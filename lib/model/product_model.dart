@@ -1,5 +1,6 @@
 class Product {
   final String displayName;
+  final String? id;
   final String sku;
   final String category;
   final String imageUrl;
@@ -15,6 +16,7 @@ class Product {
   final String companyName;
 
   Product({
+     this.id,
     required this.displayName,
     required this.sku,
     required this.category,
@@ -34,6 +36,7 @@ class Product {
   // Factory constructor to create a Product object from JSON
   factory Product.fromJson(Map<String, dynamic> json) {
     return Product(
+      id: json['_id'] ?? "",
       displayName: json['displayName'] ?? 'Unknown Product',
       sku: json['sku'] ?? 'Unknown SKU',
       category: json['category'] ?? 'Uncategorized',
@@ -54,6 +57,7 @@ class Product {
   // Method to convert Product object back to JSON
   Map<String, dynamic> toJson() {
     return {
+      '_id':id,
       'displayName': displayName,
       'sku': sku,
       'category': category,

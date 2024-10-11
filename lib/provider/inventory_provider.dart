@@ -143,8 +143,8 @@ class InventoryProvider extends ChangeNotifier {
       );
 
       // Print the raw response for debugging purposes
-      print('Response Status Code: ${response.statusCode}');
-      print('Response Body: ${response.body}');
+      // print('Response Status Code: ${response.statusCode}');
+      // print('Response Body: ${response.body}');
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
@@ -153,7 +153,6 @@ class InventoryProvider extends ChangeNotifier {
         if (data != null && data is Map<String, dynamic>) {
           print('Parsed Data: $data'); // Log parsed data for debugging
 
-          // Assuming the API returns a single inventory item object
           _inventoryDetail = data; // Store the fetched inventory detail
           notifyListeners();
         } else {
@@ -264,11 +263,13 @@ class InventoryProvider extends ChangeNotifier {
 
   List<Map<String, dynamic>> _replicationInventory = [];
 
+  Future<Map<String, dynamic>> searchByInventory(String query) async {
+    print("$query");
 
+    // Determine if the query is a SKU or a display name
+    final isSku = query.startsWith("K-"); // Assuming SKUs start with 'K-'
+    final url = Uri.parse('$_baseUrl/inventory?${isSku ? "sku" : "displayName"}=$query');
 
-  Future<Map<String, dynamic>> searchByInventory(String sku) async {
-    print("$sku");
-    final url = Uri.parse('$_baseUrl/inventory?sku=$sku'); // Adjust the endpoint if needed
     try {
       final token = await AuthProvider().getToken();
       final response = await http.get(
@@ -278,8 +279,8 @@ class InventoryProvider extends ChangeNotifier {
           'Authorization': 'Bearer $token',
         },
       );
+
       if (response.statusCode == 200) {
-        print("${response.body}");
         final data = json.decode(response.body);
         if (data.containsKey('data')) {
           // Process fetched inventory data
@@ -306,7 +307,7 @@ class InventoryProvider extends ChangeNotifier {
             };
           }).toList();
 
-          return {'success': true, 'data': fetchedInventory}; // Return fetched inventory
+          return {'success': true, 'data': fetchedInventory};
         } else {
           print('Unexpected response format: $data');
           return {'success': false, 'message': 'Unexpected response format'};
@@ -322,33 +323,38 @@ class InventoryProvider extends ChangeNotifier {
     }
   }
 
+
+
+
   bool _isLoadings = false;
 
   bool get isLoadings=> _isLoadings;
 
   void setLoading(bool loading) {
     _isLoadings = loading;
-    notifyListeners(); // Notify the UI to update
+    notifyListeners();
   }
 
+
   Future<void> filterInventory(String query) async {
-    setLoading(true); // Start loading
+    setLoading(true);
     try {
       if (query.isEmpty) {
-        _inventory = List<Map<String, dynamic>>.from(_replicationInventory); // Load full inventory
+        _inventory = List<Map<String, dynamic>>.from(_replicationInventory); // Load all inventory
       } else {
         final result = await searchByInventory(query);
         if (result['success']) {
           _inventory = result["data"];
         } else {
-          print(result['message']); // Handle error if necessary
+          print(result['message']);
         }
       }
     } finally {
-      setLoading(false); // Stop loading after search completes
+      setLoading(false);
     }
-    notifyListeners(); // Notify listeners about the change
+    notifyListeners();
   }
+
 
   void cancelInventorySearch() {
     // Reset the inventory information to the original state
@@ -398,7 +404,7 @@ class InventoryProvider extends ChangeNotifier {
       );
 
       if (response.statusCode == 200) {
-        // Inventory updated successfully
+
         final data = json.decode(response.body);
         print('Inventory updated: $data');
 
@@ -407,11 +413,6 @@ class InventoryProvider extends ChangeNotifier {
           _inventory[index]['QUANTITY'] = newQuantity.toString();
           notifyListeners();
 
-          // if (data['additionalInfo'] != null && data['additionalInfo']['reason'] != null) {
-          //   _inventory[index]['REASON'] = data['additionalInfo']['reason'];
-          //   print('Reason for update: ${data['additionalInfo']['reason']}');
-          // }
-          notifyListeners();
 
         }
       } else {

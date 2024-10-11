@@ -1,32 +1,25 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:intl/intl.dart';
+import 'package:inventory_management/invoice_page.dart';
 import 'package:inventory_management/book_page.dart';
 import 'package:inventory_management/combo_page.dart';
 import 'package:inventory_management/create-label-page.dart';
 import 'package:inventory_management/location_master.dart';
 import 'package:inventory_management/login_page.dart';
-import 'package:inventory_management/manage-inventory.dart';
 import 'package:inventory_management/manage_inventory.dart';
 import 'package:inventory_management/marketplace_page.dart';
-import 'package:inventory_management/order-page.dart';
 import 'package:inventory_management/products.dart';
 import 'package:inventory_management/category_master.dart';
 import 'package:inventory_management/dashboard_cards.dart';
 import 'package:inventory_management/checker_page.dart';
 import 'package:inventory_management/label_upload.dart';
-import 'package:inventory_management/create-label-page.dart';
-import 'package:inventory_management/location_master.dart';
-import 'package:inventory_management/manage-inventory.dart';
 import 'package:inventory_management/manifest_page.dart';
-import 'package:inventory_management/marketplace_page.dart';
 import 'package:inventory_management/product_upload.dart';
 import 'package:inventory_management/packer_page.dart';
 import 'package:inventory_management/picker_page.dart';
 import 'package:inventory_management/orders_page.dart';
-import 'package:inventory_management/products.dart';
-import 'package:inventory_management/category_master.dart';
-import 'package:inventory_management/dashboard_cards.dart';
+import 'package:inventory_management/provider/dashboard_provider.dart';
 import 'package:inventory_management/provider/inventory_provider.dart';
 import 'package:inventory_management/racked_page.dart';
 import 'package:inventory_management/show-label-page.dart';
@@ -46,10 +39,12 @@ class DashboardPage extends StatefulWidget {
 
 class _DashboardPageState extends State<DashboardPage> {
   String selectedDrawerItem = 'Dashboard';
+  DateTime? selectedDate; // State variable to hold the selected date
+  DateTime?
+      lastUpdatedTime; // Make sure this is initialized properly in your actual code
+  DateTime? previousDate;
 
-  DateTime? lastUpdatedTime;
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
-
 
   @override
   void initState() {
@@ -65,7 +60,7 @@ class _DashboardPageState extends State<DashboardPage> {
 
   @override
   Widget build(BuildContext context) {
-    final provider =Provider.of<InventoryProvider>(context, listen: false);
+    final provider = Provider.of<InventoryProvider>(context, listen: false);
     return LayoutBuilder(
       builder: (context, constraints) {
         bool isSmallScreen = constraints.maxWidth < 800;
@@ -97,7 +92,6 @@ class _DashboardPageState extends State<DashboardPage> {
                   padding: const EdgeInsets.symmetric(horizontal: 20),
                   child: Column(
                     children: [
-                      // const SizedBox(height: 20),
                       Row(
                         children: <Widget>[
                           if (isSmallScreen)
@@ -160,12 +154,13 @@ class _DashboardPageState extends State<DashboardPage> {
                 _buildOrdersSection(isSmallScreen),
                 _buildInventorySection(isSmallScreen),
                 _buildMasterSection(isSmallScreen),
-                _buildDrawerItem(
-                  icon: Icons.analytics,
-                  text: 'Accounting',
-                  isSelected: selectedDrawerItem == 'Accounting',
-                  onTap: () => _onDrawerItemTapped('Accounting', isSmallScreen),
-                ),
+                _buildAccountSection(isSmallScreen),
+                // _buildDrawerItem(
+                //   icon: Icons.analytics,
+                //   text: 'Accounting',
+                //   isSelected: selectedDrawerItem == 'Accounting',
+                //   onTap: () => _onDrawerItemTapped('Accounting', isSmallScreen),
+                // ),
                 _buildDrawerItem(
                   icon: Icons.upload_file,
                   text: 'Upload Products',
@@ -229,6 +224,58 @@ class _DashboardPageState extends State<DashboardPage> {
     );
   }
 
+  Widget _buildAccountSection(bool isSmallScreen) {
+    return Theme(
+      data: ThemeData(
+        dividerColor: Colors.transparent,
+        splashColor: Colors.transparent,
+        highlightColor: Colors.transparent,
+      ),
+      child: ExpansionTile(
+        tilePadding: const EdgeInsets.symmetric(horizontal: 20.0),
+        collapsedBackgroundColor:
+        ["Invoice Page"].contains(selectedDrawerItem)
+            ? Colors.blue.withOpacity(0.2)
+            : AppColors.white,
+        title: Text(
+          'Accounting',
+          style: TextStyle(
+            color: selectedDrawerItem == 'Accounting'
+                ? AppColors.white
+                : AppColors.primaryBlue,
+            fontSize: 16,
+          ),
+        ),
+        leading: Icon(
+          Icons.analytics,
+          color: selectedDrawerItem == 'Accounting'
+              ? AppColors.white
+              : AppColors.primaryBlue,
+          size: 24,
+        ),
+        backgroundColor: selectedDrawerItem == 'Accounting'
+            ? const Color.fromRGBO(6, 90, 216, 0.1)
+            : null,
+        children: <Widget>[
+          Padding(
+            padding:
+            const EdgeInsets.only(left: 10.0), // Ensure consistent padding
+            child: _buildDrawerItem(
+              icon: Icons.account_balance_outlined,
+              text: 'Invoice Page',
+              isSelected: selectedDrawerItem == 'Invoice PAge',
+              onTap: () =>
+                  _onDrawerItemTapped('Invoice Page', isSmallScreen),
+              isIndented: true, // Pass the indentation flag
+              iconSize: 20, // Adjust icon size
+              fontSize: 14, // Adjust font size
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildOrdersSection(bool isSmallScreen) {
     return Theme(
       data: ThemeData(
@@ -238,7 +285,17 @@ class _DashboardPageState extends State<DashboardPage> {
       ),
       child: ExpansionTile(
         tilePadding: const EdgeInsets.symmetric(horizontal: 20.0),
-         collapsedBackgroundColor:["Orders Page","Book Page","Picker Page","Packer Page","Checker Page","Racked Page","Manifest Page"].contains(selectedDrawerItem)?Colors.blue.withOpacity(0.2):AppColors.white,
+        collapsedBackgroundColor: [
+          "Orders Page",
+          "Book Page",
+          "Picker Page",
+          "Packer Page",
+          "Checker Page",
+          "Racked Page",
+          "Manifest Page"
+        ].contains(selectedDrawerItem)
+            ? Colors.blue.withOpacity(0.2)
+            : AppColors.white,
         title: Text(
           'Orders',
           style: TextStyle(
@@ -360,7 +417,10 @@ class _DashboardPageState extends State<DashboardPage> {
       ),
       child: ExpansionTile(
         tilePadding: const EdgeInsets.symmetric(horizontal: 20.0),
-         collapsedBackgroundColor:["Manage Inventory"].contains(selectedDrawerItem)?Colors.blue.withOpacity(0.2):AppColors.white,
+        collapsedBackgroundColor:
+            ["Manage Inventory"].contains(selectedDrawerItem)
+                ? Colors.blue.withOpacity(0.2)
+                : AppColors.white,
         title: Text(
           'Inventory',
           style: TextStyle(
@@ -409,9 +469,17 @@ class _DashboardPageState extends State<DashboardPage> {
       ),
       child: ExpansionTile(
         tilePadding: const EdgeInsets.symmetric(horizontal: 20.0),
-        collapsedBackgroundColor:["Label Page","Create Label Page","Product Master","Category Master","Combo Master","Marketplace Master","Location Master"].contains(selectedDrawerItem)?Colors.blue.withOpacity(0.2):AppColors.white,
-        
-        
+        collapsedBackgroundColor: [
+          "Label Page",
+          "Create Label Page",
+          "Product Master",
+          "Category Master",
+          "Combo Master",
+          "Marketplace Master",
+          "Location Master"
+        ].contains(selectedDrawerItem)
+            ? Colors.blue.withOpacity(0.2)
+            : AppColors.white,
         title: Text(
           'Master',
           style: TextStyle(
@@ -583,10 +651,10 @@ class _DashboardPageState extends State<DashboardPage> {
   }
 
   Widget _buildMainContent(String selectedDrawerItem, bool isSmallScreen) {
-    final provider =Provider.of<InventoryProvider>(context, listen: false);
+    final provider = Provider.of<InventoryProvider>(context, listen: false);
+
     switch (selectedDrawerItem) {
       case 'Dashboard':
-        // return Products();
         return _buildDashboardContent(isSmallScreen);
       case 'Sales Orders':
         return const Center(child: Text("Sales Orders content goes here"));
@@ -626,11 +694,12 @@ class _DashboardPageState extends State<DashboardPage> {
         return const MarketplacePage();
       case 'Accounting':
         return const Center(child: Text("Accounting content goes here"));
+      case 'Invoice Page':
+        return const InvoicePage();
       case 'Upload Products':
         return const ProductDataDisplay();
       case 'Upload Labels':
         return const LabelUpload();
-
       default:
         return const Center(child: Text("Select a menu item"));
     }
@@ -638,53 +707,165 @@ class _DashboardPageState extends State<DashboardPage> {
 
   Widget _buildDashboardContent(bool isSmallScreen) {
     return SingleChildScrollView(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: <Widget>[
-          const Text(
-            'Hello, Saksham',
-            style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-                color: AppColors.primaryBlue),
-          ),
-          const SizedBox(height: 10),
-          const Text(
-            "Here's what's happening with your store today",
-            style: TextStyle(
-              fontSize: 16,
-              color: AppColors.greyText,
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Expanded(
+                  child: const Text(
+                    'Hello, Saksham',
+                    style: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.primaryBlue,
+                    ),
+                  ),
+                ),
+                if (selectedDate != null) // Display selected date if not null
+                  Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Text(
+                      'Selected Date: ${DateFormat('yyyy-MM-dd').format(selectedDate!)}', // Display selected date
+                      style: const TextStyle(
+                        fontSize: 16,
+                        color: AppColors.greyText,
+                      ),
+                    ),
+                  ),
+                const SizedBox(width: 20),
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(10),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.grey.withOpacity(0.3), // Shadow color
+                          spreadRadius: 2,
+                          blurRadius: 5,
+                          offset: const Offset(0, 3),
+                        ),
+                      ],
+                    ),
+                    child: ElevatedButton.icon(
+                      onPressed: () async {
+                        DateTime? pickedDate = await _selectDate(context);
+                        if (pickedDate != null) {
+                          String formattedDate =
+                              DateFormat('yyyy-MM-dd').format(pickedDate);
+                          Provider.of<DashboardProvider>(context, listen: false)
+                              .fetchDashboardData(formattedDate);
+                        }
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor:
+                            AppColors.primaryBlue, // Button background color
+                        shape: RoundedRectangleBorder(
+                          borderRadius:
+                              BorderRadius.circular(10), // Same border radius
+                        ),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 16.0, vertical: 12.0), // Button padding
+                      ),
+                      icon: const Icon(
+                          Icons.calendar_month_outlined), // Button icon
+                      label: const Text(
+                        'Select Date', // Button label
+                        style: TextStyle(
+                          color: Colors.white, // Text color
+                          fontSize: 16, // Font size
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
-          ),
-          const SizedBox(height: 20),
-          const DashboardCards(),
-          const SizedBox(height: 20),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.end,
-            children: [
-              Text(
-                'Last updated: ${lastUpdatedTime != null ? DateFormat('hh:mm a').format(lastUpdatedTime!) : 'N/A'}',
-                style: const TextStyle(
-                  fontSize: 14,
-                  color: AppColors.greyText,
-                ),
+            const SizedBox(height: 10),
+            const Text(
+              "Here's what's happening with your store today",
+              style: TextStyle(
+                fontSize: 16,
+                color: AppColors.greyText,
               ),
-              const SizedBox(width: 10),
-              ElevatedButton(
-                onPressed: _refreshData,
-                style: ElevatedButton.styleFrom(
-                  minimumSize: const Size(100, 50),
-                  backgroundColor: AppColors.primaryBlue,
+            ),
+            const SizedBox(height: 20),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Expanded(child: DashboardCards()),
+              ],
+            ),
+            const SizedBox(height: 20),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                Text(
+                  'Last updated: ${lastUpdatedTime != null ? DateFormat('hh:mm a').format(lastUpdatedTime!) : 'N/A'}',
+                  style: const TextStyle(
+                    fontSize: 14,
+                    color: AppColors.greyText,
+                  ),
                 ),
-                child: const Text(
-                  'Refresh',
-                  style: TextStyle(fontSize: 16),
+                const SizedBox(width: 10),
+                ElevatedButton(
+                  onPressed: () {
+                    selectedDate = DateTime.now();
+                    refreshData(); // Call refresh data method
+                    _refreshData();
+                  },
+                  style: ElevatedButton.styleFrom(
+                    minimumSize: const Size(100, 50),
+                    backgroundColor: AppColors.primaryBlue,
+                  ),
+                  child: const Text(
+                    'Refresh',
+                    style: TextStyle(fontSize: 16),
+                  ),
                 ),
-              ),
-            ],
-          ),
-        ],
+              ],
+            ),
+          ],
+        ),
       ),
     );
+  }
+
+  Future<DateTime?> _selectDate(BuildContext context) async {
+    DateTime today = DateTime.now();
+    DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: selectedDate ?? today,
+      firstDate: DateTime(today.year - 5),
+      lastDate: DateTime(today.year + 5),
+    );
+
+    if (picked != null && picked != selectedDate) {
+      setState(() {
+        selectedDate = picked;
+      });
+      Provider.of<DashboardProvider>(context, listen: false)
+          .fetchDashboardData(DateFormat('yyyy-MM-dd').format(selectedDate!));
+    }
+    return picked;
+  }
+
+  void refreshData() {
+    // Refresh logic
+    DateTime today = DateTime.now(); // Get today's date
+    String formattedDate = DateFormat('yyyy-MM-dd').format(today);
+    setState(() {
+      selectedDate = today;
+      lastUpdatedTime = DateTime.now();
+    });
+    // Fetch today's data
+    Provider.of<DashboardProvider>(context, listen: false)
+        .fetchDashboardData(formattedDate);
   }
 }

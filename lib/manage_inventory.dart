@@ -104,7 +104,7 @@ class _ManageInventoryPageState extends State<ManageInventoryPage> {
       }).toList(),
     };
 
-    print("Data to send: $requestData");
+    //print("Data to send: $requestData");
 
     try {
       final token = await getToken();
@@ -235,17 +235,21 @@ class _ManageInventoryPageState extends State<ManageInventoryPage> {
                                       provider.filterInventory(
                                           searchTerm); // Fetch filtered data
                                     } else {
-                                      provider
-                                          .isLoading;
+                                      provider.fetchInventory();
                                     }
                                   }),
                             ),
                             onChanged: (value) {
-                              provider.filterInventory(value);
+                              if (value.isEmpty) {
+                                provider.fetchInventory(); // Load all inventory
+                              } else {
+                                provider.filterInventory(value); // Fetch filtered data
+                              }
                             },
                           ),
                         ),
                       ),
+
                       IconButton(
                         icon: const Icon(Icons.arrow_right,
                             color: AppColors.primaryGreen),

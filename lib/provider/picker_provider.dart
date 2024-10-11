@@ -85,8 +85,6 @@ class PickerProvider with ChangeNotifier {
       notifyListeners();
     }
   }
-
-// Debounce function to avoid searching on every keystroke
   void onSearchChanged(String query) {
     if (_debounce?.isActive ?? false) _debounce!.cancel();
     _debounce = Timer(const Duration(milliseconds: 500), () {
@@ -99,7 +97,8 @@ class PickerProvider with ChangeNotifier {
     });
   }
 
-// Method to search orders by order ID
+
+
   Future<List<Order>> searchOrders(String query) async {
     if (query.isEmpty) {
       await fetchOrdersWithStatus3();
@@ -115,7 +114,7 @@ class PickerProvider with ChangeNotifier {
     final url =
         'https://inventory-management-backend-s37u.onrender.com/orders?orderStatus=3&order_id=$query';
 
-    print('Searching failed orders with term: $query');
+    print('Searching orders with term: $query');
 
     try {
       final response = await http.get(
@@ -130,11 +129,14 @@ class PickerProvider with ChangeNotifier {
 
       if (response.statusCode == 200) {
         final jsonData = json.decode(response.body);
-        print('Response data: $jsonData');
 
         List<Order> orders = [];
+       // print('Response data: $jsonData');
         if (jsonData != null) {
+
           orders.add(Order.fromJson(jsonData));
+          print('Response data: $jsonData');
+
         } else {
           print('No data found in response.');
         }
@@ -155,6 +157,56 @@ class PickerProvider with ChangeNotifier {
 
     return _orders;
   }
+  // Future<Map<String, dynamic>?> searchByOrderId(String query) async {
+  //   print("Searching for Order ID: $query");
+  //   _isLoading = true;
+  //   notifyListeners();
+  //
+  //   final url = Uri.parse('https://inventory-management-backend-s37u.onrender.com/orders?orderStatus=3&order_id=$query');
+  //
+  //   final prefs = await SharedPreferences.getInstance();
+  //   final token = prefs.getString('token') ?? '';
+  //
+  //   try {
+  //     final response = await http.get(url, headers: {
+  //       'Authorization': 'Bearer $token', // Include token if needed
+  //       'Content-Type': 'application/json',
+  //     });
+  //
+  //     if (response.statusCode == 200) {
+  //       final body = response.body;
+  //       print("Response: $body");
+  //
+  //       if (body.isNotEmpty) {
+  //         final Map<String, dynamic> jsonData = jsonDecode(body);
+  //         if (jsonData.isNotEmpty) {
+  //          // print("$jsonData");
+  //           return jsonData;
+  //
+  //         } else {
+  //           print('Response JSON is empty.');
+  //           return null;
+  //         }
+  //       } else {
+  //         print('Response body is empty.');
+  //         return null;
+  //       }
+  //     } else {
+  //       print('Failed to load order: ${response.statusCode}');
+  //       print('Response body: ${response.body}');
+  //       return null;
+  //     }
+  //   } catch (e) {
+  //     print("Error fetching order: $e");
+  //     return null;
+  //   }
+  //   finally{
+  //     _isLoading = false;
+  //     notifyListeners();
+  //   }
+  // }
+
+
 
   void goToPage(int page) {
     if (page < 1 || page > _totalPages) return;
