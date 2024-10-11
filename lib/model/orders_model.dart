@@ -302,6 +302,8 @@ class Order {
       checkManifest: CheckManifest.fromJson(json['checkManifest']),
     );
   }
+
+
 }
 
 class Customer {
@@ -341,6 +343,7 @@ class Customer {
 
 class Item {
   final int? qty;
+  //final String? productId;
   final Product? product;
   final double? amount;
   final String? sku;
@@ -348,6 +351,7 @@ class Item {
 
   Item({
     required this.qty,
+    //this.productId,
     this.product,
     required this.amount,
     required this.sku,
@@ -357,6 +361,7 @@ class Item {
   factory Item.fromJson(Map<String, dynamic> json) {
     return Item(
       qty: json['qty']?.toInt() ?? 0, // Handle null and non-integer data
+      //productId: json['product_id']?.toString() ?? '',
       product: json['product_id'] != null
           ? Product.fromJson(json['product_id'])
           : null,

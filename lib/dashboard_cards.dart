@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:inventory_management/provider/dashboard_provider.dart';
+import 'package:provider/provider.dart';
 import 'Custom-Files/colors.dart';
 
 class DashboardCards extends StatefulWidget {
@@ -11,6 +13,15 @@ class DashboardCards extends StatefulWidget {
 class _DashboardCardsState extends State<DashboardCards> {
   final PageController _pageController = PageController();
   final int _numberOfPages = 5;
+
+  @override
+  void initState() {
+    super.initState();
+    // Fetch the dashboard data with today's date when the page loads
+    String currentDate = DateTime.now().toIso8601String().substring(0, 10); // Get 'yyyy-MM-dd' format
+    Provider.of<DashboardProvider>(context, listen: false).fetchDashboardData(currentDate);
+  }
+
 
   void _scrollLeft() {
     if (_pageController.page! > 0) {
@@ -29,6 +40,18 @@ class _DashboardCardsState extends State<DashboardCards> {
       );
     }
   }
+  String calculatePercentageChange(double today, double yesterday) {
+    if (yesterday == 0) {
+      return '0%';
+    }
+    double change = ((today - yesterday) / yesterday) * 100;
+    return '${change.toStringAsFixed(2)}%';
+  }
+
+  // Helper method to calculate color based on change
+  Color calculateChangeColor(double today, double yesterday) {
+    return today < yesterday ? AppColors.cardsred : AppColors.cardsgreen;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -44,33 +67,53 @@ class _DashboardCardsState extends State<DashboardCards> {
             : (constraints.maxWidth - 32) / 5;
         double cardHeight = isSmallScreen ? 140 : 150;
 
+        var dashboardProvider = Provider.of<DashboardProvider>(context);
+        var dashboardData = dashboardProvider.dashboardData;
+
         return Column(
           children: [
-            Wrap(
-              spacing: 8.0,
-              runSpacing: 8.0,
-              alignment: WrapAlignment.center,
-              children: [
-                DashboardCard(
-                  title: "Today's Gross Revenue",
-                  value: '₹45,000',
-                  subtitle: 'Yesterday: ₹60,000',
-                  percentageChange: '-25%',
-                  changeColor: AppColors.cardsred,
-                  chartData: const [1.0, 0.9, 0.8, 0.7],
-                  width: threeCardWidth,
-                  height: cardHeight,
-                ),
-                DashboardCard(
-                  title: "Today's Orders",
-                  value: '120',
-                  subtitle: 'Yesterday: 140',
-                  percentageChange: '-14%',
-                  changeColor: AppColors.cardsred,
-                  chartData: [1.0, 0.95, 0.85, 0.7],
-                  width: threeCardWidth,
-                  height: cardHeight,
-                ),
+            if (dashboardProvider.isLoading)
+              CircularProgressIndicator() // Show loader when data is loading
+            else if (dashboardProvider.errorMessage != null)
+              Text('Error: ${dashboardProvider.errorMessage}') // Show error if there is one
+            else if (dashboardData != null)
+                Wrap(
+                  spacing: 8.0,
+                  runSpacing: 8.0,
+                  alignment: WrapAlignment.center,
+                  children: [
+                    DashboardCard(
+                      title: "Today's Gross Revenue",
+                      value: '₹${dashboardData.totalAmountToday}', // Dynamic value from API
+                      subtitle: 'Yesterday: ₹${dashboardData.totalAmountYesterday}', // Dynamic subtitle from API
+                      percentageChange: calculatePercentageChange(
+                          dashboardData.totalAmountToday as double,
+                          dashboardData.totalAmountYesterday as double
+                      ), // Calculate percentage change
+                      changeColor: calculateChangeColor(
+                          dashboardData.totalAmountToday as double,
+                          dashboardData.totalAmountYesterday as double
+                      ), // Dynamic color based on increase/decrease
+                      chartData: [1.0, 0.9, 0.8, 0.7], // You can customize this
+                      width: threeCardWidth,
+                      height: cardHeight,
+                    ),
+                    DashboardCard(
+                      title: "Today's Orders",
+                      value: '${dashboardData.totalOrderToday}', // Dynamic value from API
+                      subtitle: 'Yesterday: ${dashboardData.totalOrderYesterday}', // Dynamic subtitle from API
+                      percentageChange: calculatePercentageChange(
+                          dashboardData.totalOrderToday as double,
+                          dashboardData.totalOrderYesterday as double
+                      ), // Calculate percentage change
+                      changeColor: calculateChangeColor(
+                          dashboardData.totalOrderToday as double,
+                          dashboardData.totalOrderYesterday as double
+                      ), // Dynamic color based on increase/decrease
+                      chartData: [1.0, 0.95, 0.85, 0.7], // Customize as needed
+                      width: threeCardWidth,
+                      height: cardHeight,
+                    ),
                 DashboardCard(
                   title: "Today's Return",
                   value: '₹0',
