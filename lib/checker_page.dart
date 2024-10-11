@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:inventory_management/Custom-Files/loading_indicator.dart';
+import 'package:inventory_management/Widgets/order_card.dart';
+import 'package:inventory_management/model/orders_model.dart';
 import 'package:provider/provider.dart';
 import 'package:inventory_management/Custom-Files/colors.dart';
 import 'package:inventory_management/provider/checker_provider.dart';
+import 'package:inventory_management/Custom-Files/custom_pagination.dart';
 
 class CheckerPage extends StatefulWidget {
   const CheckerPage({super.key});
@@ -11,331 +15,360 @@ class CheckerPage extends StatefulWidget {
 }
 
 class _CheckerPageState extends State<CheckerPage> {
+  final TextEditingController _searchController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Provider.of<CheckerProvider>(context, listen: false)
+          .fetchOrdersWithStatus5();
+    });
+  }
+
+  void _onSearchButtonPressed() {
+    final query = _searchController.text.trim();
+    if (query.isNotEmpty) {
+      Provider.of<CheckerProvider>(context, listen: false)
+          .onSearchChanged(query);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Consumer<CheckerProvider>(
       builder: (context, checkerProvider, child) {
-        // Fixed variable name to pickerProvider
         return Scaffold(
+          backgroundColor: AppColors.white,
           body: Column(
             children: [
-              // Display number of selected products
               Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: Text(
-                  'Selected Orders: ${checkerProvider.selectedCount}',
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-
-              // Table with horizontal scroll
-              Expanded(
-                child: Container(
-                  color: AppColors.greyBackground,
-                  width: double
-                      .infinity, // Make the table take the full width of the screen
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 16.0), // Optional padding
-
-                  child: SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    child: SingleChildScrollView(
-                      child: DataTable(
-                        dataRowHeight: 300,
-                        columnSpacing: MediaQuery.of(context).size.width * 0.08,
-                        columns: [
-                          const DataColumn(
-                            label: Text(
-                              'ORDERS',
-                              style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                              ),
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  children: [
+                    // Search TextField
+                    SizedBox(
+                      width: 200,
+                      child: Container(
+                        height: 40,
+                        decoration: BoxDecoration(
+                          border: Border.all(
+                            color: const Color.fromARGB(183, 6, 90, 216),
+                          ),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: TextField(
+                          controller: _searchController,
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(color: Colors.black),
+                          decoration: const InputDecoration(
+                            hintText: 'Search by Order ID',
+                            hintStyle: TextStyle(color: Colors.black),
+                            border: InputBorder.none,
+                            contentPadding: EdgeInsets.symmetric(vertical: 8.0),
+                            prefixIcon: Icon(
+                              Icons.search,
+                              color: Color.fromARGB(183, 6, 90, 216),
                             ),
                           ),
-                          const DataColumn(
-                            label: Text(
-                              'CUSTOMER DETAIL',
-                              style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                          const DataColumn(
-                            label: Text(
-                              'DATE',
-                              style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                          const DataColumn(
-                            label: Text(
-                              'TOTAL',
-                              style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                          const DataColumn(
-                            label: Text(
-                              'WEIGHT',
-                              style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                          // DataColumn with checkbox to select/deselect all products
-                          DataColumn(
-                            label: Row(
-                              children: [
-                                Transform.scale(
-                                  scale: 1,
-                                  child: Checkbox(
-                                    value: checkerProvider.selectAll,
-                                    onChanged: (bool? value) {
-                                      checkerProvider
-                                          .toggleSelectAll(value ?? false);
-                                    },
-                                    activeColor: Colors
-                                        .blue, // Customize the active color
-                                    checkColor: Colors
-                                        .white, // Customize the check mark color
-                                    side: const BorderSide(
-                                        color: Colors
-                                            .blue), // Customize the border color
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(
-                                          4), // Customize the border radius
-                                    ),
-                                  ),
-                                ),
-                                const Text('Select All'),
-                              ],
-                            ),
-                          ),
-                        ],
-                        rows: List<DataRow>.generate(
-                          checkerProvider.selectedProducts.length,
-                          (index) => DataRow(
-                            selected: checkerProvider.selectedProducts[index],
-                            cells: [
-                              // Product Image and Name in one cell
-                              DataCell(
-                                SizedBox(
-                                  width: 556,
-                                  child: Padding(
-                                    padding: const EdgeInsets.all(4.0),
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        // Display the Order ID
-                                        Text(
-                                          'ORDER ID: KSK-2599${index + 1}',
-                                          style: const TextStyle(
-                                              fontWeight: FontWeight.bold,
-                                              fontSize: 20,
-                                              color: Colors.blue),
-                                        ),
-
-                                        const SizedBox(height: 10),
-
-                                        const Row(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            SizedBox(width: 10),
-                                            SizedBox(
-                                              width: 430,
-                                              child: Column(
-                                                children: [
-                                                  // Product 1 Information
-                                                  Text(
-                                                    'Nemotude Plus (Bio Pesticides verticillium chalamydosporium 1% WP)',
-                                                    style:
-                                                        TextStyle(fontSize: 16),
-                                                    softWrap:
-                                                        true, // Enable text wrapping
-                                                    maxLines:
-                                                        3, // Adjust max lines if needed
-                                                    overflow:
-                                                        TextOverflow.ellipsis,
-                                                  ),
-                                                  SizedBox(height: 4),
-
-                                                  Row(
-                                                    children: [
-                                                      Text(
-                                                        'SKU : k-5560 ',
-                                                        style: TextStyle(
-                                                            fontSize: 14,
-                                                            fontWeight:
-                                                                FontWeight
-                                                                    .bold),
-                                                      ),
-                                                      SizedBox(width: 150),
-                                                      Text(
-                                                        'Quality : 10 ',
-                                                        style: TextStyle(
-                                                            fontSize: 14,
-                                                            fontWeight:
-                                                                FontWeight
-                                                                    .bold),
-                                                      ),
-                                                    ],
-                                                  ),
-                                                  SizedBox(height: 10),
-                                                ],
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                        const Divider(color: Colors.grey),
-                                        const Row(
-                                          children: [
-                                            SizedBox(width: 10),
-                                            SizedBox(
-                                              width: 430,
-                                              child: Column(
-                                                children: [
-                                                  // Product 1 Information
-                                                  Text(
-                                                    'Motude Plus (Bio Pesticides verticillium chalamydosporium 1% WP)',
-                                                    style:
-                                                        TextStyle(fontSize: 16),
-                                                    softWrap:
-                                                        true, // Enable text wrapping
-                                                    maxLines:
-                                                        3, // Adjust max lines if needed
-                                                    overflow:
-                                                        TextOverflow.ellipsis,
-                                                  ),
-                                                  SizedBox(height: 4),
-                                                  Row(
-                                                    children: [
-                                                      Text(
-                                                        'SKU : k-9560 ',
-                                                        style: TextStyle(
-                                                            fontSize: 14,
-                                                            fontWeight:
-                                                                FontWeight
-                                                                    .bold),
-                                                      ),
-                                                      SizedBox(width: 150),
-                                                      Text(
-                                                        'Quality : 04 ',
-                                                        style: TextStyle(
-                                                            fontSize: 14,
-                                                            fontWeight:
-                                                                FontWeight
-                                                                    .bold),
-                                                      ),
-                                                    ],
-                                                  ),
-                                                  SizedBox(height: 10),
-                                                ],
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              // Delivery price (INR)
-                              const DataCell(
-                                Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Text(
-                                      'Deependra Singh',
-                                      style: TextStyle(fontSize: 18),
-                                      overflow: TextOverflow.visible,
-                                      softWrap: true,
-                                    ),
-                                    Text(
-                                      '8758568384',
-                                      style: TextStyle(fontSize: 18),
-                                      overflow: TextOverflow.visible,
-                                      softWrap: true,
-                                    ),
-                                  ],
-                                ),
-                              ),
-
-                              // Shiprocket price (INR)
-                              const DataCell(
-                                Text(
-                                  '12/02/2020',
-                                  style: TextStyle(fontSize: 18),
-                                  overflow: TextOverflow.visible,
-                                  softWrap: true,
-                                ),
-                              ),
-                              const DataCell(
-                                Text(
-                                  '\$1200',
-                                  style: TextStyle(fontSize: 18),
-                                  overflow: TextOverflow.visible,
-                                  softWrap: true,
-                                ),
-                              ),
-
-                              DataCell(
-                                Text(
-                                  'Weight ${index + 1}',
-                                  style: const TextStyle(fontSize: 18),
-                                  overflow: TextOverflow.visible,
-                                  softWrap: true,
-                                ),
-                              ),
-
-                              // Checkbox for each row
-                              DataCell(
-                                Transform.scale(
-                                  scale: 1,
-                                  child: Checkbox(
-                                    value:
-                                        checkerProvider.selectedProducts[index],
-                                    onChanged: (bool? value) {
-                                      checkerProvider.toggleProductSelection(
-                                          index, value ?? false);
-                                    },
-                                    activeColor: Colors
-                                        .blue, // Customize the active color
-                                    checkColor: Colors
-                                        .white, // Customize the check mark color
-                                    side: const BorderSide(
-                                        color: Colors
-                                            .blue), // Customize the border color
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(
-                                          4), // Customize the border radius
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
+                          onChanged: (query) {
+                            // Trigger a rebuild to show/hide the search button
+                            setState(() {
+                              // Update search focus
+                            });
+                            if (query.isEmpty) {
+                              // Reset to all orders if search is cleared
+                              checkerProvider.fetchOrdersWithStatus5();
+                            }
+                          },
+                          onTap: () {
+                            setState(() {
+                              // Mark the search field as focused
+                            });
+                          },
+                          onEditingComplete: () {
+                            // Mark it as not focused when done
+                            FocusScope.of(context)
+                                .unfocus(); // Dismiss the keyboard
+                          },
                         ),
                       ),
                     ),
-                  ),
+                    const SizedBox(width: 8),
+                    // Search Button
+                    ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primaryBlue,
+                      ),
+                      onPressed: _searchController.text.isNotEmpty
+                          ? _onSearchButtonPressed
+                          : null,
+                      child: const Text(
+                        'Search',
+                        style: TextStyle(color: Colors.white),
+                      ),
+                    ),
+                    const Spacer(),
+                    // Refresh Button
+                    ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primaryBlue,
+                      ),
+                      onPressed: () {
+                        checkerProvider.fetchOrdersWithStatus5();
+                      },
+                      child: const Text(
+                        'Refresh',
+                        style: TextStyle(color: Colors.white),
+                      ),
+                    ),
+                  ],
                 ),
+              ),
+              const SizedBox(height: 8),
+              _buildTableHeader(checkerProvider.orders.length, checkerProvider),
+              Expanded(
+                child: Stack(
+                  children: [
+                    if (checkerProvider.isLoading)
+                      const Center(child: CheckerLoadingAnimation())
+                    else if (checkerProvider.orders.isEmpty)
+                      const Center(
+                        child: Text(
+                          'No Orders Found',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.grey,
+                          ),
+                        ),
+                      )
+                    else
+                      ListView.builder(
+                        itemCount: checkerProvider.orders.length,
+                        itemBuilder: (context, index) {
+                          final order = checkerProvider.orders[index];
+                          return Column(
+                            children: [
+                              _buildOrderCard(order, index, checkerProvider),
+                              const Divider(thickness: 1, color: Colors.grey),
+                            ],
+                          );
+                        },
+                      ),
+                  ],
+                ),
+              ),
+              CustomPaginationFooter(
+                currentPage:
+                    checkerProvider.currentPage, // Ensure correct currentPage
+                totalPages: checkerProvider.totalPages,
+                buttonSize: 30,
+                pageController: checkerProvider.textEditingController,
+                onFirstPage: () {
+                  checkerProvider.goToPage(1);
+                },
+                onLastPage: () {
+                  checkerProvider.goToPage(checkerProvider.totalPages);
+                },
+                onNextPage: () {
+                  if (checkerProvider.currentPage <
+                      checkerProvider.totalPages) {
+                    print(
+                        'Navigating to page: ${checkerProvider.currentPage + 1}');
+                    checkerProvider.goToPage(checkerProvider.currentPage + 1);
+                  }
+                },
+                onPreviousPage: () {
+                  if (checkerProvider.currentPage > 1) {
+                    print(
+                        'Navigating to page: ${checkerProvider.currentPage - 1}');
+                    checkerProvider.goToPage(checkerProvider.currentPage - 1);
+                  }
+                },
+                onGoToPage: (page) {
+                  checkerProvider.goToPage(page);
+                },
+                onJumpToPage: () {
+                  final page =
+                      int.tryParse(checkerProvider.textEditingController.text);
+                  if (page != null &&
+                      page > 0 &&
+                      page <= checkerProvider.totalPages) {
+                    checkerProvider.goToPage(page);
+                  }
+                },
               ),
             ],
           ),
         );
       },
+    );
+  }
+
+  Widget _buildTableHeader(int totalCount, CheckerProvider checkerProvider) {
+    return Container(
+      color: Colors.grey[300],
+      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+      child: Row(
+        children: [
+          buildHeader('ORDERS', flex: 9),
+          buildHeader('CUSTOMER', flex: 3),
+          buildHeader('DATE', flex: 3),
+          buildHeader('TOTAL', flex: 2),
+          buildHeader('WEIGHT', flex: 2),
+          buildHeader('CONFIRM', flex: 2),
+        ],
+      ),
+    );
+  }
+
+  Widget buildHeader(String title, {int flex = 1}) {
+    return Expanded(
+      flex: flex,
+      child: Center(
+        child: Text(
+          title,
+          style: const TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 18,
+            color: Colors.black87,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildOrderCard(
+      Order order, int index, CheckerProvider checkerProvider) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 2.0, horizontal: 8.0),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Expanded(
+            flex: 9,
+            child: OrderCard(order: order),
+          ),
+          const SizedBox(width: 4),
+          buildCell(
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Text(
+                  _getCustomerFullName(order.customer),
+                  style: const TextStyle(fontSize: 16),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 4),
+                if (order.customer?.phone != null) ...[
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      IconButton(
+                        onPressed: () {
+                          // Add your phone action here
+                        },
+                        icon: const Icon(
+                          Icons.phone,
+                          color: AppColors.green,
+                          size: 14,
+                        ),
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        _getCustomerPhoneNumber(order.customer?.phone),
+                        style: const TextStyle(
+                          fontSize: 14,
+                          color: Colors.orange,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ],
+                  ),
+                ] else ...[
+                  const Text(
+                    'Phone not available',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Colors.grey,
+                    ),
+                  ),
+                ],
+              ],
+            ),
+            flex: 3,
+          ),
+          const SizedBox(width: 4),
+          buildCell(
+            Text(
+              checkerProvider.formatDate(order.date!),
+              style: const TextStyle(fontSize: 16),
+            ),
+            flex: 3,
+          ),
+          const SizedBox(width: 4),
+          buildCell(
+            Text(
+              'Rs.${order.totalAmount!}',
+              style: const TextStyle(fontSize: 16),
+            ),
+            flex: 2,
+          ),
+          const SizedBox(width: 4),
+          buildCell(
+            Text(
+              '${order.totalWeight}',
+              style: const TextStyle(fontSize: 16),
+            ),
+            flex: 2,
+          ),
+          const SizedBox(width: 4),
+          buildCell(
+            order.checker!.approved
+                ? const Icon(
+                    Icons.check_circle,
+                    color: Colors.green,
+                    size: 24,
+                  )
+                : const SizedBox.shrink(),
+            flex: 2,
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _getCustomerPhoneNumber(dynamic phoneNumber) {
+    if (phoneNumber == null) return 'Unknown';
+
+    // Convert to string if it's an int, otherwise return as is
+    return phoneNumber.toString();
+  }
+
+  String _getCustomerFullName(Customer? customer) {
+    if (customer == null) return 'Unknown';
+
+    final firstName = customer.firstName ?? '';
+    final lastName = customer.lastName ?? '';
+
+    // Check if both first name and last name are empty
+    if (firstName.isEmpty && lastName.isEmpty) {
+      return 'Unknown';
+    }
+
+    return (firstName + (lastName.isNotEmpty ? ' $lastName' : '')).trim();
+  }
+
+  Widget buildCell(Widget content, {int flex = 1}) {
+    return Expanded(
+      flex: flex,
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 2.0, horizontal: 2.0),
+        child: Center(child: content),
+      ),
     );
   }
 }

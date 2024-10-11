@@ -20,6 +20,7 @@ class AppColors {
   static const Color cardsgreen = Colors.greenAccent;
   static const Color green = Colors.green;
   static const Color blueAccent = Color.fromRGBO(68, 138, 255, 1);
+  static const Color orange = Colors.orange;
 // <<<<<<< HEAD
 // <<<<<<< HEAD
 // =======
@@ -42,6 +43,7 @@ class AppColors {
       fontSize: 15,
     );
   }
+
 // <<<<<<< HEAD
 // =======
   static const Color lightBlue = Color.fromRGBO(3, 169, 244, 1);

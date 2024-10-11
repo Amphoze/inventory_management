@@ -596,8 +596,6 @@ class _DashboardPageState extends State<DashboardPage> {
         return const Products();
       case 'Manage Inventory':
         return const ManageInventoryPage();
-      case 'Order Page':
-        return const OrdersPage();
       case 'Orders Page':
         return const OrdersNewPage();
       case 'Book Page':

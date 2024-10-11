@@ -41,30 +41,31 @@ class CustomPaginationFooter extends StatelessWidget {
               children: [
                 IconButton(
                   icon: const Icon(Icons.first_page),
-                  onPressed: onFirstPage,
+                  onPressed: currentPage > 1 ? onFirstPage : null,
                   iconSize: arrowButtonSize,
-                  color: currentPage > 0 ? AppColors.primaryGreen : Colors.grey,
+                  color: currentPage > 1 ? AppColors.primaryGreen : Colors.grey,
                 ),
                 IconButton(
                   icon: const Icon(Icons.chevron_left),
-                  onPressed: onPreviousPage,
+                  onPressed: currentPage > 1 ? onPreviousPage : null,
                   iconSize: arrowButtonSize,
-                  color: currentPage >0 ? AppColors.primaryGreen : Colors.grey,
+                  color: currentPage > 1 ? AppColors.primaryGreen : Colors.grey,
                 ),
-                ..._buildPageButtons(currentPage, totalPages, buttonSize),
+                ..._buildPageButtons(currentPage - 1, totalPages,
+                    buttonSize), // Pass currentPage - 1 for zero-based
                 IconButton(
                   icon: const Icon(Icons.chevron_right),
-                  onPressed: onNextPage,
+                  onPressed: currentPage < totalPages ? onNextPage : null,
                   iconSize: arrowButtonSize,
-                  color: currentPage < totalPages - 1
+                  color: currentPage < totalPages
                       ? AppColors.primaryGreen
                       : Colors.grey,
                 ),
                 IconButton(
                   icon: const Icon(Icons.last_page),
-                  onPressed: onLastPage,
+                  onPressed: currentPage < totalPages ? onLastPage : null,
                   iconSize: arrowButtonSize,
-                  color: currentPage < totalPages - 1
+                  color: currentPage < totalPages
                       ? AppColors.primaryGreen
                       : Colors.grey,
                 ),
@@ -128,7 +129,7 @@ class CustomPaginationFooter extends StatelessWidget {
         Container(
           margin: const EdgeInsets.symmetric(horizontal: 2.0),
           child: ElevatedButton(
-            onPressed: () => onGoToPage(i),
+            onPressed: () => onGoToPage(i + 1),
             style: ElevatedButton.styleFrom(
               minimumSize: Size(buttonSize * 1.9, buttonSize),
               padding: const EdgeInsets.symmetric(vertical: 4),

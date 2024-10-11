@@ -27,35 +27,40 @@ class OrderCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              'Order ID: ${order.orderId}',
-              style: const TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 18, // Reduced font size
-                color: Colors.blueAccent,
-              ),
-            ),
-            RichText(
-              text: TextSpan(
-                children: [
-                  const TextSpan(
-                    text: 'Total Amount: ',
-                    style: TextStyle(
-                      color: Colors.black,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 14, // Reduced font size
-                    ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Order ID: ${order.orderId}',
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 18, // Reduced font size
+                    color: Colors.blueAccent,
                   ),
-                  TextSpan(
-                    text: order.totalAmount.toString(),
-                    style: const TextStyle(
-                      color: Colors.black87,
-                      fontWeight: FontWeight.w500,
-                      fontSize: 14, // Reduced font size
-                    ),
+                ),
+                RichText(
+                  text: TextSpan(
+                    children: [
+                      const TextSpan(
+                        text: 'Total Amount: ',
+                        style: TextStyle(
+                          color: Colors.black,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14, // Reduced font size
+                        ),
+                      ),
+                      TextSpan(
+                        text: 'Rs.${order.totalAmount?.toString() ?? 0}',
+                        style: const TextStyle(
+                          color: Colors.black87,
+                          fontWeight: FontWeight.w500,
+                          fontSize: 14, // Reduced font size
+                        ),
+                      ),
+                    ],
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
             const SizedBox(height: 6.0), // Smaller spacing between elements
             ListView.builder(
@@ -65,7 +70,7 @@ class OrderCard extends StatelessWidget {
               itemBuilder: (context, itemIndex) {
                 final item = order.items[itemIndex];
                 print(
-                    'Item $itemIndex: ${item.product?.displayName}, Quantity: ${item.qty}');
+                    'Item $itemIndex: ${item.product?.displayName.toString() ?? ''}, Quantity: ${item.qty ?? 0}');
                 return _buildProductDetails(item);
               },
             ),
@@ -108,33 +113,33 @@ class OrderCard extends StatelessWidget {
                   const SizedBox(
                       height: 6.0), // Reduced spacing between text elements
                   Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    mainAxisAlignment:
+                        MainAxisAlignment.spaceBetween, // Space between widgets
                     children: [
-                      Expanded(
-                        child: RichText(
-                          text: TextSpan(
-                            children: [
-                              const TextSpan(
-                                text: 'SKU: ',
-                                style: TextStyle(
-                                  color: Colors.blueAccent,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 12, // Reduced font size
-                                ),
+                      // SKU at the extreme left
+                      RichText(
+                        text: TextSpan(
+                          children: [
+                            const TextSpan(
+                              text: 'SKU: ',
+                              style: TextStyle(
+                                color: Colors.blueAccent,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 13, // Reduced font size
                               ),
-                              TextSpan(
-                                text: item.product?.sku ?? 'N/A',
-                                style: const TextStyle(
-                                  color: Colors.black87,
-                                  fontWeight: FontWeight.w500,
-                                  fontSize: 12, // Reduced font size
-                                ),
+                            ),
+                            TextSpan(
+                              text: item.product?.sku ?? 'N/A',
+                              style: const TextStyle(
+                                color: Colors.black87,
+                                fontWeight: FontWeight.w500,
+                                fontSize: 13, // Reduced font size
                               ),
-                            ],
-                          ),
+                            ),
+                          ],
                         ),
                       ),
-                      const SizedBox(width: 8),
+                      // Qty in the center
                       RichText(
                         text: TextSpan(
                           children: [
@@ -143,7 +148,7 @@ class OrderCard extends StatelessWidget {
                               style: TextStyle(
                                 color: Colors.blueAccent,
                                 fontWeight: FontWeight.bold,
-                                fontSize: 12, // Reduced font size
+                                fontSize: 13, // Reduced font size
                               ),
                             ),
                             TextSpan(
@@ -151,36 +156,36 @@ class OrderCard extends StatelessWidget {
                               style: const TextStyle(
                                 color: Colors.black87,
                                 fontWeight: FontWeight.w500,
-                                fontSize: 12, // Reduced font size
+                                fontSize: 13, // Reduced font size
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      // Amount at the extreme right
+                      RichText(
+                        text: TextSpan(
+                          children: [
+                            const TextSpan(
+                              text: 'Amount: ',
+                              style: TextStyle(
+                                color: Colors.blueAccent,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 13, // Reduced font size
+                              ),
+                            ),
+                            TextSpan(
+                              text: 'Rs.${item.amount.toString()}',
+                              style: const TextStyle(
+                                color: Colors.black87,
+                                fontWeight: FontWeight.w500,
+                                fontSize: 13, // Reduced font size
                               ),
                             ),
                           ],
                         ),
                       ),
                     ],
-                  ),
-                  const SizedBox(height: 6), // Reduced spacing between elements
-                  RichText(
-                    text: TextSpan(
-                      children: [
-                        const TextSpan(
-                          text: 'Amount: ',
-                          style: TextStyle(
-                            color: Colors.blueAccent,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 12, // Reduced font size
-                          ),
-                        ),
-                        TextSpan(
-                          text: item.amount.toString(),
-                          style: const TextStyle(
-                            color: Colors.black87,
-                            fontWeight: FontWeight.w500,
-                            fontSize: 12, // Reduced font size
-                          ),
-                        ),
-                      ],
-                    ),
                   ),
                 ],
               ),

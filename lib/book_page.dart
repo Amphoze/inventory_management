@@ -22,7 +22,6 @@ class _BookPageState extends State<BookPage>
   late ScrollController _scrollController;
   bool _showBackToTopButton = false;
 
-
   @override
   void initState() {
     super.initState();
@@ -134,7 +133,10 @@ class _BookPageState extends State<BookPage>
             bookProvider.fetchOrders('B2C');
             // Optionally show a message to indicate reloading
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Content refreshed')),
+              const SnackBar(
+                content: Text('Content refreshed'),
+                backgroundColor: AppColors.orange,
+              ),
             );
           },
           color: Colors.black,
@@ -241,7 +243,16 @@ class _BookPageState extends State<BookPage>
           child: bookProvider.isLoadingB2B || bookProvider.isLoadingB2C
               ? const Center(child: BookLoadingAnimation())
               : orders.isEmpty
-                  ? const Center(child: Text('No orders found'))
+                  ? const Center(
+                      child: Text(
+                        'No Orders Found',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.grey,
+                        ),
+                      ),
+                    )
                   : ListView.builder(
                       controller: _scrollController,
                       itemCount: orders.length,
@@ -288,33 +299,38 @@ class _BookPageState extends State<BookPage>
             // If no orders are selected, show a message
             if (selectedOrderIds.isEmpty) {
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('No orders selected')),
+                const SnackBar(
+                  content: Text('No orders selected'),
+                  backgroundColor: AppColors.orange,
+                ),
               );
               return;
             }
 
-            // Create an instance of OrderApi
-            final orderApi = OrdersApi();
+            // Confirm the selected orders using the new API
+            try {
+              String responseMessage = await bookProvider.bookOrders(
+                  context, selectedOrderIds); // Get the response message
 
-            // Update the status of selected orders
-            for (String orderId in selectedOrderIds) {
-              try {
-                await orderApi.updateOrderStatus(
-                    context, orderId, 3); // Update status to 3
-              } catch (e) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                      content: Text('Failed to update order $orderId: $e')),
-                );
-              }
+              // Show the API response message in the Snackbar
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(responseMessage),
+                  backgroundColor: AppColors.green,
+                ),
+              );
+            } catch (e) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                    content: Text('Failed to book orders: $e'),
+                    backgroundColor: AppColors.cardsred),
+              );
             }
 
-            // Optionally, refresh the orders after updating
+            // Optionally, refresh the orders after booking
             await bookProvider.fetchOrders(orderType);
           },
-          child: Text(
-            orderType == 'B2B' ? 'Confirm B2B Orders' : 'Confirm B2C Orders',
-          ),
+          child: const Text('Shiprocket'),
         ),
       ),
     );
@@ -344,9 +360,9 @@ class _BookPageState extends State<BookPage>
               ],
             ),
           ),
-          buildHeader('PRODUCTS', flex: 4),
-          buildHeader('DELIVERY', flex: 3),
-          buildHeader('SHIPROCKET', flex: 3),
+          buildHeader('PRODUCTS', flex: 7),
+          buildHeader('DELIVERY', flex: 2),
+          buildHeader('SHIPROCKET', flex: 2),
         ],
       ),
     );
@@ -395,15 +411,15 @@ class _BookPageState extends State<BookPage>
           ),
           const SizedBox(width: 150),
           Expanded(
-            flex: 4,
+            flex: 7,
             child: OrderCard(
               order: order,
             ),
           ),
-          const SizedBox(width: 20),
-          buildCell(order.freightCharge!.delhivery.toString(), flex: 3),
-          const SizedBox(width: 20),
-          buildCell(order.freightCharge!.shiprocket.toString(), flex: 3),
+          const SizedBox(width: 40),
+          buildCell(order.freightCharge?.delhivery?.toString() ?? '', flex: 2),
+          const SizedBox(width: 40),
+          buildCell(order.freightCharge?.shiprocket?.toString() ?? '', flex: 2),
         ],
       ),
     );
@@ -418,7 +434,7 @@ class _BookPageState extends State<BookPage>
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Text(
-              "₹ $content",
+              "Rs. $content",
               style: const TextStyle(
                 color: AppColors.grey,
                 fontWeight: FontWeight.bold,
