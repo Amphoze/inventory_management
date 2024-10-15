@@ -22,6 +22,7 @@ import 'package:inventory_management/orders_page.dart';
 import 'package:inventory_management/provider/dashboard_provider.dart';
 import 'package:inventory_management/provider/inventory_provider.dart';
 import 'package:inventory_management/racked_page.dart';
+import 'package:inventory_management/return_order.dart';
 import 'package:inventory_management/show-label-page.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -234,7 +235,7 @@ class _DashboardPageState extends State<DashboardPage> {
       child: ExpansionTile(
         tilePadding: const EdgeInsets.symmetric(horizontal: 20.0),
         collapsedBackgroundColor:
-        ["Invoice Page"].contains(selectedDrawerItem)
+        ["Invoices"].contains(selectedDrawerItem)
             ? Colors.blue.withOpacity(0.2)
             : AppColors.white,
         title: Text(
@@ -262,10 +263,10 @@ class _DashboardPageState extends State<DashboardPage> {
             const EdgeInsets.only(left: 10.0), // Ensure consistent padding
             child: _buildDrawerItem(
               icon: Icons.account_balance_outlined,
-              text: 'Invoice Page',
-              isSelected: selectedDrawerItem == 'Invoice PAge',
+              text: 'Invoices',
+              isSelected: selectedDrawerItem == 'Invoices',
               onTap: () =>
-                  _onDrawerItemTapped('Invoice Page', isSmallScreen),
+                  _onDrawerItemTapped('Invoices', isSmallScreen),
               isIndented: true, // Pass the indentation flag
               iconSize: 20, // Adjust icon size
               fontSize: 14, // Adjust font size
@@ -398,6 +399,18 @@ class _DashboardPageState extends State<DashboardPage> {
               text: 'Manifest',
               isSelected: selectedDrawerItem == 'Manifest Page',
               onTap: () => _onDrawerItemTapped('Manifest Page', isSmallScreen),
+              isIndented: true,
+              iconSize: 20,
+              fontSize: 14,
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.only(left: 10.0),
+            child: _buildDrawerItem(
+              icon: Icons.assignment_return,
+              text: 'Return',
+              isSelected: selectedDrawerItem == 'Return',
+              onTap: () => _onDrawerItemTapped('Return', isSmallScreen),
               isIndented: true,
               iconSize: 20,
               fontSize: 14,
@@ -678,6 +691,8 @@ class _DashboardPageState extends State<DashboardPage> {
         return const RackedPage();
       case 'Manifest Page':
         return const ManifestPage();
+      case 'Return':
+        return const ReturnOrders();
       case 'Product Master':
         return const ProductDashboardPage();
       case 'Create Label Page':
@@ -694,7 +709,7 @@ class _DashboardPageState extends State<DashboardPage> {
         return const MarketplacePage();
       case 'Accounting':
         return const Center(child: Text("Accounting content goes here"));
-      case 'Invoice Page':
+      case 'Invoices':
         return const InvoicePage();
       case 'Upload Products':
         return const ProductDataDisplay();

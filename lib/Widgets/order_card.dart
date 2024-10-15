@@ -38,6 +38,8 @@ class OrderCard extends StatelessWidget {
                     color: Colors.blueAccent,
                   ),
                 ),
+                //Text('Tracking Status: ${order.trackingStatus}'),
+
                 RichText(
                   text: TextSpan(
                     children: [
