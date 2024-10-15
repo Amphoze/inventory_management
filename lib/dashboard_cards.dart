@@ -18,10 +18,12 @@ class _DashboardCardsState extends State<DashboardCards> {
   void initState() {
     super.initState();
     // Fetch the dashboard data with today's date when the page loads
-    String currentDate = DateTime.now().toIso8601String().substring(0, 10); // Get 'yyyy-MM-dd' format
-    Provider.of<DashboardProvider>(context, listen: false).fetchDashboardData(currentDate);
+    String currentDate = DateTime.now()
+        .toIso8601String()
+        .substring(0, 10); // Get 'yyyy-MM-dd' format
+    Provider.of<DashboardProvider>(context, listen: false)
+        .fetchDashboardData(currentDate);
   }
-
 
   void _scrollLeft() {
     if (_pageController.page! > 0) {
@@ -40,6 +42,7 @@ class _DashboardCardsState extends State<DashboardCards> {
       );
     }
   }
+
   String calculatePercentageChange(double today, double yesterday) {
     if (yesterday == 0) {
       return '0%';
@@ -75,189 +78,194 @@ class _DashboardCardsState extends State<DashboardCards> {
             if (dashboardProvider.isLoading)
               CircularProgressIndicator() // Show loader when data is loading
             else if (dashboardProvider.errorMessage != null)
-              Text('Error: ${dashboardProvider.errorMessage}') // Show error if there is one
+              Text(
+                  'Error: ${dashboardProvider.errorMessage}') // Show error if there is one
             else if (dashboardData != null)
-                Wrap(
-                  spacing: 8.0,
-                  runSpacing: 8.0,
-                  alignment: WrapAlignment.center,
-                  children: [
-                    DashboardCard(
-                      title: "Today's Gross Revenue",
-                      value: '₹${dashboardData.totalAmountToday}', // Dynamic value from API
-                      subtitle: 'Yesterday: ₹${dashboardData.totalAmountYesterday}', // Dynamic subtitle from API
-                      percentageChange: calculatePercentageChange(
-                          dashboardData.totalAmountToday as double,
-                          dashboardData.totalAmountYesterday as double
-                      ), // Calculate percentage change
-                      changeColor: calculateChangeColor(
-                          dashboardData.totalAmountToday as double,
-                          dashboardData.totalAmountYesterday as double
-                      ), // Dynamic color based on increase/decrease
-                      chartData: [1.0, 0.9, 0.8, 0.7], // You can customize this
-                      width: threeCardWidth,
-                      height: cardHeight,
-                    ),
-                    DashboardCard(
-                      title: "Today's Orders",
-                      value: '${dashboardData.totalOrderToday}', // Dynamic value from API
-                      subtitle: 'Yesterday: ${dashboardData.totalOrderYesterday}', // Dynamic subtitle from API
-                      percentageChange: calculatePercentageChange(
-                          dashboardData.totalOrderToday as double,
-                          dashboardData.totalOrderYesterday as double
-                      ), // Calculate percentage change
-                      changeColor: calculateChangeColor(
-                          dashboardData.totalOrderToday as double,
-                          dashboardData.totalOrderYesterday as double
-                      ), // Dynamic color based on increase/decrease
-                      chartData: [1.0, 0.95, 0.85, 0.7], // Customize as needed
-                      width: threeCardWidth,
-                      height: cardHeight,
-                    ),
-                DashboardCard(
-                  title: "Today's Return",
-                  value: '₹0',
-                  subtitle: 'Yesterday: ₹0',
-                  percentageChange: '0%',
-                  changeColor: AppColors.cardsgreen,
-                  chartData: [1.0, 0.9, 0.85, 0.8],
-                  width: threeCardWidth,
-                  height: cardHeight,
-                ),
-              ],
-            ),
-            const SizedBox(height: 16.0),
-            if (isSmallScreen)
-              SizedBox(
-                height: cardHeight + 50,
-                child: Row(
-                  children: [
-                    IconButton(
-                      icon: const Icon(Icons.arrow_left),
-                      onPressed: _scrollLeft,
-                    ),
-                    Expanded(
-                      child: PageView(
-                        controller: _pageController,
-                        children: [
-                          DashboardCard(
-                            title: 'Total Sub-Orders',
-                            value: '30',
-                            subtitle: 'Yesterday: 35',
-                            percentageChange: '-14%',
-                            changeColor: AppColors.cardsred,
-                            chartData: const [1.0, 0.8, 0.7, 0.5],
-                            width: fiveCardWidth,
-                            height: cardHeight,
-                          ),
-                          DashboardCard(
-                            title: 'Distinct SKU Sold',
-                            value: '1,200',
-                            subtitle: 'Yesterday: 1,500',
-                            percentageChange: '-20%',
-                            changeColor: AppColors.cardsred,
-                            chartData: [1.0, 0.85, 0.75, 0.6],
-                            width: fiveCardWidth,
-                            height: cardHeight,
-                          ),
-                          DashboardCard(
-                            title: 'Pending Orders',
-                            value: '850',
-                            subtitle: 'Yesterday: 950',
-                            percentageChange: 'NA',
-                            changeColor: AppColors.grey,
-                            chartData: [1.0, 0.92, 0.85, 0.7],
-                            width: fiveCardWidth,
-                            height: cardHeight,
-                          ),
-                          DashboardCard(
-                            title: 'Hold Orders',
-                            value: '25%',
-                            subtitle: 'Yesterday: 30%',
-                            percentageChange: '-16%',
-                            changeColor: AppColors.cardsred,
-                            chartData: [1.0, 0.95, 0.85, 0.7],
-                            width: fiveCardWidth,
-                            height: cardHeight,
-                          ),
-                          DashboardCard(
-                            title: 'Avg. Order Value',
-                            value: '5',
-                            subtitle: 'Yesterday: 5',
-                            percentageChange: '0%',
-                            changeColor: AppColors.grey,
-                            chartData: [1.0, 1.0, 1.0, 1.0],
-                            width: fiveCardWidth,
-                            height: cardHeight,
-                          ),
-                        ],
-                      ),
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.arrow_right),
-                      onPressed: _scrollRight,
-                    ),
-                  ],
-                ),
-              )
-            else
               Wrap(
                 spacing: 8.0,
                 runSpacing: 8.0,
-                alignment: WrapAlignment.start,
+                alignment: WrapAlignment.center,
                 children: [
                   DashboardCard(
-                    title: 'Customers',
-                    value: '30',
-                    subtitle: 'Yesterday: 35',
-                    percentageChange: '-14%',
-                    changeColor: AppColors.cardsred,
-                    chartData: [1.0, 0.8, 0.7, 0.5],
-                    width: fiveCardWidth,
+                    title: "Today's Gross Revenue",
+                    value:
+                        '₹${dashboardData.totalAmountToday}', // Dynamic value from API
+                    subtitle:
+                        'Yesterday: ₹${dashboardData.totalAmountYesterday}', // Dynamic subtitle from API
+                    percentageChange: calculatePercentageChange(
+                        dashboardData.totalAmountToday as double,
+                        dashboardData.totalAmountYesterday
+                            as double), // Calculate percentage change
+                    changeColor: calculateChangeColor(
+                        dashboardData.totalAmountToday as double,
+                        dashboardData.totalAmountYesterday
+                            as double), // Dynamic color based on increase/decrease
+                    chartData: [1.0, 0.9, 0.8, 0.7], // You can customize this
+                    width: threeCardWidth,
                     height: cardHeight,
                   ),
                   DashboardCard(
-                    title: 'Likes',
-                    value: '1,200',
-                    subtitle: 'Yesterday: 1,500',
-                    percentageChange: '-20%',
-                    changeColor: AppColors.cardsred,
-                    chartData: [1.0, 0.85, 0.75, 0.6],
-                    width: fiveCardWidth,
+                    title: "Today's Orders",
+                    value:
+                        '${dashboardData.totalOrderToday}', // Dynamic value from API
+                    subtitle:
+                        'Yesterday: ${dashboardData.totalOrderYesterday}', // Dynamic subtitle from API
+                    percentageChange: calculatePercentageChange(
+                        dashboardData.totalOrderToday as double,
+                        dashboardData.totalOrderYesterday
+                            as double), // Calculate percentage change
+                    changeColor: calculateChangeColor(
+                        dashboardData.totalOrderToday as double,
+                        dashboardData.totalOrderYesterday
+                            as double), // Dynamic color based on increase/decrease
+                    chartData: [1.0, 0.95, 0.85, 0.7], // Customize as needed
+                    width: threeCardWidth,
                     height: cardHeight,
                   ),
-                  DashboardCard(
-                    title: 'Reviews',
-                    value: '850',
-                    subtitle: 'Yesterday: 950',
-                    percentageChange: '-11%',
-                    changeColor: AppColors.cardsred,
-                    chartData: [1.0, 0.92, 0.85, 0.7],
-                    width: fiveCardWidth,
-                    height: cardHeight,
-                  ),
-                  DashboardCard(
-                    title: 'Growth',
-                    value: '25%',
-                    subtitle: 'Yesterday: 30%',
-                    percentageChange: '-16%',
-                    changeColor: AppColors.cardsred,
-                    chartData: [1.0, 0.95, 0.85, 0.7],
-                    width: fiveCardWidth,
-                    height: cardHeight,
-                  ),
-                  DashboardCard(
-                    title: 'Settings',
-                    value: '5',
-                    subtitle: 'Yesterday: 5',
-                    percentageChange: '0%',
-                    changeColor: AppColors.grey,
-                    chartData: [1.0, 1.0, 1.0, 1.0],
-                    width: fiveCardWidth,
-                    height: cardHeight,
-                  ),
+                  // DashboardCard(
+                  //   title: "Today's Return",
+                  //   value: '₹0',
+                  //   subtitle: 'Yesterday: ₹0',
+                  //   percentageChange: '0%',
+                  //   changeColor: AppColors.cardsgreen,
+                  //   chartData: [1.0, 0.9, 0.85, 0.8],
+                  //   width: threeCardWidth,
+                  //   height: cardHeight,
+                  // ),
                 ],
               ),
+            // const SizedBox(height: 16.0),
+            // if (isSmallScreen)
+            //   SizedBox(
+            //     height: cardHeight + 50,
+            //     child: Row(
+            //       children: [
+            //         IconButton(
+            //           icon: const Icon(Icons.arrow_left),
+            //           onPressed: _scrollLeft,
+            //         ),
+            //         Expanded(
+            //           child: PageView(
+            //             controller: _pageController,
+            //             children: [
+            //               DashboardCard(
+            //                 title: 'Total Sub-Orders',
+            //                 value: '30',
+            //                 subtitle: 'Yesterday: 35',
+            //                 percentageChange: '-14%',
+            //                 changeColor: AppColors.cardsred,
+            //                 chartData: const [1.0, 0.8, 0.7, 0.5],
+            //                 width: fiveCardWidth,
+            //                 height: cardHeight,
+            //               ),
+            //               DashboardCard(
+            //                 title: 'Distinct SKU Sold',
+            //                 value: '1,200',
+            //                 subtitle: 'Yesterday: 1,500',
+            //                 percentageChange: '-20%',
+            //                 changeColor: AppColors.cardsred,
+            //                 chartData: [1.0, 0.85, 0.75, 0.6],
+            //                 width: fiveCardWidth,
+            //                 height: cardHeight,
+            //               ),
+            //               DashboardCard(
+            //                 title: 'Pending Orders',
+            //                 value: '850',
+            //                 subtitle: 'Yesterday: 950',
+            //                 percentageChange: 'NA',
+            //                 changeColor: AppColors.grey,
+            //                 chartData: [1.0, 0.92, 0.85, 0.7],
+            //                 width: fiveCardWidth,
+            //                 height: cardHeight,
+            //               ),
+            //               DashboardCard(
+            //                 title: 'Hold Orders',
+            //                 value: '25%',
+            //                 subtitle: 'Yesterday: 30%',
+            //                 percentageChange: '-16%',
+            //                 changeColor: AppColors.cardsred,
+            //                 chartData: [1.0, 0.95, 0.85, 0.7],
+            //                 width: fiveCardWidth,
+            //                 height: cardHeight,
+            //               ),
+            //               DashboardCard(
+            //                 title: 'Avg. Order Value',
+            //                 value: '5',
+            //                 subtitle: 'Yesterday: 5',
+            //                 percentageChange: '0%',
+            //                 changeColor: AppColors.grey,
+            //                 chartData: [1.0, 1.0, 1.0, 1.0],
+            //                 width: fiveCardWidth,
+            //                 height: cardHeight,
+            //               ),
+            //             ],
+            //           ),
+            //         ),
+            //         IconButton(
+            //           icon: const Icon(Icons.arrow_right),
+            //           onPressed: _scrollRight,
+            //         ),
+            //       ],
+            //     ),
+            //   )
+            // else
+            //   Wrap(
+            //     spacing: 8.0,
+            //     runSpacing: 8.0,
+            //     alignment: WrapAlignment.start,
+            //     children: [
+            //       DashboardCard(
+            //         title: 'Customers',
+            //         value: '30',
+            //         subtitle: 'Yesterday: 35',
+            //         percentageChange: '-14%',
+            //         changeColor: AppColors.cardsred,
+            //         chartData: [1.0, 0.8, 0.7, 0.5],
+            //         width: fiveCardWidth,
+            //         height: cardHeight,
+            //       ),
+            //       DashboardCard(
+            //         title: 'Likes',
+            //         value: '1,200',
+            //         subtitle: 'Yesterday: 1,500',
+            //         percentageChange: '-20%',
+            //         changeColor: AppColors.cardsred,
+            //         chartData: [1.0, 0.85, 0.75, 0.6],
+            //         width: fiveCardWidth,
+            //         height: cardHeight,
+            //       ),
+            //       DashboardCard(
+            //         title: 'Reviews',
+            //         value: '850',
+            //         subtitle: 'Yesterday: 950',
+            //         percentageChange: '-11%',
+            //         changeColor: AppColors.cardsred,
+            //         chartData: [1.0, 0.92, 0.85, 0.7],
+            //         width: fiveCardWidth,
+            //         height: cardHeight,
+            //       ),
+            //       DashboardCard(
+            //         title: 'Growth',
+            //         value: '25%',
+            //         subtitle: 'Yesterday: 30%',
+            //         percentageChange: '-16%',
+            //         changeColor: AppColors.cardsred,
+            //         chartData: [1.0, 0.95, 0.85, 0.7],
+            //         width: fiveCardWidth,
+            //         height: cardHeight,
+            //       ),
+            //       DashboardCard(
+            //         title: 'Settings',
+            //         value: '5',
+            //         subtitle: 'Yesterday: 5',
+            //         percentageChange: '0%',
+            //         changeColor: AppColors.grey,
+            //         chartData: [1.0, 1.0, 1.0, 1.0],
+            //         width: fiveCardWidth,
+            //         height: cardHeight,
+            //       ),
+            //     ],
+            //   ),
           ],
         );
       },

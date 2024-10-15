@@ -559,9 +559,9 @@ class FreightCharge {
 
   factory FreightCharge.fromJson(Map<String, dynamic> json) {
     return FreightCharge(
-      delhivery: (json['dehlivary'] as num?)?.toDouble() ??
+      delhivery: (json['Delhivery'] as num?)?.toDouble() ??
           0.0, // Default to 0.0 if null
-      shiprocket: (json['shiprocket'] as num?)?.toDouble() ??
+      shiprocket: (json['Shiprocket'] as num?)?.toDouble() ??
           0.0, // Default to 0.0 if null
       standardShipping: (json['standard_shipping'] as num?)?.toDouble() ??
           0.0, // Default to 0.0 if null

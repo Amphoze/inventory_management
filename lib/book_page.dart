@@ -361,7 +361,7 @@ class _BookPageState extends State<BookPage>
             ),
           ),
           buildHeader('PRODUCTS', flex: 7),
-          buildHeader('DELIVERY', flex: 2),
+          buildHeader('DELHIVERY', flex: 2),
           buildHeader('SHIPROCKET', flex: 2),
         ],
       ),
