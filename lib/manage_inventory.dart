@@ -471,7 +471,7 @@ class _ManageInventoryPageState extends State<ManageInventoryPage> {
                     const SizedBox(height: 20),
                     CustomPaginationFooter(
                       currentPage: provider.currentPage,
-                      totalPages: provider.totalPages+1 ,
+                      totalPages: provider.totalPages ,
                       buttonSize:
                           MediaQuery.of(context).size.width > 600 ? 32 : 24,
                       pageController: _pageController,

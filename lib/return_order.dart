@@ -1,53 +1,55 @@
 import 'package:flutter/material.dart';
-import 'package:inventory_management/Custom-Files/loading_indicator.dart';
-import 'package:inventory_management/Widgets/order_card.dart';
-import 'package:inventory_management/model/orders_model.dart';
+import 'package:inventory_management/provider/return_provider.dart';
 import 'package:provider/provider.dart';
-import 'package:inventory_management/Custom-Files/colors.dart';
-import 'package:inventory_management/provider/manifest_provider.dart';
-import 'package:inventory_management/Custom-Files/custom_pagination.dart';
 
-class ManifestPage extends StatefulWidget {
-  const ManifestPage({super.key});
+import 'Custom-Files/colors.dart';
+import 'Custom-Files/custom_pagination.dart';
+import 'Custom-Files/loading_indicator.dart';
+import 'Widgets/order_card.dart';
+import 'model/orders_model.dart';
+
+class ReturnOrders extends StatefulWidget {
+  const ReturnOrders({super.key});
 
   @override
-  State<ManifestPage> createState() => _ManifestPageState();
+  State<ReturnOrders> createState() => _ReturnOrdersState();
 }
 
-class _ManifestPageState extends State<ManifestPage> {
+class _ReturnOrdersState extends State<ReturnOrders> {
   final TextEditingController _searchController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      Provider.of<ManifestProvider>(context, listen: false)
-          .fetchOrdersWithStatus7();
+      Provider.of<ReturnProvider>(context, listen: false)
+          .fetchOrdersWithStatus8();
     });
   }
-
   void _onSearchButtonPressed() {
     final query = _searchController.text.trim();
     if (query.isNotEmpty) {
-      Provider.of<ManifestProvider>(context, listen: false)
+      Provider.of<ReturnProvider>(context, listen: false)
           .onSearchChanged(query);
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<ManifestProvider>(
-      builder: (context, manifestProvider, child) {
+    return Consumer<ReturnProvider>(
+      builder: (context, returnProvider, child) {
         return Scaffold(
           backgroundColor: AppColors.white,
           body: Column(
             children: [
+
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Row(
-                  mainAxisAlignment: MainAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.end,
                   children: [
-                    // Search TextField
+
+
                     SizedBox(
                       width: 200,
                       child: Container(
@@ -79,7 +81,7 @@ class _ManifestPageState extends State<ManifestPage> {
                             });
                             if (query.isEmpty) {
                               // Reset to all orders if search is cleared
-                              manifestProvider.fetchOrdersWithStatus7();
+                              returnProvider.fetchOrdersWithStatus8();
                             }
                           },
                           onTap: () {
@@ -96,12 +98,13 @@ class _ManifestPageState extends State<ManifestPage> {
                       ),
                     ),
                     const SizedBox(width: 8),
-                    // Search Button
+
                     ElevatedButton(
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.primaryBlue,
                       ),
-                      onPressed: _searchController.text.isNotEmpty
+                      onPressed:
+                      _searchController.text.isNotEmpty
                           ? _onSearchButtonPressed
                           : null,
                       child: const Text(
@@ -110,13 +113,17 @@ class _ManifestPageState extends State<ManifestPage> {
                       ),
                     ),
                     const Spacer(),
+
+                    _buildReturnButton(returnProvider),
+
+                    const SizedBox(width: 8),
                     // Refresh Button
                     ElevatedButton(
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.primaryBlue,
                       ),
                       onPressed: () {
-                        manifestProvider.fetchOrdersWithStatus7();
+                        returnProvider.fetchOrdersWithStatus8();
                       },
                       child: const Text(
                         'Refresh',
@@ -126,18 +133,18 @@ class _ManifestPageState extends State<ManifestPage> {
                   ],
                 ),
               ),
-              const SizedBox(height: 8), // Decreased space here
+              const SizedBox(height: 8),
+
+              const SizedBox(height: 8),
               _buildTableHeader(
-                  manifestProvider.orders.length, manifestProvider),
-              const SizedBox(height: 4), // New space for alignment
+                  returnProvider.orders.length, returnProvider),
+              const SizedBox(height: 4),
               Expanded(
                 child: Stack(
                   children: [
-                    if (manifestProvider.isLoading)
-                      const Center(
-                          //child: MenifestLoadingAnimation()
-                    )
-                    else if (manifestProvider.orders.isEmpty)
+                    if (returnProvider.isLoading)
+                      const Center(child: ManifestLoadingAnimation())
+                    else if (returnProvider.orders.isEmpty)
                       const Center(
                         child: Text(
                           'No Orders Found',
@@ -150,58 +157,51 @@ class _ManifestPageState extends State<ManifestPage> {
                       )
                     else
                       ListView.builder(
-                        itemCount: manifestProvider.orders.length,
+                        itemCount: returnProvider.orders.length,
                         itemBuilder: (context, index) {
-                          final order = manifestProvider.orders[index];
+                          final order = returnProvider.orders[index];
                           return Column(
                             children: [
-                              _buildOrderCard(order, index, manifestProvider),
+                              _buildOrderCard(order, index, returnProvider),
                               const Divider(thickness: 1, color: Colors.grey),
+
+
                             ],
                           );
                         },
                       ),
+
                   ],
                 ),
               ),
-
               CustomPaginationFooter(
-                currentPage:
-                    manifestProvider.currentPage, // Ensure correct currentPage
-                totalPages: manifestProvider.totalPages,
+                currentPage: returnProvider.currentPage,
+                totalPages: returnProvider.totalPages,
                 buttonSize: 30,
-                pageController: manifestProvider.textEditingController,
+                pageController: returnProvider.textEditingController,
                 onFirstPage: () {
-                  manifestProvider.goToPage(1);
+                  returnProvider.goToPage(1);
                 },
                 onLastPage: () {
-                  manifestProvider.goToPage(manifestProvider.totalPages);
+                  returnProvider.goToPage(returnProvider.totalPages);
                 },
                 onNextPage: () {
-                  if (manifestProvider.currentPage <
-                      manifestProvider.totalPages) {
-                    print(
-                        'Navigating to page: ${manifestProvider.currentPage + 1}');
-                    manifestProvider.goToPage(manifestProvider.currentPage + 1);
+                  if (returnProvider.currentPage < returnProvider.totalPages) {
+                    returnProvider.goToPage(returnProvider.currentPage + 1);
                   }
                 },
                 onPreviousPage: () {
-                  if (manifestProvider.currentPage > 1) {
-                    print(
-                        'Navigating to page: ${manifestProvider.currentPage - 1}');
-                    manifestProvider.goToPage(manifestProvider.currentPage - 1);
+                  if (returnProvider.currentPage > 1) {
+                    returnProvider.goToPage(returnProvider.currentPage - 1);
                   }
                 },
                 onGoToPage: (page) {
-                  manifestProvider.goToPage(page);
+                  returnProvider.goToPage(page);
                 },
                 onJumpToPage: () {
-                  final page =
-                      int.tryParse(manifestProvider.textEditingController.text);
-                  if (page != null &&
-                      page > 0 &&
-                      page <= manifestProvider.totalPages) {
-                    manifestProvider.goToPage(page);
+                  final page = int.tryParse(returnProvider.textEditingController.text);
+                  if (page != null && page > 0 && page <= returnProvider.totalPages) {
+                    returnProvider.goToPage(page);
                   }
                 },
               ),
@@ -212,21 +212,75 @@ class _ManifestPageState extends State<ManifestPage> {
     );
   }
 
-  Widget _buildTableHeader(int totalCount, ManifestProvider manifestProvider) {
-    return Container(
-      color: Colors.grey[300],
-      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+
+
+  Widget _buildOrderCard(Order order, int index, ReturnProvider returnProvider) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4.0, horizontal: 8.0),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          buildHeader('ORDERS', flex: 8), // Increased flex
-          buildHeader('DELIVERY PARTNER SIGNATURE',
-              flex: 5), // Decreased flex for better alignment
-          buildHeader('CONFIRM', flex: 3),
+          Checkbox(
+            value: returnProvider.selectedProducts[index], // Accessing selected products
+            onChanged: (isSelected) {
+              returnProvider.handleRowCheckboxChange(index, isSelected!);
+            },
+          ),
+          Expanded(
+            flex: 5,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween, // Space between elements
+              children: [
+                Expanded(
+
+                  child: OrderCard(order: order), // Your existing OrderCard widget
+                ),
+                const SizedBox(width: 200), // Add some spacing between the elements
+
+                Text(
+                  '${order.trackingStatus?.isEmpty ?? true ? "NA" : order.trackingStatus}', // Display "NA" if null or empty
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: order.trackingStatus == 'return' ? Colors.green : Colors.black,
+                  ),
+                ),
+
+                const SizedBox(width: 100),
+              ],
+            ),
+          ),
+          const SizedBox(width: 20),
+          // if (returnProvider.isReturning)
+          //   Center(
+          //     child: CircularProgressIndicator(), // Loading indicator
+          //   ),
         ],
       ),
     );
   }
 
+
+
+  Widget _buildTableHeader(int totalCount, ReturnProvider returnprovider) {
+    return Container(
+      color: Colors.grey[300],
+      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+      child: Row(
+        children: [
+          Checkbox(
+            value: returnprovider.selectAll,
+            onChanged: (value) {
+              returnprovider.toggleSelectAll(value!);
+            },
+          ),
+          const Text('Select All',style: TextStyle(fontWeight: FontWeight.bold,fontSize: 18),),
+          buildHeader('ORDERS', flex: 8),
+
+          buildHeader('Tracking Status', flex: 3),
+        ],
+      ),
+    );
+  }
   Widget buildHeader(String title, {int flex = 1}) {
     return Expanded(
       flex: flex,
@@ -242,43 +296,6 @@ class _ManifestPageState extends State<ManifestPage> {
       ),
     );
   }
-
-  Widget _buildOrderCard(
-      Order order, int index, ManifestProvider manifestProvider) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(
-          vertical: 4.0,
-          horizontal: 8.0), // Increased vertical space for order cards
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Expanded(
-            flex: 5, // Increased flex for wider order card
-            child: OrderCard(order: order),
-          ),
-          const SizedBox(
-              width: 20), // Reduced space between order card and signature
-          buildCell(
-            // Use the getOrderImage method to handle image display
-            order.getOrderImage(),
-            flex: 3,
-          ),
-          const SizedBox(width: 4),
-          buildCell(
-            order.checkManifest!.approved
-                ? const Icon(
-                    Icons.check_circle,
-                    color: Colors.green,
-                    size: 24,
-                  )
-                : const SizedBox.shrink(),
-            flex: 2,
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget buildCell(Widget content, {int flex = 1}) {
     return Expanded(
       flex: flex,
@@ -286,6 +303,26 @@ class _ManifestPageState extends State<ManifestPage> {
         padding: const EdgeInsets.symmetric(vertical: 2.0, horizontal: 2.0),
         child: Center(child: content),
       ),
+    );
+  }
+
+  Widget _buildReturnButton(ReturnProvider returnProvider) {
+    return ElevatedButton(
+      onPressed: returnProvider.selectedCount > 0
+          ? () async {
+        await returnProvider.returnSelectedOrders(); // Call the return method
+      }
+          : null, // Disable the button if no orders are selected
+      child: returnProvider.isReturning
+          ? SizedBox(
+        width: 24,
+        height: 24,
+        child: CircularProgressIndicator(
+          color: Colors.white,
+          strokeWidth: 3,
+        ),
+      )
+          :  const Text('Return',style: TextStyle(color: Colors.white),),
     );
   }
 }

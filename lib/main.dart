@@ -25,6 +25,7 @@ import 'package:inventory_management/provider/label_data_provider.dart';
 import 'package:inventory_management/provider/location_provider.dart';
 import 'package:inventory_management/provider/manage-inventory-provider.dart';
 import 'package:inventory_management/provider/product_data_provider.dart';
+import 'package:inventory_management/provider/return_provider.dart';
 import 'package:inventory_management/provider/show-details-order-provider.dart';
 import 'package:inventory_management/reset_password.dart';
 import 'package:inventory_management/provider/orders_provider.dart';
@@ -63,7 +64,7 @@ void main() {
       ChangeNotifierProvider(create: (context) => ManifestProvider()),
       ChangeNotifierProvider(create: (context) => RackedProvider()),
       ChangeNotifierProvider(create: (context) => OrdersProvider()),
-      // ChangeNotifierProvider(create: (context) => CheckBoxProvider()),
+      ChangeNotifierProvider(create: (context) => ReturnProvider()),
       ChangeNotifierProvider(
         create: (context) => LocationProvider(
             authProvider: Provider.of<AuthProvider>(context, listen: false)),

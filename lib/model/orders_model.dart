@@ -63,6 +63,7 @@ class Order {
   final Checker? checker;
   final Racker? racker;
   final CheckManifest? checkManifest;
+  late String? trackingStatus;
 
   Order({
     this.customer,
@@ -125,6 +126,7 @@ class Order {
     required this.checker,
     required this.racker,
     required this.checkManifest,
+    this.trackingStatus
   });
 
   // Utility function to safely parse a string from any data type
@@ -300,6 +302,7 @@ class Order {
       checker: Checker.fromJson(json['checker']),
       racker: Racker.fromJson(json['racker']),
       checkManifest: CheckManifest.fromJson(json['checkManifest']),
+      trackingStatus: _parseString(json['tracking_status'])
     );
   }
 
