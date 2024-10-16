@@ -287,7 +287,7 @@ class AuthProvider with ChangeNotifier {
     return prefs.getString('authToken');
   }
 
-  Future<Map<String, dynamic>> createCategory(String id, String name) async {
+  Future<Map<String, dynamic>> createCategory(String name) async {
     final url = Uri.parse('$_baseUrl/category/');
 
     try {
@@ -304,7 +304,6 @@ class AuthProvider with ChangeNotifier {
           'Authorization': 'Bearer $token', // Include token in headers
         },
         body: json.encode({
-          'id': id,
           'name': name,
         }),
       );

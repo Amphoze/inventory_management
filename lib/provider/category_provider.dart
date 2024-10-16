@@ -97,7 +97,7 @@ class CategoryProvider with ChangeNotifier {
     final name = categoryNameController.text;
     if (name.isNotEmpty) {
       try {
-        final result = await AuthProvider().createCategory('', name);
+        final result = await AuthProvider().createCategory(name);
         if (result['success']) {
           await fetchAllCategories();
           searchController.clear();

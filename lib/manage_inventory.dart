@@ -240,21 +240,15 @@ class _ManageInventoryPageState extends State<ManageInventoryPage> {
                             ),
                             onChanged: (value) {
                               if (value.isEmpty) {
-<<<<<<< HEAD
                                 provider.fetchInventory(); // Load all inventory
                               } else {
-                                provider.filterInventory(value); // Fetch filtered data
-=======
-                                provider.fetchInventory();
-                              } else {
-                                provider.filterInventory(value);
->>>>>>> 748a9e1 (order page)
+                                provider.filterInventory(
+                                    value); // Fetch filtered data
                               }
                             },
                           ),
                         ),
                       ),
-
                       IconButton(
                         icon: const Icon(Icons.arrow_right,
                             color: AppColors.primaryGreen),
@@ -475,11 +469,7 @@ class _ManageInventoryPageState extends State<ManageInventoryPage> {
                     const SizedBox(height: 20),
                     CustomPaginationFooter(
                       currentPage: provider.currentPage,
-<<<<<<< HEAD
-                      totalPages: provider.totalPages ,
-=======
                       totalPages: provider.totalPages,
->>>>>>> 748a9e1 (order page)
                       buttonSize:
                           MediaQuery.of(context).size.width > 600 ? 32 : 24,
                       pageController: _pageController,
