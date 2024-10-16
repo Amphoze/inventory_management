@@ -24,6 +24,9 @@ class _PackerPageState extends State<PackerPage> {
       Provider.of<PackerProvider>(context, listen: false)
           .fetchOrdersWithStatus4();
     });
+    Provider.of<PackerProvider>(context, listen: false)
+        .textEditingController
+        .clear();
   }
 
   void _onSearchButtonPressed() {

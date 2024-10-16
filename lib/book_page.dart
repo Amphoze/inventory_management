@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:inventory_management/Api/orders_api.dart';
 import 'package:inventory_management/Custom-Files/colors.dart';
+import 'package:inventory_management/Custom-Files/custom_pagination.dart';
 import 'package:inventory_management/Custom-Files/dropdown.dart';
 import 'package:inventory_management/Custom-Files/loading_indicator.dart';
 import 'package:provider/provider.dart';
@@ -19,38 +20,27 @@ class BookPage extends StatefulWidget {
 class _BookPageState extends State<BookPage>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
-  late ScrollController _scrollController;
-  bool _showBackToTopButton = false;
+  final TextEditingController b2bPageController = TextEditingController();
+  final TextEditingController b2cPageController = TextEditingController();
+  bool areOrdersFetched = false;
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
-    _scrollController = ScrollController();
-
-    _scrollController.addListener(() {
-      if (_scrollController.offset >= 400) {
-        setState(() {
-          _showBackToTopButton = true;
-        });
-      } else {
-        setState(() {
-          _showBackToTopButton = false;
-        });
-      }
-    });
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final bookProvider = Provider.of<BookProvider>(context, listen: false);
-      bookProvider.fetchOrders('B2B');
-      bookProvider.fetchOrders('B2C');
+      bookProvider.fetchOrders('B2B', bookProvider.currentPageB2B);
+      bookProvider.fetchOrders('B2C', bookProvider.currentPageB2C);
     });
   }
 
   @override
   void dispose() {
-    _scrollController.dispose();
     _tabController.dispose();
+    b2bPageController.dispose();
+    b2cPageController.dispose();
     super.dispose();
   }
 
@@ -76,39 +66,6 @@ class _BookPageState extends State<BookPage>
             ],
           ),
         ),
-        floatingActionButton: _showBackToTopButton
-            ? GestureDetector(
-                onTap: _scrollToTop,
-                child: Container(
-                  height: 60,
-                  width: 60,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    gradient: const LinearGradient(
-                      colors: [
-                        Color(0xFF6A1B9A), // Start color
-                        Color(0xFF8E24AA), // End color
-                      ],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.2),
-                        blurRadius: 10,
-                        spreadRadius: 2,
-                        offset: const Offset(0, 5), // Shadow positioning
-                      ),
-                    ],
-                  ),
-                  child: const Icon(
-                    Icons.arrow_upward_rounded,
-                    color: Colors.white,
-                    size: 30,
-                  ),
-                ),
-              )
-            : null,
       ),
     );
   }
@@ -127,21 +84,26 @@ class _BookPageState extends State<BookPage>
         IconButton(
           icon: const Icon(Icons.refresh),
           onPressed: () {
-            final bookProvider =
-                Provider.of<BookProvider>(context, listen: false);
-            bookProvider.fetchOrders('B2B');
-            bookProvider.fetchOrders('B2C');
-            // Optionally show a message to indicate reloading
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Content refreshed'),
-                backgroundColor: AppColors.orange,
-              ),
-            );
+            _refreshOrders();
           },
           color: Colors.black,
         ),
       ],
+    );
+  }
+
+// Refresh orders for both B2B and B2C
+  void _refreshOrders() {
+    final bookProvider = Provider.of<BookProvider>(context, listen: false);
+    bookProvider.fetchOrders('B2B', bookProvider.currentPageB2B);
+    bookProvider.fetchOrders('B2C', bookProvider.currentPageB2C);
+
+    // Show a message to indicate reloading
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Content refreshed'),
+        backgroundColor: AppColors.orange,
+      ),
     );
   }
 
@@ -234,6 +196,11 @@ class _BookPageState extends State<BookPage>
 
     int selectedCount = orders.where((order) => order.isSelected).length;
 
+    // Update flag when orders are fetched
+    if (orders.isNotEmpty) {
+      areOrdersFetched = true; // Set flag to true when orders are available
+    }
+
     return Column(
       children: [
         // Add the Confirm button here
@@ -254,7 +221,6 @@ class _BookPageState extends State<BookPage>
                       ),
                     )
                   : ListView.builder(
-                      controller: _scrollController,
                       itemCount: orders.length,
                       itemBuilder: (context, index) {
                         return Column(
@@ -266,7 +232,111 @@ class _BookPageState extends State<BookPage>
                       },
                     ),
         ),
+        if (areOrdersFetched)
+          CustomPaginationFooter(
+            currentPage: orderType == 'B2B'
+                ? bookProvider.currentPageB2B
+                : bookProvider.currentPageB2C,
+            totalPages: orderType == 'B2B'
+                ? bookProvider.totalPagesB2B
+                : bookProvider.totalPagesB2C,
+            buttonSize: 30,
+            pageController:
+                orderType == 'B2B' ? b2bPageController : b2cPageController,
+            onFirstPage: () {
+              if (orderType == 'B2B') {
+                bookProvider.fetchPaginatedOrdersB2B(1);
+              } else {
+                bookProvider.fetchPaginatedOrdersB2C(1);
+              }
+            },
+            onLastPage: () {
+              if (orderType == 'B2B') {
+                bookProvider
+                    .fetchPaginatedOrdersB2B(bookProvider.totalPagesB2B);
+              } else {
+                bookProvider
+                    .fetchPaginatedOrdersB2C(bookProvider.totalPagesB2C);
+              }
+            },
+            onNextPage: () {
+              int currentPage = orderType == 'B2B'
+                  ? bookProvider.currentPageB2B
+                  : bookProvider.currentPageB2C;
+
+              int totalPages = orderType == 'B2B'
+                  ? bookProvider.totalPagesB2B
+                  : bookProvider.totalPagesB2C;
+
+              if (currentPage < totalPages) {
+                if (orderType == 'B2B') {
+                  bookProvider.fetchPaginatedOrdersB2B(currentPage + 1);
+                } else {
+                  bookProvider.fetchPaginatedOrdersB2C(currentPage + 1);
+                }
+              }
+            },
+            onPreviousPage: () {
+              int currentPage = orderType == 'B2B'
+                  ? bookProvider.currentPageB2B
+                  : bookProvider.currentPageB2C;
+
+              if (currentPage > 1) {
+                if (orderType == 'B2B') {
+                  bookProvider.fetchPaginatedOrdersB2B(currentPage - 1);
+                } else {
+                  bookProvider.fetchPaginatedOrdersB2C(currentPage - 1);
+                }
+              }
+            },
+            onGoToPage: (int page) {
+              int totalPages = orderType == 'B2B'
+                  ? bookProvider.totalPagesB2B
+                  : bookProvider.totalPagesB2C;
+
+              if (page > 0 && page <= totalPages) {
+                if (orderType == 'B2B') {
+                  bookProvider.fetchPaginatedOrdersB2B(page);
+                } else {
+                  bookProvider.fetchPaginatedOrdersB2C(page);
+                }
+              } else {
+                _showSnackbar(context,
+                    'Please enter a valid page number between 1 and $totalPages.');
+              }
+            },
+            onJumpToPage: () {
+              final String pageText =
+                  (orderType == 'B2B' ? b2bPageController : b2cPageController)
+                      .text;
+              int? page = int.tryParse(pageText);
+              int totalPages = orderType == 'B2B'
+                  ? bookProvider.totalPagesB2B
+                  : bookProvider.totalPagesB2C;
+
+              if (page == null || page < 1 || page > totalPages) {
+                _showSnackbar(context,
+                    'Please enter a valid page number between 1 and $totalPages.');
+                return;
+              }
+
+              if (orderType == 'B2B') {
+                bookProvider.fetchPaginatedOrdersB2B(page);
+              } else {
+                bookProvider.fetchPaginatedOrdersB2C(page);
+              }
+
+              (orderType == 'B2B' ? b2bPageController : b2cPageController)
+                  .clear();
+            },
+          ),
       ],
+    );
+  }
+
+  void _showSnackbar(BuildContext context, String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message)),
     );
   }
 
@@ -283,17 +353,15 @@ class _BookPageState extends State<BookPage>
 
             // Collect selected order IDs based on the order type
             if (orderType == 'B2B') {
-              for (int i = 0; i < bookProvider.ordersB2B.length; i++) {
-                if (bookProvider.ordersB2B[i].isSelected) {
-                  selectedOrderIds.add(bookProvider.ordersB2B[i].orderId!);
-                }
-              }
+              selectedOrderIds = bookProvider.ordersB2B
+                  .where((order) => order.isSelected)
+                  .map((order) => order.orderId!)
+                  .toList();
             } else {
-              for (int i = 0; i < bookProvider.ordersB2C.length; i++) {
-                if (bookProvider.ordersB2C[i].isSelected) {
-                  selectedOrderIds.add(bookProvider.ordersB2C[i].orderId!);
-                }
-              }
+              selectedOrderIds = bookProvider.ordersB2C
+                  .where((order) => order.isSelected)
+                  .map((order) => order.orderId!)
+                  .toList();
             }
 
             // If no orders are selected, show a message
@@ -309,26 +377,29 @@ class _BookPageState extends State<BookPage>
 
             // Confirm the selected orders using the new API
             try {
-              String responseMessage = await bookProvider.bookOrders(
-                  context, selectedOrderIds); // Get the response message
-
-              // Show the API response message in the Snackbar
+              String responseMessage =
+                  await bookProvider.bookOrders(context, selectedOrderIds);
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
                   content: Text(responseMessage),
                   backgroundColor: AppColors.green,
                 ),
               );
+
+              // Refresh the orders after booking
+              await bookProvider.fetchOrders(
+                  orderType,
+                  orderType == 'B2B'
+                      ? bookProvider.currentPageB2B
+                      : bookProvider.currentPageB2C);
             } catch (e) {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
-                    content: Text('Failed to book orders: $e'),
-                    backgroundColor: AppColors.cardsred),
+                  content: Text('Failed to book orders: $e'),
+                  backgroundColor: AppColors.cardsred,
+                ),
               );
             }
-
-            // Optionally, refresh the orders after booking
-            await bookProvider.fetchOrders(orderType);
           },
           child: const Text('Shiprocket'),
         ),
@@ -365,14 +436,6 @@ class _BookPageState extends State<BookPage>
           buildHeader('SHIPROCKET', flex: 2),
         ],
       ),
-    );
-  }
-
-  void _scrollToTop() {
-    _scrollController.animateTo(
-      0,
-      duration: const Duration(seconds: 1),
-      curve: Curves.easeInOut,
     );
   }
 

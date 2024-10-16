@@ -12,8 +12,9 @@ import 'Custom-Files/data_table.dart';
 import 'Custom-Files/loading_indicator.dart';
 
 class ManageInventoryPage extends StatefulWidget {
-
-  const ManageInventoryPage({super.key,});
+  const ManageInventoryPage({
+    super.key,
+  });
 
   @override
   _ManageInventoryPageState createState() => _ManageInventoryPageState();
@@ -66,7 +67,6 @@ class _ManageInventoryPageState extends State<ManageInventoryPage> {
       subInventories.add({'warehouseId': null, 'quantity': null});
     });
   }
-
 
   void addSubInventory() {
     setState(() {
@@ -151,7 +151,6 @@ class _ManageInventoryPageState extends State<ManageInventoryPage> {
     final provider = Provider.of<InventoryProvider>(context, listen: false);
     if (page >= 1 && page <= provider.totalPages) {
       provider.goToPage(page);
-
     }
   }
 
@@ -241,9 +240,15 @@ class _ManageInventoryPageState extends State<ManageInventoryPage> {
                             ),
                             onChanged: (value) {
                               if (value.isEmpty) {
+<<<<<<< HEAD
                                 provider.fetchInventory(); // Load all inventory
                               } else {
                                 provider.filterInventory(value); // Fetch filtered data
+=======
+                                provider.fetchInventory();
+                              } else {
+                                provider.filterInventory(value);
+>>>>>>> 748a9e1 (order page)
                               }
                             },
                           ),
@@ -269,22 +274,21 @@ class _ManageInventoryPageState extends State<ManageInventoryPage> {
                         child: const Text('Create Inventory'),
                       ),
                       const SizedBox(width: 10),
-
-                      Consumer<ComboProvider>(builder: (context, provider, child) {
+                      Consumer<ComboProvider>(
+                          builder: (context, provider, child) {
                         return provider.isFormVisible
-                            ?
-                            ElevatedButton(
-                              style:ElevatedButton.styleFrom(backgroundColor:Colors.red),
-                              onPressed: () {
-                                provider.toggleFormVisibility(); // Hide form
-                              },
-                              child: const Text('Cancel'),
-                            )
+                            ? ElevatedButton(
+                                style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.red),
+                                onPressed: () {
+                                  provider.toggleFormVisibility(); // Hide form
+                                },
+                                child: const Text('Cancel'),
+                              )
                             : Container();
                       }),
                     ],
                   ),
-
 
                   if (comboProvider.isFormVisible) ...[
                     const SizedBox(height: 16),
@@ -292,7 +296,7 @@ class _ManageInventoryPageState extends State<ManageInventoryPage> {
                         style: TextStyle(
                             fontSize: 24, fontWeight: FontWeight.bold)),
                     const SizedBox(height: 16),
-                    
+
                     const Text("Product",
                         style: TextStyle(
                             fontWeight: FontWeight.bold, fontSize: 16)),
@@ -471,15 +475,19 @@ class _ManageInventoryPageState extends State<ManageInventoryPage> {
                     const SizedBox(height: 20),
                     CustomPaginationFooter(
                       currentPage: provider.currentPage,
+<<<<<<< HEAD
                       totalPages: provider.totalPages ,
+=======
+                      totalPages: provider.totalPages,
+>>>>>>> 748a9e1 (order page)
                       buttonSize:
                           MediaQuery.of(context).size.width > 600 ? 32 : 24,
                       pageController: _pageController,
                       onFirstPage: () => _goToPage(1),
                       onLastPage: () => _goToPage(provider.totalPages),
                       onNextPage: () {
-                        if (provider.currentPage-1 < provider.totalPages) {
-                          _goToPage(provider.currentPage+1);
+                        if (provider.currentPage - 1 < provider.totalPages) {
+                          _goToPage(provider.currentPage + 1);
                         }
                       },
                       onPreviousPage: () {

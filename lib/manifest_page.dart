@@ -24,6 +24,9 @@ class _ManifestPageState extends State<ManifestPage> {
       Provider.of<ManifestProvider>(context, listen: false)
           .fetchOrdersWithStatus7();
     });
+    Provider.of<ManifestProvider>(context, listen: false)
+        .textEditingController
+        .clear();
   }
 
   void _onSearchButtonPressed() {

@@ -13,9 +13,13 @@ class OrdersProvider with ChangeNotifier {
   List<bool> _selectedFailedOrders = [];
   List<Order> readyOrders = []; // List to store fetched ready orders
   List<Order> failedOrders = []; // List to store fetched failed orders
+  int totalFailedPages = 1; // Default value 1
+  int totalReadyPages = 1;
 
   int currentPage = 1;
   int totalPages = 1;
+  int currentPageReady = 1;
+  int currentPageFailed = 1;
 
   // Loading state
   bool isLoading = false;
@@ -43,85 +47,110 @@ class OrdersProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> fetchOrders() async {
-    isLoading = true; // Set loading state to true
-    notifyListeners(); // Notify listeners about loading state
+  Future<void> fetchFailedOrders({int page = 1}) async {
+    // Ensure the requested page number is valid
+    if (page < 1 || page > totalFailedPages) {
+      print('Invalid page number for failed orders: $page');
+      return; // Exit if the page number is invalid
+    }
 
-    final String failedOrdersUrlBase =
-        'https://inventory-management-backend-s37u.onrender.com/orders?orderStatus=0&page=';
-    final String readyOrdersUrlBase =
-        'https://inventory-management-backend-s37u.onrender.com/orders?orderStatus=1&page=';
+    isLoading = true;
+    notifyListeners();
 
-    int page = 1; // Start fetching from page 1
-    bool hasMoreFailedOrders =
-        true; // Flag to check if more failed orders exist
-    bool hasMoreReadyOrders = true; // Flag to check if more ready orders exist
+    final String failedOrdersUrl =
+        'https://inventory-management-backend-s37u.onrender.com/orders?orderStatus=0&page=$page';
 
-    failedOrders.clear(); // Clear existing orders before fetching
-    readyOrders.clear(); // Clear existing orders before fetching
+    // Get the auth token
+    final token = await _getToken();
+
+    // Check if the token is valid
+    if (token == null || token.isEmpty) {
+      isLoading = false;
+      notifyListeners();
+      print('Token is missing. Please log in again.');
+      return; // Stop execution if there's no token
+    }
 
     try {
       // Fetch failed orders
-      while (hasMoreFailedOrders) {
-        final response = await http.get(Uri.parse('$failedOrdersUrlBase$page'));
+      final responseFailed =
+          await http.get(Uri.parse(failedOrdersUrl), headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      });
 
-        if (response.statusCode == 200) {
-          final Map<String, dynamic> jsonData = json.decode(response.body);
-          final List<dynamic> ordersJson = jsonData['orders'];
+      if (responseFailed.statusCode == 200) {
+        final jsonData = json.decode(responseFailed.body);
+        failedOrders = (jsonData['orders'] as List)
+            .map((order) => Order.fromJson(order))
+            .toList();
+        totalFailedPages = jsonData['totalPages'] ?? 1; // Update total pages
+        currentPageFailed = page; // Update the current page for failed orders
 
-          if (ordersJson.isEmpty) {
-            hasMoreFailedOrders = false; // No more failed orders to fetch
-          } else {
-            failedOrders.addAll(ordersJson
-                .map((orderJson) => Order.fromJson(orderJson))
-                .toList());
-            page++; // Go to the next page
-          }
-        } else {
-          print('No More Pages for Failed Orders');
-          hasMoreFailedOrders = false; // Stop fetching on error
-        }
+        // Reset selections
+        resetSelections();
+        _selectedFailedOrders = List<bool>.filled(failedOrders.length, false);
+      } else {
+        throw Exception('Failed to load failed orders: ${responseFailed.body}');
       }
-
-      // Reset the page counter for ready orders
-      page = 1;
-
-      // Fetch ready orders
-      while (hasMoreReadyOrders) {
-        final response = await http.get(Uri.parse('$readyOrdersUrlBase$page'));
-
-        if (response.statusCode == 200) {
-          final Map<String, dynamic> jsonData = json.decode(response.body);
-          final List<dynamic> ordersJson = jsonData['orders'];
-
-          if (ordersJson.isEmpty) {
-            hasMoreReadyOrders = false; // No more ready orders to fetch
-          } else {
-            readyOrders.addAll(ordersJson
-                .map((orderJson) => Order.fromJson(orderJson))
-                .toList());
-            page++; // Go to the next page
-          }
-        } else {
-          print('No More Pages in Ready to confirm');
-          hasMoreReadyOrders = false; // Stop fetching on error
-        }
-      }
-
-      // Initialize selection states
-      _selectedFailedOrders = List<bool>.filled(failedOrders.length, false);
-      _selectedReadyOrders = List<bool>.filled(readyOrders.length, false);
-
-      // Reset counts
-      selectedFailedItemsCount = 0;
-      selectedReadyItemsCount = 0;
-
-      notifyListeners(); // Notify listeners of changes
     } catch (e) {
-      print('Error fetching orders: $e'); // Log any exception
+      print('Error fetching failed orders: $e');
     } finally {
-      isLoading = false; // Set loading state to false
-      notifyListeners(); // Notify listeners about loading state
+      isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> fetchReadyOrders({int page = 1}) async {
+    // Ensure the requested page number is valid
+    if (page < 1 || page > totalReadyPages) {
+      print('Invalid page number for ready orders: $page');
+      return; // Exit if the page number is invalid
+    }
+
+    isLoading = true;
+    notifyListeners();
+
+    final String readyOrdersUrl =
+        'https://inventory-management-backend-s37u.onrender.com/orders?orderStatus=1&page=$page';
+
+    // Get the auth token
+    final token = await _getToken();
+
+    // Check if the token is valid
+    if (token == null || token.isEmpty) {
+      isLoading = false;
+      notifyListeners();
+      print('Token is missing. Please log in again.');
+      return; // Stop execution if there's no token
+    }
+
+    try {
+      // Fetch ready orders
+      final responseReady = await http.get(Uri.parse(readyOrdersUrl), headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      });
+
+      if (responseReady.statusCode == 200) {
+        final jsonData = json.decode(responseReady.body);
+        readyOrders = (jsonData['orders'] as List)
+            .map((order) => Order.fromJson(order))
+            .toList();
+        totalReadyPages = jsonData['totalPages'] ?? 1; // Update total pages
+        currentPageReady = page; // Update the current page for ready orders
+
+        // Reset selections
+        resetSelections();
+        _selectedReadyOrders = List<bool>.filled(readyOrders.length, false);
+      } else {
+        throw Exception('Failed to load ready orders: ${responseReady.body}');
+      }
+    } catch (e) {
+      print('Error fetching ready orders: $e');
+    } finally {
+      isLoading = false;
+      notifyListeners();
     }
   }
 
@@ -156,13 +185,13 @@ class OrdersProvider with ChangeNotifier {
       );
 
       print('Response status: ${response.statusCode}');
-      print('Response body: ${response.body}');
+      //print('Response body: ${response.body}');
 
       final responseData = json.decode(response.body);
 
       if (response.statusCode == 200) {
         // After successful confirmation, fetch updated orders and notify listeners
-        await fetchOrders(); // Assuming fetchOrders is a function that reloads the orders
+        await fetchReadyOrders(); // Assuming fetchOrders is a function that reloads the orders
         resetSelections(); // Clear selected order IDs
         notifyListeners(); // Notify the UI to rebuild
 
@@ -246,7 +275,7 @@ class OrdersProvider with ChangeNotifier {
     }
 
     // Reload orders after updating
-    await fetchOrders(); // Refresh the orders after update
+    await fetchFailedOrders(); // Refresh the orders after update
 
     // Reset checkbox states
     allSelectedFailed = false; // Reset "Select All" checkbox
@@ -277,7 +306,7 @@ class OrdersProvider with ChangeNotifier {
     }
 
     // Reload orders after updating
-    await fetchOrders(); // Refresh the orders after update
+    await fetchReadyOrders(); // Refresh the orders after update
 
     // Reset checkbox states
     allSelectedReady = false; // Reset "Select All" checkbox
@@ -318,7 +347,8 @@ class OrdersProvider with ChangeNotifier {
         // Show snackbar and trigger fetchOrders in parallel
         _showSnackbar(context, 'Order status updated successfully');
         // Reload orders immediately after the snackbar is shown
-        fetchOrders(); // Refresh the orders
+        await fetchFailedOrders(); // Refresh failed orders
+        await fetchReadyOrders(); // Refresh ready orders
       } else {
         final errorResponse = json.decode(response.body);
         String errorMessage =

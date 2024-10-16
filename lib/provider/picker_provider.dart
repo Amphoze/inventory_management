@@ -47,7 +47,7 @@ class PickerProvider with ChangeNotifier {
     notifyListeners();
 
     final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString('token') ?? '';
+    final token = prefs.getString('authToken') ?? '';
     const url =
         'https://inventory-management-backend-s37u.onrender.com/orders?orderStatus=3&page=';
 
@@ -109,7 +109,7 @@ class PickerProvider with ChangeNotifier {
     notifyListeners();
 
     final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString('token') ?? '';
+    final token = prefs.getString('authToken') ?? ''; // Fetch the token
 
     final url =
         'https://inventory-management-backend-s37u.onrender.com/orders?orderStatus=3&order_id=$query';

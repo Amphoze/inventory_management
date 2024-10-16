@@ -174,7 +174,7 @@ class Order {
   /// Parses a date string and returns a DateTime object, handling multiple formats.
   static DateTime? _parseDate(String? dateString) {
     if (dateString == null || dateString.isEmpty) {
-      print("Invalid or empty date string");
+      //print("Invalid or empty date string");
       return null; // Return null for invalid or empty strings
     }
 
@@ -182,7 +182,7 @@ class Order {
     try {
       return DateTime.parse(dateString).toLocal();
     } catch (e) {
-      print("DateTime.parse failed for '$dateString': $e");
+      //print("DateTime.parse failed for '$dateString': $e");
     }
 
     // Define formats to try for parsing
@@ -206,11 +206,11 @@ class Order {
         return DateFormat(format).parse(dateString, true).toLocal();
       } catch (e) {
         // Log errors but continue trying other formats
-        print("Failed to parse using format '$format': $e");
+        //print("Failed to parse using format '$format': $e");
       }
     }
 
-    print("Error: Could not parse date string: '$dateString'");
+    //print("Error: Could not parse date string: '$dateString'");
     return null; // Return null if all parsing attempts fail
   }
 
@@ -399,6 +399,7 @@ class Product {
   final List<String>? images;
   final String? grade;
   final String? shopifyImage;
+  final String? variantName;
 
   Product({
     required this.dimensions,
@@ -423,6 +424,7 @@ class Product {
     required this.images,
     required this.grade,
     required this.shopifyImage,
+    required this.variantName,
   });
 
   factory Product.fromJson(Map<String, dynamic> json) {
@@ -453,6 +455,7 @@ class Product {
               [],
       grade: json['grade']?.toString() ?? '',
       shopifyImage: json['shopifyImage']?.toString() ?? '',
+      variantName: json['variant_name']?.toString() ?? '',
     );
   }
 }

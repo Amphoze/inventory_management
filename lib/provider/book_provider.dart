@@ -27,14 +27,28 @@ class BookProvider with ChangeNotifier {
   List<Order> ordersB2B = [];
   List<Order> ordersB2C = [];
 
+  // Pagination
+  int currentPageB2B = 1;
+  int currentPageB2C = 1;
+  int totalPagesB2B = 0;
+  int totalPagesB2C = 0;
+
   // Set the sort option and notify listeners
   void setSortOption(String? option) {
     _sortOption = option;
     notifyListeners();
   }
 
+  Future<void> fetchPaginatedOrdersB2B(int page) async {
+    await fetchOrders('B2B', page);
+  }
+
+  Future<void> fetchPaginatedOrdersB2C(int page) async {
+    await fetchOrders('B2C', page);
+  }
+
   // Fetch orders based on type (B2B or B2C)
-  Future<void> fetchOrders(String type) async {
+  Future<void> fetchOrders(String type, int page) async {
     String? token = await _getToken();
     if (token == null) {
       print('Token is null, unable to fetch orders.');
@@ -42,76 +56,66 @@ class BookProvider with ChangeNotifier {
     }
 
     String url =
-        'https://inventory-management-backend-s37u.onrender.com/orders?filter=$type&orderStatus=2';
-
-    List<Order> allOrders = [];
-
-    int page = 1;
-    bool hasMoreData = true;
+        'https://inventory-management-backend-s37u.onrender.com/orders?filter=$type&orderStatus=2&page=$page';
 
     try {
-      // Set loading state
-      isLoadingB2B = type == 'B2B';
-      isLoadingB2C = type == 'B2C';
+      // Set loading state based on order type
+      if (type == 'B2B') {
+        isLoadingB2B = true;
+      } else {
+        isLoadingB2C = true;
+      }
       notifyListeners();
 
-      // Clear checkboxes when page changes
+      // Clear checkboxes when a new page is fetched
       clearAllSelections();
 
-      while (hasMoreData) {
-        String paginatedUrl = '$url&page=$page';
+      final response = await http.get(
+        Uri.parse(url),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+      );
 
-        final response = await http.get(
-          Uri.parse(paginatedUrl),
-          headers: {
-            'Authorization': 'Bearer $token',
-            'Content-Type': 'application/json',
-          },
-        );
+      // Log response for debugging
+      print('Response status: ${response.statusCode}');
+      print('Response body: ${response.body}');
 
-        // Log response
-        print('Response status: ${response.statusCode}');
-        print('Response body: ${response.body}');
+      if (response.statusCode == 200) {
+        final jsonResponse = jsonDecode(response.body);
+        List<Order> orders = (jsonResponse['orders'] as List)
+            .map((orderJson) => Order.fromJson(orderJson))
+            .toList();
 
-        // Handle response
-        if (response.statusCode == 200) {
-          final jsonResponse = jsonDecode(response.body);
-          List<Order> orders = (jsonResponse['orders'] as List)
-              .map((orderJson) => Order.fromJson(orderJson))
-              .toList();
-
-          // Add newly fetched orders to the allOrders list
-          allOrders.addAll(orders);
-
-          // Check if more pages are available
-          if (orders.isEmpty) {
-            hasMoreData = false;
-          } else {
-            page++;
-          }
-        } else if (response.statusCode == 401) {
-          print('Unauthorized access - Token might be expired or invalid.');
-          hasMoreData = false;
-        } else if (response.statusCode == 404) {
-          print('Orders not found - Check the filter type.');
-          hasMoreData = false;
+        // Store fetched orders and update pagination state
+        if (type == 'B2B') {
+          ordersB2B = orders;
+          currentPageB2B = page; // Track current page for B2B
+          totalPagesB2B =
+              jsonResponse['totalPages']; // Assuming API returns total pages
         } else {
-          throw Exception('Failed to load orders: ${response.statusCode}');
+          ordersB2C = orders;
+          currentPageB2C = page; // Track current page for B2C
+          totalPagesB2C =
+              jsonResponse['totalPages']; // Assuming API returns total pages
         }
-      }
-
-      // Store fetched orders
-      if (type == 'B2B') {
-        ordersB2B = allOrders;
+      } else if (response.statusCode == 401) {
+        print('Unauthorized access - Token might be expired or invalid.');
+      } else if (response.statusCode == 404) {
+        print('Orders not found - Check the filter type.');
       } else {
-        ordersB2C = allOrders;
+        throw Exception('Failed to load orders: ${response.statusCode}');
       }
     } catch (e) {
       print('Error fetching $type orders: $e');
     } finally {
       // Reset loading states
-      isLoadingB2B = false;
-      isLoadingB2C = false;
+      if (type == 'B2B') {
+        isLoadingB2B = false;
+      } else {
+        isLoadingB2C = false;
+      }
       notifyListeners();
     }
   }
@@ -155,6 +159,11 @@ class BookProvider with ChangeNotifier {
 
       // Check if the response is successful
       if (response.statusCode == 200) {
+        // Optionally, you can also clear the selected orders here
+        clearAllSelections();
+
+        // Notify listeners after successful booking
+        notifyListeners();
         return responseData['message'] ?? 'Orders booked successfully';
       } else {
         // If the API returns an error, return the error message

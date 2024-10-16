@@ -634,7 +634,7 @@ class AuthProvider with ChangeNotifier {
 
   Future<Map<String, dynamic>> searchCategoryByName(String name) async {
     final url =
-        Uri.parse('$_baseUrl/category/query?name=${Uri.encodeComponent(name)}');
+        Uri.parse('$_baseUrl/category?name=${Uri.encodeComponent(name)}');
 
     try {
       final token = await getToken();
@@ -651,9 +651,11 @@ class AuthProvider with ChangeNotifier {
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
-        // Since the response is an array, we check if data is a List
-        if (data is List) {
-          return {'success': true, 'data': data}; // Return the whole list
+        if (data['categories'] is List) {
+          return {
+            'success': true,
+            'data': data['categories'],
+          };
         } else {
           print('Unexpected response format: ${data}'); // Debugging line
           return {'success': false, 'message': 'Unexpected response format'};
