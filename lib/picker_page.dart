@@ -32,7 +32,8 @@ class _PickerPageState extends State<PickerPage> {
   void _onSearchButtonPressed() {
     final query = _searchController.text.trim();
     if (query.isNotEmpty) {
-      Provider.of<PickerProvider>(context, listen: false).onSearchChanged(query);
+      Provider.of<PickerProvider>(context, listen: false)
+          .onSearchChanged(query);
     }
   }
 

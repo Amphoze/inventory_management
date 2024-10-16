@@ -5,6 +5,8 @@ import 'package:inventory_management/Widgets/product_details_card.dart';
 import 'package:inventory_management/edit_order_page.dart';
 import 'package:provider/provider.dart';
 import 'package:inventory_management/provider/orders_provider.dart';
+import 'package:provider/provider.dart';
+import 'package:inventory_management/provider/orders_provider.dart'; // Import the separate provider
 import 'package:inventory_management/Custom-Files/colors.dart';
 
 class OrdersNewPage extends StatefulWidget {
