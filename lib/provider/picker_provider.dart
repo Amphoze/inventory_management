@@ -47,7 +47,7 @@ class PickerProvider with ChangeNotifier {
     notifyListeners();
 
     final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString('token') ?? '';
+    final token = prefs.getString('authToken') ?? '';
     const url =
         'https://inventory-management-backend-s37u.onrender.com/orders?orderStatus=3&page=';
 
@@ -85,6 +85,7 @@ class PickerProvider with ChangeNotifier {
       notifyListeners();
     }
   }
+
   void onSearchChanged(String query) {
     if (_debounce?.isActive ?? false) _debounce!.cancel();
     _debounce = Timer(const Duration(milliseconds: 500), () {
@@ -97,8 +98,6 @@ class PickerProvider with ChangeNotifier {
     });
   }
 
-
-
   Future<List<Order>> searchOrders(String query) async {
     if (query.isEmpty) {
       await fetchOrdersWithStatus3();
@@ -109,7 +108,7 @@ class PickerProvider with ChangeNotifier {
     notifyListeners();
 
     final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString('token') ?? '';
+    final token = prefs.getString('authToken') ?? ''; // Fetch the token
 
     final url =
         'https://inventory-management-backend-s37u.onrender.com/orders?orderStatus=3&order_id=$query';
@@ -131,12 +130,10 @@ class PickerProvider with ChangeNotifier {
         final jsonData = json.decode(response.body);
 
         List<Order> orders = [];
-       // print('Response data: $jsonData');
+        // print('Response data: $jsonData');
         if (jsonData != null) {
-
           orders.add(Order.fromJson(jsonData));
           print('Response data: $jsonData');
-
         } else {
           print('No data found in response.');
         }
@@ -205,8 +202,6 @@ class PickerProvider with ChangeNotifier {
   //     notifyListeners();
   //   }
   // }
-
-
 
   void goToPage(int page) {
     if (page < 1 || page > _totalPages) return;

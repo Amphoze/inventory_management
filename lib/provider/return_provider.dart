@@ -1,14 +1,13 @@
-
 import 'dart:async';
 import 'dart:convert';
 import 'dart:developer';
 
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:http/http.dart'as http;
+import 'package:http/http.dart' as http;
 import '../model/orders_model.dart';
 
-class ReturnProvider extends ChangeNotifier{
+class ReturnProvider extends ChangeNotifier {
   bool _isLoading = false;
   bool _selectAll = false;
   List<bool> _selectedProducts = [];
@@ -35,7 +34,7 @@ class ReturnProvider extends ChangeNotifier{
   void toggleSelectAll(bool value) {
     _selectAll = value;
     _selectedProducts =
-    List<bool>.generate(_orders.length, (index) => _selectAll);
+        List<bool>.generate(_orders.length, (index) => _selectAll);
     notifyListeners();
   }
 
@@ -44,7 +43,7 @@ class ReturnProvider extends ChangeNotifier{
     notifyListeners();
 
     final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString('token') ?? '';
+    final token = prefs.getString('authToken') ?? '';
     const url =
         'https://inventory-management-backend-s37u.onrender.com/orders?orderStatus=8&page=';
 
@@ -83,6 +82,7 @@ class ReturnProvider extends ChangeNotifier{
       notifyListeners();
     }
   }
+
   void goToPage(int page) {
     if (page < 1 || page > _totalPages) return;
     _currentPage = page;
@@ -124,6 +124,7 @@ class ReturnProvider extends ChangeNotifier{
     }
     notifyListeners();
   }
+
   void _updateSelectAllStateForReturned() {
     selectAllReturned = selectedReturnedItems.every((item) => item);
     notifyListeners();
@@ -132,31 +133,31 @@ class ReturnProvider extends ChangeNotifier{
   bool _isReturning = false;
   bool get isReturning => _isReturning;
 
-
   Future<void> returnSelectedOrders() async {
-
     _isReturning = true; // Set loading state
     notifyListeners();
 
     final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString('token') ?? '';
+    final token = prefs.getString('authToken') ?? '';
 
     List<String> selectedOrderIds = [];
 
     // Collect the IDs of orders where trackingStatus is 'NA' (null or empty)
     for (int i = 0; i < _selectedProducts.length; i++) {
-      if (_selectedProducts[i] && (_orders[i].trackingStatus?.isEmpty ?? true)) {
+      if (_selectedProducts[i] &&
+          (_orders[i].trackingStatus?.isEmpty ?? true)) {
         selectedOrderIds.add(_orders[i].orderId);
       }
     }
 
     if (selectedOrderIds.isNotEmpty) {
-      final url = 'https://inventory-management-backend-s37u.onrender.com/orders/return';
+      final url =
+          'https://inventory-management-backend-s37u.onrender.com/orders/return';
 
       try {
         final body = json.encode({
           'orderIds': selectedOrderIds,
-           // This should send 'return' as the tracking status
+          // This should send 'return' as the tracking status
         });
 
         //print('Request body: $body'); // Verify request body
@@ -171,13 +172,14 @@ class ReturnProvider extends ChangeNotifier{
         );
 
         print('Response status: ${response.statusCode}');
-       // print('Response body: ${response.body}'); // Check for errors in the response
+        // print('Response body: ${response.body}'); // Check for errors in the response
 
         if (response.statusCode == 200) {
           print('Orders returned successfully!');
           // Update local order tracking status
           for (int i = 0; i < _orders.length; i++) {
-            if (_selectedProducts[i] && (_orders[i].trackingStatus?.isEmpty ?? true)) {
+            if (_selectedProducts[i] &&
+                (_orders[i].trackingStatus?.isEmpty ?? true)) {
               _orders[i].trackingStatus = 'return'; // Update locally
             }
           }
@@ -188,8 +190,7 @@ class ReturnProvider extends ChangeNotifier{
         }
       } catch (e) {
         print('Error: $e');
-      }
-      finally {
+      } finally {
         _isReturning = false; // Reset loading state
         notifyListeners();
       }
@@ -197,6 +198,7 @@ class ReturnProvider extends ChangeNotifier{
       print('No valid orders selected for return.');
     }
   }
+
   void onSearchChanged(String query) {
     if (_debounce?.isActive ?? false) _debounce!.cancel();
     _debounce = Timer(const Duration(milliseconds: 500), () {
@@ -219,7 +221,7 @@ class ReturnProvider extends ChangeNotifier{
     notifyListeners();
 
     final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString('token') ?? '';
+    final token = prefs.getString('authToken') ?? '';
 
     final url =
         'https://inventory-management-backend-s37u.onrender.com/orders?orderStatus=8&order_id=$query';
@@ -264,7 +266,4 @@ class ReturnProvider extends ChangeNotifier{
 
     return _orders;
   }
-
 }
-
-

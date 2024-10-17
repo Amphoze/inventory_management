@@ -24,6 +24,9 @@ class _CheckerPageState extends State<CheckerPage> {
       Provider.of<CheckerProvider>(context, listen: false)
           .fetchOrdersWithStatus5();
     });
+    Provider.of<CheckerProvider>(context, listen: false)
+        .textEditingController
+        .clear();
   }
 
   void _onSearchButtonPressed() {

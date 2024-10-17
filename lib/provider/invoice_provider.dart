@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 import '../model/invoice_model.dart';
 
 class InvoiceProvider with ChangeNotifier {
@@ -19,7 +20,8 @@ class InvoiceProvider with ChangeNotifier {
   int get currentPage => _currentPage;
   int get totalPages => _totalPages;
 
-  final String apiUrl = 'https://inventory-management-backend-s37u.onrender.com';
+  final String apiUrl =
+      'https://inventory-management-backend-s37u.onrender.com';
 
   Future<void> fetchInvoices({int page = 1}) async {
     _isLoading = true;
@@ -27,8 +29,21 @@ class InvoiceProvider with ChangeNotifier {
     _currentPage = page;
     notifyListeners();
 
+    final token = await _getToken();
+    if (token == null || token.isEmpty) {
+      notifyListeners();
+      print('Token is missing. Please log in again.');
+      return;
+    }
+
     try {
-      final response = await http.get(Uri.parse('$apiUrl/invoice?page=$page&limit=$_pageSize'));
+      final headers = {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json'
+      };
+      final response = await http.get(
+          Uri.parse('$apiUrl/invoice?page=$page&limit=$_pageSize'),
+          headers: headers);
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         final invoicesData = data['invoices'] as List<dynamic>;
@@ -77,7 +92,11 @@ class InvoiceProvider with ChangeNotifier {
       fetchInvoices(page: _totalPages);
     }
   }
-  
+
+  Future<String?> _getToken() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString('authToken');
+  }
 
   // Search invoices by invoice number
   // Future<void> searchInvoiceByNumber(String invoiceNumber) async {
@@ -118,5 +137,3 @@ class InvoiceProvider with ChangeNotifier {
     }
   }
 }
-
-

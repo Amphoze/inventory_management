@@ -24,12 +24,16 @@ class _PickerPageState extends State<PickerPage> {
       Provider.of<PickerProvider>(context, listen: false)
           .fetchOrdersWithStatus3();
     });
+    Provider.of<PickerProvider>(context, listen: false)
+        .textEditingController
+        .clear();
   }
 
   void _onSearchButtonPressed() {
     final query = _searchController.text.trim();
     if (query.isNotEmpty) {
-      Provider.of<PickerProvider>(context, listen: false).onSearchChanged(query);
+      Provider.of<PickerProvider>(context, listen: false)
+          .onSearchChanged(query);
     }
   }
 
@@ -165,22 +169,32 @@ class _PickerPageState extends State<PickerPage> {
               pageController: pickerProvider.textEditingController,
               onFirstPage: () {
                 pickerProvider.goToPage(1);
+                pickerProvider.textEditingController
+                    .clear(); // Reset the page number
               },
               onLastPage: () {
                 pickerProvider.goToPage(pickerProvider.totalPages);
+                pickerProvider.textEditingController
+                    .clear(); // Reset the page number
               },
               onNextPage: () {
                 if (pickerProvider.currentPage < pickerProvider.totalPages) {
                   pickerProvider.goToPage(pickerProvider.currentPage + 1);
+                  pickerProvider.textEditingController
+                      .clear(); // Reset the page number
                 }
               },
               onPreviousPage: () {
                 if (pickerProvider.currentPage > 1) {
                   pickerProvider.goToPage(pickerProvider.currentPage - 1);
+                  pickerProvider.textEditingController
+                      .clear(); // Reset the page number
                 }
               },
               onGoToPage: (page) {
                 pickerProvider.goToPage(page);
+                pickerProvider.textEditingController
+                    .clear(); // Reset the page number
               },
               onJumpToPage: () {
                 final page =
@@ -189,6 +203,11 @@ class _PickerPageState extends State<PickerPage> {
                     page > 0 &&
                     page <= pickerProvider.totalPages) {
                   pickerProvider.goToPage(page);
+                  pickerProvider.textEditingController
+                      .clear(); // Reset the page number
+                } else {
+                  _showSnackbar(context,
+                      'Please enter a valid page number between 1 and ${pickerProvider.totalPages}.');
                 }
               },
             ),
@@ -196,6 +215,12 @@ class _PickerPageState extends State<PickerPage> {
         ),
       );
     });
+  }
+
+  void _showSnackbar(BuildContext context, String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message)),
+    );
   }
 
   Widget _buildTableHeader(int totalCount, PickerProvider pickerProvider) {

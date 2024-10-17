@@ -65,69 +65,68 @@ class Order {
   final CheckManifest? checkManifest;
   late String? trackingStatus;
 
-  Order({
-    this.customer,
-    this.source = '',
-    this.id = '',
-    this.orderId = '',
-    this.date,
-    this.paymentMode = '',
-    this.currencyCode = '',
-    required this.items,
-    this.skuTrackingId = '',
-    this.totalWeight = 0.0,
-    this.totalAmount = 0.0,
-    this.coin = 0,
-    this.codAmount = 0.0,
-    this.prepaidAmount = 0.0,
-    this.discountCode = '',
-    this.discountScheme = '',
-    this.discountPercent = 0,
-    this.discountAmount = 0.0,
-    this.taxPercent = 0,
-    this.billingAddress,
-    this.shippingAddress,
-    this.courierName = '',
-    this.orderType = '',
-    this.boxSize = '',
-    this.replacement = false,
-    required this.orderStatus,
-    this.orderStatusMap,
-    this.marketplace,
-    this.agent = '',
-    this.filter = '',
-    this.freightCharge,
-    this.notes = '',
-    this.createdAt,
-    this.updatedAt,
-    this.isSelected = false,
-    this.isPickerFullyScanned = false,
-    this.isPackerFullyScanned = false,
-    this.expectedDeliveryDate,
-    this.preferredCourier = '',
-    this.deliveryTerm = '',
-    this.transactionNumber = '',
-    this.microDealerOrder = '',
-    this.fulfillmentType = '',
-    this.numberOfBoxes = 0,
-    this.totalQuantity = 0,
-    this.skuQty = 0,
-    this.calcEntryNumber = '',
-    this.currency = '',
-    this.paymentDateTime,
-    this.paymentBank = '',
-    this.length = 0.0,
-    this.breadth = 0.0,
-    this.height = 0.0,
-    this.shipmentId = '',
-    this.shiprocketOrderId = '',
-    this.awbNumber = '',
-    this.image = '',
-    required this.checker,
-    required this.racker,
-    required this.checkManifest,
-    this.trackingStatus
-  });
+  Order(
+      {this.customer,
+      this.source = '',
+      this.id = '',
+      this.orderId = '',
+      this.date,
+      this.paymentMode = '',
+      this.currencyCode = '',
+      required this.items,
+      this.skuTrackingId = '',
+      this.totalWeight = 0.0,
+      this.totalAmount = 0.0,
+      this.coin = 0,
+      this.codAmount = 0.0,
+      this.prepaidAmount = 0.0,
+      this.discountCode = '',
+      this.discountScheme = '',
+      this.discountPercent = 0,
+      this.discountAmount = 0.0,
+      this.taxPercent = 0,
+      this.billingAddress,
+      this.shippingAddress,
+      this.courierName = '',
+      this.orderType = '',
+      this.boxSize = '',
+      this.replacement = false,
+      required this.orderStatus,
+      this.orderStatusMap,
+      this.marketplace,
+      this.agent = '',
+      this.filter = '',
+      this.freightCharge,
+      this.notes = '',
+      this.createdAt,
+      this.updatedAt,
+      this.isSelected = false,
+      this.isPickerFullyScanned = false,
+      this.isPackerFullyScanned = false,
+      this.expectedDeliveryDate,
+      this.preferredCourier = '',
+      this.deliveryTerm = '',
+      this.transactionNumber = '',
+      this.microDealerOrder = '',
+      this.fulfillmentType = '',
+      this.numberOfBoxes = 0,
+      this.totalQuantity = 0,
+      this.skuQty = 0,
+      this.calcEntryNumber = '',
+      this.currency = '',
+      this.paymentDateTime,
+      this.paymentBank = '',
+      this.length = 0.0,
+      this.breadth = 0.0,
+      this.height = 0.0,
+      this.shipmentId = '',
+      this.shiprocketOrderId = '',
+      this.awbNumber = '',
+      this.image = '',
+      required this.checker,
+      required this.racker,
+      required this.checkManifest,
+      this.trackingStatus});
 
   // Utility function to safely parse a string from any data type
   static String _parseString(dynamic value) {
@@ -174,7 +173,7 @@ class Order {
   /// Parses a date string and returns a DateTime object, handling multiple formats.
   static DateTime? _parseDate(String? dateString) {
     if (dateString == null || dateString.isEmpty) {
-      print("Invalid or empty date string");
+      //print("Invalid or empty date string");
       return null; // Return null for invalid or empty strings
     }
 
@@ -182,7 +181,7 @@ class Order {
     try {
       return DateTime.parse(dateString).toLocal();
     } catch (e) {
-      print("DateTime.parse failed for '$dateString': $e");
+      //print("DateTime.parse failed for '$dateString': $e");
     }
 
     // Define formats to try for parsing
@@ -206,11 +205,11 @@ class Order {
         return DateFormat(format).parse(dateString, true).toLocal();
       } catch (e) {
         // Log errors but continue trying other formats
-        print("Failed to parse using format '$format': $e");
+        //print("Failed to parse using format '$format': $e");
       }
     }
 
-    print("Error: Could not parse date string: '$dateString'");
+    //print("Error: Could not parse date string: '$dateString'");
     return null; // Return null if all parsing attempts fail
   }
 
@@ -227,86 +226,84 @@ class Order {
 
   factory Order.fromJson(Map<String, dynamic> json) {
     return Order(
-      customer:
-          json['customer'] != null ? Customer.fromJson(json['customer']) : null,
-      source: _parseString(json['source']),
-      id: _parseString(json['_id']),
-      orderId: _parseString(json['order_id']),
-      date: _parseDate(_parseString(json['date'])),
-      paymentMode: _parseString(json['payment_mode']),
-      currencyCode: _parseString(json['currency_code']),
-      items: (json['items'] as List?)
-              ?.map((item) => Item.fromJson(item))
-              .toList() ??
-          [],
-      skuTrackingId: _parseString(json['sku_tracking_id']),
-      totalWeight: _parseDouble(json['total_weight']),
-      totalAmount: _parseDouble(json['total_amt']),
-      coin: _parseInt(json['coin']),
-      codAmount: _parseDouble(json['cod_amount']),
-      prepaidAmount: _parseDouble(json['prepaid_amount']),
-      discountCode: _parseString(json['discount_code']),
-      discountScheme: _parseString(json['discount_scheme']),
-      discountPercent: _parseInt(json['discount_percent']),
-      discountAmount: _parseDouble(json['discount_amount']),
-      taxPercent: _parseInt(json['tax_percent']),
-      billingAddress: json['billing_addr'] is Map<String, dynamic>
-          ? Address.fromJson(json['billing_addr'])
-          : Address(address1: _parseString(json['billing_addr'])),
-      shippingAddress: json['shipping_addr'] is Map<String, dynamic>
-          ? Address.fromJson(json['shipping_addr'])
-          : Address(address1: _parseString(json['shipping_addr'])),
-      courierName: _parseString(json['courier_name']),
-      orderType: _parseString(json['order_type']),
-      boxSize: _parseString(json['box_size']),
-      replacement: json['replacement'] is bool ? json['replacement'] : false,
-      orderStatus: _parseInt(json['order_status']),
-      orderStatusMap: (json['order_status_map'] as List?)
-              ?.map((status) => OrderStatusMap.fromJson(status))
-              .toList() ??
-          [],
-      marketplace: json['marketplace'] != null
-          ? Marketplace.fromJson(json['marketplace'])
-          : null,
-      agent: _parseString(json['agent']),
-      filter: _parseString(json['filter']),
-      freightCharge: json['freight_charge'] != null
-          ? FreightCharge.fromJson(json['freight_charge'])
-          : null,
-      notes: _parseString(json['notes']),
-      createdAt: _parseDate(_parseString(json['createdAt'])),
-      updatedAt: _parseDate(_parseString(json['updatedAt'])),
-      isPickerFullyScanned: json['isPickerFullyScanned'] ?? false,
-      isPackerFullyScanned: json['isPackerFullyScanned'] ?? false,
-      expectedDeliveryDate:
-          _parseDate(_parseString(json['expected_delivery_date'])),
-      preferredCourier: _parseString(json['preferred_courier']),
-      deliveryTerm: _parseString(json['delivery_term']),
-      transactionNumber: _parseString(json['transaction_number']),
-      microDealerOrder: _parseString(json['micro_dealer_order']),
-      fulfillmentType: _parseString(json['fulfillment_type']),
-      numberOfBoxes: _parseInt(json['number_of_boxes']),
-      totalQuantity: _parseInt(json['total_quantity']),
-      skuQty: _parseInt(json['sku_qty']),
-      calcEntryNumber: _parseString(json['calc_entry_number']),
-      currency: _parseString(json['currency']),
-      paymentDateTime: _parseDate(_parseString(json['payment_date_time'])),
-      paymentBank: _parseString(json['payment_bank']),
-      length: _parseDouble(json['length']),
-      breadth: _parseDouble(json['breadth']),
-      height: _parseDouble(json['height']),
-      shipmentId: _parseString(json['shipment_id']),
-      shiprocketOrderId: _parseString(json['shiprocket_order_id']),
-      awbNumber: _parseString(json['awb_number']),
-      image: json['image'] ?? '',
-      checker: Checker.fromJson(json['checker']),
-      racker: Racker.fromJson(json['racker']),
-      checkManifest: CheckManifest.fromJson(json['checkManifest']),
-      trackingStatus: _parseString(json['tracking_status'])
-    );
+        customer: json['customer'] != null
+            ? Customer.fromJson(json['customer'])
+            : null,
+        source: _parseString(json['source']),
+        id: _parseString(json['_id']),
+        orderId: _parseString(json['order_id']),
+        date: _parseDate(_parseString(json['date'])),
+        paymentMode: _parseString(json['payment_mode']),
+        currencyCode: _parseString(json['currency_code']),
+        items: (json['items'] as List?)
+                ?.map((item) => Item.fromJson(item))
+                .toList() ??
+            [],
+        skuTrackingId: _parseString(json['sku_tracking_id']),
+        totalWeight: _parseDouble(json['total_weight']),
+        totalAmount: _parseDouble(json['total_amt']),
+        coin: _parseInt(json['coin']),
+        codAmount: _parseDouble(json['cod_amount']),
+        prepaidAmount: _parseDouble(json['prepaid_amount']),
+        discountCode: _parseString(json['discount_code']),
+        discountScheme: _parseString(json['discount_scheme']),
+        discountPercent: _parseInt(json['discount_percent']),
+        discountAmount: _parseDouble(json['discount_amount']),
+        taxPercent: _parseInt(json['tax_percent']),
+        billingAddress: json['billing_addr'] is Map<String, dynamic>
+            ? Address.fromJson(json['billing_addr'])
+            : Address(address1: _parseString(json['billing_addr'])),
+        shippingAddress: json['shipping_addr'] is Map<String, dynamic>
+            ? Address.fromJson(json['shipping_addr'])
+            : Address(address1: _parseString(json['shipping_addr'])),
+        courierName: _parseString(json['courier_name']),
+        orderType: _parseString(json['order_type']),
+        boxSize: _parseString(json['box_size']),
+        replacement: json['replacement'] is bool ? json['replacement'] : false,
+        orderStatus: _parseInt(json['order_status']),
+        orderStatusMap: (json['order_status_map'] as List?)
+                ?.map((status) => OrderStatusMap.fromJson(status))
+                .toList() ??
+            [],
+        marketplace: json['marketplace'] != null
+            ? Marketplace.fromJson(json['marketplace'])
+            : null,
+        agent: _parseString(json['agent']),
+        filter: _parseString(json['filter']),
+        freightCharge: json['freight_charge'] != null
+            ? FreightCharge.fromJson(json['freight_charge'])
+            : null,
+        notes: _parseString(json['notes']),
+        createdAt: _parseDate(_parseString(json['createdAt'])),
+        updatedAt: _parseDate(_parseString(json['updatedAt'])),
+        isPickerFullyScanned: json['isPickerFullyScanned'] ?? false,
+        isPackerFullyScanned: json['isPackerFullyScanned'] ?? false,
+        expectedDeliveryDate:
+            _parseDate(_parseString(json['expected_delivery_date'])),
+        preferredCourier: _parseString(json['preferred_courier']),
+        deliveryTerm: _parseString(json['delivery_term']),
+        transactionNumber: _parseString(json['transaction_number']),
+        microDealerOrder: _parseString(json['micro_dealer_order']),
+        fulfillmentType: _parseString(json['fulfillment_type']),
+        numberOfBoxes: _parseInt(json['number_of_boxes']),
+        totalQuantity: _parseInt(json['total_quantity']),
+        skuQty: _parseInt(json['sku_qty']),
+        calcEntryNumber: _parseString(json['calc_entry_number']),
+        currency: _parseString(json['currency']),
+        paymentDateTime: _parseDate(_parseString(json['payment_date_time'])),
+        paymentBank: _parseString(json['payment_bank']),
+        length: _parseDouble(json['length']),
+        breadth: _parseDouble(json['breadth']),
+        height: _parseDouble(json['height']),
+        shipmentId: _parseString(json['shipment_id']),
+        shiprocketOrderId: _parseString(json['shiprocket_order_id']),
+        awbNumber: _parseString(json['awb_number']),
+        image: json['image'] ?? '',
+        checker: Checker.fromJson(json['checker']),
+        racker: Racker.fromJson(json['racker']),
+        checkManifest: CheckManifest.fromJson(json['checkManifest']),
+        trackingStatus: _parseString(json['tracking_status']));
   }
-
-
 }
 
 class Customer {
@@ -399,6 +396,7 @@ class Product {
   final List<String>? images;
   final String? grade;
   final String? shopifyImage;
+  final String? variantName;
 
   Product({
     required this.dimensions,
@@ -423,6 +421,7 @@ class Product {
     required this.images,
     required this.grade,
     required this.shopifyImage,
+    required this.variantName,
   });
 
   factory Product.fromJson(Map<String, dynamic> json) {
@@ -453,6 +452,7 @@ class Product {
               [],
       grade: json['grade']?.toString() ?? '',
       shopifyImage: json['shopifyImage']?.toString() ?? '',
+      variantName: json['variant_name']?.toString() ?? '',
     );
   }
 }

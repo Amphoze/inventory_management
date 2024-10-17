@@ -24,6 +24,9 @@ class _RackedPageState extends State<RackedPage> {
       Provider.of<RackedProvider>(context, listen: false)
           .fetchOrdersWithStatus6();
     });
+    Provider.of<RackedProvider>(context, listen: false)
+        .textEditingController
+        .clear();
   }
 
   void _onSearchButtonPressed() {
