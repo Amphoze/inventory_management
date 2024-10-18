@@ -477,6 +477,7 @@ class _BookPageState extends State<BookPage>
             flex: 7,
             child: OrderCard(
               order: order,
+              isBookPage: true,
             ),
           ),
           const SizedBox(width: 40),

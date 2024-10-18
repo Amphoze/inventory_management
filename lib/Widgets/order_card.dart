@@ -1,13 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:inventory_management/Custom-Files/colors.dart'; // Adjust the import based on your project structure
+import 'package:inventory_management/edit_order_page.dart';
 import 'package:inventory_management/model/orders_model.dart'; // Adjust the import based on your project structure
 
 class OrderCard extends StatelessWidget {
   final Order order;
+  final bool isBookPage;
 
   const OrderCard({
     Key? key,
     required this.order,
+    this.isBookPage = false,
   }) : super(key: key);
 
   @override
@@ -38,32 +41,44 @@ class OrderCard extends StatelessWidget {
                     color: Colors.blueAccent,
                   ),
                 ),
-                //Text('Tracking Status: ${order.trackingStatus}'),
-
-                RichText(
-                  text: TextSpan(
-                    children: [
-                      const TextSpan(
-                        text: 'Total Amount: ',
-                        style: TextStyle(
-                          color: Colors.black,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 14, // Reduced font size
+                if (isBookPage)
+                  ElevatedButton(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => EditOrderPage(
+                            order: order,
+                            isBookPage: true,
+                          ),
                         ),
+                      );
+                    },
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8.0, vertical: 4.0),
+                      foregroundColor: AppColors.white,
+                      backgroundColor: AppColors.orange,
+                      textStyle: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 12,
                       ),
-                      TextSpan(
-                        text: 'Rs.${order.totalAmount?.toString() ?? 0}',
-                        style: const TextStyle(
-                          color: Colors.black87,
-                          fontWeight: FontWeight.w500,
-                          fontSize: 14, // Reduced font size
-                        ),
-                      ),
-                    ],
+                    ),
+                    child: const Text(
+                      'Edit Order',
+                    ),
                   ),
-                ),
+
+                //Text('Tracking Status: ${order.trackingStatus}'),
               ],
             ),
+
+            const SizedBox(height: 6.0),
+            // New Row for Billing Address
+            _buildAddressRow('Billing Address:', order.billingAddress),
+            const SizedBox(height: 6.0),
+            // New Row for Shipping Address
+            _buildAddressRow('Shipping Address:', order.shippingAddress),
             const SizedBox(height: 6.0), // Smaller spacing between elements
             ListView.builder(
               shrinkWrap: true,
@@ -195,6 +210,48 @@ class OrderCard extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildAddressRow(String title, Address? address) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          title,
+          style: const TextStyle(
+            color: Colors.black,
+            fontWeight: FontWeight.bold,
+            fontSize: 11,
+          ),
+        ),
+        const SizedBox(width: 8.0),
+        Flexible(
+          child: RichText(
+            text: TextSpan(
+              style: const TextStyle(
+                color: Colors.black87,
+                fontWeight: FontWeight.w500,
+                fontSize: 11,
+              ),
+              children: [
+                TextSpan(
+                  text: [
+                    address?.address1,
+                    address?.address2,
+                    address?.city,
+                    address?.state,
+                    address?.country,
+                    address?.pincode?.toString(),
+                  ]
+                      .where((element) => element != null && element.isNotEmpty)
+                      .join(', '),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
     );
   }
 

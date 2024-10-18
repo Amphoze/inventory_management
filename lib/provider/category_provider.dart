@@ -23,6 +23,8 @@ class CategoryProvider with ChangeNotifier {
     List<String> allCategories = [];
     bool hasMore = true;
     int page = 1;
+    _isFetching = false;
+    notifyListeners();
 
     while (hasMore) {
       if (_isFetching) return;
@@ -52,7 +54,7 @@ class CategoryProvider with ChangeNotifier {
         break;
       }
     }
-
+    _isFetching = false;
     _categories = allCategories;
     _filteredCategories = _categories;
     notifyListeners();
