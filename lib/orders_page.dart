@@ -378,8 +378,10 @@ class _OrdersNewPageState extends State<OrdersNewPage>
                                   Navigator.push(
                                     context,
                                     MaterialPageRoute(
-                                      builder: (context) =>
-                                          EditOrderPage(order: order),
+                                      builder: (context) => EditOrderPage(
+                                        order: order,
+                                        isBookPage: false,
+                                      ),
                                     ),
                                   );
                                 },
@@ -404,14 +406,12 @@ class _OrdersNewPageState extends State<OrdersNewPage>
                           Padding(
                             padding: const EdgeInsets.all(8.0),
                             child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              crossAxisAlignment: CrossAxisAlignment
-                                  .start, // Change to start to align properly
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Container(
                                   child: const SizedBox(
                                     height: 50,
-                                    width: 200,
+                                    width: 130,
                                     child: Text(
                                       'ORDER DETAILS:',
                                       style: TextStyle(
@@ -419,257 +419,433 @@ class _OrdersNewPageState extends State<OrdersNewPage>
                                     ),
                                   ),
                                 ),
+                                const SizedBox(width: 12.0),
                                 Flexible(
-                                  // Allow the entire column to take flexible space
                                   child: Column(
                                     crossAxisAlignment:
                                         CrossAxisAlignment.start,
                                     children: [
-                                      Row(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          const Text(
-                                            'Payment Mode: ',
-                                            style: TextStyle(
-                                                fontWeight: FontWeight.bold),
-                                          ),
-                                          Flexible(
-                                            child: Text(
-                                              order.paymentMode ?? '',
-                                              softWrap: true,
-                                              maxLines:
-                                                  null, // Allow multiple lines
-                                            ),
-                                          ),
-                                        ],
+                                      buildLabelValueRow('Payment Mode',
+                                          order.paymentMode ?? ''),
+                                      buildLabelValueRow('Currency Code',
+                                          order.currencyCode ?? ''),
+                                      buildLabelValueRow('COD Amount',
+                                          order.codAmount?.toString() ?? ''),
+                                      buildLabelValueRow(
+                                          'Prepaid Amount',
+                                          order.prepaidAmount?.toString() ??
+                                              ''),
+                                      buildLabelValueRow(
+                                          'Coin', order.coin?.toString() ?? ''),
+                                      buildLabelValueRow('Tax Percent',
+                                          order.taxPercent?.toString() ?? ''),
+                                      buildLabelValueRow('Courier Name',
+                                          order.courierName ?? ''),
+                                      buildLabelValueRow(
+                                          'Order Type', order.orderType ?? ''),
+                                      buildLabelValueRow('Payment Bank',
+                                          order.paymentBank ?? ''),
+                                    ],
+                                  ),
+                                ),
+                                const SizedBox(width: 12.0),
+                                Flexible(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      buildLabelValueRow(
+                                          'Discount Amount',
+                                          order.discountAmount?.toString() ??
+                                              ''),
+                                      buildLabelValueRow('Discount Scheme',
+                                          order.discountScheme ?? ''),
+                                      buildLabelValueRow(
+                                          'Agent', order.agent ?? ''),
+                                      buildLabelValueRow(
+                                          'Notes', order.notes ?? ''),
+                                      buildLabelValueRow('Marketplace',
+                                          order.marketplace?.name ?? ''),
+                                      buildLabelValueRow(
+                                          'Filter', order.filter ?? ''),
+                                      buildLabelValueRow(
+                                        'Expected Delivery Date',
+                                        order.expectedDeliveryDate != null
+                                            ? provider.formatDate(
+                                                order.expectedDeliveryDate!)
+                                            : '',
                                       ),
-                                      const SizedBox(width: 8.0),
-                                      Row(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          const Text(
-                                            'COD Amount: ',
-                                            style: TextStyle(
-                                                fontWeight: FontWeight.bold),
-                                          ),
-                                          Flexible(
-                                            child: Text(
-                                              '${order.codAmount ?? ''}',
-                                              softWrap: true,
-                                              maxLines: null,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                      const SizedBox(width: 8.0),
-                                      Row(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          const Text(
-                                            'Prepaid Amount: ',
-                                            style: TextStyle(
-                                                fontWeight: FontWeight.bold),
-                                          ),
-                                          Flexible(
-                                            child: Text(
-                                              '${order.prepaidAmount ?? ''}',
-                                              softWrap: true,
-                                              maxLines: null,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                      const SizedBox(width: 8.0),
-                                      Row(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          const Text(
-                                            'Discount Scheme: ',
-                                            style: TextStyle(
-                                                fontWeight: FontWeight.bold),
-                                          ),
-                                          Flexible(
-                                            child: Text(
-                                              order.discountScheme ?? '',
-                                              softWrap: true,
-                                              maxLines: null,
-                                            ),
-                                          ),
-                                        ],
+                                      buildLabelValueRow('Preferred Courier',
+                                          order.preferredCourier ?? ''),
+                                      buildLabelValueRow(
+                                        'Payment Date Time',
+                                        order.paymentDateTime != null
+                                            ? provider.formatDateTime(
+                                                order.paymentDateTime!)
+                                            : '',
                                       ),
                                     ],
                                   ),
                                 ),
+                                const SizedBox(width: 12.0),
                                 Flexible(
                                   child: Column(
                                     crossAxisAlignment:
                                         CrossAxisAlignment.start,
                                     children: [
-                                      Row(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          const Text(
-                                            'Discount Percent: ',
-                                            style: TextStyle(
-                                                fontWeight: FontWeight.bold),
-                                          ),
-                                          Flexible(
-                                            child: Text(
-                                              '${order.discountPercent ?? ''}',
-                                              softWrap: true,
-                                              maxLines: null,
-                                            ),
-                                          ),
-                                        ],
+                                      buildLabelValueRow('Delivery Term',
+                                          order.deliveryTerm ?? ''),
+                                      buildLabelValueRow('Transaction Number',
+                                          order.transactionNumber ?? ''),
+                                      buildLabelValueRow('Micro Dealer Order',
+                                          order.microDealerOrder ?? ''),
+                                      buildLabelValueRow('Fulfillment Type',
+                                          order.fulfillmentType ?? ''),
+                                      buildLabelValueRow(
+                                          'No. of Boxes',
+                                          order.numberOfBoxes?.toString() ??
+                                              ''),
+                                      buildLabelValueRow(
+                                          'Total Quantity',
+                                          order.totalQuantity?.toString() ??
+                                              ''),
+                                      buildLabelValueRow('SKU Qty',
+                                          order.skuQty?.toString() ?? ''),
+                                      buildLabelValueRow('Calc Entry No.',
+                                          order.calcEntryNumber ?? ''),
+                                      buildLabelValueRow(
+                                          'Currency', order.currency ?? ''),
+                                    ],
+                                  ),
+                                ),
+                                const SizedBox(width: 12.0),
+                                Flexible(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      buildLabelValueRow(
+                                        'Dimensions',
+                                        '${order.length?.toString() ?? ''} x ${order.breadth?.toString() ?? ''} x ${order.height?.toString() ?? ''}',
                                       ),
-                                      const SizedBox(width: 8.0),
-                                      Row(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          const Text(
-                                            'Discount Amount: ',
-                                            style: TextStyle(
-                                                fontWeight: FontWeight.bold),
-                                          ),
-                                          Flexible(
-                                            child: Text(
-                                              '${order.discountAmount ?? ''}',
-                                              softWrap: true,
-                                              maxLines: null,
-                                            ),
-                                          ),
-                                        ],
+                                      buildLabelValueRow('AWB No.',
+                                          order.awbNumber?.toString() ?? ''),
+                                      buildLabelValueRow('Tracking Status',
+                                          order.trackingStatus ?? ''),
+                                      buildLabelValueRow(
+                                        'Customer ID',
+                                        order.customer?.customerId ?? '',
                                       ),
-                                      const SizedBox(width: 8.0),
-                                      Row(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          const Text(
-                                            'Tax Percent: ',
-                                            style: TextStyle(
-                                                fontWeight: FontWeight.bold),
-                                          ),
-                                          Flexible(
-                                            child: Text(
-                                              '${order.taxPercent ?? ''}',
-                                              softWrap: true,
-                                              maxLines: null,
-                                            ),
-                                          ),
-                                        ],
+                                      buildLabelValueRow(
+                                          'Full Name',
+                                          order.customer?.firstName !=
+                                                  order.customer?.lastName
+                                              ? '${order.customer?.firstName ?? ''} ${order.customer?.lastName ?? ''}'
+                                                  .trim()
+                                              : order.customer?.firstName ??
+                                                  ''),
+                                      buildLabelValueRow(
+                                        'Email',
+                                        order.customer?.email ?? '',
                                       ),
-                                      const SizedBox(width: 8.0),
-                                      Row(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          const Text(
-                                            'Shipping Address: ',
-                                            style: TextStyle(
-                                                fontWeight: FontWeight.bold),
-                                          ),
-                                          Flexible(
-                                            child: Text(
-                                              order.shippingAddress?.address1 ??
-                                                  'No address available',
-                                              softWrap: true,
-                                              maxLines: null,
-                                            ),
-                                          ),
-                                        ],
+                                      buildLabelValueRow(
+                                        'Phone',
+                                        order.customer?.phone?.toString() ?? '',
+                                      ),
+                                      buildLabelValueRow(
+                                        'GSTIN',
+                                        order.customer?.customerGstin ?? '',
                                       ),
                                     ],
                                   ),
                                 ),
+                                const SizedBox(width: 12.0),
                                 Flexible(
                                   child: Column(
                                     crossAxisAlignment:
                                         CrossAxisAlignment.start,
                                     children: [
+                                      const Text(
+                                        'Shipping Address:',
+                                        style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 12.0),
+                                      ),
                                       Row(
                                         crossAxisAlignment:
                                             CrossAxisAlignment.start,
                                         children: [
                                           const Text(
-                                            'Delivery: ',
+                                            'Address:',
                                             style: TextStyle(
-                                                fontWeight: FontWeight.bold),
+                                                color: AppColors.primaryBlue,
+                                                fontWeight: FontWeight.w400,
+                                                fontSize: 12.0),
                                           ),
                                           Flexible(
                                             child: Text(
-                                              order.freightCharge?.delhivery
+                                              [
+                                                order.shippingAddress?.address1,
+                                                order.shippingAddress?.address2,
+                                                order.shippingAddress?.city,
+                                                order.shippingAddress?.state,
+                                                order.shippingAddress?.country,
+                                                order.shippingAddress?.pincode
+                                                    ?.toString(),
+                                              ]
+                                                  .where((element) =>
+                                                      element != null &&
+                                                      element.isNotEmpty)
+                                                  .join(', '),
+                                              softWrap: true,
+                                              maxLines: 4,
+                                              style: const TextStyle(
+                                                  fontSize: 12.0),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      Row(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          const Text(
+                                            'Name:',
+                                            style: TextStyle(
+                                              color: AppColors.primaryBlue,
+                                              fontWeight: FontWeight.w400,
+                                              fontSize: 12.0,
+                                            ),
+                                          ),
+                                          Flexible(
+                                            child: Text(
+                                              order.shippingAddress
+                                                          ?.firstName !=
+                                                      order.shippingAddress
+                                                          ?.lastName
+                                                  ? '${order.shippingAddress?.firstName ?? ''} ${order.shippingAddress?.lastName ?? ''}'
+                                                      .trim()
+                                                  : order.shippingAddress
+                                                          ?.firstName ??
+                                                      '',
+                                              softWrap: true,
+                                              maxLines: 4,
+                                              style: const TextStyle(
+                                                fontSize: 12.0,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      Row(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          const Text(
+                                            'Phone:',
+                                            style: TextStyle(
+                                              color: AppColors.primaryBlue,
+                                              fontWeight: FontWeight.w400,
+                                              fontSize: 12.0,
+                                            ),
+                                          ),
+                                          Flexible(
+                                            child: Text(
+                                              order.shippingAddress?.phone
                                                       ?.toString() ??
                                                   '',
-                                              softWrap: true,
-                                              maxLines:
-                                                  null, // Allow wrapping into multiple lines
+                                              style: const TextStyle(
+                                                fontSize: 12.0,
+                                              ),
                                             ),
                                           ),
                                         ],
                                       ),
-                                      const SizedBox(width: 8.0),
                                       Row(
                                         crossAxisAlignment:
                                             CrossAxisAlignment.start,
                                         children: [
                                           const Text(
-                                            'Shiprocket: ',
+                                            'Email:',
                                             style: TextStyle(
-                                                fontWeight: FontWeight.bold),
+                                              color: AppColors.primaryBlue,
+                                              fontWeight: FontWeight.w400,
+                                              fontSize: 12.0,
+                                            ),
                                           ),
                                           Flexible(
                                             child: Text(
-                                              order.freightCharge?.shiprocket
+                                              order.shippingAddress?.email ??
+                                                  '',
+                                              style: const TextStyle(
+                                                fontSize: 12.0,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      Row(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          const Text(
+                                            'Country Code:',
+                                            style: TextStyle(
+                                              color: AppColors.primaryBlue,
+                                              fontWeight: FontWeight.w400,
+                                              fontSize: 12.0,
+                                            ),
+                                          ),
+                                          Flexible(
+                                            child: Text(
+                                              order.shippingAddress
+                                                      ?.countryCode ??
+                                                  '',
+                                              style: const TextStyle(
+                                                fontSize: 12.0,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      const SizedBox(height: 8.0),
+                                      const Text(
+                                        'Billing Address:',
+                                        style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 12.0),
+                                      ),
+                                      Row(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          const Text(
+                                            'Address:',
+                                            style: TextStyle(
+                                                color: AppColors.primaryBlue,
+                                                fontWeight: FontWeight.w400,
+                                                fontSize: 12.0),
+                                          ),
+                                          Flexible(
+                                            child: Text(
+                                              [
+                                                order.billingAddress?.address1,
+                                                order.billingAddress?.address2,
+                                                order.billingAddress?.city,
+                                                order.billingAddress?.state,
+                                                order.billingAddress?.country,
+                                                order.billingAddress?.pincode
+                                                    ?.toString(),
+                                              ]
+                                                  .where((element) =>
+                                                      element != null &&
+                                                      element.isNotEmpty)
+                                                  .join(', '),
+                                              softWrap: true,
+                                              maxLines: 4,
+                                              style: const TextStyle(
+                                                  fontSize: 12.0),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      Row(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          const Text(
+                                            'Name:',
+                                            style: TextStyle(
+                                              color: AppColors.primaryBlue,
+                                              fontWeight: FontWeight.w400,
+                                              fontSize: 12.0,
+                                            ),
+                                          ),
+                                          Flexible(
+                                            child: Text(
+                                              order.billingAddress?.firstName !=
+                                                      order.billingAddress
+                                                          ?.lastName
+                                                  ? '${order.billingAddress?.firstName ?? ''} ${order.billingAddress?.lastName ?? ''}'
+                                                      .trim()
+                                                  : order.billingAddress
+                                                          ?.firstName ??
+                                                      '',
+                                              softWrap: true,
+                                              maxLines: 4,
+                                              style: const TextStyle(
+                                                fontSize: 12.0,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      Row(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          const Text(
+                                            'Phone:',
+                                            style: TextStyle(
+                                              color: AppColors.primaryBlue,
+                                              fontWeight: FontWeight.w400,
+                                              fontSize: 12.0,
+                                            ),
+                                          ),
+                                          Flexible(
+                                            child: Text(
+                                              order.billingAddress?.phone
                                                       ?.toString() ??
                                                   '',
-                                              softWrap: true,
-                                              maxLines:
-                                                  null, // Allow wrapping into multiple lines
+                                              style: const TextStyle(
+                                                fontSize: 12.0,
+                                              ),
                                             ),
                                           ),
                                         ],
                                       ),
-                                      const SizedBox(width: 8.0),
                                       Row(
                                         crossAxisAlignment:
                                             CrossAxisAlignment.start,
                                         children: [
                                           const Text(
-                                            'Agent: ',
+                                            'Email:',
                                             style: TextStyle(
-                                                fontWeight: FontWeight.bold),
+                                              color: AppColors.primaryBlue,
+                                              fontWeight: FontWeight.w400,
+                                              fontSize: 12.0,
+                                            ),
                                           ),
                                           Flexible(
                                             child: Text(
-                                              order.agent ?? '',
-                                              softWrap: true,
-                                              maxLines: null,
+                                              order.billingAddress?.email ?? '',
+                                              style: const TextStyle(
+                                                fontSize: 12.0,
+                                              ),
                                             ),
                                           ),
                                         ],
                                       ),
-                                      const SizedBox(width: 8.0),
                                       Row(
                                         crossAxisAlignment:
                                             CrossAxisAlignment.start,
                                         children: [
                                           const Text(
-                                            'Notes: ',
+                                            'Country Code:',
                                             style: TextStyle(
-                                                fontWeight: FontWeight.bold),
+                                              color: AppColors.primaryBlue,
+                                              fontWeight: FontWeight.w400,
+                                              fontSize: 12.0,
+                                            ),
                                           ),
                                           Flexible(
                                             child: Text(
-                                              order.notes ?? '',
-                                              softWrap: true,
-                                              maxLines: null,
+                                              order.billingAddress
+                                                      ?.countryCode ??
+                                                  '',
+                                              style: const TextStyle(
+                                                fontSize: 12.0,
+                                              ),
                                             ),
                                           ),
                                         ],
@@ -685,7 +861,7 @@ class _OrdersNewPageState extends State<OrdersNewPage>
                             color: AppColors.grey,
                           ),
                           // Nested cards for each item in the order
-                          const SizedBox(height: 10),
+                          const SizedBox(height: 6),
                           ListView.builder(
                             shrinkWrap: true,
                             physics: const NeverScrollableScrollPhysics(),
@@ -925,8 +1101,10 @@ class _OrdersNewPageState extends State<OrdersNewPage>
                                   Navigator.push(
                                     context,
                                     MaterialPageRoute(
-                                      builder: (context) =>
-                                          EditOrderPage(order: order),
+                                      builder: (context) => EditOrderPage(
+                                        order: order,
+                                        isBookPage: false,
+                                      ),
                                     ),
                                   );
                                 },
@@ -951,14 +1129,12 @@ class _OrdersNewPageState extends State<OrdersNewPage>
                           Padding(
                             padding: const EdgeInsets.all(8.0),
                             child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              crossAxisAlignment: CrossAxisAlignment
-                                  .start, // Change to start to align properly
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Container(
                                   child: const SizedBox(
                                     height: 50,
-                                    width: 200,
+                                    width: 130,
                                     child: Text(
                                       'ORDER DETAILS:',
                                       style: TextStyle(
@@ -966,255 +1142,433 @@ class _OrdersNewPageState extends State<OrdersNewPage>
                                     ),
                                   ),
                                 ),
+                                const SizedBox(width: 12.0),
                                 Flexible(
-                                  // Allow the entire column to take flexible space
                                   child: Column(
                                     crossAxisAlignment:
                                         CrossAxisAlignment.start,
                                     children: [
-                                      Row(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          const Text(
-                                            'Payment Mode: ',
-                                            style: TextStyle(
-                                                fontWeight: FontWeight.bold),
-                                          ),
-                                          Flexible(
-                                            child: Text(
-                                              order.paymentMode ?? '',
-                                              softWrap: true,
-                                              maxLines:
-                                                  null, // Allow multiple lines
-                                            ),
-                                          ),
-                                        ],
+                                      buildLabelValueRow('Payment Mode',
+                                          order.paymentMode ?? ''),
+                                      buildLabelValueRow('Currency Code',
+                                          order.currencyCode ?? ''),
+                                      buildLabelValueRow('COD Amount',
+                                          order.codAmount?.toString() ?? ''),
+                                      buildLabelValueRow(
+                                          'Prepaid Amount',
+                                          order.prepaidAmount?.toString() ??
+                                              ''),
+                                      buildLabelValueRow(
+                                          'Coin', order.coin?.toString() ?? ''),
+                                      buildLabelValueRow('Tax Percent',
+                                          order.taxPercent?.toString() ?? ''),
+                                      buildLabelValueRow('Courier Name',
+                                          order.courierName ?? ''),
+                                      buildLabelValueRow(
+                                          'Order Type', order.orderType ?? ''),
+                                      buildLabelValueRow('Payment Bank',
+                                          order.paymentBank ?? ''),
+                                    ],
+                                  ),
+                                ),
+                                const SizedBox(width: 12.0),
+                                Flexible(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      buildLabelValueRow(
+                                          'Discount Amount',
+                                          order.discountAmount?.toString() ??
+                                              ''),
+                                      buildLabelValueRow('Discount Scheme',
+                                          order.discountScheme ?? ''),
+                                      buildLabelValueRow(
+                                          'Agent', order.agent ?? ''),
+                                      buildLabelValueRow(
+                                          'Notes', order.notes ?? ''),
+                                      buildLabelValueRow('Marketplace',
+                                          order.marketplace?.name ?? ''),
+                                      buildLabelValueRow(
+                                          'Filter', order.filter ?? ''),
+                                      buildLabelValueRow(
+                                        'Expected Delivery Date',
+                                        order.expectedDeliveryDate != null
+                                            ? provider.formatDate(
+                                                order.expectedDeliveryDate!)
+                                            : '',
                                       ),
-                                      const SizedBox(width: 8.0),
-                                      Row(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          const Text(
-                                            'COD Amount: ',
-                                            style: TextStyle(
-                                                fontWeight: FontWeight.bold),
-                                          ),
-                                          Flexible(
-                                            child: Text(
-                                              '${order.codAmount ?? ''}',
-                                              softWrap: true,
-                                              maxLines: null,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                      const SizedBox(width: 8.0),
-                                      Row(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          const Text(
-                                            'Prepaid Amount: ',
-                                            style: TextStyle(
-                                                fontWeight: FontWeight.bold),
-                                          ),
-                                          Flexible(
-                                            child: Text(
-                                              '${order.prepaidAmount ?? ''}',
-                                              softWrap: true,
-                                              maxLines: null,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                      const SizedBox(width: 8.0),
-                                      Row(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          const Text(
-                                            'Discount Scheme: ',
-                                            style: TextStyle(
-                                                fontWeight: FontWeight.bold),
-                                          ),
-                                          Flexible(
-                                            child: Text(
-                                              order.discountScheme ?? '',
-                                              softWrap: true,
-                                              maxLines: null,
-                                            ),
-                                          ),
-                                        ],
+                                      buildLabelValueRow('Preferred Courier',
+                                          order.preferredCourier ?? ''),
+                                      buildLabelValueRow(
+                                        'Payment Date Time',
+                                        order.paymentDateTime != null
+                                            ? provider.formatDateTime(
+                                                order.paymentDateTime!)
+                                            : '',
                                       ),
                                     ],
                                   ),
                                 ),
+                                const SizedBox(width: 12.0),
                                 Flexible(
                                   child: Column(
                                     crossAxisAlignment:
                                         CrossAxisAlignment.start,
                                     children: [
-                                      Row(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          const Text(
-                                            'Discount Percent: ',
-                                            style: TextStyle(
-                                                fontWeight: FontWeight.bold),
-                                          ),
-                                          Flexible(
-                                            child: Text(
-                                              '${order.discountPercent ?? ''}',
-                                              softWrap: true,
-                                              maxLines: null,
-                                            ),
-                                          ),
-                                        ],
+                                      buildLabelValueRow('Delivery Term',
+                                          order.deliveryTerm ?? ''),
+                                      buildLabelValueRow('Transaction Number',
+                                          order.transactionNumber ?? ''),
+                                      buildLabelValueRow('Micro Dealer Order',
+                                          order.microDealerOrder ?? ''),
+                                      buildLabelValueRow('Fulfillment Type',
+                                          order.fulfillmentType ?? ''),
+                                      buildLabelValueRow(
+                                          'No. of Boxes',
+                                          order.numberOfBoxes?.toString() ??
+                                              ''),
+                                      buildLabelValueRow(
+                                          'Total Quantity',
+                                          order.totalQuantity?.toString() ??
+                                              ''),
+                                      buildLabelValueRow('SKU Qty',
+                                          order.skuQty?.toString() ?? ''),
+                                      buildLabelValueRow('Calc Entry No.',
+                                          order.calcEntryNumber ?? ''),
+                                      buildLabelValueRow(
+                                          'Currency', order.currency ?? ''),
+                                    ],
+                                  ),
+                                ),
+                                const SizedBox(width: 12.0),
+                                Flexible(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      buildLabelValueRow(
+                                        'Dimensions',
+                                        '${order.length?.toString() ?? ''} x ${order.breadth?.toString() ?? ''} x ${order.height?.toString() ?? ''}',
                                       ),
-                                      const SizedBox(width: 8.0),
-                                      Row(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          const Text(
-                                            'Discount Amount: ',
-                                            style: TextStyle(
-                                                fontWeight: FontWeight.bold),
-                                          ),
-                                          Flexible(
-                                            child: Text(
-                                              '${order.discountAmount ?? ''}',
-                                              softWrap: true,
-                                              maxLines: null,
-                                            ),
-                                          ),
-                                        ],
+                                      buildLabelValueRow('AWB No.',
+                                          order.awbNumber?.toString() ?? ''),
+                                      buildLabelValueRow('Tracking Status',
+                                          order.trackingStatus ?? ''),
+                                      buildLabelValueRow(
+                                        'Customer ID',
+                                        order.customer?.customerId ?? '',
                                       ),
-                                      const SizedBox(width: 8.0),
-                                      Row(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          const Text(
-                                            'Tax Percent: ',
-                                            style: TextStyle(
-                                                fontWeight: FontWeight.bold),
-                                          ),
-                                          Flexible(
-                                            child: Text(
-                                              '${order.taxPercent ?? ''}',
-                                              softWrap: true,
-                                              maxLines: null,
-                                            ),
-                                          ),
-                                        ],
+                                      buildLabelValueRow(
+                                          'Full Name',
+                                          order.customer?.firstName !=
+                                                  order.customer?.lastName
+                                              ? '${order.customer?.firstName ?? ''} ${order.customer?.lastName ?? ''}'
+                                                  .trim()
+                                              : order.customer?.firstName ??
+                                                  ''),
+                                      buildLabelValueRow(
+                                        'Email',
+                                        order.customer?.email ?? '',
                                       ),
-                                      const SizedBox(width: 8.0),
-                                      Row(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          const Text(
-                                            'Shipping Address: ',
-                                            style: TextStyle(
-                                                fontWeight: FontWeight.bold),
-                                          ),
-                                          Flexible(
-                                            child: Text(
-                                              order.shippingAddress?.address1 ??
-                                                  'No address available',
-                                              softWrap: true,
-                                              maxLines: null,
-                                            ),
-                                          ),
-                                        ],
+                                      buildLabelValueRow(
+                                        'Phone',
+                                        order.customer?.phone?.toString() ?? '',
+                                      ),
+                                      buildLabelValueRow(
+                                        'GSTIN',
+                                        order.customer?.customerGstin ?? '',
                                       ),
                                     ],
                                   ),
                                 ),
+                                const SizedBox(width: 12.0),
                                 Flexible(
                                   child: Column(
                                     crossAxisAlignment:
                                         CrossAxisAlignment.start,
                                     children: [
+                                      const Text(
+                                        'Shipping Address:',
+                                        style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 12.0),
+                                      ),
                                       Row(
                                         crossAxisAlignment:
                                             CrossAxisAlignment.start,
                                         children: [
                                           const Text(
-                                            'Delivery: ',
+                                            'Address:',
                                             style: TextStyle(
-                                                fontWeight: FontWeight.bold),
+                                                color: AppColors.primaryBlue,
+                                                fontWeight: FontWeight.w400,
+                                                fontSize: 12.0),
                                           ),
                                           Flexible(
                                             child: Text(
-                                              order.freightCharge?.delhivery
+                                              [
+                                                order.shippingAddress?.address1,
+                                                order.shippingAddress?.address2,
+                                                order.shippingAddress?.city,
+                                                order.shippingAddress?.state,
+                                                order.shippingAddress?.country,
+                                                order.shippingAddress?.pincode
+                                                    ?.toString(),
+                                              ]
+                                                  .where((element) =>
+                                                      element != null &&
+                                                      element.isNotEmpty)
+                                                  .join(', '),
+                                              softWrap: true,
+                                              maxLines: 4,
+                                              style: const TextStyle(
+                                                  fontSize: 12.0),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      Row(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          const Text(
+                                            'Name:',
+                                            style: TextStyle(
+                                              color: AppColors.primaryBlue,
+                                              fontWeight: FontWeight.w400,
+                                              fontSize: 12.0,
+                                            ),
+                                          ),
+                                          Flexible(
+                                            child: Text(
+                                              order.shippingAddress
+                                                          ?.firstName !=
+                                                      order.shippingAddress
+                                                          ?.lastName
+                                                  ? '${order.shippingAddress?.firstName ?? ''} ${order.shippingAddress?.lastName ?? ''}'
+                                                      .trim()
+                                                  : order.shippingAddress
+                                                          ?.firstName ??
+                                                      '',
+                                              softWrap: true,
+                                              maxLines: 4,
+                                              style: const TextStyle(
+                                                fontSize: 12.0,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      Row(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          const Text(
+                                            'Phone:',
+                                            style: TextStyle(
+                                              color: AppColors.primaryBlue,
+                                              fontWeight: FontWeight.w400,
+                                              fontSize: 12.0,
+                                            ),
+                                          ),
+                                          Flexible(
+                                            child: Text(
+                                              order.shippingAddress?.phone
                                                       ?.toString() ??
                                                   '',
-                                              softWrap: true,
-                                              maxLines: null,
+                                              style: const TextStyle(
+                                                fontSize: 12.0,
+                                              ),
                                             ),
                                           ),
                                         ],
                                       ),
-                                      const SizedBox(width: 8.0),
                                       Row(
                                         crossAxisAlignment:
                                             CrossAxisAlignment.start,
                                         children: [
                                           const Text(
-                                            'Shiprocket: ',
+                                            'Email:',
                                             style: TextStyle(
-                                                fontWeight: FontWeight.bold),
+                                              color: AppColors.primaryBlue,
+                                              fontWeight: FontWeight.w400,
+                                              fontSize: 12.0,
+                                            ),
                                           ),
                                           Flexible(
                                             child: Text(
-                                              order.freightCharge?.shiprocket
+                                              order.shippingAddress?.email ??
+                                                  '',
+                                              style: const TextStyle(
+                                                fontSize: 12.0,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      Row(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          const Text(
+                                            'Country Code:',
+                                            style: TextStyle(
+                                              color: AppColors.primaryBlue,
+                                              fontWeight: FontWeight.w400,
+                                              fontSize: 12.0,
+                                            ),
+                                          ),
+                                          Flexible(
+                                            child: Text(
+                                              order.shippingAddress
+                                                      ?.countryCode ??
+                                                  '',
+                                              style: const TextStyle(
+                                                fontSize: 12.0,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      const SizedBox(height: 8.0),
+                                      const Text(
+                                        'Billing Address:',
+                                        style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 12.0),
+                                      ),
+                                      Row(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          const Text(
+                                            'Address:',
+                                            style: TextStyle(
+                                                color: AppColors.primaryBlue,
+                                                fontWeight: FontWeight.w400,
+                                                fontSize: 12.0),
+                                          ),
+                                          Flexible(
+                                            child: Text(
+                                              [
+                                                order.billingAddress?.address1,
+                                                order.billingAddress?.address2,
+                                                order.billingAddress?.city,
+                                                order.billingAddress?.state,
+                                                order.billingAddress?.country,
+                                                order.billingAddress?.pincode
+                                                    ?.toString(),
+                                              ]
+                                                  .where((element) =>
+                                                      element != null &&
+                                                      element.isNotEmpty)
+                                                  .join(', '),
+                                              softWrap: true,
+                                              maxLines: 4,
+                                              style: const TextStyle(
+                                                  fontSize: 12.0),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      Row(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          const Text(
+                                            'Name:',
+                                            style: TextStyle(
+                                              color: AppColors.primaryBlue,
+                                              fontWeight: FontWeight.w400,
+                                              fontSize: 12.0,
+                                            ),
+                                          ),
+                                          Flexible(
+                                            child: Text(
+                                              order.billingAddress?.firstName !=
+                                                      order.billingAddress
+                                                          ?.lastName
+                                                  ? '${order.billingAddress?.firstName ?? ''} ${order.billingAddress?.lastName ?? ''}'
+                                                      .trim()
+                                                  : order.billingAddress
+                                                          ?.firstName ??
+                                                      '',
+                                              softWrap: true,
+                                              maxLines: 4,
+                                              style: const TextStyle(
+                                                fontSize: 12.0,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      Row(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          const Text(
+                                            'Phone:',
+                                            style: TextStyle(
+                                              color: AppColors.primaryBlue,
+                                              fontWeight: FontWeight.w400,
+                                              fontSize: 12.0,
+                                            ),
+                                          ),
+                                          Flexible(
+                                            child: Text(
+                                              order.billingAddress?.phone
                                                       ?.toString() ??
                                                   '',
-                                              softWrap: true,
-                                              maxLines: null,
+                                              style: const TextStyle(
+                                                fontSize: 12.0,
+                                              ),
                                             ),
                                           ),
                                         ],
                                       ),
-                                      const SizedBox(width: 8.0),
                                       Row(
                                         crossAxisAlignment:
                                             CrossAxisAlignment.start,
                                         children: [
                                           const Text(
-                                            'Agent: ',
+                                            'Email:',
                                             style: TextStyle(
-                                                fontWeight: FontWeight.bold),
+                                              color: AppColors.primaryBlue,
+                                              fontWeight: FontWeight.w400,
+                                              fontSize: 12.0,
+                                            ),
                                           ),
                                           Flexible(
                                             child: Text(
-                                              order.agent ?? '',
-                                              softWrap: true,
-                                              maxLines: null,
+                                              order.billingAddress?.email ?? '',
+                                              style: const TextStyle(
+                                                fontSize: 12.0,
+                                              ),
                                             ),
                                           ),
                                         ],
                                       ),
-                                      const SizedBox(width: 8.0),
                                       Row(
                                         crossAxisAlignment:
                                             CrossAxisAlignment.start,
                                         children: [
                                           const Text(
-                                            'Notes: ',
+                                            'Country Code:',
                                             style: TextStyle(
-                                                fontWeight: FontWeight.bold),
+                                              color: AppColors.primaryBlue,
+                                              fontWeight: FontWeight.w400,
+                                              fontSize: 12.0,
+                                            ),
                                           ),
                                           Flexible(
                                             child: Text(
-                                              order.notes ?? '',
-                                              softWrap: true,
-                                              maxLines: null,
+                                              order.billingAddress
+                                                      ?.countryCode ??
+                                                  '',
+                                              style: const TextStyle(
+                                                fontSize: 12.0,
+                                              ),
                                             ),
                                           ),
                                         ],
@@ -1306,5 +1660,30 @@ class _OrdersNewPageState extends State<OrdersNewPage>
 void _showSnackbar(BuildContext context, String message) {
   ScaffoldMessenger.of(context).showSnackBar(
     SnackBar(content: Text(message)),
+  );
+}
+
+Widget buildLabelValueRow(String label, String? value) {
+  return Row(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Text(
+        '$label: ',
+        style: const TextStyle(
+          fontWeight: FontWeight.bold,
+          fontSize: 12.0,
+        ),
+      ),
+      Flexible(
+        child: Text(
+          value ?? '',
+          softWrap: true,
+          maxLines: null,
+          style: const TextStyle(
+            fontSize: 12.0,
+          ),
+        ),
+      ),
+    ],
   );
 }

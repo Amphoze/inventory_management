@@ -15,6 +15,10 @@ class OrdersProvider with ChangeNotifier {
   List<Order> failedOrders = []; // List to store fetched failed orders
   int totalFailedPages = 1; // Default value 1
   int totalReadyPages = 1;
+  String? _selectedCourier;
+  String? _selectedPayment;
+  String _expectedDeliveryDate = '';
+  String _paymentDateTime = '';
 
   int currentPage = 1;
   int totalPages = 1;
@@ -31,6 +35,39 @@ class OrdersProvider with ChangeNotifier {
   List<Order> _failedOrder = [];
 
   List<Order> get failedOrder => _failedOrder;
+
+  String? get selectedCourier => _selectedCourier;
+  String? get selectedPayment => _selectedPayment;
+  String get expectedDeliveryDate => _expectedDeliveryDate;
+  String get paymentDateTime => _paymentDateTime;
+
+  void updateExpectedDeliveryDate(String date) {
+    _expectedDeliveryDate = date;
+    notifyListeners();
+  }
+
+  void updatePaymentDateTime(String dateTime) {
+    _paymentDateTime = dateTime;
+    notifyListeners();
+  }
+
+  // Method to set the selected payment mode
+  void selectPayment(String? paymentMode) {
+    _selectedPayment = paymentMode;
+    notifyListeners();
+  }
+
+  // Method to set the selected courier
+  void selectCourier(String? courier) {
+    _selectedCourier = courier;
+    notifyListeners();
+  }
+
+  // Method to set an initial value for pre-filling
+  void setInitialCourier(String? courier) {
+    _selectedCourier = courier;
+    notifyListeners();
+  }
 
   // New method to reset selections and counts
   void resetSelections() {
@@ -383,6 +420,17 @@ class OrdersProvider with ChangeNotifier {
     String month = date.month.toString().padLeft(2, '0');
     String day = date.day.toString().padLeft(2, '0');
     return '$day-$month-$year';
+  }
+
+  String formatDateTime(DateTime date) {
+    String year = date.year.toString();
+    String month = date.month.toString().padLeft(2, '0');
+    String day = date.day.toString().padLeft(2, '0');
+    String hour = date.hour.toString().padLeft(2, '0');
+    String minute = date.minute.toString().padLeft(2, '0');
+    String second = date.second.toString().padLeft(2, '0');
+
+    return '$day-$month-$year $hour:$minute:$second';
   }
 
   Future<List<Order>> searchFailedOrder(String searchTerm) async {
