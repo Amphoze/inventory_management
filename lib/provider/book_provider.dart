@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:inventory_management/model/orders_model.dart';
@@ -121,7 +122,8 @@ class BookProvider with ChangeNotifier {
   }
 
   // Function to book orders
-  Future<String> bookOrders(BuildContext context, List<String> orderIds) async {
+  Future<String> bookOrders(
+      BuildContext context, List<String> orderIds, String lowerCase) async {
     const String baseUrl =
         'https://inventory-management-backend-s37u.onrender.com';
     const String bookOrderUrl = '$baseUrl/orders/book';
@@ -140,7 +142,10 @@ class BookProvider with ChangeNotifier {
     // Request body containing the order IDs
     final body = json.encode({
       'orderIds': orderIds,
+      'service': lowerCase,
     });
+    ;
+    log(body);
 
     try {
       // Make the POST request to book the orders

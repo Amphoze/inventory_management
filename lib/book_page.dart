@@ -204,7 +204,7 @@ class _BookPageState extends State<BookPage>
     return Column(
       children: [
         // Add the Confirm button here
-        _buildConfirmButton(orderType),
+        _buildConfirmButtons(orderType),
         _buildTableHeader(orderType, selectedCount),
         Expanded(
           child: bookProvider.isLoadingB2B || bookProvider.isLoadingB2C
@@ -340,71 +340,95 @@ class _BookPageState extends State<BookPage>
     );
   }
 
-  Widget _buildConfirmButton(String orderType) {
+  Widget _buildConfirmButtons(String orderType) {
     return Align(
       alignment: Alignment.topRight,
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-        child: ElevatedButton(
-          onPressed: () async {
-            final bookProvider =
-                Provider.of<BookProvider>(context, listen: false);
-            List<String> selectedOrderIds = [];
-
-            // Collect selected order IDs based on the order type
-            if (orderType == 'B2B') {
-              selectedOrderIds = bookProvider.ordersB2B
-                  .where((order) => order.isSelected)
-                  .map((order) => order.orderId!)
-                  .toList();
-            } else {
-              selectedOrderIds = bookProvider.ordersB2C
-                  .where((order) => order.isSelected)
-                  .map((order) => order.orderId!)
-                  .toList();
-            }
-
-            // If no orders are selected, show a message
-            if (selectedOrderIds.isEmpty) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('No orders selected'),
-                  backgroundColor: AppColors.orange,
-                ),
-              );
-              return;
-            }
-
-            // Confirm the selected orders using the new API
-            try {
-              String responseMessage =
-                  await bookProvider.bookOrders(context, selectedOrderIds);
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(responseMessage),
-                  backgroundColor: AppColors.green,
-                ),
-              );
-
-              // Refresh the orders after booking
-              await bookProvider.fetchOrders(
-                  orderType,
-                  orderType == 'B2B'
-                      ? bookProvider.currentPageB2B
-                      : bookProvider.currentPageB2C);
-            } catch (e) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text('Failed to book orders: $e'),
-                  backgroundColor: AppColors.cardsred,
-                ),
-              );
-            }
-          },
-          child: const Text('Shiprocket'),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.end,
+          children: [
+            _buildBookButton('Delhivery', orderType, AppColors.primaryBlue),
+            const SizedBox(width: 8),
+            _buildBookButton('Shiprocket', orderType, AppColors.primaryBlue),
+            const SizedBox(width: 8),
+            _buildBookButton('Others', orderType, AppColors.primaryBlue),
+          ],
         ),
       ),
     );
+  }
+
+  Widget _buildBookButton(String provider, String orderType, Color color) {
+    return ElevatedButton(
+      onPressed: () async {
+        await _handleBooking(provider, orderType);
+      },
+      style: ElevatedButton.styleFrom(
+        backgroundColor: color,
+        foregroundColor: Colors.white,
+      ),
+      child: Text(provider),
+    );
+  }
+
+  Future<void> _handleBooking(String provider, String orderType) async {
+    final bookProvider = Provider.of<BookProvider>(context, listen: false);
+    List<String> selectedOrderIds = [];
+
+    // Collect selected order IDs based on the order type
+    if (orderType == 'B2B') {
+      selectedOrderIds = bookProvider.ordersB2B
+          .where((order) => order.isSelected)
+          .map((order) => order.orderId!)
+          .toList();
+    } else {
+      selectedOrderIds = bookProvider.ordersB2C
+          .where((order) => order.isSelected)
+          .map((order) => order.orderId!)
+          .toList();
+    }
+
+    // If no orders are selected, show a message
+    if (selectedOrderIds.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('No orders selected'),
+          backgroundColor: AppColors.orange,
+        ),
+      );
+      return;
+    }
+
+    // Confirm the selected orders using the new API
+    try {
+      String responseMessage = await bookProvider.bookOrders(
+        context,
+        selectedOrderIds,
+        provider.toLowerCase(),
+      );
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(responseMessage),
+          backgroundColor: AppColors.green,
+        ),
+      );
+
+      // Refresh the orders after booking
+      await bookProvider.fetchOrders(
+        orderType,
+        orderType == 'B2B'
+            ? bookProvider.currentPageB2B
+            : bookProvider.currentPageB2C,
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to book orders with $provider: $e'),
+          backgroundColor: AppColors.cardsred,
+        ),
+      );
+    }
   }
 
   Widget _buildTableHeader(String orderType, int selectedCount) {
