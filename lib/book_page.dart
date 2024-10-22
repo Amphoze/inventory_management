@@ -61,8 +61,8 @@ class _BookPageState extends State<BookPage>
           child: TabBarView(
             controller: _tabController,
             children: [
-              _buildOrderList('B2B'),
               _buildOrderList('B2C'),
+              _buildOrderList('B2B'),
             ],
           ),
         ),
@@ -178,8 +178,8 @@ class _BookPageState extends State<BookPage>
       child: TabBar(
         controller: _tabController,
         tabs: const [
-          Tab(text: 'B2B'),
           Tab(text: 'B2C'),
+          Tab(text: 'B2B'),
         ],
         indicatorColor: Colors.blue,
         labelColor: Colors.black,

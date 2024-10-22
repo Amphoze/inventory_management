@@ -528,10 +528,18 @@ class _OrdersNewPageState extends State<OrdersNewPage>
                                         'Dimensions',
                                         '${order.length?.toString() ?? ''} x ${order.breadth?.toString() ?? ''} x ${order.height?.toString() ?? ''}',
                                       ),
-                                      buildLabelValueRow('AWB No.',
-                                          order.awbNumber?.toString() ?? ''),
                                       buildLabelValueRow('Tracking Status',
                                           order.trackingStatus ?? ''),
+                                      const SizedBox(
+                                        height: 7,
+                                      ),
+                                      const Text(
+                                        'Customer Details:',
+                                        style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 12.0,
+                                            color: AppColors.primaryBlue),
+                                      ),
                                       buildLabelValueRow(
                                         'Customer ID',
                                         order.customer?.customerId ?? '',
@@ -569,287 +577,90 @@ class _OrdersNewPageState extends State<OrdersNewPage>
                                         'Shipping Address:',
                                         style: TextStyle(
                                             fontWeight: FontWeight.bold,
-                                            fontSize: 12.0),
+                                            fontSize: 12.0,
+                                            color: AppColors.primaryBlue),
                                       ),
-                                      Row(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          const Text(
-                                            'Address:',
-                                            style: TextStyle(
-                                                color: AppColors.primaryBlue,
-                                                fontWeight: FontWeight.w400,
-                                                fontSize: 12.0),
-                                          ),
-                                          Flexible(
-                                            child: Text(
-                                              [
-                                                order.shippingAddress?.address1,
-                                                order.shippingAddress?.address2,
-                                                order.shippingAddress?.city,
-                                                order.shippingAddress?.state,
-                                                order.shippingAddress?.country,
-                                                order.shippingAddress?.pincode
-                                                    ?.toString(),
-                                              ]
-                                                  .where((element) =>
-                                                      element != null &&
-                                                      element.isNotEmpty)
-                                                  .join(', '),
-                                              softWrap: true,
-                                              maxLines: 4,
-                                              style: const TextStyle(
-                                                  fontSize: 12.0),
-                                            ),
-                                          ),
-                                        ],
+                                      buildLabelValueRow(
+                                        'Address',
+                                        [
+                                          order.shippingAddress?.address1,
+                                          order.shippingAddress?.address2,
+                                          order.shippingAddress?.city,
+                                          order.shippingAddress?.state,
+                                          order.shippingAddress?.country,
+                                          order.shippingAddress?.pincode
+                                              ?.toString(),
+                                        ]
+                                            .where((element) =>
+                                                element != null &&
+                                                element.isNotEmpty)
+                                            .join(', '),
                                       ),
-                                      Row(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          const Text(
-                                            'Name:',
-                                            style: TextStyle(
-                                              color: AppColors.primaryBlue,
-                                              fontWeight: FontWeight.w400,
-                                              fontSize: 12.0,
-                                            ),
-                                          ),
-                                          Flexible(
-                                            child: Text(
-                                              order.shippingAddress
-                                                          ?.firstName !=
-                                                      order.shippingAddress
-                                                          ?.lastName
-                                                  ? '${order.shippingAddress?.firstName ?? ''} ${order.shippingAddress?.lastName ?? ''}'
-                                                      .trim()
-                                                  : order.shippingAddress
-                                                          ?.firstName ??
-                                                      '',
-                                              softWrap: true,
-                                              maxLines: 4,
-                                              style: const TextStyle(
-                                                fontSize: 12.0,
-                                              ),
-                                            ),
-                                          ),
-                                        ],
+                                      buildLabelValueRow(
+                                        'Name',
+                                        order.shippingAddress?.firstName !=
+                                                order.shippingAddress?.lastName
+                                            ? '${order.shippingAddress?.firstName ?? ''} ${order.shippingAddress?.lastName ?? ''}'
+                                                .trim()
+                                            : order.shippingAddress
+                                                    ?.firstName ??
+                                                '',
                                       ),
-                                      Row(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          const Text(
-                                            'Phone:',
-                                            style: TextStyle(
-                                              color: AppColors.primaryBlue,
-                                              fontWeight: FontWeight.w400,
-                                              fontSize: 12.0,
-                                            ),
-                                          ),
-                                          Flexible(
-                                            child: Text(
-                                              order.shippingAddress?.phone
-                                                      ?.toString() ??
-                                                  '',
-                                              style: const TextStyle(
-                                                fontSize: 12.0,
-                                              ),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                      Row(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          const Text(
-                                            'Email:',
-                                            style: TextStyle(
-                                              color: AppColors.primaryBlue,
-                                              fontWeight: FontWeight.w400,
-                                              fontSize: 12.0,
-                                            ),
-                                          ),
-                                          Flexible(
-                                            child: Text(
-                                              order.shippingAddress?.email ??
-                                                  '',
-                                              style: const TextStyle(
-                                                fontSize: 12.0,
-                                              ),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                      Row(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          const Text(
-                                            'Country Code:',
-                                            style: TextStyle(
-                                              color: AppColors.primaryBlue,
-                                              fontWeight: FontWeight.w400,
-                                              fontSize: 12.0,
-                                            ),
-                                          ),
-                                          Flexible(
-                                            child: Text(
-                                              order.shippingAddress
-                                                      ?.countryCode ??
-                                                  '',
-                                              style: const TextStyle(
-                                                fontSize: 12.0,
-                                              ),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
+                                      buildLabelValueRow(
+                                          'Phone',
+                                          order.shippingAddress?.phone
+                                                  ?.toString() ??
+                                              ''),
+                                      buildLabelValueRow('Email',
+                                          order.shippingAddress?.email ?? ''),
+                                      buildLabelValueRow(
+                                          'Country Code',
+                                          order.shippingAddress?.countryCode ??
+                                              ''),
                                       const SizedBox(height: 8.0),
                                       const Text(
                                         'Billing Address:',
                                         style: TextStyle(
                                             fontWeight: FontWeight.bold,
-                                            fontSize: 12.0),
+                                            fontSize: 12.0,
+                                            color: AppColors.primaryBlue),
                                       ),
-                                      Row(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          const Text(
-                                            'Address:',
-                                            style: TextStyle(
-                                                color: AppColors.primaryBlue,
-                                                fontWeight: FontWeight.w400,
-                                                fontSize: 12.0),
-                                          ),
-                                          Flexible(
-                                            child: Text(
-                                              [
-                                                order.billingAddress?.address1,
-                                                order.billingAddress?.address2,
-                                                order.billingAddress?.city,
-                                                order.billingAddress?.state,
-                                                order.billingAddress?.country,
-                                                order.billingAddress?.pincode
-                                                    ?.toString(),
-                                              ]
-                                                  .where((element) =>
-                                                      element != null &&
-                                                      element.isNotEmpty)
-                                                  .join(', '),
-                                              softWrap: true,
-                                              maxLines: 4,
-                                              style: const TextStyle(
-                                                  fontSize: 12.0),
-                                            ),
-                                          ),
-                                        ],
+                                      buildLabelValueRow(
+                                        'Address',
+                                        [
+                                          order.billingAddress?.address1,
+                                          order.billingAddress?.address2,
+                                          order.billingAddress?.city,
+                                          order.billingAddress?.state,
+                                          order.billingAddress?.country,
+                                          order.billingAddress?.pincode
+                                              ?.toString(),
+                                        ]
+                                            .where((element) =>
+                                                element != null &&
+                                                element.isNotEmpty)
+                                            .join(', '),
                                       ),
-                                      Row(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          const Text(
-                                            'Name:',
-                                            style: TextStyle(
-                                              color: AppColors.primaryBlue,
-                                              fontWeight: FontWeight.w400,
-                                              fontSize: 12.0,
-                                            ),
-                                          ),
-                                          Flexible(
-                                            child: Text(
-                                              order.billingAddress?.firstName !=
-                                                      order.billingAddress
-                                                          ?.lastName
-                                                  ? '${order.billingAddress?.firstName ?? ''} ${order.billingAddress?.lastName ?? ''}'
-                                                      .trim()
-                                                  : order.billingAddress
-                                                          ?.firstName ??
-                                                      '',
-                                              softWrap: true,
-                                              maxLines: 4,
-                                              style: const TextStyle(
-                                                fontSize: 12.0,
-                                              ),
-                                            ),
-                                          ),
-                                        ],
+                                      buildLabelValueRow(
+                                        'Name',
+                                        order.billingAddress?.firstName !=
+                                                order.billingAddress?.lastName
+                                            ? '${order.billingAddress?.firstName ?? ''} ${order.billingAddress?.lastName ?? ''}'
+                                                .trim()
+                                            : order.billingAddress?.firstName ??
+                                                '',
                                       ),
-                                      Row(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          const Text(
-                                            'Phone:',
-                                            style: TextStyle(
-                                              color: AppColors.primaryBlue,
-                                              fontWeight: FontWeight.w400,
-                                              fontSize: 12.0,
-                                            ),
-                                          ),
-                                          Flexible(
-                                            child: Text(
-                                              order.billingAddress?.phone
-                                                      ?.toString() ??
-                                                  '',
-                                              style: const TextStyle(
-                                                fontSize: 12.0,
-                                              ),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                      Row(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          const Text(
-                                            'Email:',
-                                            style: TextStyle(
-                                              color: AppColors.primaryBlue,
-                                              fontWeight: FontWeight.w400,
-                                              fontSize: 12.0,
-                                            ),
-                                          ),
-                                          Flexible(
-                                            child: Text(
-                                              order.billingAddress?.email ?? '',
-                                              style: const TextStyle(
-                                                fontSize: 12.0,
-                                              ),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                      Row(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          const Text(
-                                            'Country Code:',
-                                            style: TextStyle(
-                                              color: AppColors.primaryBlue,
-                                              fontWeight: FontWeight.w400,
-                                              fontSize: 12.0,
-                                            ),
-                                          ),
-                                          Flexible(
-                                            child: Text(
-                                              order.billingAddress
-                                                      ?.countryCode ??
-                                                  '',
-                                              style: const TextStyle(
-                                                fontSize: 12.0,
-                                              ),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
+                                      buildLabelValueRow(
+                                          'Phone',
+                                          order.billingAddress?.phone
+                                                  ?.toString() ??
+                                              ''),
+                                      buildLabelValueRow('Email',
+                                          order.billingAddress?.email ?? ''),
+                                      buildLabelValueRow(
+                                          'Country Code',
+                                          order.billingAddress?.countryCode ??
+                                              ''),
                                     ],
                                   ),
                                 ),
@@ -1251,10 +1062,18 @@ class _OrdersNewPageState extends State<OrdersNewPage>
                                         'Dimensions',
                                         '${order.length?.toString() ?? ''} x ${order.breadth?.toString() ?? ''} x ${order.height?.toString() ?? ''}',
                                       ),
-                                      buildLabelValueRow('AWB No.',
-                                          order.awbNumber?.toString() ?? ''),
                                       buildLabelValueRow('Tracking Status',
                                           order.trackingStatus ?? ''),
+                                      const SizedBox(
+                                        height: 7,
+                                      ),
+                                      const Text(
+                                        'Customer Details:',
+                                        style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 12.0,
+                                            color: AppColors.primaryBlue),
+                                      ),
                                       buildLabelValueRow(
                                         'Customer ID',
                                         order.customer?.customerId ?? '',
@@ -1292,287 +1111,90 @@ class _OrdersNewPageState extends State<OrdersNewPage>
                                         'Shipping Address:',
                                         style: TextStyle(
                                             fontWeight: FontWeight.bold,
-                                            fontSize: 12.0),
+                                            fontSize: 12.0,
+                                            color: AppColors.primaryBlue),
                                       ),
-                                      Row(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          const Text(
-                                            'Address:',
-                                            style: TextStyle(
-                                                color: AppColors.primaryBlue,
-                                                fontWeight: FontWeight.w400,
-                                                fontSize: 12.0),
-                                          ),
-                                          Flexible(
-                                            child: Text(
-                                              [
-                                                order.shippingAddress?.address1,
-                                                order.shippingAddress?.address2,
-                                                order.shippingAddress?.city,
-                                                order.shippingAddress?.state,
-                                                order.shippingAddress?.country,
-                                                order.shippingAddress?.pincode
-                                                    ?.toString(),
-                                              ]
-                                                  .where((element) =>
-                                                      element != null &&
-                                                      element.isNotEmpty)
-                                                  .join(', '),
-                                              softWrap: true,
-                                              maxLines: 4,
-                                              style: const TextStyle(
-                                                  fontSize: 12.0),
-                                            ),
-                                          ),
-                                        ],
+                                      buildLabelValueRow(
+                                        'Address',
+                                        [
+                                          order.shippingAddress?.address1,
+                                          order.shippingAddress?.address2,
+                                          order.shippingAddress?.city,
+                                          order.shippingAddress?.state,
+                                          order.shippingAddress?.country,
+                                          order.shippingAddress?.pincode
+                                              ?.toString(),
+                                        ]
+                                            .where((element) =>
+                                                element != null &&
+                                                element.isNotEmpty)
+                                            .join(', '),
                                       ),
-                                      Row(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          const Text(
-                                            'Name:',
-                                            style: TextStyle(
-                                              color: AppColors.primaryBlue,
-                                              fontWeight: FontWeight.w400,
-                                              fontSize: 12.0,
-                                            ),
-                                          ),
-                                          Flexible(
-                                            child: Text(
-                                              order.shippingAddress
-                                                          ?.firstName !=
-                                                      order.shippingAddress
-                                                          ?.lastName
-                                                  ? '${order.shippingAddress?.firstName ?? ''} ${order.shippingAddress?.lastName ?? ''}'
-                                                      .trim()
-                                                  : order.shippingAddress
-                                                          ?.firstName ??
-                                                      '',
-                                              softWrap: true,
-                                              maxLines: 4,
-                                              style: const TextStyle(
-                                                fontSize: 12.0,
-                                              ),
-                                            ),
-                                          ),
-                                        ],
+                                      buildLabelValueRow(
+                                        'Name',
+                                        order.shippingAddress?.firstName !=
+                                                order.shippingAddress?.lastName
+                                            ? '${order.shippingAddress?.firstName ?? ''} ${order.shippingAddress?.lastName ?? ''}'
+                                                .trim()
+                                            : order.shippingAddress
+                                                    ?.firstName ??
+                                                '',
                                       ),
-                                      Row(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          const Text(
-                                            'Phone:',
-                                            style: TextStyle(
-                                              color: AppColors.primaryBlue,
-                                              fontWeight: FontWeight.w400,
-                                              fontSize: 12.0,
-                                            ),
-                                          ),
-                                          Flexible(
-                                            child: Text(
-                                              order.shippingAddress?.phone
-                                                      ?.toString() ??
-                                                  '',
-                                              style: const TextStyle(
-                                                fontSize: 12.0,
-                                              ),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                      Row(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          const Text(
-                                            'Email:',
-                                            style: TextStyle(
-                                              color: AppColors.primaryBlue,
-                                              fontWeight: FontWeight.w400,
-                                              fontSize: 12.0,
-                                            ),
-                                          ),
-                                          Flexible(
-                                            child: Text(
-                                              order.shippingAddress?.email ??
-                                                  '',
-                                              style: const TextStyle(
-                                                fontSize: 12.0,
-                                              ),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                      Row(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          const Text(
-                                            'Country Code:',
-                                            style: TextStyle(
-                                              color: AppColors.primaryBlue,
-                                              fontWeight: FontWeight.w400,
-                                              fontSize: 12.0,
-                                            ),
-                                          ),
-                                          Flexible(
-                                            child: Text(
-                                              order.shippingAddress
-                                                      ?.countryCode ??
-                                                  '',
-                                              style: const TextStyle(
-                                                fontSize: 12.0,
-                                              ),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
+                                      buildLabelValueRow(
+                                          'Phone',
+                                          order.shippingAddress?.phone
+                                                  ?.toString() ??
+                                              ''),
+                                      buildLabelValueRow('Email',
+                                          order.shippingAddress?.email ?? ''),
+                                      buildLabelValueRow(
+                                          'Country Code',
+                                          order.shippingAddress?.countryCode ??
+                                              ''),
                                       const SizedBox(height: 8.0),
                                       const Text(
                                         'Billing Address:',
                                         style: TextStyle(
                                             fontWeight: FontWeight.bold,
-                                            fontSize: 12.0),
+                                            fontSize: 12.0,
+                                            color: AppColors.primaryBlue),
                                       ),
-                                      Row(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          const Text(
-                                            'Address:',
-                                            style: TextStyle(
-                                                color: AppColors.primaryBlue,
-                                                fontWeight: FontWeight.w400,
-                                                fontSize: 12.0),
-                                          ),
-                                          Flexible(
-                                            child: Text(
-                                              [
-                                                order.billingAddress?.address1,
-                                                order.billingAddress?.address2,
-                                                order.billingAddress?.city,
-                                                order.billingAddress?.state,
-                                                order.billingAddress?.country,
-                                                order.billingAddress?.pincode
-                                                    ?.toString(),
-                                              ]
-                                                  .where((element) =>
-                                                      element != null &&
-                                                      element.isNotEmpty)
-                                                  .join(', '),
-                                              softWrap: true,
-                                              maxLines: 4,
-                                              style: const TextStyle(
-                                                  fontSize: 12.0),
-                                            ),
-                                          ),
-                                        ],
+                                      buildLabelValueRow(
+                                        'Address',
+                                        [
+                                          order.billingAddress?.address1,
+                                          order.billingAddress?.address2,
+                                          order.billingAddress?.city,
+                                          order.billingAddress?.state,
+                                          order.billingAddress?.country,
+                                          order.billingAddress?.pincode
+                                              ?.toString(),
+                                        ]
+                                            .where((element) =>
+                                                element != null &&
+                                                element.isNotEmpty)
+                                            .join(', '),
                                       ),
-                                      Row(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          const Text(
-                                            'Name:',
-                                            style: TextStyle(
-                                              color: AppColors.primaryBlue,
-                                              fontWeight: FontWeight.w400,
-                                              fontSize: 12.0,
-                                            ),
-                                          ),
-                                          Flexible(
-                                            child: Text(
-                                              order.billingAddress?.firstName !=
-                                                      order.billingAddress
-                                                          ?.lastName
-                                                  ? '${order.billingAddress?.firstName ?? ''} ${order.billingAddress?.lastName ?? ''}'
-                                                      .trim()
-                                                  : order.billingAddress
-                                                          ?.firstName ??
-                                                      '',
-                                              softWrap: true,
-                                              maxLines: 4,
-                                              style: const TextStyle(
-                                                fontSize: 12.0,
-                                              ),
-                                            ),
-                                          ),
-                                        ],
+                                      buildLabelValueRow(
+                                        'Name',
+                                        order.billingAddress?.firstName !=
+                                                order.billingAddress?.lastName
+                                            ? '${order.billingAddress?.firstName ?? ''} ${order.billingAddress?.lastName ?? ''}'
+                                                .trim()
+                                            : order.billingAddress?.firstName ??
+                                                '',
                                       ),
-                                      Row(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          const Text(
-                                            'Phone:',
-                                            style: TextStyle(
-                                              color: AppColors.primaryBlue,
-                                              fontWeight: FontWeight.w400,
-                                              fontSize: 12.0,
-                                            ),
-                                          ),
-                                          Flexible(
-                                            child: Text(
-                                              order.billingAddress?.phone
-                                                      ?.toString() ??
-                                                  '',
-                                              style: const TextStyle(
-                                                fontSize: 12.0,
-                                              ),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                      Row(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          const Text(
-                                            'Email:',
-                                            style: TextStyle(
-                                              color: AppColors.primaryBlue,
-                                              fontWeight: FontWeight.w400,
-                                              fontSize: 12.0,
-                                            ),
-                                          ),
-                                          Flexible(
-                                            child: Text(
-                                              order.billingAddress?.email ?? '',
-                                              style: const TextStyle(
-                                                fontSize: 12.0,
-                                              ),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                      Row(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          const Text(
-                                            'Country Code:',
-                                            style: TextStyle(
-                                              color: AppColors.primaryBlue,
-                                              fontWeight: FontWeight.w400,
-                                              fontSize: 12.0,
-                                            ),
-                                          ),
-                                          Flexible(
-                                            child: Text(
-                                              order.billingAddress
-                                                      ?.countryCode ??
-                                                  '',
-                                              style: const TextStyle(
-                                                fontSize: 12.0,
-                                              ),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
+                                      buildLabelValueRow(
+                                          'Phone',
+                                          order.billingAddress?.phone
+                                                  ?.toString() ??
+                                              ''),
+                                      buildLabelValueRow('Email',
+                                          order.billingAddress?.email ?? ''),
+                                      buildLabelValueRow(
+                                          'Country Code',
+                                          order.billingAddress?.countryCode ??
+                                              ''),
                                     ],
                                   ),
                                 ),

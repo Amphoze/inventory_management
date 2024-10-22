@@ -17,8 +17,11 @@ class OrdersProvider with ChangeNotifier {
   int totalReadyPages = 1;
   String? _selectedCourier;
   String? _selectedPayment;
+  String? _selectedFilter;
+  String? _selectedMarketplace;
   String _expectedDeliveryDate = '';
   String _paymentDateTime = '';
+  String _normalDate = '';
 
   int currentPage = 1;
   int totalPages = 1;
@@ -38,8 +41,16 @@ class OrdersProvider with ChangeNotifier {
 
   String? get selectedCourier => _selectedCourier;
   String? get selectedPayment => _selectedPayment;
+  String? get selectedMarketplace => _selectedMarketplace;
+  String? get selectedFilter => _selectedFilter;
   String get expectedDeliveryDate => _expectedDeliveryDate;
   String get paymentDateTime => _paymentDateTime;
+  String get normalDate => _normalDate;
+
+  void updateDate(String date) {
+    _normalDate = date;
+    notifyListeners();
+  }
 
   void updateExpectedDeliveryDate(String date) {
     _expectedDeliveryDate = date;
@@ -57,6 +68,38 @@ class OrdersProvider with ChangeNotifier {
     notifyListeners();
   }
 
+  // Method to set an initial value for pre-filling
+  void setInitialPaymentMode(String? paymentMode) {
+    _selectedPayment =
+        (paymentMode == null || paymentMode.isEmpty) ? null : paymentMode;
+    notifyListeners();
+  }
+
+  // Method to set the selected filter
+  void selectFilter(String? filter) {
+    _selectedFilter = filter;
+    notifyListeners();
+  }
+
+  // Method to set an initial value for pre-filling
+  void setInitialFilter(String? filter) {
+    _selectedFilter = (filter == null || filter.isEmpty) ? null : filter;
+    notifyListeners();
+  }
+
+  // Method to set the selected Marketplace
+  void selectMarketplace(String? marketplace) {
+    _selectedMarketplace = marketplace;
+    notifyListeners();
+  }
+
+  // Method to set an initial value for pre-filling
+  void setInitialMarketplace(String? marketplace) {
+    _selectedMarketplace =
+        (marketplace == null || marketplace.isEmpty) ? null : marketplace;
+    notifyListeners();
+  }
+
   // Method to set the selected courier
   void selectCourier(String? courier) {
     _selectedCourier = courier;
@@ -65,7 +108,7 @@ class OrdersProvider with ChangeNotifier {
 
   // Method to set an initial value for pre-filling
   void setInitialCourier(String? courier) {
-    _selectedCourier = courier;
+    _selectedCourier = (courier == null || courier.isEmpty) ? null : courier;
     notifyListeners();
   }
 
@@ -81,6 +124,54 @@ class OrdersProvider with ChangeNotifier {
     selectedReadyItemsCount = 0;
     selectedFailedItemsCount = 0;
 
+    notifyListeners();
+  }
+
+  // Function to update an order
+  Future<void> updateOrder(String id, Map<String, dynamic> updatedData) async {
+    // Get the auth token
+    final token = await _getToken();
+
+    // Check if the token is valid
+    if (token == null || token.isEmpty) {
+      isLoading = false;
+      notifyListeners();
+      print('Token is missing. Please log in again.');
+      return;
+    }
+
+    final url =
+        'https://inventory-management-backend-s37u.onrender.com/orders/$id';
+    try {
+      final response = await http.put(
+        Uri.parse(url),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+        body: json.encode(updatedData),
+      );
+
+      if (response.statusCode == 200) {
+        print('Order updated successfully');
+
+        await fetchFailedOrders();
+        await fetchReadyOrders();
+
+        notifyListeners();
+      } else if (response.statusCode == 400) {
+        final responseBody = json.decode(response.body);
+        if (responseBody['message'] == 'orderId and status are required.') {
+          print('Error: Order ID and status are required.');
+        }
+      } else {
+        print('Failed to update order: ${response.body}');
+        return;
+      }
+    } catch (error) {
+      print('Error updating order: $error');
+      throw error;
+    }
     notifyListeners();
   }
 
@@ -416,6 +507,7 @@ class OrdersProvider with ChangeNotifier {
 
   // Format date
   String formatDate(DateTime date) {
+    if (date == null) return '';
     String year = date.year.toString();
     String month = date.month.toString().padLeft(2, '0');
     String day = date.day.toString().padLeft(2, '0');
@@ -423,6 +515,7 @@ class OrdersProvider with ChangeNotifier {
   }
 
   String formatDateTime(DateTime date) {
+    if (date == null) return '';
     String year = date.year.toString();
     String month = date.month.toString().padLeft(2, '0');
     String day = date.day.toString().padLeft(2, '0');
