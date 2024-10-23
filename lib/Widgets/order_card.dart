@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:inventory_management/Custom-Files/colors.dart'; // Adjust the import based on your project structure
 import 'package:inventory_management/edit_order_page.dart';
-import 'package:inventory_management/model/orders_model.dart'; // Adjust the import based on your project structure
+import 'package:inventory_management/model/orders_model.dart';
+import 'package:provider/provider.dart';
+
+import '../provider/orders_provider.dart'; // Adjust the import based on your project structure
 
 class OrderCard extends StatelessWidget {
   final Order order;
@@ -15,6 +18,7 @@ class OrderCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final provider = Provider.of<OrdersProvider>(context, listen: false);
     print('Building OrderCard for Order ID: ${order.id}');
     return Card(
       color: AppColors.white,
@@ -72,14 +76,113 @@ class OrderCard extends StatelessWidget {
                 //Text('Tracking Status: ${order.trackingStatus}'),
               ],
             ),
-
+            if (isBookPage) ...[
+              const SizedBox(height: 8.0),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          const Text(
+                            'Date: ',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.black, // Label color black
+                            ),
+                          ),
+                          Text(
+                            provider.formatDate(order.date!),
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: AppColors.primaryBlue, // Value color blue
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          const Text(
+                            'Total Amount: ',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.black, // Label color black
+                            ),
+                          ),
+                          Text(
+                            'Rs. ${order.totalAmount ?? ''}',
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: AppColors.primaryBlue, // Value color blue
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8.0),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          const Text(
+                            'Total Items: ',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.black, // Label color black
+                            ),
+                          ),
+                          Text(
+                            '${order.items.fold(0, (total, item) => total + item.qty!)}',
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: AppColors.primaryBlue, // Value color blue
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          const Text(
+                            'Total Weight: ',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.black, // Label color black
+                            ),
+                          ),
+                          Text(
+                            '${order.totalWeight ?? ''}',
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: AppColors.primaryBlue, // Value color blue
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ],
             const SizedBox(height: 6.0),
-            // New Row for Billing Address
-            _buildAddressRow('Billing Address:', order.billingAddress),
-            const SizedBox(height: 6.0),
-            // New Row for Shipping Address
-            _buildAddressRow('Shipping Address:', order.shippingAddress),
-            const SizedBox(height: 6.0), // Smaller spacing between elements
             ListView.builder(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
