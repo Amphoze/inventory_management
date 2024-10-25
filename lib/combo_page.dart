@@ -46,9 +46,16 @@ class _ComboPageState extends State<ComboPage> {
     ComboProvider comboProvider =
         Provider.of<ComboProvider>(context, listen: false);
 
-    List<String?> selectedProductIds =
-        comboProvider.selectedProducts.map((product) => product.id).toList();
+    // List<Map<String,String?> selectedProductIds =
+    //     comboProvider.selectedProducts.map((product) => product.id).toList();
+    List<Map<String, String>> selectedProductIds =
+        comboProvider.selectedProducts.map((product) {
+      return {'product': product.id ?? ''};
+    }).toList();
 
+    for (int i = 0; i < selectedProductIds.length; i++) {
+      print("i am creating combo ${selectedProductIds[i]}");
+    }
     final combo = Combo(
       id: _idController.text,
       products: selectedProductIds,
@@ -129,7 +136,7 @@ class _ComboPageState extends State<ComboPage> {
 
   //   print("length of it is here ${comboProvider!.item.length}");
   //   // setState(() {
-  
+
   //   // });
   // }
 

@@ -39,7 +39,7 @@ class DashboardPage extends StatefulWidget {
 }
 
 class _DashboardPageState extends State<DashboardPage> {
-  String selectedDrawerItem = 'Dashboard';
+  String selectedDrawerItem = 'Products';
   DateTime? selectedDate; // State variable to hold the selected date
   DateTime?
       lastUpdatedTime; // Make sure this is initialized properly in your actual code
@@ -234,8 +234,7 @@ class _DashboardPageState extends State<DashboardPage> {
       ),
       child: ExpansionTile(
         tilePadding: const EdgeInsets.symmetric(horizontal: 20.0),
-        collapsedBackgroundColor:
-        ["Invoices"].contains(selectedDrawerItem)
+        collapsedBackgroundColor: ["Invoices"].contains(selectedDrawerItem)
             ? Colors.blue.withOpacity(0.2)
             : AppColors.white,
         title: Text(
@@ -260,13 +259,12 @@ class _DashboardPageState extends State<DashboardPage> {
         children: <Widget>[
           Padding(
             padding:
-            const EdgeInsets.only(left: 10.0), // Ensure consistent padding
+                const EdgeInsets.only(left: 10.0), // Ensure consistent padding
             child: _buildDrawerItem(
               icon: Icons.account_balance_outlined,
               text: 'Invoices',
               isSelected: selectedDrawerItem == 'Invoices',
-              onTap: () =>
-                  _onDrawerItemTapped('Invoices', isSmallScreen),
+              onTap: () => _onDrawerItemTapped('Invoices', isSmallScreen),
               isIndented: true, // Pass the indentation flag
               iconSize: 20, // Adjust icon size
               fontSize: 14, // Adjust font size

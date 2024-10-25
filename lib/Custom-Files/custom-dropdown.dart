@@ -1,6 +1,8 @@
+import 'dart:convert';
 import 'dart:js';
 
 import 'package:dropdown_search/dropdown_search.dart';
+import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 // import 'package:inventory_management/Api/auth_provider.dart';
@@ -17,26 +19,31 @@ class CustomDropdown extends StatefulWidget {
   final bool isboxSize;
   final bool label;
   final bool grade;
+  final bool isBrand;
   ValueChanged<int>? onSelectedChanged;
 
-  CustomDropdown(
-      {super.key,
-      this.validator,
-      this.fontSize = 17,
-      this.option = const [],
-      this.isboxSize = false,
-      this.label = false,
-      this.selectedIndex = 0,
-      this.onSelectedChanged,
-      this.grade = false});
+  CustomDropdown({
+    super.key,
+    this.validator,
+    this.fontSize = 17,
+    this.option = const [],
+    this.isboxSize = false,
+    this.label = false,
+    this.selectedIndex = 0,
+    this.onSelectedChanged,
+    this.grade = false,
+    this.isBrand = false,
+  });
 
   @override
-  State<CustomDropdown> createState() => _CustomDropdownState();
+  State<CustomDropdown> createState() => CustomDropdownState();
 }
 
-class _CustomDropdownState extends State<CustomDropdown> {
+class CustomDropdownState extends State<CustomDropdown> {
   String? _selectedItem = 'Select option';
+  bool isLoading = false;
   List<String> _items = ['Select option'];
+  TextEditingController searchController = TextEditingController();
 
   void updateData() {
     // _items.clear();
@@ -59,12 +66,36 @@ class _CustomDropdownState extends State<CustomDropdown> {
     setState(() {});
   }
 
+  void reset() {
+    _selectedItem = _items[0];
+    setState(() {});
+  }
+
   @override
   void initState() {
     // TODO: implement initState
     super.initState();
 
     updateData();
+  }
+
+  void searchData(String brandName) async {
+    final String _baseUrl =
+        'https://inventory-management-backend-s37u.onrender.com';
+
+    final token = await AuthProvider().getToken();
+    final url = Uri.parse('$_baseUrl/category?name=$brandName');
+    final response = await http.get(
+      url,
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+    );
+    var reslt = jsonDecode(response.body);
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      print("here dipu with reslut ${reslt['categories']}");
+    }
   }
 
   @override
@@ -82,14 +113,27 @@ class _CustomDropdownState extends State<CustomDropdown> {
         child: DropdownSearch<String>(
           items: _items,
           selectedItem: _selectedItem,
-          // enabled:false,
-          popupProps: const PopupProps.menu(
+          // filterFn: (s, d) {
+          //   isLoading = true;
+          //   setState(() {});
+          //   searchData(d);
+          //   return true;
+          // },
+          popupProps: PopupProps.menu(
             fit: FlexFit.tight,
             showSelectedItems: true,
             showSearchBox: true,
+            loadingBuilder: ((context, searchEntry) {
+              print("hete is loading bilder");
+              return Text('data');
+            }),
+
+            menuProps: const MenuProps(
+              elevation: 10,
+            ),
             searchFieldProps: TextFieldProps(
-              // cursorHeight:3,
-              decoration: InputDecoration(
+              controller: searchController,
+              decoration: const InputDecoration(
                 hintText: "Search for an option",
                 prefixIcon: Icon(
                   Icons.search,
@@ -103,20 +147,21 @@ class _CustomDropdownState extends State<CustomDropdown> {
                 contentPadding: EdgeInsets.all(0),
               ),
             ),
-            //  itemBuilder: (context, item, isSelected)=>ListTile(
-            //       title: Text(item),
-            //       selected: isSelected,
-            //     ),
+            // scrollbarOrientation:ScrollEndNotification
+            //       // notificationPredicate:(b){
+            //       //   print("b is ssssss $b");
+            //       //   return true;
+            //       // }
             scrollbarProps: ScrollbarProps(
-                // scrollbarOrientation:ScrollEndNotification
-                // notificationPredicate:(b){
-                //   print("b is ssssss $b");
-                //   return true;
-                // }
-                ),
+              notificationPredicate: (a) {
+                print(
+                    "heelo i am dipu pix ${a.metrics.pixels}  max ${a.metrics.maxScrollExtent}  nn${a.metrics.devicePixelRatio}");
+                return true;
+              },
+            ),
+            listViewProps: ListViewProps(),
           ),
           onChanged: (String? newValue) {
-            // _items.fin;
             widget.selectedIndex =
                 _items.indexWhere((element) => element == newValue);
             if (widget.onSelectedChanged != null) {
@@ -214,7 +259,7 @@ class CustomDropdownMultiple extends StatefulWidget {
 class _CustomDropdownMultipleState extends State<CustomDropdownMultiple> {
   String? _selectedItem = 'Select option';
   List<String> _items = ['Select option'];
-
+  TextEditingController searchController = TextEditingController();
   void updateData() {
     // _items.clear();
     if (widget.label) {
@@ -260,13 +305,14 @@ class _CustomDropdownMultipleState extends State<CustomDropdownMultiple> {
             items: _items,
             // selectedItem: _selectedItem,
             // enabled:false,
-            popupProps: const PopupPropsMultiSelection.menu(
+            popupProps: PopupPropsMultiSelection.menu(
               fit: FlexFit.tight,
               showSelectedItems: true,
               showSearchBox: true,
               searchFieldProps: TextFieldProps(
+                controller: searchController,
                 // cursorHeight:3,
-                decoration: InputDecoration(
+                decoration: const InputDecoration(
                   hintText: "Search for an option",
                   prefixIcon: Icon(
                     Icons.search,
@@ -309,6 +355,127 @@ class _CustomDropdownMultipleState extends State<CustomDropdownMultiple> {
             //   );
             // },
             ),
+      ),
+    );
+  }
+}
+
+class LazyLoadingDropdown extends StatefulWidget {
+  @override
+  _LazyLoadingDropdownState createState() => _LazyLoadingDropdownState();
+}
+
+class _LazyLoadingDropdownState extends State<LazyLoadingDropdown> {
+  List<String> items = [];
+  String? selectedItem;
+  bool isLoading = false;
+  int page = 0;
+  final int pageSize = 20;
+  TextEditingController searchController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    fetchData();
+  }
+
+  Future<void> fetchData([String query = '']) async {
+    setState(() {
+      isLoading = true;
+    });
+
+    // Simulate an API call for data fetching (replace this with actual API logic)
+    await Future.delayed(Duration(seconds: 1), () {
+      List<String> newItems = List.generate(
+          pageSize, (index) => 'Item ${(page * pageSize) + index} $query');
+      setState(() {
+        items.addAll(newItems);
+        isLoading = false;
+        page++;
+      });
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text("Lazy Loading Dropdown"),
+      ),
+      body: Column(
+        children: [
+          // TextField for search functionality
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: TextField(
+              controller: searchController,
+              onChanged: (value) {
+                // Clear the current list and reset the page count for new search
+                items.clear();
+                page = 0;
+                fetchData(value); // Fetch data based on search query
+              },
+              decoration: InputDecoration(
+                labelText: 'Search',
+                border: OutlineInputBorder(),
+              ),
+            ),
+          ),
+
+          // Dropdown button to show selected item
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: DropdownButton<String>(
+              value: selectedItem,
+              hint: Text("Select an item"),
+              onChanged: (newValue) {
+                setState(() {
+                  selectedItem = newValue;
+                });
+              },
+              isExpanded: true,
+              items: items.map((String value) {
+                return DropdownMenuItem<String>(
+                  value: value,
+                  child: Text(value),
+                );
+              }).toList(),
+            ),
+          ),
+
+          // Lazy-loading ListView with ListView.builder
+          Expanded(
+            child: NotificationListener<ScrollNotification>(
+              onNotification: (ScrollNotification scrollInfo) {
+                if (!isLoading &&
+                    scrollInfo.metrics.pixels ==
+                        scrollInfo.metrics.maxScrollExtent) {
+                  fetchData(searchController.text); // Load more items
+                  return true;
+                }
+                return false;
+              },
+              child: ListView.builder(
+                itemCount: items.length + (isLoading ? 1 : 0),
+                itemBuilder: (context, index) {
+                  if (index == items.length) {
+                    return Center(
+                      child: CircularProgressIndicator(),
+                    ); // Show loader at the end when fetching more data
+                  }
+                  return ListTile(
+                    title: Text(items[index]),
+                    onTap: () {
+                      setState(() {
+                        selectedItem = items[index]; // Set selected item
+                      });
+                    },
+                  );
+                },
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
