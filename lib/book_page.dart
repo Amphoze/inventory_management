@@ -439,7 +439,7 @@ class _BookPageState extends State<BookPage>
       child: Row(
         children: [
           SizedBox(
-            width: 200,
+            width: 140,
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
@@ -455,9 +455,9 @@ class _BookPageState extends State<BookPage>
               ],
             ),
           ),
-          buildHeader('PRODUCTS', flex: 7),
-          buildHeader('DELHIVERY', flex: 2),
-          buildHeader('SHIPROCKET', flex: 2),
+          buildHeader('ORDERS', flex: 7),
+          buildHeader('DELHIVERY', flex: 1),
+          buildHeader('SHIPROCKET', flex: 1),
         ],
       ),
     );
@@ -478,38 +478,45 @@ class _BookPageState extends State<BookPage>
 
   Widget _buildOrderCard(Order order, String orderType) {
     final bookProvider = Provider.of<BookProvider>(context);
+    Widget? checkboxWidget;
+    bool isBookPage = true;
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4.0, horizontal: 16.0),
-      child: Row(
-        children: [
-          SizedBox(
-            width: 80,
-            child: Checkbox(
-              value: order.isSelected,
-              onChanged: (value) {
-                bookProvider.handleRowCheckboxChange(
-                  order.orderId,
-                  value!,
-                  orderType == 'B2B',
-                );
-              },
-            ),
+    // checkbox widget if it's for the book page
+    if (isBookPage) {
+      checkboxWidget = SizedBox(
+        width: 30,
+        height: 30,
+        child: Transform.scale(
+          scale: 0.9,
+          child: Checkbox(
+            value: order.isSelected,
+            onChanged: (value) {
+              bookProvider.handleRowCheckboxChange(
+                order.orderId,
+                value!,
+                orderType == 'B2B',
+              );
+            },
           ),
-          const SizedBox(width: 150),
-          Expanded(
-            flex: 7,
-            child: OrderCard(
-              order: order,
-              isBookPage: true,
-            ),
+        ),
+      );
+    }
+
+    return Row(
+      children: [
+        Expanded(
+          flex: 9,
+          child: OrderCard(
+            order: order,
+            isBookPage: true,
+            checkboxWidget: checkboxWidget,
           ),
-          const SizedBox(width: 40),
-          buildCell(order.freightCharge?.delhivery?.toString() ?? '', flex: 2),
-          const SizedBox(width: 40),
-          buildCell(order.freightCharge?.shiprocket?.toString() ?? '', flex: 2),
-        ],
-      ),
+        ),
+        const SizedBox(width: 20),
+        buildCell(order.freightCharge?.delhivery?.toString() ?? '', flex: 1),
+        const SizedBox(width: 10),
+        buildCell(order.freightCharge?.shiprocket?.toString() ?? '', flex: 1),
+      ],
     );
   }
 
@@ -517,7 +524,7 @@ class _BookPageState extends State<BookPage>
     return Flexible(
       flex: flex,
       child: Container(
-        padding: const EdgeInsets.all(8.0),
+        padding: const EdgeInsets.all(6.0),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
@@ -526,7 +533,7 @@ class _BookPageState extends State<BookPage>
               style: const TextStyle(
                 color: AppColors.grey,
                 fontWeight: FontWeight.bold,
-                fontSize: 25,
+                fontSize: 15,
               ),
             ),
           ],

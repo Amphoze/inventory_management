@@ -32,7 +32,7 @@ class Order {
   final List<OrderStatusMap>? orderStatusMap;
   final Marketplace? marketplace;
   final String agent;
-  final String filter;
+  final String? filter;
   final FreightCharge? freightCharge;
   final String notes;
   final DateTime? createdAt;
@@ -381,13 +381,13 @@ class Product {
   final String? sku;
   final String? ean;
   final String? description;
-  final String? brand;
-  final String? category;
+  final Brand? brand;
+  final Category? category;
   final String? technicalName;
-  final String? label;
+  final Label? label;
   final String? color;
   final String? taxRule;
-  final String? boxSize;
+  final BoxSize? boxSize;
   final double? netWeight;
   final double? grossWeight;
   final double? mrp;
@@ -409,10 +409,10 @@ class Product {
     required this.brand,
     required this.category,
     required this.technicalName,
-    required this.label,
+    this.label,
     required this.color,
     required this.taxRule,
-    required this.boxSize,
+    this.boxSize,
     required this.netWeight,
     required this.grossWeight,
     required this.mrp,
@@ -435,13 +435,23 @@ class Product {
       sku: json['sku']?.toString() ?? '',
       ean: json['ean']?.toString() ?? '',
       description: json['description']?.toString() ?? '',
-      brand: json['brand']?.toString() ?? '',
-      category: json['category']?.toString() ?? '',
+      brand: json['brand'] is Map<String, dynamic>
+          ? Brand.fromJson(json['brand'])
+          : (json['brand'] is String ? Brand(id: json['brand']) : null),
+      category: json['category'] is Map<String, dynamic>
+          ? Category.fromJson(json['category'])
+          : (json['category'] is String
+              ? Category(id: json['category'])
+              : null),
       technicalName: json['technicalName']?.toString() ?? '',
-      label: json['label']?.toString() ?? '',
+      label: json['label'] is Map<String, dynamic>
+          ? Label.fromJson(json['label'])
+          : (json['label'] is String ? Label(id: json['label']) : null),
       color: json['color']?.toString() ?? '',
       taxRule: json['tax_rule']?.toString() ?? '',
-      boxSize: json['boxSize']?.toString() ?? '',
+      boxSize: json['boxSize'] is Map<String, dynamic>
+          ? BoxSize.fromJson(json['boxSize'])
+          : (json['boxSize'] is String ? BoxSize(id: json['boxSize']) : null),
       netWeight: (json['netWeight'] as num?)?.toDouble() ?? 0.0,
       grossWeight: (json['grossWeight'] as num?)?.toDouble() ?? 0.0,
       mrp: (json['mrp'] as num?)?.toDouble() ?? 0.0,
@@ -454,6 +464,162 @@ class Product {
       shopifyImage: json['shopifyImage']?.toString() ?? '',
       variantName: json['variant_name']?.toString() ?? '',
     );
+  }
+}
+
+class Brand {
+  final String? id;
+  final String? name;
+  final DateTime? createdAt;
+  final DateTime? updatedAt;
+  final int? v;
+
+  Brand({
+    this.id,
+    this.name,
+    this.createdAt,
+    this.updatedAt,
+    this.v,
+  });
+
+  factory Brand.fromJson(Map<String, dynamic> json) {
+    return Brand(
+      id: json['_id'],
+      name: json['name'],
+      createdAt:
+          json['createdAt'] != null ? DateTime.parse(json['createdAt']) : null,
+      updatedAt:
+          json['updatedAt'] != null ? DateTime.parse(json['updatedAt']) : null,
+      v: json['__v'] as int?,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      '_id': id,
+      'name': name,
+      'createdAt': createdAt?.toIso8601String(),
+      'updatedAt': updatedAt?.toIso8601String(),
+      '__v': v,
+    };
+  }
+}
+
+class Category {
+  final String? id;
+  final String? name;
+  final DateTime? createdAt;
+  final DateTime? updatedAt;
+  final int? v;
+
+  Category({
+    this.id,
+    this.name,
+    this.createdAt,
+    this.updatedAt,
+    this.v,
+  });
+
+  factory Category.fromJson(Map<String, dynamic> json) {
+    return Category(
+      id: json['_id'] as String?,
+      name: json['name'] as String?,
+      createdAt:
+          json['createdAt'] != null ? DateTime.parse(json['createdAt']) : null,
+      updatedAt:
+          json['updatedAt'] != null ? DateTime.parse(json['updatedAt']) : null,
+      v: json['__v'] as int?,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      '_id': id,
+      'name': name,
+      'createdAt': createdAt?.toIso8601String(),
+      'updatedAt': updatedAt?.toIso8601String(),
+      '__v': v,
+    };
+  }
+}
+
+class Label {
+  final String? id;
+  final String? name;
+
+  Label({
+    this.id,
+    this.name,
+  });
+
+  factory Label.fromJson(Map<String, dynamic> json) {
+    return Label(
+      id: json['_id'] as String?,
+      name: json['name'] as String?,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      '_id': id,
+      'name': name,
+    };
+  }
+}
+
+class BoxSize {
+  final String? id;
+  final String? boxName;
+  final String? unit;
+
+  BoxSize({
+    this.id,
+    this.boxName,
+    this.unit,
+  });
+
+  factory BoxSize.fromJson(Map<String, dynamic> json) {
+    return BoxSize(
+      id: json['_id'] as String?,
+      boxName: json['box_name'] as String?,
+      unit: json['unit'] as String?,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      '_id': id,
+      'box_name': boxName,
+      'unit': unit,
+    };
+  }
+}
+
+class BoxDimensions {
+  final double? length;
+  final double? width;
+  final double? height;
+
+  BoxDimensions({
+    this.length,
+    this.width,
+    this.height,
+  });
+
+  factory BoxDimensions.fromJson(Map<String, dynamic> json) {
+    return BoxDimensions(
+      length: (json['length'] as num?)?.toDouble(),
+      width: (json['width'] as num?)?.toDouble(),
+      height: (json['height'] as num?)?.toDouble(),
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'length': length,
+      'width': width,
+      'height': height,
+    };
   }
 }
 
