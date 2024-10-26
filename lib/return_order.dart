@@ -273,7 +273,10 @@ class _ReturnOrdersState extends State<ReturnOrders> {
               returnprovider.toggleSelectAll(value!);
             },
           ),
-          const Text('Select All',style: TextStyle(fontWeight: FontWeight.bold,fontSize: 18),),
+          Text(
+            'Select All(${returnprovider.selectedCount})',
+            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+          ),
           buildHeader('ORDERS', flex: 8),
 
           buildHeader('Tracking Status', flex: 3),
