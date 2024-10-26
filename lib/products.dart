@@ -11,6 +11,7 @@ import 'package:inventory_management/Custom-Files/custom-dropdown.dart';
 import 'package:inventory_management/Custom-Files/custom-textfield.dart';
 import 'package:inventory_management/Custom-Files/loading_indicator.dart';
 import 'package:inventory_management/Custom-Files/multi-image-picker.dart';
+import 'package:inventory_management/Custom-Files/test-drop.dart';
 import 'package:inventory_management/Custom-Files/textfield-in-alert-box.dart';
 // import 'package:inventory_management/Custom-Files/textfield-in-alert-box.dart';
 import 'package:provider/provider.dart';
@@ -64,8 +65,19 @@ class _ProductsState extends State<Products> {
       TextEditingController();
   String? token;
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
-  // final GlobalKey<_CustomDropdownState> dropdownKey = GlobalKey<_CustomDropdownState>();
-// final GlobalKey<CustomDropdownState> dropdownKey = GlobalKey<CustomDropdownState>();
+  final GlobalKey<CustomDropdownState> dropdownKey =
+      GlobalKey<CustomDropdownState>();
+  final GlobalKey<CustomDropdownState> categoryKey =
+      GlobalKey<CustomDropdownState>();
+  final GlobalKey<CustomDropdownState> labelKey =
+      GlobalKey<CustomDropdownState>();
+  final GlobalKey<CustomDropdownState> colorKey =
+      GlobalKey<CustomDropdownState>();
+
+  final GlobalKey<CustomDropdownState> sizeKey =
+      GlobalKey<CustomDropdownState>();
+  final GlobalKey<CustomDropdownState> gradeKey =
+      GlobalKey<CustomDropdownState>();
   // final GlobalKey<CustomDropdown> _scaffoldKey = GlobalKey<CustomDropdown>();
   // Add a form key
   // final _brandDropdownKey = GlobalKey<CustomDropdownState>();
@@ -92,11 +104,24 @@ class _ProductsState extends State<Products> {
     _widthController.dispose();
     _depthController.dispose();
     _technicalNameController.dispose();
+
     super.dispose();
   }
 
   void clear() {
+    selectedIndexOfBrand = 0;
+    selectedIndexOfCategory = 0;
+    selectedIndexOfLabel = 0;
+    selectedIndexOfBoxSize = 0;
+    selectedIndexOfColorDrop = 0;
+    dropdownKey.currentState!.reset();
+    categoryKey.currentState!.reset();
+    labelKey.currentState!.reset();
+    colorKey.currentState!.reset();
+    sizeKey.currentState!.reset();
+    gradeKey.currentState!.reset();
     _productNameController.clear();
+
     _productIdentifierController.clear();
     _productBrandController.clear();
     _modelNameController.clear();
@@ -291,12 +316,17 @@ class _ProductsState extends State<Products> {
                           height: 51,
                           width: 200,
                           child: CustomDropdown(
+                            key: dropdownKey,
                             option: productProvider!.brand,
                             selectedIndex: 0,
                             onSelectedChanged: (int a) {
                               selectedIndexOfBrand = a;
                             },
-                          )),
+                          )
+                          // child: SearchableDropdown(
+                          //   label: 'heelo',
+                          // ),
+                          ),
 
                       fieldTitle('Category',
                           show: false, height: 50, width: 69.5),
@@ -308,7 +338,7 @@ class _ProductsState extends State<Products> {
                                     height: 51,
                                     width: 260,
                                     child: CustomDropdown(
-                                      key: null,
+                                      key: categoryKey,
                                       option: productProvider!.cat,
                                       onSelectedChanged: (int a) {
                                         selectedIndexOfCategory = a;
@@ -350,7 +380,7 @@ class _ProductsState extends State<Products> {
                                     height: 51,
                                     width: 260,
                                     child: CustomDropdown(
-                                      key: null,
+                                      key: categoryKey,
                                       option: productProvider!.cat,
                                     ),
                                   ),
@@ -418,6 +448,7 @@ class _ProductsState extends State<Products> {
                         width: 200,
                         height: 51,
                         child: CustomDropdown(
+                          key: labelKey,
                           option: productProvider!.label,
                           label: true,
                           onSelectedChanged: (val) {
@@ -495,6 +526,7 @@ class _ProductsState extends State<Products> {
                                     height: 51,
                                     width: 150,
                                     child: CustomDropdown(
+                                      key: colorKey,
                                       option: productProvider!.colorDrop,
                                       onSelectedChanged: (val) {
                                         selectedIndexOfColorDrop = val;
@@ -605,6 +637,7 @@ class _ProductsState extends State<Products> {
                           width: 200,
                           height: 51,
                           child: CustomDropdown(
+                            key: sizeKey,
                             option: productProvider!.boxSize,
                             onSelectedChanged: (val) {
                               print("box size val is heer $val");
@@ -643,6 +676,7 @@ class _ProductsState extends State<Products> {
                       SizedBox(
                         width: 550,
                         child: CustomDropdown(
+                          key: gradeKey,
                           grade: true,
                         ),
                       ),
@@ -793,7 +827,7 @@ class _ProductsState extends State<Products> {
           description: _descriptionController.text,
           brandId: (selectedIndexOfBrand - 1 < 0)
               ? ''
-              : productProvider!.brand[selectedIndexOfBrand - 1]['id']
+              : productProvider!.brand[selectedIndexOfBrand - 1]['_id']
                   .toString(),
           category: (selectedIndexOfCategory - 1 < 0)
               ? ''
@@ -827,7 +861,7 @@ class _ProductsState extends State<Products> {
           shopifyImage: _shopifyController.text,
         );
 
-        if (res['message'] == 'Product created successfully') {
+        if (res.statusCode == 200 || res.statusCode == 201) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: const Text(
@@ -843,6 +877,7 @@ class _ProductsState extends State<Products> {
               duration: Duration(seconds: 3), // Duration for how long it shows
             ),
           );
+          clear();
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -906,7 +941,7 @@ class _ProductsState extends State<Products> {
             grossWeight: _grossWeightController.text,
             shopifyImage: _shopifyController.text,
           );
-          if (res['message'] == 'Product created successfully') {
+          if (res.statusCode == 200 || res.statusCode == 201) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text(
@@ -923,6 +958,7 @@ class _ProductsState extends State<Products> {
                     Duration(seconds: 3), // Duration for how long it shows
               ),
             );
+            clear();
           } else {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
@@ -1047,16 +1083,18 @@ class _ProductsState extends State<Products> {
               formLayout(
                 fieldTitle('Brand'),
                 SizedBox(
-                    height: 51,
-                    width: 300,
-                    child: CustomDropdown(
-                      selectedIndex: 0,
-                      option: productProvider!.brand,
-                      onSelectedChanged: (int a) {
-                        selectedIndexOfBrand = a;
-                      },
-                      // onReset:resetBrand,
-                    )),
+                  height: 51,
+                  width: 300,
+                  child: CustomDropdown(
+                    selectedIndex: 0,
+                    key: dropdownKey,
+                    option: productProvider!.brand,
+                    onSelectedChanged: (int a) {
+                      selectedIndexOfBrand = a;
+                    },
+                    // onReset:resetBrand,
+                  ),
+                ),
               ),
               const SizedBox(height: 12),
               formLayout(
@@ -1067,6 +1105,7 @@ class _ProductsState extends State<Products> {
                           width: 300,
                           height: 51,
                           child: CustomDropdown(
+                            key: categoryKey,
                             option: productProvider!.cat,
                             onSelectedChanged: (int a) {
                               selectedIndexOfCategory = a;
@@ -1125,6 +1164,7 @@ class _ProductsState extends State<Products> {
                   width: 300,
                   height: 51,
                   child: CustomDropdown(
+                    key: labelKey,
                     option: productProvider!.label,
                     label: true,
                     onSelectedChanged: (val) {
@@ -1204,6 +1244,7 @@ class _ProductsState extends State<Products> {
                             width: 150,
                             height: 51,
                             child: CustomDropdown(
+                              key: categoryKey,
                               option: productProvider!.colorDrop,
                               onSelectedChanged: (val) {
                                 selectedIndexOfColorDrop = val;
@@ -1327,6 +1368,7 @@ class _ProductsState extends State<Products> {
                 SizedBox(
                   width: 550,
                   child: CustomDropdown(
+                    key: sizeKey,
                     option: productProvider!.boxSize,
                     isboxSize: true,
                     onSelectedChanged: (val) {
@@ -1341,6 +1383,7 @@ class _ProductsState extends State<Products> {
                 SizedBox(
                   width: 550,
                   child: CustomDropdown(
+                    key: gradeKey,
                     grade: true,
                   ),
                 ),
@@ -1455,7 +1498,9 @@ class _ProductsState extends State<Products> {
                       CustomButton(
                           width: 150,
                           height: 40,
-                          onTap: () {},
+                          onTap: () {
+                            clear();
+                          },
                           color: AppColors.primaryBlue,
                           textColor: AppColors.white,
                           fontSize: 15,

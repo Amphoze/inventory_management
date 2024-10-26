@@ -4,7 +4,7 @@ class Combo {
   String mrp;
   String cost;
   String comboSku;
-  List<dynamic> products; // List of product IDs
+  List<Map<String, String>> products; // List of product IDs
   List<String>? images; // Nullable list of image filenames
 
   // Constructor
@@ -23,11 +23,18 @@ class Combo {
     return Combo(
       id: json['_id'] as String?, // Handle nullable ID
       name: json['name'] as String? ?? '', // Default to empty string if null
-      mrp: (json['mrp'] as num?)?.toString() ?? '0', // Convert to string, default to '0' if null
-      cost: (json['cost'] as num?)?.toString() ?? '0', // Convert to string, default to '0' if null
-      comboSku: json['comboSku'] as String? ?? '', // Default to empty string if null
-      products: List<String>.from(json['products'] ?? []), // Default to empty list if null
-      images: (json['images'] as List<dynamic>?)?.map((image) => image as String).toList() ?? [], // Handle nullable list
+      mrp: (json['mrp'] as num?)?.toString() ??
+          '0', // Convert to string, default to '0' if null
+      cost: (json['cost'] as num?)?.toString() ??
+          '0', // Convert to string, default to '0' if null
+      comboSku:
+          json['comboSku'] as String? ?? '', // Default to empty string if null
+      products: List<Map<String, String>>.from(
+          json['products'] ?? []), // Default to empty list if null
+      images: (json['images'] as List<dynamic>?)
+              ?.map((image) => image as String)
+              .toList() ??
+          [], // Handle nullable list
     );
   }
 
@@ -43,7 +50,6 @@ class Combo {
     };
   }
 }
-
 
 class Product {
   final String id;

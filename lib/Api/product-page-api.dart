@@ -38,13 +38,16 @@ class ProductPageApi {
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         if (data.containsKey('brands') && data['brands'] is List) {
-          print("i am dipu");
+          print("here is barndd ${data['brands']}");
           // List brand;
 
           // brand = parseJsonToList(response.body.toString(), 'brands');
           // }
           // print("i am dipu us here wiht success");
-          return {'success': true, 'data':List<Map<String,dynamic>>.from(data['brands'])};
+          return {
+            'success': true,
+            'data': List<Map<String, dynamic>>.from(data['brands'])
+          };
         } else {
           print('Unexpected response format: $data');
           return {'success': false, 'message': 'Unexpected response format'};
@@ -87,7 +90,7 @@ class ProductPageApi {
         if (data.isNotEmpty) {
           // List<Map<String,dynamic>>dup=data.cast(List<Map<String,dynamic>>);
           print("techna e data is here ${data.runtimeType}  ");
-          final labels=data['data'];
+          final labels = data['data'];
           print("lable of label is here ${labels.toString()}");
           return {
             'success': true,
@@ -111,7 +114,6 @@ class ProductPageApi {
     }
   }
 
-
   //boxsize
   Future<Map<String, dynamic>> getBoxSize(
       {int page = 1, int limit = 20, String? name}) async {
@@ -133,9 +135,11 @@ class ProductPageApi {
       if (response.statusCode == 200) {
         // print("jajajjhjhj");
         final data = json.decode(response.body);
-        if (data.containsKey('data') ) {
-         
-          return {'success': true, 'data':List<Map<String,dynamic>>.from(data['data']['boxsizes'])};
+        if (data.containsKey('data')) {
+          return {
+            'success': true,
+            'data': List<Map<String, dynamic>>.from(data['data']['boxsizes'])
+          };
         } else {
           print('Unexpected response format: $data');
           return {'success': false, 'message': 'Unexpected response format'};
@@ -155,7 +159,7 @@ class ProductPageApi {
   }
 
   //colors dropdown api
-    Future<Map<String, dynamic>> getColorDrop(
+  Future<Map<String, dynamic>> getColorDrop(
       {int page = 1, int limit = 20, String? name}) async {
     final url = Uri.parse('$_baseUrl/color/');
 
@@ -169,13 +173,13 @@ class ProductPageApi {
         },
       );
 
-      
-
       if (response.statusCode == 200) {
-       
         final data = json.decode(response.body);
-      //  print("here is color data ${data['data']['colors'].toString()}");
-          return {'success': true, 'data':List<Map<String,dynamic>>.from(data['data']['colors'])};
+        //  print("here is color data ${data['data']['colors'].toString()}");
+        return {
+          'success': true,
+          'data': List<Map<String, dynamic>>.from(data['data']['colors'])
+        };
         // }
       } else {
         return {
@@ -205,7 +209,6 @@ class ProductPageApi {
         },
       );
 
-
       if (response.statusCode == 200) {
         // print("jajajjhjhj");
         final data = json.decode(response.body);
@@ -232,35 +235,35 @@ class ProductPageApi {
       print('Stack trace: $stackTrace');
       return {'success': false, 'message': 'An error occurred: $error'};
     }
-  } 
+  }
 
 //multi part request
 
-Future<Map<String, dynamic>> createProduct({
-  BuildContext? context,
-  required String productName,
-  required String parentSku,
-  required String sku,
-  required String ean,
-  required String description,
-  required String brandId,
-  required String category,
-  required String technicalName,
-  required String labelSku,
-  required String colorId,
-  required String taxRule,
-  required Map<String, dynamic> dimensions,
-  required String weight,
-  required String netWeight,
-  required String grossWeight,
-  required String shopifyImage,
-  required String boxName,
-  required String mrp,
-  required String cost,
-  required bool active,
-}) async {
-  final url = Uri.parse('$_baseUrl/products/');
-  print('''
+  Future createProduct({
+    BuildContext? context,
+    required String productName,
+    required String parentSku,
+    required String sku,
+    required String ean,
+    required String description,
+    required String brandId,
+    required String category,
+    required String technicalName,
+    required String labelSku,
+    required String colorId,
+    required String taxRule,
+    required Map<String, dynamic> dimensions,
+    required String weight,
+    required String netWeight,
+    required String grossWeight,
+    required String shopifyImage,
+    required String boxName,
+    required String mrp,
+    required String cost,
+    required bool active,
+  }) async {
+    final url = Uri.parse('$_baseUrl/products/');
+    print('''
 Product Name: $productName
 Parent SKU: $parentSku
 SKU: $sku
@@ -283,35 +286,34 @@ Cost: $cost
 Active: $active
 ''');
 
-  try {
-    final token = await AuthProvider().getToken();
-    final request = http.MultipartRequest('POST', url);
+    try {
+      final token = await AuthProvider().getToken();
+      final request = http.MultipartRequest('POST', url);
       request.headers.addAll({
-    "Content-Type": "multipart/form-data",
-    "Authorization": "Bearer $token",
-});   
+        "Content-Type": "multipart/form-data",
+        "Authorization": "Bearer $token",
+      });
 
-  // var file =await Provider.of<ProductProvider>(context!,listen:false).images[0];
-  // List<int> bytes = await file.readAsBytes();
-  //     //  Uint8List.fromList(bytes);
-  // print("hjjh");
-  // var multipartFile = http.MultipartFile.fromBytes(
-  //       'images',
-  //      bytes,
-  //       filename: 'product_image.jpg',
-  //       contentType: MediaType('image', 'jpg'), 
-  //     );
+      // var file =await Provider.of<ProductProvider>(context!,listen:false).images[0];
+      // List<int> bytes = await file.readAsBytes();
+      //     //  Uint8List.fromList(bytes);
+      // print("hjjh");
+      // var multipartFile = http.MultipartFile.fromBytes(
+      //       'images',
+      //      bytes,
+      //       filename: 'product_image.jpg',
+      //       contentType: MediaType('image', 'jpg'),
+      //     );
 //   request.files.add(await http.MultipartFile.fromPath(
 //   "images",
 //   file.path,
-  
+
 // ));
 
-
       // request.files.add(multipartFile);
-      request.fields['displayName'] =productName;
-      request.fields['sku'] =parentSku;
-      request.fields['parentSku'] =parentSku;
+      request.fields['displayName'] = productName;
+      request.fields['sku'] = parentSku;
+      request.fields['parentSku'] = parentSku;
       request.fields['labelSku'] = labelSku;
       request.fields['ean'] = "123";
       request.fields['description'] = "tet -1";
@@ -327,35 +329,34 @@ Active: $active
       request.fields['length'] = dimensions['length'].toString();
       request.fields['breadth'] = dimensions['breadth'].toString();
       request.fields['height'] = dimensions['height'].toString();
-      request.fields['box_name'] =boxName;
-      request.fields['garde'] ='A';
-      request.fields['netWeight'] =netWeight;
-      request.fields['grossWeight'] =grossWeight;
-      request.fields['shopifyImage'] =shopifyImage;
-    
+      request.fields['box_name'] = boxName;
+      request.fields['garde'] = 'A';
+      request.fields['netWeight'] = netWeight;
+      request.fields['grossWeight'] = grossWeight;
+      request.fields['shopifyImage'] = shopifyImage;
+
 // print("divyansh patidadr4544656");
-    final response = await request.send();
+      final response = await request.send();
 
-    final responseBody = await response.stream.bytesToString();
-    final Map<String, dynamic> jsonData = json.decode(responseBody);
+      final responseBody = await response.stream.bytesToString();
+      final Map<String, dynamic> jsonData = json.decode(responseBody);
 
-    jsonData['success'] = true;
-    print("Product is created successfully:${response} ${responseBody} ---> ${jsonData["success"]}");
+      jsonData['success'] = true;
+      print(
+          "Product is created successfully:${response.statusCode}${response} ${responseBody} ---> ${jsonData["success"]}");
 
-    return jsonData;
-
-  } catch (error, stackTrace) {
-    print('An error occurred while creating the product: $error');
-    print('Stack trace: $stackTrace');
-    return {'success': false, 'message': 'An error occurred: $error'};
+      return response;
+    } catch (error, stackTrace) {
+      print('An error occurred while creating the product: $error');
+      print('Stack trace: $stackTrace');
+      return {'success': false, 'message': 'An error occurred: $error'};
+    }
   }
-}
 
-Future tata(File f)async{
-  var l=await f.readAsBytes();
-  return l;
-}
-
+  Future tata(File f) async {
+    var l = await f.readAsBytes();
+    return l;
+  }
 
 // Future createProduct({
 //   required String productName,
@@ -387,7 +388,7 @@ Future tata(File f)async{
 //         'Content-Type': 'application/json',
 //         'Authorization': 'Bearer $token',
 //       },
-     
+
 //       body: json.encode({
 //         "displayName": productName,
 //         "parentSku":sku,
@@ -414,16 +415,15 @@ Future tata(File f)async{
 //       print("product is created succesfully${response.body} ---> ${jsonData["success"]}");
 //     // }
 //  return jsonData;
-   
-//     // return 
-    
+
+//     // return
+
 //   } catch (error, stackTrace) {
 //     print('An error occurred while fetching categories: $error');
 //     print('Stack trace: $stackTrace');
 //     return {'success': false, 'message': 'An error occurred: $error'};
 //   }
 // }
-
 
   List<Map<String, dynamic>> parseJsonToList(String jsonString, String key) {
     // Decode the JSON string
