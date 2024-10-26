@@ -1244,7 +1244,7 @@ class _ProductsState extends State<Products> {
                             width: 150,
                             height: 51,
                             child: CustomDropdown(
-                              key: categoryKey,
+                              key: colorKey,
                               option: productProvider!.colorDrop,
                               onSelectedChanged: (val) {
                                 selectedIndexOfColorDrop = val;
