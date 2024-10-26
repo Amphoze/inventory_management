@@ -39,7 +39,7 @@ class DashboardPage extends StatefulWidget {
 }
 
 class _DashboardPageState extends State<DashboardPage> {
-  String selectedDrawerItem = 'Products';
+  String selectedDrawerItem = 'Dashboard';
   DateTime? selectedDate; // State variable to hold the selected date
   DateTime?
       lastUpdatedTime; // Make sure this is initialized properly in your actual code
