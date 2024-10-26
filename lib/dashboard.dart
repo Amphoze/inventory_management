@@ -731,7 +731,7 @@ class _DashboardPageState extends State<DashboardPage> {
               children: [
                 Expanded(
                   child: const Text(
-                    'Hello, Saksham',
+                    'Hello, Katyayani Organics',
                     style: TextStyle(
                       fontSize: 24,
                       fontWeight: FontWeight.bold,

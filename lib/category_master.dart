@@ -113,6 +113,16 @@ class _CategoryMasterPageState extends State<CategoryMasterPage> {
                             ),
                           ),
                         ),
+                      const Spacer(),
+                      _buildButton(
+                        text: "Refresh",
+                        color: AppColors.primaryBlue,
+                        icon: Icons.refresh,
+                        onTap: () {
+                          // Start fetching categories when the button is tapped
+                          categoryProvider.fetchAllCategories();
+                        },
+                      ),
                     ],
                   )
                 : Row(
@@ -176,6 +186,16 @@ class _CategoryMasterPageState extends State<CategoryMasterPage> {
                             ),
                           ),
                         ),
+                      const Spacer(),
+                      _buildButton(
+                        text: "Refresh",
+                        color: AppColors.primaryBlue,
+                        icon: Icons.refresh,
+                        onTap: () {
+                          // Start fetching categories when the button is tapped
+                          categoryProvider.fetchAllCategories();
+                        },
+                      ),
                     ],
                   ),
             const SizedBox(height: 24.0),

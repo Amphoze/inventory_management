@@ -47,7 +47,7 @@ class RackedProvider with ChangeNotifier {
     notifyListeners();
 
     final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString('token') ?? '';
+    final token = prefs.getString('authToken') ?? '';
     const url =
         'https://inventory-management-backend-s37u.onrender.com/orders?orderStatus=6&page=';
 
@@ -110,7 +110,7 @@ class RackedProvider with ChangeNotifier {
     notifyListeners();
 
     final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString('token') ?? '';
+    final token = prefs.getString('authToken') ?? '';
 
     final url =
         'https://inventory-management-backend-s37u.onrender.com/orders?orderStatus=6&order_id=$query';

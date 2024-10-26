@@ -23,6 +23,8 @@ class CategoryProvider with ChangeNotifier {
     List<String> allCategories = [];
     bool hasMore = true;
     int page = 1;
+    _isFetching = false;
+    notifyListeners();
 
     while (hasMore) {
       if (_isFetching) return;
@@ -52,7 +54,7 @@ class CategoryProvider with ChangeNotifier {
         break;
       }
     }
-
+    _isFetching = false;
     _categories = allCategories;
     _filteredCategories = _categories;
     notifyListeners();
@@ -97,7 +99,7 @@ class CategoryProvider with ChangeNotifier {
     final name = categoryNameController.text;
     if (name.isNotEmpty) {
       try {
-        final result = await AuthProvider().createCategory('', name);
+        final result = await AuthProvider().createCategory(name);
         if (result['success']) {
           await fetchAllCategories();
           searchController.clear();

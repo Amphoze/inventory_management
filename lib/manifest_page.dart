@@ -24,6 +24,9 @@ class _ManifestPageState extends State<ManifestPage> {
       Provider.of<ManifestProvider>(context, listen: false)
           .fetchOrdersWithStatus7();
     });
+    Provider.of<ManifestProvider>(context, listen: false)
+        .textEditingController
+        .clear();
   }
 
   void _onSearchButtonPressed() {
@@ -134,9 +137,7 @@ class _ManifestPageState extends State<ManifestPage> {
                 child: Stack(
                   children: [
                     if (manifestProvider.isLoading)
-                      const Center(
-                          //child: MenifestLoadingAnimation()
-                    )
+                      const Center(child: ManifestLoadingAnimation())
                     else if (manifestProvider.orders.isEmpty)
                       const Center(
                         child: Text(

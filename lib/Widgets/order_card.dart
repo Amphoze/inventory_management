@@ -1,17 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:inventory_management/Custom-Files/colors.dart'; // Adjust the import based on your project structure
-import 'package:inventory_management/model/orders_model.dart'; // Adjust the import based on your project structure
+import 'package:inventory_management/edit_order_page.dart';
+import 'package:inventory_management/model/orders_model.dart';
+import 'package:provider/provider.dart';
+
+import '../provider/orders_provider.dart'; // Adjust the import based on your project structure
 
 class OrderCard extends StatelessWidget {
   final Order order;
+  final bool isBookPage;
 
   const OrderCard({
     Key? key,
     required this.order,
+    this.isBookPage = false,
   }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
+    final provider = Provider.of<OrdersProvider>(context, listen: false);
     print('Building OrderCard for Order ID: ${order.id}');
     return Card(
       color: AppColors.white,
@@ -38,33 +45,144 @@ class OrderCard extends StatelessWidget {
                     color: Colors.blueAccent,
                   ),
                 ),
-                //Text('Tracking Status: ${order.trackingStatus}'),
-
-                RichText(
-                  text: TextSpan(
-                    children: [
-                      const TextSpan(
-                        text: 'Total Amount: ',
-                        style: TextStyle(
-                          color: Colors.black,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 14, // Reduced font size
+                if (isBookPage)
+                  ElevatedButton(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => EditOrderPage(
+                            order: order,
+                            isBookPage: true,
+                          ),
                         ),
+                      );
+                    },
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8.0, vertical: 4.0),
+                      foregroundColor: AppColors.white,
+                      backgroundColor: AppColors.orange,
+                      textStyle: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 12,
                       ),
-                      TextSpan(
-                        text: 'Rs.${order.totalAmount?.toString() ?? 0}',
-                        style: const TextStyle(
-                          color: Colors.black87,
-                          fontWeight: FontWeight.w500,
-                          fontSize: 14, // Reduced font size
-                        ),
+                    ),
+                    child: const Text(
+                      'Edit Order',
+                    ),
+                  ),
+
+                //Text('Tracking Status: ${order.trackingStatus}'),
+              ],
+            ),
+            if (isBookPage) ...[
+              const SizedBox(height: 8.0),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          const Text(
+                            'Date: ',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.black, // Label color black
+                            ),
+                          ),
+                          Text(
+                            provider.formatDate(order.date!),
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: AppColors.primaryBlue, // Value color blue
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                   ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 6.0), // Smaller spacing between elements
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          const Text(
+                            'Total Amount: ',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.black, // Label color black
+                            ),
+                          ),
+                          Text(
+                            'Rs. ${order.totalAmount ?? ''}',
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: AppColors.primaryBlue, // Value color blue
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8.0),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          const Text(
+                            'Total Items: ',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.black, // Label color black
+                            ),
+                          ),
+                          Text(
+                            '${order.items.fold(0, (total, item) => total + item.qty!)}',
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: AppColors.primaryBlue, // Value color blue
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          const Text(
+                            'Total Weight: ',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.black, // Label color black
+                            ),
+                          ),
+                          Text(
+                            '${order.totalWeight ?? ''}',
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: AppColors.primaryBlue, // Value color blue
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ],
+            const SizedBox(height: 6.0),
             ListView.builder(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
@@ -195,6 +313,48 @@ class OrderCard extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildAddressRow(String title, Address? address) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          title,
+          style: const TextStyle(
+            color: Colors.black,
+            fontWeight: FontWeight.bold,
+            fontSize: 11,
+          ),
+        ),
+        const SizedBox(width: 8.0),
+        Flexible(
+          child: RichText(
+            text: TextSpan(
+              style: const TextStyle(
+                color: Colors.black87,
+                fontWeight: FontWeight.w500,
+                fontSize: 11,
+              ),
+              children: [
+                TextSpan(
+                  text: [
+                    address?.address1,
+                    address?.address2,
+                    address?.city,
+                    address?.state,
+                    address?.country,
+                    address?.pincode?.toString(),
+                  ]
+                      .where((element) => element != null && element.isNotEmpty)
+                      .join(', '),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
     );
   }
 

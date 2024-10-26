@@ -5,6 +5,7 @@ import 'package:inventory_management/Custom-Files/colors.dart';
 import 'package:inventory_management/create_account.dart';
 import 'package:inventory_management/dashboard.dart';
 import 'package:inventory_management/forgot_password.dart';
+import 'package:path/path.dart';
 import 'package:provider/provider.dart';
 // import 'Api/auth_provider.dart';
 
@@ -123,6 +124,49 @@ class _LoginFormState extends State<LoginForm> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
 
+  void _login(BuildContext context) async {
+    if (_isLoading) return; // Prevent multiple submissions
+
+    setState(() {
+      _isLoading = true;
+    });
+
+    String email = _emailController.text.trim();
+    String password = _passwordController.text.trim();
+
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final result = await authProvider.login(email, password);
+
+    setState(() {
+      _isLoading = false;
+    });
+
+    if (result['success']) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Login successful"),
+          backgroundColor: AppColors.primaryGreen,
+        ),
+      );
+      _emailController.clear();
+      _passwordController.clear();
+      Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => const DashboardPage(inventoryId: ''),
+          ));
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(result['message'] ?? "Login failed"),
+          backgroundColor: Colors.red,
+        ),
+      );
+      _emailController.clear();
+      _passwordController.clear();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final bool isSmallScreen = MediaQuery.of(context).size.width <= 800;
@@ -168,6 +212,9 @@ class _LoginFormState extends State<LoginForm> {
                 },
               ),
             ),
+            onSubmitted: (value) {
+              _login(context);
+            },
           ),
           const SizedBox(height: 10),
           if (isSmallScreen) ...[
@@ -249,46 +296,8 @@ class _LoginFormState extends State<LoginForm> {
           ElevatedButton(
             onPressed: _isLoading
                 ? null
-                : () async {
-                    setState(() {
-                      _isLoading = true;
-                    });
-
-                    String email = _emailController.text.trim();
-                    String password = _passwordController.text.trim();
-
-                    final authProvider =
-                        Provider.of<AuthProvider>(context, listen: false);
-                    final result = await authProvider.login(email, password);
-
-                    setState(() {
-                      _isLoading = false;
-                    });
-
-                    if (result['success']) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text("Login successful"),
-                          backgroundColor: AppColors.primaryGreen,
-                        ),
-                      );
-                      _emailController.clear();
-                      _passwordController.clear();
-                      Navigator.pushReplacement(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const DashboardPage(inventoryId: '',),
-                          ));
-                    } else {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(result['message'] ?? "Login failed"),
-                          backgroundColor: Colors.red,
-                        ),
-                      );
-                      _emailController.clear();
-                      _passwordController.clear();
-                    }
+                : () {
+                    _login(context);
                   },
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.primaryBlue,
