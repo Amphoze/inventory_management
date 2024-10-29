@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:intl/intl.dart';
+import 'package:inventory_management/accounts_page.dart';
 import 'package:inventory_management/invoice_page.dart';
 import 'package:inventory_management/book_page.dart';
 import 'package:inventory_management/combo_page.dart';
@@ -286,6 +287,7 @@ class _DashboardPageState extends State<DashboardPage> {
         tilePadding: const EdgeInsets.symmetric(horizontal: 20.0),
         collapsedBackgroundColor: [
           "Orders Page",
+          "Accounts Page",
           "Book Page",
           "Picker Page",
           "Packer Page",
@@ -322,6 +324,18 @@ class _DashboardPageState extends State<DashboardPage> {
               text: 'Orders',
               isSelected: selectedDrawerItem == 'Orders Page',
               onTap: () => _onDrawerItemTapped('Orders Page', isSmallScreen),
+              isIndented: true,
+              iconSize: 20,
+              fontSize: 14,
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.only(left: 10.0),
+            child: _buildDrawerItem(
+              icon: Icons.account_box_rounded,
+              text: 'Accounts',
+              isSelected: selectedDrawerItem == 'Accounts Page',
+              onTap: () => _onDrawerItemTapped('Accounts Page', isSmallScreen),
               isIndented: true,
               iconSize: 20,
               fontSize: 14,
@@ -677,6 +691,8 @@ class _DashboardPageState extends State<DashboardPage> {
         return const ManageInventoryPage();
       case 'Orders Page':
         return const OrdersNewPage();
+      case 'Accounts Page':
+        return const AccountsPage();
       case 'Book Page':
         return const BookPage();
       case 'Picker Page':

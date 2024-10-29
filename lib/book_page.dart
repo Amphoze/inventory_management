@@ -208,7 +208,14 @@ class _BookPageState extends State<BookPage>
         _buildTableHeader(orderType, selectedCount),
         Expanded(
           child: bookProvider.isLoadingB2B || bookProvider.isLoadingB2C
-              ? const Center(child: BookLoadingAnimation())
+              ? const Center(
+                  child: LoadingAnimation(
+                    icon: Icons.book_online,
+                    beginColor: Color.fromRGBO(189, 189, 189, 1),
+                    endColor: AppColors.primaryBlue,
+                    size: 80.0,
+                  ),
+                )
               : orders.isEmpty
                   ? const Center(
                       child: Text(

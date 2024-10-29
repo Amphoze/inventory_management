@@ -9,6 +9,7 @@ import 'package:inventory_management/dashboard.dart';
 // import 'packa/ge:inventory_management/forgot_password.dart';
 import 'package:inventory_management/login_page.dart';
 import 'package:inventory_management/products.dart';
+import 'package:inventory_management/provider/accounts_provider.dart';
 import 'package:inventory_management/provider/book_provider.dart';
 import 'package:inventory_management/provider/combo_provider.dart';
 import 'package:inventory_management/provider/dashboard_provider.dart';
@@ -51,8 +52,7 @@ void main() {
       ChangeNotifierProvider(create: (context) => AuthProvider()),
       ChangeNotifierProvider(create: (context) => CheckBoxProvider()),
       ChangeNotifierProvider(create: (context) => ManagementProvider()),
-      ChangeNotifierProvider(create: (context)=>DashboardProvider()),
-
+      ChangeNotifierProvider(create: (context) => DashboardProvider()),
       ChangeNotifierProvider(create: (context) => LabelPageApi()),
       ChangeNotifierProvider(create: (context) => MarketplaceProvider()),
       ChangeNotifierProvider(create: (context) => BookProvider()),
@@ -74,7 +74,8 @@ void main() {
       ChangeNotifierProvider(create: (context) => LabelDataProvider()),
       ChangeNotifierProvider(create: (context) => OrderItemProvider()),
       ChangeNotifierProvider(create: (context) => InventoryProvider()),
-      ChangeNotifierProvider(create: (context)=> InvoiceProvider())
+      ChangeNotifierProvider(create: (context) => InvoiceProvider()),
+      ChangeNotifierProvider(create: (context) => AccountsProvider()),
     ],
     child: const MyApp(),
   ));
@@ -142,7 +143,9 @@ class _HomeState extends State<Home> {
               return const CircularProgressIndicator();
             } else if (snap.hasData) {
               if (authprovider.isAuthenticated) {
-                return const DashboardPage(inventoryId: '',);
+                return const DashboardPage(
+                  inventoryId: '',
+                );
               } else {
                 return const LoginPage();
               }

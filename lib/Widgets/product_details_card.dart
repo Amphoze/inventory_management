@@ -132,6 +132,7 @@ class OrderItemCard extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        _buildInfoRow('Brand:', item.product?.brand!.name ?? ''),
         _buildInfoRow(
           'Dimensions:',
           '${item.product?.dimensions?.length ?? ''} x ${item.product?.dimensions?.width ?? ''} x ${item.product?.dimensions?.height ?? ''}',
@@ -151,8 +152,9 @@ class OrderItemCard extends StatelessWidget {
         _buildInfoRow('EAN:', item.product?.ean ?? ''),
         _buildInfoRow('Product Grade:', item.product?.grade ?? ''),
         _buildInfoRow('Active:', item.product?.active?.toString() ?? ''),
-        _buildInfoRow('Label:', item.product?.label?.toString() ?? ''),
-        _buildInfoRow('Category:', item.product?.category?.toString() ?? ''),
+        _buildInfoRow('Label:', item.product?.label?.name.toString() ?? ''),
+        _buildInfoRow(
+            'Category:', item.product?.category?.name.toString() ?? ''),
       ],
     );
   }
@@ -192,7 +194,7 @@ class OrderItemCard extends StatelessWidget {
           child: Text(
             value ?? '',
             style: const TextStyle(fontSize: 12),
-            maxLines: 1,
+            maxLines: 3,
             overflow: TextOverflow.ellipsis,
           ),
         ),

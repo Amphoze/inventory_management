@@ -24,6 +24,7 @@ class _SearchableDropdownState extends State<SearchableDropdown> {
   String? selectedProductName;
   int currentPage = 1;
   bool isLoading = false;
+  bool isSearching = false;
   TextEditingController searchController = TextEditingController();
   bool isDropdownOpen = false;
 
@@ -180,6 +181,10 @@ class _SearchableDropdownState extends State<SearchableDropdown> {
   void _performSearch() async {
     String sku = searchController.text.trim();
     if (sku.isNotEmpty) {
+      setState(() {
+        isSearching = true;
+      });
+
       final response = await searchProductBySku(sku);
       if (response['success']) {
         setState(() {
@@ -204,6 +209,9 @@ class _SearchableDropdownState extends State<SearchableDropdown> {
         );
         print('Search Error: ${response['message']}');
       }
+      setState(() {
+        isSearching = false;
+      });
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -257,10 +265,23 @@ class _SearchableDropdownState extends State<SearchableDropdown> {
                       ),
                     ),
                   ),
-                  IconButton(
-                    icon: const Icon(Icons.search),
-                    onPressed: _performSearch,
-                  ),
+                  const SizedBox(width: 20),
+                  isSearching
+                      ? const Center(
+                          child: SizedBox(
+                            width: 24,
+                            height: 24,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                  AppColors.green),
+                            ),
+                          ),
+                        )
+                      : IconButton(
+                          icon: const Icon(Icons.search),
+                          onPressed: _performSearch,
+                        ),
                 ],
               ),
               Container(

@@ -203,7 +203,12 @@ class _CategoryMasterPageState extends State<CategoryMasterPage> {
             // Display Loader when fetching data
             if (categoryProvider.isFetching)
               const Center(
-                child: CategoryLoadingAnimation(),
+                child: LoadingAnimation(
+                  icon: Icons.category,
+                  beginColor: Color.fromRGBO(189, 189, 189, 1),
+                  endColor: AppColors.primaryBlue,
+                  size: 80.0,
+                ),
               )
             else
               Expanded(
