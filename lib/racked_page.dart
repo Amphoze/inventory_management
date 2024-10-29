@@ -22,7 +22,7 @@ class _RackedPageState extends State<RackedPage> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       Provider.of<RackedProvider>(context, listen: false)
-          .fetchOrdersWithStatus6();
+          .fetchOrdersWithStatus7();
     });
     Provider.of<RackedProvider>(context, listen: false)
         .textEditingController
@@ -82,13 +82,18 @@ class _RackedPageState extends State<RackedPage> {
                             });
                             if (query.isEmpty) {
                               // Reset to all orders if search is cleared
-                              rackedProvider.fetchOrdersWithStatus6();
+                              rackedProvider.fetchOrdersWithStatus7();
                             }
                           },
                           onTap: () {
                             setState(() {
                               // Mark the search field as focused
                             });
+                          },
+                          onSubmitted: (query) {
+                            if (query.isNotEmpty) {
+                              rackedProvider.searchOrders(query);
+                            }
                           },
                           onEditingComplete: () {
                             // Mark it as not focused when done
@@ -119,7 +124,7 @@ class _RackedPageState extends State<RackedPage> {
                         backgroundColor: AppColors.primaryBlue,
                       ),
                       onPressed: () {
-                        rackedProvider.fetchOrdersWithStatus6();
+                        rackedProvider.fetchOrdersWithStatus7();
                       },
                       child: const Text(
                         'Refresh',
@@ -135,7 +140,14 @@ class _RackedPageState extends State<RackedPage> {
                 child: Stack(
                   children: [
                     if (rackedProvider.isLoading)
-                      const Center(child: RackedLoadingAnimation())
+                      const Center(
+                        child: LoadingAnimation(
+                          icon: Icons.shelves,
+                          beginColor: Color.fromRGBO(189, 189, 189, 1),
+                          endColor: AppColors.primaryBlue,
+                          size: 80.0,
+                        ),
+                      )
                     else if (rackedProvider.orders.isEmpty)
                       const Center(
                         child: Text(

@@ -42,14 +42,14 @@ class RackedProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> fetchOrdersWithStatus6() async {
+  Future<void> fetchOrdersWithStatus7() async {
     _isLoading = true;
     notifyListeners();
 
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('authToken') ?? '';
     const url =
-        'https://inventory-management-backend-s37u.onrender.com/orders?orderStatus=6&page=';
+        'https://inventory-management-backend-s37u.onrender.com/orders?orderStatus=7&page=';
 
     try {
       final response = await http.get(Uri.parse('$url$_currentPage'), headers: {
@@ -92,7 +92,7 @@ class RackedProvider with ChangeNotifier {
     _debounce = Timer(const Duration(milliseconds: 500), () {
       if (query.isEmpty) {
         // If query is empty, reload all orders
-        fetchOrdersWithStatus6();
+        fetchOrdersWithStatus7();
       } else {
         searchOrders(query); // Trigger the search after the debounce period
       }
@@ -102,7 +102,7 @@ class RackedProvider with ChangeNotifier {
 // Method to search orders by order ID
   Future<List<Order>> searchOrders(String query) async {
     if (query.isEmpty) {
-      await fetchOrdersWithStatus6();
+      await fetchOrdersWithStatus7();
       return _orders;
     }
 
@@ -113,7 +113,7 @@ class RackedProvider with ChangeNotifier {
     final token = prefs.getString('authToken') ?? '';
 
     final url =
-        'https://inventory-management-backend-s37u.onrender.com/orders?orderStatus=6&order_id=$query';
+        'https://inventory-management-backend-s37u.onrender.com/orders?orderStatus=7&order_id=$query';
 
     print('Searching failed orders with term: $query');
 
@@ -160,7 +160,7 @@ class RackedProvider with ChangeNotifier {
     if (page < 1 || page > _totalPages) return;
     _currentPage = page;
     print('Current page set to: $_currentPage'); // Debugging line
-    fetchOrdersWithStatus6();
+    fetchOrdersWithStatus7();
     notifyListeners();
   }
 

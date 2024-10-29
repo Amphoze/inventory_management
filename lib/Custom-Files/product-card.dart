@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 class Product {
   final String sku;
   final String categoryName;
-  //final String brand;
+  final String brand;
   final String mrp;
   final String createdDate;
   final String lastUpdated;
@@ -28,11 +28,12 @@ class Product {
   final String tax_rule;
   final String grade;
   final String shopifyImage;
+  final String variantName;
 
   Product({
     required this.sku,
     required this.categoryName,
-    //required this.brand,
+    required this.brand,
     required this.mrp,
     required this.createdDate,
     required this.lastUpdated,
@@ -56,6 +57,7 @@ class Product {
     required this.length,
     required this.width,
     required this.height,
+    required this.variantName,
   });
 }
 
@@ -141,15 +143,15 @@ class ProductCard extends StatelessWidget {
         _buildText('Gross Weight', product.grossWeight),
         _buildText('Label SKU', product.labelSku),
         _buildText('Box Name', product.box_name),
-        _buildText('Grade', product.grade),
+        _buildText('Brand', product.brand),
         _buildText('Technical Name', product.technicalName),
         //_buildText('Weight', '${product.weight} kg'),
-        _buildText('MRP', '\$${product.mrp}'),
-        _buildText('Cost', '\$${product.cost}'),
+        _buildText('MRP', '₹${product.mrp}'),
+        _buildText('Cost', '₹${product.cost}'),
         _buildText('Tax Rule', product.tax_rule),
         _buildText('Grade', product.grade),
-        _buildText('Created Date', product.createdDate),
-        _buildText('Last Updated', product.lastUpdated),
+        _buildText('Created Date', formatDate(product.createdDate)),
+        _buildText('Last Updated', formatDate(product.lastUpdated)),
         _buildText('Length', product.length),
         _buildText('Width', product.width),
         _buildText('Heigth', product.height)
@@ -198,7 +200,7 @@ class ProductCard extends StatelessWidget {
         _buildText('Gross Weight', product.grossWeight),
         _buildText('Label SKU', product.labelSku),
         _buildText('Box Name', product.box_name),
-        _buildText('Grade', product.grade)
+        _buildText('Brand', product.brand)
       ],
     );
   }
@@ -213,8 +215,8 @@ class ProductCard extends StatelessWidget {
         _buildText('Cost', '₹${product.cost}'),
         _buildText('Tax Rule', product.tax_rule),
         _buildText('Grade', product.grade),
-        _buildText('Created Date', product.createdDate),
-        _buildText('Last Updated', product.lastUpdated),
+        _buildText('Created Date', formatDate(product.createdDate)),
+        _buildText('Last Updated', formatDate(product.lastUpdated)),
         _buildText('Length', product.length),
         _buildText('Width', product.width),
         _buildText('Heigth', product.height)
@@ -267,4 +269,13 @@ class ProductCard extends StatelessWidget {
       ),
     );
   }
+}
+
+String formatDate(String dateString) {
+  DateTime date = DateTime.parse(dateString);
+  String year = date.year.toString();
+  String month = date.month.toString().padLeft(2, '0');
+  String day = date.day.toString().padLeft(2, '0');
+
+  return '$day-$month-$year';
 }

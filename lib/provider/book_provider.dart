@@ -57,7 +57,7 @@ class BookProvider with ChangeNotifier {
     }
 
     String url =
-        'https://inventory-management-backend-s37u.onrender.com/orders?filter=$type&orderStatus=2&page=$page';
+        'https://inventory-management-backend-s37u.onrender.com/orders?filter=$type&orderStatus=3&page=$page';
 
     try {
       // Set loading state based on order type

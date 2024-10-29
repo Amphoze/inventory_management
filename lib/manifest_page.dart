@@ -22,7 +22,7 @@ class _ManifestPageState extends State<ManifestPage> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       Provider.of<ManifestProvider>(context, listen: false)
-          .fetchOrdersWithStatus7();
+          .fetchOrdersWithStatus8();
     });
     Provider.of<ManifestProvider>(context, listen: false)
         .textEditingController
@@ -82,13 +82,18 @@ class _ManifestPageState extends State<ManifestPage> {
                             });
                             if (query.isEmpty) {
                               // Reset to all orders if search is cleared
-                              manifestProvider.fetchOrdersWithStatus7();
+                              manifestProvider.fetchOrdersWithStatus8();
                             }
                           },
                           onTap: () {
                             setState(() {
                               // Mark the search field as focused
                             });
+                          },
+                          onSubmitted: (query) {
+                            if (query.isNotEmpty) {
+                              manifestProvider.searchOrders(query);
+                            }
                           },
                           onEditingComplete: () {
                             // Mark it as not focused when done
@@ -119,7 +124,7 @@ class _ManifestPageState extends State<ManifestPage> {
                         backgroundColor: AppColors.primaryBlue,
                       ),
                       onPressed: () {
-                        manifestProvider.fetchOrdersWithStatus7();
+                        manifestProvider.fetchOrdersWithStatus8();
                       },
                       child: const Text(
                         'Refresh',
@@ -137,7 +142,14 @@ class _ManifestPageState extends State<ManifestPage> {
                 child: Stack(
                   children: [
                     if (manifestProvider.isLoading)
-                      const Center(child: ManifestLoadingAnimation())
+                      const Center(
+                        child: LoadingAnimation(
+                          icon: Icons.star_border_outlined,
+                          beginColor: Color.fromRGBO(189, 189, 189, 1),
+                          endColor: AppColors.primaryBlue,
+                          size: 80.0,
+                        ),
+                      )
                     else if (manifestProvider.orders.isEmpty)
                       const Center(
                         child: Text(

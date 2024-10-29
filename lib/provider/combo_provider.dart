@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:developer';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:inventory_management/Api/auth_provider.dart';
 import 'package:inventory_management/model/combo_model.dart';
 import 'package:inventory_management/Api/combo_api.dart';
@@ -36,12 +37,32 @@ class ComboProvider with ChangeNotifier {
   List<Uint8List>? selectedImages = [];
   List<String> imageNames = [];
 
+  void clearSelectedImages() {
+    selectedImages = [];
+    imageNames = [];
+    notifyListeners();
+  }
+
+  // Method to remove selected image
+  void removeSelectedImage(int index) {
+    if (selectedImages != null &&
+        index >= 0 &&
+        index < selectedImages!.length) {
+      selectedImages!.removeAt(index);
+      imageNames.removeAt(index); // Remove corresponding name
+      notifyListeners(); // Update listeners
+    }
+  }
+
   ComboProvider() {
     fetchCombos();
   }
 
   void toggleFormVisibility() {
     _isFormVisible = !_isFormVisible;
+    if (!isFormVisible) {
+      clearSelectedImages();
+    }
     notifyListeners();
   }
 
@@ -79,20 +100,29 @@ class ComboProvider with ChangeNotifier {
     }
   }
 
-  // Select images using file picker
-  void selectImages() async {
+  Future<void> selectImages() async {
     FilePickerResult? result = await FilePicker.platform.pickFiles(
       allowMultiple: true,
-      type: FileType.image, // Only allow image files
+      type: FileType.image,
     );
 
     if (result != null) {
-      selectedImages = result.files.map((file) => file.bytes!).toList();
-      imageNames = result.files.map((file) => file.name).toList();
-      print('Selected images count: ${selectedImages!.length}');
-      print('Image names count: ${imageNames.length}');
+      for (var file in result.files) {
+        if (file.bytes != null) {
+          selectedImages!.add(file.bytes!);
+          imageNames.add(file.name);
+        }
+      }
       notifyListeners();
     }
+    // Print each image name
+    for (String name in imageNames) {
+      print('Image name: $name');
+    }
+
+    print('Selected images count: ${selectedImages!.length}');
+    print('Image names count: ${imageNames.length}');
+    notifyListeners();
   }
 
   Future<void> fetchCombos({int page = 1, int limit = 10}) async {
@@ -134,7 +164,6 @@ class ComboProvider with ChangeNotifier {
     notifyListeners();
   }
 
-
   Future<void> fetchProducts() async {
     _loading = true;
     notifyListeners();
@@ -144,15 +173,13 @@ class ComboProvider with ChangeNotifier {
       final response = await api.getAllProducts();
 
       if (response.containsKey('products') && response['products'] is List) {
-
         final productList = response['products'];
         print("Raw productList in provider: $productList");
 
-        _products = productList.map<Product>((json) => Product.fromJson(json)).toList();
+        _products =
+            productList.map<Product>((json) => Product.fromJson(json)).toList();
         print("Mapped products in provider: $_products");
-      }
-
-      else {
+      } else {
         print("Error: 'products' key not found or not a list in response.");
       }
     } catch (e, stacktrace) {
@@ -165,7 +192,6 @@ class ComboProvider with ChangeNotifier {
     }
   }
 
-
   List<Map<String, dynamic>> _warehouses = [];
 
   List<Map<String, dynamic>> get warehouses => _warehouses;
@@ -176,7 +202,6 @@ class ComboProvider with ChangeNotifier {
     try {
       final api = AuthProvider();
       final response = await api.getAllWarehouses();
-
 
       if (response['success'] == true) {
         final warehouseList = response['data']['warehouses'];
@@ -189,7 +214,6 @@ class ComboProvider with ChangeNotifier {
         print("Error: ${response['message']}");
       }
     } catch (e, stacktrace) {
-
       print('Error fetching warehouses: $e');
       print('Stacktrace: $stacktrace');
     } finally {
@@ -197,8 +221,6 @@ class ComboProvider with ChangeNotifier {
       notifyListeners();
     }
   }
-
-
 
   // Method to select products by IDs
   void selectProductsByIds(List<String?> productIds) {

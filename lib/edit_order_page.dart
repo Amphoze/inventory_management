@@ -35,6 +35,7 @@ class _EditOrderPageState extends State<EditOrderPage> {
   int currentPage = 1;
   bool isLoading = false;
   List<int> deletedItemsIndices = [];
+  bool _isSavingOrder = false;
   late OrdersProvider _ordersProvider;
   late ScrollController _scrollController;
   late TextEditingController _orderIdController;
@@ -732,6 +733,9 @@ class _EditOrderPageState extends State<EditOrderPage> {
   }
 
   Future<void> _saveChanges() async {
+    setState(() {
+      _isSavingOrder = true; // Set loading state
+    });
     // Prepare the items list for the update
     List<Map<String, dynamic>> itemsList = dynamicItemsList.map((item) {
       int index = dynamicItemsList.indexOf(item);
@@ -852,7 +856,16 @@ class _EditOrderPageState extends State<EditOrderPage> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Failed to update order.')),
         );
+      } finally {
+        // Reset loading state
+        setState(() {
+          _isSavingOrder = false;
+        });
       }
+    } else {
+      setState(() {
+        _isSavingOrder = false; // Reset loading state if validation fails
+      });
     }
   }
 
@@ -884,13 +897,22 @@ class _EditOrderPageState extends State<EditOrderPage> {
                       const EdgeInsets.symmetric(horizontal: 12.0)),
                 ),
                 onPressed: _saveChanges,
-                child: const Text(
-                  'Save Changes',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 16,
-                  ),
-                ),
+                child: _isSavingOrder
+                    ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(
+                          color: Colors.white,
+                          strokeWidth: 2,
+                        ),
+                      )
+                    : const Text(
+                        'Save Changes',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                        ),
+                      ),
               ),
             ),
           ],

@@ -451,7 +451,12 @@ class _ManageInventoryPageState extends State<ManageInventoryPage> {
                               child: SizedBox(
                                 width: 100, // Set appropriate width
                                 height: 500, // Set appropriate height
-                                child: InventoryLoadingAnimation(),
+                                child: LoadingAnimation(
+                                  icon: Icons.inventory_2,
+                                  beginColor: Color.fromRGBO(189, 189, 189, 1),
+                                  endColor: AppColors.primaryGreen,
+                                  size: 80.0,
+                                ),
                               ),
                             )
                           : SingleChildScrollView(

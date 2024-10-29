@@ -272,7 +272,12 @@ class _LocationMasterState extends State<LocationMaster> {
           const SizedBox(height: 20),
           locationProvider.isLoading
               ? const Center(
-                  child: WarehouseLoadingAnimation(),
+                  child: LoadingAnimation(
+                    icon: Icons.warehouse_outlined,
+                    beginColor: Color.fromRGBO(189, 189, 189, 1),
+                    endColor: AppColors.primaryGreen,
+                    size: 80.0,
+                  ),
                 )
               : CustomDataTable(
                   columnNames: columnNames,

@@ -4,6 +4,9 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:inventory_management/Api/combo_api.dart';
+import 'package:inventory_management/Custom-Files/colors.dart';
+import 'package:inventory_management/Custom-Files/loading_indicator.dart';
+import 'package:inventory_management/Widgets/searchable_dropdown.dart';
 import 'package:inventory_management/model/combo_model.dart';
 import 'package:inventory_management/provider/combo_provider.dart';
 import 'package:provider/provider.dart';
@@ -17,6 +20,8 @@ class ComboPage extends StatefulWidget {
 }
 
 class _ComboPageState extends State<ComboPage> {
+  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+  List<Map<String, String>> selectedProducts = [];
   int currentPage = 1;
   int totalCombos = 0;
 
@@ -46,16 +51,17 @@ class _ComboPageState extends State<ComboPage> {
     ComboProvider comboProvider =
         Provider.of<ComboProvider>(context, listen: false);
 
-    // List<Map<String,String?> selectedProductIds =
-    //     comboProvider.selectedProducts.map((product) => product.id).toList();
+    // Map selected products to IDs
     List<Map<String, String>> selectedProductIds =
-        comboProvider.selectedProducts.map((product) {
-      return {'product': product.id ?? ''};
+        selectedProducts.map((product) {
+      return {'product': product['id'] ?? ''};
     }).toList();
 
     for (int i = 0; i < selectedProductIds.length; i++) {
-      print("i am creating combo ${selectedProductIds[i]}");
+      print(
+          "Creating combo with product ID: ${selectedProductIds[i]['product']}");
     }
+
     final combo = Combo(
       id: _idController.text,
       products: selectedProductIds,
@@ -66,16 +72,35 @@ class _ComboPageState extends State<ComboPage> {
     );
 
     final comboApi = ComboApi();
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Saving combo...'),
+        duration: Duration(seconds: 2),
+      ),
+    );
 
     try {
       await comboApi.createCombo(
           combo, comboProvider.selectedImages, comboProvider.imageNames);
-      // comboProvider.setCombo(combo);
-      // comboProvider.addCombo(combo);
+      refreshCombos();
+
       _clearFormFields();
       comboProvider.toggleFormVisibility();
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Combo saved successfully!'),
+          backgroundColor: Colors.green,
+        ),
+      );
     } catch (e) {
       print('Failed to save combo: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Failed to save combo!'),
+          backgroundColor: Colors.red,
+        ),
+      );
     }
   }
 
@@ -97,6 +122,18 @@ class _ComboPageState extends State<ComboPage> {
     currentPage++;
     final comboProvider = Provider.of<ComboProvider>(context, listen: false);
     await comboProvider.fetchCombos(page: currentPage, limit: 10);
+  }
+
+  // Function to load combos
+  void loadCombos() async {
+    final comboProvider = Provider.of<ComboProvider>(context, listen: false);
+    await comboProvider.fetchCombos(page: currentPage, limit: 10);
+  }
+
+  // Function to refresh combos
+  void refreshCombos() {
+    currentPage = 1;
+    loadCombos();
   }
 
   void getDropValue() async {
@@ -143,293 +180,491 @@ class _ComboPageState extends State<ComboPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppColors.white,
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Consumer<ComboProvider>(
           builder: (context, comboProvider, child) {
-            if (comboProvider.products.isNotEmpty && items.isEmpty) {
-              getDropValue(); // Generate the dropdown items
-            }
-
-            print(items);
-
             return Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                ElevatedButton(
-                  onPressed: () {
-                    comboProvider.toggleFormVisibility();
-                  },
-                  child: const Text('Create Combo'),
-                ),
-                if (comboProvider.isFormVisible) ...[
-                  const SizedBox(height: 16),
-
-                  TextField(
-                    controller: _nameController,
-                    decoration: const InputDecoration(labelText: 'Name'),
+                if (!comboProvider.isFormVisible)
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text('Existing Combos',
+                          style: TextStyle(
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.black87)),
+                      Row(
+                        children: [
+                          ElevatedButton(
+                              onPressed: () {
+                                comboProvider.toggleFormVisibility();
+                              },
+                              child: const Text('Create Combo')),
+                          const SizedBox(width: 16),
+                          ElevatedButton(
+                              onPressed: refreshCombos,
+                              child: const Text('Refresh')),
+                        ],
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 16),
-                  items.isEmpty
-                      ? const CircularProgressIndicator() // Show loading if items are not ready
-                      : MultiDropdown<String>(
-                          items: items,
-                          controller: productController,
-                          searchEnabled: true,
-                          chipDecoration: const ChipDecoration(
-                            backgroundColor: Colors.yellow,
-                            wrap: true,
-                            runSpacing: 2,
-                            spacing: 10,
-                          ),
-                          fieldDecoration: FieldDecoration(
-                            hintText: 'Select Products',
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              borderSide: const BorderSide(color: Colors.grey),
-                            ),
-                            focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              borderSide:
-                                  const BorderSide(color: Colors.black87),
-                            ),
-                          ),
-                          dropdownDecoration: const DropdownDecoration(
-                            maxHeight: 500,
-                          ),
-                          onSelectionChange: (selectedItems) {
-                            debugPrint(
-                                'Selected items (product IDs): $selectedItems');
-                            comboProvider.selectProductsByIds(selectedItems);
-                          },
-                        ),
-
-                  const SizedBox(height: 16),
-                  TextField(
-                    controller: _mrpController,
-                    decoration: const InputDecoration(labelText: 'MRP'),
-                    keyboardType: TextInputType.number,
-                  ),
-                  const SizedBox(height: 16),
-                  TextField(
-                    controller: _costController,
-                    decoration: const InputDecoration(labelText: 'Cost'),
-                    keyboardType: TextInputType.number,
-                  ),
-                  const SizedBox(height: 16),
-                  TextField(
-                    controller: _skuController,
-                    decoration: const InputDecoration(labelText: 'SKU'),
-                  ),
-                  const SizedBox(height: 16),
-                  ElevatedButton(
-                    onPressed: comboProvider.selectImages, // Pick images
-                    child: const Text('Upload Images'),
-                  ),
-                  // Image Previews
-                  comboProvider.selectedImages != null &&
-                          comboProvider.selectedImages!.isNotEmpty
-                      ? SizedBox(
-                          height: 100,
-                          child: ListView.builder(
-                            scrollDirection: Axis.horizontal,
-                            itemCount: comboProvider.selectedImages!.length,
-                            itemBuilder: (context, index) {
-                              return Padding(
-                                padding: const EdgeInsets.all(8.0),
-                                child: Column(
-                                  children: [
-                                    Expanded(
-                                      child: Image.memory(
-                                        comboProvider.selectedImages![index],
-                                        width: 80,
-                                        height: 80,
-                                        fit: BoxFit.cover,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 4),
-                                    Text(
-                                      comboProvider.imageNames[index],
-                                      style: const TextStyle(fontSize: 12),
-                                    ),
-                                  ],
-                                ),
-                              );
-                            },
-                          ),
-                        )
-                      : const Text('No images selected'),
-
-                  const SizedBox(height: 30),
-
+                if (comboProvider.isFormVisible)
                   Row(
                     children: [
                       ElevatedButton(
-                        onPressed: () => saveCombo(context),
-                        child: const Text('Save Combo'),
-                      ),
+                          onPressed: () {
+                            if (_formKey.currentState!.validate()) {
+                              saveCombo(context);
+                            }
+                          },
+                          child: const Text('Save Combo')),
                       const SizedBox(width: 8),
                       TextButton(
-                        onPressed: () {
-                          _clearFormFields();
-                          comboProvider.toggleFormVisibility();
-                        },
-                        child: const Text('Cancel'),
-                      ),
+                          onPressed: () {
+                            _clearFormFields();
+                            comboProvider.clearSelectedImages();
+                            comboProvider.toggleFormVisibility();
+                          },
+                          child: const Text('Cancel')),
                     ],
-                  )
-                ],
+                  ),
+                if (comboProvider.isFormVisible)
+                  Expanded(
+                    child: SingleChildScrollView(
+                      child: Form(
+                        key: _formKey,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const SizedBox(height: 16),
+                            TextFormField(
+                              controller: _nameController,
+                              decoration:
+                                  const InputDecoration(labelText: 'Name'),
+                              validator: (value) {
+                                if (value == null || value.isEmpty) {
+                                  return 'Please enter Combo Name';
+                                }
+                                return null;
+                              },
+                            ),
+                            const SizedBox(height: 20),
+                            SearchableDropdown(
+                              label: "Add Products",
+                              onChanged: (selected) {
+                                if (selected != null &&
+                                    !selectedProducts.any((product) =>
+                                        product['sku'] == selected['sku'])) {
+                                  setState(() {
+                                    selectedProducts.add({
+                                      'sku': selected['sku'] ?? '',
+                                      'name': selected['name'] ?? '',
+                                      'id': selected['id'] ?? '',
+                                    });
+                                  });
+                                  print('Selected Product: $selected');
+                                }
+                              },
+                            ),
+                            const SizedBox(height: 16),
+                            Wrap(
+                              spacing: 8.0,
+                              children: selectedProducts.map((product) {
+                                return Chip(
+                                  label: Text(
+                                    '${product['sku']}: ${product['name']}',
+                                    style: const TextStyle(color: Colors.black),
+                                  ),
+                                  backgroundColor: Colors.yellow,
+                                  deleteIcon: Container(
+                                    decoration: const BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      color: Colors.red,
+                                    ),
+                                    child: const Icon(
+                                      Icons.close,
+                                      color: Colors.white,
+                                      size: 18,
+                                    ),
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                    side:
+                                        const BorderSide(color: Colors.yellow),
+                                  ),
+                                  onDeleted: () {
+                                    setState(() {
+                                      selectedProducts.remove(product);
+                                    });
+                                  },
+                                );
+                              }).toList(),
+                            ),
+                            const SizedBox(height: 16),
+                            TextFormField(
+                              controller: _mrpController,
+                              decoration:
+                                  const InputDecoration(labelText: 'MRP'),
+                              keyboardType: TextInputType.number,
+                              validator: (value) {
+                                if (value == null || value.isEmpty) {
+                                  return 'Please enter MRP';
+                                }
+                                return null;
+                              },
+                            ),
+                            const SizedBox(height: 16),
+                            TextFormField(
+                              controller: _costController,
+                              decoration:
+                                  const InputDecoration(labelText: 'Cost'),
+                              keyboardType: TextInputType.number,
+                              validator: (value) {
+                                if (value == null || value.isEmpty) {
+                                  return 'Please enter Cost';
+                                }
+                                return null;
+                              },
+                            ),
+                            const SizedBox(height: 16),
+                            TextFormField(
+                              controller: _skuController,
+                              decoration:
+                                  const InputDecoration(labelText: 'SKU'),
+                              validator: (value) {
+                                if (value == null || value.isEmpty) {
+                                  return 'Please enter SKU';
+                                }
+                                return null;
+                              },
+                            ),
+                            const SizedBox(height: 16),
+                            ElevatedButton(
+                              onPressed:
+                                  comboProvider.selectImages, // Pick images
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.orange,
+                              ),
+                              child: const Text('Upload Images'),
+                            ),
+                            comboProvider.selectedImages != null &&
+                                    comboProvider.selectedImages!.isNotEmpty
+                                ? SizedBox(
+                                    height: 100,
+                                    child: ListView.builder(
+                                      scrollDirection: Axis.horizontal,
+                                      itemCount:
+                                          comboProvider.selectedImages!.length,
+                                      itemBuilder: (context, index) {
+                                        return Padding(
+                                          padding: const EdgeInsets.all(8.0),
+                                          child: Stack(
+                                            alignment: Alignment.topRight,
+                                            children: [
+                                              Column(
+                                                children: [
+                                                  Expanded(
+                                                    child: Image.memory(
+                                                      comboProvider
+                                                              .selectedImages![
+                                                          index],
+                                                      width: 80,
+                                                      height: 80,
+                                                      fit: BoxFit.cover,
+                                                    ),
+                                                  ),
+                                                  const SizedBox(height: 4),
+                                                  Text(
+                                                    comboProvider
+                                                        .imageNames[index],
+                                                    style: const TextStyle(
+                                                        fontSize: 12),
+                                                  ),
+                                                ],
+                                              ),
+                                              Positioned(
+                                                top: 0,
+                                                right: -8,
+                                                child: IconButton(
+                                                  icon: const Icon(Icons.close,
+                                                      color: Colors.red),
+                                                  onPressed: () {
+                                                    comboProvider
+                                                        .removeSelectedImage(
+                                                            index);
+                                                  },
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        );
+                                      },
+                                    ),
+                                  )
+                                : const Text(
+                                    'No Images Selected.',
+                                    style: TextStyle(
+                                        fontSize: 14, color: Colors.grey),
+                                  ),
+                            const SizedBox(height: 60),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
 
                 // Do not touch this code - Begin - This is for getCombos
                 if (!comboProvider.isFormVisible) ...[
                   const SizedBox(height: 16),
-                  const Text(
-                    'Existing Combos:',
-                    style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black87,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  if (comboProvider.loading)
-                    const Center(child: CircularProgressIndicator()),
-                  if (!comboProvider.loading &&
-                      comboProvider.combosList.isNotEmpty)
-                    Expanded(
-                      child: ListView.builder(
-                        itemCount: comboProvider.combosList.length,
-                        itemBuilder: (context, index) {
-                          final combo = comboProvider.combosList[index];
-                          final images =
-                              combo['images'] as List<dynamic>? ?? [];
-                          final products =
-                              combo['products'] as List<dynamic>? ?? [];
+                  Expanded(
+                    child: comboProvider.loading
+                        ? const Center(
+                            child: LoadingAnimation(
+                              icon: Icons.collections,
+                              beginColor: Color.fromRGBO(189, 189, 189, 1),
+                              endColor: AppColors.primaryBlue,
+                              size: 80.0,
+                            ),
+                          )
+                        : comboProvider.combosList.isNotEmpty
+                            ? ListView.builder(
+                                itemCount: comboProvider.combosList.length,
+                                itemBuilder: (context, index) {
+                                  final combo = comboProvider.combosList[index];
+                                  final images =
+                                      combo['images'] as List<dynamic>? ?? [];
+                                  final products =
+                                      combo['products'] as List<dynamic>? ?? [];
 
-                          return Card(
-                            elevation: 4,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(15),
-                            ),
-                            margin: const EdgeInsets.symmetric(
-                                vertical: 12, horizontal: 16),
-                            child: Padding(
-                              padding: const EdgeInsets.all(16.0),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Row(
-                                    children: [
-                                      Text(
-                                        combo['name'] ?? 'N/A',
-                                        style: const TextStyle(
-                                          fontSize: 20,
-                                          fontWeight: FontWeight.bold,
-                                          color: Colors.black87,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 8),
-                                  Text(
-                                    'MRP: ₹${combo['mrp'] ?? 'N/A'}',
-                                    style: TextStyle(
-                                        fontSize: 16, color: Colors.grey[700]),
-                                  ),
-                                  Text(
-                                    'Cost: ₹${combo['cost'] ?? 'N/A'}',
-                                    style: TextStyle(
-                                        fontSize: 16, color: Colors.grey[700]),
-                                  ),
-                                  Text(
-                                    'SKU: ${combo['comboSku'] ?? 'N/A'}',
-                                    style: TextStyle(
-                                        fontSize: 16, color: Colors.grey[700]),
-                                  ),
-                                  const SizedBox(height: 16),
-                                  if (images.isNotEmpty) ...[
-                                    const Text(
-                                      'Images:',
-                                      style: TextStyle(
-                                        fontSize: 18,
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.black87,
-                                      ),
+                                  return Card(
+                                    color: Colors.white,
+                                    elevation: 4,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(15),
                                     ),
-                                    const SizedBox(height: 8),
-                                    SingleChildScrollView(
-                                      scrollDirection: Axis.horizontal,
-                                      child: Row(
-                                        children: images.map((imageUrl) {
-                                          return Padding(
-                                            padding: const EdgeInsets.only(
-                                                right: 8.0),
-                                            child: ClipRRect(
-                                              borderRadius:
-                                                  BorderRadius.circular(8.0),
-                                              child: Image.network(
-                                                imageUrl,
-                                                width: 100,
-                                                height: 100,
-                                                fit: BoxFit.cover,
+                                    margin: const EdgeInsets.symmetric(
+                                        vertical: 7, horizontal: 16),
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.stretch,
+                                      children: [
+                                        Container(
+                                          padding: const EdgeInsets.all(16),
+                                          decoration: BoxDecoration(
+                                            color: Colors.grey[200],
+                                            borderRadius:
+                                                const BorderRadius.vertical(
+                                                    top: Radius.circular(15)),
+                                          ),
+                                          child: Row(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.spaceBetween,
+                                            children: [
+                                              Expanded(
+                                                child: Text(
+                                                  combo['name'] ?? 'N/A',
+                                                  style: const TextStyle(
+                                                    fontSize: 20,
+                                                    fontWeight: FontWeight.bold,
+                                                    color: Colors.black87,
+                                                  ),
+                                                ),
                                               ),
-                                            ),
-                                          );
-                                        }).toList(),
-                                      ),
-                                    ),
-                                  ],
-                                  if (products.isNotEmpty) ...[
-                                    const Text(
-                                      'Products:',
-                                      style: TextStyle(
-                                        fontSize: 18,
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.black87,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 8),
-                                    Column(
-                                      children: products.map((product) {
-                                        return ListTile(
-                                          title: Text(
-                                            product['displayName']
-                                                    ?.toString() ??
-                                                'No Name Available',
-                                            style: const TextStyle(
-                                                fontSize: 16,
-                                                fontWeight: FontWeight.w500),
+                                              Row(
+                                                children: [
+                                                  _buildCompactInfo(
+                                                      label: 'MRP',
+                                                      value:
+                                                          '₹${combo['mrp'] ?? 'N/A'}'),
+                                                  _buildCompactInfo(
+                                                      label: 'Cost',
+                                                      value:
+                                                          '₹${combo['cost'] ?? 'N/A'}'),
+                                                  _buildCompactInfo(
+                                                      label: 'SKU',
+                                                      value:
+                                                          combo['comboSku'] ??
+                                                              'N/A'),
+                                                ],
+                                              ),
+                                            ],
                                           ),
-                                          subtitle: Text(
-                                            'SKU: ${product['sku']?.toString() ?? 'No SKU Available'}',
-                                            style: TextStyle(
-                                                fontSize: 14,
-                                                color: Colors.grey[600]),
+                                        ),
+                                        Padding(
+                                          padding: const EdgeInsets.all(16.0),
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              if (images.isNotEmpty) ...[
+                                                const Text(
+                                                  'Images:',
+                                                  style: TextStyle(
+                                                    fontSize: 16,
+                                                    fontWeight: FontWeight.bold,
+                                                    color: Colors.black87,
+                                                  ),
+                                                ),
+                                                const SizedBox(height: 8),
+                                                SizedBox(
+                                                  height: 80,
+                                                  child: ListView.builder(
+                                                    scrollDirection:
+                                                        Axis.horizontal,
+                                                    itemCount: images.length,
+                                                    itemBuilder:
+                                                        (context, index) {
+                                                      return Padding(
+                                                        padding:
+                                                            const EdgeInsets
+                                                                .only(
+                                                                right: 8.0),
+                                                        child: ClipRRect(
+                                                          borderRadius:
+                                                              BorderRadius
+                                                                  .circular(
+                                                                      8.0),
+                                                          child: Image.network(
+                                                            images[index],
+                                                            width: 80,
+                                                            height: 80,
+                                                            fit: BoxFit.cover,
+                                                            errorBuilder:
+                                                                (context, error,
+                                                                    stackTrace) {
+                                                              return Container(
+                                                                width: 80,
+                                                                height: 80,
+                                                                color: Colors
+                                                                    .grey[200],
+                                                                child:
+                                                                    const Icon(
+                                                                  Icons
+                                                                      .broken_image,
+                                                                  color: Colors
+                                                                      .red,
+                                                                  size: 40,
+                                                                ),
+                                                              );
+                                                            },
+                                                          ),
+                                                        ),
+                                                      );
+                                                    },
+                                                  ),
+                                                ),
+                                                const SizedBox(height: 16),
+                                              ],
+                                              if (products.isNotEmpty) ...[
+                                                const Text(
+                                                  'Products:',
+                                                  style: TextStyle(
+                                                    fontSize: 16,
+                                                    fontWeight: FontWeight.bold,
+                                                    color: Colors.black87,
+                                                  ),
+                                                ),
+                                                const SizedBox(height: 8),
+                                                Column(
+                                                  children:
+                                                      products.map((product) {
+                                                    return Padding(
+                                                      padding: const EdgeInsets
+                                                          .symmetric(
+                                                          vertical: 4.0),
+                                                      child: Container(
+                                                        padding:
+                                                            const EdgeInsets
+                                                                .symmetric(
+                                                                horizontal: 12,
+                                                                vertical: 8),
+                                                        decoration:
+                                                            BoxDecoration(
+                                                          color:
+                                                              Colors.grey[200],
+                                                          borderRadius:
+                                                              BorderRadius
+                                                                  .circular(10),
+                                                        ),
+                                                        child: Row(
+                                                          children: [
+                                                            Flexible(
+                                                              child:
+                                                                  SingleChildScrollView(
+                                                                scrollDirection:
+                                                                    Axis.horizontal,
+                                                                child: Text(
+                                                                  'SKU: ${product['sku']?.toString() ?? 'N/A'}',
+                                                                  style:
+                                                                      const TextStyle(
+                                                                    fontSize:
+                                                                        14,
+                                                                    fontWeight:
+                                                                        FontWeight
+                                                                            .bold,
+                                                                    color: Colors
+                                                                        .black87,
+                                                                  ),
+                                                                ),
+                                                              ),
+                                                            ),
+                                                            const SizedBox(
+                                                                width: 8),
+                                                            Flexible(
+                                                              child:
+                                                                  SingleChildScrollView(
+                                                                scrollDirection:
+                                                                    Axis.horizontal,
+                                                                child: Text(
+                                                                  product['displayName']
+                                                                          ?.toString() ??
+                                                                      'No Name Available',
+                                                                  style:
+                                                                      TextStyle(
+                                                                    fontSize:
+                                                                        16,
+                                                                    color: Colors
+                                                                            .grey[
+                                                                        800],
+                                                                  ),
+                                                                ),
+                                                              ),
+                                                            ),
+                                                          ],
+                                                        ),
+                                                      ),
+                                                    );
+                                                  }).toList(),
+                                                ),
+                                              ] else ...[
+                                                const SizedBox(height: 8),
+                                                const Text(
+                                                  '*No products available for this combo.',
+                                                  style: TextStyle(
+                                                      fontSize: 14,
+                                                      color: Colors.grey),
+                                                ),
+                                              ],
+                                            ],
                                           ),
-                                        );
-                                      }).toList(),
+                                        ),
+                                      ],
                                     ),
-                                  ] else ...[
-                                    const Text(
-                                      'No products available for this combo.',
-                                      style: TextStyle(
-                                          fontSize: 16, color: Colors.grey),
-                                    ),
-                                  ],
-                                ],
+                                  );
+                                },
+                              )
+                            : const Center(
+                                child: Text(
+                                  'No combos available.',
+                                  style: TextStyle(
+                                      fontSize: 16, color: Colors.grey),
+                                ),
                               ),
-                            ),
-                          );
-                        },
-                      ),
-                    )
-                  else if (!comboProvider.loading &&
-                      comboProvider.combosList.isEmpty) ...[
-                    const Text(
-                      'No combos available.',
-                      style: TextStyle(fontSize: 16, color: Colors.grey),
-                    ),
-                  ],
+                  ),
                   // Pagination Controls
                   if (!comboProvider.loading &&
                       comboProvider.combosList.isNotEmpty) ...[
@@ -461,7 +696,7 @@ class _ComboPageState extends State<ComboPage> {
                           ),
                         ),
                       ],
-                    )
+                    ),
                   ],
                 ]
 
@@ -471,38 +706,36 @@ class _ComboPageState extends State<ComboPage> {
           },
         ),
       ),
-      // floatingActionButton: FloatingActionButton(
-      //   onPressed: () {
-      //     Provider.of<ComboProvider>(context, listen: false).fetchCombos();
-      //   },
-      //   backgroundColor: Colors.blue,
-      //   tooltip: 'Fetch Combos',
-      //   child: const Icon(Icons.refresh),
-      // ),
     );
   }
 }
 
-class CustomDropdownItem<T> extends DropdownItem<T> {
-  CustomDropdownItem({
-    required String label,
-    required T value,
-    bool disabled = false,
-    bool selected = false,
-  }) : super(
-          label: label,
-          value: value,
-          disabled: disabled,
-          selected: selected,
-        );
-
-  @override
-  bool operator ==(Object other) {
-    if (identical(this, other)) return true;
-
-    return other is CustomDropdownItem<T> && other.value == value;
-  }
-
-  @override
-  int get hashCode => value.hashCode;
+Widget _buildCompactInfo({required String label, required String value}) {
+  return Container(
+    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+    margin: const EdgeInsets.only(left: 8),
+    decoration: BoxDecoration(
+      color: Colors.white.withOpacity(0.7),
+      borderRadius: BorderRadius.circular(8),
+    ),
+    child: Row(
+      children: [
+        Text(
+          '$label: ',
+          style: const TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+            color: Colors.black54,
+          ),
+        ),
+        Text(
+          value,
+          style: const TextStyle(
+            fontSize: 15,
+            color: Colors.black87,
+          ),
+        ),
+      ],
+    ),
+  );
 }
