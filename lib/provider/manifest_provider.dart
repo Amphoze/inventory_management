@@ -29,6 +29,13 @@ class ManifestProvider with ChangeNotifier {
   int get selectedCount =>
       _selectedProducts.where((isSelected) => isSelected).length;
 
+  bool isRefreshingOrders = false;
+
+  void setRefreshingOrders(bool value) {
+    isRefreshingOrders = value;
+    notifyListeners();
+  }
+
   void toggleSelectAll(bool value) {
     _selectAll = value;
     _selectedProducts =
@@ -44,6 +51,7 @@ class ManifestProvider with ChangeNotifier {
 
   Future<void> fetchOrdersWithStatus8() async {
     _isLoading = true;
+    setRefreshingOrders(true);
     notifyListeners();
 
     final prefs = await SharedPreferences.getInstance();
@@ -82,6 +90,7 @@ class ManifestProvider with ChangeNotifier {
       _totalPages = 1; // Reset total pages if there’s an error
     } finally {
       _isLoading = false;
+      setRefreshingOrders(false);
       notifyListeners();
     }
   }

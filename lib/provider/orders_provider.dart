@@ -49,6 +49,19 @@ class OrdersProvider with ChangeNotifier {
   String get paymentDateTime => _paymentDateTime;
   String get normalDate => _normalDate;
 
+  bool isConfirm = false;
+  bool isUpdating = false;
+
+  void setUpdating(bool status) {
+    isUpdating = status;
+    notifyListeners();
+  }
+
+  void setConfirmStatus(bool status) {
+    isConfirm = status;
+    notifyListeners();
+  }
+
   void updateDate(String date) {
     _normalDate = date;
     notifyListeners();
@@ -292,6 +305,8 @@ class OrdersProvider with ChangeNotifier {
         'https://inventory-management-backend-s37u.onrender.com';
     const String confirmOrderUrl = '$baseUrl/orders/confirm';
     final String? token = await _getToken();
+    setConfirmStatus(true);
+    notifyListeners();
 
     if (token == null) {
       return 'No auth token found';
@@ -325,6 +340,7 @@ class OrdersProvider with ChangeNotifier {
         // After successful confirmation, fetch updated orders and notify listeners
         await fetchReadyOrders(); // Assuming fetchOrders is a function that reloads the orders
         resetSelections(); // Clear selected order IDs
+        setConfirmStatus(false);
         notifyListeners(); // Notify the UI to rebuild
 
         return responseData['message'] ?? 'Orders confirmed successfully';
@@ -332,6 +348,8 @@ class OrdersProvider with ChangeNotifier {
         return responseData['message'] ?? 'Failed to confirm orders';
       }
     } catch (error) {
+      setConfirmStatus(false);
+      notifyListeners();
       print('Error during API request: $error');
       return 'An error occurred: $error';
     }
@@ -389,6 +407,8 @@ class OrdersProvider with ChangeNotifier {
 
   // Update status for failed orders
   Future<void> updateFailedOrders(BuildContext context) async {
+    setUpdating(true);
+    notifyListeners();
     final List<String> failedOrderIds = failedOrders
         .asMap()
         .entries
@@ -414,7 +434,7 @@ class OrdersProvider with ChangeNotifier {
     _selectedFailedOrders =
         List<bool>.filled(failedOrders.length, false); // Reset selection list
     selectedFailedItemsCount = 0; // Reset selected items count
-
+    setUpdating(false);
     notifyListeners(); // Notify listeners to update UI
   }
 

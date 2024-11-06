@@ -146,56 +146,76 @@ class _OrdersNewPageState extends State<OrdersNewPage>
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.primaryBlue,
                       ),
-                      onPressed: () async {
-                        // Get the provider instance
-                        final provider =
-                            Provider.of<OrdersProvider>(context, listen: false);
+                      onPressed: provider.isConfirm
+                          ? null // Disable button while loading
+                          : () async {
+                              final provider = Provider.of<OrdersProvider>(
+                                  context,
+                                  listen: false);
 
-                        // Collect selected order IDs
-                        List<String> selectedOrderIds = provider.readyOrders
-                            .asMap()
-                            .entries
-                            .where((entry) => provider.selectedReadyOrders[
-                                entry.key]) // Filter selected orders
-                            .map((entry) =>
-                                entry.value.orderId!) // Map to their IDs
-                            .toList();
+                              // Collect selected order IDs
+                              List<String> selectedOrderIds = provider
+                                  .readyOrders
+                                  .asMap()
+                                  .entries
+                                  .where((entry) =>
+                                      provider.selectedReadyOrders[entry.key])
+                                  .map((entry) => entry.value.orderId!)
+                                  .toList();
 
-                        if (selectedOrderIds.isEmpty) {
-                          // Show an error message if no orders are selected
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('No orders selected'),
-                              backgroundColor: AppColors
-                                  .cardsred, // Red background for error
+                              if (selectedOrderIds.isEmpty) {
+                                // Show an error message if no orders are selected
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text('No orders selected'),
+                                    backgroundColor: AppColors.cardsred,
+                                  ),
+                                );
+                              } else {
+                                // Set loading status to true before starting the operation
+                                provider.setConfirmStatus(true);
+
+                                // Call confirmOrders method with selected IDs
+                                String resultMessage = await provider
+                                    .confirmOrders(context, selectedOrderIds);
+
+                                // Set loading status to false after operation completes
+                                provider.setConfirmStatus(false);
+
+                                // Determine the background color based on the result
+                                Color snackBarColor;
+                                if (resultMessage.contains('success')) {
+                                  snackBarColor =
+                                      AppColors.green; // Success: Green
+                                } else if (resultMessage.contains('error') ||
+                                    resultMessage.contains('failed')) {
+                                  snackBarColor =
+                                      AppColors.cardsred; // Error: Red
+                                } else {
+                                  snackBarColor =
+                                      AppColors.orange; // Other: Orange
+                                }
+
+                                // Show feedback based on the result
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(resultMessage),
+                                    backgroundColor: snackBarColor,
+                                  ),
+                                );
+                              }
+                            },
+                      child: provider.isConfirm
+                          ? const SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(
+                                  color: Colors.white),
+                            )
+                          : const Text(
+                              'Confirm Orders',
+                              style: TextStyle(color: Colors.white),
                             ),
-                          );
-                        } else {
-                          // Call confirmOrders method with selected IDs
-                          String resultMessage = await provider.confirmOrders(
-                              context, selectedOrderIds);
-
-                          // Determine the background color based on the result
-                          Color snackBarColor;
-                          if (resultMessage.contains('success')) {
-                            snackBarColor = AppColors.green; // Success: Green
-                          } else if (resultMessage.contains('error') ||
-                              resultMessage.contains('failed')) {
-                            snackBarColor = AppColors.cardsred; // Error: Red
-                          } else {
-                            snackBarColor = AppColors.orange; // Other: Orange
-                          }
-
-                          // Show feedback based on the result
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(resultMessage),
-                              backgroundColor: snackBarColor,
-                            ),
-                          );
-                        }
-                      },
-                      child: const Text('Confirm Orders'),
                     ),
                     const SizedBox(width: 8),
                     ElevatedButton(
@@ -895,10 +915,24 @@ class _OrdersNewPageState extends State<OrdersNewPage>
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.cardsred,
                       ),
-                      onPressed: () {
-                        provider.updateFailedOrders(context);
-                      },
-                      child: const Text('Approve Failed Orders'),
+                      onPressed: provider.isUpdating
+                          ? null
+                          : () async {
+                              provider.setUpdating(true);
+                              await provider.updateFailedOrders(context);
+                              provider.setUpdating(false);
+                            },
+                      child: provider.isUpdating
+                          ? const SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(
+                                  color: Colors.white),
+                            )
+                          : const Text(
+                              'Approve Failed Orders',
+                              style: TextStyle(color: Colors.white),
+                            ),
                     ),
                     const SizedBox(width: 8),
                     ElevatedButton(

@@ -263,6 +263,7 @@ class _SearchableDropdownState extends State<SearchableDropdown> {
                         border: OutlineInputBorder(),
                         contentPadding: EdgeInsets.symmetric(horizontal: 8.0),
                       ),
+                      onSubmitted: (_) => _performSearch(),
                     ),
                   ),
                   const SizedBox(width: 20),

@@ -64,62 +64,64 @@ class _DashboardPageState extends State<DashboardPage> {
   @override
   Widget build(BuildContext context) {
     final provider = Provider.of<InventoryProvider>(context, listen: false);
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        bool isSmallScreen = constraints.maxWidth < 800;
+    return SelectionArea(
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          bool isSmallScreen = constraints.maxWidth < 800;
 
-        return Scaffold(
-          key: _scaffoldKey,
-          drawer: isSmallScreen
-              ? SizedBox(
-                  width: 220,
-                  child: Drawer(
-                    child: Container(
-                      color: Colors.grey[200],
-                      child: _buildDrawerContent(isSmallScreen),
+          return Scaffold(
+            key: _scaffoldKey,
+            drawer: isSmallScreen
+                ? SizedBox(
+                    width: 220,
+                    child: Drawer(
+                      child: Container(
+                        color: Colors.grey[200],
+                        child: _buildDrawerContent(isSmallScreen),
+                      ),
+                    ),
+                  )
+                : null,
+            body: Row(
+              children: <Widget>[
+                if (!isSmallScreen)
+                  Container(
+                    width: 200,
+                    color: AppColors.lightGrey,
+                    child: _buildDrawerContent(isSmallScreen),
+                  ),
+                Expanded(
+                  child: Container(
+                    color: AppColors.white,
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: Column(
+                      children: [
+                        Row(
+                          children: <Widget>[
+                            if (isSmallScreen)
+                              IconButton(
+                                icon: const Icon(Icons.menu,
+                                    color: AppColors.grey),
+                                onPressed: () {
+                                  _scaffoldKey.currentState?.openDrawer();
+                                },
+                              ),
+                          ],
+                        ),
+                        const SizedBox(height: 20),
+                        Expanded(
+                          child: _buildMainContent(
+                              selectedDrawerItem, isSmallScreen),
+                        ),
+                      ],
                     ),
                   ),
-                )
-              : null,
-          body: Row(
-            children: <Widget>[
-              if (!isSmallScreen)
-                Container(
-                  width: 200,
-                  color: AppColors.lightGrey,
-                  child: _buildDrawerContent(isSmallScreen),
                 ),
-              Expanded(
-                child: Container(
-                  color: AppColors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                  child: Column(
-                    children: [
-                      Row(
-                        children: <Widget>[
-                          if (isSmallScreen)
-                            IconButton(
-                              icon:
-                                  const Icon(Icons.menu, color: AppColors.grey),
-                              onPressed: () {
-                                _scaffoldKey.currentState?.openDrawer();
-                              },
-                            ),
-                        ],
-                      ),
-                      const SizedBox(height: 20),
-                      Expanded(
-                        child: _buildMainContent(
-                            selectedDrawerItem, isSmallScreen),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          ),
-        );
-      },
+              ],
+            ),
+          );
+        },
+      ),
     );
   }
 

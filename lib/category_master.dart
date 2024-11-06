@@ -114,14 +114,28 @@ class _CategoryMasterPageState extends State<CategoryMasterPage> {
                           ),
                         ),
                       const Spacer(),
-                      _buildButton(
-                        text: "Refresh",
-                        color: AppColors.primaryBlue,
-                        icon: Icons.refresh,
-                        onTap: () {
-                          // Start fetching categories when the button is tapped
-                          categoryProvider.fetchAllCategories();
-                        },
+                      ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primaryBlue,
+                        ),
+                        onPressed: categoryProvider.isRefreshingOrders
+                            ? null
+                            : () async {
+                                categoryProvider.fetchAllCategories();
+                              },
+                        child: categoryProvider.isRefreshingOrders
+                            ? const SizedBox(
+                                width: 16,
+                                height: 16,
+                                child: CircularProgressIndicator(
+                                  color: Colors.white,
+                                  strokeWidth: 2,
+                                ),
+                              )
+                            : const Text(
+                                'Refresh',
+                                style: TextStyle(color: Colors.white),
+                              ),
                       ),
                     ],
                   )
@@ -187,14 +201,28 @@ class _CategoryMasterPageState extends State<CategoryMasterPage> {
                           ),
                         ),
                       const Spacer(),
-                      _buildButton(
-                        text: "Refresh",
-                        color: AppColors.primaryBlue,
-                        icon: Icons.refresh,
-                        onTap: () {
-                          // Start fetching categories when the button is tapped
-                          categoryProvider.fetchAllCategories();
-                        },
+                      ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primaryBlue,
+                        ),
+                        onPressed: categoryProvider.isRefreshingOrders
+                            ? null
+                            : () async {
+                                categoryProvider.fetchAllCategories();
+                              },
+                        child: categoryProvider.isRefreshingOrders
+                            ? const SizedBox(
+                                width: 16,
+                                height: 16,
+                                child: CircularProgressIndicator(
+                                  color: Colors.white,
+                                  strokeWidth: 2,
+                                ),
+                              )
+                            : const Text(
+                                'Refresh',
+                                style: TextStyle(color: Colors.white),
+                              ),
                       ),
                     ],
                   ),

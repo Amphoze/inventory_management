@@ -123,13 +123,24 @@ class _CheckerPageState extends State<CheckerPage> {
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.primaryBlue,
                       ),
-                      onPressed: () {
-                        checkerProvider.fetchOrdersWithStatus6();
-                      },
-                      child: const Text(
-                        'Refresh',
-                        style: TextStyle(color: Colors.white),
-                      ),
+                      onPressed: checkerProvider.isRefreshingOrders
+                          ? null
+                          : () async {
+                              checkerProvider.fetchOrdersWithStatus6();
+                            },
+                      child: checkerProvider.isRefreshingOrders
+                          ? const SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(
+                                color: Colors.white,
+                                strokeWidth: 2,
+                              ),
+                            )
+                          : const Text(
+                              'Refresh',
+                              style: TextStyle(color: Colors.white),
+                            ),
                     ),
                   ],
                 ),

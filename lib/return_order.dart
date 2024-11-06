@@ -124,13 +124,24 @@ class _ReturnOrdersState extends State<ReturnOrders> {
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.primaryBlue,
                       ),
-                      onPressed: () {
-                        returnProvider.fetchOrdersWithStatus9();
-                      },
-                      child: const Text(
-                        'Refresh',
-                        style: TextStyle(color: Colors.white),
-                      ),
+                      onPressed: returnProvider.isRefreshingOrders
+                          ? null
+                          : () async {
+                              returnProvider.fetchOrdersWithStatus9();
+                            },
+                      child: returnProvider.isRefreshingOrders
+                          ? const SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(
+                                color: Colors.white,
+                                strokeWidth: 2,
+                              ),
+                            )
+                          : const Text(
+                              'Refresh',
+                              style: TextStyle(color: Colors.white),
+                            ),
                     ),
                   ],
                 ),
