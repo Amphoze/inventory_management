@@ -206,8 +206,28 @@ class _ComboPageState extends State<ComboPage> {
                               child: const Text('Create Combo')),
                           const SizedBox(width: 16),
                           ElevatedButton(
-                              onPressed: refreshCombos,
-                              child: const Text('Refresh')),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppColors.primaryBlue,
+                            ),
+                            onPressed: comboProvider.isRefreshingOrders
+                                ? null
+                                : () async {
+                                    refreshCombos();
+                                  },
+                            child: comboProvider.isRefreshingOrders
+                                ? const SizedBox(
+                                    width: 16,
+                                    height: 16,
+                                    child: CircularProgressIndicator(
+                                      color: Colors.white,
+                                      strokeWidth: 2,
+                                    ),
+                                  )
+                                : const Text(
+                                    'Refresh',
+                                    style: TextStyle(color: Colors.white),
+                                  ),
+                          ),
                         ],
                       ),
                     ],

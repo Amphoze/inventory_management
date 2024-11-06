@@ -19,11 +19,19 @@ class CategoryProvider with ChangeNotifier {
   // Add this getter to access `_isFetching`
   bool get isFetching => _isFetching;
 
+  bool isRefreshingOrders = false;
+
+  void setRefreshingOrders(bool value) {
+    isRefreshingOrders = value;
+    notifyListeners();
+  }
+
   Future<void> fetchAllCategories() async {
     List<String> allCategories = [];
     bool hasMore = true;
     int page = 1;
     _isFetching = false;
+    setRefreshingOrders(true);
     notifyListeners();
 
     while (hasMore) {
@@ -57,6 +65,7 @@ class CategoryProvider with ChangeNotifier {
     _isFetching = false;
     _categories = allCategories;
     _filteredCategories = _categories;
+    setRefreshingOrders(false);
     notifyListeners();
   }
 

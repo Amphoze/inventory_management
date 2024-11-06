@@ -37,6 +37,13 @@ class ComboProvider with ChangeNotifier {
   List<Uint8List>? selectedImages = [];
   List<String> imageNames = [];
 
+  bool isRefreshingOrders = false;
+
+  void setRefreshingOrders(bool value) {
+    isRefreshingOrders = value;
+    notifyListeners();
+  }
+
   void clearSelectedImages() {
     selectedImages = [];
     imageNames = [];
@@ -127,6 +134,7 @@ class ComboProvider with ChangeNotifier {
 
   Future<void> fetchCombos({int page = 1, int limit = 10}) async {
     _loading = true;
+    setRefreshingOrders(true);
     notifyListeners();
     try {
       _combosList = await comboApi.getCombos(page: page, limit: limit);
@@ -136,6 +144,7 @@ class ComboProvider with ChangeNotifier {
     }
 
     _loading = false;
+    setRefreshingOrders(false);
     notifyListeners();
   }
 

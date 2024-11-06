@@ -123,13 +123,24 @@ class _PackerPageState extends State<PackerPage> {
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.primaryBlue,
                       ),
-                      onPressed: () {
-                        packerProvider.fetchOrdersWithStatus5();
-                      },
-                      child: const Text(
-                        'Refresh',
-                        style: TextStyle(color: Colors.white),
-                      ),
+                      onPressed: packerProvider.isRefreshingOrders
+                          ? null
+                          : () async {
+                              packerProvider.fetchOrdersWithStatus5();
+                            },
+                      child: packerProvider.isRefreshingOrders
+                          ? const SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(
+                                color: Colors.white,
+                                strokeWidth: 2,
+                              ),
+                            )
+                          : const Text(
+                              'Refresh',
+                              style: TextStyle(color: Colors.white),
+                            ),
                     ),
                   ],
                 ),

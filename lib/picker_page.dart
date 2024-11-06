@@ -122,13 +122,24 @@ class _PickerPageState extends State<PickerPage> {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.primaryBlue,
                     ),
-                    onPressed: () {
-                      pickerProvider.fetchOrdersWithStatus4();
-                    },
-                    child: const Text(
-                      'Refresh',
-                      style: TextStyle(color: Colors.white),
-                    ),
+                    onPressed: pickerProvider.isRefreshingOrders
+                        ? null
+                        : () async {
+                            pickerProvider.fetchOrdersWithStatus4();
+                          },
+                    child: pickerProvider.isRefreshingOrders
+                        ? const SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(
+                              color: Colors.white,
+                              strokeWidth: 2,
+                            ),
+                          )
+                        : const Text(
+                            'Refresh',
+                            style: TextStyle(color: Colors.white),
+                          ),
                   ),
                 ],
               ),

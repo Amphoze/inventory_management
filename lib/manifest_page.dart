@@ -123,13 +123,24 @@ class _ManifestPageState extends State<ManifestPage> {
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.primaryBlue,
                       ),
-                      onPressed: () {
-                        manifestProvider.fetchOrdersWithStatus8();
-                      },
-                      child: const Text(
-                        'Refresh',
-                        style: TextStyle(color: Colors.white),
-                      ),
+                      onPressed: manifestProvider.isRefreshingOrders
+                          ? null
+                          : () async {
+                              manifestProvider.fetchOrdersWithStatus8();
+                            },
+                      child: manifestProvider.isRefreshingOrders
+                          ? const SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(
+                                color: Colors.white,
+                                strokeWidth: 2,
+                              ),
+                            )
+                          : const Text(
+                              'Refresh',
+                              style: TextStyle(color: Colors.white),
+                            ),
                     ),
                   ],
                 ),
