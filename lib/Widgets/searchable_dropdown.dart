@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:inventory_management/Custom-Files/colors.dart';
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -23,6 +24,7 @@ class _SearchableDropdownState extends State<SearchableDropdown> {
   String? selectedProductName;
   int currentPage = 1;
   bool isLoading = false;
+  bool isSearching = false;
   TextEditingController searchController = TextEditingController();
   bool isDropdownOpen = false;
 
@@ -52,6 +54,57 @@ class _SearchableDropdownState extends State<SearchableDropdown> {
     setState(() {
       isLoading = false;
     });
+  }
+
+  // Search for a specific product by SKU
+  Future<Map<String, dynamic>> searchProductBySku(String sku) async {
+    final url = Uri.parse(
+        'https://inventory-management-backend-s37u.onrender.com/products?sku=$sku');
+
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('authToken') ?? '';
+
+      final response = await http.get(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final products = json.decode(response.body)['products'];
+
+        if (products.isNotEmpty) {
+          final productList = products.map((product) {
+            return {
+              'id': product['_id'] ?? '',
+              'displayName': product['displayName'] ?? '',
+              'sku': product['sku'] ?? '',
+            };
+          }).toList();
+
+          return {
+            'success': true,
+            'data': productList,
+          };
+        } else {
+          return {
+            'success': false,
+            'message': 'No products found for the provided SKU.',
+          };
+        }
+      } else {
+        return {
+          'success': false,
+          'message':
+              'Failed to fetch product. Status code: ${response.statusCode}',
+        };
+      }
+    } catch (error) {
+      return {'success': false, 'message': 'Error: $error'};
+    }
   }
 
   Future<Map<String, dynamic>> getAllProducts({
@@ -100,25 +153,75 @@ class _SearchableDropdownState extends State<SearchableDropdown> {
   void _toggleDropdown() {
     setState(() {
       isDropdownOpen = !isDropdownOpen;
+      if (!isDropdownOpen) {
+        searchController.clear();
+        products.clear();
+        currentPage = 1;
+        fetchProducts();
+      }
     });
   }
 
-  void _addNewProduct(String name) {
-    setState(() {
-      products.insert(0, {'displayName': name, 'id': 'new'});
-      selectedProductId = 'new';
-      selectedProductName = name;
-      isDropdownOpen = false;
-    });
+  // void _addNewProduct(String name) {
+  //   setState(() {
+  //     products.insert(0, {'displayName': name, 'id': 'new'});
+  //     selectedProductId = 'new';
+  //     selectedProductName = name;
+  //     isDropdownOpen = false;
+  //   });
 
-    if (widget.onChanged != null) {
-      widget
-          .onChanged!({'id': selectedProductId!, 'name': selectedProductName!});
+  //   if (widget.onChanged != null) {
+  //     widget
+  //         .onChanged!({'id': selectedProductId!, 'name': selectedProductName!});
+  //   }
+
+  //   searchController.clear();
+  // }
+
+  void _performSearch() async {
+    String sku = searchController.text.trim();
+    if (sku.isNotEmpty) {
+      setState(() {
+        isSearching = true;
+      });
+
+      final response = await searchProductBySku(sku);
+      if (response['success']) {
+        setState(() {
+          products = response['data'];
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            // content: Text('Found ${response['data'].length} product(s) for SKU: $sku.'),
+            content: Text('Found product with SKU: $sku.'),
+            backgroundColor: AppColors.green,
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content:
+                Text('Search Error: ${response['message']} for SKU: $sku.'),
+            backgroundColor: AppColors.cardsred,
+            duration: const Duration(seconds: 2),
+          ),
+        );
+        print('Search Error: ${response['message']}');
+      }
+      setState(() {
+        isSearching = false;
+      });
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please enter a SKU to search.'),
+          backgroundColor: AppColors.cardsred,
+          duration: Duration(seconds: 2),
+        ),
+      );
     }
-
-    searchController.clear();
   }
-// ...
 
   @override
   Widget build(BuildContext context) {
@@ -150,18 +253,37 @@ class _SearchableDropdownState extends State<SearchableDropdown> {
               ],
             ),
             if (isDropdownOpen) ...[
-              TextField(
-                controller: searchController,
-                decoration: const InputDecoration(
-                  hintText: 'Search or add product',
-                  border: OutlineInputBorder(),
-                  contentPadding: EdgeInsets.symmetric(horizontal: 8.0),
-                ),
-                onChanged: (value) {
-                  currentPage = 1;
-                  products.clear();
-                  fetchProducts(query: value);
-                },
+              Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: searchController,
+                      decoration: const InputDecoration(
+                        hintText: 'Search by SKU',
+                        border: OutlineInputBorder(),
+                        contentPadding: EdgeInsets.symmetric(horizontal: 8.0),
+                      ),
+                      onSubmitted: (_) => _performSearch(),
+                    ),
+                  ),
+                  const SizedBox(width: 20),
+                  isSearching
+                      ? const Center(
+                          child: SizedBox(
+                            width: 24,
+                            height: 24,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                  AppColors.green),
+                            ),
+                          ),
+                        )
+                      : IconButton(
+                          icon: const Icon(Icons.search),
+                          onPressed: _performSearch,
+                        ),
+                ],
               ),
               Container(
                 constraints: const BoxConstraints(maxHeight: 250),

@@ -20,6 +20,8 @@ class BookPage extends StatefulWidget {
 class _BookPageState extends State<BookPage>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
+  final TextEditingController _b2bSearchController = TextEditingController();
+  final TextEditingController _b2cSearchController = TextEditingController();
   final TextEditingController b2bPageController = TextEditingController();
   final TextEditingController b2cPageController = TextEditingController();
   bool areOrdersFetched = false;
@@ -28,7 +30,27 @@ class _BookPageState extends State<BookPage>
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
-
+    _tabController.addListener(() {
+      // Reload data when the tab changes
+      if (_tabController.indexIsChanging) {
+        _refreshOrders("B2B");
+        _refreshOrders("B2C");
+        _b2bSearchController.clear();
+        _b2cSearchController.clear();
+      }
+    });
+    _b2bSearchController.addListener(() {
+      if (_b2bSearchController.text.isEmpty) {
+        _refreshOrders('B2B');
+        Provider.of<BookProvider>(context, listen: false).clearSearchResults();
+      }
+    });
+    _b2cSearchController.addListener(() {
+      if (_b2cSearchController.text.isEmpty) {
+        _refreshOrders('B2C');
+        Provider.of<BookProvider>(context, listen: false).clearSearchResults();
+      }
+    });
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final bookProvider = Provider.of<BookProvider>(context, listen: false);
       bookProvider.fetchOrders('B2B', bookProvider.currentPageB2B);
@@ -39,6 +61,8 @@ class _BookPageState extends State<BookPage>
   @override
   void dispose() {
     _tabController.dispose();
+    _b2bSearchController.dispose();
+    _b2cSearchController.dispose();
     b2bPageController.dispose();
     b2cPageController.dispose();
     super.dispose();
@@ -53,8 +77,11 @@ class _BookPageState extends State<BookPage>
         appBar: AppBar(
           backgroundColor: Colors.white,
           elevation: 0,
-          title: _buildAppBarTitle(),
-          bottom: _buildTabBar(),
+          toolbarHeight: 0,
+          bottom: PreferredSize(
+            preferredSize: const Size.fromHeight(50),
+            child: _buildTabBar(),
+          ),
         ),
         body: Padding(
           padding: const EdgeInsets.only(top: 3.0),
@@ -70,106 +97,14 @@ class _BookPageState extends State<BookPage>
     );
   }
 
-  Widget _buildAppBarTitle() {
-    return Row(
-      children: [
-        SizedBox(
-          width: 250,
-          child: _buildSearchBar(),
-        ),
-        const Spacer(),
-        _buildFilterButton(),
-        _buildSortDropdown(),
-        const SizedBox(width: 10),
-        IconButton(
-          icon: const Icon(Icons.refresh),
-          onPressed: () {
-            _refreshOrders();
-          },
-          color: Colors.black,
-        ),
-      ],
-    );
-  }
-
 // Refresh orders for both B2B and B2C
-  void _refreshOrders() {
+  void _refreshOrders(String orderType) {
     final bookProvider = Provider.of<BookProvider>(context, listen: false);
-    bookProvider.fetchOrders('B2B', bookProvider.currentPageB2B);
-    bookProvider.fetchOrders('B2C', bookProvider.currentPageB2C);
-
-    // Show a message to indicate reloading
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Content refreshed'),
-        backgroundColor: AppColors.orange,
-      ),
-    );
-  }
-
-  Widget _buildSearchBar() {
-    return Consumer<BookProvider>(
-      builder: (context, provider, child) {
-        return Container(
-          height: 40,
-          decoration: BoxDecoration(
-            color: const Color.fromARGB(183, 6, 90, 216),
-            borderRadius: BorderRadius.circular(8),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.grey.withOpacity(0.3),
-                blurRadius: 4,
-                offset: const Offset(0, 2),
-              ),
-            ],
-          ),
-          child: TextField(
-            controller: provider.searchController,
-            textAlign: TextAlign.center,
-            style: const TextStyle(color: Colors.white),
-            decoration: const InputDecoration(
-              hintText: 'Search Orders',
-              hintStyle: TextStyle(color: Colors.white),
-              border: InputBorder.none,
-              contentPadding: EdgeInsets.symmetric(vertical: 8.0),
-              prefixIcon: Icon(Icons.search, color: Colors.white),
-            ),
-            onChanged: (value) {
-              provider.onSearchChanged();
-            },
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _buildFilterButton() {
-    return IconButton(
-      icon: const Icon(Icons.filter_list),
-      onPressed: () {
-        print('Filter button pressed');
-      },
-      color: Colors.black,
-    );
-  }
-
-  Widget _buildSortDropdown() {
-    return Consumer<BookProvider>(
-      builder: (context, provider, child) {
-        return CustomDropdown<String>(
-          items: const ['Date', 'Amount'],
-          selectedItem: provider.sortOption,
-          hint: 'Sort by',
-          onChanged: (value) {
-            provider.setSortOption(value);
-          },
-          hintStyle: const TextStyle(color: Colors.black54),
-          itemStyle: const TextStyle(color: Colors.black),
-          borderColor: Colors.grey,
-          borderWidth: 1.0,
-        );
-      },
-    );
+    if (orderType == 'B2B') {
+      bookProvider.fetchOrders('B2B', bookProvider.currentPageB2B);
+    } else {
+      bookProvider.fetchOrders('B2C', bookProvider.currentPageB2C);
+    }
   }
 
   PreferredSizeWidget _buildTabBar() {
@@ -189,6 +124,80 @@ class _BookPageState extends State<BookPage>
     );
   }
 
+  Widget _searchBar(String orderType) {
+    final TextEditingController controller =
+        orderType == 'B2B' ? _b2bSearchController : _b2cSearchController;
+
+    return Padding(
+      padding: EdgeInsets.all(8.0),
+      child: Container(
+        width: 200,
+        height: 34,
+        decoration: BoxDecoration(
+          border: Border.all(
+            color: AppColors.green,
+            width: 1.5,
+          ),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: TextField(
+                controller: controller,
+                decoration: InputDecoration(
+                  prefixIcon: IconButton(
+                    icon: const Icon(
+                      Icons.search,
+                      color: Color.fromRGBO(117, 117, 117, 1),
+                    ),
+                    onPressed: () {},
+                  ),
+                  hintText: 'Search Orders',
+                  hintStyle: const TextStyle(
+                    color: Color.fromRGBO(117, 117, 117, 1),
+                    fontSize: 16,
+                  ),
+                  border: InputBorder.none,
+                  contentPadding: const EdgeInsets.symmetric(vertical: 10.0),
+                ),
+                style: const TextStyle(color: AppColors.black),
+                onChanged: (text) {
+                  if (text.isEmpty) {
+                    Provider.of<BookProvider>(context, listen: false)
+                        .clearSearchResults();
+                  }
+                },
+                onSubmitted: (text) {
+                  if (orderType == 'B2B') {
+                    Provider.of<BookProvider>(context, listen: false)
+                        .searchB2BOrders(text);
+                  } else {
+                    Provider.of<BookProvider>(context, listen: false)
+                        .searchB2COrders(text);
+                  }
+                },
+              ),
+            ),
+            if (controller.text.isNotEmpty)
+              IconButton(
+                icon: Icon(
+                  Icons.close,
+                  color: Colors.grey.shade600,
+                ),
+                onPressed: () {
+                  controller.clear();
+                  // _refreshOrders(orderType);
+                  Provider.of<BookProvider>(context, listen: false)
+                      .clearSearchResults();
+                },
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildOrderList(String orderType) {
     final bookProvider = Provider.of<BookProvider>(context);
     List<Order> orders =
@@ -203,12 +212,25 @@ class _BookPageState extends State<BookPage>
 
     return Column(
       children: [
-        // Add the Confirm button here
-        _buildConfirmButtons(orderType),
+        Row(
+          children: [
+            _searchBar(orderType),
+            const Spacer(),
+            // Add the Confirm button here
+            _buildConfirmButtons(orderType),
+          ],
+        ),
         _buildTableHeader(orderType, selectedCount),
         Expanded(
           child: bookProvider.isLoadingB2B || bookProvider.isLoadingB2C
-              ? const Center(child: BookLoadingAnimation())
+              ? const Center(
+                  child: LoadingAnimation(
+                    icon: Icons.book_online,
+                    beginColor: Color.fromRGBO(189, 189, 189, 1),
+                    endColor: AppColors.primaryBlue,
+                    size: 80.0,
+                  ),
+                )
               : orders.isEmpty
                   ? const Center(
                       child: Text(
@@ -341,6 +363,7 @@ class _BookPageState extends State<BookPage>
   }
 
   Widget _buildConfirmButtons(String orderType) {
+    final bookProvider = Provider.of<BookProvider>(context, listen: false);
     return Align(
       alignment: Alignment.topRight,
       child: Padding(
@@ -353,6 +376,32 @@ class _BookPageState extends State<BookPage>
             _buildBookButton('Shiprocket', orderType, AppColors.primaryBlue),
             const SizedBox(width: 8),
             _buildBookButton('Others', orderType, AppColors.primaryBlue),
+            const SizedBox(
+              width: 8,
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primaryBlue,
+              ),
+              onPressed: bookProvider.isRefreshingOrders
+                  ? null
+                  : () async {
+                      _refreshOrders(orderType);
+                    },
+              child: bookProvider.isRefreshingOrders
+                  ? const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(
+                        color: Colors.white,
+                        strokeWidth: 2,
+                      ),
+                    )
+                  : const Text(
+                      'Refresh',
+                      style: TextStyle(color: Colors.white),
+                    ),
+            ),
           ],
         ),
       ),
@@ -360,15 +409,42 @@ class _BookPageState extends State<BookPage>
   }
 
   Widget _buildBookButton(String provider, String orderType, Color color) {
+    final bookProvider = Provider.of<BookProvider>(context);
+
+    bool isLoading;
+    switch (provider) {
+      case 'Delhivery':
+        isLoading = bookProvider.isDelhiveryLoading;
+        break;
+      case 'Shiprocket':
+        isLoading = bookProvider.isShiprocketLoading;
+        break;
+      case 'Others':
+        isLoading = bookProvider.isOthersLoading;
+        break;
+      default:
+        isLoading = false;
+    }
     return ElevatedButton(
-      onPressed: () async {
-        await _handleBooking(provider, orderType);
-      },
+      onPressed: isLoading
+          ? null
+          : () async {
+              await _handleBooking(provider, orderType);
+            },
       style: ElevatedButton.styleFrom(
         backgroundColor: color,
         foregroundColor: Colors.white,
       ),
-      child: Text(provider),
+      child: isLoading
+          ? const SizedBox(
+              width: 16,
+              height: 16,
+              child: CircularProgressIndicator(
+                color: Colors.white,
+                strokeWidth: 2,
+              ),
+            )
+          : Text(provider),
     );
   }
 
@@ -380,12 +456,12 @@ class _BookPageState extends State<BookPage>
     if (orderType == 'B2B') {
       selectedOrderIds = bookProvider.ordersB2B
           .where((order) => order.isSelected)
-          .map((order) => order.orderId!)
+          .map((order) => order.orderId)
           .toList();
     } else {
       selectedOrderIds = bookProvider.ordersB2C
           .where((order) => order.isSelected)
-          .map((order) => order.orderId!)
+          .map((order) => order.orderId)
           .toList();
     }
 
@@ -403,10 +479,7 @@ class _BookPageState extends State<BookPage>
     // Confirm the selected orders using the new API
     try {
       String responseMessage = await bookProvider.bookOrders(
-        context,
-        selectedOrderIds,
-        provider.toLowerCase(),
-      );
+          context, selectedOrderIds, provider.toLowerCase(), provider);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(responseMessage),
@@ -439,7 +512,7 @@ class _BookPageState extends State<BookPage>
       child: Row(
         children: [
           SizedBox(
-            width: 200,
+            width: 140,
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
@@ -455,9 +528,9 @@ class _BookPageState extends State<BookPage>
               ],
             ),
           ),
-          buildHeader('PRODUCTS', flex: 7),
-          buildHeader('DELHIVERY', flex: 2),
-          buildHeader('SHIPROCKET', flex: 2),
+          buildHeader('ORDERS', flex: 7),
+          buildHeader('DELHIVERY', flex: 1),
+          buildHeader('SHIPROCKET', flex: 1),
         ],
       ),
     );
@@ -478,38 +551,45 @@ class _BookPageState extends State<BookPage>
 
   Widget _buildOrderCard(Order order, String orderType) {
     final bookProvider = Provider.of<BookProvider>(context);
+    Widget? checkboxWidget;
+    bool isBookPage = true;
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4.0, horizontal: 16.0),
-      child: Row(
-        children: [
-          SizedBox(
-            width: 80,
-            child: Checkbox(
-              value: order.isSelected,
-              onChanged: (value) {
-                bookProvider.handleRowCheckboxChange(
-                  order.orderId,
-                  value!,
-                  orderType == 'B2B',
-                );
-              },
-            ),
+    // checkbox widget if it's for the book page
+    if (isBookPage) {
+      checkboxWidget = SizedBox(
+        width: 30,
+        height: 30,
+        child: Transform.scale(
+          scale: 0.9,
+          child: Checkbox(
+            value: order.isSelected,
+            onChanged: (value) {
+              bookProvider.handleRowCheckboxChange(
+                order.orderId,
+                value!,
+                orderType == 'B2B',
+              );
+            },
           ),
-          const SizedBox(width: 150),
-          Expanded(
-            flex: 7,
-            child: OrderCard(
-              order: order,
-              isBookPage: true,
-            ),
+        ),
+      );
+    }
+
+    return Row(
+      children: [
+        Expanded(
+          flex: 9,
+          child: OrderCard(
+            order: order,
+            isBookPage: true,
+            checkboxWidget: checkboxWidget,
           ),
-          const SizedBox(width: 40),
-          buildCell(order.freightCharge?.delhivery?.toString() ?? '', flex: 2),
-          const SizedBox(width: 40),
-          buildCell(order.freightCharge?.shiprocket?.toString() ?? '', flex: 2),
-        ],
-      ),
+        ),
+        const SizedBox(width: 20),
+        buildCell(order.freightCharge?.delhivery?.toString() ?? '', flex: 1),
+        const SizedBox(width: 10),
+        buildCell(order.freightCharge?.shiprocket?.toString() ?? '', flex: 1),
+      ],
     );
   }
 
@@ -517,7 +597,7 @@ class _BookPageState extends State<BookPage>
     return Flexible(
       flex: flex,
       child: Container(
-        padding: const EdgeInsets.all(8.0),
+        padding: const EdgeInsets.all(6.0),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
@@ -526,7 +606,7 @@ class _BookPageState extends State<BookPage>
               style: const TextStyle(
                 color: AppColors.grey,
                 fontWeight: FontWeight.bold,
-                fontSize: 25,
+                fontSize: 15,
               ),
             ),
           ],

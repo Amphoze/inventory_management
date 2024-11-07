@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:inventory_management/Api/inventory_api.dart';
 import 'package:inventory_management/Custom-Files/colors.dart';
+import 'package:inventory_management/Widgets/product_card.dart';
 import 'package:inventory_management/Widgets/searchable_dropdown.dart';
 import 'package:inventory_management/model/orders_model.dart';
 import 'package:inventory_management/Widgets/product_details_card.dart';
@@ -10,6 +11,7 @@ import 'package:inventory_management/orders_page.dart';
 import 'package:inventory_management/provider/orders_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 
 class EditOrderPage extends StatefulWidget {
   final Order order; // Pass the order to edit
@@ -23,6 +25,7 @@ class EditOrderPage extends StatefulWidget {
 }
 
 class _EditOrderPageState extends State<EditOrderPage> {
+  final List<Map<String, dynamic>> dynamicItemsList = [];
   final _formKey = GlobalKey<FormState>();
   final List<TextEditingController> _quantityControllers = [];
   final List<TextEditingController> _amountControllers = [];
@@ -32,6 +35,7 @@ class _EditOrderPageState extends State<EditOrderPage> {
   int currentPage = 1;
   bool isLoading = false;
   List<int> deletedItemsIndices = [];
+  bool _isSavingOrder = false;
   late OrdersProvider _ordersProvider;
   late ScrollController _scrollController;
   late TextEditingController _orderIdController;
@@ -283,6 +287,19 @@ class _EditOrderPageState extends State<EditOrderPage> {
         text: widget.order.shippingAddress?.country ?? '');
     _shippingCountryCodeController = TextEditingController(
         text: widget.order.shippingAddress?.countryCode ?? '');
+    // Initialize dynamicItemsList with existing items
+    for (var item in widget.order.items) {
+      dynamicItemsList.add({
+        'product_id': item.product!.id,
+        'qty': item.qty,
+        'amount': item.amount,
+      });
+      // Initialize controllers for each item
+      _quantityControllers
+          .add(TextEditingController(text: item.qty.toString()));
+      _amountControllers.add(TextEditingController(
+          text: item.amount?.toStringAsFixed(2) ?? '0.00'));
+    }
     _initializeControllers();
   }
 
@@ -607,19 +624,129 @@ class _EditOrderPageState extends State<EditOrderPage> {
     return null;
   }
 
-  void _addProduct(Map<String, String>? selected) {
-    if (selected != null) {
-      // Add the selected product to the list
-      selectedProducts.add({
-        'id': selected['id'],
-        'name': selected['name'],
-        'sku': selected['sku'],
-      });
-      setState(() {});
+  Future<String?> getToken() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString('authToken');
+  }
+
+  Future<Product?> fetchProductbySku(String sku) async {
+    final url =
+        'https://inventory-management-backend-s37u.onrender.com/products?sku=$sku';
+
+    try {
+      final token = await getToken();
+      if (token == null) {
+        print('No token found');
+        return null;
+      }
+
+      final response = await http.get(
+        Uri.parse(url),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      // Log the response body for debugging
+      print('Response body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+
+        // Check if data contains 'products' key and is not empty
+        if (data['products'] != null && data['products'].isNotEmpty) {
+          return Product.fromJson(
+              data['products'][0]); // Access the first product
+        } else {
+          print('No products found');
+          return null; // Handle case where no products are found
+        }
+      } else {
+        print('Failed to load product, status code: ${response.statusCode}');
+        return null;
+      }
+    } catch (error) {
+      print('An error occurred: $error');
+      return null;
     }
   }
 
-  void _saveChanges() async {
+  Future<Product?> fetchProductById(String productId) async {
+    final url =
+        'https://inventory-management-backend-s37u.onrender.com/products/search/$productId';
+
+    try {
+      final token = await getToken(); // Your method to get token
+      final response = await http.get(
+        Uri.parse(url),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        return Product.fromJson(
+            data); // Assuming your Product model has a fromJson method
+      } else {
+        print('Failed to load product, status code: ${response.statusCode}');
+        return null;
+      }
+    } catch (error) {
+      print('An error occurred: $error');
+      return null;
+    }
+  }
+
+  Future<void> _addProduct(Map<String, String>? selected) async {
+    if (selected != null) {
+      final fetchedProduct = await fetchProductById(selected['id']!);
+
+      if (fetchedProduct != null) {
+        final newItem = {
+          'product_id': fetchedProduct.id,
+          'qty': 1,
+          'amount': 0.0,
+        };
+
+        setState(() {
+          dynamicItemsList.add(newItem);
+          _quantityControllers.add(TextEditingController(text: '1'));
+          _amountControllers.add(TextEditingController(text: '0.00'));
+        });
+      } else {
+        print('Product could not be added');
+      }
+    }
+  }
+
+  Future<void> _deleteProduct(int index) async {
+    if (index < dynamicItemsList.length) {
+      setState(() {
+        dynamicItemsList.removeAt(index);
+        _quantityControllers.removeAt(index);
+        _amountControllers.removeAt(index);
+      });
+    }
+  }
+
+  Future<void> _saveChanges() async {
+    setState(() {
+      _isSavingOrder = true; // Set loading state
+    });
+    // Prepare the items list for the update
+    List<Map<String, dynamic>> itemsList = dynamicItemsList.map((item) {
+      int index = dynamicItemsList.indexOf(item);
+      double amount = double.tryParse(_amountControllers[index].text) ?? 0.0;
+      int qty = int.tryParse(_quantityControllers[index].text) ?? 1;
+      return {
+        'product_id': item['product_id'],
+        'qty': qty,
+        'amount': amount,
+      };
+    }).toList();
     if (_formKey.currentState!.validate()) {
       Map<String, dynamic> updatedData = {
         'order_id': _orderIdController.text, // required
@@ -641,7 +768,8 @@ class _EditOrderPageState extends State<EditOrderPage> {
         'courier_name': _courierNameController.text,
         'order_type': _orderTypeController.text,
         'name': _marketplaceController.text,
-        'filter': _filterController.text,
+        'filter':
+            _filterController.text.isNotEmpty ? _filterController.text : null,
         'expected_delivery_date':
             parseDate(_expectedDeliveryDateController.text)?.toIso8601String(),
         'preferred_courier': _preferredCourierController.text,
@@ -701,6 +829,7 @@ class _EditOrderPageState extends State<EditOrderPage> {
           "country": _shippingCountryController.text,
           "country_code": _shippingCountryCodeController.text,
         },
+        'items': itemsList,
       };
 
       if (updatedData['order_id'] == null ||
@@ -718,14 +847,36 @@ class _EditOrderPageState extends State<EditOrderPage> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Order updated successfully!')),
         );
-
+        final ordersProvider =
+            Provider.of<OrdersProvider>(context, listen: false);
+        ordersProvider.fetchReadyOrders();
+        ordersProvider.fetchFailedOrders();
         Navigator.of(context).pop();
       } catch (error) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Failed to update order.')),
         );
+      } finally {
+        // Reset loading state
+        setState(() {
+          _isSavingOrder = false;
+        });
       }
+    } else {
+      setState(() {
+        _isSavingOrder = false; // Reset loading state if validation fails
+      });
     }
+  }
+
+  Future<List<Product?>> fetchAllProducts(
+      List<dynamic> dynamicItemsList) async {
+    List<Product?> products = [];
+    for (var item in dynamicItemsList) {
+      Product? product = await fetchProductById(item['product_id']);
+      products.add(product);
+    }
+    return products;
   }
 
   @override
@@ -746,13 +897,22 @@ class _EditOrderPageState extends State<EditOrderPage> {
                       // const EdgeInsets.symmetric(horizontal: 12.0)),
                 ),
                 onPressed: _saveChanges,
-                child: const Text(
-                  'Save Changes',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 16,
-                  ),
-                ),
+                child: _isSavingOrder
+                    ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(
+                          color: Colors.white,
+                          strokeWidth: 2,
+                        ),
+                      )
+                    : const Text(
+                        'Save Changes',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                        ),
+                      ),
               ),
             ),
           ],
@@ -1701,76 +1861,89 @@ class _EditOrderPageState extends State<EditOrderPage> {
                     ),
                   )
                 else
-                  ListView.builder(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    itemCount: widget.order.items.length,
-                    itemBuilder: (context, itemIndex) {
-                      if (deletedItemsIndices.contains(itemIndex)) {
-                        return const SizedBox.shrink();
+                  FutureBuilder<List<Product?>>(
+                    future: fetchAllProducts(dynamicItemsList),
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return const Center(
+                          child: CircularProgressIndicator(),
+                        );
+                      } else if (snapshot.hasError) {
+                        return Center(child: Text('Error: ${snapshot.error}'));
+                      } else if (!snapshot.hasData ||
+                          snapshot.data == null ||
+                          snapshot.data!.isEmpty) {
+                        return const Center(child: Text('No products found'));
+                      } else {
+                        final products = snapshot.data!;
+                        return ListView.builder(
+                          shrinkWrap: true,
+                          itemCount: dynamicItemsList.length,
+                          itemBuilder: (context, index) {
+                            final product = products[index];
+                            if (product == null) {
+                              return const Text('No product found');
+                            }
+                            return Row(
+                              children: [
+                                Expanded(
+                                  flex: 9,
+                                  child: ProductDetailsCard(
+                                    product: product,
+                                    index: index,
+                                  ),
+                                ),
+                                const SizedBox(width: 16),
+                                Expanded(
+                                  flex: 1,
+                                  child: Column(
+                                    children: [
+                                      SizedBox(
+                                        width: 140,
+                                        child: _buildTextField(
+                                          controller:
+                                              _quantityControllers[index],
+                                          label: 'Qty',
+                                          icon:
+                                              Icons.production_quantity_limits,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 8),
+                                      SizedBox(
+                                        width: 140,
+                                        child: _buildTextField(
+                                          controller: _amountControllers[index],
+                                          label: 'Amount',
+                                          icon: Icons.attach_money,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 8),
+                                      ElevatedButton(
+                                        onPressed: () {
+                                          _deleteProduct(index);
+                                        },
+                                        style: ElevatedButton.styleFrom(
+                                          backgroundColor: Colors.red,
+                                          padding: const EdgeInsets.symmetric(
+                                              horizontal: 16, vertical: 8),
+                                        ),
+                                        child: const Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            Icon(Icons.delete),
+                                            SizedBox(width: 8),
+                                            Text('Delete Item'),
+                                          ],
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            );
+                          },
+                        );
                       }
-
-                      final item = widget.order.items[itemIndex];
-
-                      return Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 8.0),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Flexible(
-                              flex: 6,
-                              child: OrderItemCard(
-                                item: item,
-                                index: itemIndex,
-                                courierName: widget.order.courierName,
-                                orderStatus:
-                                    widget.order.orderStatus.toString(),
-                                cardColor: AppColors.lightGrey,
-                              ),
-                            ),
-                            const SizedBox(width: 10),
-                            Flexible(
-                              flex: 1,
-                              child: Column(
-                                children: [
-                                  _buildTextField(
-                                    controller: _quantityControllers[itemIndex],
-                                    label: 'Quantity',
-                                    icon: Icons.format_list_numbered,
-                                  ),
-                                  const SizedBox(height: 10),
-                                  _buildTextField(
-                                    controller: _amountControllers[itemIndex],
-                                    label: 'Amount',
-                                    icon: Icons.attach_money,
-                                  ),
-                                  const SizedBox(height: 10),
-                                  ElevatedButton(
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: Colors.red,
-                                      padding: const EdgeInsets.symmetric(
-                                          horizontal: 8, vertical: 4),
-                                    ),
-                                    onPressed: () {
-                                      _deleteItem(itemIndex);
-                                    },
-                                    child: const Row(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        Icon(Icons.delete, color: Colors.white),
-                                        SizedBox(width: 4),
-                                        Text('Delete Item',
-                                            style:
-                                                TextStyle(color: Colors.white)),
-                                      ],
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                      );
                     },
                   ),
                 const SizedBox(height: 10),

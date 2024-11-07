@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:intl/intl.dart';
+import 'package:inventory_management/accounts_page.dart';
+import 'package:inventory_management/inventory_upload.dart';
 import 'package:inventory_management/invoice_page.dart';
 import 'package:inventory_management/book_page.dart';
 import 'package:inventory_management/combo_page.dart';
@@ -40,7 +42,7 @@ class DashboardPage extends StatefulWidget {
 }
 
 class _DashboardPageState extends State<DashboardPage> {
-  String selectedDrawerItem = 'Products';
+  String selectedDrawerItem = 'Dashboard';
   DateTime? selectedDate; // State variable to hold the selected date
   DateTime?
       lastUpdatedTime; // Make sure this is initialized properly in your actual code
@@ -63,62 +65,64 @@ class _DashboardPageState extends State<DashboardPage> {
   @override
   Widget build(BuildContext context) {
     final provider = Provider.of<InventoryProvider>(context, listen: false);
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        bool isSmallScreen = constraints.maxWidth < 800;
+    return SelectionArea(
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          bool isSmallScreen = constraints.maxWidth < 800;
 
-        return Scaffold(
-          key: _scaffoldKey,
-          drawer: isSmallScreen
-              ? SizedBox(
-                  width: 220,
-                  child: Drawer(
-                    child: Container(
-                      color: Colors.grey[200],
-                      child: _buildDrawerContent(isSmallScreen),
+          return Scaffold(
+            key: _scaffoldKey,
+            drawer: isSmallScreen
+                ? SizedBox(
+                    width: 220,
+                    child: Drawer(
+                      child: Container(
+                        color: Colors.grey[200],
+                        child: _buildDrawerContent(isSmallScreen),
+                      ),
+                    ),
+                  )
+                : null,
+            body: Row(
+              children: <Widget>[
+                if (!isSmallScreen)
+                  Container(
+                    width: 200,
+                    color: AppColors.lightGrey,
+                    child: _buildDrawerContent(isSmallScreen),
+                  ),
+                Expanded(
+                  child: Container(
+                    color: AppColors.white,
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: Column(
+                      children: [
+                        Row(
+                          children: <Widget>[
+                            if (isSmallScreen)
+                              IconButton(
+                                icon: const Icon(Icons.menu,
+                                    color: AppColors.grey),
+                                onPressed: () {
+                                  _scaffoldKey.currentState?.openDrawer();
+                                },
+                              ),
+                          ],
+                        ),
+                        const SizedBox(height: 20),
+                        Expanded(
+                          child: _buildMainContent(
+                              selectedDrawerItem, isSmallScreen),
+                        ),
+                      ],
                     ),
                   ),
-                )
-              : null,
-          body: Row(
-            children: <Widget>[
-              if (!isSmallScreen)
-                Container(
-                  width: 200,
-                  color: AppColors.lightGrey,
-                  child: _buildDrawerContent(isSmallScreen),
                 ),
-              Expanded(
-                child: Container(
-                  color: AppColors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                  child: Column(
-                    children: [
-                      Row(
-                        children: <Widget>[
-                          if (isSmallScreen)
-                            IconButton(
-                              icon:
-                                  const Icon(Icons.menu, color: AppColors.grey),
-                              onPressed: () {
-                                _scaffoldKey.currentState?.openDrawer();
-                              },
-                            ),
-                        ],
-                      ),
-                      const SizedBox(height: 20),
-                      Expanded(
-                        child: _buildMainContent(
-                            selectedDrawerItem, isSmallScreen),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          ),
-        );
-      },
+              ],
+            ),
+          );
+        },
+      ),
     );
   }
 
@@ -135,17 +139,7 @@ class _DashboardPageState extends State<DashboardPage> {
                 Image(
                   fit: BoxFit.cover,
                   image: const AssetImage('assets/homeLogo.png'),
-                ), // const Padding(
-                //   padding: EdgeInsets.all(20.0),
-                //   child: Text(
-                //     'StockShip',
-                //     style: TextStyle(
-                //       fontSize: 27,
-                //       fontWeight: FontWeight.bold,
-                //       color: AppColors.primaryBlue,
-                //     ),
-                //   ),
-                // ),
+                ),
                 const SizedBox(height: 20),
                 _buildDrawerItem(
                   icon: Icons.dashboard,
@@ -157,26 +151,7 @@ class _DashboardPageState extends State<DashboardPage> {
                 _buildInventorySection(isSmallScreen),
                 _buildMasterSection(isSmallScreen),
                 _buildAccountSection(isSmallScreen),
-                // _buildDrawerItem(
-                //   icon: Icons.analytics,
-                //   text: 'Accounting',
-                //   isSelected: selectedDrawerItem == 'Accounting',
-                //   onTap: () => _onDrawerItemTapped('Accounting', isSmallScreen),
-                // ),
-                _buildDrawerItem(
-                  icon: Icons.upload_file,
-                  text: 'Upload Products',
-                  isSelected: selectedDrawerItem == 'Upload Products',
-                  onTap: () =>
-                      _onDrawerItemTapped('Upload Products', isSmallScreen),
-                ),
-                _buildDrawerItem(
-                  icon: Icons.new_label,
-                  text: 'Upload Labels',
-                  isSelected: selectedDrawerItem == 'Upload Labels',
-                  onTap: () =>
-                      _onDrawerItemTapped('Upload Labels', isSmallScreen),
-                ),
+                _buildUploadSection(isSmallScreen),
                 _buildDrawerItem(
                   icon: Icons.logout,
                   text: 'Logout',
@@ -287,6 +262,7 @@ class _DashboardPageState extends State<DashboardPage> {
         tilePadding: const EdgeInsets.symmetric(horizontal: 20.0),
         collapsedBackgroundColor: [
           "Orders Page",
+          "Accounts Page",
           "Book Page",
           "Picker Page",
           "Packer Page",
@@ -323,6 +299,18 @@ class _DashboardPageState extends State<DashboardPage> {
               text: 'Orders',
               isSelected: selectedDrawerItem == 'Orders Page',
               onTap: () => _onDrawerItemTapped('Orders Page', isSmallScreen),
+              isIndented: true,
+              iconSize: 20,
+              fontSize: 14,
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.only(left: 10.0),
+            child: _buildDrawerItem(
+              icon: Icons.account_box_rounded,
+              text: 'Accounts',
+              isSelected: selectedDrawerItem == 'Accounts Page',
+              onTap: () => _onDrawerItemTapped('Accounts Page', isSmallScreen),
               isIndented: true,
               iconSize: 20,
               fontSize: 14,
@@ -608,6 +596,85 @@ class _DashboardPageState extends State<DashboardPage> {
     );
   }
 
+  Widget _buildUploadSection(bool isSmallScreen) {
+    return Theme(
+      data: ThemeData(
+        dividerColor: Colors.transparent,
+        splashColor: Colors.transparent,
+        highlightColor: Colors.transparent,
+      ),
+      child: ExpansionTile(
+        tilePadding: const EdgeInsets.symmetric(horizontal: 20.0),
+        collapsedBackgroundColor: [
+          "Upload Products",
+          "Upload Labels",
+          "Upload Inventory"
+        ].contains(selectedDrawerItem)
+            ? Colors.blue.withOpacity(0.2)
+            : AppColors.white,
+        title: Text(
+          'Uploads',
+          style: TextStyle(
+            color: selectedDrawerItem == 'Uploads'
+                ? AppColors.white
+                : AppColors.primaryBlue,
+            fontSize: 16,
+          ),
+        ),
+        leading: Icon(
+          Icons.upload_file,
+          color: selectedDrawerItem == 'Uploads'
+              ? AppColors.white
+              : AppColors.primaryBlue,
+          size: 24,
+        ),
+        backgroundColor: selectedDrawerItem == 'Uploads'
+            ? const Color.fromRGBO(6, 90, 216, 0.1)
+            : null,
+        children: <Widget>[
+          Padding(
+            padding: const EdgeInsets.only(left: 10.0),
+            child: _buildDrawerItem(
+              icon: Icons.upload_file,
+              text: 'Upload Products',
+              isSelected: selectedDrawerItem == 'Upload Products',
+              onTap: () =>
+                  _onDrawerItemTapped('Upload Products', isSmallScreen),
+              isIndented: true,
+              iconSize: 20,
+              fontSize: 14,
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.only(left: 10.0),
+            child: _buildDrawerItem(
+              icon: Icons.new_label,
+              text: 'Upload Labels',
+              isSelected: selectedDrawerItem == 'Upload Labels',
+              onTap: () => _onDrawerItemTapped('Upload Labels', isSmallScreen),
+              isIndented: true,
+              iconSize: 20,
+              fontSize: 14,
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.only(left: 10.0),
+            child: _buildDrawerItem(
+              icon: Icons.inventory,
+              text: 'Upload Inventory',
+              isSelected: selectedDrawerItem == 'Upload Inventory',
+              onTap: () =>
+                  _onDrawerItemTapped('Upload Inventory', isSmallScreen),
+              isIndented: true,
+              iconSize: 20,
+              fontSize: 14,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   void _onDrawerItemTapped(String item, bool isSmallScreen) {
     setState(() {
       selectedDrawerItem = item;
@@ -679,6 +746,8 @@ class _DashboardPageState extends State<DashboardPage> {
         return const ManageInventoryPage();
       case 'Orders Page':
         return const OrdersNewPage();
+      case 'Accounts Page':
+        return const AccountsPage();
       case 'Book Page':
         return const BookPage();
       case 'Picker Page':
@@ -715,6 +784,8 @@ class _DashboardPageState extends State<DashboardPage> {
         return const ProductDataDisplay();
       case 'Upload Labels':
         return const LabelUpload();
+      case 'Upload Inventory':
+        return const InventoryUpload();
       default:
         return const Center(child: Text("Select a menu item"));
     }

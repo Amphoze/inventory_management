@@ -31,6 +31,13 @@ class ReturnProvider extends ChangeNotifier {
   int get selectedCount =>
       _selectedProducts.where((isSelected) => isSelected).length;
 
+  bool isRefreshingOrders = false;
+
+  void setRefreshingOrders(bool value) {
+    isRefreshingOrders = value;
+    notifyListeners();
+  }
+
   void toggleSelectAll(bool value) {
     _selectAll = value;
     _selectedProducts =
@@ -38,14 +45,15 @@ class ReturnProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> fetchOrdersWithStatus8() async {
+  Future<void> fetchOrdersWithStatus9() async {
     _isLoading = true;
+    setRefreshingOrders(true);
     notifyListeners();
 
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('authToken') ?? '';
     const url =
-        'https://inventory-management-backend-s37u.onrender.com/orders?orderStatus=8&page=';
+        'https://inventory-management-backend-s37u.onrender.com/orders?orderStatus=9&page=';
 
     try {
       final response = await http.get(Uri.parse('$url$_currentPage'), headers: {
@@ -79,6 +87,7 @@ class ReturnProvider extends ChangeNotifier {
       _totalPages = 1; // Reset total pages if there’s an error
     } finally {
       _isLoading = false;
+      setRefreshingOrders(false);
       notifyListeners();
     }
   }
@@ -87,7 +96,7 @@ class ReturnProvider extends ChangeNotifier {
     if (page < 1 || page > _totalPages) return;
     _currentPage = page;
     print('Current page set to: $_currentPage'); // Debugging line
-    fetchOrdersWithStatus8();
+    fetchOrdersWithStatus9();
     notifyListeners();
   }
 
@@ -204,7 +213,7 @@ class ReturnProvider extends ChangeNotifier {
     _debounce = Timer(const Duration(milliseconds: 500), () {
       if (query.isEmpty) {
         // If query is empty, reload all orders
-        fetchOrdersWithStatus8();
+        fetchOrdersWithStatus9();
       } else {
         searchOrders(query); // Trigger the search after the debounce period
       }
@@ -213,7 +222,7 @@ class ReturnProvider extends ChangeNotifier {
 
   Future<List<Order>> searchOrders(String query) async {
     if (query.isEmpty) {
-      await fetchOrdersWithStatus8();
+      await fetchOrdersWithStatus9();
       return _orders;
     }
 
@@ -224,7 +233,7 @@ class ReturnProvider extends ChangeNotifier {
     final token = prefs.getString('authToken') ?? '';
 
     final url =
-        'https://inventory-management-backend-s37u.onrender.com/orders?orderStatus=8&order_id=$query';
+        'https://inventory-management-backend-s37u.onrender.com/orders?orderStatus=9&order_id=$query';
 
     print('Searching failed orders with term: $query');
 

@@ -189,7 +189,14 @@ class _ProductsState extends State<Products> {
                       : mobileLayout(
                           context,
                         ))
-                  : const Center(child: ProductLoadingAnimation())),
+                  : const Center(
+                      child: LoadingAnimation(
+                        icon: Icons.production_quantity_limits_rounded,
+                        beginColor: Color.fromRGBO(189, 189, 189, 1),
+                        endColor: AppColors.primaryBlue,
+                        size: 80.0,
+                      ),
+                    )),
     );
   }
 

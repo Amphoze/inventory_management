@@ -22,7 +22,7 @@ class _CheckerPageState extends State<CheckerPage> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       Provider.of<CheckerProvider>(context, listen: false)
-          .fetchOrdersWithStatus5();
+          .fetchOrdersWithStatus6();
     });
     Provider.of<CheckerProvider>(context, listen: false)
         .textEditingController
@@ -82,13 +82,18 @@ class _CheckerPageState extends State<CheckerPage> {
                             });
                             if (query.isEmpty) {
                               // Reset to all orders if search is cleared
-                              checkerProvider.fetchOrdersWithStatus5();
+                              checkerProvider.fetchOrdersWithStatus6();
                             }
                           },
                           onTap: () {
                             setState(() {
                               // Mark the search field as focused
                             });
+                          },
+                          onSubmitted: (query) {
+                            if (query.isNotEmpty) {
+                              checkerProvider.searchOrders(query);
+                            }
                           },
                           onEditingComplete: () {
                             // Mark it as not focused when done
@@ -118,13 +123,24 @@ class _CheckerPageState extends State<CheckerPage> {
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.primaryBlue,
                       ),
-                      onPressed: () {
-                        checkerProvider.fetchOrdersWithStatus5();
-                      },
-                      child: const Text(
-                        'Refresh',
-                        style: TextStyle(color: Colors.white),
-                      ),
+                      onPressed: checkerProvider.isRefreshingOrders
+                          ? null
+                          : () async {
+                              checkerProvider.fetchOrdersWithStatus6();
+                            },
+                      child: checkerProvider.isRefreshingOrders
+                          ? const SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(
+                                color: Colors.white,
+                                strokeWidth: 2,
+                              ),
+                            )
+                          : const Text(
+                              'Refresh',
+                              style: TextStyle(color: Colors.white),
+                            ),
                     ),
                   ],
                 ),
@@ -135,7 +151,14 @@ class _CheckerPageState extends State<CheckerPage> {
                 child: Stack(
                   children: [
                     if (checkerProvider.isLoading)
-                      const Center(child: CheckerLoadingAnimation())
+                      const Center(
+                        child: LoadingAnimation(
+                          icon: Icons.check_circle,
+                          beginColor: Color.fromRGBO(189, 189, 189, 1),
+                          endColor: AppColors.primaryBlue,
+                          size: 80.0,
+                        ),
+                      )
                     else if (checkerProvider.orders.isEmpty)
                       const Center(
                         child: Text(

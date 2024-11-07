@@ -28,11 +28,39 @@ class BookProvider with ChangeNotifier {
   List<Order> ordersB2B = [];
   List<Order> ordersB2C = [];
 
+  List<Order> B2BOrders = []; // List to store fetched ready orders
+  List<Order> B2COrders = [];
+
   // Pagination
   int currentPageB2B = 1;
   int currentPageB2C = 1;
   int totalPagesB2B = 0;
   int totalPagesB2C = 0;
+
+  bool isRefreshingOrders = false;
+  bool isDelhiveryLoading = false;
+  bool isShiprocketLoading = false;
+  bool isOthersLoading = false;
+
+  void setLoading(String provider, bool isLoading) {
+    switch (provider) {
+      case 'Delhivery':
+        isDelhiveryLoading = isLoading;
+        break;
+      case 'Shiprocket':
+        isShiprocketLoading = isLoading;
+        break;
+      case 'Others':
+        isOthersLoading = isLoading;
+        break;
+    }
+    notifyListeners();
+  }
+
+  void setRefreshingOrders(bool value) {
+    isRefreshingOrders = value;
+    notifyListeners();
+  }
 
   // Set the sort option and notify listeners
   void setSortOption(String? option) {
@@ -57,14 +85,16 @@ class BookProvider with ChangeNotifier {
     }
 
     String url =
-        'https://inventory-management-backend-s37u.onrender.com/orders?filter=$type&orderStatus=2&page=$page';
+        'https://inventory-management-backend-s37u.onrender.com/orders?filter=$type&orderStatus=3&page=$page';
 
     try {
       // Set loading state based on order type
       if (type == 'B2B') {
         isLoadingB2B = true;
+        setRefreshingOrders(true);
       } else {
         isLoadingB2C = true;
+        setRefreshingOrders(true);
       }
       notifyListeners();
 
@@ -114,22 +144,26 @@ class BookProvider with ChangeNotifier {
       // Reset loading states
       if (type == 'B2B') {
         isLoadingB2B = false;
+        setRefreshingOrders(false);
       } else {
         isLoadingB2C = false;
+        setRefreshingOrders(false);
       }
       notifyListeners();
     }
   }
 
   // Function to book orders
-  Future<String> bookOrders(
-      BuildContext context, List<String> orderIds, String lowerCase) async {
+  Future<String> bookOrders(BuildContext context, List<String> orderIds,
+      String lowerCase, String provider) async {
+    setLoading(provider, true);
     const String baseUrl =
         'https://inventory-management-backend-s37u.onrender.com';
     const String bookOrderUrl = '$baseUrl/orders/book';
     final String? token = await _getToken();
 
     if (token == null) {
+      setLoading(provider, false);
       return 'No auth token found';
     }
 
@@ -166,16 +200,18 @@ class BookProvider with ChangeNotifier {
       if (response.statusCode == 200) {
         // Optionally, you can also clear the selected orders here
         clearAllSelections();
-
+        setLoading(provider, false);
         // Notify listeners after successful booking
         notifyListeners();
         return responseData['message'] ?? 'Orders booked successfully';
       } else {
         // If the API returns an error, return the error message
+        setLoading(provider, false);
         return responseData['message'] ?? 'Failed to book orders';
       }
     } catch (error) {
       print('Error during API request: $error');
+      setLoading(provider, false);
       return 'An error occurred: $error';
     }
   }
@@ -249,6 +285,82 @@ class BookProvider with ChangeNotifier {
     selectAllB2B = false;
     selectAllB2C = false;
     notifyListeners();
+  }
+
+  void clearSearchResults() {
+    ordersB2B = B2BOrders;
+    ordersB2C = B2COrders;
+    notifyListeners();
+  }
+
+  Future<void> searchB2BOrders(String orderId) async {
+    final url = Uri.parse(
+        'https://inventory-management-backend-s37u.onrender.com/orders?orderStatus=3&filter=B2B&order_id=$orderId');
+    final token = await _getToken();
+    if (token == null) return;
+
+    try {
+      isLoadingB2B = true;
+      notifyListeners();
+
+      final response = await http.get(
+        url,
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        print("${response.body}");
+
+        ordersB2B = [Order.fromJson(data)];
+        print("${response.body}");
+      } else {
+        ordersB2B = [];
+      }
+    } catch (e) {
+      ordersB2B = [];
+    } finally {
+      isLoadingB2B = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> searchB2COrders(String orderId) async {
+    final url = Uri.parse(
+        'https://inventory-management-backend-s37u.onrender.com/orders?orderStatus=3&filter=B2C&order_id=$orderId');
+    final token = await _getToken();
+    if (token == null) return;
+
+    try {
+      isLoadingB2C = true;
+      notifyListeners();
+
+      final response = await http.get(
+        url,
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        print("${response.body}");
+
+        ordersB2C = [Order.fromJson(data)];
+        print("${response.body}");
+      } else {
+        ordersB2C = [];
+      }
+    } catch (e) {
+      ordersB2C = [];
+    } finally {
+      isLoadingB2C = false;
+      notifyListeners();
+    }
   }
 
   @override

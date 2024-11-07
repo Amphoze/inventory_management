@@ -22,7 +22,7 @@ class _PickerPageState extends State<PickerPage> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       Provider.of<PickerProvider>(context, listen: false)
-          .fetchOrdersWithStatus3();
+          .fetchOrdersWithStatus4();
     });
     Provider.of<PickerProvider>(context, listen: false)
         .textEditingController
@@ -81,13 +81,18 @@ class _PickerPageState extends State<PickerPage> {
                           });
                           if (query.isEmpty) {
                             // Reset to all orders if search is cleared
-                            pickerProvider.fetchOrdersWithStatus3();
+                            pickerProvider.fetchOrdersWithStatus4();
                           }
                         },
                         onTap: () {
                           setState(() {
                             // Mark the search field as focused
                           });
+                        },
+                        onSubmitted: (query) {
+                          if (query.isNotEmpty) {
+                            pickerProvider.searchOrders(query);
+                          }
                         },
                         onEditingComplete: () {
                           // Mark it as not focused when done
@@ -117,13 +122,24 @@ class _PickerPageState extends State<PickerPage> {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.primaryBlue,
                     ),
-                    onPressed: () {
-                      pickerProvider.fetchOrdersWithStatus3();
-                    },
-                    child: const Text(
-                      'Refresh',
-                      style: TextStyle(color: Colors.white),
-                    ),
+                    onPressed: pickerProvider.isRefreshingOrders
+                        ? null
+                        : () async {
+                            pickerProvider.fetchOrdersWithStatus4();
+                          },
+                    child: pickerProvider.isRefreshingOrders
+                        ? const SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(
+                              color: Colors.white,
+                              strokeWidth: 2,
+                            ),
+                          )
+                        : const Text(
+                            'Refresh',
+                            style: TextStyle(color: Colors.white),
+                          ),
                   ),
                 ],
               ),
@@ -134,7 +150,14 @@ class _PickerPageState extends State<PickerPage> {
               child: Stack(
                 children: [
                   if (pickerProvider.isLoading)
-                    const Center(child: PickerLoadingAnimation())
+                    const Center(
+                      child: LoadingAnimation(
+                        icon: Icons.local_shipping,
+                        beginColor: Color.fromRGBO(189, 189, 189, 1),
+                        endColor: AppColors.primaryBlue,
+                        size: 80.0,
+                      ),
+                    )
                   else if (pickerProvider.orders.isEmpty)
                     const Center(
                       child: Text(

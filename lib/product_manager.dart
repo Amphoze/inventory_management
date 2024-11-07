@@ -71,28 +71,30 @@ class _ProductDashboardPageState extends State<ProductDashboardPage> {
         final List<dynamic> productData = response['data'];
         final newProducts = productData
             .map((data) => Product(
-                  sku: data['sku'],
-                  parentSku: data['parentSku'],
-                  ean: data['ean'],
-                  description: data['description'],
-                  categoryName: data['categoryName'] ?? '-',
-                  colour: data['colour'] ?? '-',
-                  netWeight: data['netWeight']?.toString() ?? '-',
-                  grossWeight: data['grossWeight']?.toString() ?? '-',
-                  labelSku: data['labelSku'] ?? '-',
-                  box_name: data['box_name'] ?? '-',
-                  grade: data['grade'] ?? '-',
-                  technicalName: data['technicalName'] ?? '-',
-                  length: data['length']?.toString() ?? '-',
-                  width: data['width']?.toString() ?? '-',
-                  height: data['height']?.toString() ?? '-',
-                  mrp: data['mrp']?.toString() ?? '-',
-                  cost: data['cost']?.toString() ?? '-',
-                  tax_rule: data['tax_rule']?.toString() ?? '-',
+                  sku: data['sku'] ?? '',
+                  parentSku: data['parentSku'] ?? '',
+                  ean: data['ean'] ?? '',
+                  description: data['description'] ?? '',
+                  categoryName: data['category']?['name'] ?? '',
+                  brand: data['brand']?['name'] ?? '',
+                  colour: data['colour'] ?? '',
+                  netWeight: data['netWeight']?.toString() ?? '',
+                  grossWeight: data['grossWeight']?.toString() ?? '',
+                  labelSku: data['labelSku'] ?? '',
+                  box_name: data['boxSize']?['box_name'] ?? '',
+                  grade: data['grade'] ?? '',
+                  technicalName: data['technicalName'] ?? '',
+                  length: data['dimensions']?['length']?.toString() ?? '',
+                  width: data['dimensions']?['width']?.toString() ?? '',
+                  height: data['dimensions']?['height']?.toString() ?? '',
+                  mrp: data['mrp']?.toString() ?? '',
+                  cost: data['cost']?.toString() ?? '',
+                  tax_rule: data['tax_rule']?.toString() ?? '',
                   shopifyImage: data['shopifyImage'] ?? '',
-                  createdDate: data['createdAt'],
-                  lastUpdated: data['updatedAt'],
-                  displayName: data['displayName'] ?? '-',
+                  createdDate: data['createdAt'] ?? '',
+                  lastUpdated: data['updatedAt'] ?? '',
+                  displayName: data['displayName'] ?? '',
+                  variantName: data['variant_name'] ?? '',
                 ))
             .toList();
 
@@ -242,7 +244,6 @@ class _ProductDashboardPageState extends State<ProductDashboardPage> {
   Widget _buildActionButtons() {
     return Row(
       children: [
-
         _buildSearchDropdown(),
         const SizedBox(width: 16),
         if (_selectedSearchOption != null &&
@@ -253,7 +254,6 @@ class _ProductDashboardPageState extends State<ProductDashboardPage> {
           Text('Total Products: ${_products.length}',
               style: const TextStyle(fontSize: 16)),
         const SizedBox(width: 20),
-
         CustomButton(
           width: 150,
           height: 37,
@@ -267,7 +267,6 @@ class _ProductDashboardPageState extends State<ProductDashboardPage> {
       ],
     );
   }
-
 
   Widget _buildSearchDropdown() {
     return CustomDropdown<String>(
@@ -296,7 +295,6 @@ class _ProductDashboardPageState extends State<ProductDashboardPage> {
       elevation: 8.0,
     );
   }
-
 
   Widget _buildConditionalSearchBar() {
     return SizedBox(
@@ -390,10 +388,11 @@ class _ProductDashboardPageState extends State<ProductDashboardPage> {
                       ean: data['ean'] ?? '',
                       description: data['description'] ?? '',
                       categoryName: data['category']?['name'] ?? '',
-                      colour: data['colour'] ?? '',
+                      brand: data['brand']?['name'] ?? '',
+                      colour: data['color'] ?? '',
                       netWeight: data['netWeight']?.toString() ?? '',
                       grossWeight: data['grossWeight']?.toString() ?? '',
-                      labelSku: data['labelSku'] ?? '',
+                      labelSku: data['label']['labelSku'] ?? '',
                       box_name: data['boxSize']?['box_name'] ?? '',
                       grade: data['grade'] ?? '-',
                       technicalName: data['technicalName'] ?? '',
@@ -407,6 +406,7 @@ class _ProductDashboardPageState extends State<ProductDashboardPage> {
                       createdDate: data['createdAt'] ?? '',
                       lastUpdated: data['updatedAt'] ?? '',
                       displayName: data['displayName'] ?? '',
+                      variantName: data['variant_name'] ?? '',
                     ))
                 .toList());
           });
@@ -465,12 +465,26 @@ class _ProductDashboardPageState extends State<ProductDashboardPage> {
         return false;
       },
       child: _products.isEmpty
-          ? const Center(child: ProductLoadingAnimation())
+          ? const Center(
+              child: LoadingAnimation(
+                icon: Icons.production_quantity_limits_rounded,
+                beginColor: Color.fromRGBO(189, 189, 189, 1),
+                endColor: AppColors.primaryBlue,
+                size: 80.0,
+              ),
+            )
           : ListView.builder(
               itemCount: _products.length + (_hasMore ? 1 : 0),
               itemBuilder: (context, index) {
                 if (index == _products.length) {
-                  return const Center(child: ProductLoadingAnimation());
+                  return const Center(
+                    child: LoadingAnimation(
+                      icon: Icons.production_quantity_limits_rounded,
+                      beginColor: Color.fromRGBO(189, 189, 189, 1),
+                      endColor: AppColors.primaryBlue,
+                      size: 80.0,
+                    ),
+                  );
                 }
                 return ProductCard(product: _products[index]);
               },

@@ -22,6 +22,8 @@ class OrdersProvider with ChangeNotifier {
   String _expectedDeliveryDate = '';
   String _paymentDateTime = '';
   String _normalDate = '';
+  List<Order> filteredReadyOrders = [];
+  List<Order> filteredFailedOrders = [];
 
   int currentPage = 1;
   int totalPages = 1;
@@ -46,6 +48,19 @@ class OrdersProvider with ChangeNotifier {
   String get expectedDeliveryDate => _expectedDeliveryDate;
   String get paymentDateTime => _paymentDateTime;
   String get normalDate => _normalDate;
+
+  bool isConfirm = false;
+  bool isUpdating = false;
+
+  void setUpdating(bool status) {
+    isUpdating = status;
+    notifyListeners();
+  }
+
+  void setConfirmStatus(bool status) {
+    isConfirm = status;
+    notifyListeners();
+  }
 
   void updateDate(String date) {
     _normalDate = date;
@@ -218,6 +233,7 @@ class OrdersProvider with ChangeNotifier {
         // Reset selections
         resetSelections();
         _selectedFailedOrders = List<bool>.filled(failedOrders.length, false);
+        filteredFailedOrders = failedOrders;
       } else {
         throw Exception('Failed to load failed orders: ${responseFailed.body}');
       }
@@ -271,6 +287,7 @@ class OrdersProvider with ChangeNotifier {
         // Reset selections
         resetSelections();
         _selectedReadyOrders = List<bool>.filled(readyOrders.length, false);
+        filteredReadyOrders = readyOrders;
       } else {
         throw Exception('Failed to load ready orders: ${responseReady.body}');
       }
@@ -288,6 +305,8 @@ class OrdersProvider with ChangeNotifier {
         'https://inventory-management-backend-s37u.onrender.com';
     const String confirmOrderUrl = '$baseUrl/orders/confirm';
     final String? token = await _getToken();
+    setConfirmStatus(true);
+    notifyListeners();
 
     if (token == null) {
       return 'No auth token found';
@@ -321,6 +340,7 @@ class OrdersProvider with ChangeNotifier {
         // After successful confirmation, fetch updated orders and notify listeners
         await fetchReadyOrders(); // Assuming fetchOrders is a function that reloads the orders
         resetSelections(); // Clear selected order IDs
+        setConfirmStatus(false);
         notifyListeners(); // Notify the UI to rebuild
 
         return responseData['message'] ?? 'Orders confirmed successfully';
@@ -328,6 +348,8 @@ class OrdersProvider with ChangeNotifier {
         return responseData['message'] ?? 'Failed to confirm orders';
       }
     } catch (error) {
+      setConfirmStatus(false);
+      notifyListeners();
       print('Error during API request: $error');
       return 'An error occurred: $error';
     }
@@ -385,6 +407,8 @@ class OrdersProvider with ChangeNotifier {
 
   // Update status for failed orders
   Future<void> updateFailedOrders(BuildContext context) async {
+    setUpdating(true);
+    notifyListeners();
     final List<String> failedOrderIds = failedOrders
         .asMap()
         .entries
@@ -410,7 +434,7 @@ class OrdersProvider with ChangeNotifier {
     _selectedFailedOrders =
         List<bool>.filled(failedOrders.length, false); // Reset selection list
     selectedFailedItemsCount = 0; // Reset selected items count
-
+    setUpdating(false);
     notifyListeners(); // Notify listeners to update UI
   }
 
@@ -526,83 +550,24 @@ class OrdersProvider with ChangeNotifier {
     return '$day-$month-$year $hour:$minute:$second';
   }
 
-  Future<List<Order>> searchFailedOrder(String searchTerm) async {
-    final String? token = await _getToken(); // Retrieve the token
+  void clearSearchResults() {
+    filteredReadyOrders = readyOrders;
+    filteredFailedOrders = failedOrders;
+    notifyListeners();
+  }
 
-    if (token == null) {
-      throw Exception('No auth token found');
-    }
-
-    // Modify the URL to just search by the searchTerm with status 0
-    final url =
-        'https://inventory-management-backend-s37u.onrender.com/orders?orderStatus=0&order_id=$searchTerm'; // Search term and status 0
-
-    print('Searching failed orders with term: $searchTerm'); // Debugging print
+  Future<void> searchReadyToConfirmOrders(String orderId) async {
+    final url = Uri.parse(
+        'https://inventory-management-backend-s37u.onrender.com/orders?orderStatus=1&order_id=$orderId');
+    final token = await _getToken();
+    if (token == null) return;
 
     try {
+      isLoading = true;
+      notifyListeners();
+
       final response = await http.get(
-        Uri.parse(url),
-        headers: {
-          'Authorization': 'Bearer $token',
-          'Content-Type': 'application/json',
-        },
-      );
-
-      print('Response status: ${response.statusCode}'); // Print the status code
-
-      if (response.statusCode == 200) {
-        final jsonData = json.decode(response.body);
-        print(
-            'Response data: $jsonData'); // Print the entire JSON response for debugging
-
-        // Check if the response is a single order object
-        List<Order> orders = [];
-        if (jsonData != null) {
-          // Directly create an Order instance from the response
-          orders.add(Order.fromJson(jsonData)); // Add the order to the list
-        } else {
-          print('No data found in response.'); // Handle null data
-        }
-
-        print(
-            'Orders fetched: ${orders.length}'); // Print the number of fetched orders
-        notifyListeners();
-
-        return orders; // Return the list containing the single order
-      } else {
-        throw Exception('Failed to load orders: ${response.statusCode}');
-      }
-    } catch (error) {
-      print('Error searching failed orders: $error'); // Print error details
-      return [];
-    }
-  }
-
-  Future<void> searchReadyToConfirmOrder(String searchTerm) async {
-    final List<Order> results = await searchReadyToConfirmOrders(searchTerm);
-    readyOrders = results; // Update the list of ready orders
-    notifyListeners(); // Notify listeners to rebuild UI
-  }
-
-  Future<void> searchFailedOrders(String searchTerm) async {
-    final List<Order> results = await searchFailedOrder(searchTerm);
-    failedOrders = results; // Update the list of failed orders
-    notifyListeners(); // Notify listeners to rebuild UI
-  }
-
-  Future<List<Order>> searchReadyToConfirmOrders(String searchTerm) async {
-    final String? token = await _getToken(); // Retrieve the token
-
-    if (token == null) {
-      throw Exception('No auth token found');
-    }
-
-    final url =
-        'https://inventory-management-backend-s37u.onrender.com/orders?order_id=$searchTerm'; // No status in URL
-
-    try {
-      final response = await http.get(
-        Uri.parse(url),
+        url,
         headers: {
           'Authorization': 'Bearer $token',
           'Content-Type': 'application/json',
@@ -610,22 +575,54 @@ class OrdersProvider with ChangeNotifier {
       );
 
       if (response.statusCode == 200) {
-        final jsonData = json.decode(response.body);
-        print(jsonData); // Print the entire JSON response to debug
+        final data = jsonDecode(response.body);
+        print("${response.body}");
 
-        // Assuming the list is under a key like 'orders'
-        final List<dynamic> ordersList =
-            jsonData['orders']; // Adjust 'orders' to the actual key
-        List<Order> orders =
-            List<Order>.from(ordersList.map((item) => Order.fromJson(item)));
-        print("Hello i am ${orders.toList()}");
-        return orders;
+        filteredReadyOrders = [Order.fromJson(data)];
+        print("${response.body}");
       } else {
-        throw Exception('Failed to load orders: ${response.statusCode}');
+        filteredReadyOrders = [];
       }
-    } catch (error) {
-      print('Error searching ready-to-confirm orders: $error');
-      return [];
+    } catch (e) {
+      filteredReadyOrders = [];
+    } finally {
+      isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> searchFailedOrders(String orderId) async {
+    final url = Uri.parse(
+        'https://inventory-management-backend-s37u.onrender.com/orders?orderStatus=0&order_id=$orderId');
+    final token = await _getToken();
+    if (token == null) return;
+
+    try {
+      isLoading = true;
+      notifyListeners();
+
+      final response = await http.get(
+        url,
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        print("${response.body}");
+
+        filteredFailedOrders = [Order.fromJson(data)];
+        print("${response.body}");
+      } else {
+        filteredFailedOrders = [];
+      }
+    } catch (e) {
+      filteredFailedOrders = [];
+    } finally {
+      isLoading = false;
+      notifyListeners();
     }
   }
 }

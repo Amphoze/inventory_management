@@ -10,6 +10,7 @@ import 'package:inventory_management/dashboard.dart';
 // import 'packa/ge:inventory_management/forgot_password.dart';
 import 'package:inventory_management/login_page.dart';
 import 'package:inventory_management/products.dart';
+import 'package:inventory_management/provider/accounts_provider.dart';
 import 'package:inventory_management/provider/book_provider.dart';
 import 'package:inventory_management/provider/combo_provider.dart';
 import 'package:inventory_management/provider/dashboard_provider.dart';
@@ -75,7 +76,7 @@ void main() {
       ChangeNotifierProvider(create: (context) => OrderItemProvider()),
       ChangeNotifierProvider(create: (context) => InventoryProvider()),
       ChangeNotifierProvider(create: (context) => InvoiceProvider()),
-      ChangeNotifierProvider(create: (context) => UpdateQuantityBySku())
+      ChangeNotifierProvider(create: (context) => AccountsProvider()),
     ],
     child: const MyApp(),
   ));

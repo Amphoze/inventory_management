@@ -22,7 +22,7 @@ class _PackerPageState extends State<PackerPage> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       Provider.of<PackerProvider>(context, listen: false)
-          .fetchOrdersWithStatus4();
+          .fetchOrdersWithStatus5();
     });
     Provider.of<PackerProvider>(context, listen: false)
         .textEditingController
@@ -82,13 +82,18 @@ class _PackerPageState extends State<PackerPage> {
                             });
                             if (query.isEmpty) {
                               // Reset to all orders if search is cleared
-                              packerProvider.fetchOrdersWithStatus4();
+                              packerProvider.fetchOrdersWithStatus5();
                             }
                           },
                           onTap: () {
                             setState(() {
                               // Mark the search field as focused
                             });
+                          },
+                          onSubmitted: (query) {
+                            if (query.isNotEmpty) {
+                              packerProvider.searchOrders(query);
+                            }
                           },
                           onEditingComplete: () {
                             // Mark it as not focused when done
@@ -118,13 +123,24 @@ class _PackerPageState extends State<PackerPage> {
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.primaryBlue,
                       ),
-                      onPressed: () {
-                        packerProvider.fetchOrdersWithStatus4();
-                      },
-                      child: const Text(
-                        'Refresh',
-                        style: TextStyle(color: Colors.white),
-                      ),
+                      onPressed: packerProvider.isRefreshingOrders
+                          ? null
+                          : () async {
+                              packerProvider.fetchOrdersWithStatus5();
+                            },
+                      child: packerProvider.isRefreshingOrders
+                          ? const SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(
+                                color: Colors.white,
+                                strokeWidth: 2,
+                              ),
+                            )
+                          : const Text(
+                              'Refresh',
+                              style: TextStyle(color: Colors.white),
+                            ),
                     ),
                   ],
                 ),
@@ -135,7 +151,14 @@ class _PackerPageState extends State<PackerPage> {
                 child: Stack(
                   children: [
                     if (packerProvider.isLoading)
-                      const Center(child: PackerLoadingAnimation())
+                      const Center(
+                        child: LoadingAnimation(
+                          icon: Icons.backpack_rounded,
+                          beginColor: Color.fromRGBO(189, 189, 189, 1),
+                          endColor: AppColors.primaryBlue,
+                          size: 80.0,
+                        ),
+                      )
                     else if (packerProvider.orders.isEmpty)
                       const Center(
                         child: Text(
@@ -322,7 +345,7 @@ class _PackerPageState extends State<PackerPage> {
           const SizedBox(width: 4),
           buildCell(
             Text(
-              '${order.boxSize}',
+              order.boxSize,
               style: const TextStyle(fontSize: 16),
             ),
             flex: 2,

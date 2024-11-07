@@ -23,9 +23,10 @@ class _ReturnOrdersState extends State<ReturnOrders> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       Provider.of<ReturnProvider>(context, listen: false)
-          .fetchOrdersWithStatus8();
+          .fetchOrdersWithStatus9();
     });
   }
+
   void _onSearchButtonPressed() {
     final query = _searchController.text.trim();
     if (query.isNotEmpty) {
@@ -42,14 +43,11 @@ class _ReturnOrdersState extends State<ReturnOrders> {
           backgroundColor: AppColors.white,
           body: Column(
             children: [
-
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
-
-
                     SizedBox(
                       width: 200,
                       child: Container(
@@ -81,13 +79,18 @@ class _ReturnOrdersState extends State<ReturnOrders> {
                             });
                             if (query.isEmpty) {
                               // Reset to all orders if search is cleared
-                              returnProvider.fetchOrdersWithStatus8();
+                              returnProvider.fetchOrdersWithStatus9();
                             }
                           },
                           onTap: () {
                             setState(() {
                               // Mark the search field as focused
                             });
+                          },
+                          onSubmitted: (query) {
+                            if (query.isNotEmpty) {
+                              returnProvider.searchOrders(query);
+                            }
                           },
                           onEditingComplete: () {
                             // Mark it as not focused when done
@@ -103,8 +106,7 @@ class _ReturnOrdersState extends State<ReturnOrders> {
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.primaryBlue,
                       ),
-                      onPressed:
-                      _searchController.text.isNotEmpty
+                      onPressed: _searchController.text.isNotEmpty
                           ? _onSearchButtonPressed
                           : null,
                       child: const Text(
@@ -122,28 +124,44 @@ class _ReturnOrdersState extends State<ReturnOrders> {
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.primaryBlue,
                       ),
-                      onPressed: () {
-                        returnProvider.fetchOrdersWithStatus8();
-                      },
-                      child: const Text(
-                        'Refresh',
-                        style: TextStyle(color: Colors.white),
-                      ),
+                      onPressed: returnProvider.isRefreshingOrders
+                          ? null
+                          : () async {
+                              returnProvider.fetchOrdersWithStatus9();
+                            },
+                      child: returnProvider.isRefreshingOrders
+                          ? const SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(
+                                color: Colors.white,
+                                strokeWidth: 2,
+                              ),
+                            )
+                          : const Text(
+                              'Refresh',
+                              style: TextStyle(color: Colors.white),
+                            ),
                     ),
                   ],
                 ),
               ),
               const SizedBox(height: 8),
-
               const SizedBox(height: 8),
-              _buildTableHeader(
-                  returnProvider.orders.length, returnProvider),
+              _buildTableHeader(returnProvider.orders.length, returnProvider),
               const SizedBox(height: 4),
               Expanded(
                 child: Stack(
                   children: [
                     if (returnProvider.isLoading)
-                      const Center(child: ManifestLoadingAnimation())
+                      const Center(
+                        child: LoadingAnimation(
+                          icon: Icons.find_replace,
+                          beginColor: Color.fromRGBO(189, 189, 189, 1),
+                          endColor: AppColors.primaryBlue,
+                          size: 80.0,
+                        ),
+                      )
                     else if (returnProvider.orders.isEmpty)
                       const Center(
                         child: Text(
@@ -164,13 +182,10 @@ class _ReturnOrdersState extends State<ReturnOrders> {
                             children: [
                               _buildOrderCard(order, index, returnProvider),
                               const Divider(thickness: 1, color: Colors.grey),
-
-
                             ],
                           );
                         },
                       ),
-
                   ],
                 ),
               ),
@@ -199,8 +214,11 @@ class _ReturnOrdersState extends State<ReturnOrders> {
                   returnProvider.goToPage(page);
                 },
                 onJumpToPage: () {
-                  final page = int.tryParse(returnProvider.textEditingController.text);
-                  if (page != null && page > 0 && page <= returnProvider.totalPages) {
+                  final page =
+                      int.tryParse(returnProvider.textEditingController.text);
+                  if (page != null &&
+                      page > 0 &&
+                      page <= returnProvider.totalPages) {
                     returnProvider.goToPage(page);
                   }
                 },
@@ -212,16 +230,16 @@ class _ReturnOrdersState extends State<ReturnOrders> {
     );
   }
 
-
-
-  Widget _buildOrderCard(Order order, int index, ReturnProvider returnProvider) {
+  Widget _buildOrderCard(
+      Order order, int index, ReturnProvider returnProvider) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4.0, horizontal: 8.0),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Checkbox(
-            value: returnProvider.selectedProducts[index], // Accessing selected products
+            value: returnProvider
+                .selectedProducts[index], // Accessing selected products
             onChanged: (isSelected) {
               returnProvider.handleRowCheckboxChange(index, isSelected!);
             },
@@ -229,19 +247,23 @@ class _ReturnOrdersState extends State<ReturnOrders> {
           Expanded(
             flex: 5,
             child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween, // Space between elements
+              mainAxisAlignment:
+                  MainAxisAlignment.spaceBetween, // Space between elements
               children: [
                 Expanded(
-
-                  child: OrderCard(order: order), // Your existing OrderCard widget
+                  child:
+                      OrderCard(order: order), // Your existing OrderCard widget
                 ),
-                const SizedBox(width: 200), // Add some spacing between the elements
+                const SizedBox(
+                    width: 200), // Add some spacing between the elements
 
                 Text(
                   '${order.trackingStatus?.isEmpty ?? true ? "NA" : order.trackingStatus}', // Display "NA" if null or empty
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
-                    color: order.trackingStatus == 'return' ? Colors.green : Colors.black,
+                    color: order.trackingStatus == 'return'
+                        ? Colors.green
+                        : Colors.black,
                   ),
                 ),
 
@@ -259,8 +281,6 @@ class _ReturnOrdersState extends State<ReturnOrders> {
     );
   }
 
-
-
   Widget _buildTableHeader(int totalCount, ReturnProvider returnprovider) {
     return Container(
       color: Colors.grey[300],
@@ -273,14 +293,17 @@ class _ReturnOrdersState extends State<ReturnOrders> {
               returnprovider.toggleSelectAll(value!);
             },
           ),
-          const Text('Select All',style: TextStyle(fontWeight: FontWeight.bold,fontSize: 18),),
+          Text(
+            'Select All(${returnprovider.selectedCount})',
+            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+          ),
           buildHeader('ORDERS', flex: 8),
-
           buildHeader('Tracking Status', flex: 3),
         ],
       ),
     );
   }
+
   Widget buildHeader(String title, {int flex = 1}) {
     return Expanded(
       flex: flex,
@@ -296,6 +319,7 @@ class _ReturnOrdersState extends State<ReturnOrders> {
       ),
     );
   }
+
   Widget buildCell(Widget content, {int flex = 1}) {
     return Expanded(
       flex: flex,
@@ -310,19 +334,23 @@ class _ReturnOrdersState extends State<ReturnOrders> {
     return ElevatedButton(
       onPressed: returnProvider.selectedCount > 0
           ? () async {
-        await returnProvider.returnSelectedOrders(); // Call the return method
-      }
+              await returnProvider
+                  .returnSelectedOrders(); // Call the return method
+            }
           : null, // Disable the button if no orders are selected
       child: returnProvider.isReturning
           ? SizedBox(
-        width: 24,
-        height: 24,
-        child: CircularProgressIndicator(
-          color: Colors.white,
-          strokeWidth: 3,
-        ),
-      )
-          :  const Text('Return',style: TextStyle(color: Colors.white),),
+              width: 24,
+              height: 24,
+              child: CircularProgressIndicator(
+                color: Colors.white,
+                strokeWidth: 3,
+              ),
+            )
+          : const Text(
+              'Return',
+              style: TextStyle(color: Colors.white),
+            ),
     );
   }
 }

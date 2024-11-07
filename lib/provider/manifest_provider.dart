@@ -29,6 +29,13 @@ class ManifestProvider with ChangeNotifier {
   int get selectedCount =>
       _selectedProducts.where((isSelected) => isSelected).length;
 
+  bool isRefreshingOrders = false;
+
+  void setRefreshingOrders(bool value) {
+    isRefreshingOrders = value;
+    notifyListeners();
+  }
+
   void toggleSelectAll(bool value) {
     _selectAll = value;
     _selectedProducts =
@@ -42,14 +49,15 @@ class ManifestProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> fetchOrdersWithStatus7() async {
+  Future<void> fetchOrdersWithStatus8() async {
     _isLoading = true;
+    setRefreshingOrders(true);
     notifyListeners();
 
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('authToken') ?? '';
     const url =
-        'https://inventory-management-backend-s37u.onrender.com/orders?orderStatus=7&page=';
+        'https://inventory-management-backend-s37u.onrender.com/orders?orderStatus=8&page=';
 
     try {
       final response = await http.get(Uri.parse('$url$_currentPage'), headers: {
@@ -82,6 +90,7 @@ class ManifestProvider with ChangeNotifier {
       _totalPages = 1; // Reset total pages if there’s an error
     } finally {
       _isLoading = false;
+      setRefreshingOrders(false);
       notifyListeners();
     }
   }
@@ -92,7 +101,7 @@ class ManifestProvider with ChangeNotifier {
     _debounce = Timer(const Duration(milliseconds: 500), () {
       if (query.isEmpty) {
         // If query is empty, reload all orders
-        fetchOrdersWithStatus7();
+        fetchOrdersWithStatus8();
       } else {
         searchOrders(query); // Trigger the search after the debounce period
       }
@@ -102,7 +111,7 @@ class ManifestProvider with ChangeNotifier {
 // Method to search orders by order ID
   Future<List<Order>> searchOrders(String query) async {
     if (query.isEmpty) {
-      await fetchOrdersWithStatus7();
+      await fetchOrdersWithStatus8();
       return _orders;
     }
 
@@ -113,7 +122,7 @@ class ManifestProvider with ChangeNotifier {
     final token = prefs.getString('authToken') ?? '';
 
     final url =
-        'https://inventory-management-backend-s37u.onrender.com/orders?orderStatus=7&order_id=$query';
+        'https://inventory-management-backend-s37u.onrender.com/orders?orderStatus=8&order_id=$query';
 
     print('Searching failed orders with term: $query');
 
@@ -160,7 +169,7 @@ class ManifestProvider with ChangeNotifier {
     if (page < 1 || page > _totalPages) return;
     _currentPage = page;
     print('Current page set to: $_currentPage'); // Debugging line
-    fetchOrdersWithStatus7();
+    fetchOrdersWithStatus8();
     notifyListeners();
   }
 

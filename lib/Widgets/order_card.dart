@@ -9,12 +9,14 @@ import '../provider/orders_provider.dart'; // Adjust the import based on your pr
 class OrderCard extends StatelessWidget {
   final Order order;
   final bool isBookPage;
+  final Widget? checkboxWidget;
 
-  const OrderCard({
-    Key? key,
-    required this.order,
-    this.isBookPage = false,
-  }) : super(key: key);
+  const OrderCard(
+      {Key? key,
+      required this.order,
+      this.isBookPage = false,
+      this.checkboxWidget})
+      : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -37,13 +39,18 @@ class OrderCard extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  'Order ID: ${order.orderId}',
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 18, // Reduced font size
-                    color: Colors.blueAccent,
-                  ),
+                Row(
+                  children: [
+                    if (isBookPage && checkboxWidget != null) checkboxWidget!,
+                    Text(
+                      'Order ID: ${order.orderId}',
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 15,
+                        color: Colors.blueAccent,
+                      ),
+                    ),
+                  ],
                 ),
                 if (isBookPage)
                   ElevatedButton(
@@ -60,16 +67,17 @@ class OrderCard extends StatelessWidget {
                     },
                     style: ElevatedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 8.0, vertical: 4.0),
+                          horizontal: 6.0, vertical: 2.0),
                       foregroundColor: AppColors.white,
                       backgroundColor: AppColors.orange,
                       textStyle: const TextStyle(
                         fontWeight: FontWeight.bold,
-                        fontSize: 12,
+                        fontSize: 10,
                       ),
                     ),
                     child: const Text(
                       'Edit Order',
+                      style: TextStyle(fontSize: 10),
                     ),
                   ),
 
@@ -77,109 +85,280 @@ class OrderCard extends StatelessWidget {
               ],
             ),
             if (isBookPage) ...[
-              const SizedBox(height: 8.0),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          const Text(
-                            'Date: ',
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: Colors.black, // Label color black
-                            ),
+              Padding(
+                padding: const EdgeInsets.all(4.0),
+                child: Column(
+                  children: [
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Flexible(
+                          flex: 2,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              buildLabelValueRow(
+                                  'Date', provider.formatDate(order.date!)),
+                              buildLabelValueRow('Total Amount',
+                                  'Rs. ${order.totalAmount ?? ''}'),
+                              buildLabelValueRow('Total Items',
+                                  '${order.items.fold(0, (total, item) => total + item.qty!)}'),
+                              buildLabelValueRow(
+                                  'Total Weight', '${order.totalWeight ?? ''}'),
+                              buildLabelValueRow(
+                                  'Payment Mode', order.paymentMode ?? ''),
+                              buildLabelValueRow(
+                                  'Currency Code', order.currencyCode ?? ''),
+                              buildLabelValueRow('COD Amount',
+                                  order.codAmount?.toString() ?? ''),
+                              buildLabelValueRow(
+                                  'AWB No.', order.awbNumber?.toString() ?? ''),
+                            ],
                           ),
-                          Text(
-                            provider.formatDate(order.date!),
-                            style: const TextStyle(
-                              fontSize: 12,
-                              color: AppColors.primaryBlue, // Value color blue
-                            ),
+                        ),
+                        const SizedBox(width: 8.0),
+                        Flexible(
+                          flex: 2,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              buildLabelValueRow('Discount Amount',
+                                  order.discountAmount?.toString() ?? ''),
+                              buildLabelValueRow('Discount Scheme',
+                                  order.discountScheme ?? ''),
+                              buildLabelValueRow('Agent', order.agent ?? ''),
+                              buildLabelValueRow('Notes', order.notes ?? ''),
+                              buildLabelValueRow(
+                                  'Marketplace', order.marketplace?.name ?? ''),
+                              buildLabelValueRow('Filter', order.filter ?? ''),
+                              buildLabelValueRow(
+                                'Expected Delivery Date',
+                                order.expectedDeliveryDate != null
+                                    ? provider
+                                        .formatDate(order.expectedDeliveryDate!)
+                                    : '',
+                              ),
+                            ],
                           ),
-                        ],
-                      ),
-                    ],
-                  ),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          const Text(
-                            'Total Amount: ',
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: Colors.black, // Label color black
-                            ),
+                        ),
+                        const SizedBox(width: 8.0),
+                        Flexible(
+                          flex: 2,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              buildLabelValueRow(
+                                  'Delivery Term', order.deliveryTerm ?? ''),
+                              buildLabelValueRow('Transaction Number',
+                                  order.transactionNumber ?? ''),
+                              buildLabelValueRow('Micro Dealer Order',
+                                  order.microDealerOrder ?? ''),
+                              buildLabelValueRow('Fulfillment Type',
+                                  order.fulfillmentType ?? ''),
+                              buildLabelValueRow('No. of Boxes',
+                                  order.numberOfBoxes?.toString() ?? ''),
+                              buildLabelValueRow('Total Quantity',
+                                  order.totalQuantity?.toString() ?? ''),
+                              buildLabelValueRow(
+                                  'SKU Qty', order.skuQty?.toString() ?? ''),
+                            ],
                           ),
-                          Text(
-                            'Rs. ${order.totalAmount ?? ''}',
-                            style: const TextStyle(
-                              fontSize: 12,
-                              color: AppColors.primaryBlue, // Value color blue
-                            ),
+                        ),
+                        const SizedBox(width: 8.0),
+                        Flexible(
+                          flex: 2,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              buildLabelValueRow(
+                                'Dimensions',
+                                '${order.length?.toString() ?? ''} x ${order.breadth?.toString() ?? ''} x ${order.height?.toString() ?? ''}',
+                              ),
+                              buildLabelValueRow('Tracking Status',
+                                  order.trackingStatus ?? ''),
+                              const SizedBox(
+                                height: 7,
+                              ),
+                              buildLabelValueRow('Tax Percent',
+                                  '${order.taxPercent?.toString() ?? ''}%'),
+                              buildLabelValueRow(
+                                  'Courier Name', order.courierName ?? ''),
+                              buildLabelValueRow(
+                                  'Order Type', order.orderType ?? ''),
+                              buildLabelValueRow(
+                                  'Payment Bank', order.paymentBank ?? ''),
+                            ],
                           ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8.0),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          const Text(
-                            'Total Items: ',
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: Colors.black, // Label color black
-                            ),
+                        ),
+                        const SizedBox(width: 8.0),
+                        Flexible(
+                          flex: 2,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              buildLabelValueRow('Prepaid Amount',
+                                  order.prepaidAmount?.toString() ?? ''),
+                              buildLabelValueRow(
+                                  'Coin', order.coin?.toString() ?? ''),
+                              buildLabelValueRow('Preferred Courier',
+                                  order.preferredCourier ?? ''),
+                              buildLabelValueRow(
+                                'Payment Date Time',
+                                order.paymentDateTime != null
+                                    ? provider
+                                        .formatDateTime(order.paymentDateTime!)
+                                    : '',
+                              ),
+                              buildLabelValueRow('Calc Entry No.',
+                                  order.calcEntryNumber ?? ''),
+                              buildLabelValueRow(
+                                  'Currency', order.currency ?? ''),
+                            ],
                           ),
-                          Text(
-                            '${order.items.fold(0, (total, item) => total + item.qty!)}',
-                            style: const TextStyle(
-                              fontSize: 12,
-                              color: AppColors.primaryBlue, // Value color blue
-                            ),
+                        ),
+                      ],
+                    ),
+                    const Divider(
+                      thickness: 1,
+                      color: AppColors.grey,
+                    ),
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Flexible(
+                          flex: 3,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                'Customer Details:',
+                                style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 11.0,
+                                    color: AppColors.primaryBlue),
+                              ),
+                              buildLabelValueRow(
+                                'Customer ID',
+                                order.customer?.customerId ?? '',
+                              ),
+                              buildLabelValueRow(
+                                  'Full Name',
+                                  order.customer?.firstName !=
+                                          order.customer?.lastName
+                                      ? '${order.customer?.firstName ?? ''} ${order.customer?.lastName ?? ''}'
+                                          .trim()
+                                      : order.customer?.firstName ?? ''),
+                              buildLabelValueRow(
+                                'Email',
+                                order.customer?.email ?? '',
+                              ),
+                              buildLabelValueRow(
+                                'Phone',
+                                order.customer?.phone?.toString() ?? '',
+                              ),
+                              buildLabelValueRow(
+                                'GSTIN',
+                                order.customer?.customerGstin ?? '',
+                              ),
+                            ],
                           ),
-                        ],
-                      ),
-                    ],
-                  ),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          const Text(
-                            'Total Weight: ',
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: Colors.black, // Label color black
-                            ),
+                        ),
+                        const SizedBox(width: 8.0),
+                        Flexible(
+                          flex: 3,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                'Shipping Address:',
+                                style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 11.0,
+                                    color: AppColors.primaryBlue),
+                              ),
+                              buildLabelValueRow(
+                                'Address',
+                                [
+                                  order.shippingAddress?.address1,
+                                  order.shippingAddress?.address2,
+                                  order.shippingAddress?.city,
+                                  order.shippingAddress?.state,
+                                  order.shippingAddress?.country,
+                                  order.shippingAddress?.pincode?.toString(),
+                                ]
+                                    .where((element) =>
+                                        element != null && element.isNotEmpty)
+                                    .join(', '),
+                              ),
+                              buildLabelValueRow(
+                                'Name',
+                                order.shippingAddress?.firstName !=
+                                        order.shippingAddress?.lastName
+                                    ? '${order.shippingAddress?.firstName ?? ''} ${order.shippingAddress?.lastName ?? ''}'
+                                        .trim()
+                                    : order.shippingAddress?.firstName ?? '',
+                              ),
+                              buildLabelValueRow(
+                                  'Phone',
+                                  order.shippingAddress?.phone?.toString() ??
+                                      ''),
+                              buildLabelValueRow(
+                                  'Email', order.shippingAddress?.email ?? ''),
+                              buildLabelValueRow('Country Code',
+                                  order.shippingAddress?.countryCode ?? ''),
+                            ],
                           ),
-                          Text(
-                            '${order.totalWeight ?? ''}',
-                            style: const TextStyle(
-                              fontSize: 12,
-                              color: AppColors.primaryBlue, // Value color blue
-                            ),
+                        ),
+                        const SizedBox(width: 8.0),
+                        Flexible(
+                          flex: 3,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                'Billing Address:',
+                                style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 11.0,
+                                    color: AppColors.primaryBlue),
+                              ),
+                              buildLabelValueRow(
+                                'Address',
+                                [
+                                  order.billingAddress?.address1,
+                                  order.billingAddress?.address2,
+                                  order.billingAddress?.city,
+                                  order.billingAddress?.state,
+                                  order.billingAddress?.country,
+                                  order.billingAddress?.pincode?.toString(),
+                                ]
+                                    .where((element) =>
+                                        element != null && element.isNotEmpty)
+                                    .join(', '),
+                              ),
+                              buildLabelValueRow(
+                                'Name',
+                                order.billingAddress?.firstName !=
+                                        order.billingAddress?.lastName
+                                    ? '${order.billingAddress?.firstName ?? ''} ${order.billingAddress?.lastName ?? ''}'
+                                        .trim()
+                                    : order.billingAddress?.firstName ?? '',
+                              ),
+                              buildLabelValueRow(
+                                  'Phone',
+                                  order.billingAddress?.phone?.toString() ??
+                                      ''),
+                              buildLabelValueRow(
+                                  'Email', order.billingAddress?.email ?? ''),
+                              buildLabelValueRow('Country Code',
+                                  order.billingAddress?.countryCode ?? ''),
+                            ],
                           ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ],
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
             ],
             const SizedBox(height: 6.0),
@@ -316,41 +495,31 @@ class OrderCard extends StatelessWidget {
     );
   }
 
-  Widget _buildAddressRow(String title, Address? address) {
+  Widget buildLabelValueRow(
+    String label,
+    String? value, {
+    Color labelColor = Colors.black,
+    Color valueColor = AppColors.primaryBlue,
+    double fontSize = 10,
+  }) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          title,
-          style: const TextStyle(
-            color: Colors.black,
-            fontWeight: FontWeight.bold,
-            fontSize: 11,
+          '$label: ',
+          style: TextStyle(
+            fontSize: fontSize,
+            color: labelColor,
           ),
         ),
-        const SizedBox(width: 8.0),
         Flexible(
-          child: RichText(
-            text: TextSpan(
-              style: const TextStyle(
-                color: Colors.black87,
-                fontWeight: FontWeight.w500,
-                fontSize: 11,
-              ),
-              children: [
-                TextSpan(
-                  text: [
-                    address?.address1,
-                    address?.address2,
-                    address?.city,
-                    address?.state,
-                    address?.country,
-                    address?.pincode?.toString(),
-                  ]
-                      .where((element) => element != null && element.isNotEmpty)
-                      .join(', '),
-                ),
-              ],
+          child: Text(
+            value ?? '',
+            softWrap: true,
+            maxLines: null,
+            style: TextStyle(
+              fontSize: fontSize,
+              color: valueColor,
             ),
           ),
         ),
