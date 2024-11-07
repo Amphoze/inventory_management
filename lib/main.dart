@@ -4,6 +4,7 @@ import 'package:inventory_management/Api/label-api.dart';
 import 'package:inventory_management/Api/lable-page-api.dart';
 import 'package:inventory_management/Api/order-page-checkbox-provider.dart';
 import 'package:inventory_management/Api/products-provider.dart';
+import 'package:inventory_management/Api/update-quantity-by-sku.dart';
 // import 'package:inventory_management/Custom-Files/multi-image-picker.dart';
 import 'package:inventory_management/dashboard.dart';
 // import 'packa/ge:inventory_management/forgot_password.dart';
@@ -51,8 +52,7 @@ void main() {
       ChangeNotifierProvider(create: (context) => AuthProvider()),
       ChangeNotifierProvider(create: (context) => CheckBoxProvider()),
       ChangeNotifierProvider(create: (context) => ManagementProvider()),
-      ChangeNotifierProvider(create: (context)=>DashboardProvider()),
-
+      ChangeNotifierProvider(create: (context) => DashboardProvider()),
       ChangeNotifierProvider(create: (context) => LabelPageApi()),
       ChangeNotifierProvider(create: (context) => MarketplaceProvider()),
       ChangeNotifierProvider(create: (context) => BookProvider()),
@@ -74,7 +74,8 @@ void main() {
       ChangeNotifierProvider(create: (context) => LabelDataProvider()),
       ChangeNotifierProvider(create: (context) => OrderItemProvider()),
       ChangeNotifierProvider(create: (context) => InventoryProvider()),
-      ChangeNotifierProvider(create: (context)=> InvoiceProvider())
+      ChangeNotifierProvider(create: (context) => InvoiceProvider()),
+      ChangeNotifierProvider(create: (context) => UpdateQuantityBySku())
     ],
     child: const MyApp(),
   ));
@@ -142,7 +143,9 @@ class _HomeState extends State<Home> {
               return const CircularProgressIndicator();
             } else if (snap.hasData) {
               if (authprovider.isAuthenticated) {
-                return const DashboardPage(inventoryId: '',);
+                return const DashboardPage(
+                  inventoryId: '',
+                );
               } else {
                 return const LoginPage();
               }
