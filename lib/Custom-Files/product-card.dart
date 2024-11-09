@@ -19,7 +19,8 @@ class Product {
   final String description;
   final String technicalName;
   final String labelSku;
-  final String box_name;
+  final String outerPackage_name;
+  final String outerPackage_quantity;
   final String length;
   final String width;
   final String height;
@@ -53,7 +54,8 @@ class Product {
     required this.netWeight,
     required this.grossWeight,
     required this.labelSku,
-    required this.box_name,
+    required this.outerPackage_name,
+    required this.outerPackage_quantity,
     required this.length,
     required this.width,
     required this.height,
@@ -142,19 +144,24 @@ class ProductCard extends StatelessWidget {
         _buildText('Net Weight', product.netWeight),
         _buildText('Gross Weight', product.grossWeight),
         _buildText('Label SKU', product.labelSku),
-        _buildText('Box Name', product.box_name),
+        _buildText('Outer Package Name', product.outerPackage_name),
+        _buildText('Outer Package Quantity', product.outerPackage_quantity),
         _buildText('Brand', product.brand),
         _buildText('Technical Name', product.technicalName),
         //_buildText('Weight', '${product.weight} kg'),
-        _buildText('MRP', '₹${product.mrp}'),
-        _buildText('Cost', '₹${product.cost}'),
-        _buildText('Tax Rule', product.tax_rule),
+        _buildText('MRP', product.mrp.isNotEmpty ? '₹${product.mrp}' : ''),
+        _buildText('Cost', product.cost.isNotEmpty ? '₹${product.cost}' : ''),
+        _buildText('Tax Rule',
+            product.tax_rule.isNotEmpty ? '${product.tax_rule}%' : ''),
         _buildText('Grade', product.grade),
         _buildText('Created Date', formatDate(product.createdDate)),
         _buildText('Last Updated', formatDate(product.lastUpdated)),
-        _buildText('Length', product.length),
-        _buildText('Width', product.width),
-        _buildText('Heigth', product.height)
+        _buildText(
+            'Length', product.length.isNotEmpty ? '${product.length} cm' : ''),
+        _buildText(
+            'Width', product.width.isNotEmpty ? '${product.width} cm' : ''),
+        _buildText(
+            'Heigth', product.height.isNotEmpty ? '${product.height} cm' : ''),
       ],
     );
   }
@@ -199,8 +206,8 @@ class ProductCard extends StatelessWidget {
         _buildText('Net Weight', product.netWeight),
         _buildText('Gross Weight', product.grossWeight),
         _buildText('Label SKU', product.labelSku),
-        _buildText('Box Name', product.box_name),
-        _buildText('Brand', product.brand)
+        _buildText('Outer Package Name', product.outerPackage_name),
+        _buildText('Outer Package Quantity', product.outerPackage_quantity),
       ],
     );
   }
@@ -209,17 +216,22 @@ class ProductCard extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        _buildText('Brand', product.brand),
         _buildText('Technical Name', product.technicalName),
         //_buildText('Weight', '${product.weight} kg'),
-        _buildText('MRP', '₹${product.mrp}'),
-        _buildText('Cost', '₹${product.cost}'),
-        _buildText('Tax Rule', product.tax_rule),
+        _buildText('MRP', product.mrp.isNotEmpty ? '₹${product.mrp}' : ''),
+        _buildText('Cost', product.cost.isNotEmpty ? '₹${product.cost}' : ''),
+        _buildText('Tax Rule',
+            product.tax_rule.isNotEmpty ? '${product.tax_rule}%' : ''),
         _buildText('Grade', product.grade),
         _buildText('Created Date', formatDate(product.createdDate)),
         _buildText('Last Updated', formatDate(product.lastUpdated)),
-        _buildText('Length', product.length),
-        _buildText('Width', product.width),
-        _buildText('Heigth', product.height)
+        _buildText(
+            'Length', product.length.isNotEmpty ? '${product.length} cm' : ''),
+        _buildText(
+            'Width', product.width.isNotEmpty ? '${product.width} cm' : ''),
+        _buildText(
+            'Heigth', product.height.isNotEmpty ? '${product.height} cm' : ''),
       ],
     );
   }
@@ -256,7 +268,7 @@ class ProductCard extends StatelessWidget {
           const SizedBox(width: 8),
           Flexible(
             child: Text(
-              value.isNotEmpty ? value : '-',
+              value.isNotEmpty ? value : ' ',
               style: const TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.normal,

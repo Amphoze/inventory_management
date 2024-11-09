@@ -159,12 +159,14 @@ class ProductDetailsCard extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildInfoRow('Color:', product.color ?? ''),
+        _buildInfoRow('Color:', product.color!.name ?? ''),
         _buildInfoRow('Net Weight:',
             product.netWeight != null ? '${product.netWeight} kg' : ''),
         _buildInfoRow('Gross Weight:',
             product.grossWeight != null ? '${product.grossWeight} kg' : ''),
-        _buildInfoRow('Box Size:', product.boxSize?.boxName ?? ''),
+        // _buildInfoRow('Box Size:', product.boxSize?.boxName ?? ''),
+        _buildInfoRow('Outer Package Name:',
+            product.outerPackage?.outerPackageName ?? ''),
         _buildInfoRow('Variant Name:', product.variantName ?? ''),
       ],
     );
