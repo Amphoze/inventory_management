@@ -242,7 +242,7 @@ class _PackerPageState extends State<PackerPage> {
           buildHeader('CUSTOMER', flex: 3),
           buildHeader('DATE', flex: 3),
           buildHeader('TOTAL', flex: 2),
-          buildHeader('BOX SIZE', flex: 2),
+          buildHeader('PACKAGE NAME', flex: 2),
           buildHeader('CONFIRM', flex: 2),
         ],
       ),
@@ -343,13 +343,27 @@ class _PackerPageState extends State<PackerPage> {
             flex: 2,
           ),
           const SizedBox(width: 4),
+          // buildCell(
+          //   Text(
+          //     order.boxSize,
+          //     style: const TextStyle(fontSize: 16),
+          //   ),
+          //   flex: 2,
+          // ),
           buildCell(
             Text(
-              order.boxSize,
+              order.items
+                  .where((item) =>
+                      item.product != null &&
+                      item.product!.outerPackage != null)
+                  .map((item) =>
+                      item.product!.outerPackage!.outerPackageName ?? ' ')
+                  .join(', '),
               style: const TextStyle(fontSize: 16),
             ),
             flex: 2,
           ),
+
           const SizedBox(width: 4),
           buildCell(
             order.isPackerFullyScanned

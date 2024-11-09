@@ -385,9 +385,10 @@ class Product {
   final Category? category;
   final String? technicalName;
   final Label? label;
-  final String? color;
+  final Colour? color;
   final String? taxRule;
   final BoxSize? boxSize;
+  final OuterPackage? outerPackage;
   final double? netWeight;
   final double? grossWeight;
   final double? mrp;
@@ -413,6 +414,7 @@ class Product {
     required this.color,
     required this.taxRule,
     this.boxSize,
+    this.outerPackage,
     required this.netWeight,
     required this.grossWeight,
     required this.mrp,
@@ -447,11 +449,18 @@ class Product {
       label: json['label'] is Map<String, dynamic>
           ? Label.fromJson(json['label'])
           : (json['label'] is String ? Label(id: json['label']) : null),
-      color: json['color']?.toString() ?? '',
+      color: json['color'] is Map<String, dynamic>
+          ? Colour.fromJson(json['color'])
+          : (json['color'] is String ? Colour(id: json['color']) : null),
       taxRule: json['tax_rule']?.toString() ?? '',
       boxSize: json['boxSize'] is Map<String, dynamic>
           ? BoxSize.fromJson(json['boxSize'])
           : (json['boxSize'] is String ? BoxSize(id: json['boxSize']) : null),
+      outerPackage: json['outerPackage'] is Map<String, dynamic>
+          ? OuterPackage.fromJson(json['outerPackage'])
+          : (json['outerPackage'] is String
+              ? OuterPackage(id: json['outerPackage'])
+              : null),
       netWeight: (json['netWeight'] as num?)?.toDouble() ?? 0.0,
       grossWeight: (json['grossWeight'] as num?)?.toDouble() ?? 0.0,
       mrp: (json['mrp'] as num?)?.toDouble() ?? 0.0,
@@ -464,6 +473,41 @@ class Product {
       shopifyImage: json['shopifyImage']?.toString() ?? '',
       variantName: json['variant_name']?.toString() ?? '',
     );
+  }
+}
+
+class Colour {
+  final String? id;
+  final String? name;
+  final DateTime? createdAt;
+  final DateTime? updatedAt;
+
+  // Constructor
+  Colour({
+    this.id,
+    this.name,
+    this.createdAt,
+    this.updatedAt,
+  });
+
+  // Factory constructor to create a Color object from JSON
+  factory Colour.fromJson(Map<String, dynamic> json) {
+    return Colour(
+      id: json['_id'],
+      name: json['name'],
+      createdAt: DateTime.parse(json['createdAt']),
+      updatedAt: DateTime.parse(json['updatedAt']),
+    );
+  }
+
+  // Method to convert the Color object to JSON
+  Map<String, dynamic> toJson() {
+    return {
+      '_id': id,
+      'name': name,
+      'createdAt': createdAt!.toIso8601String(),
+      'updatedAt': updatedAt!.toIso8601String(),
+    };
   }
 }
 
@@ -546,16 +590,27 @@ class Category {
 class Label {
   final String? id;
   final String? name;
+  final String? labelSku;
+  final String? productSku;
+  final int? quantity;
+  final String? description;
 
-  Label({
-    this.id,
-    this.name,
-  });
+  Label(
+      {this.id,
+      this.name,
+      this.labelSku,
+      this.productSku,
+      this.quantity,
+      this.description});
 
   factory Label.fromJson(Map<String, dynamic> json) {
     return Label(
       id: json['_id'] as String?,
       name: json['name'] as String?,
+      labelSku: json['labelSku'] as String?,
+      productSku: json['product SKU '] as String?,
+      quantity: json['quantity'] as int?,
+      description: json['description'] as String?,
     );
   }
 
@@ -563,6 +618,53 @@ class Label {
     return {
       '_id': id,
       'name': name,
+      'labelSku': labelSku,
+      'product SKU ': productSku,
+      'quantity': quantity,
+      'description': description,
+    };
+  }
+}
+
+class OuterPackage {
+  final String? id;
+  final String? outerPackageSku;
+  final String? outerPackageName;
+  final String? outerPackageType;
+  final String? occupiedWeight;
+  final String? weightUnit;
+  final String? lengthUnit;
+
+  OuterPackage(
+      {this.id,
+      this.outerPackageSku,
+      this.outerPackageName,
+      this.outerPackageType,
+      this.occupiedWeight,
+      this.weightUnit,
+      this.lengthUnit});
+
+  factory OuterPackage.fromJson(Map<String, dynamic> json) {
+    return OuterPackage(
+      id: json['_id'] as String?,
+      outerPackageSku: json['outerPackage_sku'] as String?,
+      outerPackageName: json['outerPackage_name'] as String?,
+      outerPackageType: json['outerPackage_type'] as String?,
+      occupiedWeight: json['occupied_weight'] as String?,
+      weightUnit: json['weight_unit'] as String?,
+      lengthUnit: json['length_unit'] as String?,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      '_id': id,
+      'outerPackage_sku': outerPackageSku,
+      'outerPackage_name': outerPackageName,
+      'outerPackage_type': outerPackageType,
+      'occupied_weight': occupiedWeight,
+      'weight_unit': weightUnit,
+      'length_unit': lengthUnit
     };
   }
 }

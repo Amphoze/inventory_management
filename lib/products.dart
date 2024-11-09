@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:inventory_management/Api/product-page-api.dart';
-
+import 'package:inventory_management/Widgets/dropdown.dart';
 import 'package:inventory_management/Api/products-provider.dart';
 import 'package:inventory_management/Custom-Files/colors.dart';
 import 'package:inventory_management/Custom-Files/custom-button.dart';
@@ -1090,18 +1090,15 @@ class _ProductsState extends State<Products> {
               formLayout(
                 fieldTitle('Brand'),
                 SizedBox(
-                  height: 51,
-                  width: 300,
-                  child: CustomDropdown(
-                    selectedIndex: 0,
-                    key: dropdownKey,
-                    option: productProvider!.brand,
-                    onSelectedChanged: (int a) {
-                      selectedIndexOfBrand = a;
-                    },
-                    // onReset:resetBrand,
-                  ),
-                ),
+                    height: 51,
+                    width: 300,
+                    child: PaginatedSearchDropdown(
+                      hintText: 'Search Item...',
+                      fetchItems: fetchBrandsFromApi,
+                      onItemSelected: (id) {
+                        print('Selected Item ID: $id');
+                      },
+                    )),
               ),
               const SizedBox(height: 12),
               formLayout(
@@ -1109,13 +1106,13 @@ class _ProductsState extends State<Products> {
                   Row(
                     children: [
                       SizedBox(
-                          width: 300,
                           height: 51,
-                          child: CustomDropdown(
-                            key: categoryKey,
-                            option: productProvider!.cat,
-                            onSelectedChanged: (int a) {
-                              selectedIndexOfCategory = a;
+                          width: 300,
+                          child: PaginatedSearchDropdown(
+                            hintText: 'Search Item...',
+                            fetchItems: fetchCategoryFromApi,
+                            onItemSelected: (id) {
+                              print('Selected Item ID: $id');
                             },
                           )),
                       Container(
@@ -1786,7 +1783,7 @@ class _ProductsState extends State<Products> {
   }
 
   Widget fieldTitle(String filTitle,
-      {double height = 51, double width = 168.3, bool show = true}) {
+      {double height = 51, double width = 173.3, bool show = true}) {
     return SizedBox(
       height: height,
       width: width,
