@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:developer';
 
 import 'package:flutter/material.dart';
 import 'package:inventory_management/Api/inventory_api.dart';
@@ -292,6 +293,7 @@ class _EditOrderPageState extends State<EditOrderPage> {
       dynamicItemsList.add({
         'product_id': item.product!.id,
         'qty': item.qty,
+        'sku': item.sku,
         'amount': item.amount,
       });
       // Initialize controllers for each item
@@ -741,9 +743,11 @@ class _EditOrderPageState extends State<EditOrderPage> {
       int index = dynamicItemsList.indexOf(item);
       double amount = double.tryParse(_amountControllers[index].text) ?? 0.0;
       int qty = int.tryParse(_quantityControllers[index].text) ?? 1;
+      log("Itemmmmmmmmmmmmmmm $item");
       return {
         'product_id': item['product_id'],
         'qty': qty,
+        'sku': item['sku'],
         'amount': amount,
       };
     }).toList();
