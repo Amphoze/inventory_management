@@ -631,7 +631,7 @@ class OuterPackage {
   final String? outerPackageSku;
   final String? outerPackageName;
   final String? outerPackageType;
-  final String? occupiedWeight;
+  final num? occupiedWeight;
   final String? weightUnit;
   final String? lengthUnit;
 
@@ -650,7 +650,7 @@ class OuterPackage {
       outerPackageSku: json['outerPackage_sku'] as String?,
       outerPackageName: json['outerPackage_name'] as String?,
       outerPackageType: json['outerPackage_type'] as String?,
-      occupiedWeight: json['occupied_weight'] as String?,
+      occupiedWeight: json['occupied_weight'] as num?,
       weightUnit: json['weight_unit'] as String?,
       lengthUnit: json['length_unit'] as String?,
     );
