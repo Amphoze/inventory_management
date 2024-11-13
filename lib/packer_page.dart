@@ -352,13 +352,7 @@ class _PackerPageState extends State<PackerPage> {
           // ),
           buildCell(
             Text(
-              order.items
-                  .where((item) =>
-                      item.product != null &&
-                      item.product!.outerPackage != null)
-                  .map((item) =>
-                      item.product!.outerPackage!.outerPackageName ?? ' ')
-                  .join(', '),
+              order.outerPackage?.replaceAll('[', '').replaceAll(']', '') ?? '',
               style: const TextStyle(fontSize: 16),
             ),
             flex: 2,

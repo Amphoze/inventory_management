@@ -26,7 +26,7 @@ class Order {
   final Address? shippingAddress;
   final String courierName;
   final String orderType;
-  final String boxSize;
+  final String outerPackage;
   final bool replacement;
   int orderStatus;
   final List<OrderStatusMap>? orderStatusMap;
@@ -89,7 +89,7 @@ class Order {
       this.shippingAddress,
       this.courierName = '',
       this.orderType = '',
-      this.boxSize = '',
+      this.outerPackage = '',
       this.replacement = false,
       required this.orderStatus,
       this.orderStatusMap,
@@ -258,7 +258,7 @@ class Order {
             : Address(address1: _parseString(json['shipping_addr'])),
         courierName: _parseString(json['courier_name']),
         orderType: _parseString(json['order_type']),
-        boxSize: _parseString(json['box_size']),
+        outerPackage: _parseString(json['outerPackage']),
         replacement: json['replacement'] is bool ? json['replacement'] : false,
         orderStatus: _parseInt(json['order_status']),
         orderStatusMap: (json['order_status_map'] as List?)
