@@ -10,13 +10,13 @@ class OrderItemCard extends StatelessWidget {
   final Color cardColor;
 
   const OrderItemCard({
-    Key? key,
+    super.key,
     required this.item,
     required this.index,
     required this.courierName,
     required this.orderStatus,
     this.cardColor = AppColors.white,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

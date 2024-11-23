@@ -189,8 +189,8 @@ class CreateAccountFormState extends State<CreateAccountForm> {
   bool _isOtpSent = false;
   bool _isOtpVerified = false;
   bool _isLoading = false;
-  bool _isSendingOtp = false;
-  bool _isVerifyingOtp = false;
+  final bool _isSendingOtp = false;
+  final bool _isVerifyingOtp = false;
 
   String? _username;
   String? _email;
@@ -298,7 +298,7 @@ class CreateAccountFormState extends State<CreateAccountForm> {
       } else {
         // Handle the case where OTP verification fails
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Incorrect OTP. Please try again.')),
+          const SnackBar(content: Text('Incorrect OTP. Please try again.')),
         );
       }
     } catch (error) {

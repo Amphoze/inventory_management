@@ -12,7 +12,7 @@ class CustomDropdown<T> extends StatelessWidget {
   final double elevation;
 
   const CustomDropdown({
-    Key? key,
+    super.key,
     required this.items,
     required this.selectedItem,
     required this.hint,
@@ -22,7 +22,7 @@ class CustomDropdown<T> extends StatelessWidget {
     this.borderColor = Colors.grey,
     this.borderWidth = 1.0,
     this.elevation = 8.0,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

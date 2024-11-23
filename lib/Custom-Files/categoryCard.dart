@@ -66,28 +66,28 @@ class CategoryCard extends StatelessWidget {
                         ),
                       ),
                     ),
-                    ElevatedButton(
-                      onPressed: () {
-                        // Add your action here
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8.0),
-                        ),
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 20.0,
-                          vertical: 12.0,
-                        ),
-                      ),
-                      child: Text(
-                        'Action',
-                        style: TextStyle(
-                          fontSize: isSmallScreen ? 14 : 16,
-                          color: AppColors.primaryBlue,
-                        ),
-                      ),
-                    ),
+                    // ElevatedButton(
+                    //   onPressed: () {
+                    //     // Add your action here
+                    //   },
+                    //   style: ElevatedButton.styleFrom(
+                    //     backgroundColor: Colors.white,
+                    //     shape: RoundedRectangleBorder(
+                    //       borderRadius: BorderRadius.circular(8.0),
+                    //     ),
+                    //     padding: const EdgeInsets.symmetric(
+                    //       horizontal: 20.0,
+                    //       vertical: 12.0,
+                    //     ),
+                    //   ),
+                    //   child: Text(
+                    //     'Action',
+                    //     style: TextStyle(
+                    //       fontSize: isSmallScreen ? 14 : 16,
+                    //       color: AppColors.primaryBlue,
+                    //     ),
+                    //   ),
+                    // ),
                   ],
                 ),
               ),

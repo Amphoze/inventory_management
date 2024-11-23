@@ -1,7 +1,5 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:inventory_management/Api/product-page-api.dart';
 import 'package:inventory_management/Widgets/dropdown.dart';
 import 'package:inventory_management/Api/products-provider.dart';
@@ -11,7 +9,6 @@ import 'package:inventory_management/Custom-Files/custom-dropdown.dart';
 import 'package:inventory_management/Custom-Files/custom-textfield.dart';
 import 'package:inventory_management/Custom-Files/loading_indicator.dart';
 import 'package:inventory_management/Custom-Files/multi-image-picker.dart';
-import 'package:inventory_management/Custom-Files/test-drop.dart';
 import 'package:inventory_management/Custom-Files/textfield-in-alert-box.dart';
 // import 'package:inventory_management/Custom-Files/textfield-in-alert-box.dart';
 import 'package:provider/provider.dart';
@@ -881,7 +878,7 @@ class _ProductsState extends State<Products> {
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(10), // Rounded corners
               ),
-              duration: Duration(seconds: 3), // Duration for how long it shows
+              duration: const Duration(seconds: 3), // Duration for how long it shows
             ),
           );
           clear();
@@ -962,7 +959,7 @@ class _ProductsState extends State<Products> {
                   borderRadius: BorderRadius.circular(10), // Rounded corners
                 ),
                 duration:
-                    Duration(seconds: 3), // Duration for how long it shows
+                    const Duration(seconds: 3), // Duration for how long it shows
               ),
             );
             clear();
@@ -990,7 +987,7 @@ class _ProductsState extends State<Products> {
     } catch (e) {
       // print(e.toString());
       ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text('${e.toString()}')));
+          .showSnackBar(SnackBar(content: Text(e.toString())));
     }
 
     productProvider!.saveButtonClickStatus();
@@ -1066,7 +1063,7 @@ class _ProductsState extends State<Products> {
                             'EAM/UPC',
                             height: 51,
                           ),
-                          Container(
+                          SizedBox(
                             // color: Colors.blueAccent,
                             width: 150,
                             height: 51,
@@ -1522,7 +1519,7 @@ class _ProductsState extends State<Products> {
   Widget formLayout(Widget title, Widget anyWidget,
       {MainAxisAlignment mainAxisAlignment = MainAxisAlignment.start,
       double width = 1200}) {
-    return Container(
+    return SizedBox(
       // color:Colors.black,
       width: width,
       child: Row(

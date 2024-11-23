@@ -1,14 +1,13 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
-import 'package:inventory_management/Api/orders_api.dart';
 import 'package:inventory_management/Custom-Files/colors.dart';
 import 'package:inventory_management/Custom-Files/custom_pagination.dart';
-import 'package:inventory_management/Custom-Files/dropdown.dart';
 import 'package:inventory_management/Custom-Files/loading_indicator.dart';
 import 'package:provider/provider.dart';
 import 'package:inventory_management/provider/book_provider.dart';
 import 'package:inventory_management/model/orders_model.dart';
 import 'package:inventory_management/Widgets/order_card.dart';
-import 'package:inventory_management/Api/orders_api.dart';
 
 class BookPage extends StatefulWidget {
   const BookPage({super.key});
@@ -129,7 +128,7 @@ class _BookPageState extends State<BookPage>
         orderType == 'B2B' ? _b2bSearchController : _b2cSearchController;
 
     return Padding(
-      padding: EdgeInsets.all(8.0),
+      padding: const EdgeInsets.all(8.0),
       child: Container(
         width: 200,
         height: 34,
@@ -357,6 +356,7 @@ class _BookPageState extends State<BookPage>
   }
 
   void _showSnackbar(BuildContext context, String message) {
+    ScaffoldMessenger.of(context).removeCurrentSnackBar();
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(message)),
     );
@@ -376,9 +376,159 @@ class _BookPageState extends State<BookPage>
             _buildBookButton('Shiprocket', orderType, AppColors.primaryBlue),
             const SizedBox(width: 8),
             _buildBookButton('Others', orderType, AppColors.primaryBlue),
-            const SizedBox(
-              width: 8,
-            ),
+            const SizedBox(width: 8),
+            // _buildBookButton('Cancel', orderType, AppColors.cardsred),
+            // const SizedBox(width: 8),
+            orderType == 'B2B'
+                ? ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.cardsred,
+                    ),
+                    onPressed: bookProvider.isCancel
+                        ? null // Disable button while loading
+                        : () async {
+                            log("B2C");
+                            final provider = Provider.of<BookProvider>(context,
+                                listen: false);
+
+                            // Collect selected order IDs
+                            List<String> selectedOrderIds = provider.ordersB2B
+                                .asMap()
+                                .entries
+                                .where((entry) =>
+                                    provider.selectedB2BItems[entry.key])
+                                .map((entry) => entry.value.orderId)
+                                .toList();
+
+                            if (selectedOrderIds.isEmpty) {
+                              // Show an error message if no orders are selected
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('No orders selected'),
+                                  backgroundColor: AppColors.cardsred,
+                                ),
+                              );
+                            } else {
+                              // Set loading status to true before starting the operation
+                              provider.setCancelStatus(true);
+
+                              // Call confirmOrders method with selected IDs
+                              String resultMessage = await provider
+                                  .cancelOrders(context, selectedOrderIds);
+
+                              // Set loading status to false after operation completes
+                              provider.setCancelStatus(false);
+
+                              // Determine the background color based on the result
+                              Color snackBarColor;
+                              if (resultMessage.contains('success')) {
+                                snackBarColor =
+                                    AppColors.green; // Success: Green
+                              } else if (resultMessage.contains('error') ||
+                                  resultMessage.contains('failed')) {
+                                snackBarColor =
+                                    AppColors.cardsred; // Error: Red
+                              } else {
+                                snackBarColor =
+                                    AppColors.orange; // Other: Orange
+                              }
+
+                              // Show feedback based on the result
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(resultMessage),
+                                  backgroundColor: snackBarColor,
+                                ),
+                              );
+                            }
+                          },
+                    child: bookProvider.isCancel
+                        ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child:
+                                CircularProgressIndicator(color: Colors.white),
+                          )
+                        : const Text(
+                            'Cancel Orders',
+                            style: TextStyle(color: Colors.white),
+                          ),
+                  )
+                : ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.cardsred,
+                    ),
+                    onPressed: bookProvider.isCancel
+                        ? null // Disable button while loading
+                        : () async {
+                            log("B2C");
+                            final provider = Provider.of<BookProvider>(context,
+                                listen: false);
+
+                            // Collect selected order IDs
+                            List<String> selectedOrderIds = provider.ordersB2C
+                                .asMap()
+                                .entries
+                                .where((entry) =>
+                                    provider.selectedB2CItems[entry.key])
+                                .map((entry) => entry.value.orderId)
+                                .toList();
+
+                            if (selectedOrderIds.isEmpty) {
+                              // Show an error message if no orders are selected
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('No orders selected'),
+                                  backgroundColor: AppColors.cardsred,
+                                ),
+                              );
+                            } else {
+                              // Set loading status to true before starting the operation
+                              provider.setCancelStatus(true);
+
+                              // Call confirmOrders method with selected IDs
+                              String resultMessage = await provider
+                                  .cancelOrders(context, selectedOrderIds);
+
+                              // Set loading status to false after operation completes
+                              provider.setCancelStatus(false);
+
+                              // Determine the background color based on the result
+                              Color snackBarColor;
+                              if (resultMessage.contains('success')) {
+                                snackBarColor =
+                                    AppColors.green; // Success: Green
+                              } else if (resultMessage.contains('error') ||
+                                  resultMessage.contains('failed')) {
+                                snackBarColor =
+                                    AppColors.cardsred; // Error: Red
+                              } else {
+                                snackBarColor =
+                                    AppColors.orange; // Other: Orange
+                              }
+
+                              // Show feedback based on the result
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(resultMessage),
+                                  backgroundColor: snackBarColor,
+                                ),
+                              );
+                            }
+                          },
+                    child: bookProvider.isCancel
+                        ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child:
+                                CircularProgressIndicator(color: Colors.white),
+                          )
+                        : const Text(
+                            'Cancel Orders',
+                            style: TextStyle(color: Colors.white),
+                          ),
+                  ),
+            const SizedBox(width: 8),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primaryBlue,

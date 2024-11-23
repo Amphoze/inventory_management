@@ -1,12 +1,37 @@
 import 'dart:convert';
+import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:logger/logger.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class AuthProvider with ChangeNotifier {
   bool _isAuthenticated = false;
+  bool _isSuperAdminAssigned = false;
+  bool _isAdminAssigned = false;
+  bool _isConfirmerAssigned = false;
+  bool _isBookerAssigned = false;
+  bool _isAccountsAssigned = false;
+  bool _isPickerAssigned = false;
+  bool _isPackerAssigned = false;
+  bool _isCheckerAssigned = false;
+  bool _isRackerAssigned = false;
+  bool _isManifestAssigned = false;
   final String _baseUrl =
       'https://inventory-management-backend-s37u.onrender.com';
+
+  bool get isSuperAdminAssigned => _isSuperAdminAssigned;
+  bool get isAdminAssigned => _isAdminAssigned;
+  bool get isConfirmerAssigned => _isConfirmerAssigned;
+  bool get isBookerAssigned => _isBookerAssigned;
+  bool get isAccountsAssigned => _isAccountsAssigned;
+  bool get isPickerAssigned => _isPickerAssigned;
+  bool get isPackerAssigned => _isPackerAssigned;
+  bool get isCheckerAssigned => _isCheckerAssigned;
+  bool get isRackerAssigned => _isRackerAssigned;
+  bool get isManifestAssigned => _isManifestAssigned;
+
+  String? assignedRole;
 
   bool get isAuthenticated => _isAuthenticated;
   Future<Map<String, dynamic>> register(String email, String password) async {
@@ -23,7 +48,7 @@ class AuthProvider with ChangeNotifier {
       );
 
       if (response.statusCode == 200) {
-        await _saveCredentials(email, password);
+        await _saveCredentials(email, password, '');
         return {'success': true, 'data': json.decode(response.body)};
       } else if (response.statusCode == 400) {
         final errorResponse = json.decode(response.body);
@@ -101,11 +126,66 @@ class AuthProvider with ChangeNotifier {
         // Directly extract the token from the response body
         final token = responseData['token'];
 
+        // Fetch user roles from responseData
+        final List<dynamic> userRoles = responseData['userRoles'];
+        // Variable to hold the assigned role
+
+        // Initialize boolean flags for each role
+
+        // Find the first assigned role and set boolean flags
+        for (var role in userRoles) {
+          if (role['isAssigned'] == true) {
+            assignedRole = role['roleName'];
+            switch (assignedRole) {
+              case 'superAdmin':
+                _isSuperAdminAssigned = true;
+                break;
+              case 'admin':
+                _isAdminAssigned = true;
+                break;
+              case 'confirmer':
+                _isConfirmerAssigned = true;
+                break;
+              case 'booker':
+                _isBookerAssigned = true;
+                break;
+              case 'account':
+                _isAccountsAssigned = true;
+                break;
+              case 'picker':
+                _isPickerAssigned = true;
+                break;
+              case 'packer':
+                _isPackerAssigned = true;
+                break;
+              case 'checker':
+                _isCheckerAssigned = true;
+                break;
+              case 'racker':
+                _isRackerAssigned = true;
+                break;
+              case 'manifest':
+                _isManifestAssigned = true;
+                break;
+            }
+            break; // Exit the loop after finding the first assigned role
+          }
+        }
+
+        log('Assigned Role: $assignedRole'); // Debugging line
+
         if (token != null && token.isNotEmpty) {
           await _saveToken(token);
           print('Token retrieved and saved: $token');
-          await _saveCredentials(email, password);
-          return {'success': true, 'data': responseData};
+          await _saveCredentials(email, password, assignedRole!);
+
+          // log("responseData: $responseData"); ////////////////////////
+
+          return {
+            'success': true,
+            'data': responseData,
+            'role': assignedRole,
+          };
         } else {
           print('Token not retrieved');
           return {'success': false, 'data': responseData};
@@ -609,23 +689,29 @@ class AuthProvider with ChangeNotifier {
       }
     } catch (error) {
       print('Error fetching warehouse data: $error');
-      throw error;
+      rethrow;
     }
   }
 
-  Future<void> _saveCredentials(String email, String password) async {
+  Future<void> _saveCredentials(
+      String email, String password, String userRole) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('email', email);
     await prefs.setString('password', password);
+    await prefs.setString('userRole', userRole); // Save the assigned role
   }
 
   Future<Map<String, String?>> getCredentials() async {
     final prefs = await SharedPreferences.getInstance();
     final email = prefs.getString('email');
     final password = prefs.getString('password');
+    final userRole = prefs.getString('userRole');
+    
+    assignedRole = userRole;
     return {
       'email': email,
       'password': password,
+      'userRole': userRole,
     };
   }
 
@@ -661,7 +747,7 @@ class AuthProvider with ChangeNotifier {
             'data': data['categories'],
           };
         } else {
-          print('Unexpected response format: ${data}'); // Debugging line
+          print('Unexpected response format: $data'); // Debugging line
           return {'success': false, 'message': 'Unexpected response format'};
         }
       } else {
@@ -799,33 +885,44 @@ class AuthProvider with ChangeNotifier {
     final url =
         '$_baseUrl/products?displayName=${Uri.encodeComponent(displayName)}';
 
+    Logger().e("Request URL: $url");
+
     try {
       final token = await getToken();
       if (token == null) {
         return {'success': false, 'message': 'No token found'};
       }
 
-      // Make the HTTP GET request
       final response = await http.get(
-        Uri.parse(url), // Ensure URL is parsed
+        Uri.parse(url),
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer $token',
         },
       );
 
-      // Check the response status code
-      if (response.statusCode == 200) {
-        print("Response Status: ${response.statusCode}");
-        print("Response Body: ${response.body}");
+      Logger().e("Response Status: ${response.statusCode}");
 
-        // Return the whole response as a Map
+      if (response.statusCode == 200) {
+        final decodedBody = json.decode(response.body);
+        Logger().e("Response Body: $decodedBody");
+
+        if (decodedBody['products'] is! List ||
+            decodedBody['totalProducts'] is! int ||
+            decodedBody['totalPages'] is! int ||
+            decodedBody['currentPage'] is! int) {
+          return {
+            'success': false,
+            'message': 'Unexpected response format',
+          };
+        }
+
         return {
           'success': true,
-          'products': json.decode(response.body)['products'],
-          'totalProducts': json.decode(response.body)['totalProducts'],
-          'totalPages': json.decode(response.body)['totalPages'],
-          'currentPage': json.decode(response.body)['currentPage'],
+          'products': decodedBody['products'],
+          'totalProducts': decodedBody['totalProducts'],
+          'totalPages': decodedBody['totalPages'],
+          'currentPage': decodedBody['currentPage'],
         };
       } else {
         return {
@@ -835,13 +932,61 @@ class AuthProvider with ChangeNotifier {
         };
       }
     } catch (error) {
-      // Handle exceptions (network errors, JSON parsing errors, etc.)
+      Logger().e('Error: $error');
       return {
         'success': false,
         'message': 'An error occurred: $error',
       };
     }
   }
+
+  // Future<Map<String, dynamic>> searchProductsByDisplayName(
+  //     String displayName) async {
+  //   final url =
+  //       '$_baseUrl/products?displayName=${Uri.encodeComponent(displayName)}';
+  //   Logger().e(
+  //     "url: $url",
+  //   );
+  //   try {
+  //     final token = await getToken();
+  //     if (token == null) {
+  //       return {'success': false, 'message': 'No token found'};
+  //     }
+  //     // Make the HTTP GET request
+  //     final response = await http.get(
+  //       Uri.parse(url), // Ensure URL is parsed
+  //       headers: {
+  //         'Content-Type': 'application/json',
+  //         'Authorization': 'Bearer $token',
+  //       },
+  //     );
+  //     // Check the response status code
+  //     if (response.statusCode == 200) {
+  //       print("Response Status: ${response.statusCode}");
+  //       // print("Response Body: ${response.body}");
+  //       // Dispatched the whole response as a Map
+  //       return {
+  //         'success': true,
+  //         'products': json.decode(response.body)['products'],
+  //         'totalProducts': json.decode(response.body)['totalProducts'],
+  //         'totalPages': json.decode(response.body)['totalPages'],
+  //         'currentPage': json.decode(response.body)['currentPage'],
+  //       };
+  //     } else {
+  //       return {
+  //         'success': false,
+  //         'message':
+  //             'Failed to load products, status code: ${response.statusCode}',
+  //       };
+  //     }
+  //   } catch (error) {
+  //     // Handle exceptions (network errors, JSON parsing errors, etc.)
+  //     return {
+  //       'success': false,
+  //       'message': 'An error occurred: $error',
+  //     };
+  //   }
+  // }
 
   Future<Map<String, dynamic>> searchProductsBySKU(String sku) async {
     final url = '$_baseUrl/products?sku=${Uri.encodeComponent(sku)}';

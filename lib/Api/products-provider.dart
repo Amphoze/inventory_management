@@ -5,7 +5,6 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:inventory_management/Api/auth_provider.dart';
 import 'package:inventory_management/Api/product-page-api.dart';
 
@@ -96,7 +95,7 @@ class ProductProvider extends ChangeNotifier {
     _eanUpcs.add(TextEditingController());
     _skus.add(TextEditingController());
     _countVariationField++;
-    print("heelo is ahere${_countVariationField}");
+    print("heelo is ahere$_countVariationField");
     notifyListeners();
   }
   

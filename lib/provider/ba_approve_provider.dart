@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:inventory_management/model/orders_model.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-class AccountsProvider with ChangeNotifier {
+class BAApproveProvider with ChangeNotifier {
   bool _isLoading = false;
   bool _selectAll = false;
   List<bool> _selectedProducts = [];
@@ -160,7 +160,7 @@ class AccountsProvider with ChangeNotifier {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('authToken') ?? '';
     const url =
-        'https://inventory-management-backend-s37u.onrender.com/orders?orderStatus=2&ba_approve=true&page=';
+        'https://inventory-management-backend-s37u.onrender.com/orders?orderStatus=2&ba_approve=false&page=';
 
     try {
       final response = await http.get(Uri.parse('$url$_currentPage'), headers: {
@@ -223,7 +223,7 @@ class AccountsProvider with ChangeNotifier {
     final token = prefs.getString('authToken') ?? ''; // Fetch the token
 
     final url =
-        'https://inventory-management-backend-s37u.onrender.com/orders?orderStatus=2&ba_approve=true&order_id=$query';
+        'https://inventory-management-backend-s37u.onrender.com/orders?orderStatus=2&ba_approve=false&order_id=$query';
 
     print('Searching orders with term: $query');
 
@@ -288,7 +288,7 @@ class AccountsProvider with ChangeNotifier {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('authToken') ?? '';
     const url =
-        'https://inventory-management-backend-s37u.onrender.com/orders/invoice';
+        'https://inventory-management-backend-s37u.onrender.com/orders/ba_approve';
 
     try {
       final response = await http.post(

@@ -2,13 +2,10 @@ import 'dart:convert';
 import 'dart:developer';
 
 import 'package:flutter/material.dart';
-import 'package:inventory_management/Api/inventory_api.dart';
 import 'package:inventory_management/Custom-Files/colors.dart';
 import 'package:inventory_management/Widgets/product_card.dart';
 import 'package:inventory_management/Widgets/searchable_dropdown.dart';
 import 'package:inventory_management/model/orders_model.dart';
-import 'package:inventory_management/Widgets/product_details_card.dart';
-import 'package:inventory_management/orders_page.dart';
 import 'package:inventory_management/provider/orders_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:http/http.dart' as http;
@@ -18,8 +15,7 @@ class EditOrderPage extends StatefulWidget {
   final Order order; // Pass the order to edit
   final bool isBookPage;
 
-  const EditOrderPage({Key? key, required this.order, required this.isBookPage})
-      : super(key: key);
+  const EditOrderPage({super.key, required this.order, required this.isBookPage});
 
   @override
   _EditOrderPageState createState() => _EditOrderPageState();
@@ -141,25 +137,25 @@ class _EditOrderPageState extends State<EditOrderPage> {
     _skuTrackingIdController =
         TextEditingController(text: widget.order.skuTrackingId ?? '');
     _totalWeightController =
-        TextEditingController(text: widget.order.totalWeight?.toString() ?? '');
+        TextEditingController(text: widget.order.totalWeight.toString() ?? '');
     _totalAmtController =
         TextEditingController(text: widget.order.totalAmount?.toString() ?? '');
     _coinController =
-        TextEditingController(text: widget.order.coin?.toString() ?? '');
+        TextEditingController(text: widget.order.coin.toString() ?? '');
     _codAmountController =
-        TextEditingController(text: widget.order.codAmount?.toString() ?? '');
+        TextEditingController(text: widget.order.codAmount.toString() ?? '');
     _prepaidAmountController = TextEditingController(
-        text: widget.order.prepaidAmount?.toString() ?? '');
+        text: widget.order.prepaidAmount.toString() ?? '');
     _discountCodeController =
         TextEditingController(text: widget.order.discountCode ?? '');
     _discountSchemeController =
         TextEditingController(text: widget.order.discountScheme ?? '');
     _discountPercentController = TextEditingController(
-        text: widget.order.discountPercent?.toString() ?? '');
+        text: widget.order.discountPercent.toString() ?? '');
     _discountAmountController = TextEditingController(
-        text: widget.order.discountAmount?.toString() ?? '');
+        text: widget.order.discountAmount.toString() ?? '');
     _taxPercentController =
-        TextEditingController(text: widget.order.taxPercent?.toString() ?? '');
+        TextEditingController(text: widget.order.taxPercent.toString() ?? '');
     _courierNameController =
         TextEditingController(text: widget.order.courierName ?? '');
 
@@ -169,7 +165,7 @@ class _EditOrderPageState extends State<EditOrderPage> {
     _orderTypeController =
         TextEditingController(text: widget.order.orderType ?? '');
     _marketplaceController = TextEditingController(
-        text: widget.order.marketplace?.name?.toString() ?? '');
+        text: widget.order.marketplace?.name.toString() ?? '');
 
     // Initialize the provider with the initial marketplace
     _ordersProvider.setInitialMarketplace(_marketplaceController.text);
@@ -201,11 +197,11 @@ class _EditOrderPageState extends State<EditOrderPage> {
     _fulfillmentTypeController =
         TextEditingController(text: widget.order.fulfillmentType ?? '');
     _numberOfBoxesController = TextEditingController(
-        text: widget.order.numberOfBoxes?.toString() ?? '');
+        text: widget.order.numberOfBoxes.toString() ?? '');
     _totalQuantityController = TextEditingController(
-        text: widget.order.totalQuantity?.toString() ?? '');
+        text: widget.order.totalQuantity.toString() ?? '');
     _skuQtyController =
-        TextEditingController(text: widget.order.skuQty?.toString() ?? '');
+        TextEditingController(text: widget.order.skuQty.toString() ?? '');
     _calcEntryNumberController =
         TextEditingController(text: widget.order.calcEntryNumber ?? '');
     _currencyController =
@@ -217,11 +213,11 @@ class _EditOrderPageState extends State<EditOrderPage> {
     _paymentBankController =
         TextEditingController(text: widget.order.paymentBank ?? '');
     _lengthController =
-        TextEditingController(text: widget.order.length?.toString() ?? '');
+        TextEditingController(text: widget.order.length.toString() ?? '');
     _breadthController =
-        TextEditingController(text: widget.order.breadth?.toString() ?? '');
+        TextEditingController(text: widget.order.breadth.toString() ?? '');
     _heightController =
-        TextEditingController(text: widget.order.height?.toString() ?? '');
+        TextEditingController(text: widget.order.height.toString() ?? '');
 
     _awbNumberController = TextEditingController(text: widget.order.awbNumber);
     _trackingStatusController =

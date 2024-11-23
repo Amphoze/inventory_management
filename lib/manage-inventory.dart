@@ -1,8 +1,5 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:http/retry.dart';
 import 'package:inventory_management/Custom-Files/colors.dart';
 import 'package:inventory_management/Custom-Files/custom-dropdown.dart';
 import 'package:inventory_management/Custom-Files/custom-textfield.dart';
@@ -11,7 +8,7 @@ import 'package:pagination_flutter/pagination.dart';
 import 'package:provider/provider.dart';
 
 class ManageInventory extends StatefulWidget {
-  const ManageInventory({Key? key}) : super(key: key);
+  const ManageInventory({super.key});
 
   @override
   State<ManageInventory> createState() => _ManageInventoryState();
@@ -59,7 +56,7 @@ class _ManageInventoryState extends State<ManageInventory> {
                                         width: screenWidth * 0.12,
                                       ),
                                       const SizedBox(width: 20),
-                                      buttonForThisPage(
+                                      const buttonForThisPage(
                                           width: 70,
                                           height: 50,
                                           buttonTitle: 'GO'),
@@ -95,14 +92,14 @@ class _ManageInventoryState extends State<ManageInventory> {
                                         const SizedBox(
                                           width: 5,
                                         ),
-                                        buttonForThisPage(
+                                        const buttonForThisPage(
                                             buttonTitle: 'Search',
                                             height: 50,
                                             width: 100),
                                         const SizedBox(
                                           width: 5,
                                         ),
-                                        buttonForThisPage(
+                                        const buttonForThisPage(
                                             buttonTitle: 'Download Inventory',
                                             height: 50,
                                             width: 175),
@@ -132,7 +129,7 @@ class _ManageInventoryState extends State<ManageInventory> {
                                   ),
                                   const SizedBox(width: 10),
                                   screenWidth > 450
-                                      ? buttonForThisPage(
+                                      ? const buttonForThisPage(
                                           width: 70,
                                           height: 50,
                                           buttonTitle: 'GO')
@@ -140,7 +137,7 @@ class _ManageInventoryState extends State<ManageInventory> {
                                 ],
                               ),
                               screenWidth < 450
-                                  ? buttonForThisPage(
+                                  ? const buttonForThisPage(
                                       width: 70, height: 50, buttonTitle: 'GO')
                                   : const SizedBox(),
                               Text('Search',
@@ -167,7 +164,7 @@ class _ManageInventoryState extends State<ManageInventory> {
                                   const SizedBox(
                                     width: 5,
                                   ),
-                                  buttonForThisPage(
+                                  const buttonForThisPage(
                                       buttonTitle: 'Search',
                                       height: 50,
                                       width: 100),
@@ -179,7 +176,7 @@ class _ManageInventoryState extends State<ManageInventory> {
                               const SizedBox(
                                 height: 5,
                               ),
-                              buttonForThisPage(
+                              const buttonForThisPage(
                                   buttonTitle: 'Download Inventory',
                                   height: 50,
                                   width: 175),
@@ -296,7 +293,7 @@ class _ManageInventoryState extends State<ManageInventory> {
                         DataCell(
                             Text(handleNullValue(inventory.product?.modelNo))),
                         DataCell(Text(handleNullValue(
-                            inventory.product?.mrp as String?))),
+                            inventory.product?.mrp))),
                         DataCell(
                           Container(
                             constraints: const BoxConstraints(maxWidth: 200),
@@ -324,7 +321,7 @@ class _ManageInventoryState extends State<ManageInventory> {
                                             ),
                                           ),
                                           const SizedBox(height: 3),
-                                          buttonForThisPage(),
+                                          const buttonForThisPage(),
                                         ],
                                       ),
                                       const SizedBox(width: 4),
@@ -396,16 +393,16 @@ class _ManageInventoryState extends State<ManageInventory> {
                     ),
                     activeBtnStyle: ButtonStyle(
                       backgroundColor:
-                          MaterialStateProperty.all(AppColors.primaryBlue),
-                      shape: MaterialStateProperty.all(const CircleBorder(
+                          WidgetStateProperty.all(AppColors.primaryBlue),
+                      shape: WidgetStateProperty.all(const CircleBorder(
                         side:
                             BorderSide(color: AppColors.primaryBlue, width: 1),
                       )),
                     ),
                     inactiveBtnStyle: ButtonStyle(
-                      elevation: MaterialStateProperty.all(0),
-                      backgroundColor: MaterialStateProperty.all(Colors.white),
-                      shape: MaterialStateProperty.all(const CircleBorder(
+                      elevation: WidgetStateProperty.all(0),
+                      backgroundColor: WidgetStateProperty.all(Colors.white),
+                      shape: WidgetStateProperty.all(const CircleBorder(
                         side:
                             BorderSide(color: AppColors.primaryBlue, width: 1),
                       )),
@@ -453,11 +450,11 @@ class buttonForThisPage extends StatelessWidget {
   final String buttonTitle;
 
   const buttonForThisPage({
-    Key? key,
+    super.key,
     this.width = 150,
     this.height = 30,
     this.buttonTitle = 'View Details',
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -466,7 +463,7 @@ class buttonForThisPage extends StatelessWidget {
       height: height,
       child: ElevatedButton(
         style: const ButtonStyle(
-          fixedSize: MaterialStatePropertyAll(Size(130, 7)),
+          fixedSize: WidgetStatePropertyAll(Size(130, 7)),
         ),
         onPressed: () {
           // View details action

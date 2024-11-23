@@ -7,10 +7,10 @@ class ProductDetailsCard extends StatelessWidget {
   final int index;
 
   const ProductDetailsCard({
-    Key? key,
+    super.key,
     required this.product,
     required this.index,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -76,7 +76,7 @@ class ProductDetailsCard extends StatelessWidget {
             ),
           ),
         const SizedBox(height: 5.0),
-        Container(
+        SizedBox(
           width: 370,
           child: Text(
             product.displayName,

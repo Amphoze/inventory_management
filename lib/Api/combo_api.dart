@@ -1,6 +1,5 @@
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:inventory_management/model/combo_model.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -130,7 +129,7 @@ class ComboApi with ChangeNotifier {
       //print('get products response: ${response.body}');
 
       if (response.statusCode == 200) {
-        return jsonDecode(response.body); // Return the full JSON response
+        return jsonDecode(response.body); // Dispatched the full JSON response
       } else {
         throw Exception('Failed to load products: ${response.statusCode}');
       }

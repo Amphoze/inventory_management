@@ -8,10 +8,10 @@ class SearchableDropdown extends StatefulWidget {
   final Function(Map<String, String>?)? onChanged;
 
   const SearchableDropdown({
-    Key? key,
+    super.key,
     required this.label,
     this.onChanged,
-  }) : super(key: key);
+  });
 
   @override
   _SearchableDropdownState createState() => _SearchableDropdownState();

@@ -1,12 +1,8 @@
 import 'package:dropdown_search/dropdown_search.dart';
-import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:inventory_management/Api/label-api.dart';
 import 'package:inventory_management/Api/lable-page-api.dart';
-import 'package:inventory_management/Custom-Files/custom-textfield.dart';
 import 'package:inventory_management/Custom-Files/responsove-layout.dart';
-import 'package:multi_dropdown/multi_dropdown.dart';
 import 'package:provider/provider.dart';
 
 class CreateLabelPage extends StatefulWidget {

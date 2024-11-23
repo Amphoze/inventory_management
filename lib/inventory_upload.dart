@@ -1,5 +1,5 @@
 import 'dart:developer';
-
+import 'dart:html' as html;
 import 'package:csv/csv.dart';
 import 'package:flutter/material.dart';
 import 'package:inventory_management/Custom-Files/colors.dart';
@@ -19,7 +19,9 @@ class _InventoryUploadState extends State<InventoryUpload> {
   List<List<dynamic>> _csvData = [];
   int _rowCount = 0;
   bool _isUploadEnabled = false;
-  bool _isUploading = false;
+  bool _isChangeUploading = false;
+  bool _isAddUploading = false;
+  bool _isSubtractUploading = false;
   int _currentUploadIndex = 0;
 
   Future<void> _pickAndReadCSV() async {
@@ -35,7 +37,7 @@ class _InventoryUploadState extends State<InventoryUpload> {
 
         setState(() {
           _csvData = const CsvToListConverter().convert(csvString);
-          _rowCount = _csvData.length > 0 ? _csvData.length - 1 : 0;
+          _rowCount = _csvData.isNotEmpty ? _csvData.length - 1 : 0;
           _isUploadEnabled = _rowCount > 0;
         });
       }
@@ -46,11 +48,39 @@ class _InventoryUploadState extends State<InventoryUpload> {
     }
   }
 
-  Future<void> _uploadInventory() async {
+  void _downloadTemplate() {
+    // Define the path to the CSV file in the assets
+    const String csvFilePath = 'assets/inventory template.csv';
+
+    // Create an anchor element
+    final html.AnchorElement anchor = html.AnchorElement(href: csvFilePath)
+      ..setAttribute(
+          'download', 'inventory template.csv') // Set the download attribute
+      ..click(); // Trigger the click event to start the download
+
+    // Optionally, show a message to the user
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Template download initiated.')),
+    );
+  }
+
+  Future<void> _uploadInventory(String type) async {
     if (_csvData.isEmpty) return;
 
     setState(() {
-      _isUploading = true;
+      // _isUploading = true;
+      switch (type) {
+        case 'change':
+          _isChangeUploading = true;
+          break;
+        case 'add':
+          _isAddUploading = true;
+          break;
+        case 'subtract':
+          _isSubtractUploading = true;
+          break;
+        // default:
+      }
       _currentUploadIndex = 0;
     });
 
@@ -82,6 +112,7 @@ class _InventoryUploadState extends State<InventoryUpload> {
             'Authorization': 'Bearer $token',
           },
           body: json.encode({
+            "action": type,
             "newTotal": quantity,
             "warehouseId": "66fceb5163c6d5c106cfa809",
             "additionalInfo": {"reason": "Excel update"}
@@ -89,11 +120,9 @@ class _InventoryUploadState extends State<InventoryUpload> {
         );
         log(response.statusCode.toString());
 
-        if (response.statusCode != 200) {
-          throw Exception('Failed to upload SKU: $sku');
-        }
-
-        await Future.delayed(const Duration(milliseconds: 100));
+        // if (response.statusCode != 201) {
+        //   throw Exception('Failed to upload SKU: $sku');
+        // }
       }
 
       ScaffoldMessenger.of(context).showSnackBar(
@@ -105,7 +134,19 @@ class _InventoryUploadState extends State<InventoryUpload> {
       );
     } finally {
       setState(() {
-        _isUploading = false;
+        // _isUploading = false;
+        switch (type) {
+          case 'change':
+            _isChangeUploading = false;
+            break;
+          case 'add':
+            _isAddUploading = false;
+            break;
+          case 'subtract':
+            _isSubtractUploading = false;
+            break;
+          // default:
+        }
       });
     }
   }
@@ -127,14 +168,59 @@ class _InventoryUploadState extends State<InventoryUpload> {
                   ),
                 ),
                 const SizedBox(width: 16),
+                ElevatedButton(
+                  onPressed: _downloadTemplate,
+                  child: const Text('Download Template'),
+                ),
+                const SizedBox(width: 16),
                 if (_rowCount > 0)
                   Expanded(
                     child: ElevatedButton(
-                      onPressed: _isUploadEnabled && !_isUploading
-                          ? _uploadInventory
-                          : null,
-                      child: Text(
-                          _isUploading ? 'Uploading...' : 'Upload Inventory'),
+                      onPressed: () {
+                        _isUploadEnabled && !_isChangeUploading
+                            ? _uploadInventory('change')
+                            : null;
+                      },
+                      child: FittedBox(
+                        fit: BoxFit.contain,
+                        child: Text(_isChangeUploading
+                            ? 'Uploading...'
+                            : 'Upload Inventory (for change)'),
+                      ),
+                    ),
+                  ),
+                const SizedBox(width: 16),
+                if (_rowCount > 0)
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () {
+                        _isUploadEnabled && !_isAddUploading
+                            ? _uploadInventory('add')
+                            : null;
+                      },
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Text(_isAddUploading
+                            ? 'Uploading...'
+                            : 'Upload Inventory (for add)'),
+                      ),
+                    ),
+                  ),
+                const SizedBox(width: 16),
+                if (_rowCount > 0)
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () {
+                        _isUploadEnabled && !_isSubtractUploading
+                            ? _uploadInventory('subtract')
+                            : null;
+                      },
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Text(_isSubtractUploading
+                            ? 'Uploading...'
+                            : 'Upload Inventory (for subtract)'),
+                      ),
                     ),
                   ),
               ],
@@ -194,7 +280,9 @@ class _InventoryUploadState extends State<InventoryUpload> {
                 ),
               ),
             ],
-            if (_isUploading) ...[
+            if (_isChangeUploading ||
+                _isAddUploading ||
+                _isSubtractUploading) ...[
               const SizedBox(height: 16),
               LinearProgressIndicator(
                 value: _currentUploadIndex / _csvData.length,

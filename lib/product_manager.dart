@@ -1,7 +1,10 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:inventory_management/Api/auth_provider.dart';
 import 'package:inventory_management/Custom-Files/custom-button.dart';
 import 'package:inventory_management/Custom-Files/loading_indicator.dart';
+import 'package:logger/logger.dart';
 import 'package:provider/provider.dart';
 import 'Custom-Files/colors.dart';
 import 'products.dart';
@@ -354,13 +357,17 @@ class _ProductDashboardPageState extends State<ProductDashboardPage> {
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     final searchTerm = _searchbarController.text;
 
+    Logger().e(
+      "searchTerm: $searchTerm",
+    );
+
     try {
       Map<String, dynamic> response;
 
       // Fetch products based on selected search option
       if (_selectedSearchOption == 'Display Name') {
         response = await authProvider.searchProductsByDisplayName(searchTerm);
-        print("response in UI page - $response");
+        log("response in UI page - $response");
       } else if (_selectedSearchOption == 'SKU') {
         response = await authProvider.searchProductsBySKU(searchTerm);
         print("response in UI page - $response");
@@ -375,43 +382,55 @@ class _ProductDashboardPageState extends State<ProductDashboardPage> {
         final List<dynamic>? productData =
             response['products'] ?? response['data'];
 
+        // Logger().e(
+        //   "productData: $productData",
+        // );
+
         if (productData != null) {
           print("Products retrieved successfully.");
 
           // Clear previous products and add new results
           setState(() {
             _products.clear();
-            _products.addAll(productData
-                .map((data) => Product(
-                      sku: data['sku'] ?? '',
-                      parentSku: data['parentSku'] ?? '',
-                      ean: data['ean'] ?? '',
-                      description: data['description'] ?? '',
-                      categoryName: data['categoryName'] ?? '',
-                      brand: data['brand'] ?? '',
-                      colour: data['colour'] ?? '',
-                      netWeight: data['netWeight']?.toString() ?? '',
-                      grossWeight: data['grossWeight']?.toString() ?? '',
-                      labelSku: data['labelSku'] ?? '',
-                      outerPackage_quantity:
-                          data['outerPackage_quantity']?.toString() ?? '',
-                      outerPackage_name: data['outerPackage_name'] ?? '',
-                      grade: data['grade'] ?? '',
-                      technicalName: data['technicalName'] ?? '',
-                      length: data['length']?.toString() ?? '',
-                      width: data['width']?.toString() ?? '',
-                      height: data['height']?.toString() ?? '',
-                      mrp: data['mrp']?.toString() ?? '',
-                      cost: data['cost']?.toString() ?? '',
-                      tax_rule: data['tax_rule']?.toString() ?? '',
-                      shopifyImage: data['shopifyImage'] ?? '',
-                      createdDate: data['createdAt'] ?? '',
-                      lastUpdated: data['updatedAt'] ?? '',
-                      displayName: data['displayName'] ?? '',
-                      variantName: data['variant_name'] ?? '',
-                    ))
-                .toList());
+            _products.addAll(productData.map((data) {
+              // Log the data to see its structure
+              Logger().e("Product data: $data");
+
+              // Check each field to ensure it's a string or primitive
+              return Product(
+                sku: data['sku'] ?? '',
+                parentSku: data['parentSku'] ?? '',
+                ean: data['ean'] ?? '',
+                description: data['description'] ?? '',
+                categoryName: data['categoryName'] ?? '',
+                brand: data['brand'] ?? '',
+                colour: data['colour'] ?? '',
+                netWeight: data['netWeight']?.toString() ?? '',
+                grossWeight: data['grossWeight']?.toString() ?? '',
+                labelSku: data['labelSku'] ?? '',
+                outerPackage_quantity:
+                    data['outerPackage_quantity']?.toString() ?? '',
+                outerPackage_name: data['outerPackage_name'] ?? '',
+                grade: data['grade'] ?? '',
+                technicalName: data['technicalName'] ?? '',
+                length: data['length']?.toString() ?? '',
+                width: data['width']?.toString() ?? '',
+                height: data['height']?.toString() ?? '',
+                mrp: data['mrp']?.toString() ?? '',
+                cost: data['cost']?.toString() ?? '',
+                tax_rule: data['tax_rule']?.toString() ?? '',
+                shopifyImage: data['shopifyImage'] ?? '',
+                createdDate: data['createdAt'] ?? '',
+                lastUpdated: data['updatedAt'] ?? '',
+                displayName: data['displayName'] ?? '',
+                variantName: data['variant_name'] ?? '',
+              );
+            }).toList());
           });
+          log("............................................................................");
+          Logger().e(
+            "new_products: ${_products.runtimeType}",
+          );
         } else {
           // Handle case when no product data is found
           setState(() {

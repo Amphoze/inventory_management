@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:inventory_management/Custom-Files/custom-dropdown.dart';
-import 'package:inventory_management/location_master.dart';
 import 'package:provider/provider.dart';
 import 'package:inventory_management/provider/location_provider.dart';
 import 'package:inventory_management/Custom-Files/custom-button.dart';
@@ -200,7 +199,7 @@ class _NewLocationFormState extends State<NewLocationForm> {
   Widget build(BuildContext context) {
     final locationProvider = Provider.of<LocationProvider>(context);
     final isWideScreen = MediaQuery.of(context).size.width > 800;
-    String? _errorMessage;
+    String? errorMessage;
     final isEmailValid = Provider.of<LocationProvider>(context).isEmailValid;
 
     // print(
@@ -926,11 +925,11 @@ class _NewLocationFormState extends State<NewLocationForm> {
                               'addressLine2': _billingAddress2Controller.text,
                               'country': locationProvider
                                       .selectedBillingCountryIndex
-                                      ?.toString() ??
+                                      .toString() ??
                                   '',
                               'state': locationProvider
                                       .selectedBillingStateIndex
-                                      ?.toString() ??
+                                      .toString() ??
                                   '',
                               'city': _cityController.text,
                               'zipCode':
@@ -946,11 +945,11 @@ class _NewLocationFormState extends State<NewLocationForm> {
                               'addressLine2': _shippingAddress2Controller.text,
                               'country': locationProvider
                                       .selectedShippingCountryIndex
-                                      ?.toString() ??
+                                      .toString() ??
                                   '',
                               'state': locationProvider
                                       .selectedShippingStateIndex
-                                      ?.toString() ??
+                                      .toString() ??
                                   '',
                               'city': _shippingCityController.text,
                               'zipCode': int.tryParse(
@@ -964,7 +963,7 @@ class _NewLocationFormState extends State<NewLocationForm> {
                             // Other fields
                             'locationType': locationProvider
                                     .selectedLocationTypeIndex
-                                    ?.toString() ??
+                                    .toString() ??
                                 '',
                             'holdStocks': locationProvider.holdsStock ?? false,
                             'copyMasterSkuFromPrimary':

@@ -108,9 +108,7 @@ class ManagementProvider extends ChangeNotifier {
                 InventoryModel.fromJson(json as Map<String, dynamic>);
 
             // Ensure subInventory is not null, assign an empty list if it is
-            if (inventory.subInventory == null) {
-              inventory.subInventory = [];
-            }
+            inventory.subInventory ??= [];
 
             // Log if product_id is null
             if (inventory.product == null) {

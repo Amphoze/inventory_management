@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:inventory_management/provider/return_provider.dart';
+import 'package:inventory_management/provider/cancelled_provider.dart';
 import 'package:provider/provider.dart';
 
 import 'Custom-Files/colors.dart';
@@ -8,37 +8,37 @@ import 'Custom-Files/loading_indicator.dart';
 import 'Widgets/order_card.dart';
 import 'model/orders_model.dart';
 
-class ReturnOrders extends StatefulWidget {
-  const ReturnOrders({super.key});
+class CancelledOrders extends StatefulWidget {
+  const CancelledOrders({super.key});
 
   @override
-  State<ReturnOrders> createState() => _ReturnOrdersState();
+  State<CancelledOrders> createState() => _CancelledOrdersState();
 }
 
-class _ReturnOrdersState extends State<ReturnOrders> {
+class _CancelledOrdersState extends State<CancelledOrders> {
   final TextEditingController _searchController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      Provider.of<ReturnProvider>(context, listen: false)
-          .fetchOrdersWithStatus9();
+      Provider.of<CancelledProvider>(context, listen: false)
+          .fetchOrdersWithStatus10();
     });
   }
 
   void _onSearchButtonPressed() {
     final query = _searchController.text.trim();
     if (query.isNotEmpty) {
-      Provider.of<ReturnProvider>(context, listen: false)
+      Provider.of<CancelledProvider>(context, listen: false)
           .onSearchChanged(query);
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<ReturnProvider>(
-      builder: (context, returnProvider, child) {
+    return Consumer<CancelledProvider>(
+      builder: (context, cancelProvider, child) {
         return Scaffold(
           backgroundColor: AppColors.white,
           body: Column(
@@ -79,7 +79,7 @@ class _ReturnOrdersState extends State<ReturnOrders> {
                             });
                             if (query.isEmpty) {
                               // Reset to all orders if search is cleared
-                              returnProvider.fetchOrdersWithStatus9();
+                              cancelProvider.fetchOrdersWithStatus10();
                             }
                           },
                           onTap: () {
@@ -89,7 +89,7 @@ class _ReturnOrdersState extends State<ReturnOrders> {
                           },
                           onSubmitted: (query) {
                             if (query.isNotEmpty) {
-                              returnProvider.searchOrders(query);
+                              cancelProvider.searchOrders(query);
                             }
                           },
                           onEditingComplete: () {
@@ -116,20 +116,20 @@ class _ReturnOrdersState extends State<ReturnOrders> {
                     ),
                     const Spacer(),
 
-                    _buildReturnButton(returnProvider),
+                    // _buildReturnButton(cancelProvider),
+                    // const SizedBox(width: 8),
 
-                    const SizedBox(width: 8),
                     // Refresh Button
                     ElevatedButton(
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.primaryBlue,
                       ),
-                      onPressed: returnProvider.isRefreshingOrders
+                      onPressed: cancelProvider.isRefreshingOrders
                           ? null
                           : () async {
-                              returnProvider.fetchOrdersWithStatus9();
+                              cancelProvider.fetchOrdersWithStatus10();
                             },
-                      child: returnProvider.isRefreshingOrders
+                      child: cancelProvider.isRefreshingOrders
                           ? const SizedBox(
                               width: 16,
                               height: 16,
@@ -148,12 +148,12 @@ class _ReturnOrdersState extends State<ReturnOrders> {
               ),
               const SizedBox(height: 8),
               const SizedBox(height: 8),
-              _buildTableHeader(returnProvider.orders.length, returnProvider),
+              _buildTableHeader(cancelProvider.orders.length, cancelProvider),
               const SizedBox(height: 4),
               Expanded(
                 child: Stack(
                   children: [
-                    if (returnProvider.isLoading)
+                    if (cancelProvider.isLoading)
                       const Center(
                         child: LoadingAnimation(
                           icon: Icons.find_replace,
@@ -162,7 +162,7 @@ class _ReturnOrdersState extends State<ReturnOrders> {
                           size: 80.0,
                         ),
                       )
-                    else if (returnProvider.orders.isEmpty)
+                    else if (cancelProvider.orders.isEmpty)
                       const Center(
                         child: Text(
                           'No Orders Found',
@@ -175,12 +175,12 @@ class _ReturnOrdersState extends State<ReturnOrders> {
                       )
                     else
                       ListView.builder(
-                        itemCount: returnProvider.orders.length,
+                        itemCount: cancelProvider.orders.length,
                         itemBuilder: (context, index) {
-                          final order = returnProvider.orders[index];
+                          final order = cancelProvider.orders[index];
                           return Column(
                             children: [
-                              _buildOrderCard(order, index, returnProvider),
+                              _buildOrderCard(order, index, cancelProvider),
                               const Divider(thickness: 1, color: Colors.grey),
                             ],
                           );
@@ -190,36 +190,36 @@ class _ReturnOrdersState extends State<ReturnOrders> {
                 ),
               ),
               CustomPaginationFooter(
-                currentPage: returnProvider.currentPage,
-                totalPages: returnProvider.totalPages,
+                currentPage: cancelProvider.currentPage,
+                totalPages: cancelProvider.totalPages,
                 buttonSize: 30,
-                pageController: returnProvider.textEditingController,
+                pageController: cancelProvider.textEditingController,
                 onFirstPage: () {
-                  returnProvider.goToPage(1);
+                  cancelProvider.goToPage(1);
                 },
                 onLastPage: () {
-                  returnProvider.goToPage(returnProvider.totalPages);
+                  cancelProvider.goToPage(cancelProvider.totalPages);
                 },
                 onNextPage: () {
-                  if (returnProvider.currentPage < returnProvider.totalPages) {
-                    returnProvider.goToPage(returnProvider.currentPage + 1);
+                  if (cancelProvider.currentPage < cancelProvider.totalPages) {
+                    cancelProvider.goToPage(cancelProvider.currentPage + 1);
                   }
                 },
                 onPreviousPage: () {
-                  if (returnProvider.currentPage > 1) {
-                    returnProvider.goToPage(returnProvider.currentPage - 1);
+                  if (cancelProvider.currentPage > 1) {
+                    cancelProvider.goToPage(cancelProvider.currentPage - 1);
                   }
                 },
                 onGoToPage: (page) {
-                  returnProvider.goToPage(page);
+                  cancelProvider.goToPage(page);
                 },
                 onJumpToPage: () {
                   final page =
-                      int.tryParse(returnProvider.textEditingController.text);
+                      int.tryParse(cancelProvider.textEditingController.text);
                   if (page != null &&
                       page > 0 &&
-                      page <= returnProvider.totalPages) {
-                    returnProvider.goToPage(page);
+                      page <= cancelProvider.totalPages) {
+                    cancelProvider.goToPage(page);
                   }
                 },
               ),
@@ -231,17 +231,17 @@ class _ReturnOrdersState extends State<ReturnOrders> {
   }
 
   Widget _buildOrderCard(
-      Order order, int index, ReturnProvider returnProvider) {
+      Order order, int index, CancelledProvider cancelProvider) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4.0, horizontal: 8.0),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Checkbox(
-            value: returnProvider
+            value: cancelProvider
                 .selectedProducts[index], // Accessing selected products
             onChanged: (isSelected) {
-              returnProvider.handleRowCheckboxChange(index, isSelected!);
+              cancelProvider.handleRowCheckboxChange(index, isSelected!);
             },
           ),
           Expanded(
@@ -272,7 +272,7 @@ class _ReturnOrdersState extends State<ReturnOrders> {
             ),
           ),
           const SizedBox(width: 20),
-          // if (returnProvider.isReturning)
+          // if (cancelProvider.isReturning)
           //   Center(
           //     child: CircularProgressIndicator(), // Loading indicator
           //   ),
@@ -281,20 +281,20 @@ class _ReturnOrdersState extends State<ReturnOrders> {
     );
   }
 
-  Widget _buildTableHeader(int totalCount, ReturnProvider returnprovider) {
+  Widget _buildTableHeader(int totalCount, CancelledProvider cancelProvider) {
     return Container(
       color: Colors.grey[300],
       padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
       child: Row(
         children: [
           Checkbox(
-            value: returnprovider.selectAll,
+            value: cancelProvider.selectAll,
             onChanged: (value) {
-              returnprovider.toggleSelectAll(value!);
+              cancelProvider.toggleSelectAll(value!);
             },
           ),
           Text(
-            'Select All(${returnprovider.selectedCount})',
+            'Select All(${cancelProvider.selectedCount})',
             style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
           ),
           buildHeader('ORDERS', flex: 8),
@@ -330,27 +330,27 @@ class _ReturnOrdersState extends State<ReturnOrders> {
     );
   }
 
-  Widget _buildReturnButton(ReturnProvider returnProvider) {
-    return ElevatedButton(
-      onPressed: returnProvider.selectedCount > 0
-          ? () async {
-              await returnProvider
-                  .returnSelectedOrders(); // Call the return method
-            }
-          : null, // Disable the button if no orders are selected
-      child: returnProvider.isReturning
-          ? SizedBox(
-              width: 24,
-              height: 24,
-              child: CircularProgressIndicator(
-                color: Colors.white,
-                strokeWidth: 3,
-              ),
-            )
-          : const Text(
-              'Return',
-              style: TextStyle(color: Colors.white),
-            ),
-    );
-  }
+  // Widget _buildReturnButton(CancelledProvider cancelProvider) {
+  //   return ElevatedButton(
+  //     onPressed: cancelProvider.selectedCount > 0
+  //         ? () async {
+  //             await cancelProvider
+  //                 .returnSelectedOrders(); // Call the return method
+  //           }
+  //         : null, // Disable the button if no orders are selected
+  //     child: cancelProvider.isCancelling
+  //         ? const SizedBox(
+  //             width: 24,
+  //             height: 24,
+  //             child: CircularProgressIndicator(
+  //               color: Colors.white,
+  //               strokeWidth: 3,
+  //             ),
+  //           )
+  //         : const Text(
+  //             'Cancel',
+  //             style: TextStyle(color: Colors.white),
+  //           ),
+  //   );
+  // }
 }

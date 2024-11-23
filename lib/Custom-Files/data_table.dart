@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:inventory_management/Custom-Files/colors.dart';
 import 'package:provider/provider.dart';
@@ -9,10 +8,10 @@ class CustomDataTable extends StatelessWidget {
   final List<Map<String, dynamic>> rowsData;
 
   const CustomDataTable({
-    Key? key,
+    super.key,
     required this.columnNames,
     required this.rowsData,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -34,10 +33,8 @@ class CustomDataTable extends StatelessWidget {
         cells: columnNames.map((columnName) {
           var cellData = data[columnName];
           if (cellData is Widget) {
-
             return DataCell(cellData);
           } else {
-
             return DataCell(Text(cellData?.toString() ?? 'N/A'));
           }
         }).toList(),
@@ -49,7 +46,7 @@ class CustomDataTable extends StatelessWidget {
       child: SingleChildScrollView(
         scrollDirection: Axis.vertical,
         child: DataTable(
-          headingRowColor: MaterialStateColor.resolveWith(
+          headingRowColor: WidgetStateColor.resolveWith(
             (states) => AppColors.green.withOpacity(0.2),
           ),
           columns: columns,
@@ -68,12 +65,12 @@ class InventoryDataTable extends StatefulWidget {
   // final String inventoryId;
 
   const InventoryDataTable({
-    Key? key,
+    super.key,
     required this.columnNames,
     required this.rowsData,
     required this.scrollController,
-   // required this.inventoryId,
-  }) : super(key: key);
+    // required this.inventoryId,
+  });
 
   @override
   State<InventoryDataTable> createState() => _InventoryDataTableState();
@@ -88,15 +85,15 @@ class _InventoryDataTableState extends State<InventoryDataTable> {
       child: SingleChildScrollView(
         scrollDirection: Axis.vertical,
         child: DataTable(
-          headingRowColor: MaterialStateColor.resolveWith(
-                (states) => AppColors.green.withOpacity(0.2),
+          headingRowColor: WidgetStateColor.resolveWith(
+            (states) => AppColors.green.withOpacity(0.2),
           ),
           columns: widget.columnNames.map((name) {
             if (name == 'ACTIONS') {
               return DataColumn(
                 label: Column(
                   mainAxisAlignment:
-                  MainAxisAlignment.center, // Center vertically
+                      MainAxisAlignment.center, // Center vertically
                   children: [
                     Text(
                       name,
@@ -191,18 +188,15 @@ class _InventoryDataTableState extends State<InventoryDataTable> {
                           TextButton(
                             onPressed: () {
                               final inventoryId = data['inventoryId'];
-                              if (inventoryId !=
-                                  null) { // Check if inventoryId exists
+                              if (inventoryId != null) {
+                                // Check if inventoryId exists
 
                                 _showDetailsDialog(context, data);
                                 //_showDetailsDialog(context, inventoryId);
-
                               } else {
-
                                 print(
                                     'Inventory ID not found for the selected item.');
                               }
-
                             },
                             child: const Text(
                               'View Details',
@@ -231,8 +225,8 @@ class _InventoryDataTableState extends State<InventoryDataTable> {
     );
   }
 
-  void _showUpdateQuantityDialog(BuildContext context,
-      Map<String, dynamic> data) {
+  void _showUpdateQuantityDialog(
+      BuildContext context, Map<String, dynamic> data) {
     TextEditingController quantityController = TextEditingController();
     TextEditingController reasonController = TextEditingController();
 
@@ -272,16 +266,17 @@ class _InventoryDataTableState extends State<InventoryDataTable> {
             ],
           ),
           actions: [
-
             TextButton(
               style: TextButton.styleFrom(backgroundColor: Colors.redAccent),
               onPressed: () {
                 Navigator.of(context).pop();
               },
-              child: const Text(
-                  'Cancel', style: TextStyle(color: Colors.white)),
+              child:
+                  const Text('Cancel', style: TextStyle(color: Colors.white)),
             ),
-            const SizedBox(width: 5,),
+            const SizedBox(
+              width: 5,
+            ),
             TextButton(
               style: TextButton.styleFrom(backgroundColor: Colors.blueAccent),
               onPressed: () async {
@@ -294,8 +289,8 @@ class _InventoryDataTableState extends State<InventoryDataTable> {
                   return;
                 }
 
-                final inventoryProvider = Provider.of<InventoryProvider>(
-                    context, listen: false);
+                final inventoryProvider =
+                    Provider.of<InventoryProvider>(context, listen: false);
 
                 await inventoryProvider.updateInventoryQuantity(
                   data['inventoryId'],
@@ -318,8 +313,8 @@ class _InventoryDataTableState extends State<InventoryDataTable> {
                 // Close the dialog
                 Navigator.of(context).pop();
               },
-              child: const Text(
-                  'Update', style: TextStyle(color: Colors.white)),
+              child:
+                  const Text('Update', style: TextStyle(color: Colors.white)),
             ),
           ],
         );
@@ -327,195 +322,254 @@ class _InventoryDataTableState extends State<InventoryDataTable> {
     );
   }
 
-  void _showDetailsDialog(BuildContext context, Map<String, dynamic> data)async {
-
-
+  void _showDetailsDialog(
+      BuildContext context, Map<String, dynamic> data) async {
     List<dynamic> inventoryLogs = data['inventoryLogs'] ?? [];
 
     showDialog(
       context: context,
       builder: (BuildContext context) {
-        return AlertDialog(
-          title: Column(
-            children: [
-              Container(
-                height: 30,
-                width: 100,
-                child: Text(
-                  'Updated Details ${data['PRODUCT NAME']}',
-                  style: TextStyle(fontSize: 20,fontWeight: FontWeight.bold),
-                ),
-              ),
-            ],
+        return Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
           ),
-          content: Container(
-            width:500, // Set width to maximum available
-            constraints: BoxConstraints(
-              maxHeight: MediaQuery.of(context).size.height * 0.4, // Max height of 40% of screen
-            ),
-            child: SingleChildScrollView( // Make the content scrollable
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Inventory Logs:',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
+          child: Container(
+            width: MediaQuery.of(context).size.width * 0.85, // Wider dialog
+            height: MediaQuery.of(context).size.height * 0.7, // Taller dialog
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Header Section
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                      child: Text.rich(
+                        TextSpan(
+                          children: [
+                            const TextSpan(
+                              text: 'Updated Details: ',
+                              // style: TextStyle(
+                              //   color: AppColors.primaryBlue,
+                              // ),
+                            ),
+                            TextSpan(
+                              text: '${data['PRODUCT NAME']}',
+                              style: const TextStyle(
+                                  // color: AppColors.primaryBlue,
+                                  fontWeight: FontWeight.normal),
+                            )
+                          ],
+                        ),
+                        style: const TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      // child: Text(
+                      //   'Updated Details: ${data['PRODUCT NAME']}',
+                      //   style: const TextStyle(
+                      //     fontSize: 22,
+                      //     fontWeight: FontWeight.bold,
+                      //   ),
+                      //   maxLines: 2,
+                      //   overflow: TextOverflow.ellipsis,
+                      // ),
                     ),
-                  ),
-                  const SizedBox(height: 10),
+                    IconButton(
+                      icon: const Icon(Icons.close, color: Colors.grey),
+                      onPressed: () => Navigator.of(context).pop(),
+                    ),
+                  ],
+                ),
+                const Divider(),
 
-                  // Check if there are any logs, and render them in a Column
-                  if (inventoryLogs.isNotEmpty)
-                    Column(
-                      children: inventoryLogs.map((log) {
-                        // Determine icon and color based on changeType
-                        IconData icon;
-                        Color iconColor;
-                        double size = 30;
+                // Content Section
+                Expanded(
+                  child: inventoryLogs.isNotEmpty
+                      ? ListView.builder(
+                          itemCount: inventoryLogs.length,
+                          itemBuilder: (context, index) {
+                            final log = inventoryLogs[index];
+                            IconData icon;
+                            Color iconColor;
 
-                        if (log['changeType'] == 'Addition') {
-                          icon = Icons.add; // Plus icon
-                          iconColor = Colors.green; // Green color
-                          //size=30;
-                        } else if (log['changeType'] == 'Subtraction') {
-                          icon = Icons.remove; // Minus icon
-                          iconColor = Colors.red; // Red color
-                        } else {
-                          icon = Icons.info; // Default icon
-                          iconColor = Colors.grey; // Default color
-                        }
+                            if (log['changeType'] == 'Addition') {
+                              icon = Icons.add;
+                              iconColor = Colors.green;
+                            } else if (log['changeType'] == 'Subtraction') {
+                              icon = Icons.remove;
+                              iconColor = Colors.red;
+                            } else {
+                              icon = Icons.info;
+                              iconColor = Colors.grey;
+                            }
 
-                        return Card(
-                          margin: const EdgeInsets.symmetric(vertical: 8),
-                          elevation: 2,
-                          shadowColor: Colors.blueAccent,
-                          surfaceTintColor: Colors.blueAccent,
-                          child: Padding(
-                            padding: const EdgeInsets.all(8.0),
-                            child: Row(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                // Expanded text section
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      LabelValueText(
-                                        label: 'Quantity Changed : ',
-                                        value: '${log['quantityChanged']}',
-                                        fontSize: 17.0, // Adjust font size as needed
+                            return Card(
+                              margin: const EdgeInsets.symmetric(vertical: 8),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              elevation: 3,
+                              child: Padding(
+                                padding: const EdgeInsets.all(12),
+                                child: Row(
+                                  children: [
+                                    // Icon Section
+                                    Container(
+                                      decoration: BoxDecoration(
+                                        shape: BoxShape.circle,
+                                        color: iconColor.withOpacity(0.2),
                                       ),
-                                      LabelValueText(
-                                        label: 'Previous Total : ',
-                                        value: '${log['previousTotal']}',
-                                        fontSize: 17.0,
+                                      padding: const EdgeInsets.all(12),
+                                      child: Icon(
+                                        icon,
+                                        color: iconColor,
+                                        size: 30,
                                       ),
-                                      LabelValueText(
-                                        label: 'New Total : ',
-                                        value: '${log['newTotal']}',
-                                        fontSize: 17.0,
-                                      ),
-                                      LabelValueText(
-                                        label: 'Updated By : ',
-                                        value: '${log['updatedBy']}',
-                                        fontSize: 17.0,
-                                      ),
-                                      LabelValueText(
-                                        label: 'Source : ',
-                                        value: '${log['source']}',
-                                        fontSize: 17.0,
-                                      ),
-                                      LabelValueText(
-                                        label: 'Timestamp : ',
-                                        value: '${log['timestamp']}',
-                                        fontSize: 17.0,
-                                      ),
-                                      if (log['additionalInfo'] != null && log['additionalInfo']['reason'] != null)
-                                        LabelValueText(
-                                          label: 'Reason : ',
-                                          value: '${log['additionalInfo']['reason']}',
-                                          fontSize: 17.0,
-                                        ),
+                                    ),
+                                    const SizedBox(width: 12),
 
-                                      if (log['affectedWarehouse'] != null)
-                                        Column(
-                                          crossAxisAlignment: CrossAxisAlignment.start,
-                                          children: [
-                                            const SizedBox(height: 10), // Add some spacing
-                                            Text(
-                                              'Affected Warehouse:',
-                                              style: TextStyle(
-                                                fontWeight: FontWeight.bold,
-                                                fontSize: 16,
-                                              ),
+                                    // Log Details Section
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          _buildDetailRow(
+                                            'Quantity Changed:',
+                                            '${log['quantityChanged']}',
+                                          ),
+                                          _buildDetailRow(
+                                            'Previous Total:',
+                                            '${log['previousTotal']}',
+                                          ),
+                                          _buildDetailRow(
+                                            'New Total:',
+                                            '${log['newTotal']}',
+                                          ),
+                                          _buildDetailRow(
+                                            'Updated By:',
+                                            '${log['updatedBy']}',
+                                          ),
+                                          _buildDetailRow(
+                                            'Source:',
+                                            '${log['source']}',
+                                          ),
+                                          _buildDetailRow(
+                                            'Timestamp:',
+                                            '${log['timestamp']}',
+                                          ),
+                                          if (log['additionalInfo'] != null &&
+                                              log['additionalInfo']['reason'] !=
+                                                  null)
+                                            _buildDetailRow(
+                                              'Reason:',
+                                              '${log['additionalInfo']['reason']}',
                                             ),
-                                            LabelValueText(
-                                              label: 'Warehouse ID : ',
-                                              value: '${log['affectedWarehouse']['warehouseId']}',
-                                              fontSize: 17.0,
+                                          if (log['affectedWarehouse'] != null)
+                                            Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                              children: [
+                                                const SizedBox(height: 8),
+                                                const Text(
+                                                  'Affected Warehouse:',
+                                                  style: TextStyle(
+                                                    fontWeight: FontWeight.bold,
+                                                  ),
+                                                ),
+                                                _buildDetailRow(
+                                                  'Warehouse ID:',
+                                                  '${log['affectedWarehouse']['warehouseId']}',
+                                                ),
+                                                _buildDetailRow(
+                                                  'Previous Quantity:',
+                                                  '${log['affectedWarehouse']['previousQuantity']}',
+                                                ),
+                                                _buildDetailRow(
+                                                  'Updated Quantity:',
+                                                  '${log['affectedWarehouse']['updatedQuantity']}',
+                                                ),
+                                              ],
                                             ),
-                                            LabelValueText(
-                                              label: 'Previous Quantity : ',
-                                              value: '${log['affectedWarehouse']['previousQuantity']}',
-                                              fontSize: 17.0,
-                                            ),
-                                            LabelValueText(
-                                              label: 'Updated Quantity : ',
-                                              value: '${log['affectedWarehouse']['updatedQuantity']}',
-                                              fontSize: 17.0,
-                                            ),
-                                          ],
-                                        ),
-
-                                    ],
-                                  ),
-
+                                        ],
+                                      ),
+                                    ),
+                                  ],
                                 ),
-                                Center(child:
-
-                                Container(
-                                  decoration: BoxDecoration(
-                                    shape: BoxShape.circle,
-                                    color: iconColor.withOpacity(0.3), // Light background color for the icon
-                                  ),
-                                  padding: const EdgeInsets.all(8), // Padding to create space around the icon
-                                  child: Icon(
-                                    icon,
-                                    color: iconColor,
-                                    size: size,
-                                  ),
-                                ),
-                                ),
-                              ],
+                              ),
+                            );
+                          },
+                        )
+                      : const Center(
+                          child: Text(
+                            'No inventory logs available',
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: Colors.grey,
                             ),
                           ),
-                        );
-                      }).toList(),
-                    )
+                        ),
+                ),
 
-                  else
-                    const Center(
-                      child: Text('No inventory logs available'),
+                // Footer Section
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.blueAccent,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 20,
+                        vertical: 12,
+                      ),
                     ),
-                ],
-              ),
+                    onPressed: () => Navigator.of(context).pop(),
+                    child: const Text(
+                      'Close',
+                      style: TextStyle(fontSize: 16, color: Colors.white),
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
-          actions: [
-            TextButton(
-              style: TextButton.styleFrom(backgroundColor: Colors.blueAccent),
-              onPressed: () {
-                Navigator.of(context).pop(); // Close dialog
-              },
-              child: const Text('Close',style:TextStyle(color: Colors.white)),
-            ),
-          ],
         );
       },
     );
   }
+
+// Helper Widget for Detail Rows
+  Widget _buildDetailRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 6),
+      child: RichText(
+        text: TextSpan(
+          text: '$label ',
+          style: const TextStyle(
+            fontWeight: FontWeight.bold,
+            color: Colors.black,
+          ),
+          children: [
+            TextSpan(
+              text: value,
+              style: const TextStyle(
+                fontWeight: FontWeight.normal,
+                color: Colors.black,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   // void _showDetailsDialog(BuildContext context, String inventoryId) async {
   //   final inventoryProvider = Provider.of<InventoryProvider>(context,listen: false);
   //
@@ -638,8 +692,6 @@ class _InventoryDataTableState extends State<InventoryDataTable> {
   //     },
   //   );
   // }
-
-
 }
 
 class LabelValueText extends StatelessWidget {
@@ -648,11 +700,11 @@ class LabelValueText extends StatelessWidget {
   final double fontSize;
 
   const LabelValueText({
-    Key? key,
+    super.key,
     required this.label,
     required this.value,
     this.fontSize = 20.0, // Default font size
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

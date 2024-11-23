@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:inventory_management/Widgets/product_details_card.dart';
 import 'package:inventory_management/edit_order_page.dart';
-import 'package:inventory_management/provider/accounts_provider.dart';
+import 'package:inventory_management/provider/ba_approve_provider.dart';
 import 'package:provider/provider.dart';
 
 import 'Custom-Files/colors.dart';
@@ -10,21 +10,21 @@ import 'Custom-Files/loading_indicator.dart';
 import 'Widgets/order_card.dart';
 import 'model/orders_model.dart';
 
-class AccountsPage extends StatefulWidget {
-  const AccountsPage({super.key});
+class BAApprovePage extends StatefulWidget {
+  const BAApprovePage({super.key});
 
   @override
-  State<AccountsPage> createState() => _AccountsPageState();
+  State<BAApprovePage> createState() => _BAApprovePageState();
 }
 
-class _AccountsPageState extends State<AccountsPage> {
+class _BAApprovePageState extends State<BAApprovePage> {
   final TextEditingController _searchController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      Provider.of<AccountsProvider>(context, listen: false)
+      Provider.of<BAApproveProvider>(context, listen: false)
           .fetchOrdersWithStatus2();
     });
   }
@@ -32,15 +32,15 @@ class _AccountsPageState extends State<AccountsPage> {
   void _onSearchButtonPressed() {
     final query = _searchController.text.trim();
     if (query.isNotEmpty) {
-      Provider.of<AccountsProvider>(context, listen: false)
+      Provider.of<BAApproveProvider>(context, listen: false)
           .onSearchChanged(query);
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<AccountsProvider>(
-      builder: (context, accountsProvider, child) {
+    return Consumer<BAApproveProvider>(
+      builder: (context, baApproveProvider, child) {
         return Scaffold(
           backgroundColor: AppColors.white,
           body: Column(
@@ -77,7 +77,7 @@ class _AccountsPageState extends State<AccountsPage> {
                           onChanged: (query) {
                             setState(() {});
                             if (query.isEmpty) {
-                              accountsProvider.fetchOrdersWithStatus2();
+                              baApproveProvider.fetchOrdersWithStatus2();
                             }
                           },
                           onTap: () {
@@ -85,7 +85,7 @@ class _AccountsPageState extends State<AccountsPage> {
                           },
                           onSubmitted: (query) {
                             if (query.isNotEmpty) {
-                              accountsProvider.searchOrders(query);
+                              baApproveProvider.searchOrders(query);
                             }
                           },
                           onEditingComplete: () {
@@ -118,9 +118,9 @@ class _AccountsPageState extends State<AccountsPage> {
                             backgroundColor: AppColors.primaryBlue,
                           ),
                           onPressed: () async {
-                            await accountsProvider.statusUpdate(context);
+                            await baApproveProvider.statusUpdate(context);
                           },
-                          child: accountsProvider.isUpdatingOrder
+                          child: baApproveProvider.isUpdatingOrder
                               ? const SizedBox(
                                   width: 16,
                                   height: 16,
@@ -130,7 +130,7 @@ class _AccountsPageState extends State<AccountsPage> {
                                   ),
                                 )
                               : const Text(
-                                  'Confirm',
+                                  'Approve',
                                   style: TextStyle(color: Colors.white),
                                 ),
                         ),
@@ -140,22 +140,22 @@ class _AccountsPageState extends State<AccountsPage> {
                             backgroundColor: AppColors.cardsred,
                           ),
                           // onPressed: () async {
-                          //   await accountsProvider.statusUpdate(context);
+                          //   await baApproveProvider.statusUpdate(context);
                           // },
-                          onPressed: accountsProvider.isCancel
+                          onPressed: baApproveProvider.isCancel
                               ? null // Disable button while loading
                               : () async {
-                                  final provider = Provider.of<AccountsProvider>(
-                                      context,
-                                      listen: false);
+                                  final provider =
+                                      Provider.of<BAApproveProvider>(context,
+                                          listen: false);
 
                                   // Collect selected order IDs
                                   List<String> selectedOrderIds = provider
                                       .orders
                                       .asMap()
                                       .entries
-                                      .where((entry) => provider
-                                          .selectedProducts[entry.key])
+                                      .where((entry) =>
+                                          provider.selectedProducts[entry.key])
                                       .map((entry) => entry.value.orderId)
                                       .toList();
 
@@ -203,7 +203,7 @@ class _AccountsPageState extends State<AccountsPage> {
                                     );
                                   }
                                 },
-                          child: accountsProvider.isCancel
+                          child: baApproveProvider.isCancel
                               ? const SizedBox(
                                   width: 16,
                                   height: 16,
@@ -222,13 +222,13 @@ class _AccountsPageState extends State<AccountsPage> {
                           style: ElevatedButton.styleFrom(
                             backgroundColor: AppColors.primaryBlue,
                           ),
-                          onPressed: accountsProvider.isRefreshingOrders
+                          onPressed: baApproveProvider.isRefreshingOrders
                               ? null
                               : () async {
-                                  await accountsProvider
+                                  await baApproveProvider
                                       .fetchOrdersWithStatus2();
                                 },
-                          child: accountsProvider.isRefreshingOrders
+                          child: baApproveProvider.isRefreshingOrders
                               ? const SizedBox(
                                   width: 16,
                                   height: 16,
@@ -250,12 +250,12 @@ class _AccountsPageState extends State<AccountsPage> {
               const SizedBox(height: 8),
               const SizedBox(height: 8),
               _buildTableHeader(
-                  accountsProvider.orders.length, accountsProvider),
+                  baApproveProvider.orders.length, baApproveProvider),
               const SizedBox(height: 4),
               Expanded(
                 child: Stack(
                   children: [
-                    if (accountsProvider.isLoading)
+                    if (baApproveProvider.isLoading)
                       const Center(
                         child: LoadingAnimation(
                           icon: Icons.account_box_rounded,
@@ -264,7 +264,7 @@ class _AccountsPageState extends State<AccountsPage> {
                           size: 80.0,
                         ),
                       )
-                    else if (accountsProvider.orders.isEmpty)
+                    else if (baApproveProvider.orders.isEmpty)
                       const Center(
                         child: Text(
                           'No Orders Found',
@@ -277,9 +277,9 @@ class _AccountsPageState extends State<AccountsPage> {
                       )
                     else
                       ListView.builder(
-                        itemCount: accountsProvider.orders.length,
+                        itemCount: baApproveProvider.orders.length,
                         itemBuilder: (context, index) {
-                          final order = accountsProvider.orders[index];
+                          final order = baApproveProvider.orders[index];
 
                           return Card(
                             surfaceTintColor: Colors.white,
@@ -296,10 +296,10 @@ class _AccountsPageState extends State<AccountsPage> {
                                         MainAxisAlignment.spaceBetween,
                                     children: [
                                       Checkbox(
-                                        value: accountsProvider
+                                        value: baApproveProvider
                                             .selectedProducts[index],
                                         onChanged: (isSelected) {
-                                          accountsProvider
+                                          baApproveProvider
                                               .handleRowCheckboxChange(
                                                   index, isSelected!);
                                         },
@@ -332,7 +332,7 @@ class _AccountsPageState extends State<AccountsPage> {
                                                 fontWeight: FontWeight.bold),
                                           ),
                                           Text(
-                                            accountsProvider
+                                            baApproveProvider
                                                 .formatDate(order.date!),
                                             style: const TextStyle(
                                                 fontWeight: FontWeight.bold,
@@ -404,7 +404,7 @@ class _AccountsPageState extends State<AccountsPage> {
                                             ),
                                           );
                                           if (result == true) {
-                                            Provider.of<AccountsProvider>(
+                                            Provider.of<BAApproveProvider>(
                                                     context,
                                                     listen: false)
                                                 .fetchOrdersWithStatus2();
@@ -507,7 +507,7 @@ class _AccountsPageState extends State<AccountsPage> {
                                                 'Expected Delivery Date',
                                                 order.expectedDeliveryDate !=
                                                         null
-                                                    ? accountsProvider
+                                                    ? baApproveProvider
                                                         .formatDate(order
                                                             .expectedDeliveryDate!)
                                                     : '',
@@ -518,7 +518,7 @@ class _AccountsPageState extends State<AccountsPage> {
                                               buildLabelValueRow(
                                                 'Payment Date Time',
                                                 order.paymentDateTime != null
-                                                    ? accountsProvider
+                                                    ? baApproveProvider
                                                         .formatDateTime(order
                                                             .paymentDateTime!)
                                                     : '',
@@ -775,37 +775,39 @@ class _AccountsPageState extends State<AccountsPage> {
                 ),
               ),
               CustomPaginationFooter(
-                currentPage: accountsProvider.currentPage,
-                totalPages: accountsProvider.totalPages,
+                currentPage: baApproveProvider.currentPage,
+                totalPages: baApproveProvider.totalPages,
                 buttonSize: 30,
-                pageController: accountsProvider.textEditingController,
+                pageController: baApproveProvider.textEditingController,
                 onFirstPage: () {
-                  accountsProvider.goToPage(1);
+                  baApproveProvider.goToPage(1);
                 },
                 onLastPage: () {
-                  accountsProvider.goToPage(accountsProvider.totalPages);
+                  baApproveProvider.goToPage(baApproveProvider.totalPages);
                 },
                 onNextPage: () {
-                  if (accountsProvider.currentPage <
-                      accountsProvider.totalPages) {
-                    accountsProvider.goToPage(accountsProvider.currentPage + 1);
+                  if (baApproveProvider.currentPage <
+                      baApproveProvider.totalPages) {
+                    baApproveProvider
+                        .goToPage(baApproveProvider.currentPage + 1);
                   }
                 },
                 onPreviousPage: () {
-                  if (accountsProvider.currentPage > 1) {
-                    accountsProvider.goToPage(accountsProvider.currentPage - 1);
+                  if (baApproveProvider.currentPage > 1) {
+                    baApproveProvider
+                        .goToPage(baApproveProvider.currentPage - 1);
                   }
                 },
                 onGoToPage: (page) {
-                  accountsProvider.goToPage(page);
+                  baApproveProvider.goToPage(page);
                 },
                 onJumpToPage: () {
-                  final page =
-                      int.tryParse(accountsProvider.textEditingController.text);
+                  final page = int.tryParse(
+                      baApproveProvider.textEditingController.text);
                   if (page != null &&
                       page > 0 &&
-                      page <= accountsProvider.totalPages) {
-                    accountsProvider.goToPage(page);
+                      page <= baApproveProvider.totalPages) {
+                    baApproveProvider.goToPage(page);
                   }
                 },
               ),
@@ -817,17 +819,17 @@ class _AccountsPageState extends State<AccountsPage> {
   }
 
   Widget _buildOrderCard(
-      Order order, int index, AccountsProvider accountsProvider) {
+      Order order, int index, BAApproveProvider baApproveProvider) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4.0, horizontal: 8.0),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Checkbox(
-            value: accountsProvider
+            value: baApproveProvider
                 .selectedProducts[index], // Accessing selected products
             onChanged: (isSelected) {
-              accountsProvider.handleRowCheckboxChange(index, isSelected!);
+              baApproveProvider.handleRowCheckboxChange(index, isSelected!);
             },
           ),
           Expanded(
@@ -853,7 +855,8 @@ class _AccountsPageState extends State<AccountsPage> {
     );
   }
 
-  Widget _buildTableHeader(int totalCount, AccountsProvider accountsProvider) {
+  Widget _buildTableHeader(
+      int totalCount, BAApproveProvider baApproveProvider) {
     return Container(
       color: Colors.grey[300],
       padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
@@ -862,14 +865,14 @@ class _AccountsPageState extends State<AccountsPage> {
           Transform.scale(
             scale: 0.8,
             child: Checkbox(
-              value: accountsProvider.selectAll,
+              value: baApproveProvider.selectAll,
               onChanged: (value) {
-                accountsProvider.toggleSelectAll(value!);
+                baApproveProvider.toggleSelectAll(value!);
               },
             ),
           ),
           Text(
-            'Select All(${accountsProvider.selectedCount})',
+            'Select All(${baApproveProvider.selectedCount})',
           ),
           buildHeader('ORDERS')
         ],
