@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:inventory_management/Custom-Files/colors.dart'; // Adjust the import based on your project structure
 import 'package:inventory_management/edit_order_page.dart';
 import 'package:inventory_management/model/orders_model.dart';
+import 'package:inventory_management/orders_page.dart';
 import 'package:provider/provider.dart';
 
 import '../provider/orders_provider.dart'; // Adjust the import based on your project structure
@@ -230,24 +231,46 @@ class OrderCard extends StatelessWidget {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const Text(
-                                'Customer Details:',
-                                style: TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 11.0,
-                                    color: AppColors.primaryBlue),
+                              Row(
+                                children: [
+                                  const Text(
+                                    'Customer Details:',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 11.0,
+                                      color: AppColors.primaryBlue,
+                                    ),
+                                  ),
+                                  IconButton(
+                                    icon: const Icon(
+                                      Icons.edit,
+                                      size: 16, // Smaller icon size
+                                      color: AppColors.primaryBlue,
+                                    ),
+                                    constraints:
+                                        const BoxConstraints(), // Remove size constraints
+                                    onPressed: () {
+                                      showDialog(
+                                        context: context,
+                                        builder: (context) =>
+                                            EditContactDialog(order: order),
+                                      );
+                                    },
+                                  ),
+                                ],
                               ),
                               buildLabelValueRow(
                                 'Customer ID',
                                 order.customer?.customerId ?? '',
                               ),
                               buildLabelValueRow(
-                                  'Full Name',
-                                  order.customer?.firstName !=
-                                          order.customer?.lastName
-                                      ? '${order.customer?.firstName ?? ''} ${order.customer?.lastName ?? ''}'
-                                          .trim()
-                                      : order.customer?.firstName ?? ''),
+                                'Full Name',
+                                order.customer?.firstName !=
+                                        order.customer?.lastName
+                                    ? '${order.customer?.firstName ?? ''} ${order.customer?.lastName ?? ''}'
+                                        .trim()
+                                    : order.customer?.firstName ?? '',
+                              ),
                               buildLabelValueRow(
                                 'Email',
                                 order.customer?.email ?? '',
@@ -269,12 +292,34 @@ class OrderCard extends StatelessWidget {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const Text(
-                                'Shipping Address:',
-                                style: TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 11.0,
-                                    color: AppColors.primaryBlue),
+                              Row(
+                                children: [
+                                  const Text(
+                                    'Shipping Address:',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 11.0,
+                                      color: AppColors.primaryBlue,
+                                    ),
+                                  ),
+                                  IconButton(
+                                    icon: const Icon(
+                                      Icons.edit,
+                                      size: 16, // Smaller icon size
+                                      color: AppColors.primaryBlue,
+                                    ),
+                                    constraints:
+                                        const BoxConstraints(), // Remove size constraints
+                                    onPressed: () {
+                                      showDialog(
+                                        context: context,
+                                        builder: (context) =>
+                                            EditShippingAddressDialog(
+                                                order: order),
+                                      );
+                                    },
+                                  ),
+                                ],
                               ),
                               buildLabelValueRow(
                                 'Address',
@@ -315,12 +360,34 @@ class OrderCard extends StatelessWidget {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const Text(
-                                'Billing Address:',
-                                style: TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 11.0,
-                                    color: AppColors.primaryBlue),
+                              Row(
+                                children: [
+                                  const Text(
+                                    'Billing Address:',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 11.0,
+                                      color: AppColors.primaryBlue,
+                                    ),
+                                  ),
+                                  IconButton(
+                                    icon: const Icon(
+                                      Icons.edit,
+                                      size: 16, // Smaller icon size
+                                      color: AppColors.primaryBlue,
+                                    ),
+                                    constraints:
+                                        const BoxConstraints(), // Remove size constraints
+                                    onPressed: () {
+                                      showDialog(
+                                        context: context,
+                                        builder: (context) =>
+                                            EditBillingAddressDialog(
+                                                order: order),
+                                      );
+                                    },
+                                  ),
+                                ],
                               ),
                               buildLabelValueRow(
                                 'Address',

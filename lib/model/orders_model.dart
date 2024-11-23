@@ -23,7 +23,7 @@ class Order {
   final double discountAmount;
   final int taxPercent;
   final Address? billingAddress;
-  final Address? shippingAddress;
+  Address? shippingAddress; // No more `late` keyword here
   final String courierName;
   final String orderType;
   final String outerPackage;
@@ -63,70 +63,85 @@ class Order {
   final Checker? checker;
   final Racker? racker;
   final CheckManifest? checkManifest;
-  late String? trackingStatus;
+  String? trackingStatus;
 
-  Order(
-      {this.customer,
-      this.source = '',
-      this.id = '',
-      this.orderId = '',
-      this.date,
-      this.paymentMode = '',
-      this.currencyCode = '',
-      required this.items,
-      this.skuTrackingId = '',
-      this.totalWeight = 0.0,
-      this.totalAmount = 0.0,
-      this.coin = 0,
-      this.codAmount = 0.0,
-      this.prepaidAmount = 0.0,
-      this.discountCode = '',
-      this.discountScheme = '',
-      this.discountPercent = 0,
-      this.discountAmount = 0.0,
-      this.taxPercent = 0,
-      this.billingAddress,
-      this.shippingAddress,
-      this.courierName = '',
-      this.orderType = '',
-      this.outerPackage = '',
-      this.replacement = false,
-      required this.orderStatus,
-      this.orderStatusMap,
-      this.marketplace,
-      this.agent = '',
-      this.filter = '',
-      this.freightCharge,
-      this.notes = '',
-      this.createdAt,
-      this.updatedAt,
-      this.isSelected = false,
-      this.isPickerFullyScanned = false,
-      this.isPackerFullyScanned = false,
-      this.expectedDeliveryDate,
-      this.preferredCourier = '',
-      this.deliveryTerm = '',
-      this.transactionNumber = '',
-      this.microDealerOrder = '',
-      this.fulfillmentType = '',
-      this.numberOfBoxes = 0,
-      this.totalQuantity = 0,
-      this.skuQty = 0,
-      this.calcEntryNumber = '',
-      this.currency = '',
-      this.paymentDateTime,
-      this.paymentBank = '',
-      this.length = 0.0,
-      this.breadth = 0.0,
-      this.height = 0.0,
-      this.shipmentId = '',
-      this.shiprocketOrderId = '',
-      this.awbNumber = '',
-      this.image = '',
-      required this.checker,
-      required this.racker,
-      required this.checkManifest,
-      this.trackingStatus});
+  // Constructor
+  Order({
+    this.customer,
+    this.source = '',
+    this.id = '',
+    this.orderId = '',
+    this.date,
+    this.paymentMode = '',
+    this.currencyCode = '',
+    required this.items,
+    this.skuTrackingId = '',
+    this.totalWeight = 0.0,
+    this.totalAmount = 0.0,
+    this.coin = 0,
+    this.codAmount = 0.0,
+    this.prepaidAmount = 0.0,
+    this.discountCode = '',
+    this.discountScheme = '',
+    this.discountPercent = 0,
+    this.discountAmount = 0.0,
+    this.taxPercent = 0,
+    this.billingAddress,
+    Address? shippingAddress, // Allow nullable for this
+    this.courierName = '',
+    this.orderType = '',
+    this.outerPackage = '',
+    this.replacement = false,
+    required this.orderStatus,
+    this.orderStatusMap,
+    this.marketplace,
+    this.agent = '',
+    this.filter = '',
+    this.freightCharge,
+    this.notes = '',
+    this.createdAt,
+    this.updatedAt,
+    this.isSelected = false,
+    this.isPickerFullyScanned = false,
+    this.isPackerFullyScanned = false,
+    this.expectedDeliveryDate,
+    this.preferredCourier = '',
+    this.deliveryTerm = '',
+    this.transactionNumber = '',
+    this.microDealerOrder = '',
+    this.fulfillmentType = '',
+    this.numberOfBoxes = 0,
+    this.totalQuantity = 0,
+    this.skuQty = 0,
+    this.calcEntryNumber = '',
+    this.currency = '',
+    this.paymentDateTime,
+    this.paymentBank = '',
+    this.length = 0.0,
+    this.breadth = 0.0,
+    this.height = 0.0,
+    this.shipmentId = '',
+    this.shiprocketOrderId = '',
+    this.awbNumber = '',
+    this.image = '',
+    required this.checker,
+    required this.racker,
+    required this.checkManifest,
+    this.trackingStatus,
+  }) : shippingAddress = shippingAddress ??
+            Address(
+              address1: '',
+              address2: '',
+              city: '',
+              state: '',
+              country: '',
+              email: '',
+            );
+
+  // You can also create a method to update shipping address here.
+  void updateShippingAddress(Address newAddress) {
+    shippingAddress = newAddress;
+  }
 
   // Utility function to safely parse a string from any data type
   static String _parseString(dynamic value) {
@@ -749,15 +764,15 @@ class Dimensions {
 class Address {
   final String? firstName;
   final String? lastName;
-  final String? address1;
-  final String? address2;
-  final int? phone;
-  final String? city;
-  final int? pincode;
-  final String? state;
-  final String? country;
+  late final String? address1;
+  late final String? address2;
+  late final int? phone;
+  late final String? city;
+  late final int? pincode;
+  late final String? state;
+  late final String? country;
   final String? countryCode;
-  final String? email;
+  late final String? email;
 
   Address({
     this.firstName,

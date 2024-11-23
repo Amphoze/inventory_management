@@ -288,6 +288,7 @@ class _EditOrderPageState extends State<EditOrderPage> {
         text: widget.order.shippingAddress?.country ?? '');
     _shippingCountryCodeController = TextEditingController(
         text: widget.order.shippingAddress?.countryCode ?? '');
+
     // Initialize dynamicItemsList with existing items
     for (var item in widget.order.items) {
       dynamicItemsList.add({
@@ -1263,6 +1264,7 @@ class _EditOrderPageState extends State<EditOrderPage> {
                 ),
                 const SizedBox(height: 30),
                 // Customer Details
+
                 _buildHeading("Shipping and Delivery Details"),
                 const Divider(thickness: 1, color: AppColors.grey),
                 const SizedBox(height: 10),
@@ -1414,6 +1416,7 @@ class _EditOrderPageState extends State<EditOrderPage> {
                 ),
                 const SizedBox(height: 30),
                 // Customer Details
+
                 _buildHeading("Order Dimension"),
                 const Divider(thickness: 1, color: AppColors.grey),
                 const SizedBox(height: 10),
@@ -1445,6 +1448,7 @@ class _EditOrderPageState extends State<EditOrderPage> {
                     ),
                   ],
                 ),
+
                 const SizedBox(height: 30),
                 // Customer Details
                 _buildHeading("Discount Information"),
@@ -1730,6 +1734,7 @@ class _EditOrderPageState extends State<EditOrderPage> {
 
                 // Shipping Address
                 const SizedBox(height: 30),
+
                 _buildHeading("Shipping Address"),
                 const Divider(thickness: 1, color: AppColors.grey),
                 const SizedBox(height: 10),
@@ -1984,7 +1989,7 @@ class _EditOrderPageState extends State<EditOrderPage> {
   }
 
   // Function to build text fields
-// Function to build text fields
+  // Function to build text fields
   Widget _buildTextField({
     required TextEditingController controller,
     required String label,

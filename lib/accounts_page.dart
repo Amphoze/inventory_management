@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:inventory_management/Widgets/product_details_card.dart';
 import 'package:inventory_management/edit_order_page.dart';
+import 'package:inventory_management/orders_page.dart';
 import 'package:inventory_management/provider/accounts_provider.dart';
 import 'package:provider/provider.dart';
 
@@ -367,11 +368,119 @@ class _AccountsPageState extends State<AccountsPage> {
                                             crossAxisAlignment:
                                                 CrossAxisAlignment.start,
                                             children: [
+                                              Row(
+                                                mainAxisAlignment:
+                                                    MainAxisAlignment.start,
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.center,
+                                                children: [
+                                                  const Text(
+                                                    'Order Details:',
+                                                    style: TextStyle(
+                                                      fontWeight:
+                                                          FontWeight.bold,
+                                                      fontSize: 12.0,
+                                                      color:
+                                                          AppColors.primaryBlue,
+                                                    ),
+                                                  ),
+                                                  const SizedBox(
+                                                      width:
+                                                          4.0), // Add spacing between the text and the icon
+                                                  IconButton(
+                                                    icon: const Icon(
+                                                      Icons.edit,
+                                                      size:
+                                                          16, // Smaller icon size
+                                                      color:
+                                                          AppColors.primaryBlue,
+                                                    ),
+                                                    constraints:
+                                                        const BoxConstraints(), // Remove size constraints
+                                                    padding: EdgeInsets
+                                                        .zero, // Remove extra padding
+                                                    onPressed: () {
+                                                      showDialog(
+                                                        context: context,
+                                                        builder: (context) =>
+                                                            EditOrderDetailsDialog(
+                                                                order: order),
+                                                      );
+                                                    },
+                                                  ),
+                                                ],
+                                              ),
+                                              buildLabelValueRow('Order Type',
+                                                  order.orderType ?? ''),
+                                              buildLabelValueRow(
+                                                  'Marketplace',
+                                                  order.marketplace?.name ??
+                                                      ''),
+                                              buildLabelValueRow(
+                                                  'Transaction Number',
+                                                  order.transactionNumber ??
+                                                      ''),
+                                              buildLabelValueRow(
+                                                  'Calc Entry No.',
+                                                  order.calcEntryNumber ?? ''),
+                                              buildLabelValueRow(
+                                                  'Micro Dealer Order',
+                                                  order.microDealerOrder ?? ''),
+                                              buildLabelValueRow(
+                                                  'Fulfillment Type',
+                                                  order.fulfillmentType ?? ''),
+                                              buildLabelValueRow(
+                                                  'Filter', order.filter ?? ''),
+                                              const SizedBox(height: 7.0),
+                                              Row(
+                                                mainAxisAlignment:
+                                                    MainAxisAlignment.start,
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.center,
+                                                children: [
+                                                  const Text(
+                                                    'Payment Details:',
+                                                    style: TextStyle(
+                                                      fontWeight:
+                                                          FontWeight.bold,
+                                                      fontSize: 12.0,
+                                                      color:
+                                                          AppColors.primaryBlue,
+                                                    ),
+                                                  ),
+                                                  const SizedBox(
+                                                      width:
+                                                          4.0), // Add spacing between the text and the icon
+                                                  IconButton(
+                                                    icon: const Icon(
+                                                      Icons.edit,
+                                                      size:
+                                                          16, // Smaller icon size
+                                                      color:
+                                                          AppColors.primaryBlue,
+                                                    ),
+                                                    constraints:
+                                                        const BoxConstraints(), // Remove size constraints
+                                                    padding: EdgeInsets
+                                                        .zero, // Remove extra padding
+                                                    onPressed: () {
+                                                      showDialog(
+                                                        context: context,
+                                                        builder: (context) =>
+                                                            EditPaymentDetailsDialog(
+                                                                order: order),
+                                                      );
+                                                    },
+                                                  ),
+                                                ],
+                                              ),
                                               buildLabelValueRow('Payment Mode',
                                                   order.paymentMode ?? ''),
                                               buildLabelValueRow(
                                                   'Currency Code',
                                                   order.currencyCode ?? ''),
+                                              buildLabelValueRow('Currency',
+                                                  order.currency ?? ''),
                                               buildLabelValueRow(
                                                   'COD Amount',
                                                   order.codAmount?.toString() ??
@@ -381,46 +490,72 @@ class _AccountsPageState extends State<AccountsPage> {
                                                   order.prepaidAmount
                                                           ?.toString() ??
                                                       ''),
-                                              buildLabelValueRow('Coin',
-                                                  order.coin?.toString() ?? ''),
-                                              buildLabelValueRow(
-                                                  'Tax Percent',
-                                                  order.taxPercent
-                                                          ?.toString() ??
-                                                      ''),
-                                              buildLabelValueRow('Courier Name',
-                                                  order.courierName ?? ''),
-                                              buildLabelValueRow('Order Type',
-                                                  order.orderType ?? ''),
                                               buildLabelValueRow('Payment Bank',
                                                   order.paymentBank ?? ''),
+                                              buildLabelValueRow(
+                                                'Payment Date Time',
+                                                order.paymentDateTime != null
+                                                    ? accountsProvider
+                                                        .formatDateTime(order
+                                                            .paymentDateTime!)
+                                                    : '',
+                                              ),
                                             ],
                                           ),
                                         ),
-                                        const SizedBox(width: 12.0),
+                                        const SizedBox(width: 35.0),
                                         Flexible(
                                           child: Column(
                                             crossAxisAlignment:
                                                 CrossAxisAlignment.start,
                                             children: [
+                                              Row(
+                                                mainAxisAlignment:
+                                                    MainAxisAlignment.start,
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.center,
+                                                children: [
+                                                  const Text(
+                                                    'Delivery Details:',
+                                                    style: TextStyle(
+                                                      fontWeight:
+                                                          FontWeight.bold,
+                                                      fontSize: 12.0,
+                                                      color:
+                                                          AppColors.primaryBlue,
+                                                    ),
+                                                  ),
+                                                  const SizedBox(
+                                                      width:
+                                                          4.0), // Add spacing between the text and the icon
+                                                  IconButton(
+                                                    icon: const Icon(
+                                                      Icons.edit,
+                                                      size:
+                                                          16, // Smaller icon size
+                                                      color:
+                                                          AppColors.primaryBlue,
+                                                    ),
+                                                    constraints:
+                                                        const BoxConstraints(), // Remove size constraints
+                                                    padding: EdgeInsets
+                                                        .zero, // Remove extra padding
+                                                    onPressed: () {
+                                                      showDialog(
+                                                        context: context,
+                                                        builder: (context) =>
+                                                            EditDeliveryDetailsDialog(
+                                                                order: order),
+                                                      );
+                                                    },
+                                                  ),
+                                                ],
+                                              ),
+                                              buildLabelValueRow('Courier Name',
+                                                  order.courierName ?? ''),
                                               buildLabelValueRow(
-                                                  'Discount Amount',
-                                                  order.discountAmount
-                                                          ?.toString() ??
-                                                      ''),
-                                              buildLabelValueRow(
-                                                  'Discount Scheme',
-                                                  order.discountScheme ?? ''),
-                                              buildLabelValueRow(
-                                                  'Agent', order.agent ?? ''),
-                                              buildLabelValueRow(
-                                                  'Notes', order.notes ?? ''),
-                                              buildLabelValueRow(
-                                                  'Marketplace',
-                                                  order.marketplace?.name ??
-                                                      ''),
-                                              buildLabelValueRow(
-                                                  'Filter', order.filter ?? ''),
+                                                  'Tracking Status',
+                                                  order.trackingStatus ?? ''),
                                               buildLabelValueRow(
                                                 'Expected Delivery Date',
                                                 order.expectedDeliveryDate !=
@@ -434,80 +569,267 @@ class _AccountsPageState extends State<AccountsPage> {
                                                   'Preferred Courier',
                                                   order.preferredCourier ?? ''),
                                               buildLabelValueRow(
-                                                'Payment Date Time',
-                                                order.paymentDateTime != null
-                                                    ? accountsProvider
-                                                        .formatDateTime(order
-                                                            .paymentDateTime!)
-                                                    : '',
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                        const SizedBox(width: 12.0),
-                                        Flexible(
-                                          child: Column(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
-                                            children: [
-                                              buildLabelValueRow(
                                                   'Delivery Term',
                                                   order.deliveryTerm ?? ''),
-                                              buildLabelValueRow(
-                                                  'Transaction Number',
-                                                  order.transactionNumber ??
-                                                      ''),
-                                              buildLabelValueRow(
-                                                  'Micro Dealer Order',
-                                                  order.microDealerOrder ?? ''),
-                                              buildLabelValueRow(
-                                                  'Fulfillment Type',
-                                                  order.fulfillmentType ?? ''),
-                                              buildLabelValueRow(
-                                                  'No. of Boxes',
-                                                  order.numberOfBoxes
-                                                          ?.toString() ??
-                                                      ''),
+                                              const SizedBox(height: 7.0),
+                                              Row(
+                                                mainAxisAlignment:
+                                                    MainAxisAlignment.start,
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.center,
+                                                children: [
+                                                  const Text(
+                                                    'Order Specification:',
+                                                    style: TextStyle(
+                                                      fontWeight:
+                                                          FontWeight.bold,
+                                                      fontSize: 12.0,
+                                                      color:
+                                                          AppColors.primaryBlue,
+                                                    ),
+                                                  ),
+                                                  const SizedBox(
+                                                      width:
+                                                          4.0), // Add spacing between the text and the icon
+                                                  IconButton(
+                                                    icon: const Icon(
+                                                      Icons.edit,
+                                                      size:
+                                                          16, // Smaller icon size
+                                                      color:
+                                                          AppColors.primaryBlue,
+                                                    ),
+                                                    constraints:
+                                                        const BoxConstraints(), // Remove size constraints
+                                                    padding: EdgeInsets
+                                                        .zero, // Remove extra padding
+                                                    onPressed: () {
+                                                      showDialog(
+                                                        context: context,
+                                                        builder: (context) =>
+                                                            EditOrderSpecificationDialog(
+                                                                order: order),
+                                                      );
+                                                    },
+                                                  ),
+                                                ],
+                                              ),
                                               buildLabelValueRow(
                                                   'Total Quantity',
                                                   order.totalQuantity
                                                           ?.toString() ??
                                                       ''),
                                               buildLabelValueRow(
+                                                  'No. of Boxes',
+                                                  order.numberOfBoxes
+                                                          ?.toString() ??
+                                                      ''),
+                                              buildLabelValueRow(
                                                   'SKU Qty',
                                                   order.skuQty?.toString() ??
                                                       ''),
+                                              const SizedBox(height: 7.0),
+                                              Row(
+                                                mainAxisAlignment:
+                                                    MainAxisAlignment.start,
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.center,
+                                                children: [
+                                                  const Text(
+                                                    'Order Dimention:',
+                                                    style: TextStyle(
+                                                      fontWeight:
+                                                          FontWeight.bold,
+                                                      fontSize: 12.0,
+                                                      color:
+                                                          AppColors.primaryBlue,
+                                                    ),
+                                                  ),
+                                                  const SizedBox(
+                                                      width:
+                                                          4.0), // Add spacing between the text and the icon
+                                                  IconButton(
+                                                    icon: const Icon(
+                                                      Icons.edit,
+                                                      size:
+                                                          16, // Smaller icon size
+                                                      color:
+                                                          AppColors.primaryBlue,
+                                                    ),
+                                                    constraints:
+                                                        const BoxConstraints(), // Remove size constraints
+                                                    padding: EdgeInsets
+                                                        .zero, // Remove extra padding
+                                                    onPressed: () {
+                                                      showDialog(
+                                                        context: context,
+                                                        builder: (context) =>
+                                                            EditDimensionsDialog(
+                                                                order: order),
+                                                      );
+                                                    },
+                                                  ),
+                                                ],
+                                              ),
                                               buildLabelValueRow(
-                                                  'Calc Entry No.',
-                                                  order.calcEntryNumber ?? ''),
-                                              buildLabelValueRow('Currency',
-                                                  order.currency ?? ''),
+                                                'Dimensions',
+                                                '${order.length?.toString() ?? ''} x ${order.breadth?.toString() ?? ''} x ${order.height?.toString() ?? ''}',
+                                              ),
                                             ],
                                           ),
                                         ),
-                                        const SizedBox(width: 12.0),
+                                        const SizedBox(width: 26.0),
                                         Flexible(
                                           child: Column(
                                             crossAxisAlignment:
                                                 CrossAxisAlignment.start,
                                             children: [
-                                              buildLabelValueRow(
-                                                'Dimensions',
-                                                '${order.length?.toString() ?? ''} x ${order.breadth?.toString() ?? ''} x ${order.height?.toString() ?? ''}',
+                                              Row(
+                                                mainAxisAlignment:
+                                                    MainAxisAlignment.start,
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.center,
+                                                children: [
+                                                  const Text(
+                                                    'Discount Info:',
+                                                    style: TextStyle(
+                                                      fontWeight:
+                                                          FontWeight.bold,
+                                                      fontSize: 12.0,
+                                                      color:
+                                                          AppColors.primaryBlue,
+                                                    ),
+                                                  ),
+                                                  const SizedBox(
+                                                      width:
+                                                          4.0), // Add spacing between the text and the icon
+                                                  IconButton(
+                                                    icon: const Icon(
+                                                      Icons.edit,
+                                                      size:
+                                                          16, // Smaller icon size
+                                                      color:
+                                                          AppColors.primaryBlue,
+                                                    ),
+                                                    constraints:
+                                                        const BoxConstraints(), // Remove size constraints
+                                                    padding: EdgeInsets
+                                                        .zero, // Remove extra padding
+                                                    onPressed: () {
+                                                      showDialog(
+                                                        context: context,
+                                                        builder: (context) =>
+                                                            EditDiscountDialog(
+                                                                order: order),
+                                                      );
+                                                    },
+                                                  ),
+                                                ],
                                               ),
                                               buildLabelValueRow(
-                                                  'Tracking Status',
-                                                  order.trackingStatus ?? ''),
-                                              const SizedBox(
-                                                height: 7,
+                                                  'Discount Amount',
+                                                  order.discountAmount
+                                                          ?.toString() ??
+                                                      ''),
+                                              buildLabelValueRow(
+                                                  'Discount Scheme',
+                                                  order.discountScheme ?? ''),
+                                              const SizedBox(height: 7.0),
+                                              Row(
+                                                mainAxisAlignment:
+                                                    MainAxisAlignment.start,
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.center,
+                                                children: [
+                                                  const Text(
+                                                    'Additional Info:',
+                                                    style: TextStyle(
+                                                      fontWeight:
+                                                          FontWeight.bold,
+                                                      fontSize: 12.0,
+                                                      color:
+                                                          AppColors.primaryBlue,
+                                                    ),
+                                                  ),
+                                                  const SizedBox(
+                                                      width:
+                                                          4.0), // Add spacing between the text and the icon
+                                                  IconButton(
+                                                    icon: const Icon(
+                                                      Icons.edit,
+                                                      size:
+                                                          16, // Smaller icon size
+                                                      color:
+                                                          AppColors.primaryBlue,
+                                                    ),
+                                                    constraints:
+                                                        const BoxConstraints(), // Remove size constraints
+                                                    padding: EdgeInsets
+                                                        .zero, // Remove extra padding
+                                                    onPressed: () {
+                                                      showDialog(
+                                                        context: context,
+                                                        builder: (context) =>
+                                                            EditAdditionalInfoDialog(
+                                                                order: order),
+                                                      );
+                                                    },
+                                                  ),
+                                                ],
                                               ),
-                                              const Text(
-                                                'Customer Details:',
-                                                style: TextStyle(
-                                                    fontWeight: FontWeight.bold,
-                                                    fontSize: 12.0,
-                                                    color:
-                                                        AppColors.primaryBlue),
+                                              buildLabelValueRow(
+                                                  'Agent', order.agent ?? ''),
+                                              buildLabelValueRow(
+                                                  'Notes', order.notes ?? ''),
+                                              buildLabelValueRow('Coin',
+                                                  order.coin?.toString() ?? ''),
+                                              buildLabelValueRow(
+                                                  'Tax Percent',
+                                                  order.taxPercent
+                                                          ?.toString() ??
+                                                      ''),
+                                              const SizedBox(height: 7),
+                                              Row(
+                                                mainAxisAlignment:
+                                                    MainAxisAlignment.start,
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.center,
+                                                children: [
+                                                  const Text(
+                                                    'Customer Details:',
+                                                    style: TextStyle(
+                                                      fontWeight:
+                                                          FontWeight.bold,
+                                                      fontSize: 12.0,
+                                                      color:
+                                                          AppColors.primaryBlue,
+                                                    ),
+                                                  ),
+                                                  const SizedBox(
+                                                      width:
+                                                          4.0), // Add spacing between the text and the icon
+                                                  IconButton(
+                                                    icon: const Icon(
+                                                      Icons.edit,
+                                                      size:
+                                                          16, // Smaller icon size
+                                                      color:
+                                                          AppColors.primaryBlue,
+                                                    ),
+                                                    constraints:
+                                                        const BoxConstraints(), // Remove size constraints
+                                                    padding: EdgeInsets
+                                                        .zero, // Remove extra padding
+                                                    onPressed: () {
+                                                      showDialog(
+                                                        context: context,
+                                                        builder: (context) =>
+                                                            EditContactDialog(
+                                                                order: order),
+                                                      );
+                                                    },
+                                                  ),
+                                                ],
                                               ),
                                               buildLabelValueRow(
                                                 'Customer ID',
@@ -542,19 +864,61 @@ class _AccountsPageState extends State<AccountsPage> {
                                             ],
                                           ),
                                         ),
-                                        const SizedBox(width: 12.0),
+                                        const SizedBox(width: 21.0),
                                         Flexible(
                                           child: Column(
                                             crossAxisAlignment:
                                                 CrossAxisAlignment.start,
                                             children: [
-                                              const Text(
-                                                'Shipping Address:',
-                                                style: TextStyle(
-                                                    fontWeight: FontWeight.bold,
-                                                    fontSize: 12.0,
-                                                    color:
-                                                        AppColors.primaryBlue),
+                                              const SizedBox(
+                                                height: 7,
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                        const SizedBox(width: 50.0),
+                                        Flexible(
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              Row(
+                                                mainAxisSize: MainAxisSize
+                                                    .min, // Adjust to fit content
+                                                children: [
+                                                  const Text(
+                                                    'Shipping Address:',
+                                                    style: TextStyle(
+                                                      fontWeight:
+                                                          FontWeight.bold,
+                                                      fontSize: 12.0,
+                                                      color:
+                                                          AppColors.primaryBlue,
+                                                    ),
+                                                  ),
+                                                  const SizedBox(
+                                                      width:
+                                                          4.0), // Adjust spacing between text and icon
+                                                  IconButton(
+                                                    icon: const Icon(
+                                                      Icons.edit,
+                                                      size:
+                                                          16, // Smaller icon size
+                                                      color:
+                                                          AppColors.primaryBlue,
+                                                    ),
+                                                    constraints:
+                                                        const BoxConstraints(), // Remove size constraints
+                                                    onPressed: () {
+                                                      showDialog(
+                                                        context: context,
+                                                        builder: (context) =>
+                                                            EditShippingAddressDialog(
+                                                                order: order),
+                                                      );
+                                                    },
+                                                  ),
+                                                ],
                                               ),
                                               buildLabelValueRow(
                                                 'Address',
@@ -588,29 +952,76 @@ class _AccountsPageState extends State<AccountsPage> {
                                                         '',
                                               ),
                                               buildLabelValueRow(
-                                                  'Phone',
-                                                  order.shippingAddress?.phone
-                                                          ?.toString() ??
-                                                      ''),
-                                              buildLabelValueRow(
-                                                  'Email',
-                                                  order.shippingAddress
-                                                          ?.email ??
-                                                      ''),
-                                              buildLabelValueRow(
-                                                  'Country Code',
-                                                  order.shippingAddress
-                                                          ?.countryCode ??
-                                                      ''),
-                                              const SizedBox(height: 8.0),
-                                              const Text(
-                                                'Billing Address:',
-                                                style: TextStyle(
-                                                    fontWeight: FontWeight.bold,
-                                                    fontSize: 12.0,
-                                                    color:
-                                                        AppColors.primaryBlue),
+                                                'Phone',
+                                                order.shippingAddress?.phone
+                                                        ?.toString() ??
+                                                    '',
                                               ),
+                                              buildLabelValueRow(
+                                                'Email',
+                                                order.shippingAddress?.email ??
+                                                    '',
+                                              ),
+                                              buildLabelValueRow(
+                                                'Country Code',
+                                                order.shippingAddress
+                                                        ?.countryCode ??
+                                                    '',
+                                              ),
+                                              buildLabelValueRow(
+                                                'Pin Code',
+                                                order.shippingAddress?.pincode
+                                                        ?.toString() ??
+                                                    '',
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                        const SizedBox(width: 50.0),
+                                        Flexible(
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              // Row to place 'Billing Address' and the edit icon side by side
+                                              Row(
+                                                children: [
+                                                  const Text(
+                                                    'Billing Address:',
+                                                    style: TextStyle(
+                                                      fontWeight:
+                                                          FontWeight.bold,
+                                                      fontSize: 12.0,
+                                                      color:
+                                                          AppColors.primaryBlue,
+                                                    ),
+                                                  ),
+                                                  const SizedBox(
+                                                      width:
+                                                          8.0), // Add some space between the text and icon
+                                                  IconButton(
+                                                    icon: const Icon(
+                                                      Icons.edit,
+                                                      size:
+                                                          16, // Smaller icon size
+                                                      color:
+                                                          AppColors.primaryBlue,
+                                                    ),
+                                                    constraints:
+                                                        const BoxConstraints(), // Remove size constraints
+                                                    onPressed: () {
+                                                      showDialog(
+                                                        context: context,
+                                                        builder: (context) =>
+                                                            EditBillingAddressDialog(
+                                                                order: order),
+                                                      );
+                                                    },
+                                                  ),
+                                                ],
+                                              ),
+
+                                              // Build the other label-value rows
                                               buildLabelValueRow(
                                                 'Address',
                                                 [
@@ -654,6 +1065,13 @@ class _AccountsPageState extends State<AccountsPage> {
                                                   order.billingAddress
                                                           ?.countryCode ??
                                                       ''),
+
+                                              buildLabelValueRow(
+                                                'Pin Code',
+                                                order.shippingAddress?.pincode
+                                                        ?.toString() ??
+                                                    '',
+                                              ),
                                             ],
                                           ),
                                         ),
