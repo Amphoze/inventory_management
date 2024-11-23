@@ -34,9 +34,11 @@ class AuthProvider with ChangeNotifier {
   String? assignedRole;
 
   bool get isAuthenticated => _isAuthenticated;
-  Future<Map<String, dynamic>> register(String email, String password) async {
+  Future<Map<String, dynamic>> register(String email, String password,
+      List<Map<String, dynamic>> assignedRoles) async {
     final url = Uri.parse('$_baseUrl/register');
 
+    log(assignedRoles.toString());
     try {
       final response = await http.post(
         url,
@@ -44,11 +46,18 @@ class AuthProvider with ChangeNotifier {
         body: json.encode({
           'email': email,
           'password': password,
+          'userRoles': assignedRoles,
         }),
       );
 
+      log({
+        'email': email,
+        'password': password,
+        'userRoles': assignedRoles,
+      }.toString());
+
       if (response.statusCode == 200) {
-        await _saveCredentials(email, password, '');
+        // await _saveCredentials(email, password, '');
         return {'success': true, 'data': json.decode(response.body)};
       } else if (response.statusCode == 400) {
         final errorResponse = json.decode(response.body);
@@ -706,7 +715,7 @@ class AuthProvider with ChangeNotifier {
     final email = prefs.getString('email');
     final password = prefs.getString('password');
     final userRole = prefs.getString('userRole');
-    
+
     assignedRole = userRole;
     return {
       'email': email,

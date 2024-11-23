@@ -736,26 +736,37 @@ class _BookPageState extends State<BookPage>
           ),
         ),
         const SizedBox(width: 20),
-        buildCell(order.freightCharge?.delhivery?.toString() ?? '', flex: 1),
+        buildCell(order.freightCharge?.delhivery!, order.totalAmount!, flex: 1),
         const SizedBox(width: 10),
-        buildCell(order.freightCharge?.shiprocket?.toString() ?? '', flex: 1),
+        buildCell(order.freightCharge?.shiprocket!, order.totalAmount!,
+            flex: 1),
       ],
     );
   }
 
-  Widget buildCell(String content, {int flex = 1}) {
+  Widget buildCell(double? freightCharge, double total, {int flex = 1}) {
+    final percent =
+        double.parse(((freightCharge! / total) * 100).toStringAsFixed(2));
     return Flexible(
       flex: flex,
       child: Container(
         padding: const EdgeInsets.all(6.0),
-        child: Row(
+        child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Text(
-              "Rs. $content",
+              "Rs. $freightCharge",
               style: const TextStyle(
                 color: AppColors.grey,
                 fontWeight: FontWeight.bold,
+                fontSize: 15,
+              ),
+            ),
+            Text(
+              percent > 20 ? "($percent %)" : "($percent %)",
+              style: TextStyle(
+                color:
+                    percent > 20 ? AppColors.cardsred : AppColors.primaryGreen,
                 fontSize: 15,
               ),
             ),

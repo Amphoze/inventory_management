@@ -280,6 +280,16 @@ class _BAApprovePageState extends State<BAApprovePage> {
                         itemCount: baApproveProvider.orders.length,
                         itemBuilder: (context, index) {
                           final order = baApproveProvider.orders[index];
+                          final percentDelhivery = double.parse(
+                              ((order.freightCharge!.delhivery! /
+                                          order.totalAmount!) *
+                                      100)
+                                  .toStringAsFixed(2));
+                          final percentShiprocket = double.parse(
+                              ((order.freightCharge!.shiprocket! /
+                                          order.totalAmount!) *
+                                      100)
+                                  .toStringAsFixed(2));
 
                           return Card(
                             surfaceTintColor: Colors.white,
@@ -737,6 +747,69 @@ class _BAApprovePageState extends State<BAApprovePage> {
                                                           ?.countryCode ??
                                                       ''),
                                             ],
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  Padding(
+                                    padding: const EdgeInsets.all(8.0),
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text.rich(
+                                          TextSpan(
+                                            text: "Delhivery: ",
+                                            children: [
+                                              TextSpan(
+                                                  text:
+                                                      "Rs. ${order.freightCharge!.delhivery} ",
+                                                  style: const TextStyle(
+                                                    fontWeight:
+                                                        FontWeight.normal,
+                                                  )),
+                                              TextSpan(
+                                                text: "($percentDelhivery %)",
+                                                style: TextStyle(
+                                                  color: percentDelhivery > 20
+                                                      ? AppColors.cardsred
+                                                      : AppColors.green,
+                                                  fontWeight: FontWeight.normal,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                          style: const TextStyle(
+                                            fontSize: 20,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                        Text.rich(
+                                          TextSpan(
+                                            text: "Shiprocket: ",
+                                            children: [
+                                              TextSpan(
+                                                text:
+                                                    "Rs. ${order.freightCharge!.shiprocket} ",
+                                                style: const TextStyle(
+                                                  fontWeight: FontWeight.normal,
+                                                ),
+                                              ),
+                                              TextSpan(
+                                                text: "($percentShiprocket %)",
+                                                style: TextStyle(
+                                                  color: percentShiprocket > 20
+                                                      ? AppColors.cardsred
+                                                      : AppColors.green,
+                                                  fontWeight: FontWeight.normal,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                          style: const TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 20,
                                           ),
                                         ),
                                       ],

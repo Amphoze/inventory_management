@@ -126,7 +126,6 @@ class _PickerPageState extends State<PickerPage> {
                   //           final provider = Provider.of<PickerProvider>(
                   //               context,
                   //               listen: false);
-
                   //           // Collect selected order IDs
                   //           List<String> selectedOrderIds = provider.orders
                   //               .asMap()

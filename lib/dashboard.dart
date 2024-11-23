@@ -7,6 +7,7 @@ import 'package:inventory_management/accounts_page.dart';
 import 'package:inventory_management/ba_approve_page.dart';
 import 'package:inventory_management/cancelled_orders.dart';
 import 'package:inventory_management/combo_upload.dart';
+import 'package:inventory_management/create_account.dart';
 import 'package:inventory_management/inventory_upload.dart';
 import 'package:inventory_management/invoice_page.dart';
 import 'package:inventory_management/book_page.dart';
@@ -171,6 +172,20 @@ class _DashboardPageState extends State<DashboardPage> {
                 _buildMasterSection(isSmallScreen),
                 _buildAccountSection(isSmallScreen),
                 _buildUploadSection(isSmallScreen),
+                (userRole == 'superAdmin' || userRole == 'admin')
+                    ? _buildDrawerItem(
+                        icon: Icons.person,
+                        text: 'Create Account',
+                        isSelected: selectedDrawerItem == 'Create Account',
+                        onTap: () {
+                          Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (context) =>
+                                      const CreateAccountPage()));
+                        },
+                      )
+                    : Container(),
                 _buildDrawerItem(
                   icon: Icons.logout,
                   text: 'Logout',
@@ -294,7 +309,7 @@ class _DashboardPageState extends State<DashboardPage> {
         tilePadding: const EdgeInsets.symmetric(horizontal: 20.0),
         collapsedBackgroundColor: [
           "Orders Page",
-          "BA Approval",
+          "HOD Approval",
           "Accounts Page",
           "Book Page",
           "Picker Page",
@@ -349,12 +364,10 @@ class _DashboardPageState extends State<DashboardPage> {
             padding: const EdgeInsets.only(left: 10.0),
             child: _buildDrawerItem(
               icon: Icons.account_box_rounded,
-              text: 'BA Approval',
-              isSelected: selectedDrawerItem == 'BA Approval',
-              onTap: () => userRole == 'account' ||
-                      userRole == 'superAdmin' ||
-                      userRole == 'admin'
-                  ? _onDrawerItemTapped('BA Approval', isSmallScreen)
+              text: 'HOD Approval',
+              isSelected: selectedDrawerItem == 'HOD Approval',
+              onTap: () => userRole == 'superAdmin' || userRole == 'admin'
+                  ? _onDrawerItemTapped('HOD Approval', isSmallScreen)
                   : ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
                           content: Text(
@@ -1009,7 +1022,7 @@ class _DashboardPageState extends State<DashboardPage> {
         return const ManageInventoryPage();
       case 'Orders Page':
         return const OrdersNewPage();
-      case 'BA Approval':
+      case 'HOD Approval':
         return const BAApprovePage();
       case 'Accounts Page':
         return const AccountsPage();
