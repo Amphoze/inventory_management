@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:inventory_management/Custom-Files/colors.dart';
@@ -191,6 +193,9 @@ class CreateAccountFormState extends State<CreateAccountForm> {
   bool _isLoading = false;
   bool _isSendingOtp = false;
   bool _isVerifyingOtp = false;
+  bool _canResendOtp = false;
+  int _remainingSeconds = 60;
+  Timer? _timer;
 
   String? _username;
   String? _email;
@@ -201,11 +206,14 @@ class CreateAccountFormState extends State<CreateAccountForm> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _usernameController = TextEditingController();
 
+  List<Map<String, dynamic>> assignedRoles = [];
+
   @override
   void dispose() {
     _otpController.dispose();
     _emailController.dispose();
     _usernameController.dispose();
+    _timer?.cancel();
     super.dispose();
   }
 
@@ -230,51 +238,54 @@ class CreateAccountFormState extends State<CreateAccountForm> {
     return emailRegExp.hasMatch(email);
   }
 
-  // String? _username;
-  // String? _email;
-  // String? _password;
-  // String? _confirmPassword;
-  // bool _isOtpEnabled = false;
-  // bool _isOtpSent = false;
-  // bool _isOtpVerified = false;
-
-  // final TextEditingController _otpController = TextEditingController();
-
-  // @override
-  // void dispose() {
-  //   _otpController.dispose();
-  //   super.dispose();
-  // }
-
-  // void _checkIfOtpCanBeEnabled() {
-  //   setState(() {
-  //     _isOtpEnabled = _username != null &&
-  //         _username!.isNotEmpty &&
-  //         _email != null &&
-  //         _email!.isNotEmpty &&
-  //         _password != null &&
-  //         _password!.isNotEmpty &&
-  //         _password == _confirmPassword;
-  //   });
-  // }
-
   Future<void> _sendOtp() async {
     if (!_isOtpEnabled) return;
 
+    setState(() {
+      _isSendingOtp = true;
+      _canResendOtp = false;
+      _remainingSeconds = 60;
+    });
+
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    assignedRoles = selectedRoles
+        .map((role) => {
+              'roleName': role,
+              'isAssigned': true,
+            })
+        .toList();
     try {
-      await authProvider.register(_email!, _password!);
+      await authProvider.register(_email!, _password!, assignedRoles);
       setState(() {
         _isOtpSent = true;
       });
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('OTP sent successfully!')),
       );
+      _startResendTimer();
     } catch (error) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Failed to send OTP: $error')),
       );
+    } finally {
+      setState(() {
+        _isSendingOtp = false;
+      });
     }
+  }
+
+  void _startResendTimer() {
+    _timer?.cancel();
+    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      setState(() {
+        if (_remainingSeconds > 0) {
+          _remainingSeconds--;
+        } else {
+          _canResendOtp = true;
+          timer.cancel();
+        }
+      });
+    });
   }
 
   Future<void> _verifyOtp() async {
@@ -282,11 +293,9 @@ class CreateAccountFormState extends State<CreateAccountForm> {
 
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     try {
-      // Call the OTP verification method and await the result
       final result = await authProvider.registerOtp(
           _email!, _otpController.text, _password!);
 
-      // Check if the response indicates success
       if (result['success'] == true) {
         setState(() {
           _isOtpVerified = true;
@@ -295,10 +304,10 @@ class CreateAccountFormState extends State<CreateAccountForm> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('OTP verified successfully!')),
         );
+        Navigator.pop(context);
       } else {
-        // Handle the case where OTP verification fails
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Incorrect OTP. Please try again.')),
+          const SnackBar(content: Text('Incorrect OTP. Please try again.')),
         );
       }
     } catch (error) {
@@ -308,279 +317,388 @@ class CreateAccountFormState extends State<CreateAccountForm> {
     }
   }
 
+  final List<String> roles = [
+    'superAdmin',
+    'admin',
+    'confirmer',
+    'booker',
+    'account',
+    'picker',
+    'packer',
+    'checker',
+    'racker',
+    'manifest',
+  ];
+
+  final List<String> selectedRoles = [];
+
+  final Map<String, String> roleDisplayNames = {
+    'superAdmin': 'Super Admin',
+    'admin': 'Admin',
+    'confirmer': 'Confirmer',
+    'booker': 'Booker',
+    'account': 'Account',
+    'picker': 'Picker',
+    'packer': 'Packer',
+    'checker': 'Checker',
+    'racker': 'Racker',
+    'manifest': 'Manifest',
+  };
+
+  void _showMultiSelectDialog() async {
+    final List<String>? selected = await showDialog<List<String>>(
+      context: context,
+      builder: (BuildContext context) {
+        final List<String> tempSelectedRoles = List.from(selectedRoles);
+
+        return StatefulBuilder(
+          builder: (BuildContext context, StateSetter setState) {
+            return AlertDialog(
+              title: const Text("Select Roles"),
+              content: SingleChildScrollView(
+                child: Column(
+                  children: roles.map((role) {
+                    return CheckboxListTile(
+                      title: Text(roleDisplayNames[role] ?? role),
+                      value: tempSelectedRoles.contains(role),
+                      onChanged: (bool? value) {
+                        setState(() {
+                          if (value == true) {
+                            tempSelectedRoles.add(role);
+                          } else {
+                            tempSelectedRoles.remove(role);
+                          }
+                        });
+                      },
+                    );
+                  }).toList(),
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context, null),
+                  child: const Text("Cancel"),
+                ),
+                TextButton(
+                  onPressed: () => Navigator.pop(context, tempSelectedRoles),
+                  child: const Text("OK"),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+
+    if (selected != null) {
+      setState(() {
+        selectedRoles.clear();
+        selectedRoles.addAll(selected);
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(50.0),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              const Text(
-                "Create Account",
-                style: TextStyle(
-                  fontSize: 32,
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.primaryBlue,
-                ),
-              ),
-              const SizedBox(height: 20),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  IconButton(
-                    icon: const Icon(FontAwesomeIcons.facebook,
-                        color: AppColors.facebookColor),
-                    onPressed: () {},
+        padding: const EdgeInsets.symmetric(vertical: 30, horizontal: 50),
+        child: SingleChildScrollView(
+          child: Form(
+            key: _formKey,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                const Text(
+                  "Create Account",
+                  style: TextStyle(
+                    fontSize: 32,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.primaryBlue,
                   ),
-                  const SizedBox(width: 10),
-                  IconButton(
-                    icon: const Icon(FontAwesomeIcons.google,
-                        color: AppColors.googleColor),
-                    onPressed: () {},
-                  ),
-                  const SizedBox(width: 10),
-                  IconButton(
-                    icon: const Icon(FontAwesomeIcons.linkedin,
-                        color: AppColors.linkedinColor),
-                    onPressed: () {},
-                  ),
-                ],
-              ),
-              const SizedBox(height: 20),
-              const Text("or use your email for registration:"),
-              const SizedBox(height: 20),
-              TextFormField(
-                controller: _usernameController,
-                decoration: const InputDecoration(
-                  prefixIcon: Icon(Icons.person),
-                  labelText: "Username",
-                  border: OutlineInputBorder(),
                 ),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please enter your username';
-                  }
-                  return null;
-                },
-                onChanged: (value) {
-                  _username = value;
-                  _checkIfOtpCanBeEnabled();
-                },
-              ),
-              const SizedBox(height: 10),
-              TextFormField(
-                controller: _emailController,
-                decoration: InputDecoration(
-                  prefixIcon: const Icon(Icons.mail),
-                  labelText: "Email",
-                  border: const OutlineInputBorder(),
-                  suffixIcon: _email != null && _email!.isNotEmpty
-                      ? Icon(
-                          _isValidEmail(_email!)
-                              ? Icons.check_circle
-                              : Icons.cancel,
-                          color: _isValidEmail(_email!)
-                              ? Colors.green
-                              : Colors.red,
-                        )
-                      : null,
-                ),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please enter your email';
-                  }
-                  if (!_isValidEmail(value)) {
-                    return 'Please enter a valid email address';
-                  }
-                  return null;
-                },
-                onChanged: (value) {
-                  _email = value;
-                  _checkIfOtpCanBeEnabled();
-                },
-              ),
-              const SizedBox(height: 10),
-              TextFormField(
-                obscureText: _obscurePassword,
-                decoration: InputDecoration(
-                  prefixIcon: const Icon(Icons.lock),
-                  labelText: "Password",
-                  border: const OutlineInputBorder(),
-                  suffixIcon: IconButton(
-                    icon: Icon(
-                      _obscurePassword
-                          ? Icons.visibility
-                          : Icons.visibility_off,
-                      color: AppColors.grey,
+                const SizedBox(height: 20),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    IconButton(
+                      icon: const Icon(FontAwesomeIcons.facebook,
+                          color: AppColors.facebookColor),
+                      onPressed: () {},
                     ),
-                    onPressed: () {
-                      setState(() {
-                        _obscurePassword = !_obscurePassword;
-                      });
-                    },
-                  ),
-                ),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please enter your password';
-                  }
-                  return null;
-                },
-                onChanged: (value) {
-                  _password = value;
-                  _checkIfOtpCanBeEnabled();
-                },
-              ),
-              const SizedBox(height: 10),
-              TextFormField(
-                obscureText: _obscureConfirmPassword,
-                decoration: InputDecoration(
-                  prefixIcon: const Icon(Icons.lock),
-                  labelText: "Confirm Password",
-                  border: const OutlineInputBorder(),
-                  suffixIcon: IconButton(
-                    icon: Icon(
-                      _obscureConfirmPassword
-                          ? Icons.visibility
-                          : Icons.visibility_off,
-                      color: AppColors.grey,
+                    const SizedBox(width: 10),
+                    IconButton(
+                      icon: const Icon(FontAwesomeIcons.google,
+                          color: AppColors.googleColor),
+                      onPressed: () {},
                     ),
-                    onPressed: () {
-                      setState(() {
-                        _obscureConfirmPassword = !_obscureConfirmPassword;
-                      });
-                    },
-                  ),
+                    const SizedBox(width: 10),
+                    IconButton(
+                      icon: const Icon(FontAwesomeIcons.linkedin,
+                          color: AppColors.linkedinColor),
+                      onPressed: () {},
+                    ),
+                  ],
                 ),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please confirm your password';
-                  }
-                  if (value != _password) {
-                    return 'Passwords do not match';
-                  }
-                  return null;
-                },
-                onChanged: (value) {
-                  _confirmPassword = value;
-                  _checkIfOtpCanBeEnabled();
-                },
-              ),
-              const SizedBox(height: 20),
-              Row(
-                children: [
-                  Expanded(
-                    child: TextFormField(
-                      controller: _otpController,
-                      enabled: _isOtpEnabled,
-                      decoration: const InputDecoration(
-                        prefixIcon: Icon(Icons.sms),
-                        labelText: "OTP",
-                        border: OutlineInputBorder(),
+                const SizedBox(height: 20),
+                const Text("or use your email for registration:"),
+                const SizedBox(height: 20),
+                TextFormField(
+                  controller: _usernameController,
+                  decoration: const InputDecoration(
+                    prefixIcon: Icon(Icons.person),
+                    labelText: "Username",
+                    border: OutlineInputBorder(),
+                  ),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Please enter your username';
+                    }
+                    return null;
+                  },
+                  onChanged: (value) {
+                    _username = value;
+                    _checkIfOtpCanBeEnabled();
+                  },
+                ),
+                const SizedBox(height: 10),
+                GestureDetector(
+                  onTap: _showMultiSelectDialog,
+                  child: InputDecorator(
+                    decoration: const InputDecoration(
+                      labelText: "Select Roles",
+                      border: OutlineInputBorder(),
+                    ),
+                    child: Text(
+                      selectedRoles.isEmpty
+                          ? "No roles selected"
+                          : selectedRoles
+                              .map((role) => roleDisplayNames[role] ?? role)
+                              .join(', '),
+                      style: TextStyle(
+                        color:
+                            selectedRoles.isEmpty ? Colors.grey : Colors.black,
                       ),
-                      validator: (value) {
-                        if (_isOtpEnabled && (value == null || value.isEmpty)) {
-                          return 'Please enter the OTP';
-                        }
-                        return null;
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 10),
+                TextFormField(
+                  controller: _emailController,
+                  decoration: InputDecoration(
+                    prefixIcon: const Icon(Icons.mail),
+                    labelText: "Email",
+                    border: const OutlineInputBorder(),
+                    suffixIcon: _email != null && _email!.isNotEmpty
+                        ? Icon(
+                            _isValidEmail(_email!)
+                                ? Icons.check_circle
+                                : Icons.cancel,
+                            color: _isValidEmail(_email!)
+                                ? Colors.green
+                                : Colors.red,
+                          )
+                        : null,
+                  ),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Please enter your email';
+                    }
+                    if (!_isValidEmail(value)) {
+                      return 'Please enter a valid email address';
+                    }
+                    return null;
+                  },
+                  onChanged: (value) {
+                    _email = value;
+                    _checkIfOtpCanBeEnabled();
+                  },
+                ),
+                const SizedBox(height: 10),
+                TextFormField(
+                  obscureText: _obscurePassword,
+                  decoration: InputDecoration(
+                    prefixIcon: const Icon(Icons.lock),
+                    labelText: "Password",
+                    border: const OutlineInputBorder(),
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        _obscurePassword
+                            ? Icons.visibility
+                            : Icons.visibility_off,
+                        color: AppColors.grey,
+                      ),
+                      onPressed: () {
+                        setState(() {
+                          _obscurePassword = !_obscurePassword;
+                        });
                       },
                     ),
                   ),
-                  const SizedBox(width: 10),
-                  ElevatedButton(
-                    onPressed: _isOtpEnabled
-                        ? (_isOtpSent ? _verifyOtp : _sendOtp)
-                        : null,
-                    style: ElevatedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(
-                          vertical: 20.0, horizontal: 20.0),
-                      backgroundColor: AppColors.primaryBlue,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8.0),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Please enter your password';
+                    }
+                    return null;
+                  },
+                  onChanged: (value) {
+                    _password = value;
+                    _checkIfOtpCanBeEnabled();
+                  },
+                ),
+                const SizedBox(height: 10),
+                TextFormField(
+                  obscureText: _obscureConfirmPassword,
+                  decoration: InputDecoration(
+                    prefixIcon: const Icon(Icons.lock),
+                    labelText: "Confirm Password",
+                    border: const OutlineInputBorder(),
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        _obscureConfirmPassword
+                            ? Icons.visibility
+                            : Icons.visibility_off,
+                        color: AppColors.grey,
+                      ),
+                      onPressed: () {
+                        setState(() {
+                          _obscureConfirmPassword = !_obscureConfirmPassword;
+                        });
+                      },
+                    ),
+                  ),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Please confirm your password';
+                    }
+                    if (value != _password) {
+                      return 'Passwords do not match';
+                    }
+                    return null;
+                  },
+                  onChanged: (value) {
+                    _confirmPassword = value;
+                    _checkIfOtpCanBeEnabled();
+                  },
+                ),
+                const SizedBox(height: 20),
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextFormField(
+                        controller: _otpController,
+                        enabled: _isOtpEnabled,
+                        decoration: const InputDecoration(
+                          prefixIcon: Icon(Icons.sms),
+                          labelText: "OTP",
+                          border: OutlineInputBorder(),
+                        ),
+                        validator: (value) {
+                          if (_isOtpEnabled &&
+                              (value == null || value.isEmpty)) {
+                            return 'Please enter the OTP';
+                          }
+                          return null;
+                        },
                       ),
                     ),
-                    child: _isSendingOtp
-                        ? const SizedBox(
-                            height: 20,
-                            width: 20,
-                            child: CircularProgressIndicator(
-                              valueColor: AlwaysStoppedAnimation<Color>(
-                                  AppColors.white),
-                            ),
-                          )
-                        : Text(_isOtpSent ? "Verify" : "Send OTP"),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 20),
-              ElevatedButton(
-                onPressed: _isOtpVerified && !_isVerifyingOtp
-                    ? () {
-                        if (_formKey.currentState!.validate()) {
-                          _register();
-                        }
-                      }
-                    : null,
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(
-                      vertical: 20.0, horizontal: 40.0),
-                  backgroundColor: AppColors.primaryBlue,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8.0),
-                  ),
-                ),
-                child: _isVerifyingOtp
-                    ? const SizedBox(
-                        height: 20,
-                        width: 20,
-                        child: CircularProgressIndicator(
-                          valueColor:
-                              AlwaysStoppedAnimation<Color>(AppColors.white),
+                    const SizedBox(width: 10),
+                    ElevatedButton(
+                      onPressed: (_isOtpEnabled && !_isOtpSent) ||
+                              (_isOtpSent && _canResendOtp)
+                          ? _sendOtp
+                          : null,
+                      style: ElevatedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(
+                            vertical: 20.0, horizontal: 20.0),
+                        backgroundColor: AppColors.primaryBlue,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8.0),
                         ),
-                      )
-                    : _isLoading
-                        ? const SizedBox(
-                            height: 20,
-                            width: 20,
-                            child: CircularProgressIndicator(
-                              valueColor: AlwaysStoppedAnimation<Color>(
-                                  AppColors.white),
-                            ),
-                          )
-                        : const Text("Sign Up"),
-              ),
-            ],
+                      ),
+                      child: _isSendingOtp
+                          ? const SizedBox(
+                              height: 20,
+                              width: 20,
+                              child: CircularProgressIndicator(
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                    AppColors.white),
+                              ),
+                            )
+                          : Text(_isOtpSent
+                              ? _canResendOtp
+                                  ? "Resend OTP"
+                                  : "Resend in ${_remainingSeconds}s"
+                              : "Send OTP"),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 20),
+                ElevatedButton(
+                  onPressed: _isOtpSent && !_isVerifyingOtp && !_isLoading
+                      ? () async {
+                          if (_formKey.currentState!.validate()) {
+                            setState(() {
+                              _isLoading = true;
+                            });
+                            await _verifyOtp();
+                            setState(() {
+                              _isLoading = false;
+                            });
+                          }
+                        }
+                      : null,
+                  style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(
+                        vertical: 20.0, horizontal: 40.0),
+                    backgroundColor: AppColors.primaryBlue,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8.0),
+                    ),
+                  ),
+                  child: _isLoading || _isVerifyingOtp
+                      ? const SizedBox(
+                          height: 20,
+                          width: 20,
+                          child: CircularProgressIndicator(
+                            valueColor:
+                                AlwaysStoppedAnimation<Color>(AppColors.white),
+                          ),
+                        )
+                      : const Text("Sign Up"),
+                ),
+              ],
+            ),
           ),
         ),
       ),
     );
   }
 
-  void _register() async {
-    final authProvider = Provider.of<AuthProvider>(context, listen: false);
-    if (_email != null && _password != null && _username != null) {
-      setState(() {
-        _isLoading = true;
-      });
-      final response = await authProvider.register(_email!, _password!);
-      setState(() {
-        _isLoading = false;
-      });
+  // void _register() async {
+  //   final authProvider = Provider.of<AuthProvider>(context, listen: false);
 
-      if (response['success']) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Account created successfully!')),
-        );
-        Navigator.pushNamed(context, '/login');
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(response['message'])),
-        );
-      }
-    }
-  }
+  //   if (_email != null && _password != null && _username != null) {
+  //     setState(() {
+  //       _isLoading = true;
+  //     });
+  //     final response =
+  //         await authProvider.register(_email!, _password!, assignedRoles);
+  //     setState(() {
+  //       _isLoading = false;
+  //     });
+
+  //     if (response['success']) {
+  //       ScaffoldMessenger.of(context).showSnackBar(
+  //         const SnackBar(content: Text('Account created successfully!')),
+  //       );
+  //       Navigator.pushNamed(context, '/login');
+  //     } else {
+  //       ScaffoldMessenger.of(context).showSnackBar(
+  //         SnackBar(content: Text(response['message'])),
+  //       );
+  //     }
+  //   }
+  // }
 }

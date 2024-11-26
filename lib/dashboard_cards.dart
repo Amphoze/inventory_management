@@ -76,7 +76,7 @@ class _DashboardCardsState extends State<DashboardCards> {
         return Column(
           children: [
             if (dashboardProvider.isLoading)
-              CircularProgressIndicator() // Show loader when data is loading
+              const CircularProgressIndicator() // Show loader when data is loading
             else if (dashboardProvider.errorMessage != null)
               Text(
                   'Error: ${dashboardProvider.errorMessage}') // Show error if there is one
@@ -100,7 +100,7 @@ class _DashboardCardsState extends State<DashboardCards> {
                         dashboardData.totalAmountToday as double,
                         dashboardData.totalAmountYesterday
                             as double), // Dynamic color based on increase/decrease
-                    chartData: [1.0, 0.9, 0.8, 0.7], // You can customize this
+                    chartData: const [1.0, 0.9, 0.8, 0.7], // You can customize this
                     width: threeCardWidth,
                     height: cardHeight,
                   ),
@@ -118,7 +118,7 @@ class _DashboardCardsState extends State<DashboardCards> {
                         dashboardData.totalOrderToday as double,
                         dashboardData.totalOrderYesterday
                             as double), // Dynamic color based on increase/decrease
-                    chartData: [1.0, 0.95, 0.85, 0.7], // Customize as needed
+                    chartData: const [1.0, 0.95, 0.85, 0.7], // Customize as needed
                     width: threeCardWidth,
                     height: cardHeight,
                   ),

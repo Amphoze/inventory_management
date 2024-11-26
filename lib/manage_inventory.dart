@@ -1,4 +1,5 @@
 import 'dart:convert'; // For JSON encoding/decoding
+import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:inventory_management/provider/combo_provider.dart';
 import 'package:inventory_management/provider/inventory_provider.dart';
@@ -30,6 +31,7 @@ class _ManageInventoryPageState extends State<ManageInventoryPage> {
   String? selectedProductName;
   int curentPage = 1;
   bool isloading = true;
+  final TextEditingController searchController = TextEditingController();
 
   @override
   void initState() {
@@ -41,6 +43,11 @@ class _ManageInventoryPageState extends State<ManageInventoryPage> {
 
       getDropValueForProduct();
       getDropValueForWarehouse(); // Fetch warehouse dropdown values
+    });
+
+    searchController.addListener(() {
+      log("Search text: ${searchController.text}");
+      context.read<ComboProvider>().addMoreProducts(searchController.text);
     });
   }
 
@@ -295,8 +302,12 @@ class _ManageInventoryPageState extends State<ManageInventoryPage> {
                         style: TextStyle(
                             fontWeight: FontWeight.bold, fontSize: 16)),
                     const SizedBox(height: 10),
+
                     DropdownSearch<String>(
                       items: comboProvider.products
+                          .where((product) => product.displayName
+                              ?.toLowerCase()
+                              .contains(searchController.text.toLowerCase()) ?? false)
                           .map((product) => product.displayName ?? 'Unknown')
                           .toList(),
                       onChanged: (String? newValue) {
@@ -309,16 +320,17 @@ class _ManageInventoryPageState extends State<ManageInventoryPage> {
                         });
                       },
                       selectedItem: selectedProductName,
-                      dropdownDecoratorProps: DropDownDecoratorProps(
+                      dropdownDecoratorProps: const DropDownDecoratorProps(
                         dropdownSearchDecoration: InputDecoration(
                           labelText: 'Search and Select Product',
                           border: OutlineInputBorder(),
                         ),
                       ),
-                      popupProps: const PopupProps.dialog(
+                      popupProps: PopupProps.dialog(
                         showSearchBox: true,
                         searchFieldProps: TextFieldProps(
-                          decoration: InputDecoration(
+                          controller: searchController,
+                          decoration: const InputDecoration(
                             labelText: 'Search Product',
                             border: OutlineInputBorder(),
                           ),

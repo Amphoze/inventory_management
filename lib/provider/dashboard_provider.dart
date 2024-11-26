@@ -7,7 +7,7 @@ import '../model/dashboard_model.dart';
 
 class DashboardProvider with ChangeNotifier {
   DashboardData? _dashboardData;
-  bool _isLoading = false;
+  final bool _isLoading = false;
   String? _errorMessage;
 
   DashboardData? get dashboardData => _dashboardData;

@@ -10,13 +10,13 @@ class OrderItemCard extends StatelessWidget {
   final Color cardColor;
 
   const OrderItemCard({
-    Key? key,
+    super.key,
     required this.item,
     required this.index,
     required this.courierName,
     required this.orderStatus,
     this.cardColor = AppColors.white,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -152,7 +152,8 @@ class OrderItemCard extends StatelessWidget {
         _buildInfoRow('EAN:', item.product?.ean ?? ''),
         _buildInfoRow('Product Grade:', item.product?.grade ?? ''),
         _buildInfoRow('Active:', item.product?.active?.toString() ?? ''),
-        _buildInfoRow('Label:', item.product?.label?.name.toString() ?? ''),
+        _buildInfoRow(
+            'Label SKU:', item.product?.label?.labelSku.toString() ?? ''),
         _buildInfoRow(
             'Category:', item.product?.category?.name.toString() ?? ''),
       ],
@@ -163,7 +164,7 @@ class OrderItemCard extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildInfoRow('Color:', item.product?.color ?? ''),
+        _buildInfoRow('Color:', item.product?.color!.name ?? ''),
         _buildInfoRow(
             'Net Weight:',
             item.product?.netWeight != null
@@ -174,7 +175,9 @@ class OrderItemCard extends StatelessWidget {
             item.product?.grossWeight != null
                 ? '${item.product!.grossWeight} kg'
                 : ''),
-        _buildInfoRow('Box Size:', item.product?.boxSize?.boxName ?? ''),
+        // _buildInfoRow('Box Size:', item.product?.boxSize?.boxName ?? ''),
+        _buildInfoRow('Outer Package Name:',
+            item.product?.outerPackage?.outerPackageName ?? ''),
         _buildInfoRow(
           'Variant Name:',
           item.product?.variantName ?? '',

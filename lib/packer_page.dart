@@ -118,6 +118,81 @@ class _PackerPageState extends State<PackerPage> {
                       ),
                     ),
                     const Spacer(),
+                    //   ElevatedButton(
+                    //   style: ElevatedButton.styleFrom(
+                    //     backgroundColor: AppColors.cardsred,
+                    //   ),
+                    //   onPressed: packerProvider.isCancel
+                    //       ? null // Disable button while loading
+                    //       : () async {
+                    //           final provider = Provider.of<PackerProvider>(
+                    //               context,
+                    //               listen: false);
+
+                    //           // Collect selected order IDs
+                    //           List<String> selectedOrderIds = provider.orders
+                    //               .asMap()
+                    //               .entries
+                    //               .where((entry) =>
+                    //                   provider.selectedProducts[entry.key])
+                    //               .map((entry) => entry.value.orderId)
+                    //               .toList();
+
+                    //           if (selectedOrderIds.isEmpty) {
+                    //             // Show an error message if no orders are selected
+                    //             ScaffoldMessenger.of(context).showSnackBar(
+                    //               const SnackBar(
+                    //                 content: Text('No orders selected'),
+                    //                 backgroundColor: AppColors.cardsred,
+                    //               ),
+                    //             );
+                    //           } else {
+                    //             // Set loading status to true before starting the operation
+                    //             provider.setCancelStatus(true);
+
+                    //             // Call confirmOrders method with selected IDs
+                    //             String resultMessage = await provider
+                    //                 .cancelOrders(context, selectedOrderIds);
+
+                    //             // Set loading status to false after operation completes
+                    //             provider.setCancelStatus(false);
+
+                    //             // Determine the background color based on the result
+                    //             Color snackBarColor;
+                    //             if (resultMessage.contains('success')) {
+                    //               snackBarColor =
+                    //                   AppColors.green; // Success: Green
+                    //             } else if (resultMessage.contains('error') ||
+                    //                 resultMessage.contains('failed')) {
+                    //               snackBarColor =
+                    //                   AppColors.cardsred; // Error: Red
+                    //             } else {
+                    //               snackBarColor =
+                    //                   AppColors.orange; // Other: Orange
+                    //             }
+
+                    //             // Show feedback based on the result
+                    //             ScaffoldMessenger.of(context).showSnackBar(
+                    //               SnackBar(
+                    //                 content: Text(resultMessage),
+                    //                 backgroundColor: snackBarColor,
+                    //               ),
+                    //             );
+                    //           }
+                    //         },
+                    //   child: packerProvider.isCancel
+                    //       ? const SizedBox(
+                    //           width: 20,
+                    //           height: 20,
+                    //           child:
+                    //               CircularProgressIndicator(color: Colors.white),
+                    //         )
+                    //       : const Text(
+                    //           'Cancel Orders',
+                    //           style: TextStyle(color: Colors.white),
+                    //         ),
+                    // ),
+                    // const SizedBox(width: 8),
                     // Refresh Button
                     ElevatedButton(
                       style: ElevatedButton.styleFrom(
@@ -242,7 +317,7 @@ class _PackerPageState extends State<PackerPage> {
           buildHeader('CUSTOMER', flex: 3),
           buildHeader('DATE', flex: 3),
           buildHeader('TOTAL', flex: 2),
-          buildHeader('BOX SIZE', flex: 2),
+          buildHeader('PACKAGE NAME', flex: 2),
           buildHeader('CONFIRM', flex: 2),
         ],
       ),
@@ -343,13 +418,21 @@ class _PackerPageState extends State<PackerPage> {
             flex: 2,
           ),
           const SizedBox(width: 4),
+          // buildCell(
+          //   Text(
+          //     order.boxSize,
+          //     style: const TextStyle(fontSize: 16),
+          //   ),
+          //   flex: 2,
+          // ),
           buildCell(
             Text(
-              order.boxSize,
+              order.outerPackage.replaceAll('[', '').replaceAll(']', '') ?? '',
               style: const TextStyle(fontSize: 16),
             ),
             flex: 2,
           ),
+
           const SizedBox(width: 4),
           buildCell(
             order.isPackerFullyScanned

@@ -1,7 +1,5 @@
 import 'dart:convert';
 import 'dart:developer';
-import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:inventory_management/Api/auth_provider.dart';
 import 'package:inventory_management/model/combo_model.dart';
 import 'package:inventory_management/Api/combo_api.dart';
@@ -17,7 +15,7 @@ class ComboProvider with ChangeNotifier {
   Combo? _combo;
   bool _isFormVisible = false;
   List<Combo> _comboList = [];
-  List<DropdownItem<String>> _items = [];
+  final List<DropdownItem<String>> _items = [];
   List<DropdownItem<String>> get item => _items;
   List<Product> _products = [];
   List<Product> _selectedProducts = [];
@@ -235,6 +233,44 @@ class ComboProvider with ChangeNotifier {
   void selectProductsByIds(List<String?> productIds) {
     _selectedProducts =
         _products.where((product) => productIds.contains(product.id)).toList();
+    notifyListeners();
+  }
+
+  void addMoreProducts(String displayName) async {
+    log("displayName: $displayName");
+    const String baseUrl =
+        'https://inventory-management-backend-s37u.onrender.com';
+    final url =
+        '$baseUrl/products?displayName=${Uri.encodeComponent(displayName)}';
+
+    try {
+      final token = await getToken();
+      final response = await http.get(
+        Uri.parse(url), // Ensure URL is parsed
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      // Check the response status code
+      if (response.statusCode == 200) {
+        print("Response Status: ${response.statusCode}");
+        log("Response Body: ${response.body}");
+
+        final productList = json.decode(response.body)['products'];
+        final newProducts =
+            productList.map<Product>((json) => Product.fromJson(json)).toList();
+        _products.addAll(newProducts);
+        
+        notifyListeners();
+
+        log(_products.toString());
+      }
+    } catch (error) {
+      log("catched: $error");
+    }
+
     notifyListeners();
   }
 }

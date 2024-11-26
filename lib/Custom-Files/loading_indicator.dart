@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:inventory_management/Custom-Files/colors.dart';
 
 // Custom Loading Animation Widget
 class LoadingAnimation extends StatefulWidget {
@@ -9,12 +8,12 @@ class LoadingAnimation extends StatefulWidget {
   final double size;
 
   const LoadingAnimation({
-    Key? key,
+    super.key,
     required this.icon,
     required this.beginColor,
     required this.endColor,
     this.size = 80.0,
-  }) : super(key: key);
+  });
 
   @override
   _LoadingAnimationState createState() => _LoadingAnimationState();

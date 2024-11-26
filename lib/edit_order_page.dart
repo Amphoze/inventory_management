@@ -1,13 +1,11 @@
 import 'dart:convert';
+import 'dart:developer';
 
 import 'package:flutter/material.dart';
-import 'package:inventory_management/Api/inventory_api.dart';
 import 'package:inventory_management/Custom-Files/colors.dart';
 import 'package:inventory_management/Widgets/product_card.dart';
 import 'package:inventory_management/Widgets/searchable_dropdown.dart';
 import 'package:inventory_management/model/orders_model.dart';
-import 'package:inventory_management/Widgets/product_details_card.dart';
-import 'package:inventory_management/orders_page.dart';
 import 'package:inventory_management/provider/orders_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:http/http.dart' as http;
@@ -17,8 +15,7 @@ class EditOrderPage extends StatefulWidget {
   final Order order; // Pass the order to edit
   final bool isBookPage;
 
-  const EditOrderPage({Key? key, required this.order, required this.isBookPage})
-      : super(key: key);
+  const EditOrderPage({super.key, required this.order, required this.isBookPage});
 
   @override
   _EditOrderPageState createState() => _EditOrderPageState();
@@ -140,25 +137,25 @@ class _EditOrderPageState extends State<EditOrderPage> {
     _skuTrackingIdController =
         TextEditingController(text: widget.order.skuTrackingId ?? '');
     _totalWeightController =
-        TextEditingController(text: widget.order.totalWeight?.toString() ?? '');
+        TextEditingController(text: widget.order.totalWeight.toString() ?? '');
     _totalAmtController =
         TextEditingController(text: widget.order.totalAmount?.toString() ?? '');
     _coinController =
-        TextEditingController(text: widget.order.coin?.toString() ?? '');
+        TextEditingController(text: widget.order.coin.toString() ?? '');
     _codAmountController =
-        TextEditingController(text: widget.order.codAmount?.toString() ?? '');
+        TextEditingController(text: widget.order.codAmount.toString() ?? '');
     _prepaidAmountController = TextEditingController(
-        text: widget.order.prepaidAmount?.toString() ?? '');
+        text: widget.order.prepaidAmount.toString() ?? '');
     _discountCodeController =
         TextEditingController(text: widget.order.discountCode ?? '');
     _discountSchemeController =
         TextEditingController(text: widget.order.discountScheme ?? '');
     _discountPercentController = TextEditingController(
-        text: widget.order.discountPercent?.toString() ?? '');
+        text: widget.order.discountPercent.toString() ?? '');
     _discountAmountController = TextEditingController(
-        text: widget.order.discountAmount?.toString() ?? '');
+        text: widget.order.discountAmount.toString() ?? '');
     _taxPercentController =
-        TextEditingController(text: widget.order.taxPercent?.toString() ?? '');
+        TextEditingController(text: widget.order.taxPercent.toString() ?? '');
     _courierNameController =
         TextEditingController(text: widget.order.courierName ?? '');
 
@@ -168,7 +165,7 @@ class _EditOrderPageState extends State<EditOrderPage> {
     _orderTypeController =
         TextEditingController(text: widget.order.orderType ?? '');
     _marketplaceController = TextEditingController(
-        text: widget.order.marketplace?.name?.toString() ?? '');
+        text: widget.order.marketplace?.name.toString() ?? '');
 
     // Initialize the provider with the initial marketplace
     _ordersProvider.setInitialMarketplace(_marketplaceController.text);
@@ -200,11 +197,11 @@ class _EditOrderPageState extends State<EditOrderPage> {
     _fulfillmentTypeController =
         TextEditingController(text: widget.order.fulfillmentType ?? '');
     _numberOfBoxesController = TextEditingController(
-        text: widget.order.numberOfBoxes?.toString() ?? '');
+        text: widget.order.numberOfBoxes.toString() ?? '');
     _totalQuantityController = TextEditingController(
-        text: widget.order.totalQuantity?.toString() ?? '');
+        text: widget.order.totalQuantity.toString() ?? '');
     _skuQtyController =
-        TextEditingController(text: widget.order.skuQty?.toString() ?? '');
+        TextEditingController(text: widget.order.skuQty.toString() ?? '');
     _calcEntryNumberController =
         TextEditingController(text: widget.order.calcEntryNumber ?? '');
     _currencyController =
@@ -216,11 +213,11 @@ class _EditOrderPageState extends State<EditOrderPage> {
     _paymentBankController =
         TextEditingController(text: widget.order.paymentBank ?? '');
     _lengthController =
-        TextEditingController(text: widget.order.length?.toString() ?? '');
+        TextEditingController(text: widget.order.length.toString() ?? '');
     _breadthController =
-        TextEditingController(text: widget.order.breadth?.toString() ?? '');
+        TextEditingController(text: widget.order.breadth.toString() ?? '');
     _heightController =
-        TextEditingController(text: widget.order.height?.toString() ?? '');
+        TextEditingController(text: widget.order.height.toString() ?? '');
 
     _awbNumberController = TextEditingController(text: widget.order.awbNumber);
     _trackingStatusController =
@@ -292,6 +289,7 @@ class _EditOrderPageState extends State<EditOrderPage> {
       dynamicItemsList.add({
         'product_id': item.product!.id,
         'qty': item.qty,
+        'sku': item.sku,
         'amount': item.amount,
       });
       // Initialize controllers for each item
@@ -741,9 +739,11 @@ class _EditOrderPageState extends State<EditOrderPage> {
       int index = dynamicItemsList.indexOf(item);
       double amount = double.tryParse(_amountControllers[index].text) ?? 0.0;
       int qty = int.tryParse(_quantityControllers[index].text) ?? 1;
+      log("Itemmmmmmmmmmmmmmm $item");
       return {
         'product_id': item['product_id'],
         'qty': qty,
+        'sku': item['sku'],
         'amount': amount,
       };
     }).toList();
@@ -958,8 +958,179 @@ class _EditOrderPageState extends State<EditOrderPage> {
                         ),
                       ),
                     ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: _buildTextField(
+                        controller: _orderTypeController,
+                        label: 'Order Type',
+                        icon: Icons.shopping_cart,
+                      ),
+                    ),
                   ],
                 ),
+                const SizedBox(height: 10),
+                Row(
+                  children: [
+                    Expanded(
+                      child: ChangeNotifierProvider.value(
+                        value: _ordersProvider,
+                        child: Consumer<OrdersProvider>(
+                          builder: (context, ordersProvider, child) {
+                            final String? selectedMarketplace =
+                                ordersProvider.selectedMarketplace;
+                            final bool isCustomMarketplace =
+                                selectedMarketplace != null &&
+                                    selectedMarketplace.isNotEmpty &&
+                                    selectedMarketplace != 'Shopify' &&
+                                    selectedMarketplace != 'Woocommerce' &&
+                                    selectedMarketplace != 'Offline';
+
+                            final List<DropdownMenuItem<String>> item = [
+                              const DropdownMenuItem<String>(
+                                value: 'Shopify',
+                                child: Text('Shopify'),
+                              ),
+                              const DropdownMenuItem<String>(
+                                value: 'Woocommerce',
+                                child: Text('Woocommerce'),
+                              ),
+                              const DropdownMenuItem<String>(
+                                value: 'Offline',
+                                child: Text('Offline'),
+                              ),
+                            ];
+
+                            if (isCustomMarketplace) {
+                              item.add(DropdownMenuItem<String>(
+                                value: selectedMarketplace,
+                                child: Text(selectedMarketplace),
+                              ));
+                            }
+
+                            return DropdownButtonFormField<String>(
+                              value: selectedMarketplace,
+                              decoration: const InputDecoration(
+                                labelText: 'Marketplace',
+                                prefixIcon: Icon(Icons.store),
+                                border: OutlineInputBorder(),
+                              ),
+                              dropdownColor: Colors.white,
+                              hint: const Text('Select Marketplace'),
+                              items: item,
+                              onChanged: (value) {
+                                if (value != null) {
+                                  ordersProvider.selectMarketplace(value);
+                                  _marketplaceController.text = value;
+                                }
+                              },
+                            );
+                          },
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: _buildTextField(
+                        controller: _microDealerOrderController,
+                        label: 'Micro Dealer Order',
+                        icon: Icons.shopping_cart,
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: _buildTextField(
+                        controller: _fulfillmentTypeController,
+                        label: 'Fulfillment Type',
+                        icon: Icons.assignment,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                Row(
+                  children: [
+                    Expanded(
+                      child: _buildTextField(
+                        controller: _transactionNumberController,
+                        label: 'Transaction Number',
+                        icon: Icons.confirmation_number,
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: _buildTextField(
+                        controller: _calcEntryNumberController,
+                        label: 'Calculation Entry Number',
+                        icon: Icons.calculate,
+                      ),
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 10),
+
+                Row(
+                  children: [
+                    Expanded(
+                      child: ChangeNotifierProvider.value(
+                        value: _ordersProvider,
+                        child: Consumer<OrdersProvider>(
+                            builder: (context, ordersProvider, child) {
+                          final String? selectedFilter =
+                              ordersProvider.selectedFilter;
+
+                          // Create the list of DropdownMenuItems
+                          final List<DropdownMenuItem<String>> items = [
+                            const DropdownMenuItem<String>(
+                              value: 'B2B',
+                              child: Text('B2B'),
+                            ),
+                            const DropdownMenuItem<String>(
+                              value: 'B2C',
+                              child: Text('B2C'),
+                            ),
+                          ];
+
+                          // Add custom filter if it exists and is not already listed
+                          if (selectedFilter != null &&
+                              selectedFilter.isNotEmpty &&
+                              selectedFilter != 'B2B' &&
+                              selectedFilter != 'B2C') {
+                            items.add(DropdownMenuItem<String>(
+                              value: selectedFilter,
+                              child: Text(selectedFilter),
+                            ));
+                          }
+
+                          return DropdownButtonFormField<String>(
+                            value:
+                                selectedFilter, // Show the current selected value or null
+                            decoration: const InputDecoration(
+                              labelText: 'Filter',
+                              prefixIcon: Icon(Icons.filter_1),
+                              border: OutlineInputBorder(),
+                            ),
+                            dropdownColor: Colors.white,
+                            hint: const Text(
+                                'Select Filter'), // Hint text when no value is selected
+                            items: items,
+                            onChanged: (value) {
+                              ordersProvider.selectFilter(
+                                  value); // Update the selected filter
+                              _filterController.text =
+                                  value ?? ''; // Clear the controller if null
+                            },
+                          );
+                        }),
+                      ),
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 30),
+                // Customer Details
+                _buildHeading("Payment Details"),
+                const Divider(thickness: 1, color: AppColors.grey),
                 const SizedBox(height: 10),
                 Row(
                   children: [
@@ -1023,23 +1194,11 @@ class _EditOrderPageState extends State<EditOrderPage> {
                         icon: Icons.currency_bitcoin,
                       ),
                     ),
-                  ],
-                ),
-                const SizedBox(height: 10),
-                Row(
-                  children: [
-                    Expanded(
-                      child: _buildTextField(
-                        controller: _skuTrackingIdController,
-                        label: 'SKU Tracking ID',
-                        icon: Icons.local_shipping,
-                      ),
-                    ),
                     const SizedBox(width: 10),
                     Expanded(
                       child: _buildTextField(
-                        controller: _coinController,
-                        label: 'Coin',
+                        controller: _currencyController,
+                        label: 'Currency',
                         icon: Icons.monetization_on,
                       ),
                     ),
@@ -1050,25 +1209,25 @@ class _EditOrderPageState extends State<EditOrderPage> {
                   children: [
                     Expanded(
                       child: _buildTextField(
-                        controller: _totalWeightController,
-                        label: 'Total Weight',
-                        icon: Icons.line_weight,
+                        controller: _paymentBankController,
+                        label: 'Payment Bank',
+                        icon: Icons.account_balance,
                       ),
                     ),
                     const SizedBox(width: 10),
                     Expanded(
-                      child: _buildTextField(
-                        controller: _taxPercentController,
-                        label: 'Tax Percent',
-                        icon: Icons.account_balance_wallet,
+                      child: GestureDetector(
+                        onTap: () => _selectPaymentDateTime(context),
+                        child: AbsorbPointer(
+                          child: _buildTextField(
+                            controller: _paymentDateTimeController,
+                            label: "Payment Date and Time",
+                            icon: Icons.access_time,
+                          ),
+                        ),
                       ),
                     ),
-                  ],
-                ),
-                const SizedBox(height: 10),
-
-                Row(
-                  children: [
+                    const SizedBox(width: 10),
                     Expanded(
                       child: _buildTextField(
                         controller: _codAmountController,
@@ -1076,7 +1235,11 @@ class _EditOrderPageState extends State<EditOrderPage> {
                         icon: Icons.money,
                       ),
                     ),
-                    const SizedBox(width: 10),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                Row(
+                  children: [
                     Expanded(
                       child: _buildTextField(
                         controller: _prepaidAmountController,
@@ -1089,49 +1252,15 @@ class _EditOrderPageState extends State<EditOrderPage> {
                       child: _buildTextField(
                         controller: _totalAmtController,
                         label: 'Total Amount',
-                        icon: Icons.attach_money,
+                        icon: Icons.currency_rupee,
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 10),
-
-                Row(
-                  children: [
-                    Expanded(
-                      child: _buildTextField(
-                        controller: _discountCodeController,
-                        label: 'Discount Code',
-                        icon: Icons.discount,
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: _buildTextField(
-                        controller: _discountSchemeController,
-                        label: 'Discount Scheme',
-                        icon: Icons.card_giftcard,
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: _buildTextField(
-                        controller: _discountPercentController,
-                        label: 'Discount Percent',
-                        icon: Icons.percent,
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: _buildTextField(
-                        controller: _discountAmountController,
-                        label: 'Discount Amount',
-                        icon: Icons.money_off,
-                      ),
-                    ),
-                  ],
-                ),
-
+                const SizedBox(height: 30),
+                // Customer Details
+                _buildHeading("Shipping and Delivery Details"),
+                const Divider(thickness: 1, color: AppColors.grey),
                 const SizedBox(height: 10),
                 Row(
                   children: [
@@ -1190,135 +1319,32 @@ class _EditOrderPageState extends State<EditOrderPage> {
                     const SizedBox(width: 10),
                     Expanded(
                       child: _buildTextField(
-                        controller: _orderTypeController,
-                        label: 'Order Type',
-                        icon: Icons.shopping_cart,
-                      ),
-                    ),
-                  ],
-                ),
-
-                const SizedBox(height: 10),
-
-                Row(
-                  children: [
-                    Expanded(
-                      child: ChangeNotifierProvider.value(
-                        value: _ordersProvider,
-                        child: Consumer<OrdersProvider>(
-                          builder: (context, ordersProvider, child) {
-                            final String? selectedMarketplace =
-                                ordersProvider.selectedMarketplace;
-                            final bool isCustomMarketplace =
-                                selectedMarketplace != null &&
-                                    selectedMarketplace.isNotEmpty &&
-                                    selectedMarketplace != 'Shopify' &&
-                                    selectedMarketplace != 'Woocommerce' &&
-                                    selectedMarketplace != 'Offline';
-
-                            final List<DropdownMenuItem<String>> item = [
-                              const DropdownMenuItem<String>(
-                                value: 'Shopify',
-                                child: Text('Shopify'),
-                              ),
-                              const DropdownMenuItem<String>(
-                                value: 'Woocommerce',
-                                child: Text('Woocommerce'),
-                              ),
-                              const DropdownMenuItem<String>(
-                                value: 'Offline',
-                                child: Text('Offline'),
-                              ),
-                            ];
-
-                            if (isCustomMarketplace) {
-                              item.add(DropdownMenuItem<String>(
-                                value: selectedMarketplace,
-                                child: Text(selectedMarketplace),
-                              ));
-                            }
-
-                            return DropdownButtonFormField<String>(
-                              value: selectedMarketplace,
-                              decoration: const InputDecoration(
-                                labelText: 'Marketplace',
-                                prefixIcon: Icon(Icons.store),
-                                border: OutlineInputBorder(),
-                              ),
-                              dropdownColor: Colors.white,
-                              hint: const Text('Select Marketplace'),
-                              items: item,
-                              onChanged: (value) {
-                                if (value != null) {
-                                  ordersProvider.selectMarketplace(value);
-                                  _marketplaceController.text = value;
-                                }
-                              },
-                            );
-                          },
-                        ),
+                        controller: _preferredCourierController,
+                        label: 'Preferred Courier',
+                        icon: Icons.local_shipping,
                       ),
                     ),
                     const SizedBox(width: 10),
                     Expanded(
-                      child: ChangeNotifierProvider.value(
-                        value: _ordersProvider,
-                        child: Consumer<OrdersProvider>(
-                            builder: (context, ordersProvider, child) {
-                          final String? selectedFilter =
-                              ordersProvider.selectedFilter;
-
-                          // Create the list of DropdownMenuItems
-                          final List<DropdownMenuItem<String>> items = [
-                            const DropdownMenuItem<String>(
-                              value: 'B2B',
-                              child: Text('B2B'),
-                            ),
-                            const DropdownMenuItem<String>(
-                              value: 'B2C',
-                              child: Text('B2C'),
-                            ),
-                          ];
-
-                          // Add custom filter if it exists and is not already listed
-                          if (selectedFilter != null &&
-                              selectedFilter.isNotEmpty &&
-                              selectedFilter != 'B2B' &&
-                              selectedFilter != 'B2C') {
-                            items.add(DropdownMenuItem<String>(
-                              value: selectedFilter,
-                              child: Text(selectedFilter),
-                            ));
-                          }
-
-                          return DropdownButtonFormField<String>(
-                            value:
-                                selectedFilter, // Show the current selected value or null
-                            decoration: const InputDecoration(
-                              labelText: 'Filter',
-                              prefixIcon: Icon(Icons.filter_1),
-                              border: OutlineInputBorder(),
-                            ),
-                            dropdownColor: Colors.white,
-                            hint: const Text(
-                                'Select Filter'), // Hint text when no value is selected
-                            items: items,
-                            onChanged: (value) {
-                              ordersProvider.selectFilter(
-                                  value); // Update the selected filter
-                              _filterController.text =
-                                  value ?? ''; // Clear the controller if null
-                            },
-                          );
-                        }),
+                      child: _buildTextField(
+                        controller: _deliveryTermController,
+                        label: 'Delivery Term',
+                        icon: Icons.description,
                       ),
                     ),
                   ],
                 ),
                 const SizedBox(height: 10),
-
                 Row(
                   children: [
+                    Expanded(
+                      child: _buildTextField(
+                        controller: _skuTrackingIdController,
+                        label: 'SKU Tracking ID',
+                        icon: Icons.local_shipping,
+                      ),
+                    ),
+                    const SizedBox(width: 10),
                     Expanded(
                       child: GestureDetector(
                         onTap: () => _selectDate(context, true),
@@ -1334,55 +1360,17 @@ class _EditOrderPageState extends State<EditOrderPage> {
                     const SizedBox(width: 10),
                     Expanded(
                       child: _buildTextField(
-                        controller: _preferredCourierController,
-                        label: 'Preferred Courier',
+                        controller: _trackingStatusController,
+                        label: 'Tracking Status',
                         icon: Icons.local_shipping,
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 10),
-
-                Row(
-                  children: [
-                    Expanded(
-                      child: _buildTextField(
-                        controller: _deliveryTermController,
-                        label: 'Delivery Term',
-                        icon: Icons.description,
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: _buildTextField(
-                        controller: _transactionNumberController,
-                        label: 'Transaction Number',
-                        icon: Icons.confirmation_number,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 10),
-
-                Row(
-                  children: [
-                    Expanded(
-                      child: _buildTextField(
-                        controller: _microDealerOrderController,
-                        label: 'Micro Dealer Order',
-                        icon: Icons.shopping_cart,
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: _buildTextField(
-                        controller: _fulfillmentTypeController,
-                        label: 'Fulfillment Type',
-                        icon: Icons.assignment,
-                      ),
-                    ),
-                  ],
-                ),
+                const SizedBox(height: 30),
+                // Customer Details
+                _buildHeading("Order Specifications"),
+                const Divider(thickness: 1, color: AppColors.grey),
                 const SizedBox(height: 10),
 
                 Row(
@@ -1410,55 +1398,20 @@ class _EditOrderPageState extends State<EditOrderPage> {
                         icon: Icons.list_alt,
                       ),
                     ),
-                  ],
-                ),
-                const SizedBox(height: 10),
-
-                Row(
-                  children: [
-                    Expanded(
-                      child: _buildTextField(
-                        controller: _currencyController,
-                        label: 'Currency',
-                        icon: Icons.monetization_on,
-                      ),
-                    ),
                     const SizedBox(width: 10),
                     Expanded(
                       child: _buildTextField(
-                        controller: _calcEntryNumberController,
-                        label: 'Calculation Entry Number',
-                        icon: Icons.calculate,
+                        controller: _totalWeightController,
+                        label: 'Total Weight',
+                        icon: Icons.line_weight,
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 10),
-
-                Row(
-                  children: [
-                    Expanded(
-                      child: _buildTextField(
-                        controller: _paymentBankController,
-                        label: 'Payment Bank',
-                        icon: Icons.account_balance,
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: GestureDetector(
-                        onTap: () => _selectPaymentDateTime(context),
-                        child: AbsorbPointer(
-                          child: _buildTextField(
-                            controller: _paymentDateTimeController,
-                            label: "Payment Date and Time",
-                            icon: Icons.access_time,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
+                const SizedBox(height: 30),
+                // Customer Details
+                _buildHeading("Order Dimension"),
+                const Divider(thickness: 1, color: AppColors.grey),
                 const SizedBox(height: 10),
 
                 Row(
@@ -1488,6 +1441,73 @@ class _EditOrderPageState extends State<EditOrderPage> {
                     ),
                   ],
                 ),
+                const SizedBox(height: 30),
+                // Customer Details
+                _buildHeading("Discount Information"),
+                const Divider(thickness: 1, color: AppColors.grey),
+                const SizedBox(height: 10),
+
+                Row(
+                  children: [
+                    Expanded(
+                      child: _buildTextField(
+                        controller: _discountCodeController,
+                        label: 'Discount Code',
+                        icon: Icons.discount,
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: _buildTextField(
+                        controller: _discountSchemeController,
+                        label: 'Discount Scheme',
+                        icon: Icons.card_giftcard,
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: _buildTextField(
+                        controller: _discountPercentController,
+                        label: 'Discount Percent',
+                        icon: Icons.percent,
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: _buildTextField(
+                        controller: _discountAmountController,
+                        label: 'Discount Amount',
+                        icon: Icons.money_off,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 30),
+                // Customer Details
+                _buildHeading("Additional Information"),
+                const Divider(thickness: 1, color: AppColors.grey),
+                const SizedBox(height: 10),
+
+                Row(
+                  children: [
+                    Expanded(
+                      child: _buildTextField(
+                        controller: _coinController,
+                        label: 'Coin',
+                        icon: Icons.monetization_on,
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: _buildTextField(
+                        controller: _taxPercentController,
+                        label: 'Tax Percent',
+                        icon: Icons.account_balance_wallet,
+                      ),
+                    ),
+                  ],
+                ),
+
                 const SizedBox(height: 10),
                 Row(
                   children: [
@@ -1512,14 +1532,6 @@ class _EditOrderPageState extends State<EditOrderPage> {
 
                 Row(
                   children: [
-                    Expanded(
-                      child: _buildTextField(
-                        controller: _trackingStatusController,
-                        label: 'Tracking Status',
-                        icon: Icons.local_shipping,
-                      ),
-                    ),
-                    const SizedBox(width: 10),
                     if (widget.isBookPage)
                       Expanded(
                         child: _buildTextField(
@@ -1914,7 +1926,7 @@ class _EditOrderPageState extends State<EditOrderPage> {
                                         child: _buildTextField(
                                           controller: _amountControllers[index],
                                           label: 'Amount',
-                                          icon: Icons.attach_money,
+                                          icon: Icons.currency_rupee,
                                         ),
                                       ),
                                       const SizedBox(height: 8),
@@ -1968,32 +1980,45 @@ class _EditOrderPageState extends State<EditOrderPage> {
   }
 
   // Function to build text fields
+// Function to build text fields
   Widget _buildTextField({
     required TextEditingController controller,
     required String label,
     required IconData icon,
     bool enabled = true,
   }) {
-    return TextFormField(
-      controller: controller,
-      enabled: enabled,
-      style: TextStyle(
-          color: enabled ? AppColors.green : Colors.grey[700],
-          fontWeight: FontWeight.bold),
-      decoration: InputDecoration(
-        labelText: label,
-        labelStyle: const TextStyle(
-          fontWeight: FontWeight.bold,
-          color: Colors.black,
-        ),
-        border: OutlineInputBorder(
-          borderSide: BorderSide(
-            color: Colors.grey[400]!,
-          ),
-        ),
-        prefixIcon: Icon(icon, color: Colors.black),
-        filled: true,
-        fillColor: enabled ? Colors.white : Colors.grey[300],
+    return Focus(
+      child: Builder(
+        builder: (BuildContext context) {
+          final bool isFocused = Focus.of(context).hasFocus;
+          final bool isEmpty = controller.text.isEmpty;
+
+          return TextFormField(
+            controller: controller,
+            enabled: enabled,
+            style: TextStyle(
+              color: enabled ? AppColors.green : Colors.grey[700],
+              fontWeight: FontWeight.bold,
+            ),
+            decoration: InputDecoration(
+              labelText: label,
+              labelStyle: TextStyle(
+                fontWeight: FontWeight.bold,
+                color: isFocused || !isEmpty
+                    ? Colors.black
+                    : Colors.grey.withOpacity(0.7),
+              ),
+              border: OutlineInputBorder(
+                borderSide: BorderSide(
+                  color: Colors.grey[400]!,
+                ),
+              ),
+              prefixIcon: Icon(icon, color: Colors.black),
+              filled: true,
+              fillColor: enabled ? Colors.white : Colors.grey[300],
+            ),
+          );
+        },
       ),
     );
   }

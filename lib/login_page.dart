@@ -1,11 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:inventory_management/Api/auth_provider.dart';
 import 'package:inventory_management/Custom-Files/colors.dart';
-import 'package:inventory_management/create_account.dart';
 import 'package:inventory_management/dashboard.dart';
 import 'package:inventory_management/forgot_password.dart';
-import 'package:path/path.dart';
 import 'package:provider/provider.dart';
 // import 'Api/auth_provider.dart';
 
@@ -24,21 +21,21 @@ class LoginPage extends StatelessWidget {
                 Expanded(
                   flex: 1,
                   child: Container(
-                    decoration: BoxDecoration(
+                    decoration: const BoxDecoration(
                       gradient: LinearGradient(
                         begin: Alignment.bottomLeft,
                         end: Alignment.topRight,
                         colors: [
-                          const Color.fromARGB(255, 0, 53, 96),
-                          const Color.fromARGB(255, 8, 76, 131),
-                          const Color.fromARGB(255, 18, 95, 157),
+                          Color.fromARGB(255, 0, 53, 96),
+                          Color.fromARGB(255, 8, 76, 131),
+                          Color.fromARGB(255, 18, 95, 157),
                           Colors.white,
                         ],
                       ),
                     ),
                     child: Stack(
                       children: [
-                        Align(
+                        const Align(
                           alignment: Alignment.center,
                           child: Image(
                             image: AssetImage('assets/background.png'),
@@ -51,9 +48,9 @@ class LoginPage extends StatelessWidget {
                               color: Colors.white,
                               elevation: 5,
                               borderRadius: BorderRadius.circular(20),
-                              child: Container(
+                              child: const SizedBox(
                                 width: 400,
-                                child: const LoginForm(),
+                                child: LoginForm(),
                               ),
                             ),
                           ),
@@ -172,6 +169,8 @@ class _LoginFormState extends State<LoginForm> {
     final bool isSmallScreen = MediaQuery.of(context).size.width <= 800;
     double textSize = isSmallScreen ? 30.0 : 32.0;
 
+    final userRole = context.read<AuthProvider>().assignedRole;
+
     return Padding(
       padding: const EdgeInsets.all(31.0),
       child: Column(
@@ -277,7 +276,7 @@ class _LoginFormState extends State<LoginForm> {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => ForgotPasswordPage(),
+                        builder: (context) => const ForgotPasswordPage(),
                       ),
                     );
                   },
@@ -319,30 +318,32 @@ class _LoginFormState extends State<LoginForm> {
                   )
                 : const Text("Log in"),
           ),
-          const SizedBox(height: 15),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Text("Don't have an account?"),
-              TextButton(
-                onPressed: () {
-                  // Navigator.pushNamed(context, '/createAccount');
-                  Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                          builder: (context) => const CreateAccountPage()));
-                },
-                child: const Text(
-                  "Create Account",
-                  style: TextStyle(
-                    color: AppColors.primaryBlue,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 20),
+          // if (userRole == 'superAdmin' || userRole == 'admin') ...[
+          //   const SizedBox(height: 15),
+          //   Row(
+          //     mainAxisAlignment: MainAxisAlignment.center,
+          //     children: [
+          //       const Text("Don't have an account?"),
+          //       TextButton(
+          //         onPressed: () {
+          //           // Navigator.pushNamed(context, '/createAccount');
+                    // Navigator.push(
+                    //     context,
+                    //     MaterialPageRoute(
+                    //         builder: (context) => const CreateAccountPage()));
+          //         },
+          //         child: const Text(
+          //           "Create Account",
+          //           style: TextStyle(
+          //             color: AppColors.primaryBlue,
+          //             fontWeight: FontWeight.bold,
+          //           ),
+          //         ),
+          //       ),
+          //     ],
+          //   ),
+          // ],
+          // const SizedBox(height: 20),
         ],
       ),
     );

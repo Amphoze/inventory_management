@@ -14,7 +14,7 @@ class CustomPaginationFooter extends StatelessWidget {
   final VoidCallback onJumpToPage;
 
   const CustomPaginationFooter({
-    Key? key,
+    super.key,
     required this.currentPage,
     required this.totalPages,
     required this.buttonSize,
@@ -25,7 +25,7 @@ class CustomPaginationFooter extends StatelessWidget {
     required this.onPreviousPage,
     required this.onGoToPage,
     required this.onJumpToPage,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -74,7 +74,7 @@ class CustomPaginationFooter extends StatelessWidget {
             // Go to page section on the right
             Row(
               children: [
-                Container(
+                SizedBox(
                   width: 100,
                   height: 35,
                   child: TextField(

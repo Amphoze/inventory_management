@@ -7,10 +7,10 @@ class ProductDetailsCard extends StatelessWidget {
   final int index;
 
   const ProductDetailsCard({
-    Key? key,
+    super.key,
     required this.product,
     required this.index,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -76,7 +76,7 @@ class ProductDetailsCard extends StatelessWidget {
             ),
           ),
         const SizedBox(height: 5.0),
-        Container(
+        SizedBox(
           width: 370,
           child: Text(
             product.displayName,
@@ -159,12 +159,14 @@ class ProductDetailsCard extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildInfoRow('Color:', product.color ?? ''),
+        _buildInfoRow('Color:', product.color!.name ?? ''),
         _buildInfoRow('Net Weight:',
             product.netWeight != null ? '${product.netWeight} kg' : ''),
         _buildInfoRow('Gross Weight:',
             product.grossWeight != null ? '${product.grossWeight} kg' : ''),
-        _buildInfoRow('Box Size:', product.boxSize?.boxName ?? ''),
+        // _buildInfoRow('Box Size:', product.boxSize?.boxName ?? ''),
+        _buildInfoRow('Outer Package Name:',
+            product.outerPackage?.outerPackageName ?? ''),
         _buildInfoRow('Variant Name:', product.variantName ?? ''),
       ],
     );

@@ -42,6 +42,13 @@ class BookProvider with ChangeNotifier {
   bool isShiprocketLoading = false;
   bool isOthersLoading = false;
 
+  bool isCancel = false;
+
+  void setCancelStatus(bool status) {
+    isCancel = status;
+    notifyListeners();
+  }
+
   void setLoading(String provider, bool isLoading) {
     switch (provider) {
       case 'Delhivery':
@@ -70,6 +77,61 @@ class BookProvider with ChangeNotifier {
 
   Future<void> fetchPaginatedOrdersB2B(int page) async {
     await fetchOrders('B2B', page);
+  }
+
+  Future<String> cancelOrders(
+      BuildContext context, List<String> orderIds) async {
+    const String baseUrl =
+        'https://inventory-management-backend-s37u.onrender.com';
+    const String cancelOrderUrl = '$baseUrl/orders/cancel';
+    // final String? token = await _getToken();
+
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('authToken') ?? '';
+    setCancelStatus(true);
+    notifyListeners();
+
+    // Headers for the API request
+    final headers = {
+      'Authorization': 'Bearer $token',
+      'Content-Type': 'application/json',
+    };
+
+    // Request body containing the order IDs
+    final body = json.encode({
+      'orderIds': orderIds,
+    });
+
+    try {
+      // Make the POST request to confirm the orders
+      final response = await http.post(
+        Uri.parse(cancelOrderUrl),
+        headers: headers,
+        body: body,
+      );
+
+      print('Response status: ${response.statusCode}');
+      //print('Response body: ${response.body}');
+
+      final responseData = json.decode(response.body);
+
+      if (response.statusCode == 200) {
+        // After successful confirmation, fetch updated orders and notify listeners
+        // await fetchOrders(type); // Assuming fetchOrders is a function that reloads the orders
+        setRefreshingOrders(false); // Clear selected order IDs
+        setCancelStatus(false);
+        notifyListeners(); // Notify the UI to rebuild
+
+        return responseData['message'] ?? 'Orders confirmed successfully';
+      } else {
+        return responseData['message'] ?? 'Failed to confirm orders';
+      }
+    } catch (error) {
+      setCancelStatus(false);
+      notifyListeners();
+      print('Error during API request: $error');
+      return 'An error occurred: $error';
+    }
   }
 
   Future<void> fetchPaginatedOrdersB2C(int page) async {
@@ -178,7 +240,6 @@ class BookProvider with ChangeNotifier {
       'orderIds': orderIds,
       'service': lowerCase,
     });
-    ;
     log(body);
 
     try {
@@ -313,10 +374,10 @@ class BookProvider with ChangeNotifier {
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        print("${response.body}");
+        print(response.body);
 
         ordersB2B = [Order.fromJson(data)];
-        print("${response.body}");
+        print(response.body);
       } else {
         ordersB2B = [];
       }
@@ -348,10 +409,10 @@ class BookProvider with ChangeNotifier {
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        print("${response.body}");
+        print(response.body);
 
         ordersB2C = [Order.fromJson(data)];
-        print("${response.body}");
+        print(response.body);
       } else {
         ordersB2C = [];
       }

@@ -8,6 +8,8 @@ import 'package:inventory_management/Custom-Files/custom-button.dart';
 import 'package:inventory_management/provider/category_provider.dart';
 
 class CategoryMasterPage extends StatefulWidget {
+  const CategoryMasterPage({super.key});
+
   @override
   _CategoryMasterPageState createState() => _CategoryMasterPageState();
 }

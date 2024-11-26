@@ -8,7 +8,7 @@ import 'Custom-Files/data_table.dart';
 import 'Custom-Files/loading_indicator.dart';
 
 class LocationMaster extends StatefulWidget {
-  const LocationMaster({Key? key}) : super(key: key);
+  const LocationMaster({super.key});
 
   @override
   _LocationMasterState createState() => _LocationMasterState();

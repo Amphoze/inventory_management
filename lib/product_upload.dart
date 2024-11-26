@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import 'package:inventory_management/Custom-Files/colors.dart';
 import 'package:inventory_management/Api/auth_provider.dart';
 import 'package:intl/intl.dart';
+import 'dart:html' as html; // Import the html library
 
 class ProductDataDisplay extends StatefulWidget {
   const ProductDataDisplay({super.key});
@@ -220,8 +221,8 @@ class _ProductDataDisplayState extends State<ProductDataDisplay> {
                     _showMessage(context, errorMessage, isError: true);
                   },
                 ),
-                const SizedBox(width: 16.0),
                 if (productDataProvider.isUploadSuccessful) ...[
+                  const SizedBox(width: 16.0),
                   ElevatedButton(
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.primaryGreen,
@@ -245,6 +246,11 @@ class _ProductDataDisplayState extends State<ProductDataDisplay> {
                     },
                   ),
                 ],
+                const SizedBox(width: 16),
+                ElevatedButton(
+                  onPressed: () => AuthProvider().downloadTemplate(context,'product'),
+                  child: const Text('Download Template'),
+                ),
                 const SizedBox(width: 16.0),
                 ElevatedButton(
                   onPressed: failedProducts.isEmpty
@@ -336,7 +342,7 @@ class _ProductDataDisplayState extends State<ProductDataDisplay> {
                           title: Text('SKU: ${failedProduct['sku']}'),
                           subtitle: Text(
                             'Reason: ${failedProduct['reason']}\nFailed at: ${failedProduct['timestamp']}',
-                            style: TextStyle(
+                            style: const TextStyle(
                                 color: Colors.red), // Optional styling
                           ),
                         );

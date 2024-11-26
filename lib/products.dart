@@ -1,9 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:inventory_management/Api/product-page-api.dart';
-
+import 'package:inventory_management/Widgets/dropdown.dart';
 import 'package:inventory_management/Api/products-provider.dart';
 import 'package:inventory_management/Custom-Files/colors.dart';
 import 'package:inventory_management/Custom-Files/custom-button.dart';
@@ -11,7 +9,6 @@ import 'package:inventory_management/Custom-Files/custom-dropdown.dart';
 import 'package:inventory_management/Custom-Files/custom-textfield.dart';
 import 'package:inventory_management/Custom-Files/loading_indicator.dart';
 import 'package:inventory_management/Custom-Files/multi-image-picker.dart';
-import 'package:inventory_management/Custom-Files/test-drop.dart';
 import 'package:inventory_management/Custom-Files/textfield-in-alert-box.dart';
 // import 'package:inventory_management/Custom-Files/textfield-in-alert-box.dart';
 import 'package:provider/provider.dart';
@@ -881,7 +878,7 @@ class _ProductsState extends State<Products> {
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(10), // Rounded corners
               ),
-              duration: Duration(seconds: 3), // Duration for how long it shows
+              duration: const Duration(seconds: 3), // Duration for how long it shows
             ),
           );
           clear();
@@ -962,7 +959,7 @@ class _ProductsState extends State<Products> {
                   borderRadius: BorderRadius.circular(10), // Rounded corners
                 ),
                 duration:
-                    Duration(seconds: 3), // Duration for how long it shows
+                    const Duration(seconds: 3), // Duration for how long it shows
               ),
             );
             clear();
@@ -990,7 +987,7 @@ class _ProductsState extends State<Products> {
     } catch (e) {
       // print(e.toString());
       ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text('${e.toString()}')));
+          .showSnackBar(SnackBar(content: Text(e.toString())));
     }
 
     productProvider!.saveButtonClickStatus();
@@ -1066,7 +1063,7 @@ class _ProductsState extends State<Products> {
                             'EAM/UPC',
                             height: 51,
                           ),
-                          Container(
+                          SizedBox(
                             // color: Colors.blueAccent,
                             width: 150,
                             height: 51,
@@ -1090,18 +1087,15 @@ class _ProductsState extends State<Products> {
               formLayout(
                 fieldTitle('Brand'),
                 SizedBox(
-                  height: 51,
-                  width: 300,
-                  child: CustomDropdown(
-                    selectedIndex: 0,
-                    key: dropdownKey,
-                    option: productProvider!.brand,
-                    onSelectedChanged: (int a) {
-                      selectedIndexOfBrand = a;
-                    },
-                    // onReset:resetBrand,
-                  ),
-                ),
+                    height: 51,
+                    width: 300,
+                    child: PaginatedSearchDropdown(
+                      hintText: 'Search Item...',
+                      fetchItems: fetchBrandsFromApi,
+                      onItemSelected: (id) {
+                        print('Selected Item ID: $id');
+                      },
+                    )),
               ),
               const SizedBox(height: 12),
               formLayout(
@@ -1109,13 +1103,13 @@ class _ProductsState extends State<Products> {
                   Row(
                     children: [
                       SizedBox(
-                          width: 300,
                           height: 51,
-                          child: CustomDropdown(
-                            key: categoryKey,
-                            option: productProvider!.cat,
-                            onSelectedChanged: (int a) {
-                              selectedIndexOfCategory = a;
+                          width: 300,
+                          child: PaginatedSearchDropdown(
+                            hintText: 'Search Item...',
+                            fetchItems: fetchCategoryFromApi,
+                            onItemSelected: (id) {
+                              print('Selected Item ID: $id');
                             },
                           )),
                       Container(
@@ -1525,7 +1519,7 @@ class _ProductsState extends State<Products> {
   Widget formLayout(Widget title, Widget anyWidget,
       {MainAxisAlignment mainAxisAlignment = MainAxisAlignment.start,
       double width = 1200}) {
-    return Container(
+    return SizedBox(
       // color:Colors.black,
       width: width,
       child: Row(
@@ -1786,7 +1780,7 @@ class _ProductsState extends State<Products> {
   }
 
   Widget fieldTitle(String filTitle,
-      {double height = 51, double width = 168.3, bool show = true}) {
+      {double height = 51, double width = 173.3, bool show = true}) {
     return SizedBox(
       height: height,
       width: width,

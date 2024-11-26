@@ -7,15 +7,15 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 import '../model/orders_model.dart';
 
-class ReturnProvider extends ChangeNotifier {
+class DispatchedProvider extends ChangeNotifier {
   bool _isLoading = false;
   bool _selectAll = false;
   List<bool> _selectedProducts = [];
   List<Order> _orders = [];
   int _currentPage = 1; // Ensure this starts at 1
   int _totalPages = 1;
-  PageController _pageController = PageController();
-  TextEditingController _textEditingController = TextEditingController();
+  final PageController _pageController = PageController();
+  final TextEditingController _textEditingController = TextEditingController();
   Timer? _debounce;
 
   bool get selectAll => _selectAll;
@@ -45,6 +45,66 @@ class ReturnProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  bool isCancel = false;
+  void setCancelStatus(bool status) {
+    isCancel = status;
+    notifyListeners();
+  }
+
+  Future<String> cancelOrders(
+      BuildContext context, List<String> orderIds) async {
+    const String baseUrl =
+        'https://inventory-management-backend-s37u.onrender.com';
+    const String cancelOrderUrl = '$baseUrl/orders/cancel';
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('authToken') ?? '';
+    setCancelStatus(true);
+    notifyListeners();
+
+    // Headers for the API request
+    final headers = {
+      'Authorization': 'Bearer $token',
+      'Content-Type': 'application/json',
+    };
+
+    // Request body containing the order IDs
+    final body = json.encode({
+      'orderIds': orderIds,
+    });
+
+    try {
+      // Make the POST request to confirm the orders
+      final response = await http.post(
+        Uri.parse(cancelOrderUrl),
+        headers: headers,
+        body: body,
+      );
+
+      print('Response status: ${response.statusCode}');
+      //print('Response body: ${response.body}');
+
+      final responseData = json.decode(response.body);
+
+      if (response.statusCode == 200) {
+        // After successful confirmation, fetch updated orders and notify listeners
+        await fetchOrdersWithStatus9(); // Assuming fetchOrders is a function that reloads the orders
+        // resetSelections(); // Clear selected order IDs
+        setCancelStatus(false);
+        notifyListeners(); // Notify the UI to rebuild
+
+        return responseData['message'] ?? 'Orders confirmed successfully';
+      } else {
+        return responseData['message'] ?? 'Failed to confirm orders';
+      }
+    } catch (error) {
+      setCancelStatus(false);
+      notifyListeners();
+      print('Error during API request: $error');
+      return 'An error occurred: $error';
+    }
+  }
+
+
   Future<void> fetchOrdersWithStatus9() async {
     _isLoading = true;
     setRefreshingOrders(true);
@@ -63,6 +123,7 @@ class ReturnProvider extends ChangeNotifier {
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
+        log("dispatch data: $data");
         List<Order> orders = (data['orders'] as List)
             .map((order) => Order.fromJson(order))
             .toList();
@@ -71,9 +132,12 @@ class ReturnProvider extends ChangeNotifier {
         _totalPages = data['totalPages']; // Get total pages from response
         _orders = orders; // Set the orders for the current page
 
+        // Logger().e(orders);
+
         // Initialize selected products list
         _selectedProducts = List<bool>.filled(_orders.length, false);
 
+        // Logger().e(_selectedProducts);
         // Print the total number of orders fetched from the current page
         print('Total Orders Fetched from Page $_currentPage: ${orders.length}');
       } else {
@@ -108,13 +172,14 @@ class ReturnProvider extends ChangeNotifier {
     return '$day-$month-$year';
   }
 
-  List<Order> ordersReturned = []; // List of returned orders
-  List<bool> selectedReturnedItems = []; // Selection state for returned orders
-  bool selectAllReturned = false;
+  List<Order> ordersDispatched = []; // List of returned orders
+  List<bool> selectedDispatchedItems =
+      []; // Selection state for returned orders
+  bool selectAllDispatched = false;
 
   void initializeSelection() {
     _selectedProducts = List<bool>.filled(_orders.length, false);
-    selectedReturnedItems = List<bool>.filled(ordersReturned.length, false);
+    selectedDispatchedItems = List<bool>.filled(ordersDispatched.length, false);
   }
 
   // Handle individual row checkbox change for orders
@@ -124,26 +189,27 @@ class ReturnProvider extends ChangeNotifier {
   }
 
   // Handle individual row checkbox change for returned orders
-  void handleRowCheckboxChangeForReturned(String? orderId, bool isSelected) {
-    int index = ordersReturned.indexWhere((order) => order.orderId == orderId);
+  void handleRowCheckboxChangeForDispatched(String? orderId, bool isSelected) {
+    int index =
+        ordersDispatched.indexWhere((order) => order.orderId == orderId);
     if (index != -1) {
-      selectedReturnedItems[index] = isSelected;
-      ordersReturned[index].isSelected = isSelected;
-      _updateSelectAllStateForReturned();
+      selectedDispatchedItems[index] = isSelected;
+      ordersDispatched[index].isSelected = isSelected;
+      _updateSelectAllStateForDispatched();
     }
     notifyListeners();
   }
 
-  void _updateSelectAllStateForReturned() {
-    selectAllReturned = selectedReturnedItems.every((item) => item);
+  void _updateSelectAllStateForDispatched() {
+    selectAllDispatched = selectedDispatchedItems.every((item) => item);
     notifyListeners();
   }
 
-  bool _isReturning = false;
-  bool get isReturning => _isReturning;
+  bool _isDispatching = false;
+  bool get isDispatching => _isDispatching;
 
   Future<void> returnSelectedOrders() async {
-    _isReturning = true; // Set loading state
+    _isDispatching = true; // Set loading state
     notifyListeners();
 
     final prefs = await SharedPreferences.getInstance();
@@ -160,7 +226,7 @@ class ReturnProvider extends ChangeNotifier {
     }
 
     if (selectedOrderIds.isNotEmpty) {
-      final url =
+      const url =
           'https://inventory-management-backend-s37u.onrender.com/orders/return';
 
       try {
@@ -200,7 +266,7 @@ class ReturnProvider extends ChangeNotifier {
       } catch (e) {
         print('Error: $e');
       } finally {
-        _isReturning = false; // Reset loading state
+        _isDispatching = false; // Reset loading state
         notifyListeners();
       }
     } else {

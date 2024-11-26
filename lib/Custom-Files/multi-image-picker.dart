@@ -182,7 +182,6 @@ import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:inventory_management/Api/products-provider.dart';
 import 'package:provider/provider.dart';
@@ -201,7 +200,7 @@ class _CustomPickerState extends State<CustomPicker> {
   Future<void> pickImages() async {
     final pickedFiles = await _imagePicker.pickMultiImage();
       // pickedFiles[0].r
-    if (pickedFiles != null && pickedFiles.isNotEmpty) {
+    if (pickedFiles.isNotEmpty) {
      
       setState(() {
         _images = pickedFiles.map((e) =>File(e.path)).toList();
@@ -247,9 +246,9 @@ class _CustomPickerState extends State<CustomPicker> {
                   crossAxisSpacing: 4,
                   mainAxisSpacing: 4,
                 ),
-                itemCount: _images!.length,
+                itemCount: _images.length,
                 itemBuilder: (context, index) {
-                  return (kIsWeb)?Image.network(_images![index].path):Image.file(_images![index]);
+                  return (kIsWeb)?Image.network(_images[index].path):Image.file(_images[index]);
                 },
               ),
       ),
