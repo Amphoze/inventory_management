@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:intl/intl.dart';
 import 'package:logger/logger.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -220,6 +221,8 @@ class AuthProvider with ChangeNotifier {
   Future<void> _saveToken(String token) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('authToken', token);
+    await prefs.setString(
+        'date', DateFormat('dd-MMMM-yyyy').format(DateTime.now()));
   }
 
   Future<Map<String, dynamic>> forgotPassword(String email) async {
@@ -372,7 +375,9 @@ class AuthProvider with ChangeNotifier {
 
   Future<String?> getToken() async {
     final prefs = await SharedPreferences.getInstance();
-    _isAuthenticated = prefs.getString('authToken') != null;
+    _isAuthenticated = prefs.getString('authToken') != null &&
+        prefs.getString('date') ==
+            DateFormat('dd-MMMM-yyyy').format(DateTime.now());
     // notifyListeners();
     return prefs.getString('authToken');
   }

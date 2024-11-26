@@ -32,6 +32,7 @@ import 'package:inventory_management/provider/inventory_provider.dart';
 import 'package:inventory_management/racked_page.dart';
 import 'package:inventory_management/dispatch_order.dart';
 import 'package:inventory_management/show-label-page.dart';
+import 'package:inventory_management/uploadproduct-quantity.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'Custom-Files/colors.dart';
@@ -1017,7 +1018,8 @@ class _DashboardPageState extends State<DashboardPage> {
       case 'Inventory':
         return const Center(child: Text("Inventory content goes here"));
       case 'Products':
-        return const Products();
+        return UploadProductSku();
+      // return const Products();
       case 'Manage Inventory':
         return const ManageInventoryPage();
       case 'Orders Page':

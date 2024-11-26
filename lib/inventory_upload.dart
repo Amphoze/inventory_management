@@ -220,8 +220,8 @@ class _InventoryUploadState extends State<InventoryUpload> {
                   child: SingleChildScrollView(
                     scrollDirection: Axis.horizontal,
                     child: DataTable(
-                      headingRowColor: WidgetStateProperty.all(
-                          AppColors.primaryBlue.withOpacity(0.1)),
+                      // headingRowColor: WidgetStateProperty.all(
+                      //     AppColors.primaryBlue.withOpacity(0.1)),
                       headingTextStyle: const TextStyle(
                         fontWeight: FontWeight.bold,
                         color: AppColors.primaryBlue,
