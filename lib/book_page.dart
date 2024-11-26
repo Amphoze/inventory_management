@@ -214,6 +214,19 @@ class _BookPageState extends State<BookPage>
         Row(
           children: [
             _searchBar(orderType),
+            const SizedBox(width: 8),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primaryBlue,
+              ),
+              onPressed: () {
+                _showPicklistSourceDialog(context);
+              },
+              child: const Text(
+                'Generate Picklist',
+                style: TextStyle(color: Colors.white),
+              ),
+            ),
             const Spacer(),
             // Add the Confirm button here
             _buildConfirmButtons(orderType),
@@ -773,6 +786,73 @@ class _BookPageState extends State<BookPage>
           ],
         ),
       ),
+    );
+  }
+
+  void _showPicklistSourceDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text(
+            'Select Picklist Source',
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              color: AppColors.primaryBlue, // Change to your desired color
+            ),
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                title: const Text(
+                  'Website',
+                  style: TextStyle(fontSize: 16), // Adjust font size
+                ),
+                onTap: () {
+                  // Handle Website selection
+                  Navigator.of(context).pop();
+                },
+              ),
+              ListTile(
+                title: const Text(
+                  'Offline',
+                  style: TextStyle(fontSize: 16), // Adjust font size
+                ),
+                onTap: () {
+                  // Handle Offline selection
+                  Navigator.of(context).pop();
+                },
+              ),
+              ListTile(
+                title: const Text(
+                  'All',
+                  style: TextStyle(fontSize: 16), // Adjust font size
+                ),
+                onTap: () {
+                  // Handle All selection
+                  Navigator.of(context).pop();
+                },
+              ),
+            ],
+          ),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12), // Rounded corners
+          ),
+          backgroundColor: Colors.white, // Background color
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(); // Close the dialog
+              },
+              child: const Text(
+                'Cancel',
+                style: TextStyle(color: AppColors.primaryBlue), // Cancel button color
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 }

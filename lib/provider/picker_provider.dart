@@ -1,8 +1,10 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:developer';
 import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
 import 'package:inventory_management/model/orders_model.dart';
+import 'package:logger/logger.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class PickerProvider with ChangeNotifier {
@@ -10,11 +12,14 @@ class PickerProvider with ChangeNotifier {
   bool _selectAll = false;
   List<bool> _selectedProducts = [];
   List<Order> _orders = [];
+  List<dynamic> _extractedOrders = [];
   int _currentPage = 1;
   int _totalPages = 1;
   final PageController _pageController = PageController();
   final TextEditingController _textEditingController = TextEditingController();
   Timer? _debounce;
+
+  List<dynamic> get extractedOrders => _extractedOrders;
 
   bool get selectAll => _selectAll;
   List<bool> get selectedProducts => _selectedProducts;
@@ -65,10 +70,6 @@ class PickerProvider with ChangeNotifier {
     setCancelStatus(true);
     notifyListeners();
 
-    if (token == null) {
-      return 'No auth token found';
-    }
-
     // Headers for the API request
     final headers = {
       'Authorization': 'Bearer $token',
@@ -95,8 +96,7 @@ class PickerProvider with ChangeNotifier {
 
       if (response.statusCode == 200) {
         // After successful confirmation, fetch updated orders and notify listeners
-        await 
-        fetchOrdersWithStatus4(); // Assuming fetchOrders is a function that reloads the orders
+        await fetchOrdersWithStatus4(); // Assuming fetchOrders is a function that reloads the orders
         // resetSelections(); // Clear selected order IDs
         setCancelStatus(false);
         notifyListeners(); // Notify the UI to rebuild
@@ -113,6 +113,45 @@ class PickerProvider with ChangeNotifier {
     }
   }
 
+  // Future<void> fetchOrdersWithStatus4() async {
+  //   _isLoading = true;
+  //   setRefreshingOrders(true);
+  //   notifyListeners();
+  //   final prefs = await SharedPreferences.getInstance();
+  //   final token = prefs.getString('authToken') ?? '';
+  //   const url =
+  //       'https://inventory-management-backend-s37u.onrender.com/orders?orderStatus=4&page=';
+  //   try {
+  //     final response = await http.get(Uri.parse('$url$_currentPage'), headers: {
+  //       'Authorization': 'Bearer $token',
+  //       'Content-Type': 'application/json',
+  //     });
+  //     if (response.statusCode == 200) {
+  //       final data = json.decode(response.body);
+  //       List<Order> orders = (data['orders'] as List)
+  //           .map((order) => Order.fromJson(order))
+  //           .toList();
+  //       _totalPages = data['totalPages']; // Get total pages from response
+  //       _orders = orders; // Set the orders for the current page
+  //       // Initialize selected products list
+  //       _selectedProducts = List<bool>.filled(_orders.length, false);
+  //       // Print the total number of orders fetched from the current page
+  //       print('Total Orders Fetched from Page $_currentPage: ${orders.length}');
+  //     } else {
+  //       // Handle non-success responses
+  //       _orders = [];
+  //       _totalPages = 1; // Reset total pages if there’s an error
+  //     }
+  //   } catch (e) {
+  //     // Handle errors
+  //     _orders = [];
+  //     _totalPages = 1; // Reset total pages if there’s an error
+  //   } finally {
+  //     _isLoading = false;
+  //     setRefreshingOrders(false);
+  //     notifyListeners();
+  //   }
+  // }
 
   Future<void> fetchOrdersWithStatus4() async {
     _isLoading = true;
@@ -122,36 +161,31 @@ class PickerProvider with ChangeNotifier {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('authToken') ?? '';
     const url =
-        'https://inventory-management-backend-s37u.onrender.com/orders?orderStatus=4&page=';
+        'https://inventory-management-backend-s37u.onrender.com/order-picker';
 
     try {
-      final response = await http.get(Uri.parse('$url$_currentPage'), headers: {
+      final response = await http.get(Uri.parse(url), headers: {
         'Authorization': 'Bearer $token',
         'Content-Type': 'application/json',
       });
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
-        List<Order> orders = (data['orders'] as List)
-            .map((order) => Order.fromJson(order))
-            .toList();
 
-        _totalPages = data['totalPages']; // Get total pages from response
-        _orders = orders; // Set the orders for the current page
+        log(data['data'].runtimeType.toString());
 
-        // Initialize selected products list
-        _selectedProducts = List<bool>.filled(_orders.length, false);
-
-        // Print the total number of orders fetched from the current page
-        print('Total Orders Fetched from Page $_currentPage: ${orders.length}');
+        _extractedOrders = data['data'];
+        log("_extractedOrders: $_extractedOrders");
+        log("${_extractedOrders.length}");
       } else {
         // Handle non-success responses
-        _orders = [];
+        _extractedOrders = [];
         _totalPages = 1; // Reset total pages if there’s an error
       }
     } catch (e) {
       // Handle errors
-      _orders = [];
+      log(e.toString());
+      _extractedOrders = [];
       _totalPages = 1; // Reset total pages if there’s an error
     } finally {
       _isLoading = false;
@@ -228,6 +262,7 @@ class PickerProvider with ChangeNotifier {
 
     return _orders;
   }
+
   // Future<Map<String, dynamic>?> searchByOrderId(String query) async {
   //   print("Searching for Order ID: $query");
   //   _isLoading = true;

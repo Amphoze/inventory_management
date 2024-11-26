@@ -1,5 +1,8 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:inventory_management/Widgets/picker_order_card.dart';
+// import 'package:inventory_management/Widgets/picker_order_card.dart';
 import 'package:inventory_management/model/orders_model.dart';
 import 'package:provider/provider.dart';
 import 'package:inventory_management/Custom-Files/colors.dart';
@@ -134,7 +137,6 @@ class _PickerPageState extends State<PickerPage> {
                   //                   provider.selectedProducts[entry.key])
                   //               .map((entry) => entry.value.orderId)
                   //               .toList();
-
                   //           if (selectedOrderIds.isEmpty) {
                   //             // Show an error message if no orders are selected
                   //             ScaffoldMessenger.of(context).showSnackBar(
@@ -146,14 +148,11 @@ class _PickerPageState extends State<PickerPage> {
                   //           } else {
                   //             // Set loading status to true before starting the operation
                   //             provider.setCancelStatus(true);
-
                   //             // Call confirmOrders method with selected IDs
                   //             String resultMessage = await provider
                   //                 .cancelOrders(context, selectedOrderIds);
-
                   //             // Set loading status to false after operation completes
                   //             provider.setCancelStatus(false);
-
                   //             // Determine the background color based on the result
                   //             Color snackBarColor;
                   //             if (resultMessage.contains('success')) {
@@ -167,7 +166,6 @@ class _PickerPageState extends State<PickerPage> {
                   //               snackBarColor =
                   //                   AppColors.orange; // Other: Orange
                   //             }
-
                   //             // Show feedback based on the result
                   //             ScaffoldMessenger.of(context).showSnackBar(
                   //               SnackBar(
@@ -218,19 +216,17 @@ class _PickerPageState extends State<PickerPage> {
               ),
             ),
             const SizedBox(height: 8),
-            _buildTableHeader(pickerProvider.orders.length, pickerProvider),
+            _buildTableHeader(
+                pickerProvider.extractedOrders.length, pickerProvider),
             Expanded(
               child: ListView.builder(
-                itemCount: pickerProvider.orders.length,
+                itemCount: pickerProvider.extractedOrders.length,
                 itemBuilder: (context, index) {
-                  final order = pickerProvider.orders[index];
+                  final extractedOrders = pickerProvider.extractedOrders[index];
                   return Column(
                     children: [
-                      _buildOrderCard(order, index, pickerProvider, 'Product 1',
-                          'k-1', 'Rs. 1000', 2),
-                      _buildOrderCard(order, index, pickerProvider, 'Product 2',
-                          'k-2', 'Rs. 2000', 1),
-                      // const Divider(thickness: 1, color: Colors.grey),
+                      _buildOrderCard(extractedOrders),
+                      const Divider(thickness: 1, color: Colors.grey),
                     ],
                   );
                 },
@@ -370,8 +366,10 @@ class _PickerPageState extends State<PickerPage> {
     );
   }
 
-  Widget _buildOrderCard(Order order, int index, PickerProvider pickerProvider,
-      String name, String sku, String amount, int qty) {
+  Widget _buildOrderCard(
+    Map<String, dynamic> order,
+  ) {
+    // order['items][index]['product_id'][]
     return Card(
       color: AppColors.white,
       elevation: 4, // Reduced elevation for less shadow
@@ -379,103 +377,317 @@ class _PickerPageState extends State<PickerPage> {
         borderRadius:
             BorderRadius.circular(12), // Slightly smaller rounded corners
       ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Expanded(
-            flex: 13,
-            child: PickerOrderCard(
-                order: order, name: name, sku: sku, amount: amount, qty: qty),
-          ),
-          const SizedBox(width: 4),
-          buildCell(
-            const Text(
-              "1",
-              style: TextStyle(fontSize: 16),
+      child: Padding(
+        padding: const EdgeInsets.all(8.0), // Add padding here
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Text("Picklist ID: ${order['picklistId']}",
+            // style: const TextStyle(
+            //   fontWeight: FontWeight.bold,
+            //   fontSize: 15,
+            //   color: Colors.blueAccent,
+            // )),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Expanded(
+                  flex: 15,
+                  child: SizedBox(
+                    // height: 200, // Removed fixed height
+                    child: ListView.builder(
+                      shrinkWrap:
+                          true, // Allow ListView to take necessary height
+                      itemCount: order['items'].length,
+                      itemBuilder: (context, index) {
+                        return Container(
+                          decoration: BoxDecoration(
+                            color: AppColors.lightGrey,
+                            borderRadius: BorderRadius.circular(
+                                10), // Slightly smaller rounded corners
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(
+                                    0.08), // Lighter shadow for smaller card
+                                offset: const Offset(0, 1),
+                                blurRadius: 3,
+                              ),
+                            ],
+                          ),
+                          margin: const EdgeInsets.symmetric(vertical: 4.0),
+                          child: Padding(
+                            padding: const EdgeInsets.all(
+                                10.0), // Reduced padding inside product card
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: [
+                                ClipRRect(
+                                  borderRadius: BorderRadius.circular(6),
+                                  child: SizedBox(
+                                    width: 60, // Smaller image size
+                                    height: 60,
+                                    child: order['items'][index]['product_id']
+                                                    ['shopifyImage'] !=
+                                                null &&
+                                            order['items'][index]['product_id']
+                                                    ['shopifyImage']
+                                                .isNotEmpty
+                                        ? Image.network(
+                                            '${order['items'][index]['product_id']['shopifyImage']}',
+                                          )
+                                        : const Icon(
+                                            Icons.image_not_supported,
+                                            size: 40, // Fallback icon size
+                                            color: AppColors.grey,
+                                          ),
+                                  ),
+                                ),
+                                const SizedBox(
+                                    width:
+                                        8.0), // Reduced spacing between image and text
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        order['items'][index]['product_id']
+                                            ['displayName'],
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.w600,
+                                          fontSize: 14, // Reduced font size
+                                          color: Colors.black87,
+                                        ),
+                                        maxLines: 2,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                      const SizedBox(
+                                          height:
+                                              6.0), // Reduced spacing between text elements
+                                      Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.start,
+                                        children: [
+                                          RichText(
+                                            text: TextSpan(
+                                              children: [
+                                                const TextSpan(
+                                                  text: 'SKU: ',
+                                                  style: TextStyle(
+                                                    color: Colors.blueAccent,
+                                                    fontWeight: FontWeight.bold,
+                                                    fontSize:
+                                                        13, // Reduced font size
+                                                  ),
+                                                ),
+                                                TextSpan(
+                                                  text: order['items'][index]
+                                                      ['product_id']['sku'],
+                                                  style: const TextStyle(
+                                                    color: Colors.black87,
+                                                    fontWeight: FontWeight.w500,
+                                                    fontSize:
+                                                        13, // Reduced font size
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                          const SizedBox(width: 20),
+                                          RichText(
+                                            text: TextSpan(
+                                              children: [
+                                                const TextSpan(
+                                                  text: 'Amount: ',
+                                                  style: TextStyle(
+                                                    color: Colors.blueAccent,
+                                                    fontWeight: FontWeight.bold,
+                                                    fontSize:
+                                                        13, // Reduced font size
+                                                  ),
+                                                ),
+                                                TextSpan(
+                                                  text: order['items'][index]
+                                                          ['product_id']['mrp']
+                                                      .toString(),
+                                                  style: const TextStyle(
+                                                    color: Colors.black87,
+                                                    fontWeight: FontWeight.w500,
+                                                    fontSize:
+                                                        13, // Reduced font size
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                const Spacer(), // Ensures `qty` is aligned to the right end
+                                const Text(
+                                  "X",
+                                  style: TextStyle(
+                                    fontSize: 20,
+                                  ),
+                                ),
+                                const Spacer(), // Ensures `qty` is aligned to the right end
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      vertical: 2.0, horizontal: 2.0),
+                                  child: Center(
+                                    child: Text(
+                                      order['items'][index]['product_id']
+                                              ['itemQty']
+                                          .toString(),
+                                      style: const TextStyle(
+                                        fontSize: 20,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(
+                                  width: 60,
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 4),
+                buildCell(
+                  Text("${order['picklistId']}",
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                        color: Colors.blueAccent,
+                      )),
+                  flex: 3,
+                ),
+              ],
             ),
-            flex: 3,
-          ),
-          // const SizedBox(width: 4),
-          // buildCell(
-          //   Column(
-          //     crossAxisAlignment: CrossAxisAlignment.center,
-          //     children: [
-          //       Text(
-          //         _getCustomerFullName(order.customer),
-          //         style: const TextStyle(fontSize: 16),
-          //         textAlign: TextAlign.center,
-          //       ),
-          //       const SizedBox(height: 4),
-          //       if (order.customer?.phone != null) ...[
-          //         Row(
-          //           mainAxisAlignment: MainAxisAlignment.center,
-          //           children: [
-          //             IconButton(
-          //               onPressed: () {
-          //                 // Add your phone action here
-          //               },
-          //               icon: const Icon(
-          //                 Icons.phone,
-          //                 color: AppColors.green,
-          //                 size: 14,
-          //               ),
-          //             ),
-          //             const SizedBox(width: 4),
-          //             Text(
-          //               _getCustomerPhoneNumber(order.customer?.phone),
-          //               style: const TextStyle(
-          //                 fontSize: 14,
-          //                 color: Colors.orange,
-          //                 fontWeight: FontWeight.bold,
-          //               ),
-          //               textAlign: TextAlign.center,
-          //             ),
-          //           ],
-          //         ),
-          //       ] else ...[
-          //         const Text(
-          //           'Phone not available',
-          //           style: TextStyle(
-          //             fontSize: 14,
-          //             color: Colors.grey,
-          //           ),
-          //         ),
-          //       ],
-          //     ],
-          //   ),
-          //   flex: 3,
-          // ),
-          // const SizedBox(width: 4),
-          // buildCell(
-          //   Text(
-          //     pickerProvider.formatDate(order.date!),
-          //     style: const TextStyle(fontSize: 16),
-          //   ),
-          //   flex: 3,
-          // ),
-          // const SizedBox(width: 4),
-          // buildCell(
-          //   Text(
-          //     'Rs.${order.totalAmount!}',
-          //     style: const TextStyle(fontSize: 16),
-          //   ),
-          //   flex: 2,
-          // ),
-          // const SizedBox(width: 4),
-          // buildCell(
-          //   order.isPickerFullyScanned
-          //       ? const Icon(
-          //           Icons.check_circle,
-          //           color: Colors.green,
-          //           size: 24,
-          //         )
-          //       : const SizedBox.shrink(),
-          //   flex: 2,
-          // ),
-        ],
+          ],
+        ),
       ),
     );
   }
+
+  // Widget _buildOrderCard(Order order, int index, PickerProvider pickerProvider,
+  //     String name, String sku, String amount, int qty) {
+  //   return Card(
+  //     color: AppColors.white,
+  //     elevation: 4, // Reduced elevation for less shadow
+  //     shape: RoundedRectangleBorder(
+  //       borderRadius:
+  //           BorderRadius.circular(12), // Slightly smaller rounded corners
+  //     ),
+  //     child: Column(
+  //       children: [
+  //         Text("Picklist ID: "),
+  //         Row(
+  //           crossAxisAlignment: CrossAxisAlignment.center,
+  //           children: [
+  //             Expanded(
+  //               flex: 13,
+  //               child: PickerOrderCard(
+  //                   order: order, name: name, sku: sku, amount: amount, qty: qty),
+  //             ),
+  //             const SizedBox(width: 4),
+  //             buildCell(
+  //               const Text(
+  //                 "1",
+  //                 style: TextStyle(fontSize: 16),
+  //               ),
+  //               flex: 3,
+  //             ),
+  //             // const SizedBox(width: 4),
+  //             // buildCell(
+  //             //   Column(
+  //             //     crossAxisAlignment: CrossAxisAlignment.center,
+  //             //     children: [
+  //             //       Text(
+  //             //         _getCustomerFullName(order.customer),
+  //             //         style: const TextStyle(fontSize: 16),
+  //             //         textAlign: TextAlign.center,
+  //             //       ),
+  //             //       const SizedBox(height: 4),
+  //             //       if (order.customer?.phone != null) ...[
+  //             //         Row(
+  //             //           mainAxisAlignment: MainAxisAlignment.center,
+  //             //           children: [
+  //             //             IconButton(
+  //             //               onPressed: () {
+  //             //                 // Add your phone action here
+  //             //               },
+  //             //               icon: const Icon(
+  //             //                 Icons.phone,
+  //             //                 color: AppColors.green,
+  //             //                 size: 14,
+  //             //               ),
+  //             //             ),
+  //             //             const SizedBox(width: 4),
+  //             //             Text(
+  //             //               _getCustomerPhoneNumber(order.customer?.phone),
+  //             //               style: const TextStyle(
+  //             //                 fontSize: 14,
+  //             //                 color: Colors.orange,
+  //             //                 fontWeight: FontWeight.bold,
+  //             //               ),
+  //             //               textAlign: TextAlign.center,
+  //             //             ),
+  //             //           ],
+  //             //         ),
+  //             //       ] else ...[
+  //             //         const Text(
+  //             //           'Phone not available',
+  //             //           style: TextStyle(
+  //             //             fontSize: 14,
+  //             //             color: Colors.grey,
+  //             //           ),
+  //             //         ),
+  //             //       ],
+  //             //     ],
+  //             //   ),
+  //             //   flex: 3,
+  //             // ),
+  //             // const SizedBox(width: 4),
+  //             // buildCell(
+  //             //   Text(
+  //             //     pickerProvider.formatDate(order.date!),
+  //             //     style: const TextStyle(fontSize: 16),
+  //             //   ),
+  //             //   flex: 3,
+  //             // ),
+  //             // const SizedBox(width: 4),
+  //             // buildCell(
+  //             //   Text(
+  //             //     'Rs.${order.totalAmount!}',
+  //             //     style: const TextStyle(fontSize: 16),
+  //             //   ),
+  //             //   flex: 2,
+  //             // ),
+  //             // const SizedBox(width: 4),
+  //             // buildCell(
+  //             //   order.isPickerFullyScanned
+  //             //       ? const Icon(
+  //             //           Icons.check_circle,
+  //             //           color: Colors.green,
+  //             //           size: 24,
+  //             //         )
+  //             //       : const SizedBox.shrink(),
+  //             //   flex: 2,
+  //             // ),
+  //           ],
+  //         ),
+  //       ],
+  //     ),
+  //   );
+  // }
 
   Widget _buildProductCard(
       Order order, int index, PickerProvider pickerProvider) {

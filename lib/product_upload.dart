@@ -195,22 +195,6 @@ class _ProductDataDisplayState extends State<ProductDataDisplay> {
     });
   }
 
-  void _downloadTemplate() {
-    // Define the path to the CSV file in the assets
-    const String csvFilePath = 'assets/product template.xlsx';
-
-    // Create an anchor element
-    final html.AnchorElement anchor = html.AnchorElement(href: csvFilePath)
-      ..setAttribute(
-          'download', 'product template.xlsx') // Set the download attribute
-      ..click(); // Trigger the click event to start the download
-
-    // Optionally, show a message to the user
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Template download initiated.')),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final productDataProvider = Provider.of<ProductDataProvider>(context);
@@ -264,7 +248,7 @@ class _ProductDataDisplayState extends State<ProductDataDisplay> {
                 ],
                 const SizedBox(width: 16),
                 ElevatedButton(
-                  onPressed: _downloadTemplate,
+                  onPressed: () => AuthProvider().downloadTemplate(context,'product'),
                   child: const Text('Download Template'),
                 ),
                 const SizedBox(width: 16.0),
