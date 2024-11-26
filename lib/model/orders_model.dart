@@ -130,7 +130,7 @@ class Order {
 
   // Utility function to safely parse a string from any data type
   static String _parseString(dynamic value) {
-    return value?.toString() ?? ''; // Return an empty string if null
+    return value?.toString() ?? ''; // Dispatched an empty string if null
   }
 
   // Utility function to parse a double from any data type
@@ -165,7 +165,8 @@ class Order {
     } else {
       return const Icon(Icons.image,
           size: 200,
-          color: AppColors.grey); // Return an icon if the image is not present
+          color:
+              AppColors.grey); // Dispatched an icon if the image is not present
     }
   }
 
@@ -174,7 +175,7 @@ class Order {
   static DateTime? _parseDate(String? dateString) {
     if (dateString == null || dateString.isEmpty) {
       //print("Invalid or empty date string");
-      return null; // Return null for invalid or empty strings
+      return null; // Dispatched null for invalid or empty strings
     }
 
     // Try parsing using DateTime.parse()
@@ -210,7 +211,7 @@ class Order {
     }
 
     //print("Error: Could not parse date string: '$dateString'");
-    return null; // Return null if all parsing attempts fail
+    return null; // Dispatched null if all parsing attempts fail
   }
 
   /// Formats a DateTime object to 'dd-MM-yyyy' string.

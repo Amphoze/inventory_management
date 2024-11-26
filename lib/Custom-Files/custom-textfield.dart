@@ -12,7 +12,7 @@ class CustomTextField extends StatelessWidget {
   final TextEditingController controller;
   final String? Function(String?)? validator;
 
-  CustomTextField({
+  const CustomTextField({super.key, 
     this.maxLines = 1,
     this.height = 52,
     this.width = 550,

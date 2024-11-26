@@ -1,7 +1,4 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
-import 'package:flutter/widgets.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:inventory_management/Api/order-page-checkbox-provider.dart';
 import 'package:inventory_management/Custom-Files/colors.dart';
@@ -162,7 +159,7 @@ class _OrdersPageState extends State<OrdersPage>
                                   layoutOfOrderItem(checkBoxProvider:checkBoxProvider,index:index, totalOrderAmount: '', orderId: '', easyId: '', quantity:1, brand: '', totalMrp: '', sellingPrice: '', tat: '', importDate: '', paymentStatus: '', sku: '', paymentMode: '', orderDate: '', shippingMethod: '', orderItemId: '', shippingMode: '', productName: '',),
                                   Row(
                                     children: [
-                                      Text('No. of Boxes : '),
+                                      const Text('No. of Boxes : '),
                                       SizedBox(
                                         height:35,
                                         width:40,
@@ -565,7 +562,7 @@ class _OrdersPageState extends State<OrdersPage>
         if (isCheckmark)
           Text(
             value,
-            style: TextStyle(color: AppColors.cardsgreen),
+            style: const TextStyle(color: AppColors.cardsgreen),
           )
         else
           Text(

@@ -4,42 +4,30 @@ import 'package:inventory_management/Api/label-api.dart';
 import 'package:inventory_management/Api/lable-page-api.dart';
 import 'package:inventory_management/Api/order-page-checkbox-provider.dart';
 import 'package:inventory_management/Api/products-provider.dart';
-// import 'package:inventory_management/Custom-Files/multi-image-picker.dart';
 import 'package:inventory_management/dashboard.dart';
-// import 'packa/ge:inventory_management/forgot_password.dart';
 import 'package:inventory_management/login_page.dart';
-import 'package:inventory_management/products.dart';
 import 'package:inventory_management/provider/accounts_provider.dart';
+import 'package:inventory_management/provider/ba_approve_provider.dart';
 import 'package:inventory_management/provider/book_provider.dart';
+import 'package:inventory_management/provider/cancelled_provider.dart';
 import 'package:inventory_management/provider/combo_provider.dart';
 import 'package:inventory_management/provider/dashboard_provider.dart';
 import 'package:inventory_management/provider/inventory_provider.dart';
 import 'package:inventory_management/provider/invoice_provider.dart';
 import 'package:inventory_management/provider/marketplace_provider.dart';
-import 'package:inventory_management/forgot_password.dart';
-import 'package:inventory_management/location_master.dart';
-import 'package:inventory_management/login_page.dart';
-import 'package:inventory_management/products.dart';
 import 'package:inventory_management/provider/category_provider.dart';
-import 'package:inventory_management/provider/combo_provider.dart';
 import 'package:inventory_management/provider/label_data_provider.dart';
 import 'package:inventory_management/provider/location_provider.dart';
 import 'package:inventory_management/provider/manage-inventory-provider.dart';
 import 'package:inventory_management/provider/product_data_provider.dart';
-import 'package:inventory_management/provider/return_provider.dart';
+import 'package:inventory_management/provider/dispatched_provider.dart';
 import 'package:inventory_management/provider/show-details-order-provider.dart';
-import 'package:inventory_management/reset_password.dart';
 import 'package:inventory_management/provider/orders_provider.dart';
 import 'package:inventory_management/provider/picker_provider.dart';
 import 'package:inventory_management/provider/packer_provider.dart';
 import 'package:inventory_management/provider/checker_provider.dart';
 import 'package:inventory_management/provider/racked_provider.dart';
 import 'package:inventory_management/provider/manifest_provider.dart';
-import 'package:inventory_management/provider/checker_provider.dart';
-import 'package:inventory_management/provider/location_provider.dart';
-import 'package:inventory_management/provider/manage-inventory-provider.dart';
-import 'package:inventory_management/show-label-page.dart';
-import 'package:path/path.dart';
 import 'package:provider/provider.dart';
 
 // import 'package:inventory_management/create_account.dart';
@@ -64,11 +52,11 @@ void main() {
       ChangeNotifierProvider(create: (context) => ManifestProvider()),
       ChangeNotifierProvider(create: (context) => RackedProvider()),
       ChangeNotifierProvider(create: (context) => OrdersProvider()),
-      ChangeNotifierProvider(create: (context) => ReturnProvider()),
+      ChangeNotifierProvider(create: (context) => DispatchedProvider()),
+      ChangeNotifierProvider(create: (context) => CancelledProvider()),
       ChangeNotifierProvider(
-        create: (context) => LocationProvider(
-            authProvider: Provider.of<AuthProvider>(context, listen: false)),
-      ),
+          create: (context) => LocationProvider(
+              authProvider: Provider.of<AuthProvider>(context, listen: false))),
       ChangeNotifierProvider(create: (context) => CategoryProvider()),
       ChangeNotifierProvider(create: (context) => ProductDataProvider()),
       ChangeNotifierProvider(create: (context) => LabelDataProvider()),
@@ -76,6 +64,7 @@ void main() {
       ChangeNotifierProvider(create: (context) => InventoryProvider()),
       ChangeNotifierProvider(create: (context) => InvoiceProvider()),
       ChangeNotifierProvider(create: (context) => AccountsProvider()),
+      ChangeNotifierProvider(create: (context) => BAApproveProvider()),
     ],
     child: const MyApp(),
   ));
@@ -106,7 +95,7 @@ class MyApp extends StatelessWidget {
           ),
         ),
       ),
-      home: Home(),
+      home: const Home(),
     );
   }
 }

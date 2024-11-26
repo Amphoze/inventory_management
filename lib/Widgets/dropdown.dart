@@ -11,7 +11,7 @@ class PaginatedSearchDropdown extends StatefulWidget {
       fetchItems;
   final ValueChanged<String> onItemSelected;
 
-  PaginatedSearchDropdown({
+  const PaginatedSearchDropdown({super.key, 
     required this.hintText,
     required this.fetchItems,
     required this.onItemSelected,
@@ -31,7 +31,7 @@ class _PaginatedSearchDropdownState extends State<PaginatedSearchDropdown> {
   bool isDropdownOpen = false;
   int currentPage = 1;
   OverlayEntry? _overlayEntry;
-  GlobalKey _key =
+  final GlobalKey _key =
       GlobalKey(); // Added a GlobalKey to track widget position and size
 
   @override
@@ -77,8 +77,8 @@ class _PaginatedSearchDropdownState extends State<PaginatedSearchDropdown> {
                   controller: searchController,
                   decoration: InputDecoration(
                     hintText: widget.hintText,
-                    border: OutlineInputBorder(),
-                    contentPadding: EdgeInsets.symmetric(horizontal: 8.0),
+                    border: const OutlineInputBorder(),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 8.0),
                   ),
                   onChanged: (query) => _onSearchChanged(query),
                 ),
@@ -122,7 +122,7 @@ class _PaginatedSearchDropdownState extends State<PaginatedSearchDropdown> {
       ),
     );
 
-    Overlay.of(context)?.insert(_overlayEntry!);
+    Overlay.of(context).insert(_overlayEntry!);
   }
 
   void _removeOverlay() {

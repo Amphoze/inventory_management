@@ -4,9 +4,16 @@ import 'package:inventory_management/provider/label_data_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:inventory_management/Custom-Files/colors.dart';
 import 'package:inventory_management/Api/auth_provider.dart';
+import 'dart:html' as html; // Import the html library
 
-class LabelUpload extends StatelessWidget {
+class LabelUpload extends StatefulWidget {
   const LabelUpload({super.key});
+
+  @override
+  State<LabelUpload> createState() => _LabelUploadState();
+}
+
+class _LabelUploadState extends State<LabelUpload> {
   Future<void> _uploadLabels(BuildContext context) async {
     final authProvider = AuthProvider();
     final labelDataProvider =
@@ -73,6 +80,22 @@ class LabelUpload extends StatelessWidget {
     );
   }
 
+  void _downloadTemplate() {
+    // Define the path to the CSV file in the assets
+    const String csvFilePath = 'assets/label template.xlsx';
+
+    // Create an anchor element
+    final html.AnchorElement anchor = html.AnchorElement(href: csvFilePath)
+      ..setAttribute(
+          'download', 'label template.xlsx') // Set the download attribute
+      ..click(); // Trigger the click event to start the download
+
+    // Optionally, show a message to the user
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Template download initiated.')),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final labelDataProvider = Provider.of<LabelDataProvider>(context);
@@ -95,8 +118,8 @@ class LabelUpload extends StatelessWidget {
                   onError: (errorMessage) =>
                       _showMessage(context, errorMessage, isError: true),
                 ),
-                const SizedBox(width: 16.0),
                 if (labelDataProvider.isUploadSuccessful) ...[
+                  const SizedBox(width: 16.0),
                   ElevatedButton(
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.primaryGreen,
@@ -120,6 +143,11 @@ class LabelUpload extends StatelessWidget {
                     },
                   ),
                 ],
+                const SizedBox(width: 16),
+                ElevatedButton(
+                  onPressed: _downloadTemplate,
+                  child: const Text('Download Template'),
+                ),
               ],
             ),
             const SizedBox(height: 16.0),
@@ -176,7 +204,7 @@ class LabelUpload extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         final isSmallScreen = constraints.maxWidth < 600;
-        final imageWidget = Container(
+        final imageWidget = SizedBox(
           width: isSmallScreen ? 120 : 150,
           height: isSmallScreen ? 120 : 150,
           child: dataMap['image'] != null && dataMap['image']!.isNotEmpty

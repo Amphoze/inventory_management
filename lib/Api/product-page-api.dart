@@ -5,14 +5,11 @@ import 'dart:io';
 // import 'dart:io';
 // import 'dart:typed_data';
 import 'package:flutter/material.dart';
-import 'package:http_parser/http_parser.dart';
 
 // import 'package:http_parser/http_parser.dart';
 // import 'package:flutter/services.dart';
 import 'package:inventory_management/Api/auth_provider.dart';
 import 'package:http/http.dart' as http;
-import 'package:inventory_management/Api/products-provider.dart';
-import 'package:provider/provider.dart';
 // import 'package:path/path.dart' as path;
 
 class ProductPageApi {
@@ -32,7 +29,7 @@ class ProductPageApi {
         },
       );
 
-      print('token is here: ${token}');
+      print('token is here: $token');
       // print('Get All brand  Response Body: ${response.body}');
 
       if (response.statusCode == 200) {
@@ -343,7 +340,7 @@ Active: $active
 
       jsonData['success'] = true;
       print(
-          "Product is created successfully:${response.statusCode}${response} ${responseBody} ---> ${jsonData["success"]}");
+          "Product is created successfully:${response.statusCode}$response $responseBody ---> ${jsonData["success"]}");
 
       return response;
     } catch (error, stackTrace) {

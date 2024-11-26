@@ -1,10 +1,8 @@
 import 'dart:convert';
-import 'dart:js';
 
 import 'package:dropdown_search/dropdown_search.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
 // import 'package:inventory_management/Api/auth_provider.dart';
 import 'package:inventory_management/Api/auth_provider.dart';
 import 'package:inventory_management/Api/products-provider.dart';
@@ -42,7 +40,7 @@ class CustomDropdown extends StatefulWidget {
 class CustomDropdownState extends State<CustomDropdown> {
   String? _selectedItem = 'Select option';
   bool isLoading = false;
-  List<String> _items = ['Select option'];
+  final List<String> _items = ['Select option'];
   TextEditingController searchController = TextEditingController();
 
   void updateData() {
@@ -80,11 +78,11 @@ class CustomDropdownState extends State<CustomDropdown> {
   }
 
   void searchData(String brandName) async {
-    final String _baseUrl =
+    const String baseUrl =
         'https://inventory-management-backend-s37u.onrender.com';
 
     final token = await AuthProvider().getToken();
-    final url = Uri.parse('$_baseUrl/category?name=$brandName');
+    final url = Uri.parse('$baseUrl/category?name=$brandName');
     final response = await http.get(
       url,
       headers: {
@@ -125,7 +123,7 @@ class CustomDropdownState extends State<CustomDropdown> {
             showSearchBox: true,
             loadingBuilder: ((context, searchEntry) {
               print("hete is loading bilder");
-              return Text('data');
+              return const Text('data');
             }),
 
             menuProps: const MenuProps(
@@ -159,7 +157,7 @@ class CustomDropdownState extends State<CustomDropdown> {
                 return true;
               },
             ),
-            listViewProps: ListViewProps(),
+            listViewProps: const ListViewProps(),
           ),
           onChanged: (String? newValue) {
             widget.selectedIndex =
@@ -258,7 +256,7 @@ class CustomDropdownMultiple extends StatefulWidget {
 
 class _CustomDropdownMultipleState extends State<CustomDropdownMultiple> {
   String? _selectedItem = 'Select option';
-  List<String> _items = ['Select option'];
+  final List<String> _items = ['Select option'];
   TextEditingController searchController = TextEditingController();
   void updateData() {
     // _items.clear();
@@ -361,6 +359,8 @@ class _CustomDropdownMultipleState extends State<CustomDropdownMultiple> {
 }
 
 class LazyLoadingDropdown extends StatefulWidget {
+  const LazyLoadingDropdown({super.key});
+
   @override
   _LazyLoadingDropdownState createState() => _LazyLoadingDropdownState();
 }
@@ -385,7 +385,7 @@ class _LazyLoadingDropdownState extends State<LazyLoadingDropdown> {
     });
 
     // Simulate an API call for data fetching (replace this with actual API logic)
-    await Future.delayed(Duration(seconds: 1), () {
+    await Future.delayed(const Duration(seconds: 1), () {
       List<String> newItems = List.generate(
           pageSize, (index) => 'Item ${(page * pageSize) + index} $query');
       setState(() {
@@ -400,7 +400,7 @@ class _LazyLoadingDropdownState extends State<LazyLoadingDropdown> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text("Lazy Loading Dropdown"),
+        title: const Text("Lazy Loading Dropdown"),
       ),
       body: Column(
         children: [
@@ -415,7 +415,7 @@ class _LazyLoadingDropdownState extends State<LazyLoadingDropdown> {
                 page = 0;
                 fetchData(value); // Fetch data based on search query
               },
-              decoration: InputDecoration(
+              decoration: const InputDecoration(
                 labelText: 'Search',
                 border: OutlineInputBorder(),
               ),
@@ -427,7 +427,7 @@ class _LazyLoadingDropdownState extends State<LazyLoadingDropdown> {
             padding: const EdgeInsets.all(8.0),
             child: DropdownButton<String>(
               value: selectedItem,
-              hint: Text("Select an item"),
+              hint: const Text("Select an item"),
               onChanged: (newValue) {
                 setState(() {
                   selectedItem = newValue;
@@ -459,7 +459,7 @@ class _LazyLoadingDropdownState extends State<LazyLoadingDropdown> {
                 itemCount: items.length + (isLoading ? 1 : 0),
                 itemBuilder: (context, index) {
                   if (index == items.length) {
-                    return Center(
+                    return const Center(
                       child: CircularProgressIndicator(),
                     ); // Show loader at the end when fetching more data
                   }

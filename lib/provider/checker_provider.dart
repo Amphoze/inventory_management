@@ -12,8 +12,8 @@ class CheckerProvider with ChangeNotifier {
   List<Order> _orders = [];
   int _currentPage = 1; // Ensure this starts at 1
   int _totalPages = 1;
-  PageController _pageController = PageController();
-  TextEditingController _textEditingController = TextEditingController();
+  final PageController _pageController = PageController();
+  final TextEditingController _textEditingController = TextEditingController();
   Timer? _debounce;
 
   bool get selectAll => _selectAll;
@@ -48,6 +48,70 @@ class CheckerProvider with ChangeNotifier {
     _selectAll = selectedCount == _orders.length;
     notifyListeners();
   }
+
+  bool isCancel = false;
+  void setCancelStatus(bool status) {
+    isCancel = status;
+    notifyListeners();
+  }
+
+  Future<String> cancelOrders(
+      BuildContext context, List<String> orderIds) async {
+    const String baseUrl =
+        'https://inventory-management-backend-s37u.onrender.com';
+    const String cancelOrderUrl = '$baseUrl/orders/cancel';
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('authToken') ?? '';
+    setCancelStatus(true);
+    notifyListeners();
+
+    if (token == null) {
+      return 'No auth token found';
+    }
+
+    // Headers for the API request
+    final headers = {
+      'Authorization': 'Bearer $token',
+      'Content-Type': 'application/json',
+    };
+
+    // Request body containing the order IDs
+    final body = json.encode({
+      'orderIds': orderIds,
+    });
+
+    try {
+      // Make the POST request to confirm the orders
+      final response = await http.post(
+        Uri.parse(cancelOrderUrl),
+        headers: headers,
+        body: body,
+      );
+
+      print('Response status: ${response.statusCode}');
+      //print('Response body: ${response.body}');
+
+      final responseData = json.decode(response.body);
+
+      if (response.statusCode == 200) {
+        // After successful confirmation, fetch updated orders and notify listeners
+        await fetchOrdersWithStatus6(); // Assuming fetchOrders is a function that reloads the orders
+        // resetSelections(); // Clear selected order IDs
+        setCancelStatus(false);
+        notifyListeners(); // Notify the UI to rebuild
+
+        return responseData['message'] ?? 'Orders confirmed successfully';
+      } else {
+        return responseData['message'] ?? 'Failed to confirm orders';
+      }
+    } catch (error) {
+      setCancelStatus(false);
+      notifyListeners();
+      print('Error during API request: $error');
+      return 'An error occurred: $error';
+    }
+  }
+
 
   Future<void> fetchOrdersWithStatus6() async {
     _isLoading = true;

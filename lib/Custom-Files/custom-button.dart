@@ -12,7 +12,7 @@ class CustomButton extends StatelessWidget {
   final Widget? prefixIcon; // Optional prefix icon
 
   const CustomButton({
-    Key? key,
+    super.key,
     required this.width,
     required this.height,
     required this.onTap,
@@ -22,7 +22,7 @@ class CustomButton extends StatelessWidget {
     required this.text,
     this.borderRadius = BorderRadius.zero,
     this.prefixIcon, // Optional parameter
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -38,7 +38,7 @@ class CustomButton extends StatelessWidget {
             BoxShadow(
               color: Colors.black.withOpacity(0.2),
               blurRadius: 4,
-              offset: Offset(0, 2),
+              offset: const Offset(0, 2),
             ),
           ],
         ),
@@ -47,7 +47,7 @@ class CustomButton extends StatelessWidget {
           children: [
             if (prefixIcon != null) ...[
               prefixIcon!,
-              SizedBox(width: 8), 
+              const SizedBox(width: 8), 
             ],
             Text(
               text,

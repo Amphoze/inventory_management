@@ -18,7 +18,7 @@ class InventoryService {
     );
 
     if (response.statusCode == 201) {
-      return jsonDecode(response.body); // Return created inventory data
+      return jsonDecode(response.body); // Dispatched created inventory data
     } else {
       throw Exception('Failed to create inventory');
     }
@@ -35,7 +35,7 @@ class InventoryService {
     );
 
     if (response.statusCode == 200) {
-      return jsonDecode(response.body); // Return the response as a map
+      return jsonDecode(response.body); // Dispatched the response as a map
     } else {
       throw Exception('Failed to load inventory');
     }
@@ -52,7 +52,7 @@ class InventoryService {
     );
 
     if (response.statusCode == 200) {
-      return jsonDecode(response.body); // Return inventory data by ID
+      return jsonDecode(response.body); // Dispatched inventory data by ID
     } else {
       throw Exception('Failed to load inventory by ID');
     }
@@ -71,7 +71,7 @@ class InventoryService {
     );
 
     if (response.statusCode == 200) {
-      return jsonDecode(response.body); // Return updated inventory data
+      return jsonDecode(response.body); // Dispatched updated inventory data
     } else {
       throw Exception('Failed to update inventory');
     }

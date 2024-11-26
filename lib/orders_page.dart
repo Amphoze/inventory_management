@@ -5,12 +5,11 @@ import 'package:inventory_management/Widgets/product_details_card.dart';
 import 'package:inventory_management/edit_order_page.dart';
 import 'package:provider/provider.dart';
 import 'package:inventory_management/provider/orders_provider.dart';
-import 'package:provider/provider.dart';
-import 'package:inventory_management/provider/orders_provider.dart'; // Import the separate provider
+// Import the separate provider
 import 'package:inventory_management/Custom-Files/colors.dart';
 
 class OrdersNewPage extends StatefulWidget {
-  const OrdersNewPage({Key? key}) : super(key: key);
+  const OrdersNewPage({super.key});
 
   @override
   _OrdersNewPageState createState() => _OrdersNewPageState();
@@ -160,7 +159,7 @@ class _OrdersNewPageState extends State<OrdersNewPage>
                                   .entries
                                   .where((entry) =>
                                       provider.selectedReadyOrders[entry.key])
-                                  .map((entry) => entry.value.orderId!)
+                                  .map((entry) => entry.value.orderId)
                                   .toList();
 
                               if (selectedOrderIds.isEmpty) {
@@ -214,6 +213,82 @@ class _OrdersNewPageState extends State<OrdersNewPage>
                             )
                           : const Text(
                               'Confirm Orders',
+                              style: TextStyle(color: Colors.white),
+                            ),
+                    ),
+                    const SizedBox(width: 8),
+                    ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.cardsred,
+                      ),
+                      onPressed: provider.isCancel
+                          ? null // Disable button while loading
+                          : () async {
+                              final provider = Provider.of<OrdersProvider>(
+                                  context,
+                                  listen: false);
+
+                              // Collect selected order IDs
+                              List<String> selectedOrderIds = provider
+                                  .readyOrders
+                                  .asMap()
+                                  .entries
+                                  .where((entry) =>
+                                      provider.selectedReadyOrders[entry.key])
+                                  .map((entry) => entry.value.orderId)
+                                  .toList();
+
+                              if (selectedOrderIds.isEmpty) {
+                                // Show an error message if no orders are selected
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text('No orders selected'),
+                                    backgroundColor: AppColors.cardsred,
+                                  ),
+                                );
+                              } else {
+                                // Set loading status to true before starting the operation
+                                provider.setCancelStatus(true);
+
+                                // Call confirmOrders method with selected IDs
+                                String resultMessage = await provider
+                                    .cancelOrders(context, selectedOrderIds);
+
+                                // Set loading status to false after operation completes
+                                provider.setCancelStatus(false);
+
+                                // Determine the background color based on the result
+                                Color snackBarColor;
+                                if (resultMessage.contains('success')) {
+                                  snackBarColor =
+                                      AppColors.green; // Success: Green
+                                } else if (resultMessage.contains('error') ||
+                                    resultMessage.contains('failed')) {
+                                  snackBarColor =
+                                      AppColors.cardsred; // Error: Red
+                                } else {
+                                  snackBarColor =
+                                      AppColors.orange; // Other: Orange
+                                }
+
+                                // Show feedback based on the result
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(resultMessage),
+                                    backgroundColor: snackBarColor,
+                                  ),
+                                );
+                              }
+                            },
+                      child: provider.isCancel
+                          ? const SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(
+                                  color: Colors.white),
+                            )
+                          : const Text(
+                              'Cancel Orders',
                               style: TextStyle(color: Colors.white),
                             ),
                     ),
@@ -497,21 +572,21 @@ class _OrdersNewPageState extends State<OrdersNewPage>
                                                 buildLabelValueRow(
                                                     'COD Amount',
                                                     order.codAmount
-                                                            ?.toString() ??
+                                                            .toString() ??
                                                         ''),
                                                 buildLabelValueRow(
                                                     'Prepaid Amount',
                                                     order.prepaidAmount
-                                                            ?.toString() ??
+                                                            .toString() ??
                                                         ''),
                                                 buildLabelValueRow(
                                                     'Coin',
-                                                    order.coin?.toString() ??
+                                                    order.coin.toString() ??
                                                         ''),
                                                 buildLabelValueRow(
                                                     'Tax Percent',
                                                     order.taxPercent
-                                                            ?.toString() ??
+                                                            .toString() ??
                                                         ''),
                                                 buildLabelValueRow(
                                                     'Courier Name',
@@ -533,7 +608,7 @@ class _OrdersNewPageState extends State<OrdersNewPage>
                                                 buildLabelValueRow(
                                                     'Discount Amount',
                                                     order.discountAmount
-                                                            ?.toString() ??
+                                                            .toString() ??
                                                         ''),
                                                 buildLabelValueRow(
                                                     'Discount Scheme',
@@ -595,16 +670,16 @@ class _OrdersNewPageState extends State<OrdersNewPage>
                                                 buildLabelValueRow(
                                                     'No. of Boxes',
                                                     order.numberOfBoxes
-                                                            ?.toString() ??
+                                                            .toString() ??
                                                         ''),
                                                 buildLabelValueRow(
                                                     'Total Quantity',
                                                     order.totalQuantity
-                                                            ?.toString() ??
+                                                            .toString() ??
                                                         ''),
                                                 buildLabelValueRow(
                                                     'SKU Qty',
-                                                    order.skuQty?.toString() ??
+                                                    order.skuQty.toString() ??
                                                         ''),
                                                 buildLabelValueRow(
                                                     'Calc Entry No.',
@@ -623,7 +698,7 @@ class _OrdersNewPageState extends State<OrdersNewPage>
                                               children: [
                                                 buildLabelValueRow(
                                                   'Dimensions',
-                                                  '${order.length?.toString() ?? ''} x ${order.breadth?.toString() ?? ''} x ${order.height?.toString() ?? ''}',
+                                                  '${order.length.toString() ?? ''} x ${order.breadth.toString() ?? ''} x ${order.height.toString() ?? ''}',
                                                 ),
                                                 buildLabelValueRow(
                                                     'Tracking Status',
@@ -913,7 +988,7 @@ class _OrdersNewPageState extends State<OrdersNewPage>
                   children: [
                     ElevatedButton(
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.cardsred,
+                        backgroundColor: AppColors.primaryBlue,
                       ),
                       onPressed: provider.isUpdating
                           ? null
@@ -931,6 +1006,82 @@ class _OrdersNewPageState extends State<OrdersNewPage>
                             )
                           : const Text(
                               'Approve Failed Orders',
+                              style: TextStyle(color: Colors.white),
+                            ),
+                    ),
+                    const SizedBox(width: 8),
+                    ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.cardsred,
+                      ),
+                      onPressed: provider.isCancel
+                          ? null // Disable button while loading
+                          : () async {
+                              final provider = Provider.of<OrdersProvider>(
+                                  context,
+                                  listen: false);
+
+                              // Collect selected order IDs
+                              List<String> selectedOrderIds = provider
+                                  .failedOrders
+                                  .asMap()
+                                  .entries
+                                  .where((entry) =>
+                                      provider.selectedFailedOrders[entry.key])
+                                  .map((entry) => entry.value.orderId)
+                                  .toList();
+
+                              if (selectedOrderIds.isEmpty) {
+                                // Show an error message if no orders are selected
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text('No orders selected'),
+                                    backgroundColor: AppColors.cardsred,
+                                  ),
+                                );
+                              } else {
+                                // Set loading status to true before starting the operation
+                                provider.setCancelStatus(true);
+
+                                // Call confirmOrders method with selected IDs
+                                String resultMessage = await provider
+                                    .cancelOrders(context, selectedOrderIds);
+
+                                // Set loading status to false after operation completes
+                                provider.setCancelStatus(false);
+
+                                // Determine the background color based on the result
+                                Color snackBarColor;
+                                if (resultMessage.contains('success')) {
+                                  snackBarColor =
+                                      AppColors.green; // Success: Green
+                                } else if (resultMessage.contains('error') ||
+                                    resultMessage.contains('failed')) {
+                                  snackBarColor =
+                                      AppColors.cardsred; // Error: Red
+                                } else {
+                                  snackBarColor =
+                                      AppColors.orange; // Other: Orange
+                                }
+
+                                // Show feedback based on the result
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(resultMessage),
+                                    backgroundColor: snackBarColor,
+                                  ),
+                                );
+                              }
+                            },
+                      child: provider.isCancel
+                          ? const SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(
+                                  color: Colors.white),
+                            )
+                          : const Text(
+                              'Cancel Orders',
                               style: TextStyle(color: Colors.white),
                             ),
                     ),
@@ -1214,21 +1365,21 @@ class _OrdersNewPageState extends State<OrdersNewPage>
                                                 buildLabelValueRow(
                                                     'COD Amount',
                                                     order.codAmount
-                                                            ?.toString() ??
+                                                            .toString() ??
                                                         ''),
                                                 buildLabelValueRow(
                                                     'Prepaid Amount',
                                                     order.prepaidAmount
-                                                            ?.toString() ??
+                                                            .toString() ??
                                                         ''),
                                                 buildLabelValueRow(
                                                     'Coin',
-                                                    order.coin?.toString() ??
+                                                    order.coin.toString() ??
                                                         ''),
                                                 buildLabelValueRow(
                                                     'Tax Percent',
                                                     order.taxPercent
-                                                            ?.toString() ??
+                                                            .toString() ??
                                                         ''),
                                                 buildLabelValueRow(
                                                     'Courier Name',
@@ -1250,7 +1401,7 @@ class _OrdersNewPageState extends State<OrdersNewPage>
                                                 buildLabelValueRow(
                                                     'Discount Amount',
                                                     order.discountAmount
-                                                            ?.toString() ??
+                                                            .toString() ??
                                                         ''),
                                                 buildLabelValueRow(
                                                     'Discount Scheme',
@@ -1312,16 +1463,16 @@ class _OrdersNewPageState extends State<OrdersNewPage>
                                                 buildLabelValueRow(
                                                     'No. of Boxes',
                                                     order.numberOfBoxes
-                                                            ?.toString() ??
+                                                            .toString() ??
                                                         ''),
                                                 buildLabelValueRow(
                                                     'Total Quantity',
                                                     order.totalQuantity
-                                                            ?.toString() ??
+                                                            .toString() ??
                                                         ''),
                                                 buildLabelValueRow(
                                                     'SKU Qty',
-                                                    order.skuQty?.toString() ??
+                                                    order.skuQty.toString() ??
                                                         ''),
                                                 buildLabelValueRow(
                                                     'Calc Entry No.',
@@ -1340,7 +1491,7 @@ class _OrdersNewPageState extends State<OrdersNewPage>
                                               children: [
                                                 buildLabelValueRow(
                                                   'Dimensions',
-                                                  '${order.length?.toString() ?? ''} x ${order.breadth?.toString() ?? ''} x ${order.height?.toString() ?? ''}',
+                                                  '${order.length.toString() ?? ''} x ${order.breadth.toString() ?? ''} x ${order.height.toString() ?? ''}',
                                                 ),
                                                 buildLabelValueRow(
                                                     'Tracking Status',

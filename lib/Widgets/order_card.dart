@@ -12,11 +12,10 @@ class OrderCard extends StatelessWidget {
   final Widget? checkboxWidget;
 
   const OrderCard(
-      {Key? key,
+      {super.key,
       required this.order,
       this.isBookPage = false,
-      this.checkboxWidget})
-      : super(key: key);
+      this.checkboxWidget});
 
   @override
   Widget build(BuildContext context) {
@@ -110,9 +109,9 @@ class OrderCard extends StatelessWidget {
                               buildLabelValueRow(
                                   'Currency Code', order.currencyCode ?? ''),
                               buildLabelValueRow('COD Amount',
-                                  order.codAmount?.toString() ?? ''),
+                                  order.codAmount.toString() ?? ''),
                               buildLabelValueRow(
-                                  'AWB No.', order.awbNumber?.toString() ?? ''),
+                                  'AWB No.', order.awbNumber.toString() ?? ''),
                             ],
                           ),
                         ),
@@ -123,7 +122,7 @@ class OrderCard extends StatelessWidget {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               buildLabelValueRow('Discount Amount',
-                                  order.discountAmount?.toString() ?? ''),
+                                  order.discountAmount.toString() ?? ''),
                               buildLabelValueRow('Discount Scheme',
                                   order.discountScheme ?? ''),
                               buildLabelValueRow('Agent', order.agent ?? ''),
@@ -156,11 +155,11 @@ class OrderCard extends StatelessWidget {
                               buildLabelValueRow('Fulfillment Type',
                                   order.fulfillmentType ?? ''),
                               buildLabelValueRow('No. of Boxes',
-                                  order.numberOfBoxes?.toString() ?? ''),
+                                  order.numberOfBoxes.toString() ?? ''),
                               buildLabelValueRow('Total Quantity',
-                                  order.totalQuantity?.toString() ?? ''),
+                                  order.totalQuantity.toString() ?? ''),
                               buildLabelValueRow(
-                                  'SKU Qty', order.skuQty?.toString() ?? ''),
+                                  'SKU Qty', order.skuQty.toString() ?? ''),
                             ],
                           ),
                         ),
@@ -172,7 +171,7 @@ class OrderCard extends StatelessWidget {
                             children: [
                               buildLabelValueRow(
                                 'Dimensions',
-                                '${order.length?.toString() ?? ''} x ${order.breadth?.toString() ?? ''} x ${order.height?.toString() ?? ''}',
+                                '${order.length.toString() ?? ''} x ${order.breadth.toString() ?? ''} x ${order.height.toString() ?? ''}',
                               ),
                               buildLabelValueRow('Tracking Status',
                                   order.trackingStatus ?? ''),
@@ -180,7 +179,7 @@ class OrderCard extends StatelessWidget {
                                 height: 7,
                               ),
                               buildLabelValueRow('Tax Percent',
-                                  '${order.taxPercent?.toString() ?? ''}%'),
+                                  '${order.taxPercent.toString() ?? ''}%'),
                               buildLabelValueRow(
                                   'Courier Name', order.courierName ?? ''),
                               buildLabelValueRow(
@@ -197,9 +196,9 @@ class OrderCard extends StatelessWidget {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               buildLabelValueRow('Prepaid Amount',
-                                  order.prepaidAmount?.toString() ?? ''),
+                                  order.prepaidAmount.toString() ?? ''),
                               buildLabelValueRow(
-                                  'Coin', order.coin?.toString() ?? ''),
+                                  'Coin', order.coin.toString() ?? ''),
                               buildLabelValueRow('Preferred Courier',
                                   order.preferredCourier ?? ''),
                               buildLabelValueRow(

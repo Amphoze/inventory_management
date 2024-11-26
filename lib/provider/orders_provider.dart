@@ -37,7 +37,7 @@ class OrdersProvider with ChangeNotifier {
   List<bool> get selectedFailedOrders => _selectedFailedOrders;
   List<bool> get selectedReadyOrders => _selectedReadyOrders;
 
-  List<Order> _failedOrder = [];
+  final List<Order> _failedOrder = [];
 
   List<Order> get failedOrder => _failedOrder;
 
@@ -50,6 +50,7 @@ class OrdersProvider with ChangeNotifier {
   String get normalDate => _normalDate;
 
   bool isConfirm = false;
+  bool isCancel = false;
   bool isUpdating = false;
 
   void setUpdating(bool status) {
@@ -59,6 +60,10 @@ class OrdersProvider with ChangeNotifier {
 
   void setConfirmStatus(bool status) {
     isConfirm = status;
+    notifyListeners();
+  }
+  void setCancelStatus(bool status) {
+    isCancel = status;
     notifyListeners();
   }
 
@@ -185,7 +190,7 @@ class OrdersProvider with ChangeNotifier {
       }
     } catch (error) {
       print('Error updating order: $error');
-      throw error;
+      rethrow;
     }
     notifyListeners();
   }
@@ -355,6 +360,62 @@ class OrdersProvider with ChangeNotifier {
     }
   }
 
+  Future<String> cancelOrders(
+      BuildContext context, List<String> orderIds) async {
+    const String baseUrl =
+        'https://inventory-management-backend-s37u.onrender.com';
+    const String cancelOrderUrl = '$baseUrl/orders/cancel';
+    final String? token = await _getToken();
+    setCancelStatus(true);
+    notifyListeners();
+
+    if (token == null) {
+      return 'No auth token found';
+    }
+
+    // Headers for the API request
+    final headers = {
+      'Authorization': 'Bearer $token',
+      'Content-Type': 'application/json',
+    };
+
+    // Request body containing the order IDs
+    final body = json.encode({
+      'orderIds': orderIds,
+    });
+
+    try {
+      // Make the POST request to confirm the orders
+      final response = await http.post(
+        Uri.parse(cancelOrderUrl),
+        headers: headers,
+        body: body,
+      );
+
+      print('Response status: ${response.statusCode}');
+      //print('Response body: ${response.body}');
+
+      final responseData = json.decode(response.body);
+
+      if (response.statusCode == 200) {
+        // After successful confirmation, fetch updated orders and notify listeners
+        await fetchReadyOrders(); // Assuming fetchOrders is a function that reloads the orders
+        resetSelections(); // Clear selected order IDs
+        setCancelStatus(false);
+        notifyListeners(); // Notify the UI to rebuild
+
+        return responseData['message'] ?? 'Orders confirmed successfully';
+      } else {
+        return responseData['message'] ?? 'Failed to confirm orders';
+      }
+    } catch (error) {
+      setCancelStatus(false);
+      notifyListeners();
+      print('Error during API request: $error');
+      return 'An error occurred: $error';
+    }
+  }
+
   void toggleSelectAllReady(bool isSelected) {
     allSelectedReady = isSelected;
     selectedReadyItemsCount = isSelected
@@ -413,7 +474,7 @@ class OrdersProvider with ChangeNotifier {
         .asMap()
         .entries
         .where((entry) => _selectedFailedOrders[entry.key])
-        .map((entry) => entry.value.orderId!)
+        .map((entry) => entry.value.orderId)
         .toList();
 
     if (failedOrderIds.isEmpty) {
@@ -444,7 +505,7 @@ class OrdersProvider with ChangeNotifier {
         .asMap()
         .entries
         .where((entry) => _selectedReadyOrders[entry.key])
-        .map((entry) => entry.value.orderId!)
+        .map((entry) => entry.value.orderId)
         .toList();
 
     if (readyOrderIds.isEmpty) {
@@ -531,7 +592,6 @@ class OrdersProvider with ChangeNotifier {
 
   // Format date
   String formatDate(DateTime date) {
-    if (date == null) return '';
     String year = date.year.toString();
     String month = date.month.toString().padLeft(2, '0');
     String day = date.day.toString().padLeft(2, '0');
@@ -539,7 +599,6 @@ class OrdersProvider with ChangeNotifier {
   }
 
   String formatDateTime(DateTime date) {
-    if (date == null) return '';
     String year = date.year.toString();
     String month = date.month.toString().padLeft(2, '0');
     String day = date.day.toString().padLeft(2, '0');
@@ -576,10 +635,10 @@ class OrdersProvider with ChangeNotifier {
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        print("${response.body}");
+        print(response.body);
 
         filteredReadyOrders = [Order.fromJson(data)];
-        print("${response.body}");
+        print(response.body);
       } else {
         filteredReadyOrders = [];
       }
@@ -611,10 +670,10 @@ class OrdersProvider with ChangeNotifier {
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        print("${response.body}");
+        print(response.body);
 
         filteredFailedOrders = [Order.fromJson(data)];
-        print("${response.body}");
+        print(response.body);
       } else {
         filteredFailedOrders = [];
       }
