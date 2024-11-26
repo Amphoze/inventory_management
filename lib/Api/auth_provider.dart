@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:logger/logger.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class AuthProvider with ChangeNotifier {
   bool _isAuthenticated = false;
@@ -1044,6 +1045,95 @@ class AuthProvider with ChangeNotifier {
         'success': false,
         'message': 'An error occurred: $error',
       };
+    }
+  }
+
+  Future<String> getTemplateURL(BuildContext context, String title) async {
+    // Retrieve the token from shared preferences
+    final token = await getToken();
+
+    // Check if the token is valid
+    if (token == null || token.isEmpty) {
+      throw Exception('Authorization token is missing or invalid.');
+    }
+
+    // Set up the headers for the request
+    final headers = {
+      'Authorization': 'Bearer $token',
+      'Content-Type': 'application/json',
+    };
+
+    try {
+      // Make the GET request
+      final response = await http.get(Uri.parse('$_baseUrl/links?title=$title'),
+          headers: headers);
+
+      // Print the received response for debugging
+      //print('Response status: ${response.statusCode}');
+      print('Response body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        final jsonBody = json.decode(response.body);
+
+        log("jsonBody: $jsonBody");
+
+        // Check if the response has an "orders" key
+        return jsonBody['data']['url'];
+      } else {
+        throw Exception(
+            'Failed to load template: ${response.statusCode} ${response.body}');
+      }
+    } catch (error) {
+      print('Error during HTTP request: $error');
+      throw Exception('An error occurred while loading template: $error');
+    }
+  }
+
+  Future<void> downloadTemplate(BuildContext context, String title) async {
+    try {
+      final templateURL = getTemplateURL(context, title);
+      final fileUrl = Uri.parse(await templateURL);
+
+      log("fileUrl: $fileUrl");
+
+      if (await canLaunchUrl(fileUrl)) {
+        await launchUrl(fileUrl);
+        // Optionally, show a message to the user
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Template download initiated.')),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Could not launch URL.')),
+        );
+      }
+
+      // final response = await http.get(Uri.parse(apiUrl));
+
+      // if (response.statusCode == 200) {
+      //   final res = json.decode(response.body);
+      //   final String fileUrl = res['data']['url']; // Extract the URL from the response
+
+      // if (await canLaunch(fileUrl)) {
+      //   await launch(fileUrl);
+      //   // Optionally, show a message to the user
+      //   ScaffoldMessenger.of(context).showSnackBar(
+      //     const SnackBar(content: Text('Template download initiated.')),
+      //   );
+      // } else {
+      //   ScaffoldMessenger.of(context).showSnackBar(
+      //     const SnackBar(content: Text('Could not launch URL.')),
+      //   );
+      // }
+      // } else {
+      //   ScaffoldMessenger.of(context).showSnackBar(
+      //     SnackBar(content: Text('Failed to fetch template URL: ${response.statusCode}')),
+      //   );
+      // }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: $e')),
+      );
     }
   }
 

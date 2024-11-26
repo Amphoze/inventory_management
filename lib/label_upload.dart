@@ -80,22 +80,6 @@ class _LabelUploadState extends State<LabelUpload> {
     );
   }
 
-  void _downloadTemplate() {
-    // Define the path to the CSV file in the assets
-    const String csvFilePath = 'assets/label template.xlsx';
-
-    // Create an anchor element
-    final html.AnchorElement anchor = html.AnchorElement(href: csvFilePath)
-      ..setAttribute(
-          'download', 'label template.xlsx') // Set the download attribute
-      ..click(); // Trigger the click event to start the download
-
-    // Optionally, show a message to the user
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Template download initiated.')),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final labelDataProvider = Provider.of<LabelDataProvider>(context);
@@ -145,7 +129,7 @@ class _LabelUploadState extends State<LabelUpload> {
                 ],
                 const SizedBox(width: 16),
                 ElevatedButton(
-                  onPressed: _downloadTemplate,
+                  onPressed: () => AuthProvider().downloadTemplate(context,'label'),
                   child: const Text('Download Template'),
                 ),
               ],

@@ -605,9 +605,14 @@ class CreateAccountFormState extends State<CreateAccountForm> {
                     ),
                     const SizedBox(width: 10),
                     ElevatedButton(
+<<<<<<< HEAD
                       onPressed: (_isOtpEnabled && !_isOtpSent) ||
                               (_isOtpSent && _canResendOtp)
                           ? _sendOtp
+=======
+                      onPressed: _isOtpEnabled
+                          ? (_isOtpSent ? _verifyOtp : _sendOtp)
+>>>>>>> 6143678 (anup update)
                           : null,
                       style: ElevatedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(
@@ -626,16 +631,21 @@ class CreateAccountFormState extends State<CreateAccountForm> {
                                     AppColors.white),
                               ),
                             )
+<<<<<<< HEAD
                           : Text(_isOtpSent
                               ? _canResendOtp
                                   ? "Resend OTP"
                                   : "Resend in ${_remainingSeconds}s"
                               : "Send OTP"),
+=======
+                          : Text(_isOtpSent ? "Verify" : "Send OTP"),
+>>>>>>> 6143678 (anup update)
                     ),
                   ],
                 ),
                 const SizedBox(height: 20),
                 ElevatedButton(
+<<<<<<< HEAD
                   onPressed: _isOtpSent && !_isVerifyingOtp && !_isLoading
                       ? () async {
                           if (_formKey.currentState!.validate()) {
@@ -646,6 +656,12 @@ class CreateAccountFormState extends State<CreateAccountForm> {
                             setState(() {
                               _isLoading = false;
                             });
+=======
+                  onPressed: _isOtpVerified && !_isVerifyingOtp
+                      ? () {
+                          if (_formKey.currentState!.validate()) {
+                            _register();
+>>>>>>> 6143678 (anup update)
                           }
                         }
                       : null,
@@ -657,7 +673,11 @@ class CreateAccountFormState extends State<CreateAccountForm> {
                       borderRadius: BorderRadius.circular(8.0),
                     ),
                   ),
+<<<<<<< HEAD
                   child: _isLoading || _isVerifyingOtp
+=======
+                  child: _isVerifyingOtp
+>>>>>>> 6143678 (anup update)
                       ? const SizedBox(
                           height: 20,
                           width: 20,
@@ -666,7 +686,20 @@ class CreateAccountFormState extends State<CreateAccountForm> {
                                 AlwaysStoppedAnimation<Color>(AppColors.white),
                           ),
                         )
+<<<<<<< HEAD
                       : const Text("Sign Up"),
+=======
+                      : _isLoading
+                          ? const SizedBox(
+                              height: 20,
+                              width: 20,
+                              child: CircularProgressIndicator(
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                    AppColors.white),
+                              ),
+                            )
+                          : const Text("Sign Up"),
+>>>>>>> 6143678 (anup update)
                 ),
               ],
             ),
@@ -676,8 +709,27 @@ class CreateAccountFormState extends State<CreateAccountForm> {
     );
   }
 
+<<<<<<< HEAD
   // void _register() async {
   //   final authProvider = Provider.of<AuthProvider>(context, listen: false);
+=======
+  void _register() async {
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    
+    assignedRoles = selectedRoles.map((role) => {
+      'roleName': role,
+      'isAssigned': true,
+    }).toList();
+
+    if (_email != null && _password != null && _username != null) {
+      setState(() {
+        _isLoading = true;
+      });
+      final response = await authProvider.register(_email!, _password!, assignedRoles);
+      setState(() {
+        _isLoading = false;
+      });
+>>>>>>> 6143678 (anup update)
 
   //   if (_email != null && _password != null && _username != null) {
   //     setState(() {

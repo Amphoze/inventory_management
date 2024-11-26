@@ -61,10 +61,6 @@ class DispatchedProvider extends ChangeNotifier {
     setCancelStatus(true);
     notifyListeners();
 
-    if (token == null) {
-      return 'No auth token found';
-    }
-
     // Headers for the API request
     final headers = {
       'Authorization': 'Bearer $token',

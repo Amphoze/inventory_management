@@ -2,12 +2,13 @@ import 'dart:developer';
 
 import 'package:csv/csv.dart';
 import 'package:flutter/material.dart';
+import 'package:inventory_management/Api/auth_provider.dart';
 import 'package:inventory_management/Custom-Files/colors.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:inventory_management/Api/inventory_api.dart';
-import 'dart:html' as html; // Import the html library
+import 'dart:html' as html;
 
 class ComboUpload extends StatefulWidget {
   const ComboUpload({super.key});
@@ -192,22 +193,6 @@ class _ComboUploadState extends State<ComboUpload> {
   //   }
   // }
 
-  void _downloadTemplate() {
-    // Define the path to the CSV file in the assets
-    const String csvFilePath = 'assets/combo template.csv';
-
-    // Create an anchor element
-    final html.AnchorElement anchor = html.AnchorElement(href: csvFilePath)
-      ..setAttribute(
-          'download', 'combo template.csv') // Set the download attribute
-      ..click(); // Trigger the click event to start the download
-
-    // Optionally, show a message to the user
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Template download initiated.')),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -226,7 +211,7 @@ class _ComboUploadState extends State<ComboUpload> {
                 ),
                 const SizedBox(width: 16),
                 ElevatedButton(
-                  onPressed: _downloadTemplate,
+                  onPressed: () => AuthProvider().downloadTemplate(context,'combo'),
                   child: const Text('Download Template'),
                 ),
                 const SizedBox(width: 16),
