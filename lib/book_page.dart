@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:inventory_management/Custom-Files/colors.dart';
 import 'package:inventory_management/Custom-Files/custom_pagination.dart';
 import 'package:inventory_management/Custom-Files/loading_indicator.dart';
+import 'package:inventory_management/provider/marketplace_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:inventory_management/provider/book_provider.dart';
 import 'package:inventory_management/model/orders_model.dart';
@@ -55,6 +56,8 @@ class _BookPageState extends State<BookPage>
       bookProvider.fetchOrders('B2B', bookProvider.currentPageB2B);
       bookProvider.fetchOrders('B2C', bookProvider.currentPageB2C);
     });
+
+    context.read<MarketplaceProvider>().fetchMarketplaces();
   }
 
   @override
@@ -384,6 +387,48 @@ class _BookPageState extends State<BookPage>
         child: Row(
           mainAxisAlignment: MainAxisAlignment.end,
           children: [
+            Consumer<MarketplaceProvider>(
+              builder: (context, provider, child) {
+                return PopupMenuButton<String>(
+                  tooltip: 'Filter by Marketplace',
+                  initialValue: 'All',
+                  onSelected: (String value) {
+                    if (value == 'All') {
+                      bookProvider.fetchOrders(
+                          orderType, bookProvider.currentPageB2B);
+                    } else {
+                      bookProvider.fetchOrdersByMarketplace(
+                          value,
+                          orderType,
+                          orderType == 'B2B'
+                              ? bookProvider.currentPageB2B
+                              : bookProvider.currentPageB2C);
+                    }
+                    log('Selected: $value');
+                  },
+                  itemBuilder: (BuildContext context) =>
+                      <PopupMenuEntry<String>>[
+                    ...provider.marketplaces
+                        .map((marketplace) => PopupMenuItem<String>(
+                              value: marketplace.name,
+                              child: Text(marketplace.name),
+                            )), // Fetched marketplaces
+                    const PopupMenuItem<String>(
+                      value: 'All', // Hardcoded marketplace
+                      child: Text('All'),
+                    ),
+                  ],
+                  child: const IconButton(
+                    onPressed: null,
+                    icon: Icon(
+                      Icons.filter_alt_outlined,
+                      size: 30,
+                    ),
+                  ),
+                );
+              },
+            ),
+            const SizedBox(width: 8),
             _buildBookButton('Delhivery', orderType, AppColors.primaryBlue),
             const SizedBox(width: 8),
             _buildBookButton('Shiprocket', orderType, AppColors.primaryBlue),
@@ -790,64 +835,112 @@ class _BookPageState extends State<BookPage>
   }
 
   void _showPicklistSourceDialog(BuildContext context) {
+    final bookProvider = context.read<BookProvider>();
     showDialog(
       context: context,
-      builder: (BuildContext context) {
+      builder: (_) {
+        // Add a state variable to track the selected option
+        String? selectedMarketplace;
+
         return AlertDialog(
           title: const Text(
-            'Select Picklist Source',
+            'Select Marketplace',
             style: TextStyle(
-              fontWeight: FontWeight.bold,
-              color: AppColors.primaryBlue, // Change to your desired color
+              fontWeight: FontWeight.w500,
+              color: AppColors.primaryBlue,
             ),
           ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              ListTile(
-                title: const Text(
-                  'Website',
-                  style: TextStyle(fontSize: 16), // Adjust font size
-                ),
-                onTap: () {
-                  // Handle Website selection
-                  Navigator.of(context).pop();
-                },
-              ),
-              ListTile(
-                title: const Text(
-                  'Offline',
-                  style: TextStyle(fontSize: 16), // Adjust font size
-                ),
-                onTap: () {
-                  // Handle Offline selection
-                  Navigator.of(context).pop();
-                },
-              ),
-              ListTile(
-                title: const Text(
-                  'All',
-                  style: TextStyle(fontSize: 16), // Adjust font size
-                ),
-                onTap: () {
-                  // Handle All selection
-                  Navigator.of(context).pop();
-                },
-              ),
-            ],
+          content: StatefulBuilder(
+            builder: (BuildContext context, StateSetter setState) {
+              return Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  RadioListTile<String>(
+                    contentPadding: const EdgeInsets.all(0),
+                    title:
+                        const Text('Website', style: TextStyle(fontSize: 16)),
+                    value: 'website',
+                    groupValue: selectedMarketplace,
+                    onChanged: (value) {
+                      setState(() {
+                        selectedMarketplace = value; // Store selected option
+                      });
+                    },
+                  ),
+                  RadioListTile<String>(
+                    contentPadding: const EdgeInsets.all(0),
+                    title:
+                        const Text('Offline', style: TextStyle(fontSize: 16)),
+                    value: 'offline',
+                    groupValue: selectedMarketplace,
+                    onChanged: (value) {
+                      setState(() {
+                        selectedMarketplace = value; // Store selected option
+                      });
+                    },
+                  ),
+                  RadioListTile<String>(
+                    contentPadding: const EdgeInsets.all(0),
+                    title: const Text('All', style: TextStyle(fontSize: 16)),
+                    value: 'all',
+                    groupValue: selectedMarketplace,
+                    onChanged: (value) {
+                      setState(() {
+                        selectedMarketplace = value; // Store selected option
+                      });
+                    },
+                  ),
+                ],
+              );
+            },
           ),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12), // Rounded corners
+            borderRadius: BorderRadius.circular(12),
           ),
-          backgroundColor: Colors.white, // Background color
+          backgroundColor: Colors.white,
           actions: [
             TextButton(
               onPressed: () {
                 Navigator.of(context).pop(); // Close the dialog
               },
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () {
+                if (selectedMarketplace != null) {
+                  log('Selected Marketplace: $selectedMarketplace');
+
+                  // Show loading dialog
+                  showDialog(
+                    context: context,
+                    barrierDismissible: false, // Prevent dismissing the dialog
+                    builder: (BuildContext context) {
+                      return const AlertDialog(
+                        content: Row(
+                          children: [
+                            CircularProgressIndicator(),
+                            SizedBox(width: 10),
+                            Text("Generating picklist"),
+                          ],
+                        ),
+                      );
+                    },
+                  ).then((_) {
+                    // Close the marketplace selection dialog after loading dialog is dismissed
+                    Navigator.of(context).pop();
+                  });
+
+                  // Fetch order picker data
+                  bookProvider
+                      .generatePicklist(context, selectedMarketplace!)
+                      .then((_) {
+                    Navigator.of(context).pop(); // Close loading dialog
+                  });
+                }
+              },
               child: const Text(
-                'Cancel',
-                style: TextStyle(color: AppColors.primaryBlue), // Cancel button color
+                'Ok',
+                style: TextStyle(color: AppColors.primaryBlue),
               ),
             ),
           ],

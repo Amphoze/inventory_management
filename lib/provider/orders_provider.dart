@@ -1,3 +1,5 @@
+import 'dart:developer';
+import 'package:logger/logger.dart';
 import 'package:flutter/material.dart';
 import 'package:inventory_management/model/orders_model.dart'; // Ensure you have the Order model defined here
 import 'package:shared_preferences/shared_preferences.dart';
@@ -62,6 +64,7 @@ class OrdersProvider with ChangeNotifier {
     isConfirm = status;
     notifyListeners();
   }
+
   void setCancelStatus(bool status) {
     isCancel = status;
     notifyListeners();
@@ -196,6 +199,7 @@ class OrdersProvider with ChangeNotifier {
   }
 
   Future<void> fetchFailedOrders({int page = 1}) async {
+    log("called");
     // Ensure the requested page number is valid
     if (page < 1 || page > totalFailedPages) {
       print('Invalid page number for failed orders: $page');
@@ -221,19 +225,31 @@ class OrdersProvider with ChangeNotifier {
 
     try {
       // Fetch failed orders
-      final responseFailed =
-          await http.get(Uri.parse(failedOrdersUrl), headers: {
-        'Authorization': 'Bearer $token',
-        'Content-Type': 'application/json',
-      });
+      final responseFailed = await http.get(
+        Uri.parse(failedOrdersUrl),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+      );
 
       if (responseFailed.statusCode == 200) {
+        log("Status: ${responseFailed.statusCode}");
         final jsonData = json.decode(responseFailed.body);
+
+        log("jsonData: $jsonData");
+
         failedOrders = (jsonData['orders'] as List)
             .map((order) => Order.fromJson(order))
             .toList();
-        totalFailedPages = jsonData['totalPages'] ?? 1; // Update total pages
+
+        // Check for null values before assigning
+        totalFailedPages = (jsonData['totalPages'] as int?) ?? 1;
+
+        // totalFailedPages = jsonData['totalPages'] ?? 1; // Default to 1 if null
         currentPageFailed = page; // Update the current page for failed orders
+
+        log("failedOrders: $failedOrders");
 
         // Reset selections
         resetSelections();
@@ -249,6 +265,70 @@ class OrdersProvider with ChangeNotifier {
       notifyListeners();
     }
   }
+
+  // Future<void> fetchFailedOrders({int page = 1}) async {
+  //   log("called");
+  //   // Ensure the requested page number is valid
+  //   if (page < 1 || page > totalFailedPages) {
+  //     print('Invalid page number for failed orders: $page');
+  //     return; // Exit if the page number is invalid
+  //   }
+
+  //   isLoading = true;
+  //   notifyListeners();
+
+  //   final String failedOrdersUrl =
+  //       'https://inventory-management-backend-s37u.onrender.com/orders?orderStatus=0&page=$page';
+
+  //   // Get the auth token
+  //   final token = await _getToken();
+
+  //   // Check if the token is valid
+  //   if (token == null || token.isEmpty) {
+  //     isLoading = false;
+  //     notifyListeners();
+  //     print('Token is missing. Please log in again.');
+  //     return; // Stop execution if there's no token
+  //   }
+
+  //   try {
+  //     // Fetch failed orders
+  //     final responseFailed = await http.get(
+  //       Uri.parse(failedOrdersUrl),
+  //       headers: {
+  //         'Authorization': 'Bearer $token',
+  //         'Content-Type': 'application/json',
+  //       },
+  //     );
+
+  //     if (responseFailed.statusCode == 200) {
+  //       log("Status: ${responseFailed.statusCode}");
+  //       final jsonData = json.decode(responseFailed.body);
+
+  //       log("jsonData: $jsonData");
+
+  //       failedOrders = (jsonData['orders'] as List)
+  //           .map((order) => Order.fromJson(order))
+  //           .toList();
+  //       totalFailedPages = jsonData['totalPages'] ?? 1; // Update total pages
+  //       currentPageFailed = page; // Update the current page for failed orders
+
+  //       log("failedOrders: $failedOrders");
+
+  //       // Reset selections
+  //       resetSelections();
+  //       _selectedFailedOrders = List<bool>.filled(failedOrders.length, false);
+  //       filteredFailedOrders = failedOrders;
+  //     } else {
+  //       throw Exception('Failed to load failed orders: ${responseFailed.body}');
+  //     }
+  //   } catch (e) {
+  //     print('Error fetching failed orders: $e');
+  //   } finally {
+  //     isLoading = false;
+  //     notifyListeners();
+  //   }
+  // }
 
   Future<void> fetchReadyOrders({int page = 1}) async {
     // Ensure the requested page number is valid
@@ -679,6 +759,83 @@ class OrdersProvider with ChangeNotifier {
       }
     } catch (e) {
       filteredFailedOrders = [];
+    } finally {
+      isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> fetchOrdersByMarketplace(
+      String marketplace, int orderStatus, int page) async {
+    const String baseUrl =
+        'https://inventory-management-backend-s37u.onrender.com/orders';
+    String url =
+        '$baseUrl?orderStatus=$orderStatus&marketplace=$marketplace&page=$page';
+
+    String? token =
+        await _getToken(); // Assuming you have a method to get the token
+    if (token == null) {
+      print('Token is null, unable to fetch orders.');
+      return;
+    }
+
+    try {
+      isLoading = true;
+      notifyListeners();
+
+      // Clear checkboxes when a new page is fetched
+      // clearSearchResults();
+
+      final response = await http.get(
+        Uri.parse(url),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+      );
+
+      // Log response for debugging
+      print('Response status: ${response.statusCode}');
+      print('Response body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        final jsonResponse = jsonDecode(response.body);
+        List<Order> orders = (jsonResponse['orders'] as List)
+            .map((orderJson) => Order.fromJson(orderJson))
+            .toList();
+
+        Logger().e("length: ${orders.length}");
+
+        // Store fetched orders and update pagination state
+        if (orderStatus == 1) {
+          filteredReadyOrders = orders;
+          currentPageReady = page; // Track current page for B2B
+          totalReadyPages =
+              jsonResponse['totalPages']; // Assuming API returns total pages
+          notifyListeners();
+        } else {
+          filteredFailedOrders = orders;
+          currentPageFailed = page; // Track current page for B2C
+          totalFailedPages =
+              jsonResponse['totalPages']; // Assuming API returns total pages
+          notifyListeners();
+        }
+      } else if (response.statusCode == 401) {
+        print('Unauthorized access - Token might be expired or invalid.');
+      } else if (response.statusCode == 404) {
+        if (orderStatus == 1) {
+          filteredReadyOrders = [];
+          notifyListeners();
+        } else {
+          filteredFailedOrders = [];
+          notifyListeners();
+        }
+        print('Orders not found - Check the filter type.');
+      } else {
+        throw Exception('Failed to load orders: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Error fetching orders: $e');
     } finally {
       isLoading = false;
       notifyListeners();

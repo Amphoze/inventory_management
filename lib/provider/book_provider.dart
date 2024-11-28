@@ -2,7 +2,9 @@ import 'dart:convert';
 import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:inventory_management/Custom-Files/colors.dart';
 import 'package:inventory_management/model/orders_model.dart';
+import 'package:logger/logger.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class BookProvider with ChangeNotifier {
@@ -116,8 +118,6 @@ class BookProvider with ChangeNotifier {
       final responseData = json.decode(response.body);
 
       if (response.statusCode == 200) {
-        // After successful confirmation, fetch updated orders and notify listeners
-        // await fetchOrders(type); // Assuming fetchOrders is a function that reloads the orders
         setRefreshingOrders(false); // Clear selected order IDs
         setCancelStatus(false);
         notifyListeners(); // Notify the UI to rebuild
@@ -420,6 +420,153 @@ class BookProvider with ChangeNotifier {
       ordersB2C = [];
     } finally {
       isLoadingB2C = false;
+      notifyListeners();
+    }
+  }
+
+  // Add this method to the BookProvider class
+  Future<void> generatePicklist(
+      BuildContext context, String marketplace) async {
+    // Get the current time in ISO 8601 format
+    String currentTime = DateTime.now().toIso8601String();
+
+    log("currentTime: $currentTime");
+    log("marketplace: $marketplace");
+
+    const String baseUrl =
+        'https://inventory-management-backend-s37u.onrender.com';
+    String url =
+        '$baseUrl/order-picker?currentTime=$currentTime&marketplace=$marketplace';
+
+    String? token = await _getToken();
+    if (token == null) {
+      print('Token is null, unable to fetch order picker data.');
+      return;
+    }
+
+    try {
+      // Make the GET request
+      final response = await http.post(
+        Uri.parse(url),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+      );
+
+      // Log response for debugging
+      log('Status: ${response.statusCode}');
+      log('Body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        // Handle the successful response
+        final data = jsonDecode(response.body);
+        // Process the data as needed
+
+        log("data: $data");
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('No pick time found for the given time range'),
+            backgroundColor: AppColors.cardsred,
+          ),
+        );
+        print('Failed to post order picker data: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Error posting order picker data: $e');
+    } finally {
+      notifyListeners();
+    }
+  }
+
+  Future<void> fetchOrdersByMarketplace(
+      String marketplace, String type, int page) async {
+    log("$marketplace, $type, $page");
+    const String baseUrl =
+        'https://inventory-management-backend-s37u.onrender.com/orders';
+    String url =
+        '$baseUrl?orderStatus=3&marketplace=$marketplace&filter=$type&page=$page';
+
+    String? token =
+        await _getToken(); // Assuming you have a method to get the token
+    if (token == null) {
+      print('Token is null, unable to fetch orders.');
+      return;
+    }
+
+    try {
+      // Set loading state based on order type
+      if (type == 'B2B') {
+        isLoadingB2B = true;
+        setRefreshingOrders(true);
+      } else {
+        isLoadingB2C = true;
+        setRefreshingOrders(true);
+      }
+      notifyListeners();
+
+      // Clear checkboxes when a new page is fetched
+      clearAllSelections();
+
+      final response = await http.get(
+        Uri.parse(url),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+      );
+
+      // Log response for debugging
+      log('Response status: ${response.statusCode}');
+      log('Response body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        final jsonResponse = jsonDecode(response.body);
+        List<Order> orders = (jsonResponse['orders'] as List)
+            .map((orderJson) => Order.fromJson(orderJson))
+            .toList();
+
+        Logger().e("length: ${orders.length}");
+
+        // Store fetched orders and update pagination state
+        if (type == 'B2B') {
+          ordersB2B = orders;
+          currentPageB2B = page; // Track current page for B2B
+          totalPagesB2B =
+              jsonResponse['totalPages']; // Assuming API returns total pages
+        } else {
+          ordersB2C = orders;
+          currentPageB2C = page; // Track current page for B2C
+          totalPagesB2C =
+              jsonResponse['totalPages']; // Assuming API returns total pages
+        }
+      } else if (response.statusCode == 401) {
+        print('Unauthorized access - Token might be expired or invalid.');
+      } else if (response.statusCode == 404) {
+        if (type == 'B2C') {
+          ordersB2C = [];
+          notifyListeners();
+        } else {
+          ordersB2B = [];
+          notifyListeners();
+        }
+
+        log('Orders not found - Check the filter type.');
+      } else {
+        throw Exception('Failed to load orders: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Error fetching $type orders: $e');
+    } finally {
+      // Reset loading states
+      if (type == 'B2B') {
+        isLoadingB2B = false;
+        setRefreshingOrders(false);
+      } else {
+        isLoadingB2C = false;
+        setRefreshingOrders(false);
+      }
       notifyListeners();
     }
   }

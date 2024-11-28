@@ -2,6 +2,7 @@ import 'dart:developer';
 
 import 'package:flutter/material.dart';
 import 'package:inventory_management/Widgets/picker_order_card.dart';
+import 'package:intl/intl.dart';
 // import 'package:inventory_management/Widgets/picker_order_card.dart';
 import 'package:inventory_management/model/orders_model.dart';
 import 'package:provider/provider.dart';
@@ -382,12 +383,22 @@ class _PickerPageState extends State<PickerPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Text("Picklist ID: ${order['picklistId']}",
-            // style: const TextStyle(
-            //   fontWeight: FontWeight.bold,
-            //   fontSize: 15,
-            //   color: Colors.blueAccent,
-            // )),
+            // Text.rich(
+            //   TextSpan(
+            //       text: "Updated on: ",
+            //       children: [
+            //         TextSpan(
+            //             text: DateFormat('dd-MM-yyyy\',\' hh:mm a').format(
+            //               DateTime.parse("${order['items'][index]['product_id']}"),
+            //             ),
+            //             style: const TextStyle(
+            //               fontWeight: FontWeight.normal,
+            //             )),
+            //       ],
+            //       style: const TextStyle(
+            //         fontWeight: FontWeight.bold,
+            //       )),
+            // ),
             Row(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
@@ -418,138 +429,180 @@ class _PickerPageState extends State<PickerPage> {
                           child: Padding(
                             padding: const EdgeInsets.all(
                                 10.0), // Reduced padding inside product card
-                            child: Row(
-                              crossAxisAlignment: CrossAxisAlignment.center,
+                            child: Column(
                               children: [
-                                ClipRRect(
-                                  borderRadius: BorderRadius.circular(6),
-                                  child: SizedBox(
-                                    width: 60, // Smaller image size
-                                    height: 60,
-                                    child: order['items'][index]['product_id']
-                                                    ['shopifyImage'] !=
-                                                null &&
-                                            order['items'][index]['product_id']
-                                                    ['shopifyImage']
-                                                .isNotEmpty
-                                        ? Image.network(
-                                            '${order['items'][index]['product_id']['shopifyImage']}',
-                                          )
-                                        : const Icon(
-                                            Icons.image_not_supported,
-                                            size: 40, // Fallback icon size
-                                            color: AppColors.grey,
-                                          ),
-                                  ),
-                                ),
-                                const SizedBox(
-                                    width:
-                                        8.0), // Reduced spacing between image and text
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        order['items'][index]['product_id']
-                                            ['displayName'],
-                                        style: const TextStyle(
-                                          fontWeight: FontWeight.w600,
-                                          fontSize: 14, // Reduced font size
-                                          color: Colors.black87,
-                                        ),
-                                        maxLines: 2,
-                                        overflow: TextOverflow.ellipsis,
+                                Row(
+                                  crossAxisAlignment: CrossAxisAlignment.center,
+                                  children: [
+                                    ClipRRect(
+                                      borderRadius: BorderRadius.circular(6),
+                                      child: SizedBox(
+                                        width: 60, // Smaller image size
+                                        height: 60,
+                                        child: order['items'][index]
+                                                            ['product_id']
+                                                        ['shopifyImage'] !=
+                                                    null &&
+                                                order['items'][index]
+                                                            ['product_id']
+                                                        ['shopifyImage']
+                                                    .isNotEmpty
+                                            ? Image.network(
+                                                '${order['items'][index]['product_id']['shopifyImage']}',
+                                              )
+                                            : const Icon(
+                                                Icons.image_not_supported,
+                                                size: 40, // Fallback icon size
+                                                color: AppColors.grey,
+                                              ),
                                       ),
-                                      const SizedBox(
-                                          height:
-                                              6.0), // Reduced spacing between text elements
-                                      Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.start,
+                                    ),
+                                    const SizedBox(
+                                        width:
+                                            8.0), // Reduced spacing between image and text
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
                                         children: [
-                                          RichText(
-                                            text: TextSpan(
-                                              children: [
-                                                const TextSpan(
-                                                  text: 'SKU: ',
-                                                  style: TextStyle(
-                                                    color: Colors.blueAccent,
-                                                    fontWeight: FontWeight.bold,
-                                                    fontSize:
-                                                        13, // Reduced font size
-                                                  ),
-                                                ),
-                                                TextSpan(
-                                                  text: order['items'][index]
-                                                      ['product_id']['sku'],
-                                                  style: const TextStyle(
-                                                    color: Colors.black87,
-                                                    fontWeight: FontWeight.w500,
-                                                    fontSize:
-                                                        13, // Reduced font size
-                                                  ),
-                                                ),
-                                              ],
+                                          Text(
+                                            order['items'][index]['product_id']
+                                                ['displayName'],
+                                            style: const TextStyle(
+                                              fontWeight: FontWeight.w600,
+                                              fontSize: 14, // Reduced font size
+                                              color: Colors.black87,
                                             ),
+                                            maxLines: 2,
+                                            overflow: TextOverflow.ellipsis,
                                           ),
-                                          const SizedBox(width: 20),
-                                          RichText(
-                                            text: TextSpan(
-                                              children: [
-                                                const TextSpan(
-                                                  text: 'Amount: ',
-                                                  style: TextStyle(
-                                                    color: Colors.blueAccent,
-                                                    fontWeight: FontWeight.bold,
-                                                    fontSize:
-                                                        13, // Reduced font size
-                                                  ),
+                                          const SizedBox(
+                                              height:
+                                                  6.0), // Reduced spacing between text elements
+                                          Row(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.start,
+                                            children: [
+                                              RichText(
+                                                text: TextSpan(
+                                                  children: [
+                                                    const TextSpan(
+                                                      text: 'SKU: ',
+                                                      style: TextStyle(
+                                                        color:
+                                                            Colors.blueAccent,
+                                                        fontWeight:
+                                                            FontWeight.bold,
+                                                        fontSize:
+                                                            13, // Reduced font size
+                                                      ),
+                                                    ),
+                                                    TextSpan(
+                                                      text: order['items']
+                                                              [index]
+                                                          ['product_id']['sku'],
+                                                      style: const TextStyle(
+                                                        color: Colors.black87,
+                                                        fontWeight:
+                                                            FontWeight.w500,
+                                                        fontSize:
+                                                            13, // Reduced font size
+                                                      ),
+                                                    ),
+                                                  ],
                                                 ),
-                                                TextSpan(
-                                                  text: order['items'][index]
-                                                          ['product_id']['mrp']
-                                                      .toString(),
-                                                  style: const TextStyle(
-                                                    color: Colors.black87,
-                                                    fontWeight: FontWeight.w500,
-                                                    fontSize:
-                                                        13, // Reduced font size
-                                                  ),
+                                              ),
+                                              const SizedBox(width: 20),
+                                              RichText(
+                                                text: TextSpan(
+                                                  children: [
+                                                    const TextSpan(
+                                                      text: 'Amount: ',
+                                                      style: TextStyle(
+                                                        color:
+                                                            Colors.blueAccent,
+                                                        fontWeight:
+                                                            FontWeight.bold,
+                                                        fontSize:
+                                                            13, // Reduced font size
+                                                      ),
+                                                    ),
+                                                    TextSpan(
+                                                      text: order['items']
+                                                                      [index]
+                                                                  ['product_id']
+                                                              ['mrp']
+                                                          .toString(),
+                                                      style: const TextStyle(
+                                                        color: Colors.black87,
+                                                        fontWeight:
+                                                            FontWeight.w500,
+                                                        fontSize:
+                                                            13, // Reduced font size
+                                                      ),
+                                                    ),
+                                                  ],
                                                 ),
-                                              ],
-                                            ),
+                                              ),
+                                            ],
                                           ),
                                         ],
                                       ),
-                                    ],
-                                  ),
-                                ),
-                                const Spacer(), // Ensures `qty` is aligned to the right end
-                                const Text(
-                                  "X",
-                                  style: TextStyle(
-                                    fontSize: 20,
-                                  ),
-                                ),
-                                const Spacer(), // Ensures `qty` is aligned to the right end
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                      vertical: 2.0, horizontal: 2.0),
-                                  child: Center(
-                                    child: Text(
-                                      order['items'][index]['product_id']
-                                              ['itemQty']
-                                          .toString(),
-                                      style: const TextStyle(
+                                    ),
+                                    const Spacer(), // Ensures `qty` is aligned to the right end
+                                    const Text(
+                                      "X",
+                                      style: TextStyle(
                                         fontSize: 20,
-                                        fontWeight: FontWeight.bold,
                                       ),
                                     ),
-                                  ),
+                                    const Spacer(), // Ensures `qty` is aligned to the right end
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                          vertical: 2.0, horizontal: 2.0),
+                                      child: Center(
+                                        child: Text(
+                                          order['items'][index]['product_id']
+                                                  ['itemQty']
+                                              .toString(),
+                                          style: const TextStyle(
+                                            fontSize: 20,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(
+                                      width: 60,
+                                    ),
+                                  ],
                                 ),
                                 const SizedBox(
-                                  width: 60,
+                                  height: 8,
+                                ),
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.end,
+                                  children: [
+                                    Text.rich(
+                                      TextSpan(
+                                          text: "Created on: ",
+                                          children: [
+                                            TextSpan(
+                                                text: DateFormat(
+                                                        'dd-MM-yyyy\',\' hh:mm a')
+                                                    .format(
+                                                  DateTime.parse(
+                                                      "${order['items'][index]['product_id']['createdAt']}"),
+                                                ),
+                                                style: const TextStyle(
+                                                  fontWeight: FontWeight.normal,
+                                                )),
+                                          ],
+                                          style: const TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                          )),
+                                    ),
+                                  ],
                                 ),
                               ],
                             ),

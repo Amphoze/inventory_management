@@ -98,11 +98,14 @@ class OrderItemCard extends StatelessWidget {
   }
 
   Column _buildDetailsColumn() {
+    // String rate = (item.amount! / item.qty!).toStringAsFixed(1);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _buildInfoRow('SKU:', item.product?.sku ?? ''),
         _buildInfoRow('Quantity:', item.qty?.toString() ?? ''),
+        _buildInfoRow('Rate:',
+            'Rs.${(item.amount! / item.qty!).toStringAsFixed(1) ?? ''}'),
         _buildInfoRow('Amount:', 'Rs.${item.amount ?? ''}'),
         _buildInfoRow('Description:', item.product?.description ?? ''),
         _buildInfoRow('Technical Name:', item.product?.technicalName ?? ''),

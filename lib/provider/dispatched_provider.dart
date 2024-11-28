@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:developer';
 
 import 'package:flutter/material.dart';
+import 'package:inventory_management/Custom-Files/colors.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 import '../model/orders_model.dart';
@@ -103,7 +104,6 @@ class DispatchedProvider extends ChangeNotifier {
       return 'An error occurred: $error';
     }
   }
-
 
   Future<void> fetchOrdersWithStatus9() async {
     _isLoading = true;
@@ -340,5 +340,64 @@ class DispatchedProvider extends ChangeNotifier {
     }
 
     return _orders;
+  }
+
+  Future<String> updateOrderTrackingStatus(
+      BuildContext context, String id, String trackingStatus) async {
+    const String baseUrl =
+        'https://inventory-management-backend-s37u.onrender.com';
+    final String updateOrderUrl = '$baseUrl/orders/$id';
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('authToken') ?? '';
+
+    // Headers for the API request
+    final headers = {
+      'Authorization': 'Bearer $token',
+      'Content-Type': 'application/json',
+    };
+
+    // Request body containing the tracking status
+    final body = json.encode({
+      'tracking_status': trackingStatus,
+    });
+
+    try {
+      // Make the PUT request to update the order tracking status
+      final response = await http.put(
+        Uri.parse(updateOrderUrl),
+        headers: headers,
+        body: body,
+      );
+
+      print('Response status: ${response.statusCode}');
+
+      if (response.statusCode == 200) {
+        // Show success snackbar
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+              backgroundColor: AppColors.green,
+              content: Text(
+                'Tracking status successfully updated to "$trackingStatus"',
+              )),
+        );
+        return 'Tracking status updated successfully';
+      } else {
+        final responseData = json.decode(response.body);
+        // Show failure snackbar
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+              content: Text(responseData['message'] ??
+                  'Failed to update tracking status')),
+        );
+        return responseData['message'] ?? 'Failed to update tracking status';
+      }
+    } catch (error) {
+      print('Error during API request: $error');
+      // Show error snackbar
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('An error occurred: $error')),
+      );
+      return 'An error occurred: $error';
+    }
   }
 }

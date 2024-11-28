@@ -241,7 +241,7 @@ class Order {
                 .toList() ??
             [],
         skuTrackingId: _parseString(json['sku_tracking_id']),
-        totalWeight: _parseDouble(json['total_weight']),
+        totalWeight: _parseDouble(json['total_weight'] ?? 0),
         totalAmount: _parseDouble(json['total_amt']),
         coin: _parseInt(json['coin']),
         codAmount: _parseDouble(json['cod_amount']),
