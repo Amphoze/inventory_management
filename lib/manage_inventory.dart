@@ -305,9 +305,10 @@ class _ManageInventoryPageState extends State<ManageInventoryPage> {
 
                     DropdownSearch<String>(
                       items: comboProvider.products
-                          .where((product) => product.displayName
-                              ?.toLowerCase()
-                              .contains(searchController.text.toLowerCase()) ?? false)
+                          .where((product) =>
+                              product.displayName?.toLowerCase().contains(
+                                  searchController.text.toLowerCase()) ??
+                              false)
                           .map((product) => product.displayName ?? 'Unknown')
                           .toList(),
                       onChanged: (String? newValue) {

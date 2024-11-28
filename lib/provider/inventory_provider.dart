@@ -396,6 +396,7 @@ class InventoryProvider extends ChangeNotifier {
           'Authorization': 'Bearer $token',
         },
         body: json.encode({
+          "action": "change",
           'newTotal': newQuantity,
           'warehouseId': warehousId,
           'additionalInfo': {'reason': reason},

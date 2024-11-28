@@ -1,6 +1,6 @@
 {
   "projects": {
-    "default": "inventory-management-7a979",
+    "default": "inventory-management-29c58",
     "prod": "inventory-management-7a979"
   },
   "targets": {},
