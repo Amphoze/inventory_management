@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:developer';
 import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
 import 'package:inventory_management/model/orders_model.dart';
@@ -124,6 +125,9 @@ class ManifestProvider with ChangeNotifier {
         'Authorization': 'Bearer $token',
         'Content-Type': 'application/json',
       });
+
+      log("Code: ${response.statusCode}");
+      log("Body: ${response.body}");
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);

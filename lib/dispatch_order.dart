@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:inventory_management/provider/dispatched_provider.dart';
 import 'package:provider/provider.dart';
@@ -117,80 +119,80 @@ class _DispatchedOrdersState extends State<DispatchedOrders> {
                     const Spacer(),
 
                     ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.cardsred,
-                    ),
-                    onPressed: dispatchProvider.isCancel
-                        ? null // Disable button while loading
-                        : () async {
-                            final provider = Provider.of<DispatchedProvider>(
-                                context,
-                                listen: false);
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.cardsred,
+                      ),
+                      onPressed: dispatchProvider.isCancel
+                          ? null // Disable button while loading
+                          : () async {
+                              final provider = Provider.of<DispatchedProvider>(
+                                  context,
+                                  listen: false);
 
-                            // Collect selected order IDs
-                            List<String> selectedOrderIds = provider.orders
-                                .asMap()
-                                .entries
-                                .where((entry) =>
-                                    provider.selectedProducts[entry.key])
-                                .map((entry) => entry.value.orderId)
-                                .toList();
+                              // Collect selected order IDs
+                              List<String> selectedOrderIds = provider.orders
+                                  .asMap()
+                                  .entries
+                                  .where((entry) =>
+                                      provider.selectedProducts[entry.key])
+                                  .map((entry) => entry.value.orderId)
+                                  .toList();
 
-                            if (selectedOrderIds.isEmpty) {
-                              // Show an error message if no orders are selected
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text('No orders selected'),
-                                  backgroundColor: AppColors.cardsred,
-                                ),
-                              );
-                            } else {
-                              // Set loading status to true before starting the operation
-                              provider.setCancelStatus(true);
-
-                              // Call confirmOrders method with selected IDs
-                              String resultMessage = await provider
-                                  .cancelOrders(context, selectedOrderIds);
-
-                              // Set loading status to false after operation completes
-                              provider.setCancelStatus(false);
-
-                              // Determine the background color based on the result
-                              Color snackBarColor;
-                              if (resultMessage.contains('success')) {
-                                snackBarColor =
-                                    AppColors.green; // Success: Green
-                              } else if (resultMessage.contains('error') ||
-                                  resultMessage.contains('failed')) {
-                                snackBarColor =
-                                    AppColors.cardsred; // Error: Red
+                              if (selectedOrderIds.isEmpty) {
+                                // Show an error message if no orders are selected
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text('No orders selected'),
+                                    backgroundColor: AppColors.cardsred,
+                                  ),
+                                );
                               } else {
-                                snackBarColor =
-                                    AppColors.orange; // Other: Orange
-                              }
+                                // Set loading status to true before starting the operation
+                                provider.setCancelStatus(true);
 
-                              // Show feedback based on the result
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text(resultMessage),
-                                  backgroundColor: snackBarColor,
-                                ),
-                              );
-                            }
-                          },
-                    child: dispatchProvider.isCancel
-                        ? const SizedBox(
-                            width: 20,
-                            height: 20,
-                            child:
-                                CircularProgressIndicator(color: Colors.white),
-                          )
-                        : const Text(
-                            'Cancel Orders',
-                            style: TextStyle(color: Colors.white),
-                          ),
-                  ),
-                  const SizedBox(width: 8),
+                                // Call confirmOrders method with selected IDs
+                                String resultMessage = await provider
+                                    .cancelOrders(context, selectedOrderIds);
+
+                                // Set loading status to false after operation completes
+                                provider.setCancelStatus(false);
+
+                                // Determine the background color based on the result
+                                Color snackBarColor;
+                                if (resultMessage.contains('success')) {
+                                  snackBarColor =
+                                      AppColors.green; // Success: Green
+                                } else if (resultMessage.contains('error') ||
+                                    resultMessage.contains('failed')) {
+                                  snackBarColor =
+                                      AppColors.cardsred; // Error: Red
+                                } else {
+                                  snackBarColor =
+                                      AppColors.orange; // Other: Orange
+                                }
+
+                                // Show feedback based on the result
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(resultMessage),
+                                    backgroundColor: snackBarColor,
+                                  ),
+                                );
+                              }
+                            },
+                      child: dispatchProvider.isCancel
+                          ? const SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(
+                                  color: Colors.white),
+                            )
+                          : const Text(
+                              'Cancel Orders',
+                              style: TextStyle(color: Colors.white),
+                            ),
+                    ),
+                    const SizedBox(width: 8),
 
                     _buildDispatchButton(dispatchProvider),
 
@@ -310,8 +312,13 @@ class _DispatchedOrdersState extends State<DispatchedOrders> {
 
   Widget _buildOrderCard(
       Order order, int index, DispatchedProvider dispatchProvider) {
+    String? selectedStatus;
+    bool isSaved = order.trackingStatus != '';
+
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4.0, horizontal: 8.0),
+      padding: const EdgeInsets.symmetric(
+        vertical: 4.0,
+      ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
@@ -332,20 +339,82 @@ class _DispatchedOrdersState extends State<DispatchedOrders> {
                   child:
                       OrderCard(order: order), // Your existing OrderCard widget
                 ),
-                const SizedBox(
-                    width: 200), // Add some spacing between the elements
-
-                Text(
-                  '${order.trackingStatus?.isEmpty ?? true ? "NA" : order.trackingStatus}', // Display "NA" if null or empty
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    color: order.trackingStatus == 'return'
-                        ? Colors.green
-                        : Colors.black,
-                  ),
+                const SizedBox(width: 50),
+                SizedBox(
+                  width: 200,
+                  child: StatefulBuilder(
+                      builder: (BuildContext context, StateSetter setState) {
+                    return Column(
+                      children: [
+                        PopupMenuButton<String>(
+                          tooltip: 'Select tracking status',
+                          onSelected: (String newStatus) {
+                            setState(() {
+                              selectedStatus = newStatus;
+                              order.trackingStatus = newStatus;
+                            });
+                          },
+                          itemBuilder: (BuildContext context) {
+                            return <String>[
+                              "Delivered",
+                              "RTO",
+                              "Disposed Off",
+                              "Rack Up",
+                              "Lost",
+                              "In Transit",
+                              "Damaged",
+                              "Out For Delivery",
+                              "Not Confirmed",
+                              "Cancelled",
+                              "Confirmed",
+                              "Shipped",
+                              "Destroyed",
+                              "Discarded Entry",
+                              "Attempted",
+                              "Hold"
+                            ].map<PopupMenuItem<String>>((String value) {
+                              return PopupMenuItem<String>(
+                                value: value,
+                                child: Text(value),
+                              );
+                            }).toList();
+                          },
+                          child: isSaved == true
+                              ? Text(
+                                  order.trackingStatus!,
+                                )
+                              : Text(
+                                  selectedStatus == null
+                                      ? "Select tracking status"
+                                      : selectedStatus!,
+                                  style: TextStyle(
+                                      color: selectedStatus == null
+                                          ? AppColors.primaryBlue
+                                          : Colors.black),
+                                ),
+                        ),
+                        const SizedBox(
+                          height: 8,
+                        ),
+                        if (selectedStatus != null)
+                          ElevatedButton(
+                            onPressed: () {
+                              isSaved = true;
+                              if (selectedStatus != null) {
+                                dispatchProvider.updateOrderTrackingStatus(
+                                    context, order.id, selectedStatus!);
+                              }
+                              log("id: ${order.id}");
+                              log("tracking: ${order.trackingStatus}");
+                              log('Saving status: $selectedStatus');
+                            },
+                            child: const Text('Save'),
+                          ),
+                      ],
+                    );
+                  }),
                 ),
-
-                const SizedBox(width: 100),
+                const SizedBox(width: 50),
               ],
             ),
           ),

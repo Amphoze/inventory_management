@@ -1,8 +1,12 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:inventory_management/Custom-Files/custom_pagination.dart';
 import 'package:inventory_management/Custom-Files/loading_indicator.dart';
 import 'package:inventory_management/Widgets/product_details_card.dart';
 import 'package:inventory_management/edit_order_page.dart';
+import 'package:inventory_management/provider/marketplace_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:inventory_management/provider/orders_provider.dart';
 // Import the separate provider
@@ -40,6 +44,8 @@ class _OrdersNewPageState extends State<OrdersNewPage>
         _searchControllerFailed.clear();
       }
     });
+
+    context.read<MarketplaceProvider>().fetchMarketplaces();
   }
 
   @override
@@ -111,8 +117,8 @@ class _OrdersNewPageState extends State<OrdersNewPage>
 
   Widget _buildReadyToConfirmTab() {
     return Consumer<OrdersProvider>(
-      builder: (context, provider, child) {
-        if (provider.isLoading) {
+      builder: (context, ordersProvider, child) {
+        if (ordersProvider.isLoading) {
           return const Center(
             child: LoadingAnimation(
               icon: Icons.shopping_cart,
@@ -131,21 +137,59 @@ class _OrdersNewPageState extends State<OrdersNewPage>
                 Row(
                   children: [
                     Checkbox(
-                      value: provider.allSelectedReady,
+                      value: ordersProvider.allSelectedReady,
                       onChanged: (bool? value) {
-                        provider.toggleSelectAllReady(value ?? false);
+                        ordersProvider.toggleSelectAllReady(value ?? false);
                       },
                     ),
-                    Text('Select All (${provider.selectedReadyItemsCount})'),
+                    Text(
+                        'Select All (${ordersProvider.selectedReadyItemsCount})'),
                   ],
                 ),
                 Row(
                   children: [
+                    Consumer<MarketplaceProvider>(
+                      builder: (context, provider, child) {
+                        return PopupMenuButton<String>(
+                          tooltip: 'Filter by Marketplace',
+                          onSelected: (String value) {
+                            if (value == 'All') {
+                              ordersProvider.fetchReadyOrders();
+                            } else {
+                              ordersProvider.fetchOrdersByMarketplace(
+                                  value, 1, ordersProvider.currentPageReady);
+                            }
+
+                            log('Selected: $value');
+                          },
+                          itemBuilder: (BuildContext context) =>
+                              <PopupMenuEntry<String>>[
+                            ...provider.marketplaces
+                                .map((marketplace) => PopupMenuItem<String>(
+                                      value: marketplace.name,
+                                      child: Text(marketplace.name),
+                                    )), // Fetched marketplaces
+                            const PopupMenuItem<String>(
+                              value: 'All', // Hardcoded marketplace
+                              child: Text('All'),
+                            ),
+                          ],
+                          child: const IconButton(
+                            onPressed: null,
+                            icon: Icon(
+                              Icons.filter_alt_outlined,
+                              size: 30,
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                    const SizedBox(width: 8),
                     ElevatedButton(
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.primaryBlue,
                       ),
-                      onPressed: provider.isConfirm
+                      onPressed: ordersProvider.isConfirm
                           ? null // Disable button while loading
                           : () async {
                               final provider = Provider.of<OrdersProvider>(
@@ -204,7 +248,7 @@ class _OrdersNewPageState extends State<OrdersNewPage>
                                 );
                               }
                             },
-                      child: provider.isConfirm
+                      child: ordersProvider.isConfirm
                           ? const SizedBox(
                               width: 20,
                               height: 20,
@@ -221,7 +265,7 @@ class _OrdersNewPageState extends State<OrdersNewPage>
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.cardsred,
                       ),
-                      onPressed: provider.isCancel
+                      onPressed: ordersProvider.isCancel
                           ? null // Disable button while loading
                           : () async {
                               final provider = Provider.of<OrdersProvider>(
@@ -280,7 +324,7 @@ class _OrdersNewPageState extends State<OrdersNewPage>
                                 );
                               }
                             },
-                      child: provider.isCancel
+                      child: ordersProvider.isCancel
                           ? const SizedBox(
                               width: 20,
                               height: 20,
@@ -303,7 +347,7 @@ class _OrdersNewPageState extends State<OrdersNewPage>
                             .fetchReadyOrders();
                         Provider.of<OrdersProvider>(context, listen: false)
                             .resetSelections();
-                        provider.clearSearchResults();
+                        ordersProvider.clearSearchResults();
                         print('Ready to Confirm Orders refreshed');
                       },
                       child: const Text('Refresh'),
@@ -333,7 +377,7 @@ class _OrdersNewPageState extends State<OrdersNewPage>
                                   onPressed: () {
                                     final searchTerm =
                                         _searchControllerReady.text;
-                                    provider
+                                    ordersProvider
                                         .searchReadyToConfirmOrders(searchTerm);
                                   },
                                 ),
@@ -348,11 +392,12 @@ class _OrdersNewPageState extends State<OrdersNewPage>
                               ),
                               style: const TextStyle(color: AppColors.black),
                               onSubmitted: (value) {
-                                provider.searchReadyToConfirmOrders(value);
+                                ordersProvider
+                                    .searchReadyToConfirmOrders(value);
                               },
                               onChanged: (value) {
                                 if (value.isEmpty) {
-                                  provider.clearSearchResults();
+                                  ordersProvider.clearSearchResults();
                                 }
                               },
                             ),
@@ -365,8 +410,8 @@ class _OrdersNewPageState extends State<OrdersNewPage>
                               ),
                               onPressed: () {
                                 _searchControllerReady.clear();
-                                provider.fetchReadyOrders();
-                                provider.clearSearchResults();
+                                ordersProvider.fetchReadyOrders();
+                                ordersProvider.clearSearchResults();
                               },
                             ),
                         ],
@@ -378,7 +423,7 @@ class _OrdersNewPageState extends State<OrdersNewPage>
             ),
             const SizedBox(height: 8),
             Expanded(
-              child: provider.isLoading
+              child: ordersProvider.isLoading
                   ? const Center(
                       child: LoadingAnimation(
                         icon: Icons.shopping_cart,
@@ -387,7 +432,7 @@ class _OrdersNewPageState extends State<OrdersNewPage>
                         size: 80.0,
                       ),
                     )
-                  : provider.filteredReadyOrders.isEmpty
+                  : ordersProvider.filteredReadyOrders.isEmpty
                       ? const Center(
                           child: Text(
                             "No orders found",
@@ -395,9 +440,10 @@ class _OrdersNewPageState extends State<OrdersNewPage>
                           ),
                         )
                       : ListView.builder(
-                          itemCount: provider.filteredReadyOrders.length,
+                          itemCount: ordersProvider.filteredReadyOrders.length,
                           itemBuilder: (context, index) {
-                            final order = provider.filteredReadyOrders[index];
+                            final order =
+                                ordersProvider.filteredReadyOrders[index];
 
                             return Card(
                               surfaceTintColor: Colors.white,
@@ -414,9 +460,9 @@ class _OrdersNewPageState extends State<OrdersNewPage>
                                           MainAxisAlignment.spaceBetween,
                                       children: [
                                         Checkbox(
-                                          value: provider
+                                          value: ordersProvider
                                               .selectedReadyOrders[index],
-                                          onChanged: (value) => provider
+                                          onChanged: (value) => ordersProvider
                                               .toggleOrderSelectionReady(
                                                   value ?? false, index),
                                         ),
@@ -448,7 +494,8 @@ class _OrdersNewPageState extends State<OrdersNewPage>
                                                   fontWeight: FontWeight.bold),
                                             ),
                                             Text(
-                                              provider.formatDate(order.date!),
+                                              ordersProvider
+                                                  .formatDate(order.date!),
                                               style: const TextStyle(
                                                   fontWeight: FontWeight.bold,
                                                   color: AppColors.primaryBlue),
@@ -627,8 +674,9 @@ class _OrdersNewPageState extends State<OrdersNewPage>
                                                   'Expected Delivery Date',
                                                   order.expectedDeliveryDate !=
                                                           null
-                                                      ? provider.formatDate(order
-                                                          .expectedDeliveryDate!)
+                                                      ? ordersProvider
+                                                          .formatDate(order
+                                                              .expectedDeliveryDate!)
                                                       : '',
                                                 ),
                                                 buildLabelValueRow(
@@ -638,8 +686,8 @@ class _OrdersNewPageState extends State<OrdersNewPage>
                                                 buildLabelValueRow(
                                                   'Payment Date Time',
                                                   order.paymentDateTime != null
-                                                      ? provider.formatDateTime(
-                                                          order
+                                                      ? ordersProvider
+                                                          .formatDateTime(order
                                                               .paymentDateTime!)
                                                       : '',
                                                 ),
@@ -875,6 +923,30 @@ class _OrdersNewPageState extends State<OrdersNewPage>
                                         ],
                                       ),
                                     ),
+                                    const SizedBox(height: 6),
+                                    Padding(
+                                      padding: const EdgeInsets.all(8.0),
+                                      child: Text.rich(
+                                        TextSpan(
+                                            text: "Updated at: ",
+                                            children: [
+                                              TextSpan(
+                                                  text: DateFormat(
+                                                          'dd-MM-yyyy\',\' hh:mm a')
+                                                      .format(
+                                                    DateTime.parse(
+                                                        "${order.updatedAt}"),
+                                                  ),
+                                                  style: const TextStyle(
+                                                    fontWeight:
+                                                        FontWeight.normal,
+                                                  )),
+                                            ],
+                                            style: const TextStyle(
+                                              fontWeight: FontWeight.bold,
+                                            )),
+                                      ),
+                                    ),
                                     const Divider(
                                       thickness: 1,
                                       color: AppColors.grey,
@@ -906,31 +978,33 @@ class _OrdersNewPageState extends State<OrdersNewPage>
                         ),
             ),
             CustomPaginationFooter(
-              currentPage: provider.currentPageReady,
-              totalPages: provider.totalReadyPages,
+              currentPage: ordersProvider.currentPageReady,
+              totalPages: ordersProvider.totalReadyPages,
               buttonSize: 30,
               pageController: pageController,
               onFirstPage: () {
-                provider.fetchReadyOrders(page: 1);
+                ordersProvider.fetchReadyOrders(page: 1);
               },
               onLastPage: () {
-                provider.fetchReadyOrders(page: provider.totalReadyPages);
+                ordersProvider.fetchReadyOrders(
+                    page: ordersProvider.totalReadyPages);
               },
               onNextPage: () {
-                if (provider.currentPageReady < provider.totalReadyPages) {
-                  provider.fetchReadyOrders(
-                      page: provider.currentPageReady + 1);
+                if (ordersProvider.currentPageReady <
+                    ordersProvider.totalReadyPages) {
+                  ordersProvider.fetchReadyOrders(
+                      page: ordersProvider.currentPageReady + 1);
                 }
               },
               onPreviousPage: () {
-                if (provider.currentPageReady > 1) {
-                  provider.fetchReadyOrders(
-                      page: provider.currentPageReady - 1);
+                if (ordersProvider.currentPageReady > 1) {
+                  ordersProvider.fetchReadyOrders(
+                      page: ordersProvider.currentPageReady - 1);
                 }
               },
               onGoToPage: (page) {
-                if (page > 0 && page <= provider.totalReadyPages) {
-                  provider.fetchReadyOrders(page: page);
+                if (page > 0 && page <= ordersProvider.totalReadyPages) {
+                  ordersProvider.fetchReadyOrders(page: page);
                 }
               },
               onJumpToPage: () {
@@ -938,13 +1012,13 @@ class _OrdersNewPageState extends State<OrdersNewPage>
 
                 if (page == null ||
                     page < 1 ||
-                    page > provider.totalReadyPages) {
+                    page > ordersProvider.totalReadyPages) {
                   _showSnackbar(context,
-                      'Please enter a valid page number between 1 and ${provider.totalReadyPages}.');
+                      'Please enter a valid page number between 1 and ${ordersProvider.totalReadyPages}.');
                   return;
                 }
 
-                provider.fetchReadyOrders(page: page);
+                ordersProvider.fetchReadyOrders(page: page);
                 pageController.clear();
               },
             ),
@@ -956,8 +1030,8 @@ class _OrdersNewPageState extends State<OrdersNewPage>
 
   Widget _buildFailedOrdersTab() {
     return Consumer<OrdersProvider>(
-      builder: (context, provider, child) {
-        if (provider.isLoading) {
+      builder: (context, ordersProvider, child) {
+        if (ordersProvider.isLoading) {
           return const Center(
             child: LoadingAnimation(
               icon: Icons.shopping_cart,
@@ -976,28 +1050,65 @@ class _OrdersNewPageState extends State<OrdersNewPage>
                 Row(
                   children: [
                     Checkbox(
-                      value: provider.allSelectedFailed,
+                      value: ordersProvider.allSelectedFailed,
                       onChanged: (bool? value) {
-                        provider.toggleSelectAllFailed(value ?? false);
+                        ordersProvider.toggleSelectAllFailed(value ?? false);
                       },
                     ),
-                    Text('Select All (${provider.selectedFailedItemsCount})'),
+                    Text(
+                        'Select All (${ordersProvider.selectedFailedItemsCount})'),
                   ],
                 ),
                 Row(
                   children: [
+                    Consumer<MarketplaceProvider>(
+                      builder: (context, provider, child) {
+                        return PopupMenuButton<String>(
+                          tooltip: 'Filter by Marketplace',
+                          onSelected: (String value) {
+                            if (value == 'All') {
+                              ordersProvider.fetchFailedOrders();
+                            } else {
+                              ordersProvider.fetchOrdersByMarketplace(
+                                  value, 0, ordersProvider.currentPageFailed);
+                            }
+                            log('Selected: $value');
+                          },
+                          itemBuilder: (BuildContext context) =>
+                              <PopupMenuEntry<String>>[
+                            ...provider.marketplaces
+                                .map((marketplace) => PopupMenuItem<String>(
+                                      value: marketplace.name,
+                                      child: Text(marketplace.name),
+                                    )), // Fetched marketplaces
+                            const PopupMenuItem<String>(
+                              value: 'All', // Hardcoded marketplace
+                              child: Text('All'),
+                            ),
+                          ],
+                          child: const IconButton(
+                            onPressed: null,
+                            icon: Icon(
+                              Icons.filter_alt_outlined,
+                              size: 30,
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                    const SizedBox(width: 8),
                     ElevatedButton(
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.primaryBlue,
                       ),
-                      onPressed: provider.isUpdating
+                      onPressed: ordersProvider.isUpdating
                           ? null
                           : () async {
-                              provider.setUpdating(true);
-                              await provider.updateFailedOrders(context);
-                              provider.setUpdating(false);
+                              ordersProvider.setUpdating(true);
+                              await ordersProvider.updateFailedOrders(context);
+                              ordersProvider.setUpdating(false);
                             },
-                      child: provider.isUpdating
+                      child: ordersProvider.isUpdating
                           ? const SizedBox(
                               width: 20,
                               height: 20,
@@ -1014,7 +1125,7 @@ class _OrdersNewPageState extends State<OrdersNewPage>
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.cardsred,
                       ),
-                      onPressed: provider.isCancel
+                      onPressed: ordersProvider.isCancel
                           ? null // Disable button while loading
                           : () async {
                               final provider = Provider.of<OrdersProvider>(
@@ -1073,7 +1184,7 @@ class _OrdersNewPageState extends State<OrdersNewPage>
                                 );
                               }
                             },
-                      child: provider.isCancel
+                      child: ordersProvider.isCancel
                           ? const SizedBox(
                               width: 20,
                               height: 20,
@@ -1096,7 +1207,7 @@ class _OrdersNewPageState extends State<OrdersNewPage>
                             .fetchFailedOrders();
                         Provider.of<OrdersProvider>(context, listen: false)
                             .resetSelections();
-                        provider.clearSearchResults();
+                        ordersProvider.clearSearchResults();
 
                         print('Failed Orders refreshed');
                       },
@@ -1127,7 +1238,8 @@ class _OrdersNewPageState extends State<OrdersNewPage>
                                   onPressed: () {
                                     final searchTerm =
                                         _searchControllerFailed.text;
-                                    provider.searchFailedOrders(searchTerm);
+                                    ordersProvider
+                                        .searchFailedOrders(searchTerm);
                                   },
                                 ),
                                 hintText: 'Search Orders',
@@ -1141,11 +1253,11 @@ class _OrdersNewPageState extends State<OrdersNewPage>
                               ),
                               style: const TextStyle(color: Colors.white),
                               onSubmitted: (value) {
-                                provider.searchFailedOrders(value);
+                                ordersProvider.searchFailedOrders(value);
                               },
                               onChanged: (value) {
                                 if (value.isEmpty) {
-                                  provider.clearSearchResults();
+                                  ordersProvider.clearSearchResults();
                                 }
                               },
                             ),
@@ -1158,8 +1270,8 @@ class _OrdersNewPageState extends State<OrdersNewPage>
                               ),
                               onPressed: () {
                                 _searchControllerFailed.clear();
-                                provider.fetchFailedOrders();
-                                provider.clearSearchResults();
+                                ordersProvider.fetchFailedOrders();
+                                ordersProvider.clearSearchResults();
                               },
                             ),
                         ],
@@ -1171,7 +1283,7 @@ class _OrdersNewPageState extends State<OrdersNewPage>
             ),
             const SizedBox(height: 8),
             Expanded(
-              child: provider.isLoading
+              child: ordersProvider.isLoading
                   ? const Center(
                       child: LoadingAnimation(
                         icon: Icons.shopping_cart,
@@ -1180,7 +1292,7 @@ class _OrdersNewPageState extends State<OrdersNewPage>
                         size: 80.0,
                       ),
                     )
-                  : provider.filteredFailedOrders.isEmpty
+                  : ordersProvider.filteredFailedOrders.isEmpty
                       ? const Center(
                           child: Text(
                             "No orders found",
@@ -1188,9 +1300,10 @@ class _OrdersNewPageState extends State<OrdersNewPage>
                           ),
                         )
                       : ListView.builder(
-                          itemCount: provider.filteredFailedOrders.length,
+                          itemCount: ordersProvider.filteredFailedOrders.length,
                           itemBuilder: (context, index) {
-                            final order = provider.filteredFailedOrders[index];
+                            final order =
+                                ordersProvider.filteredFailedOrders[index];
 
                             return Card(
                               surfaceTintColor: Colors.white,
@@ -1207,9 +1320,9 @@ class _OrdersNewPageState extends State<OrdersNewPage>
                                           MainAxisAlignment.spaceBetween,
                                       children: [
                                         Checkbox(
-                                          value: provider
+                                          value: ordersProvider
                                               .selectedFailedOrders[index],
-                                          onChanged: (value) => provider
+                                          onChanged: (value) => ordersProvider
                                               .toggleOrderSelectionFailed(
                                                   value ?? false, index),
                                         ),
@@ -1241,7 +1354,8 @@ class _OrdersNewPageState extends State<OrdersNewPage>
                                                   fontWeight: FontWeight.bold),
                                             ),
                                             Text(
-                                              provider.formatDate(order.date!),
+                                              ordersProvider
+                                                  .formatDate(order.date!),
                                               style: const TextStyle(
                                                   fontWeight: FontWeight.bold,
                                                   color: AppColors.primaryBlue),
@@ -1420,8 +1534,9 @@ class _OrdersNewPageState extends State<OrdersNewPage>
                                                   'Expected Delivery Date',
                                                   order.expectedDeliveryDate !=
                                                           null
-                                                      ? provider.formatDate(order
-                                                          .expectedDeliveryDate!)
+                                                      ? ordersProvider
+                                                          .formatDate(order
+                                                              .expectedDeliveryDate!)
                                                       : '',
                                                 ),
                                                 buildLabelValueRow(
@@ -1431,8 +1546,8 @@ class _OrdersNewPageState extends State<OrdersNewPage>
                                                 buildLabelValueRow(
                                                   'Payment Date Time',
                                                   order.paymentDateTime != null
-                                                      ? provider.formatDateTime(
-                                                          order
+                                                      ? ordersProvider
+                                                          .formatDateTime(order
                                                               .paymentDateTime!)
                                                       : '',
                                                 ),
@@ -1668,6 +1783,30 @@ class _OrdersNewPageState extends State<OrdersNewPage>
                                         ],
                                       ),
                                     ),
+                                    const SizedBox(height: 6),
+                                    Padding(
+                                      padding: const EdgeInsets.all(8.0),
+                                      child: Text.rich(
+                                        TextSpan(
+                                            text: "Updated at: ",
+                                            children: [
+                                              TextSpan(
+                                                  text: DateFormat(
+                                                          'dd-MM-yyyy\',\' hh:mm a')
+                                                      .format(
+                                                    DateTime.parse(
+                                                        "${order.updatedAt}"),
+                                                  ),
+                                                  style: const TextStyle(
+                                                    fontWeight:
+                                                        FontWeight.normal,
+                                                  )),
+                                            ],
+                                            style: const TextStyle(
+                                              fontWeight: FontWeight.bold,
+                                            )),
+                                      ),
+                                    ),
                                     const Divider(
                                       thickness: 1,
                                       color: AppColors.grey,
@@ -1699,31 +1838,33 @@ class _OrdersNewPageState extends State<OrdersNewPage>
                         ),
             ),
             CustomPaginationFooter(
-              currentPage: provider.currentPageFailed,
-              totalPages: provider.totalFailedPages,
+              currentPage: ordersProvider.currentPageFailed,
+              totalPages: ordersProvider.totalFailedPages,
               buttonSize: 30,
               pageController: _pageController,
               onFirstPage: () {
-                provider.fetchFailedOrders(page: 1);
+                ordersProvider.fetchFailedOrders(page: 1);
               },
               onLastPage: () {
-                provider.fetchFailedOrders(page: provider.totalFailedPages);
+                ordersProvider.fetchFailedOrders(
+                    page: ordersProvider.totalFailedPages);
               },
               onNextPage: () {
-                if (provider.currentPageFailed < provider.totalFailedPages) {
-                  provider.fetchFailedOrders(
-                      page: provider.currentPageFailed + 1);
+                if (ordersProvider.currentPageFailed <
+                    ordersProvider.totalFailedPages) {
+                  ordersProvider.fetchFailedOrders(
+                      page: ordersProvider.currentPageFailed + 1);
                 }
               },
               onPreviousPage: () {
-                if (provider.currentPageFailed > 1) {
-                  provider.fetchFailedOrders(
-                      page: provider.currentPageFailed - 1);
+                if (ordersProvider.currentPageFailed > 1) {
+                  ordersProvider.fetchFailedOrders(
+                      page: ordersProvider.currentPageFailed - 1);
                 }
               },
               onGoToPage: (page) {
-                if (page > 0 && page <= provider.totalFailedPages) {
-                  provider.fetchFailedOrders(page: page);
+                if (page > 0 && page <= ordersProvider.totalFailedPages) {
+                  ordersProvider.fetchFailedOrders(page: page);
                 }
               },
               onJumpToPage: () {
@@ -1731,13 +1872,13 @@ class _OrdersNewPageState extends State<OrdersNewPage>
 
                 if (page == null ||
                     page < 1 ||
-                    page > provider.totalFailedPages) {
+                    page > ordersProvider.totalFailedPages) {
                   _showSnackbar(context,
-                      'Please enter a valid page number between 1 and ${provider.totalFailedPages}.');
+                      'Please enter a valid page number between 1 and ${ordersProvider.totalFailedPages}.');
                   return;
                 }
 
-                provider.fetchFailedOrders(page: page);
+                ordersProvider.fetchFailedOrders(page: page);
                 _pageController.clear();
               },
             ),

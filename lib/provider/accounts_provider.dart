@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:developer';
 import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
 import 'package:inventory_management/model/orders_model.dart';
@@ -320,5 +321,64 @@ class AccountsProvider with ChangeNotifier {
     }
     setUpdatingOrder(false);
     notifyListeners();
+  }
+
+  Future<void> fetchOrdersByMarketplace(
+      String marketplace, int orderStatus, int page) async {
+    const String baseUrl =
+        'https://inventory-management-backend-s37u.onrender.com/orders';
+    String url =
+        '$baseUrl?orderStatus=$orderStatus&marketplace=$marketplace&page=$page';
+
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('authToken') ?? '';
+
+    try {
+
+      _isLoading = true;
+      notifyListeners();
+
+      // Clear checkboxes when a new page is fetched
+      // clearAllSelections();
+
+      final response = await http.get(
+        Uri.parse(url),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+      );
+
+      // Log response for debugging
+      print('Response status: ${response.statusCode}');
+      print('Response body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        final jsonResponse = jsonDecode(response.body);
+        List<Order> orders = (jsonResponse['orders'] as List)
+            .map((orderJson) => Order.fromJson(orderJson))
+            .toList();
+
+        log("orders: $orders");
+
+        _orders = orders;
+        _currentPage = page; // Track current page for B2B
+        _totalPages =
+            jsonResponse['totalPages']; // Assuming API returns total pages
+      } else if (response.statusCode == 401) {
+        print('Unauthorized access - Token might be expired or invalid.');
+      } else if (response.statusCode == 404) {
+        _orders = [];
+        notifyListeners();
+        print('Orders not found - Check the filter type.');
+      } else {
+        throw Exception('Failed to load orders: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Error fetching orders: $e');
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
   }
 }

@@ -1,7 +1,11 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:inventory_management/Widgets/product_details_card.dart';
 import 'package:inventory_management/edit_order_page.dart';
 import 'package:inventory_management/provider/accounts_provider.dart';
+import 'package:inventory_management/provider/marketplace_provider.dart';
 import 'package:provider/provider.dart';
 
 import 'Custom-Files/colors.dart';
@@ -27,6 +31,8 @@ class _AccountsPageState extends State<AccountsPage> {
       Provider.of<AccountsProvider>(context, listen: false)
           .fetchOrdersWithStatus2();
     });
+
+    context.read<MarketplaceProvider>().fetchMarketplaces();
   }
 
   void _onSearchButtonPressed() {
@@ -113,6 +119,42 @@ class _AccountsPageState extends State<AccountsPage> {
                     // Refresh Button
                     Row(
                       children: [
+                        Consumer<MarketplaceProvider>(
+                          builder: (context, provider, child) {
+                            return PopupMenuButton<String>(
+                              tooltip: 'Filter by Marketplace',
+                              onSelected: (String value) {
+                                if (value == 'All') {
+                                  accountsProvider.fetchOrdersWithStatus2();
+                                } else {
+                                  accountsProvider.fetchOrdersByMarketplace(
+                                      value, 2, accountsProvider.currentPage);
+                                }
+                                log('Selected: $value');
+                              },
+                              itemBuilder: (BuildContext context) =>
+                                  <PopupMenuEntry<String>>[
+                                ...provider.marketplaces
+                                    .map((marketplace) => PopupMenuItem<String>(
+                                          value: marketplace.name,
+                                          child: Text(marketplace.name),
+                                        )), // Fetched marketplaces
+                                const PopupMenuItem<String>(
+                                  value: 'All', // Hardcoded marketplace
+                                  child: Text('All'),
+                                ),
+                              ],
+                              child: const IconButton(
+                                onPressed: null,
+                                icon: Icon(
+                                  Icons.filter_alt_outlined,
+                                  size: 30,
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                        const SizedBox(width: 8),
                         ElevatedButton(
                           style: ElevatedButton.styleFrom(
                             backgroundColor: AppColors.primaryBlue,
@@ -145,17 +187,17 @@ class _AccountsPageState extends State<AccountsPage> {
                           onPressed: accountsProvider.isCancel
                               ? null // Disable button while loading
                               : () async {
-                                  final provider = Provider.of<AccountsProvider>(
-                                      context,
-                                      listen: false);
+                                  final provider =
+                                      Provider.of<AccountsProvider>(context,
+                                          listen: false);
 
                                   // Collect selected order IDs
                                   List<String> selectedOrderIds = provider
                                       .orders
                                       .asMap()
                                       .entries
-                                      .where((entry) => provider
-                                          .selectedProducts[entry.key])
+                                      .where((entry) =>
+                                          provider.selectedProducts[entry.key])
                                       .map((entry) => entry.value.orderId)
                                       .toList();
 
@@ -740,6 +782,29 @@ class _AccountsPageState extends State<AccountsPage> {
                                           ),
                                         ),
                                       ],
+                                    ),
+                                  ),
+                                  const SizedBox(height: 6),
+                                  Padding(
+                                    padding: const EdgeInsets.all(8.0),
+                                    child: Text.rich(
+                                      TextSpan(
+                                          text: "Updated on: ",
+                                          children: [
+                                            TextSpan(
+                                                text: DateFormat(
+                                                        'dd-MM-yyyy\',\' hh:mm a')
+                                                    .format(
+                                                  DateTime.parse(
+                                                      "${order.updatedAt}"),
+                                                ),
+                                                style: const TextStyle(
+                                                  fontWeight: FontWeight.normal,
+                                                )),
+                                          ],
+                                          style: const TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                          )),
                                     ),
                                   ),
                                   const Divider(

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:inventory_management/Custom-Files/colors.dart'; // Adjust the import based on your project structure
 import 'package:inventory_management/edit_order_page.dart';
 import 'package:inventory_management/model/orders_model.dart';
@@ -360,7 +361,25 @@ class OrderCard extends StatelessWidget {
                 ),
               ),
             ],
-            const SizedBox(height: 6.0),
+            // Text.rich(
+            //   TextSpan(
+            //       text: "Updated on: ",
+            //       children: [
+            //         TextSpan(
+            //             text: DateFormat('dd-MM-yyyy\',\' hh:mm a').format(
+            //               DateTime.parse("${order.updatedAt}"),
+            //             ),
+            //             style: const TextStyle(
+            //               fontWeight: FontWeight.normal,
+            //             )),
+            //       ],
+            //       style: const TextStyle(
+            //         fontWeight: FontWeight.bold,
+            //       )),
+            // ),
+            // const SizedBox(
+            //   height: 8,
+            // ),
             ListView.builder(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
@@ -371,6 +390,30 @@ class OrderCard extends StatelessWidget {
                     'Item $itemIndex: ${item.product?.displayName.toString() ?? ''}, Quantity: ${item.qty ?? 0}');
                 return _buildProductDetails(item);
               },
+            ),
+            const SizedBox(
+              height: 8,
+            ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                Text.rich(
+                  TextSpan(
+                      text: "Updated on: ",
+                      children: [
+                        TextSpan(
+                            text: DateFormat('dd-MM-yyyy\',\' hh:mm a').format(
+                              DateTime.parse("${order.updatedAt}"),
+                            ),
+                            style: const TextStyle(
+                              fontWeight: FontWeight.normal,
+                            )),
+                      ],
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                      )),
+                ),
+              ],
             ),
           ],
         ),
@@ -451,6 +494,30 @@ class OrderCard extends StatelessWidget {
                             ),
                             TextSpan(
                               text: item.qty?.toString() ?? '0',
+                              style: const TextStyle(
+                                color: Colors.black87,
+                                fontWeight: FontWeight.w500,
+                                fontSize: 13, // Reduced font size
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      // Rate
+                      RichText(
+                        text: TextSpan(
+                          children: [
+                            const TextSpan(
+                              text: 'Rate: ',
+                              style: TextStyle(
+                                color: Colors.blueAccent,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 13, // Reduced font size
+                              ),
+                            ),
+                            TextSpan(
+                              text:
+                                  'Rs.${(item.amount! / item.qty!).toStringAsFixed(1)}',
                               style: const TextStyle(
                                 color: Colors.black87,
                                 fontWeight: FontWeight.w500,

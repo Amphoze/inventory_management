@@ -4,7 +4,6 @@ import 'package:inventory_management/model/orders_model.dart';
 // import 'package:inventory_management/edit_order_page.dart';
 // import 'package:provider/provider.dart';
 // import '../provider/orders_provider.dart'; // Adjust the import based on your project structure
-import 'dart:developer';
 
 class PickerProductCard extends StatelessWidget {
   final Map<String, dynamic> order;

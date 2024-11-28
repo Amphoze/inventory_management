@@ -4,7 +4,7 @@ import 'package:inventory_management/provider/label_data_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:inventory_management/Custom-Files/colors.dart';
 import 'package:inventory_management/Api/auth_provider.dart';
-import 'dart:html' as html; // Import the html library
+// Import the html library
 
 class LabelUpload extends StatefulWidget {
   const LabelUpload({super.key});
