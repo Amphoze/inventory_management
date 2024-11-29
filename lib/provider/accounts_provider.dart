@@ -161,7 +161,7 @@ class AccountsProvider with ChangeNotifier {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('authToken') ?? '';
     const url =
-        'https://inventory-management-backend-s37u.onrender.com/orders/account?page=';
+        'https://inventory-management-backend-s37u.onrender.com/orders?orderStatus=2&ba_approve=true&page=';
 
     try {
       final response = await http.get(Uri.parse('$url$_currentPage'), headers: {
@@ -180,7 +180,7 @@ class AccountsProvider with ChangeNotifier {
         _orders = orders; // Set the orders for the current page
 
         // Initialize selected products list
-        // _selectedProducts = List<bool>.filled(_orders.length, false);
+        _selectedProducts = List<bool>.filled(_orders.length, false);
 
         // Print the total number of orders fetched from the current page
         print('Total Orders Fetched from Page $_currentPage: ${orders.length}');
