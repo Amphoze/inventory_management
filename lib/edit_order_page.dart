@@ -891,7 +891,7 @@ class _EditOrderPageState extends State<EditOrderPage> {
             Padding(
               padding: const EdgeInsets.only(right: 16.0),
               child: ElevatedButton(
-                style: ButtonStyle(
+                style: const ButtonStyle(
                   // backgroundColor: WidgetStateProperty.all(AppColors.orange),
                   // padding: WidgetStateProperty.all(
                       // const EdgeInsets.symmetric(horizontal: 12.0)),

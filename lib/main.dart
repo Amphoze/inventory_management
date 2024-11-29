@@ -4,7 +4,6 @@ import 'package:inventory_management/Api/label-api.dart';
 import 'package:inventory_management/Api/lable-page-api.dart';
 import 'package:inventory_management/Api/order-page-checkbox-provider.dart';
 import 'package:inventory_management/Api/products-provider.dart';
-import 'package:inventory_management/Api/update-quantity-by-sku.dart';
 import 'package:inventory_management/dashboard.dart';
 import 'package:inventory_management/login_page.dart';
 import 'package:inventory_management/provider/accounts_provider.dart';

@@ -11,8 +11,6 @@ import 'package:provider/provider.dart';
 import 'Custom-Files/colors.dart';
 import 'Custom-Files/custom_pagination.dart';
 import 'Custom-Files/loading_indicator.dart';
-import 'Widgets/order_card.dart';
-import 'model/orders_model.dart';
 
 class AccountsPage extends StatefulWidget {
   const AccountsPage({super.key});
@@ -881,42 +879,42 @@ class _AccountsPageState extends State<AccountsPage> {
     );
   }
 
-  Widget _buildOrderCard(
-      Order order, int index, AccountsProvider accountsProvider) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4.0, horizontal: 8.0),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Checkbox(
-            value: accountsProvider
-                .selectedProducts[index], // Accessing selected products
-            onChanged: (isSelected) {
-              accountsProvider.handleRowCheckboxChange(index, isSelected!);
-            },
-          ),
-          Expanded(
-            flex: 5,
-            child: Row(
-              mainAxisAlignment:
-                  MainAxisAlignment.spaceBetween, // Space between elements
-              children: [
-                Expanded(
-                  child:
-                      OrderCard(order: order), // Your existing OrderCard widget
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 20),
-          // if (dispatchProvider.isReturning)
-          //   Center(
-          //     child: CircularProgressIndicator(), // Loading indicator
-          //   ),
-        ],
-      ),
-    );
-  }
+  // Widget _buildOrderCard(
+  //     Order order, int index, AccountsProvider accountsProvider) {
+  //   return Padding(
+  //     padding: const EdgeInsets.symmetric(vertical: 4.0, horizontal: 8.0),
+  //     child: Row(
+  //       crossAxisAlignment: CrossAxisAlignment.center,
+  //       children: [
+  //         Checkbox(
+  //           value: accountsProvider
+  //               .selectedProducts[index], // Accessing selected products
+  //           onChanged: (isSelected) {
+  //             accountsProvider.handleRowCheckboxChange(index, isSelected!);
+  //           },
+  //         ),
+  //         Expanded(
+  //           flex: 5,
+  //           child: Row(
+  //             mainAxisAlignment:
+  //                 MainAxisAlignment.spaceBetween, // Space between elements
+  //             children: [
+  //               Expanded(
+  //                 child:
+  //                     OrderCard(order: order), // Your existing OrderCard widget
+  //               ),
+  //             ],
+  //           ),
+  //         ),
+  //         const SizedBox(width: 20),
+  //         // if (dispatchProvider.isReturning)
+  //         //   Center(
+  //         //     child: CircularProgressIndicator(), // Loading indicator
+  //         //   ),
+  //       ],
+  //     ),
+  //   );
+  // }
 
   Widget _buildTableHeader(int totalCount, AccountsProvider accountsProvider) {
     return Container(
