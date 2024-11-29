@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import 'package:inventory_management/Api/auth_provider.dart';
 import 'package:inventory_management/accounts_page.dart';
 import 'package:inventory_management/ba_approve_page.dart';
+import 'package:inventory_management/booked_page.dart';
 import 'package:inventory_management/cancelled_orders.dart';
 import 'package:inventory_management/combo_upload.dart';
 import 'package:inventory_management/create_account.dart';
@@ -16,8 +17,8 @@ import 'package:inventory_management/create-label-page.dart';
 import 'package:inventory_management/location_master.dart';
 import 'package:inventory_management/login_page.dart';
 import 'package:inventory_management/manage_inventory.dart';
+import 'package:inventory_management/manifest_section.dart';
 import 'package:inventory_management/marketplace_page.dart';
-import 'package:inventory_management/products.dart';
 import 'package:inventory_management/category_master.dart';
 import 'package:inventory_management/dashboard_cards.dart';
 import 'package:inventory_management/checker_page.dart';
@@ -28,7 +29,6 @@ import 'package:inventory_management/packer_page.dart';
 import 'package:inventory_management/picker_page.dart';
 import 'package:inventory_management/orders_page.dart';
 import 'package:inventory_management/provider/dashboard_provider.dart';
-import 'package:inventory_management/provider/inventory_provider.dart';
 import 'package:inventory_management/racked_page.dart';
 import 'package:inventory_management/dispatch_order.dart';
 import 'package:inventory_management/show-label-page.dart';
@@ -83,7 +83,7 @@ class _DashboardPageState extends State<DashboardPage> {
 
   @override
   Widget build(BuildContext context) {
-    final provider = Provider.of<InventoryProvider>(context, listen: false);
+    // final provider = Provider.of<InventoryProvider>(context, listen: false);
     return SelectionArea(
       child: LayoutBuilder(
         builder: (context, constraints) {
@@ -313,11 +313,13 @@ class _DashboardPageState extends State<DashboardPage> {
           "HOD Approval",
           "Accounts Page",
           "Book Page",
+          "Booked Orders",
           "Picker Page",
           "Packer Page",
           "Checker Page",
           "Racked Page",
-          "Manifest Page"
+          "Manifest Page",
+          "Manifest Section",
         ].contains(selectedDrawerItem)
             ? Colors.blue.withOpacity(0.2)
             : AppColors.white,
@@ -419,8 +421,25 @@ class _DashboardPageState extends State<DashboardPage> {
               fontSize: 14,
             ),
           ),
-          const SizedBox(
-            height: 4,
+          Padding(
+            padding: const EdgeInsets.only(left: 30.0),
+            child: _buildDrawerItem(
+              icon: Icons.subdirectory_arrow_right,
+              text: 'Booked Orders',
+              isSelected: selectedDrawerItem == 'Booked Orders',
+              onTap: () => userRole == 'booker' ||
+                      userRole == 'superAdmin' ||
+                      userRole == 'admin'
+                  ? _onDrawerItemTapped('Booked Orders', isSmallScreen)
+                  : ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                          content: Text(
+                              "You are not authorized to view this page.")),
+                    ),
+              isIndented: true,
+              iconSize: 20,
+              fontSize: 14,
+            ),
           ),
           Padding(
             padding: const EdgeInsets.only(left: 10.0),
@@ -512,6 +531,26 @@ class _DashboardPageState extends State<DashboardPage> {
                       userRole == 'superAdmin' ||
                       userRole == 'admin'
                   ? _onDrawerItemTapped('Manifest Page', isSmallScreen)
+                  : ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                          content: Text(
+                              "You are not authorized to view this page.")),
+                    ),
+              isIndented: true,
+              iconSize: 20,
+              fontSize: 14,
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.only(left: 30.0),
+            child: _buildDrawerItem(
+              icon: Icons.subdirectory_arrow_right,
+              text: 'Sub section',
+              isSelected: selectedDrawerItem == 'Manifest Section',
+              onTap: () => userRole == 'manifest' ||
+                      userRole == 'superAdmin' ||
+                      userRole == 'admin'
+                  ? _onDrawerItemTapped('Manifest Section', isSmallScreen)
                   : ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
                           content: Text(
@@ -1018,7 +1057,7 @@ class _DashboardPageState extends State<DashboardPage> {
       case 'Inventory':
         return const Center(child: Text("Inventory content goes here"));
       case 'Products':
-        return UploadProductSku();
+        return const UploadProductSku();
       // return const Products();
       case 'Manage Inventory':
         return const ManageInventoryPage();
@@ -1030,6 +1069,8 @@ class _DashboardPageState extends State<DashboardPage> {
         return const AccountsPage();
       case 'Book Page':
         return const BookPage();
+      case 'Booked Orders':
+        return const BookedPage();
       case 'Picker Page':
         return const PickerPage();
       case 'Packer Page':
@@ -1040,6 +1081,8 @@ class _DashboardPageState extends State<DashboardPage> {
         return const RackedPage();
       case 'Manifest Page':
         return const ManifestPage();
+      case 'Manifest Section':
+        return const ManifestSection();
       case 'Dispatched':
         return const DispatchedOrders();
       case 'Cancelled':

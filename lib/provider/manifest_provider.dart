@@ -3,7 +3,9 @@ import 'dart:convert';
 import 'dart:developer';
 import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
+import 'package:inventory_management/model/manifest_model.dart';
 import 'package:inventory_management/model/orders_model.dart';
+import 'package:logger/logger.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class ManifestProvider with ChangeNotifier {
@@ -11,6 +13,7 @@ class ManifestProvider with ChangeNotifier {
   bool _selectAll = false;
   List<bool> _selectedProducts = [];
   List<Order> _orders = [];
+  List<Manifest> _manifests = [];
   int _currentPage = 1; // Ensure this starts at 1
   int _totalPages = 1;
   final PageController _pageController = PageController();
@@ -20,6 +23,7 @@ class ManifestProvider with ChangeNotifier {
   bool get selectAll => _selectAll;
   List<bool> get selectedProducts => _selectedProducts;
   List<Order> get orders => _orders;
+  List<Manifest> get manifests => _manifests;
   bool get isLoading => _isLoading;
 
   int get currentPage => _currentPage;
@@ -34,6 +38,13 @@ class ManifestProvider with ChangeNotifier {
 
   void setRefreshingOrders(bool value) {
     isRefreshingOrders = value;
+    notifyListeners();
+  }
+
+  bool isCreatingManifest = false;
+
+  void setCreatingManifest(bool value) {
+    isCreatingManifest = value;
     notifyListeners();
   }
 
@@ -109,7 +120,6 @@ class ManifestProvider with ChangeNotifier {
     }
   }
 
-
   Future<void> fetchOrdersWithStatus8() async {
     _isLoading = true;
     setRefreshingOrders(true);
@@ -134,6 +144,217 @@ class ManifestProvider with ChangeNotifier {
         List<Order> orders = (data['orders'] as List)
             .map((order) => Order.fromJson(order))
             .toList();
+
+        _totalPages = data['totalPages']; // Get total pages from response
+        _orders = orders; // Set the orders for the current page
+
+        // Initialize selected products list
+        _selectedProducts = List<bool>.filled(_orders.length, false);
+
+        // Print the total number of orders fetched from the current page
+        print('Total Orders Fetched from Page $_currentPage: ${orders.length}');
+      } else {
+        // Handle non-success responses
+        _orders = [];
+        _totalPages = 1; // Reset total pages if there’s an error
+      }
+    } catch (e) {
+      // Handle errors
+      _orders = [];
+      _totalPages = 1; // Reset total pages if there’s an error
+    } finally {
+      _isLoading = false;
+      setRefreshingOrders(false);
+      notifyListeners();
+    }
+  }
+
+  Future<void> fetchCreatedManifests(int page) async {
+    _isLoading = true;
+    setRefreshingOrders(true);
+    notifyListeners();
+
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('authToken') ?? '';
+    var url =
+        'https://inventory-management-backend-s37u.onrender.com/manifest?page=$page';
+
+    try {
+      final response = await http.get(Uri.parse(url), headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      });
+
+      log("Code: ${response.statusCode}");
+      // log("Body: ${response.body}");
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        debugPrint("data: $data");
+
+        List<Manifest> manifests = (data['data']['manifest'] as List)
+            .map((manifest) => Manifest.fromJson(manifest))
+            .toList();
+        log(manifests.toString());
+
+        _totalPages = data['data']['totalPages'];
+        _currentPage =
+            data['data']['currentPage']; // Get total pages from response
+        _manifests = manifests; // Set the orders for the current page
+        // log(_totalPages.toString());
+
+        log('Total Orders Fetched from Page $_currentPage: ${manifests.length}');
+      } else {
+        // Handle non-success responses
+        _manifests = [];
+        _totalPages = 1; // Reset total pages if there’s an error
+      }
+    } catch (e) {
+      log("catch data $e");
+      // Handle errors
+      _manifests = [];
+      _totalPages = 1; // Reset total pages if there’s an error
+    } finally {
+      _isLoading = false;
+      setRefreshingOrders(false);
+      notifyListeners();
+    }
+  }
+
+  Future<void> createManifest(
+      BuildContext context, String deliveryPartner) async {
+    setCreatingManifest(true);
+    notifyListeners();
+
+    if (deliveryPartner == 'All') {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please select a delivery courier'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      setCreatingManifest(false);
+      notifyListeners();
+      return;
+    }
+
+    final selectedOrderIds = _orders
+        .asMap()
+        .entries
+        .where((entry) => _selectedProducts[entry.key])
+        .map((entry) => entry.value.orderId)
+        .toList();
+
+    if (selectedOrderIds.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('No orders selected to create manifest'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      setCreatingManifest(false);
+      notifyListeners();
+      return;
+    }
+
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('authToken') ?? '';
+    const url =
+        'https://inventory-management-backend-s37u.onrender.com/manifest';
+
+    try {
+      final response = await http.post(
+        Uri.parse(url),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode(
+          {
+            'orderIds': selectedOrderIds,
+            'deliveryPartner': deliveryPartner,
+          },
+        ),
+      );
+
+      log("status code: ${response.statusCode}");
+
+      if (response.statusCode == 201 || response.statusCode == 200) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Manifest created successfully'),
+            backgroundColor: Colors.green,
+          ),
+        );
+
+        fetchOrdersWithStatus8();
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Failed to create manifest'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } catch (error) {
+      print('Error updating order status: $error');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error while creating manifest, $error'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } finally {
+      setCreatingManifest(false);
+      notifyListeners();
+    }
+  }
+
+  void handleRowCheckboxChange(int index, bool isSelected) {
+    _selectedProducts[index] = isSelected;
+
+    // If any individual checkbox is unchecked, deselect "Select All"
+    if (!isSelected) {
+      _selectAll = false;
+    } else {
+      // If all boxes are checked, select "Select All"
+      _selectAll = _selectedProducts.every((element) => element);
+    }
+
+    notifyListeners();
+  }
+
+  Future<void> fetchOrdersByBookingCourier(String courier, int page) async {
+    _isLoading = true;
+    setRefreshingOrders(true);
+    notifyListeners();
+
+    log("courier: $courier");
+
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('authToken') ?? '';
+    const String baseUrl =
+        'https://inventory-management-backend-s37u.onrender.com';
+
+    final url =
+        '$baseUrl/orders?orderStatus=8&bookingCourier=$courier&page=$page';
+
+    try {
+      final response = await http.get(Uri.parse(url), headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      });
+
+      log("Code: ${response.statusCode}");
+      log("Body: ${response.body}");
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        List<Order> orders = (data['orders'] as List)
+            .map((order) => Order.fromJson(order))
+            .toList();
+
+        log("orders: $orders");
 
         _totalPages = data['totalPages']; // Get total pages from response
         _orders = orders; // Set the orders for the current page

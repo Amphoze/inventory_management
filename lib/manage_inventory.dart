@@ -128,28 +128,37 @@ class _ManageInventoryPageState extends State<ManageInventoryPage> {
       print('Response status: ${response.statusCode}');
       print('Response body: ${response.body}');
 
-      if (response.statusCode == 200) {
+      if (response.statusCode == 201) {
         final responseData = jsonDecode(response.body);
         if (responseData['success'] == true) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text("Inventory created successfully!")),
+            const SnackBar(
+              content: Text("Inventory created successfully!"),
+              backgroundColor: Colors.green,
+            ),
           );
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text("Inventory created successfully!")),
+            const SnackBar(
+              content: Text("Failed to create inventory"),
+              backgroundColor: Colors.red,
+            ),
           );
-          // ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          //   content: Text("Failed to create inventory: ${responseData['message'] ?? 'Unknown error'}"),
-          // ));
         }
       } else {
-        // ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        //   content: Text("Failed to save inventory: ${response.body}"),
-        // ));
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("Failed to save inventory"),
+            backgroundColor: Colors.red,
+          ),
+        );
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Error saving inventory: $e")),
+        SnackBar(
+          content: Text("Error saving inventory: $e"),
+          backgroundColor: Colors.red,
+        ),
       );
     }
   }
@@ -435,7 +444,28 @@ class _ManageInventoryPageState extends State<ManageInventoryPage> {
                                 content: Text("Please select a product"),
                               ));
                             } else {
+                              // Show loading dialog
+                              showDialog(
+                                context: context,
+                                barrierDismissible:
+                                    false, // Prevent dismissing the dialog
+                                builder: (BuildContext context) {
+                                  return const AlertDialog(
+                                    content: Row(
+                                      children: [
+                                        CircularProgressIndicator(),
+                                        SizedBox(width: 20),
+                                        Text("Saving inventory..."),
+                                      ],
+                                    ),
+                                  );
+                                },
+                              );
+
                               await saveInventoryToApi(context);
+
+                              // Close the loading dialog after saving
+                              Navigator.of(context).pop();
                             }
                           },
                           child: const Text('Save Inventory'),

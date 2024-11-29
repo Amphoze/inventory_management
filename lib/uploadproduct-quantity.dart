@@ -25,7 +25,7 @@ class _UploadProductSkuState extends State<UploadProductSku> {
     return Consumer<UpdateQuantityBySku>(
       builder: (context, provider, child) => Column(
         children: [
-          Container(
+          SizedBox(
             height: 50,
             width: 150,
             child: ElevatedButton(
@@ -59,13 +59,13 @@ class _UploadProductSkuState extends State<UploadProductSku> {
                     }
                   }
                 },
-                child: Text("Upload Excel")),
+                child: const Text("Upload Excel")),
           ),
           ElevatedButton(
             onPressed: !provider.jsonHaveData
                 ? null
                 : () {
-                    for (String i in jsonData!.keys) {
+                    for (String i in jsonData.keys) {
                       print("data is here $i => ${jsonData[i].toString()}");
                     }
                   },

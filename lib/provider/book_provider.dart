@@ -13,14 +13,17 @@ class BookProvider with ChangeNotifier {
   // Store selected states for B2B and B2C orders
   List<bool> selectedB2BItems = List.generate(40, (index) => false);
   List<bool> selectedB2CItems = List.generate(40, (index) => false);
+  List<bool> selectedBookedItems = List.generate(40, (index) => false);
 
   // Select all flags for B2B and B2C
   bool selectAllB2B = false;
   bool selectAllB2C = false;
+  bool selectAllBooked = false;
 
   // Loading states for B2B and B2C orders
   bool isLoadingB2B = false;
   bool isLoadingB2C = false;
+  bool isLoadingBooked = false;
 
   // Sort option for orders
   String? _sortOption;
@@ -29,15 +32,19 @@ class BookProvider with ChangeNotifier {
   // Lists for storing fetched orders
   List<Order> ordersB2B = [];
   List<Order> ordersB2C = [];
+  List<Order> ordersBooked = [];
 
   List<Order> B2BOrders = []; // List to store fetched ready orders
   List<Order> B2COrders = [];
+  List<Order> BookedOrders = [];
 
   // Pagination
   int currentPageB2B = 1;
   int currentPageB2C = 1;
+  int currentPageBooked = 1;
   int totalPagesB2B = 0;
   int totalPagesB2C = 0;
+  int totalPagesBooked = 0;
 
   bool isRefreshingOrders = false;
   bool isDelhiveryLoading = false;
@@ -67,6 +74,11 @@ class BookProvider with ChangeNotifier {
   }
 
   void setRefreshingOrders(bool value) {
+    isRefreshingOrders = value;
+    notifyListeners();
+  }
+
+  void setRefreshingBookedOrders(bool value) {
     isRefreshingOrders = value;
     notifyListeners();
   }
@@ -215,6 +227,63 @@ class BookProvider with ChangeNotifier {
     }
   }
 
+  Future<void> fetchBookedOrders(int page) async {
+    String? token = await _getToken();
+    if (token == null) {
+      print('Token is null, unable to fetch orders.');
+      return;
+    }
+
+    String url =
+        'https://inventory-management-backend-s37u.onrender.com/orders?isBooked=true&page=$page';
+
+    try {
+      // Set loading state based on order type
+      isLoadingBooked = true;
+      setRefreshingBookedOrders(true);
+      notifyListeners();
+
+      clearAllSelections();
+
+      final response = await http.get(
+        Uri.parse(url),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+      );
+
+      // Log response for debugging
+      log('Response status: ${response.statusCode}');
+      log('Response body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        final jsonResponse = jsonDecode(response.body);
+        List<Order> orders = (jsonResponse['orders'] as List)
+            .map((orderJson) => Order.fromJson(orderJson))
+            .toList();
+
+        Logger().e(jsonResponse['orders'][0]['isBooked']['status']);
+
+        ordersBooked = orders;
+        currentPageBooked = page;
+        totalPagesBooked = jsonResponse['totalPages'];
+      } else if (response.statusCode == 401) {
+        print('Unauthorized access - Token might be expired or invalid.');
+      } else if (response.statusCode == 404) {
+        print('Orders not found');
+      } else {
+        throw Exception('Failed to load orders: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Error fetching orders: $e');
+    } finally {
+      isLoadingBooked = false;
+      setRefreshingBookedOrders(false);
+      notifyListeners();
+    }
+  }
+
   // Function to book orders
   Future<String> bookOrders(BuildContext context, List<String> orderIds,
       String lowerCase, String provider) async {
@@ -309,6 +378,19 @@ class BookProvider with ChangeNotifier {
     notifyListeners();
   }
 
+  void handleRowCheckboxChangeBooked(String? orderId, bool isSelected) {
+    int index;
+    index = ordersBooked.indexWhere((order) => order.orderId == orderId);
+    if (index != -1) {
+      selectedBookedItems[index] = isSelected;
+      ordersBooked[index].isSelected = isSelected;
+    }
+
+    selectAllBooked = selectedBookedItems.every((item) => item);
+    // _updateSelectAllState(isB2B);
+    notifyListeners();
+  }
+
   // Update the select all state based on selected items
   void _updateSelectAllState(bool isB2B) {
     if (isB2B) {
@@ -339,6 +421,18 @@ class BookProvider with ChangeNotifier {
     notifyListeners();
   }
 
+  void toggleBookedSelectAll(bool? value) {
+    selectAllBooked = value!;
+    selectedBookedItems.fillRange(
+        0, selectedBookedItems.length, selectAllBooked);
+    // Update the selection state for B2B orders
+    for (int i = 0; i < ordersBooked.length; i++) {
+      ordersBooked[i].isSelected = selectAllBooked;
+    }
+
+    notifyListeners();
+  }
+
   // Clear all checkboxes when the page is changed
   void clearAllSelections() {
     selectedB2BItems.fillRange(0, selectedB2BItems.length, false);
@@ -351,6 +445,7 @@ class BookProvider with ChangeNotifier {
   void clearSearchResults() {
     ordersB2B = B2BOrders;
     ordersB2C = B2COrders;
+    ordersBooked = BookedOrders;
     notifyListeners();
   }
 
@@ -424,6 +519,41 @@ class BookProvider with ChangeNotifier {
     }
   }
 
+  Future<void> searchBookedOrders(String orderId) async {
+    final url = Uri.parse(
+        'https://inventory-management-backend-s37u.onrender.com/orders?isBooked=true&order_id=$orderId');
+    final token = await _getToken();
+    if (token == null) return;
+
+    try {
+      isLoadingBooked = true;
+      notifyListeners();
+
+      final response = await http.get(
+        url,
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        print(response.body);
+
+        ordersBooked = [Order.fromJson(data)];
+        print(response.body);
+      } else {
+        ordersBooked = [];
+      }
+    } catch (e) {
+      ordersBooked = [];
+    } finally {
+      isLoadingBooked = false;
+      notifyListeners();
+    }
+  }
+
   // Add this method to the BookProvider class
   Future<void> generatePicklist(
       BuildContext context, String marketplace) async {
@@ -458,16 +588,22 @@ class BookProvider with ChangeNotifier {
       log('Status: ${response.statusCode}');
       log('Body: ${response.body}');
 
-      if (response.statusCode == 200) {
-        // Handle the successful response
-        final data = jsonDecode(response.body);
-        // Process the data as needed
+      final data = jsonDecode(response.body);
 
+      if (response.statusCode == 201) {
+        // Handle the successful response
+        // Process the data as needed
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(data['error']['message']),
+            backgroundColor: AppColors.cardsred,
+          ),
+        );
         log("data: $data");
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('No pick time found for the given time range'),
+          SnackBar(
+            content: Text(data['error']['message']),
             backgroundColor: AppColors.cardsred,
           ),
         );
@@ -567,6 +703,72 @@ class BookProvider with ChangeNotifier {
         isLoadingB2C = false;
         setRefreshingOrders(false);
       }
+      notifyListeners();
+    }
+  }
+
+  Future<void> fetchBookedOrdersByMarketplace(
+      String marketplace, int page) async {
+    log("$marketplace, $page");
+    const String baseUrl =
+        'https://inventory-management-backend-s37u.onrender.com/orders';
+    String url = '$baseUrl?isBooked=true&marketplace=$marketplace&page=$page';
+
+    String? token =
+        await _getToken(); // Assuming you have a method to get the token
+    if (token == null) {
+      print('Token is null, unable to fetch orders.');
+      return;
+    }
+
+    try {
+      isLoadingBooked = true;
+      setRefreshingBookedOrders(true);
+      notifyListeners();
+
+      // Clear checkboxes when a new page is fetched
+      clearAllSelections();
+
+      final response = await http.get(
+        Uri.parse(url),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+      );
+
+      // Log response for debugging
+      log('Response status: ${response.statusCode}');
+      log('Response body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        final jsonResponse = jsonDecode(response.body);
+        List<Order> orders = (jsonResponse['orders'] as List)
+            .map((orderJson) => Order.fromJson(orderJson))
+            .toList();
+
+        Logger().e("length: ${orders.length}");
+
+        ordersBooked = orders;
+        currentPageBooked = page; // Track current page for B2B
+        totalPagesBooked =
+            jsonResponse['totalPages']; // Assuming API returns total pages
+      } else if (response.statusCode == 401) {
+        print('Unauthorized access - Token might be expired or invalid.');
+      } else if (response.statusCode == 404) {
+        ordersBooked = [];
+        notifyListeners();
+
+        log('Orders not found');
+      } else {
+        throw Exception('Failed to load orders: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Error fetching orders: $e');
+    } finally {
+      isLoadingBooked = false;
+      setRefreshingBookedOrders(false);
+
       notifyListeners();
     }
   }

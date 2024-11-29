@@ -161,7 +161,7 @@ class AccountsProvider with ChangeNotifier {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('authToken') ?? '';
     const url =
-        'https://inventory-management-backend-s37u.onrender.com/orders?orderStatus=2&ba_approve=true&page=';
+        'https://inventory-management-backend-s37u.onrender.com/orders/account?page=';
 
     try {
       final response = await http.get(Uri.parse('$url$_currentPage'), headers: {
@@ -174,12 +174,13 @@ class AccountsProvider with ChangeNotifier {
         List<Order> orders = (data['orders'] as List)
             .map((order) => Order.fromJson(order))
             .toList();
+        log(orders.toString());
 
         _totalPages = data['totalPages']; // Get total pages from response
         _orders = orders; // Set the orders for the current page
 
         // Initialize selected products list
-        _selectedProducts = List<bool>.filled(_orders.length, false);
+        // _selectedProducts = List<bool>.filled(_orders.length, false);
 
         // Print the total number of orders fetched from the current page
         print('Total Orders Fetched from Page $_currentPage: ${orders.length}');
@@ -189,6 +190,7 @@ class AccountsProvider with ChangeNotifier {
         _totalPages = 1; // Reset total pages if there’s an error
       }
     } catch (e) {
+      log(e.toString());
       // Handle errors
       _orders = [];
       _totalPages = 1; // Reset total pages if there’s an error
@@ -334,7 +336,6 @@ class AccountsProvider with ChangeNotifier {
     final token = prefs.getString('authToken') ?? '';
 
     try {
-
       _isLoading = true;
       notifyListeners();
 

@@ -1,22 +1,20 @@
-import 'dart:developer';
-
 import 'package:flutter/material.dart';
 import 'package:inventory_management/Custom-Files/loading_indicator.dart';
 import 'package:inventory_management/Widgets/order_card.dart';
-import 'package:inventory_management/model/orders_model.dart';
+import 'package:inventory_management/model/manifest_model.dart';
 import 'package:provider/provider.dart';
 import 'package:inventory_management/Custom-Files/colors.dart';
 import 'package:inventory_management/provider/manifest_provider.dart';
 import 'package:inventory_management/Custom-Files/custom_pagination.dart';
 
-class ManifestPage extends StatefulWidget {
-  const ManifestPage({super.key});
+class ManifestSection extends StatefulWidget {
+  const ManifestSection({super.key});
 
   @override
-  State<ManifestPage> createState() => _ManifestPageState();
+  State<ManifestSection> createState() => _ManifestSectionState();
 }
 
-class _ManifestPageState extends State<ManifestPage> {
+class _ManifestSectionState extends State<ManifestSection> {
   final TextEditingController _searchController = TextEditingController();
 
   @override
@@ -24,7 +22,7 @@ class _ManifestPageState extends State<ManifestPage> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       Provider.of<ManifestProvider>(context, listen: false)
-          .fetchOrdersWithStatus8();
+          .fetchCreatedManifests(1);
     });
     Provider.of<ManifestProvider>(context, listen: false)
         .textEditingController
@@ -41,7 +39,7 @@ class _ManifestPageState extends State<ManifestPage> {
 
   @override
   Widget build(BuildContext context) {
-    String? selectedCourier = 'All';
+    // String? selectedCourier;
     return Consumer<ManifestProvider>(
       builder: (context, manifestProvider, child) {
         return Scaffold(
@@ -84,7 +82,8 @@ class _ManifestPageState extends State<ManifestPage> {
                             });
                             if (query.isEmpty) {
                               // Reset to all orders if search is cleared
-                              manifestProvider.fetchOrdersWithStatus8();
+                              manifestProvider.fetchCreatedManifests(
+                                  manifestProvider.currentPage);
                             }
                           },
                           onTap: () {
@@ -120,148 +119,6 @@ class _ManifestPageState extends State<ManifestPage> {
                       ),
                     ),
                     const Spacer(),
-                    // ElevatedButton(
-                    //   style: ElevatedButton.styleFrom(
-                    //     backgroundColor: AppColors.cardsred,
-                    //   ),
-                    //   onPressed: manifestProvider.isCancel
-                    //       ? null // Disable button while loading
-                    //       : () async {
-                    //           final provider = Provider.of<ManifestProvider>(
-                    //               context,
-                    //               listen: false);
-                    //           // Collect selected order IDs
-                    //           List<String> selectedOrderIds = provider.orders
-                    //               .asMap()
-                    //               .entries
-                    //               .where((entry) =>
-                    //                   provider.selectedProducts[entry.key])
-                    //               .map((entry) => entry.value.orderId)
-                    //               .toList();
-                    //           if (selectedOrderIds.isEmpty) {
-                    //             // Show an error message if no orders are selected
-                    //             ScaffoldMessenger.of(context).showSnackBar(
-                    //               const SnackBar(
-                    //                 content: Text('No orders selected'),
-                    //                 backgroundColor: AppColors.cardsred,
-                    //               ),
-                    //             );
-                    //           } else {
-                    //             // Set loading status to true before starting the operation
-                    //             provider.setCancelStatus(true);
-                    //             // Call confirmOrders method with selected IDs
-                    //             String resultMessage = await provider
-                    //                 .cancelOrders(context, selectedOrderIds)
-                    //             // Set loading status to false after operation completes
-                    //             provider.setCancelStatus(false);
-                    //             // Determine the background color based on the result
-                    //             Color snackBarColor;
-                    //             if (resultMessage.contains('success')) {
-                    //               snackBarColor =
-                    //                   AppColors.green; // Success: Green
-                    //             } else if (resultMessage.contains('error') ||
-                    //                 resultMessage.contains('failed')) {
-                    //               snackBarColor =
-                    //                   AppColors.cardsred; // Error: Red
-                    //             } else {
-                    //               snackBarColor =
-                    //                   AppColors.orange; // Other: Orange
-                    //             }
-                    //             // Show feedback based on the result
-                    //             ScaffoldMessenger.of(context).showSnackBar(
-                    //               SnackBar(
-                    //                 content: Text(resultMessage),
-                    //                 backgroundColor: snackBarColor,
-                    //               ),
-                    //             );
-                    //           }
-                    //         },
-                    //   child: manifestProvider.isCancel
-                    //       ? const SizedBox(
-                    //           width: 20,
-                    //           height: 20,
-                    //           child: CircularProgressIndicator(
-                    //               color: Colors.white),
-                    //         )
-                    //       : const Text(
-                    //           'Cancel Orders',
-                    //           style: TextStyle(color: Colors.white),
-                    //         ),
-                    // ),
-                    // const SizedBox(width: 8),
-                    // Refresh Button
-                    Text(
-                      selectedCourier!,
-                    ),
-                    PopupMenuButton<String>(
-                      tooltip: 'Filter by Booking Courier',
-                      onSelected: (String value) {
-                        if (value == 'All') {
-                          manifestProvider.fetchOrdersWithStatus8();
-                        } else {
-                          selectedCourier = value;
-                          manifestProvider.fetchOrdersByBookingCourier(
-                              value, manifestProvider.currentPage);
-                        }
-                        log('Selected: $value');
-                      },
-                      itemBuilder: (BuildContext context) =>
-                          <PopupMenuEntry<String>>[
-                        const PopupMenuItem<String>(
-                          value: 'Delhivery', // Hardcoded marketplace
-                          child: Text('Delhivery'),
-                        ),
-                        const PopupMenuItem<String>(
-                          value: 'Shiprocket', // Hardcoded marketplace
-                          child: Text('Shiprocket'),
-                        ),
-                        const PopupMenuItem<String>(
-                          value: 'Others', // Hardcoded marketplace
-                          child: Text('Others'),
-                        ),
-                        const PopupMenuItem<String>(
-                          value: 'All', // Hardcoded marketplace
-                          child: Text('All'),
-                        ),
-                      ],
-                      child: const IconButton(
-                        onPressed: null,
-                        icon: Icon(
-                          Icons.filter_alt_outlined,
-                          size: 30,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(
-                      width: 8,
-                    ),
-                    ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primaryBlue,
-                      ),
-                      onPressed: manifestProvider.isCreatingManifest
-                          ? null
-                          : () async {
-                              manifestProvider.createManifest(
-                                  context, selectedCourier!);
-                            },
-                      child: manifestProvider.isCreatingManifest
-                          ? const SizedBox(
-                              width: 16,
-                              height: 16,
-                              child: CircularProgressIndicator(
-                                color: Colors.white,
-                                strokeWidth: 2,
-                              ),
-                            )
-                          : const Text(
-                              'Create Manifest',
-                              style: TextStyle(color: Colors.white),
-                            ),
-                    ),
-                    const SizedBox(
-                      width: 8,
-                    ),
                     ElevatedButton(
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.primaryBlue,
@@ -269,7 +126,8 @@ class _ManifestPageState extends State<ManifestPage> {
                       onPressed: manifestProvider.isRefreshingOrders
                           ? null
                           : () async {
-                              manifestProvider.fetchOrdersWithStatus8();
+                              manifestProvider.fetchCreatedManifests(
+                                  manifestProvider.currentPage);
                             },
                       child: manifestProvider.isRefreshingOrders
                           ? const SizedBox(
@@ -290,7 +148,7 @@ class _ManifestPageState extends State<ManifestPage> {
               ),
               const SizedBox(height: 8), // Decreased space here
               _buildTableHeader(
-                  manifestProvider.orders.length, manifestProvider),
+                  manifestProvider.manifests.length, manifestProvider),
               const SizedBox(height: 4), // New space for alignment
               Expanded(
                 child: Stack(
@@ -304,7 +162,7 @@ class _ManifestPageState extends State<ManifestPage> {
                           size: 80.0,
                         ),
                       )
-                    else if (manifestProvider.orders.isEmpty)
+                    else if (manifestProvider.manifests.isEmpty)
                       const Center(
                         child: Text(
                           'No Orders Found',
@@ -317,12 +175,13 @@ class _ManifestPageState extends State<ManifestPage> {
                       )
                     else
                       ListView.builder(
-                        itemCount: manifestProvider.orders.length,
+                        itemCount: manifestProvider.manifests.length,
                         itemBuilder: (context, index) {
-                          final order = manifestProvider.orders[index];
+                          final manifest = manifestProvider.manifests[index];
                           return Column(
                             children: [
-                              _buildOrderCard(order, index, manifestProvider),
+                              _buildManifest(
+                                  manifest, index, manifestProvider),
                               const Divider(thickness: 1, color: Colors.grey),
                             ],
                           );
@@ -384,45 +243,43 @@ class _ManifestPageState extends State<ManifestPage> {
       padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
       child: Row(
         children: [
-          Transform.scale(
-            scale: 0.8,
-            child: Checkbox(
-              value: manifestProvider.selectAll,
-              onChanged: (value) {
-                manifestProvider.toggleSelectAll(value!);
-              },
-            ),
-          ),
-          Text(
-            'Select All(${manifestProvider.selectedCount})',
-          ),
-          buildHeader('ORDERS', flex: 8), // Increased flex
-          // buildHeader('DELIVERY PARTNER SIGNATURE',
-          //     flex: 5), // Decreased flex for better alignment
+          buildHeader('ORDERS', '', flex: 9), // Increased flex
+          buildHeader('ID', '(Delivery Partner)',
+              flex: 3), // Decreased flex for better alignment
           // buildHeader('CONFIRM', flex: 3),
         ],
       ),
     );
   }
 
-  Widget buildHeader(String title, {int flex = 1}) {
+  Widget buildHeader(String title, String subtitle, {int flex = 1}) {
     return Expanded(
       flex: flex,
       child: Center(
-        child: Text(
-          title,
-          style: const TextStyle(
-            fontWeight: FontWeight.bold,
-            fontSize: 18,
-            color: Colors.black87,
+          child: Column(
+        children: [
+          Text(
+            title,
+            style: const TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 18,
+              color: Colors.black87,
+            ),
           ),
-        ),
-      ),
+          Text(
+            subtitle,
+            style: const TextStyle(
+              fontSize: 18,
+              color: Colors.black87,
+            ),
+          ),
+        ],
+      )),
     );
   }
 
-  Widget _buildOrderCard(
-      Order order, int index, ManifestProvider manifestProvider) {
+  Widget _buildManifest(
+      Manifest manifest, int index, ManifestProvider manifestProvider) {
     return Padding(
       padding: const EdgeInsets.symmetric(
           vertical: 4.0,
@@ -430,18 +287,43 @@ class _ManifestPageState extends State<ManifestPage> {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Checkbox(
-            value: manifestProvider.selectedProducts[index],
-            onChanged: (isSelected) {
-              manifestProvider.handleRowCheckboxChange(index, isSelected!);
-            },
+          Flexible(
+            flex: 3,
+            child: Column(
+              children: [
+                ListView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: manifest.orders.length,
+                  itemBuilder: (context, index) {
+                    return OrderCard(order: manifest.orders[index]);
+                  },
+                ),
+              ],
+            ),
           ),
-          Expanded(
-            flex: 5, // Increased flex for wider order card
-            child: OrderCard(order: order),
+          const SizedBox(width: 20),
+          buildCell(
+            Column(
+              children: [
+                Text(
+                  manifest.manifestId,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                    color: Colors.blueAccent,
+                  ),
+                ),
+                Text(
+                  "(${manifest.deliveryPartner})",
+                  style: const TextStyle(
+                    fontSize: 16,
+                  ),
+                ),
+              ],
+            ),
+            flex: 1,
           ),
-          // const SizedBox(
-          //     width: 20), // Reduced space between order card and signature
           // buildCell(
           //   // Use the getOrderImage method to handle image display
           //   order.getOrderImage(),

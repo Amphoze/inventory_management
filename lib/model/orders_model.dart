@@ -29,7 +29,8 @@ class Order {
   final String outerPackage;
   final bool replacement;
   int orderStatus;
-  final List<OrderStatusMap>? orderStatusMap;
+  bool isBooked;
+  // final List<OrderStatusMap>? orderStatusMap;
   final Marketplace? marketplace;
   final String agent;
   final String? filter;
@@ -66,7 +67,8 @@ class Order {
   late String? trackingStatus;
 
   Order(
-      {this.customer,
+      {this.isBooked = false,
+      this.customer,
       this.source = '',
       this.id = '',
       this.orderId = '',
@@ -92,7 +94,7 @@ class Order {
       this.outerPackage = '',
       this.replacement = false,
       required this.orderStatus,
-      this.orderStatusMap,
+      // this.orderStatusMap,
       this.marketplace,
       this.agent = '',
       this.filter = '',
@@ -227,6 +229,7 @@ class Order {
 
   factory Order.fromJson(Map<String, dynamic> json) {
     return Order(
+        isBooked: json['isBooked']['status'] ?? false,
         customer: json['customer'] != null
             ? Customer.fromJson(json['customer'])
             : null,
@@ -262,10 +265,10 @@ class Order {
         outerPackage: _parseString(json['outerPackage']),
         replacement: json['replacement'] is bool ? json['replacement'] : false,
         orderStatus: _parseInt(json['order_status']),
-        orderStatusMap: (json['order_status_map'] as List?)
-                ?.map((status) => OrderStatusMap.fromJson(status))
-                .toList() ??
-            [],
+        // orderStatusMap: (json['order_status_map'] as List?)
+        //         ?.map((status) => OrderStatusMap.fromJson(status))
+        //         .toList() ??
+        //     [],
         marketplace: json['marketplace'] != null
             ? Marketplace.fromJson(json['marketplace'])
             : null,
@@ -910,15 +913,13 @@ class Racker {
 
 class CheckManifest {
   final bool approved;
-  final List<dynamic> image; // Adjust the type as necessary for your use case
   final DateTime? timestamp;
 
-  CheckManifest({required this.approved, required this.image, this.timestamp});
+  CheckManifest({required this.approved, this.timestamp});
 
   factory CheckManifest.fromJson(Map<String, dynamic> json) {
     return CheckManifest(
       approved: json['approved'] ?? false,
-      image: json['image'] ?? [],
       timestamp: DateTime.tryParse(json['timestamp'] ?? ''),
     );
   }

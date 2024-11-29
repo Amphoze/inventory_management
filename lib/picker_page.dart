@@ -1,7 +1,5 @@
-import 'dart:developer';
 
 import 'package:flutter/material.dart';
-import 'package:inventory_management/Widgets/picker_order_card.dart';
 import 'package:intl/intl.dart';
 // import 'package:inventory_management/Widgets/picker_order_card.dart';
 import 'package:inventory_management/model/orders_model.dart';
@@ -580,30 +578,30 @@ class _PickerPageState extends State<PickerPage> {
                                 const SizedBox(
                                   height: 8,
                                 ),
-                                Row(
-                                  mainAxisAlignment: MainAxisAlignment.end,
-                                  children: [
-                                    Text.rich(
-                                      TextSpan(
-                                          text: "Created on: ",
-                                          children: [
-                                            TextSpan(
-                                                text: DateFormat(
-                                                        'dd-MM-yyyy\',\' hh:mm a')
-                                                    .format(
-                                                  DateTime.parse(
-                                                      "${order['items'][index]['product_id']['createdAt']}"),
-                                                ),
-                                                style: const TextStyle(
-                                                  fontWeight: FontWeight.normal,
-                                                )),
-                                          ],
-                                          style: const TextStyle(
-                                            fontWeight: FontWeight.bold,
-                                          )),
-                                    ),
-                                  ],
-                                ),
+                                // Row(
+                                //   mainAxisAlignment: MainAxisAlignment.end,
+                                //   children: [
+                                //     Text.rich(
+                                //       TextSpan(
+                                //           text: "Created on: ",
+                                //           children: [
+                                //             TextSpan(
+                                //                 text: DateFormat(
+                                //                         'dd-MM-yyyy\',\' hh:mm a')
+                                //                     .format(
+                                //                   DateTime.parse(
+                                //                       "${order['items'][index]['product_id']['createdAt']}"),
+                                //                 ),
+                                //                 style: const TextStyle(
+                                //                   fontWeight: FontWeight.normal,
+                                //                 )),
+                                //           ],
+                                //           style: const TextStyle(
+                                //             fontWeight: FontWeight.bold,
+                                //           )),
+                                //     ),
+                                //   ],
+                                // ),
                               ],
                             ),
                           ),
@@ -614,15 +612,35 @@ class _PickerPageState extends State<PickerPage> {
                 ),
                 const SizedBox(width: 4),
                 buildCell(
-                  Text("${order['picklistId']}",
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
-                        color: Colors.blueAccent,
-                      )),
+                  Text(
+                    "${order['picklistId']}",
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                      color: Colors.blueAccent,
+                    ),
+                  ),
                   flex: 3,
                 ),
               ],
+            ),
+            const SizedBox(height: 8),
+            Text.rich(
+              TextSpan(
+                  text: "Created on: ",
+                  children: [
+                    TextSpan(
+                        text: DateFormat('dd-MM-yyyy\',\' hh:mm a').format(
+                          DateTime.parse(
+                              "${order['items'][0]['product_id']['createdAt']}"),
+                        ),
+                        style: const TextStyle(
+                          fontWeight: FontWeight.normal,
+                        )),
+                  ],
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                  )),
             ),
           ],
         ),
