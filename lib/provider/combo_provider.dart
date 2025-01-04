@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:developer';
 import 'package:inventory_management/Api/auth_provider.dart';
+import 'package:inventory_management/constants/constants.dart';
 import 'package:inventory_management/model/combo_model.dart';
 import 'package:inventory_management/Api/combo_api.dart';
 import 'package:multi_dropdown/multi_dropdown.dart';
@@ -146,6 +147,76 @@ class ComboProvider with ChangeNotifier {
     notifyListeners();
   }
 
+  Future<int?> fetchQuantityBySku(String query) async {
+  try {
+    String baseUrl = await ApiUrls.getBaseUrl();
+    final pref = await SharedPreferences.getInstance();
+    final warehouseId = pref.getString('warehouseId');
+
+    if (warehouseId == null) {
+      log('Warehouse ID is not set in preferences.');
+      return null;
+    }
+
+    final url = Uri.parse(
+        '$baseUrl/inventory/warehouse?warehouse=$warehouseId&productSku=$query');
+    log('URL: $url');
+
+    final token = await AuthProvider().getToken();
+    final response = await http.post(
+      url,
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      final data = json.decode(response.body);
+      if (data.containsKey('data')) {
+        final inventories = List<Map<String, dynamic>>.from(data["data"]['inventories']);
+
+        for (var item in inventories) {
+          final subInventories = item['subInventory'] ?? [];
+          for (var subInventory in subInventories) {
+            if (subInventory['warehouseId']['_id'] == warehouseId) {
+              return subInventory['quantity']; // Return quantity directly
+            }
+          }
+        }
+        log('No matching warehouseId found.');
+        return null;
+      } else {
+        log('Unexpected response format: $data');
+        return null;
+      }
+    } else {
+      log('Failed to fetch inventory: Status code ${response.statusCode}');
+      return null;
+    }
+  } catch (e) {
+    log('Error occurred: $e');
+    return null;
+  }
+}
+
+
+  Future<void> searchCombos(String query) async {
+    _loading = true;
+    setRefreshingOrders(true);
+    notifyListeners();
+    try {
+      _combosList = await comboApi.searchCombo(query);
+      //print("comboProvider.combosList : $_combosList");
+    } catch (e) {
+      print('Error fetching combos: $e');
+    }
+
+    _loading = false;
+    setRefreshingOrders(false);
+    notifyListeners();
+  }
+
   Future<void> _loadCombos() async {
     final prefs = await SharedPreferences.getInstance();
     final jsonList = prefs.getStringList('combos') ?? [];
@@ -185,7 +256,7 @@ class ComboProvider with ChangeNotifier {
 
         _products =
             productList.map<Product>((json) => Product.fromJson(json)).toList();
-        print("Mapped products in provider: $_products");
+        log("Mapped products in provider: $_products");
       } else {
         print("Error: 'products' key not found or not a list in response.");
       }
@@ -221,7 +292,7 @@ class ComboProvider with ChangeNotifier {
         print("Error: ${response['message']}");
       }
     } catch (e, stacktrace) {
-      print('Error fetching warehouses: $e');
+      log('Error fetching warehouses: $e');
       print('Stacktrace: $stacktrace');
     } finally {
       _loading = false;
@@ -238,9 +309,8 @@ class ComboProvider with ChangeNotifier {
 
   void addMoreProducts(String displayName) async {
     log("displayName: $displayName");
-    const String baseUrl =
-        'https://inventory-management-backend-s37u.onrender.com';
-    final url =
+    String baseUrl = await ApiUrls.getBaseUrl();
+    String url =
         '$baseUrl/products?displayName=${Uri.encodeComponent(displayName)}';
 
     try {
@@ -262,7 +332,7 @@ class ComboProvider with ChangeNotifier {
         final newProducts =
             productList.map<Product>((json) => Product.fromJson(json)).toList();
         _products.addAll(newProducts);
-        
+
         notifyListeners();
 
         log(_products.toString());

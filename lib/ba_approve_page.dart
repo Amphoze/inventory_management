@@ -2,10 +2,12 @@ import 'dart:developer';
 
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:inventory_management/Custom-Files/utils.dart';
 import 'package:inventory_management/Widgets/product_details_card.dart';
 import 'package:inventory_management/edit_order_page.dart';
 import 'package:inventory_management/provider/ba_approve_provider.dart';
 import 'package:inventory_management/provider/marketplace_provider.dart';
+import 'package:logger/logger.dart';
 import 'package:provider/provider.dart';
 
 import 'Custom-Files/colors.dart';
@@ -14,21 +16,23 @@ import 'Custom-Files/loading_indicator.dart';
 import 'Widgets/order_card.dart';
 import 'model/orders_model.dart';
 
-class BAApprovePage extends StatefulWidget {
-  const BAApprovePage({super.key});
+class BaApprovePage extends StatefulWidget {
+  const BaApprovePage({super.key});
 
   @override
-  State<BAApprovePage> createState() => _BAApprovePageState();
+  State<BaApprovePage> createState() => _BaApprovePageState();
 }
 
-class _BAApprovePageState extends State<BAApprovePage> {
+class _BaApprovePageState extends State<BaApprovePage> {
   final TextEditingController _searchController = TextEditingController();
+  String _selectedDate = 'Select Date';
+  final remarkController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      Provider.of<BAApproveProvider>(context, listen: false)
+      Provider.of<BaApproveProvider>(context, listen: false)
           .fetchOrdersWithStatus2();
     });
 
@@ -38,14 +42,38 @@ class _BAApprovePageState extends State<BAApprovePage> {
   void _onSearchButtonPressed() {
     final query = _searchController.text.trim();
     if (query.isNotEmpty) {
-      Provider.of<BAApproveProvider>(context, listen: false)
+      Provider.of<BaApproveProvider>(context, listen: false)
           .onSearchChanged(query);
     }
   }
 
+  String formatIsoDate(String isoDate) {
+    final dateTime = DateTime.parse(isoDate)
+        .toUtc()
+        .add(const Duration(hours: 5, minutes: 30));
+    final date = DateFormat('yyyy-MM-dd').format(dateTime);
+    final time = DateFormat('hh:mm:ss a').format(dateTime);
+    return " ($date, $time)";
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    remarkController.dispose();
+    super.dispose();
+  }
+
+  String maskPhoneNumber(dynamic phone) {
+    if (phone == null) return '';
+    String phoneStr = phone.toString();
+    if (phoneStr.length < 4) return phoneStr;
+    return '${'*' * (phoneStr.length - 4)}${phoneStr.substring(phoneStr.length - 4)}';
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Consumer<BAApproveProvider>(
+    String selectedCourier = 'All';
+    return Consumer<BaApproveProvider>(
       builder: (context, baApproveProvider, child) {
         return Scaffold(
           backgroundColor: AppColors.white,
@@ -101,7 +129,6 @@ class _BAApprovePageState extends State<BAApprovePage> {
                       ),
                     ),
                     const SizedBox(width: 8),
-
                     ElevatedButton(
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.primaryBlue,
@@ -116,44 +143,138 @@ class _BAApprovePageState extends State<BAApprovePage> {
                     ),
                     const Spacer(),
                     const SizedBox(width: 8),
-                    // Refresh Button
                     Row(
                       children: [
-                        Consumer<MarketplaceProvider>(
-                          builder: (context, provider, child) {
-                            return PopupMenuButton<String>(
-                              tooltip: 'Filter by Marketplace',
-                              onSelected: (String value) {
-                                if (value == 'All') {
-                                  baApproveProvider.fetchOrdersWithStatus2();
-                                } else {
-                                  baApproveProvider.fetchOrdersByMarketplace(
-                                      value, 2, baApproveProvider.currentPage);
-                                }
-                                log('Selected: $value');
-                              },
-                              itemBuilder: (BuildContext context) =>
-                                  <PopupMenuEntry<String>>[
-                                ...provider.marketplaces
-                                    .map((marketplace) => PopupMenuItem<String>(
-                                          value: marketplace.name,
-                                          child: Text(marketplace.name),
-                                        )), // Fetched marketplaces
-                                const PopupMenuItem<String>(
-                                  value: 'All', // Hardcoded marketplace
-                                  child: Text('All'),
-                                ),
-                              ],
-                              child: const IconButton(
-                                onPressed: null,
-                                icon: Icon(
-                                  Icons.filter_alt_outlined,
+                        Column(
+                          children: [
+                            Text(
+                              _selectedDate,
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: _selectedDate == 'Select Date'
+                                    ? Colors.grey
+                                    : AppColors.primaryBlue,
+                              ),
+                            ),
+                            Tooltip(
+                              message: 'Filter by Date',
+                              child: IconButton(
+                                onPressed: () async {
+                                  final DateTime? picked = await showDatePicker(
+                                    context: context,
+                                    initialDate: DateTime.now(),
+                                    firstDate: DateTime(2020),
+                                    lastDate: DateTime.now(),
+                                    builder: (context, child) {
+                                      return Theme(
+                                        data: Theme.of(context).copyWith(
+                                          colorScheme: const ColorScheme.light(
+                                            primary: AppColors.primaryBlue,
+                                            onPrimary: Colors.white,
+                                            surface: Colors.white,
+                                            onSurface: Colors.black,
+                                          ),
+                                        ),
+                                        child: child!,
+                                      );
+                                    },
+                                  );
+
+                                  if (picked != null) {
+                                    String formattedDate =
+                                        DateFormat('dd-MM-yyyy').format(picked);
+                                    setState(() {
+                                      _selectedDate = formattedDate;
+                                    });
+
+                                    if (selectedCourier != 'All') {
+                                      baApproveProvider
+                                          .fetchOrdersByMarketplace(
+                                        selectedCourier,
+                                        2,
+                                        baApproveProvider.currentPage,
+                                        date: picked,
+                                      );
+                                    } else {
+                                      baApproveProvider.fetchOrdersWithStatus2(
+                                        date: picked,
+                                      );
+                                    }
+                                  }
+                                },
+                                icon: const Icon(
+                                  Icons.calendar_today,
                                   size: 30,
+                                  color: AppColors.primaryBlue,
                                 ),
                               ),
-                            );
-                          },
+                            ),
+                          ],
                         ),
+                        const SizedBox(width: 8),
+                        // Refresh Button
+                        StatefulBuilder(builder: (context, setState) {
+                          return Column(
+                            children: [
+                              Text(
+                                selectedCourier,
+                              ),
+                              Consumer<MarketplaceProvider>(
+                                builder: (context, provider, child) {
+                                  return PopupMenuButton<String>(
+                                    tooltip: 'Filter by Marketplace',
+                                    onSelected: (String value) {
+                                      log('Value: $value');
+                                      setState(() {
+                                        selectedCourier = value;
+                                      });
+                                      if (value == 'All') {
+                                        baApproveProvider
+                                            .fetchOrdersWithStatus2(
+                                                date: _selectedDate ==
+                                                        'Select Date'
+                                                    ? null
+                                                    : DateTime.parse(
+                                                        _selectedDate));
+                                      } else {
+                                        selectedCourier = value;
+                                        baApproveProvider
+                                            .fetchOrdersByMarketplace(value, 2,
+                                                baApproveProvider.currentPage,
+                                                date: _selectedDate ==
+                                                        'Select Date'
+                                                    ? null
+                                                    : DateTime.parse(
+                                                        _selectedDate));
+                                      }
+                                      log('Selected: $value');
+                                    },
+                                    itemBuilder: (BuildContext context) =>
+                                        <PopupMenuEntry<String>>[
+                                      ...provider.marketplaces.map(
+                                          (marketplace) =>
+                                              PopupMenuItem<String>(
+                                                value: marketplace.name,
+                                                child: Text(marketplace.name),
+                                              )), // Fetched marketplaces
+                                      const PopupMenuItem<String>(
+                                        value: 'All', // Hardcoded marketplace
+                                        child: Text('All'),
+                                      ),
+                                    ],
+                                    child: const IconButton(
+                                      onPressed: null,
+                                      icon: Icon(
+                                        Icons.filter_alt_outlined,
+                                        size: 30,
+                                      ),
+                                    ),
+                                  );
+                                },
+                              ),
+                            ],
+                          );
+                        }),
                         const SizedBox(width: 8),
                         ElevatedButton(
                           style: ElevatedButton.styleFrom(
@@ -188,7 +309,7 @@ class _BAApprovePageState extends State<BAApprovePage> {
                               ? null // Disable button while loading
                               : () async {
                                   final provider =
-                                      Provider.of<BAApproveProvider>(context,
+                                      Provider.of<BaApproveProvider>(context,
                                           listen: false);
 
                                   // Collect selected order IDs
@@ -203,6 +324,8 @@ class _BAApprovePageState extends State<BAApprovePage> {
 
                                   if (selectedOrderIds.isEmpty) {
                                     // Show an error message if no orders are selected
+                                    ScaffoldMessenger.of(context)
+                                        .removeCurrentSnackBar();
                                     ScaffoldMessenger.of(context).showSnackBar(
                                       const SnackBar(
                                         content: Text('No orders selected'),
@@ -237,6 +360,8 @@ class _BAApprovePageState extends State<BAApprovePage> {
                                     }
 
                                     // Show feedback based on the result
+                                    ScaffoldMessenger.of(context)
+                                        .removeCurrentSnackBar();
                                     ScaffoldMessenger.of(context).showSnackBar(
                                       SnackBar(
                                         content: Text(resultMessage),
@@ -332,6 +457,30 @@ class _BAApprovePageState extends State<BAApprovePage> {
                                           order.totalAmount!) *
                                       100)
                                   .toStringAsFixed(2));
+                          ////////////////////////////////////////////////////////////////////////////
+
+                          final Map<String, List<Item>> groupedComboItems = {};
+                          for (var item in order.items) {
+                            if (item.isCombo == true && item.comboSku != null) {
+                              if (!groupedComboItems
+                                  .containsKey(item.comboSku)) {
+                                groupedComboItems[item.comboSku!] = [];
+                              }
+                              groupedComboItems[item.comboSku]!.add(item);
+                            }
+                          }
+                          final List<List<Item>> comboItemGroups =
+                              groupedComboItems.values
+                                  .where((items) => items.length > 1)
+                                  .toList();
+
+                          Logger().e('comboItemGroups: $comboItemGroups');
+
+                          final List<Item> remainingItems = order.items
+                              .where((item) => !(item.isCombo == true &&
+                                  item.comboSku != null &&
+                                  groupedComboItems[item.comboSku]!.length > 1))
+                              .toList();
 
                           return Card(
                             surfaceTintColor: Colors.white,
@@ -456,10 +605,35 @@ class _BAApprovePageState extends State<BAApprovePage> {
                                             ),
                                           );
                                           if (result == true) {
-                                            Provider.of<BAApproveProvider>(
-                                                    context,
-                                                    listen: false)
-                                                .fetchOrdersWithStatus2();
+                                            final searched =
+                                                _searchController.text;
+
+                                            // Ready
+                                            if (searched.isNotEmpty) {
+                                              baApproveProvider
+                                                  .searchOrders(searched);
+                                            } else if (selectedCourier !=
+                                                'All') {
+                                              baApproveProvider
+                                                  .fetchOrdersByMarketplace(
+                                                      selectedCourier,
+                                                      2,
+                                                      baApproveProvider
+                                                          .currentPage);
+                                            } else if (searched.isNotEmpty &&
+                                                selectedCourier != 'All') {
+                                              baApproveProvider
+                                                  .fetchOrdersByMarketplace(
+                                                      selectedCourier,
+                                                      2,
+                                                      baApproveProvider
+                                                          .currentPage);
+                                              baApproveProvider
+                                                  .searchOrders(searched);
+                                            } else {
+                                              baApproveProvider
+                                                  .fetchOrdersWithStatus2();
+                                            }
                                           }
                                         },
                                         style: ElevatedButton.styleFrom(
@@ -485,18 +659,6 @@ class _BAApprovePageState extends State<BAApprovePage> {
                                       crossAxisAlignment:
                                           CrossAxisAlignment.start,
                                       children: [
-                                        Container(
-                                          child: const SizedBox(
-                                            height: 50,
-                                            width: 130,
-                                            child: Text(
-                                              'ORDER DETAILS:',
-                                              style: TextStyle(
-                                                  fontWeight: FontWeight.bold),
-                                            ),
-                                          ),
-                                        ),
-                                        const SizedBox(width: 12.0),
                                         Flexible(
                                           child: Column(
                                             crossAxisAlignment:
@@ -664,8 +826,9 @@ class _BAApprovePageState extends State<BAApprovePage> {
                                               ),
                                               buildLabelValueRow(
                                                 'Phone',
-                                                order.customer?.phone
-                                                        ?.toString() ??
+                                                maskPhoneNumber(order
+                                                        .customer?.phone
+                                                        ?.toString()) ??
                                                     '',
                                               ),
                                               buildLabelValueRow(
@@ -676,126 +839,200 @@ class _BAApprovePageState extends State<BAApprovePage> {
                                             ],
                                           ),
                                         ),
-                                        const SizedBox(width: 12.0),
-                                        Flexible(
-                                          child: Column(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
-                                            children: [
-                                              const Text(
-                                                'Shipping Address:',
-                                                style: TextStyle(
-                                                    fontWeight: FontWeight.bold,
-                                                    fontSize: 12.0,
-                                                    color:
-                                                        AppColors.primaryBlue),
-                                              ),
-                                              buildLabelValueRow(
-                                                'Address',
-                                                [
-                                                  order.shippingAddress
-                                                      ?.address1,
-                                                  order.shippingAddress
-                                                      ?.address2,
-                                                  order.shippingAddress?.city,
-                                                  order.shippingAddress?.state,
-                                                  order
-                                                      .shippingAddress?.country,
-                                                  order.shippingAddress?.pincode
-                                                      ?.toString(),
-                                                ]
-                                                    .where((element) =>
-                                                        element != null &&
-                                                        element.isNotEmpty)
-                                                    .join(', '),
-                                              ),
-                                              buildLabelValueRow(
-                                                'Name',
-                                                order.shippingAddress
-                                                            ?.firstName !=
+                                      ],
+                                    ),
+                                  ),
+                                  Padding(
+                                    padding: const EdgeInsets.all(16.0),
+                                    child: Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.start,
+                                      children: [
+                                        Expanded(
+                                          // flex: 1,
+                                          child: FittedBox(
+                                            fit: BoxFit.scaleDown,
+                                            child: Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                              children: [
+                                                const Text(
+                                                  'Shipping Address:',
+                                                  style: TextStyle(
+                                                      fontWeight:
+                                                          FontWeight.bold,
+                                                      fontSize: 12.0,
+                                                      color: AppColors
+                                                          .primaryBlue),
+                                                ),
+                                                Row(
+                                                  crossAxisAlignment:
+                                                      CrossAxisAlignment.start,
+                                                  children: [
+                                                    const Text(
+                                                      'Address: ',
+                                                      style: TextStyle(
+                                                        fontWeight:
+                                                            FontWeight.bold,
+                                                        fontSize: 12.0,
+                                                      ),
+                                                    ),
+                                                    Text(
+                                                      [
                                                         order.shippingAddress
-                                                            ?.lastName
-                                                    ? '${order.shippingAddress?.firstName ?? ''} ${order.shippingAddress?.lastName ?? ''}'
-                                                        .trim()
-                                                    : order.shippingAddress
-                                                            ?.firstName ??
-                                                        '',
-                                              ),
-                                              buildLabelValueRow(
-                                                  'Phone',
-                                                  order.shippingAddress?.phone
-                                                          ?.toString() ??
-                                                      ''),
-                                              buildLabelValueRow(
-                                                  'Email',
+                                                            ?.address1,
+                                                        order.shippingAddress
+                                                            ?.address2,
+                                                        order.shippingAddress
+                                                            ?.city,
+                                                        order.shippingAddress
+                                                            ?.state,
+                                                        order.shippingAddress
+                                                            ?.country,
+                                                        order.shippingAddress
+                                                            ?.pincode
+                                                            ?.toString(),
+                                                      ]
+                                                          .where((element) =>
+                                                              element != null &&
+                                                              element
+                                                                  .isNotEmpty)
+                                                          .join(', ')
+                                                          .replaceAllMapped(
+                                                              RegExp('.{1,50}'),
+                                                              (match) =>
+                                                                  '${match.group(0)}\n'),
+                                                      softWrap: true,
+                                                      maxLines: null,
+                                                      style: const TextStyle(
+                                                        fontSize: 12.0,
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                                buildLabelValueRow(
+                                                  'Name',
                                                   order.shippingAddress
-                                                          ?.email ??
-                                                      ''),
-                                              buildLabelValueRow(
-                                                  'Country Code',
-                                                  order.shippingAddress
-                                                          ?.countryCode ??
-                                                      ''),
-                                              const SizedBox(height: 8.0),
-                                              const Text(
-                                                'Billing Address:',
-                                                style: TextStyle(
-                                                    fontWeight: FontWeight.bold,
-                                                    fontSize: 12.0,
-                                                    color:
-                                                        AppColors.primaryBlue),
-                                              ),
-                                              buildLabelValueRow(
-                                                'Address',
-                                                [
-                                                  order
-                                                      .billingAddress?.address1,
-                                                  order
-                                                      .billingAddress?.address2,
-                                                  order.billingAddress?.city,
-                                                  order.billingAddress?.state,
-                                                  order.billingAddress?.country,
-                                                  order.billingAddress?.pincode
-                                                      ?.toString(),
-                                                ]
-                                                    .where((element) =>
-                                                        element != null &&
-                                                        element.isNotEmpty)
-                                                    .join(', '),
-                                              ),
-                                              buildLabelValueRow(
-                                                'Name',
-                                                order.billingAddress?.firstName !=
+                                                              ?.firstName !=
+                                                          order.shippingAddress
+                                                              ?.lastName
+                                                      ? '${order.shippingAddress?.firstName ?? ''} ${order.shippingAddress?.lastName ?? ''}'
+                                                          .trim()
+                                                      : order.shippingAddress
+                                                              ?.firstName ??
+                                                          '',
+                                                ),
+                                                buildLabelValueRow(
+                                                    'Pincode',
+                                                    order.shippingAddress
+                                                            ?.pincode
+                                                            ?.toString() ??
+                                                        ''),
+                                                buildLabelValueRow(
+                                                    'Country Code',
+                                                    order.shippingAddress
+                                                            ?.countryCode ??
+                                                        ''),
+                                              ],
+                                            ),
+                                          ),
+                                        ),
+                                        Expanded(
+                                          // flex: 1,
+                                          child: FittedBox(
+                                            fit: BoxFit.scaleDown,
+                                            child: Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                              children: [
+                                                const Text(
+                                                  'Billing Address:',
+                                                  style: TextStyle(
+                                                      fontWeight:
+                                                          FontWeight.bold,
+                                                      fontSize: 12.0,
+                                                      color: AppColors
+                                                          .primaryBlue),
+                                                ),
+                                                Row(
+                                                  crossAxisAlignment:
+                                                      CrossAxisAlignment.start,
+                                                  children: [
+                                                    const Text(
+                                                      'Address: ',
+                                                      style: TextStyle(
+                                                        fontWeight:
+                                                            FontWeight.bold,
+                                                        fontSize: 12.0,
+                                                      ),
+                                                    ),
+                                                    Text(
+                                                      [
                                                         order.billingAddress
-                                                            ?.lastName
-                                                    ? '${order.billingAddress?.firstName ?? ''} ${order.billingAddress?.lastName ?? ''}'
-                                                        .trim()
-                                                    : order.billingAddress
-                                                            ?.firstName ??
-                                                        '',
-                                              ),
-                                              buildLabelValueRow(
-                                                  'Phone',
-                                                  order.billingAddress?.phone
-                                                          ?.toString() ??
-                                                      ''),
-                                              buildLabelValueRow(
-                                                  'Email',
-                                                  order.billingAddress?.email ??
-                                                      ''),
-                                              buildLabelValueRow(
-                                                  'Country Code',
+                                                            ?.address1,
+                                                        order.billingAddress
+                                                            ?.address2,
+                                                        order.billingAddress
+                                                            ?.city,
+                                                        order.billingAddress
+                                                            ?.state,
+                                                        order.billingAddress
+                                                            ?.country,
+                                                        order.billingAddress
+                                                            ?.pincode
+                                                            ?.toString(),
+                                                      ]
+                                                          .where((element) =>
+                                                              element != null &&
+                                                              element
+                                                                  .isNotEmpty)
+                                                          .join(', ')
+                                                          .replaceAllMapped(
+                                                              RegExp('.{1,50}'),
+                                                              (match) =>
+                                                                  '${match.group(0)}\n'),
+                                                      softWrap: true,
+                                                      maxLines: null,
+                                                      style: const TextStyle(
+                                                        fontSize: 12.0,
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                                buildLabelValueRow(
+                                                  'Name',
                                                   order.billingAddress
-                                                          ?.countryCode ??
-                                                      ''),
-                                            ],
+                                                              ?.firstName !=
+                                                          order.billingAddress
+                                                              ?.lastName
+                                                      ? '${order.billingAddress?.firstName ?? ''} ${order.billingAddress?.lastName ?? ''}'
+                                                          .trim()
+                                                      : order.billingAddress
+                                                              ?.firstName ??
+                                                          '',
+                                                ),
+                                                buildLabelValueRow(
+                                                    'Pincode',
+                                                    order.billingAddress
+                                                            ?.pincode
+                                                            ?.toString() ??
+                                                        ''),
+                                                buildLabelValueRow(
+                                                    'Country Code',
+                                                    order.billingAddress
+                                                            ?.countryCode ??
+                                                        ''),
+                                              ],
+                                            ),
                                           ),
                                         ),
                                       ],
                                     ),
                                   ),
+
                                   Padding(
-                                    padding: const EdgeInsets.all(8.0),
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 16.0),
                                     child: Column(
                                       crossAxisAlignment:
                                           CrossAxisAlignment.start,
@@ -858,26 +1095,86 @@ class _BAApprovePageState extends State<BAApprovePage> {
                                     ),
                                   ),
                                   const SizedBox(height: 6),
+                                  if (order.confirmedBy!['status'] == true)
+                                    Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 16.0),
+                                      child: Text.rich(
+                                        TextSpan(
+                                            text: "Confirmed By: ",
+                                            children: [
+                                              TextSpan(
+                                                  text: order.confirmedBy![
+                                                          'confirmedBy']
+                                                      .toString()
+                                                      .split('@')[0],
+                                                  style: const TextStyle(
+                                                    fontWeight:
+                                                        FontWeight.normal,
+                                                  )),
+                                              TextSpan(
+                                                  text: formatIsoDate(
+                                                      order.confirmedBy![
+                                                          'timestamp']),
+                                                  style: const TextStyle(
+                                                    fontWeight:
+                                                        FontWeight.normal,
+                                                  )),
+                                            ],
+                                            style: const TextStyle(
+                                              fontWeight: FontWeight.bold,
+                                            )),
+                                      ),
+                                    ),
+
                                   Padding(
-                                    padding: const EdgeInsets.all(8.0),
-                                    child: Text.rich(
-                                      TextSpan(
-                                          text: "Updated on: ",
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 16.0),
+                                    child: Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        Text.rich(
+                                          TextSpan(
+                                              text: "Updated on: ",
+                                              children: [
+                                                TextSpan(
+                                                    text: DateFormat(
+                                                            'yyyy-MM-dd\',\' hh:mm a')
+                                                        .format(
+                                                      DateTime.parse(
+                                                          "${order.updatedAt}"),
+                                                    ),
+                                                    style: const TextStyle(
+                                                      fontWeight:
+                                                          FontWeight.normal,
+                                                    )),
+                                              ],
+                                              style: const TextStyle(
+                                                fontWeight: FontWeight.bold,
+                                              )),
+                                        ),
+                                        Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.end,
                                           children: [
-                                            TextSpan(
-                                                text: DateFormat(
-                                                        'dd-MM-yyyy\',\' hh:mm a')
-                                                    .format(
-                                                  DateTime.parse(
-                                                      "${order.updatedAt}"),
-                                                ),
-                                                style: const TextStyle(
-                                                  fontWeight: FontWeight.normal,
-                                                )),
+                                            if (order.messages != null &&
+                                                order.messages![
+                                                        'confirmerMessage'] !=
+                                                    null &&
+                                                order.messages![
+                                                        'confirmerMessage']
+                                                    .toString()
+                                                    .isNotEmpty)
+                                              Utils().showMessage(
+                                                  context,
+                                                  'Confirmer Remark',
+                                                  order.messages![
+                                                          'confirmerMessage']
+                                                      .toString()),
                                           ],
-                                          style: const TextStyle(
-                                            fontWeight: FontWeight.bold,
-                                          )),
+                                        ),
+                                      ],
                                     ),
                                   ),
                                   const Divider(
@@ -886,23 +1183,58 @@ class _BAApprovePageState extends State<BAApprovePage> {
                                   ),
                                   // Nested cards for each item in the order
                                   const SizedBox(height: 6),
+                                  // ListView.builder(
+                                  //   shrinkWrap: true,
+                                  //   physics:
+                                  //       const NeverScrollableScrollPhysics(),
+                                  //   itemCount: comboItemGroups.length,
+                                  //   itemBuilder: (context, comboIndex) {
+                                  //     final combo = comboItemGroups[comboIndex];
+                                  //     // print(
+                                  //     //     'Item $itemIndex: ${item.product?.displayName.toString() ?? ''}, Quantity: ${item.qty ?? 0}');
+                                  //     return BigComboCard(
+                                  //       items: combo,
+                                  //       index: comboIndex,
+                                  //       courierName: order.courierName,
+                                  //       // orderStatus:
+                                  //       //     order.orderStatus.toString(),
+                                  //     );
+                                  //   },
+                                  // ),
                                   ListView.builder(
                                     shrinkWrap: true,
                                     physics:
                                         const NeverScrollableScrollPhysics(),
-                                    itemCount: order.items.length,
+                                    itemCount: remainingItems.length,
                                     itemBuilder: (context, itemIndex) {
-                                      final item = order.items[itemIndex];
-
-                                      return OrderItemCard(
+                                      final item = remainingItems[itemIndex];
+                                      print(
+                                          'Item $itemIndex: ${item.product?.displayName.toString() ?? ''}, Quantity: ${item.qty ?? 0}');
+                                      return ProductDetailsCard(
                                         item: item,
                                         index: itemIndex,
-                                        courierName: order.courierName,
-                                        orderStatus:
-                                            order.orderStatus.toString(),
+                                        // courierName: order.courierName,
+                                        // orderStatus:
+                                        //     order.orderStatus.toString(),
                                       );
                                     },
                                   ),
+                                  // ListView.builder(
+                                  //   shrinkWrap: true,
+                                  //   physics:
+                                  //       const NeverScrollableScrollPhysics(),
+                                  //   itemCount: order.items.length,
+                                  //   itemBuilder: (context, itemIndex) {
+                                  //     final item = order.items[itemIndex];
+                                  //     return ProductDetailsCard(
+                                  //       item: item,
+                                  //       index: itemIndex,
+                                  //       courierName: order.courierName,
+                                  //       // orderStatus:
+                                  //       //     order.orderStatus.toString(),
+                                  //     );
+                                  //   },
+                                  // ),
                                 ],
                               ),
                             ),
@@ -957,7 +1289,7 @@ class _BAApprovePageState extends State<BAApprovePage> {
   }
 
   Widget _buildOrderCard(
-      Order order, int index, BAApproveProvider baApproveProvider) {
+      Order order, int index, BaApproveProvider baApproveProvider) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4.0, horizontal: 8.0),
       child: Row(
@@ -994,7 +1326,7 @@ class _BAApprovePageState extends State<BAApprovePage> {
   }
 
   Widget _buildTableHeader(
-      int totalCount, BAApproveProvider baApproveProvider) {
+      int totalCount, BaApproveProvider baApproveProvider) {
     return Container(
       color: Colors.grey[300],
       padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
@@ -1056,14 +1388,12 @@ Widget buildLabelValueRow(String label, String? value) {
           fontSize: 12.0,
         ),
       ),
-      Flexible(
-        child: Text(
-          value ?? '',
-          softWrap: true,
-          maxLines: null,
-          style: const TextStyle(
-            fontSize: 12.0,
-          ),
+      Text(
+        value ?? '',
+        softWrap: true,
+        maxLines: null,
+        style: const TextStyle(
+          fontSize: 12.0,
         ),
       ),
     ],

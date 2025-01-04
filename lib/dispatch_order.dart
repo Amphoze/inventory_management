@@ -1,13 +1,13 @@
 import 'dart:developer';
 
 import 'package:flutter/material.dart';
+import 'package:inventory_management/Widgets/small_combo_card.dart';
 import 'package:inventory_management/provider/dispatched_provider.dart';
 import 'package:provider/provider.dart';
 
 import 'Custom-Files/colors.dart';
 import 'Custom-Files/custom_pagination.dart';
 import 'Custom-Files/loading_indicator.dart';
-import 'Widgets/order_card.dart';
 import 'model/orders_model.dart';
 
 class DispatchedOrders extends StatefulWidget {
@@ -336,8 +336,8 @@ class _DispatchedOrdersState extends State<DispatchedOrders> {
                   MainAxisAlignment.spaceBetween, // Space between elements
               children: [
                 Expanded(
-                  child:
-                      OrderCard(order: order), // Your existing OrderCard widget
+                  child: SmallComboCard(
+                      order: order), // Your existing OrderCard widget
                 ),
                 const SizedBox(width: 50),
                 SizedBox(

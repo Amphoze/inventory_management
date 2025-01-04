@@ -1,0 +1,28 @@
+const Text(
+                                                'Shipping Address:',
+                                                style: TextStyle(
+                                                    fontWeight: FontWeight.bold,
+                                                    fontSize: 12.0,
+                                                    color:
+                                                        AppColors.primaryBlue),
+                                              ),
+                                              buildLabelValueRow(
+                                                'Address',
+                                                [
+                                                  order.shippingAddress
+                                                      ?.address1,
+                                                  order.shippingAddress
+                                                      ?.address2,
+                                                  order.shippingAddress?.city,
+                                                  order.shippingAddress?.state,
+                                                  order
+                                                      .shippingAddress?.country,
+                                                  order.shippingAddress?.pincode
+                                                      ?.toString(),
+                                                ]
+                                                    .where((element) =>
+                                                        element != null &&
+                                                        element.isNotEmpty)
+                                                    .join(', '),
+                                              ),
+                                              

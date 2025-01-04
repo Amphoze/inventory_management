@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:inventory_management/Custom-Files/colors.dart';
 import 'package:provider/provider.dart';
 import 'package:inventory_management/provider/marketplace_provider.dart';
 import 'package:inventory_management/custom-files/custom-dropdown.dart';
@@ -30,10 +31,17 @@ class _MarketplacePageState extends State<MarketplacePage> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: provider.isFormVisible
+                  ? AppColors.cardsred
+                  : AppColors.primaryBlue,
+            ),
             onPressed: () {
               provider.toggleForm(); // Toggle the form visibility
             },
-            child: const Text('Create Marketplace'),
+            child: provider.isFormVisible
+                ? const Text('Cancel')
+                : const Text('Create Marketplace'),
           ),
           const SizedBox(height: 8),
           if (provider.isFormVisible) ...[

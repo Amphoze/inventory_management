@@ -2,19 +2,19 @@ import 'package:flutter/material.dart';
 import 'package:inventory_management/model/orders_model.dart';
 import 'package:inventory_management/Custom-Files/colors.dart';
 
-class OrderItemCard extends StatelessWidget {
+class ProductDetailsCard extends StatelessWidget {
   final Item item;
   final int index; // To display product number
-  final String courierName;
-  final String orderStatus;
+  // final String courierName;
+  // final String orderStatus;
   final Color cardColor;
 
-  const OrderItemCard({
+  const ProductDetailsCard({
     super.key,
     required this.item,
     required this.index,
-    required this.courierName,
-    required this.orderStatus,
+    // required this.courierName,
+    // required this.orderStatus,
     this.cardColor = AppColors.white,
   });
 
@@ -41,11 +41,14 @@ class OrderItemCard extends StatelessWidget {
   }
 
   Column _buildProductColumn() {
+    // log("item.product?.shopifyImage: ${item.product?.shopifyImage}");
+    // log("item.product?.displayName: ${item.product?.displayName}");
     return Column(
       children: [
-        Text(
-          'Product ${index + 1}',
-          style: const TextStyle(fontWeight: FontWeight.bold),
+        const Text(
+          'Product',
+          // 'Product ${index + 1}',
+          style: TextStyle(fontWeight: FontWeight.bold),
           textAlign: TextAlign.center,
         ),
         const SizedBox(height: 2.0),
@@ -98,7 +101,11 @@ class OrderItemCard extends StatelessWidget {
   }
 
   Column _buildDetailsColumn() {
-    // String rate = (item.amount! / item.qty!).toStringAsFixed(1);
+    // log("item.amount/qty (Rate): ${(item.amount! / item.qty!).toStringAsFixed(1)}");
+    // log("item.amount: ${item.amount}");
+    // log("item.product?.description: ${item.product?.description}");
+    // log("item.product?.technicalName: ${item.product?.technicalName}");
+    // log("item.product?.parentSku: ${item.product?.parentSku}");
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -132,6 +139,13 @@ class OrderItemCard extends StatelessWidget {
   }
 
   Column _buildFirstDetailsColumn() {
+    // log("item.product?.brand?.name: ${item.product?.brand?.name}");
+    // log("item.product?.dimensions?.length: ${item.product?.dimensions?.length}");
+    // log("item.product?.dimensions?.width: ${item.product?.dimensions?.width}");
+    // log("item.product?.dimensions?.height: ${item.product?.dimensions?.height}");
+    // log("item.product?.taxRule: ${item.product?.taxRule}");
+    // log("item.product?.mrp: ${item.product?.mrp}");
+    // log("item.product?.cost: ${item.product?.cost}");
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -164,10 +178,15 @@ class OrderItemCard extends StatelessWidget {
   }
 
   Column _buildThirdDetailsColumn() {
+    // log("item.product?.color?.name: ${item.product?.color?.name}");
+    // log("item.product?.netWeight: ${item.product?.netWeight}");
+    // log("item.product?.grossWeight: ${item.product?.grossWeight}");
+    // log("item.product?.outerPackage?.outerPackageName: ${item.product?.outerPackage?.outerPackageName}");
+    // log("item.product?.variantName: ${item.product?.variantName}");
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildInfoRow('Color:', item.product?.color!.name ?? ''),
+        // _buildInfoRow('Color:', item.product?.color!.name ?? ''),
         _buildInfoRow(
             'Net Weight:',
             item.product?.netWeight != null
@@ -179,8 +198,8 @@ class OrderItemCard extends StatelessWidget {
                 ? '${item.product!.grossWeight} kg'
                 : ''),
         // _buildInfoRow('Box Size:', item.product?.boxSize?.boxName ?? ''),
-        _buildInfoRow('Outer Package Name:',
-            item.product?.outerPackage?.outerPackageName ?? ''),
+        // _buildInfoRow('Outer Package Name:',
+        //     item.product?.outerPackage?.outerPackageName ?? ''),
         _buildInfoRow(
           'Variant Name:',
           item.product?.variantName ?? '',
@@ -190,6 +209,8 @@ class OrderItemCard extends StatelessWidget {
   }
 
   Widget _buildInfoRow(String label, String? value) {
+    // log("label: $label");
+    // log("value: $value");
     return Row(
       children: [
         Text(

@@ -1,11 +1,18 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:inventory_management/constants/constants.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class ProductApi {
-  final String _baseUrl =
-      'https://inventory-management-backend-s37u.onrender.com';
+// late final String _baseUrl;
 
+//   ProductApi() {
+//     _initialize();
+//   }
+
+//   Future<void> _initialize() async {
+//     _baseUrl = await ApiUrls.getBaseUrl();
+//   }
   Future<String?> getToken() async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getString('authToken');
@@ -13,6 +20,7 @@ class ProductApi {
 
   Future<Map<String, dynamic>> searchProductsByDisplayName(
       String displayName) async {
+    String _baseUrl = await ApiUrls.getBaseUrl();
     final url = '$_baseUrl?displayName=${Uri.encodeComponent(displayName)}';
 
     try {
@@ -52,7 +60,7 @@ class ProductApi {
 
 // class ProductAPI {
 //   static const String _baseUrl =
-//       'https://inventory-management-backend-s37u.onrender.com';
+//       '${await ApiUrls.getBaseUrl()}';
 
 //   // Fetch token from SharedPreferences
 //   Future<String?> _getToken() async {

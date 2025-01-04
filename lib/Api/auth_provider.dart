@@ -3,6 +3,7 @@ import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
+import 'package:inventory_management/constants/constants.dart';
 import 'package:logger/logger.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -19,8 +20,6 @@ class AuthProvider with ChangeNotifier {
   bool _isCheckerAssigned = false;
   bool _isRackerAssigned = false;
   bool _isManifestAssigned = false;
-  final String _baseUrl =
-      'https://inventory-management-backend-s37u.onrender.com';
 
   bool get isSuperAdminAssigned => _isSuperAdminAssigned;
   bool get isAdminAssigned => _isAdminAssigned;
@@ -36,9 +35,12 @@ class AuthProvider with ChangeNotifier {
   String? assignedRole;
 
   bool get isAuthenticated => _isAuthenticated;
+
   Future<Map<String, dynamic>> register(String email, String password,
       List<Map<String, dynamic>> assignedRoles) async {
-    final url = Uri.parse('$_baseUrl/register');
+    String baseUrl = await ApiUrls.getBaseUrl();
+
+    final url = Uri.parse('$baseUrl/register');
 
     log(assignedRoles.toString());
     try {
@@ -86,7 +88,9 @@ class AuthProvider with ChangeNotifier {
 
   Future<Map<String, dynamic>> registerOtp(
       String email, String otp, String password) async {
-    final url = Uri.parse('$_baseUrl/register-otp');
+    String baseUrl = await ApiUrls.getBaseUrl();
+
+    final url = Uri.parse('$baseUrl/register-otp');
 
     try {
       final response = await http.post(
@@ -114,7 +118,9 @@ class AuthProvider with ChangeNotifier {
   }
 
   Future<Map<String, dynamic>> login(String email, String password) async {
-    final url = Uri.parse('$_baseUrl/login');
+    String baseUrl = await ApiUrls.getBaseUrl();
+
+    final url = Uri.parse('$baseUrl/login');
 
     try {
       final response = await http.post(
@@ -139,56 +145,72 @@ class AuthProvider with ChangeNotifier {
 
         // Fetch user roles from responseData
         final List<dynamic> userRoles = responseData['userRoles'];
-        // Variable to hold the assigned role
-
-        // Initialize boolean flags for each role
-
-        // Find the first assigned role and set boolean flags
         for (var role in userRoles) {
           if (role['isAssigned'] == true) {
             assignedRole = role['roleName'];
             switch (assignedRole) {
               case 'superAdmin':
                 _isSuperAdminAssigned = true;
+                log('isSuperAdmin: $_isSuperAdminAssigned');
                 break;
               case 'admin':
                 _isAdminAssigned = true;
+                log('isAdmin: $_isAdminAssigned');
                 break;
               case 'confirmer':
                 _isConfirmerAssigned = true;
+                log('isConfirmer: $_isConfirmerAssigned');
                 break;
               case 'booker':
                 _isBookerAssigned = true;
+                log('isBooker: $_isBookerAssigned');
                 break;
               case 'account':
                 _isAccountsAssigned = true;
+                log('isAccounts: $_isAccountsAssigned');
                 break;
               case 'picker':
                 _isPickerAssigned = true;
+                log('isPicker: $_isPickerAssigned');
                 break;
               case 'packer':
                 _isPackerAssigned = true;
+                log('isPacker: $_isPackerAssigned');
                 break;
               case 'checker':
                 _isCheckerAssigned = true;
+                log('isChecker: $_isCheckerAssigned');
                 break;
               case 'racker':
                 _isRackerAssigned = true;
+                log('isRacker: $_isRackerAssigned');
                 break;
               case 'manifest':
                 _isManifestAssigned = true;
+                log('isManifest: $_isManifestAssigned');
                 break;
             }
-            break; // Exit the loop after finding the first assigned role
           }
         }
 
-        log('Assigned Role: $assignedRole'); // Debugging line
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setBool('_isSuperAdminAssigned', _isSuperAdminAssigned);
+        await prefs.setBool('_isAdminAssigned', _isAdminAssigned);
+        await prefs.setBool('_isConfirmerAssigned', _isConfirmerAssigned);
+        await prefs.setBool('_isBookerAssigned', _isBookerAssigned);
+        await prefs.setBool('_isAccountsAssigned', _isAccountsAssigned);
+        await prefs.setBool('_isPickerAssigned', _isPickerAssigned);
+        await prefs.setBool('_isPackerAssigned', _isPackerAssigned);
+        await prefs.setBool('_isCheckerAssigned', _isCheckerAssigned);
+        await prefs.setBool('_isRackerAssigned', _isRackerAssigned);
+        await prefs.setBool('_isManifestAssigned', _isManifestAssigned);
+
+        // log('Assigned Role: $assignedRole'); // Debugging line
 
         if (token != null && token.isNotEmpty) {
           await _saveToken(token);
           print('Token retrieved and saved: $token');
-          await _saveCredentials(email, password, assignedRole!);
+          await _saveCredentials(email, password);
 
           // log("responseData: $responseData"); ////////////////////////
 
@@ -226,7 +248,9 @@ class AuthProvider with ChangeNotifier {
   }
 
   Future<Map<String, dynamic>> forgotPassword(String email) async {
-    final url = Uri.parse('$_baseUrl/forgot-password');
+    String baseUrl = await ApiUrls.getBaseUrl();
+
+    final url = Uri.parse('$baseUrl/forgot-password');
 
     try {
       final response = await http.post(
@@ -235,8 +259,8 @@ class AuthProvider with ChangeNotifier {
         body: json.encode({'email': email}),
       );
 
-      print('Forgot Password Response: ${response.statusCode}');
-      print('Forgot Password Response Body: ${response.body}');
+      log('Forgot Password Response: ${response.statusCode}');
+      log('Forgot Password Response Body: ${response.body}');
 
       if (response.statusCode == 200) {
         return {'success': true, 'message': 'OTP sent to email'};
@@ -257,7 +281,9 @@ class AuthProvider with ChangeNotifier {
   }
 
   Future<Map<String, dynamic>> verifyOtp(String email, String otp) async {
-    final url = Uri.parse('$_baseUrl/verify-otp');
+    String baseUrl = await ApiUrls.getBaseUrl();
+
+    final url = Uri.parse('$baseUrl/verify-otp');
 
     try {
       final response = await http.post(
@@ -283,7 +309,9 @@ class AuthProvider with ChangeNotifier {
 
   Future<Map<String, dynamic>> resetPassword(
       String email, String newPassword) async {
-    final url = Uri.parse('$_baseUrl/reset-password');
+    String baseUrl = await ApiUrls.getBaseUrl();
+
+    final url = Uri.parse('$baseUrl/reset-password');
 
     try {
       final response = await http.post(
@@ -318,7 +346,9 @@ class AuthProvider with ChangeNotifier {
 
   Future<Map<String, dynamic>> getAllCategories(
       {int page = 1, int limit = 70, String? name}) async {
-    final url = Uri.parse('$_baseUrl/category/?page=$page&limit=$limit');
+    String baseUrl = await ApiUrls.getBaseUrl();
+
+    final url = Uri.parse('$baseUrl/category/?page=$page&limit=$limit');
 
     try {
       final token = await getToken();
@@ -383,7 +413,9 @@ class AuthProvider with ChangeNotifier {
   }
 
   Future<Map<String, dynamic>> createCategory(String name) async {
-    final url = Uri.parse('$_baseUrl/category/');
+    String baseUrl = await ApiUrls.getBaseUrl();
+
+    final url = Uri.parse('$baseUrl/category/');
 
     try {
       final token = await getToken();
@@ -429,7 +461,9 @@ class AuthProvider with ChangeNotifier {
   }
 
   Future<Map<String, dynamic>> getCategoryById(String id) async {
-    final url = Uri.parse('$_baseUrl/category/$id');
+    String baseUrl = await ApiUrls.getBaseUrl();
+
+    final url = Uri.parse('$baseUrl/category/$id');
 
     try {
       final token = await getToken();
@@ -465,7 +499,9 @@ class AuthProvider with ChangeNotifier {
   Future<Map<String, dynamic>> getAllProducts(
       {int page = 1, int itemsPerPage = 10}) async {
     // Append query parameters for pagination (page number and items per page)
-    final url = Uri.parse('$_baseUrl/products?page=$page&limit=$itemsPerPage');
+    String baseUrl = await ApiUrls.getBaseUrl();
+
+    final url = Uri.parse('$baseUrl/products?page=$page&limit=$itemsPerPage');
 
     try {
       final token = await getToken();
@@ -484,6 +520,7 @@ class AuthProvider with ChangeNotifier {
       print('Get All Products Response: ${response.statusCode}');
 
       if (response.statusCode == 200) {
+        final Map<String, dynamic> res = json.decode(response.body);
         final List<dynamic> data = json.decode(response.body)['products'];
 
         // Extract required fields and log them
@@ -493,19 +530,19 @@ class AuthProvider with ChangeNotifier {
             'displayName': product['displayName'] ?? '',
             'parentSku': product['parentSku'] ?? '',
             'sku': product['sku'] ?? '',
+            'description': product['description'] ?? '',
+            'brand': product['brand']?['name'] ?? '',
+            'categoryName': product['category']?['name'] ?? '',
             'netWeight': product['netWeight']?.toString() ?? '',
             'grossWeight': product['grossWeight']?.toString() ?? '',
             'ean': product['ean'] ?? '',
-            'description': product['description'] ?? '',
             'technicalName': product['technicalName'] ?? '',
             'labelSku': product['label']?['labelSku'] ?? '',
             'colour': product['color']?['name'] ?? '',
-            'brand': product['brand']?['name'] ?? '',
             'outerPackage_quantity':
                 product['outerPackage_quantity']?.toString() ?? '',
             'outerPackage_name':
                 product['outerPackage']?['outerPackage_name'] ?? '',
-            'categoryName': product['category']?['name'] ?? '',
             'length': product['dimensions']?['length']?.toString() ?? '',
             'width': product['dimensions']?['width']?.toString() ?? '',
             'height': product['dimensions']?['height']?.toString() ?? '',
@@ -525,7 +562,11 @@ class AuthProvider with ChangeNotifier {
           return extractedProduct;
         }).toList();
 
-        return {'success': true, 'data': products};
+        return {
+          'success': true,
+          'data': products,
+          'totalProducts': res['totalProducts']
+        };
       } else {
         return {
           'success': false,
@@ -540,7 +581,8 @@ class AuthProvider with ChangeNotifier {
   }
 
   Future<Map<String, dynamic>> getAllWarehouses() async {
-    final url = Uri.parse('$_baseUrl/warehouse');
+    String baseUrl = await ApiUrls.getBaseUrl();
+    final url = Uri.parse('$baseUrl/warehouse');
 
     try {
       final token = await getToken();
@@ -586,7 +628,7 @@ class AuthProvider with ChangeNotifier {
           print('Warehouse Pincode: ${warehouse['warehousePincode']}');
           print('Pincode List: ${warehouse['pincode']}');
           print('Created At: ${warehouse['createdAt']}');
-          print('Updated At: ${warehouse['updatedAt']}');
+          print('Updated on: ${warehouse['updatedAt']}');
           print('------------------');
         }
 
@@ -602,67 +644,75 @@ class AuthProvider with ChangeNotifier {
         };
       }
     } catch (error) {
-      print('Error fetching warehouses: $error');
+      log('Error fetching warehouses: $error');
       return {'success': false, 'message': 'Error fetching warehouses'};
     }
   }
 
   Future<Map<String, dynamic>> createWarehouse({
-    required String name,
-    required String email,
-    required int taxIdentificationNumber,
-    required String billingAddressLine1,
-    required String billingAddressLine2,
-    required String billingCountry,
-    required String billingState,
-    required String billingCity,
-    required int billingZipCode,
-    required int billingPhoneNumber,
-    required String shippingAddressLine1,
-    required String shippingAddressLine2,
-    required String shippingCountry,
-    required String shippingState,
-    required String shippingCity,
-    required int shippingZipCode,
-    required int shippingPhoneNumber,
-    required String locationType,
-    required bool holdStocks,
-    required bool copyMasterSkuFromPrimary,
-    required List<String> pincodes,
-    required int warehousePincode,
+    required Map<String, dynamic>? warehouseData,
+    // required String name,
+    // required String email,
+    // required int taxIdentificationNumber,
+    // required String billingAddressLine1,
+    // required String billingAddressLine2,
+    // required String billingCountry,
+    // required String billingState,
+    // required String billingCity,
+    // required int billingZipCode,
+    // required int billingPhoneNumber,
+    // required String shippingAddressLine1,
+    // required String shippingAddressLine2,
+    // required String shippingCountry,
+    // required String shippingState,
+    // required String shippingCity,
+    // required int shippingZipCode,
+    // required int shippingPhoneNumber,
+    // required String locationType,
+    // required bool holdStocks,
+    // required bool copyMasterSkuFromPrimary,
+    // required List<String> pincodes,
+    // required int warehousePincode,
   }) async {
-    final url = Uri.parse('$_baseUrl/warehouse');
-    final body = {
-      "location": {
-        "otherDetails": {
-          "taxIdentificationNumber": taxIdentificationNumber,
-        },
-        "billingAddress": {
-          "addressLine1": billingAddressLine1,
-          "addressLine2": billingAddressLine2,
-          "country": billingCountry,
-          "state": billingState,
-          "city": billingCity,
-          "zipCode": billingZipCode,
-          "phoneNumber": billingPhoneNumber,
-        },
-        "shippingAddress": {
-          "addressLine1": shippingAddressLine1,
-          "addressLine2": shippingAddressLine2,
-          "country": shippingCountry,
-          "state": shippingState,
-          "city": shippingCity,
-          "zipCode": shippingZipCode,
-          "phoneNumber": shippingPhoneNumber,
-        },
-        "locationType": locationType,
-        "holdStocks": holdStocks,
-        "copyMasterSkuFromPrimary": copyMasterSkuFromPrimary,
-      },
-      "name": name,
-      "pincode": pincodes,
-      "warehousePincode": warehousePincode,
-    };
+    String baseUrl = await ApiUrls.getBaseUrl();
+    final url = Uri.parse('$baseUrl/warehouse');
+    // final body = {
+    //   "location": {
+    //     "otherDetails": {
+    //       "taxIdentificationNumber": taxIdentificationNumber,
+    //     },
+    //     "billingAddress": {
+    //       "addressLine1": billingAddressLine1,
+    //       "addressLine2": billingAddressLine2,
+    //       "country": billingCountry,
+    //       "state": billingState,
+    //       "city": billingCity,
+    //       "zipCode": billingZipCode,
+    //       "phoneNumber": billingPhoneNumber,
+    //     },
+    //     "shippingAddress": {
+    //       "addressLine1": shippingAddressLine1,
+    //       "addressLine2": shippingAddressLine2,
+    //       "country": shippingCountry,
+    //       "state": shippingState,
+    //       "city": shippingCity,
+    //       "zipCode": shippingZipCode,
+    //       "phoneNumber": shippingPhoneNumber,
+    //     },
+    //     "locationType": locationType,
+    //     "holdStocks": holdStocks,
+    //     "copyMasterSkuFromPrimary": copyMasterSkuFromPrimary,
+    //   },
+    //   "name": name,
+    //   "pincode": pincodes,
+    //   "warehousePincode": warehousePincode,
+    // };
+
+    // final body = {
+    //   "name": name,
+    //   "pinCodes": pincodes,
+    //   "isPrimary": isPrimary,
+    // };
 
     try {
       final token = await getToken();
@@ -672,26 +722,28 @@ class AuthProvider with ChangeNotifier {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer $token',
         },
-        body: jsonEncode(body),
+        body: jsonEncode(warehouseData),
       );
 
-      if (response.statusCode == 201) {
+      if (response.statusCode == 200 || response.statusCode == 201) {
         return jsonDecode(response.body);
       } else {
         throw Exception('Failed to create warehouse: ${response.statusCode}');
       }
     } catch (e) {
-      print('Error occurred while creating warehouse: $e');
+      log('Error occurred while creating warehouse: $e');
       throw Exception('Error creating warehouse: $e');
     }
   }
 
   // Method to fetch warehouse data using the warehouse ID
   Future<Map<String, dynamic>> fetchWarehouseById(String warehouseId) async {
+    String baseUrl = await ApiUrls.getBaseUrl();
+
     try {
       final token = await getToken();
       final response = await http.get(
-        Uri.parse('$_baseUrl/warehouse/$warehouseId'),
+        Uri.parse('$baseUrl/warehouse/$warehouseId'),
         headers: {
           'Authorization': 'Bearer $token',
         },
@@ -709,24 +761,21 @@ class AuthProvider with ChangeNotifier {
   }
 
   Future<void> _saveCredentials(
-      String email, String password, String userRole) async {
+    String email,
+    String password,
+  ) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('email', email);
     await prefs.setString('password', password);
-    await prefs.setString('userRole', userRole); // Save the assigned role
   }
 
   Future<Map<String, String?>> getCredentials() async {
     final prefs = await SharedPreferences.getInstance();
     final email = prefs.getString('email');
     final password = prefs.getString('password');
-    final userRole = prefs.getString('userRole');
-
-    assignedRole = userRole;
     return {
       'email': email,
       'password': password,
-      'userRole': userRole,
     };
   }
 
@@ -738,8 +787,10 @@ class AuthProvider with ChangeNotifier {
   }
 
   Future<Map<String, dynamic>> searchCategoryByName(String name) async {
+    String baseUrl = await ApiUrls.getBaseUrl();
+
     final url =
-        Uri.parse('$_baseUrl/category?name=${Uri.encodeComponent(name)}');
+        Uri.parse('$baseUrl/category?name=${Uri.encodeComponent(name)}');
 
     try {
       final token = await getToken();
@@ -780,7 +831,9 @@ class AuthProvider with ChangeNotifier {
 
   Future<Map<String, dynamic>?> createProduct(
       List<Map<String, dynamic>> productData) async {
-    final url = Uri.parse('$_baseUrl/products/');
+    String baseUrl = await ApiUrls.getBaseUrl();
+
+    final url = Uri.parse('$baseUrl/products/');
     try {
       final token = await getToken();
       final response = await http.post(
@@ -840,7 +893,9 @@ class AuthProvider with ChangeNotifier {
   }
 
   Future<String?> createLabel(Map<String, dynamic> labelData) async {
-    final url = Uri.parse('$_baseUrl/label/');
+    String baseUrl = await ApiUrls.getBaseUrl();
+
+    final url = Uri.parse('$baseUrl/label/');
     try {
       final token = await getToken();
       final response = await http.post(
@@ -864,7 +919,9 @@ class AuthProvider with ChangeNotifier {
   }
 
   Future<bool> deleteWarehouse(String warehouseId) async {
-    final String url = "$_baseUrl/warehouse/$warehouseId";
+    String baseUrl = await ApiUrls.getBaseUrl();
+
+    final String url = "$baseUrl/warehouse/$warehouseId";
 
     try {
       final token = await getToken();
@@ -897,8 +954,10 @@ class AuthProvider with ChangeNotifier {
 
   Future<Map<String, dynamic>> searchProductsByDisplayName(
       String displayName) async {
+    String baseUrl = await ApiUrls.getBaseUrl();
+
     final url =
-        '$_baseUrl/products?displayName=${Uri.encodeComponent(displayName)}';
+        '$baseUrl/products?displayName=${Uri.encodeComponent(displayName)}';
 
     Logger().e("Request URL: $url");
 
@@ -1004,7 +1063,9 @@ class AuthProvider with ChangeNotifier {
   // }
 
   Future<Map<String, dynamic>> searchProductsBySKU(String sku) async {
-    final url = '$_baseUrl/products?sku=${Uri.encodeComponent(sku)}';
+    String baseUrl = await ApiUrls.getBaseUrl();
+
+    final url = '$baseUrl/products?sku=${Uri.encodeComponent(sku)}';
 
     try {
       final token = await getToken();
@@ -1055,6 +1116,7 @@ class AuthProvider with ChangeNotifier {
 
   Future<String> getTemplateURL(BuildContext context, String title) async {
     // Retrieve the token from shared preferences
+    String baseUrl = await ApiUrls.getBaseUrl();
     final token = await getToken();
 
     // Check if the token is valid
@@ -1070,7 +1132,7 @@ class AuthProvider with ChangeNotifier {
 
     try {
       // Make the GET request
-      final response = await http.get(Uri.parse('$_baseUrl/links?title=$title'),
+      final response = await http.get(Uri.parse('$baseUrl/links?title=$title'),
           headers: headers);
 
       // Print the received response for debugging

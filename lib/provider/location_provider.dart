@@ -48,7 +48,7 @@ class LocationProvider with ChangeNotifier {
   String? _errorMessage;
   String? _successMessage;
 
-  List<String> pincodes = [];
+  List<Map<String, dynamic>> pincodes = [];
   String? validationMessage;
 
   bool _isEmailValid = false;
@@ -80,12 +80,13 @@ class LocationProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  void addPincode(String pincode) {
+  void addPincode(List<Map<String, dynamic>> pincode) {
     if (pincode.isEmpty) {
       validationMessage = 'Please enter a pincode';
       notifyListeners();
     } else {
-      pincodes.add(pincode);
+      pincodes = pincode;
+      // pincodes.add(pincode);
       validationMessage = null; // Clear validation message
       notifyListeners();
     }
@@ -253,54 +254,54 @@ class LocationProvider with ChangeNotifier {
     return await authProvider.getAllWarehouses();
   }
 
-  Future<bool> createWarehouse(Map<String, dynamic> location) async {
+  Future<bool> createWarehouse(Map<String, dynamic> body) async {
     try {
-      final taxIdentificationNumber = location['taxIdentificationNumber'] is int
-          ? location['taxIdentificationNumber'] as int
-          : int.tryParse(location['taxIdentificationNumber'].toString()) ?? 0;
+      final taxIdentificationNumber = body['taxIdentificationNumber'] is int
+          ? body['taxIdentificationNumber'] as int
+          : int.tryParse(body['taxIdentificationNumber'].toString()) ?? 0;
 
-      final holdStocks = location['holdStocks'] is bool
-          ? location['holdStocks'] as bool
-          : location['holdStocks'] == 'true';
+      final holdStocks = body['holdStocks'] is bool
+          ? body['holdStocks'] as bool
+          : body['holdStocks'] == 'true';
 
-      final copyMasterSkuFromPrimary =
-          location['copyMasterSkuFromPrimary'] is bool
-              ? location['copyMasterSkuFromPrimary'] as bool
-              : location['copyMasterSkuFromPrimary'] == 'true';
+      final copyMasterSkuFromPrimary = body['copyMasterSkuFromPrimary'] is bool
+          ? body['copyMasterSkuFromPrimary'] as bool
+          : body['copyMasterSkuFromPrimary'] == 'true';
 
       // Extract pincodes from location if available
-      final List<String> pincodes = location['pincode'] is List<String>
-          ? List<String>.from(location['pincode'])
+      final List<String> pincodes = body['pincode'] is List<String>
+          ? List<String>.from(body['pincode'])
           : [];
 
-      final response = await authProvider.createWarehouse(
-        name: location['name'] as String,
-        email: location['email'] as String,
-        taxIdentificationNumber: taxIdentificationNumber,
-        billingAddressLine1:
-            location['billingAddress']['addressLine1'] as String,
-        billingAddressLine2:
-            location['billingAddress']['addressLine2'] as String,
-        billingCountry: countries[_selectedBillingCountryIndex]['name'],
-        billingState: states[_selectedBillingStateIndex]['name'],
-        billingCity: location['billingAddress']['city'] as String,
-        billingZipCode: location['billingAddress']['zipCode'] as int,
-        billingPhoneNumber: location['billingAddress']['phoneNumber'] as int,
-        shippingAddressLine1:
-            location['shippingAddress']['addressLine1'] as String,
-        shippingAddressLine2:
-            location['shippingAddress']['addressLine2'] as String,
-        shippingCountry: countries[_selectedShippingCountryIndex]['name'],
-        shippingState: states[_selectedShippingStateIndex]['name'],
-        shippingCity: location['shippingAddress']['city'] as String,
-        shippingZipCode: location['shippingAddress']['zipCode'] as int,
-        shippingPhoneNumber: location['shippingAddress']['phoneNumber'] as int,
-        locationType: locationTypes[_selectedLocationTypeIndex]['name'],
-        holdStocks: holdStocks,
-        copyMasterSkuFromPrimary: copyMasterSkuFromPrimary,
-        pincodes: pincodes,
-        warehousePincode: location['warehousePincode'] as int,
-      );
+      final response = await authProvider.createWarehouse(warehouseData: body);
+      // final response = await authProvider.createWarehouse(
+      //   name: location['name'] as String,
+      //   email: location['email'] as String,
+      //   taxIdentificationNumber: taxIdentificationNumber,
+      //   billingAddressLine1:
+      //       location['billingAddress']['addressLine1'] as String,
+      //   billingAddressLine2:
+      //       location['billingAddress']['addressLine2'] as String,
+      //   billingCountry: countries[_selectedBillingCountryIndex]['name'],
+      //   billingState: states[_selectedBillingStateIndex]['name'],
+      //   billingCity: location['billingAddress']['city'] as String,
+      //   billingZipCode: location['billingAddress']['zipCode'] as int,
+      //   billingPhoneNumber: location['billingAddress']['phoneNumber'] as int,
+      //   shippingAddressLine1:
+      //       location['shippingAddress']['addressLine1'] as String,
+      //   shippingAddressLine2:
+      //       location['shippingAddress']['addressLine2'] as String,
+      //   shippingCountry: countries[_selectedShippingCountryIndex]['name'],
+      //   shippingState: states[_selectedShippingStateIndex]['name'],
+      //   shippingCity: location['shippingAddress']['city'] as String,
+      //   shippingZipCode: location['shippingAddress']['zipCode'] as int,
+      //   shippingPhoneNumber: location['shippingAddress']['phoneNumber'] as int,
+      //   locationType: locationTypes[_selectedLocationTypeIndex]['name'],
+      //   holdStocks: holdStocks,
+      //   copyMasterSkuFromPrimary: copyMasterSkuFromPrimary,
+      //   pincodes: pincodes,
+      //   warehousePincode: location['warehousePincode'] as int,
+      // );
 
       if (response['success']) {
         _setSuccess('Warehouse created successfully!');

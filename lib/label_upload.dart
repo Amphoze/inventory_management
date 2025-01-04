@@ -80,12 +80,41 @@ class _LabelUploadState extends State<LabelUpload> {
     );
   }
 
+  void _showLoadingDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      barrierDismissible: false, // Prevent closing the dialog
+      builder: (BuildContext context) {
+        return const AlertDialog(
+          content: Row(
+            children: [
+              CircularProgressIndicator(),
+              SizedBox(width: 10),
+              Text("Do not change or close this tab."),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final labelDataProvider = Provider.of<LabelDataProvider>(context);
     final screenWidth = MediaQuery.of(context).size.width;
     final baseTextSize =
         screenWidth > 1200 ? 16.0 : (screenWidth > 800 ? 15.0 : 14.0);
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (labelDataProvider.isLoadingDataGroups) {
+        _showLoadingDialog(context);
+      } else {
+        // Close the dialog if it's showing
+        if (Navigator.canPop(context)) {
+          Navigator.of(context).pop();
+        }
+      }
+    });
 
     return Scaffold(
       backgroundColor: AppColors.white,
@@ -129,7 +158,8 @@ class _LabelUploadState extends State<LabelUpload> {
                 ],
                 const SizedBox(width: 16),
                 ElevatedButton(
-                  onPressed: () => AuthProvider().downloadTemplate(context,'label'),
+                  onPressed: () =>
+                      AuthProvider().downloadTemplate(context, 'label'),
                   child: const Text('Download Template'),
                 ),
               ],

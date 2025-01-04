@@ -32,7 +32,6 @@ class CustomPaginationFooter extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         double arrowButtonSize = 20;
-
         return Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
@@ -43,13 +42,13 @@ class CustomPaginationFooter extends StatelessWidget {
                   icon: const Icon(Icons.first_page),
                   onPressed: currentPage > 1 ? onFirstPage : null,
                   iconSize: arrowButtonSize,
-                  color: currentPage > 1 ? AppColors.primaryGreen : Colors.grey,
+                  color: currentPage > 1 ? AppColors.primaryBlue : Colors.grey,
                 ),
                 IconButton(
                   icon: const Icon(Icons.chevron_left),
                   onPressed: currentPage > 1 ? onPreviousPage : null,
                   iconSize: arrowButtonSize,
-                  color: currentPage > 1 ? AppColors.primaryGreen : Colors.grey,
+                  color: currentPage > 1 ? AppColors.primaryBlue : Colors.grey,
                 ),
                 ..._buildPageButtons(currentPage - 1, totalPages,
                     buttonSize), // Pass currentPage - 1 for zero-based
@@ -58,7 +57,7 @@ class CustomPaginationFooter extends StatelessWidget {
                   onPressed: currentPage < totalPages ? onNextPage : null,
                   iconSize: arrowButtonSize,
                   color: currentPage < totalPages
-                      ? AppColors.primaryGreen
+                      ? AppColors.primaryBlue
                       : Colors.grey,
                 ),
                 IconButton(
@@ -66,7 +65,7 @@ class CustomPaginationFooter extends StatelessWidget {
                   onPressed: currentPage < totalPages ? onLastPage : null,
                   iconSize: arrowButtonSize,
                   color: currentPage < totalPages
-                      ? AppColors.primaryGreen
+                      ? AppColors.primaryBlue
                       : Colors.grey,
                 ),
               ],
@@ -96,7 +95,7 @@ class CustomPaginationFooter extends StatelessWidget {
                 ElevatedButton(
                   onPressed: onJumpToPage,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primaryGreen,
+                    backgroundColor: AppColors.primaryBlue,
                   ),
                   child: const Text('Go'),
                 ),
@@ -134,7 +133,7 @@ class CustomPaginationFooter extends StatelessWidget {
               minimumSize: Size(buttonSize * 1.9, buttonSize),
               padding: const EdgeInsets.symmetric(vertical: 4),
               backgroundColor:
-                  isCurrentPage ? AppColors.primaryGreen : Colors.grey[200],
+                  isCurrentPage ? AppColors.primaryBlue : Colors.grey[200],
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(30),
               ),

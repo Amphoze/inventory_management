@@ -1,14 +1,16 @@
 import 'dart:developer';
 
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:inventory_management/Custom-Files/colors.dart';
 import 'package:inventory_management/Custom-Files/custom_pagination.dart';
 import 'package:inventory_management/Custom-Files/loading_indicator.dart';
+import 'package:inventory_management/Widgets/order_combo_card.dart';
 import 'package:inventory_management/provider/marketplace_provider.dart';
+import 'package:logger/logger.dart';
 import 'package:provider/provider.dart';
 import 'package:inventory_management/provider/book_provider.dart';
 import 'package:inventory_management/model/orders_model.dart';
-import 'package:inventory_management/Widgets/order_card.dart';
 
 class BookPage extends StatefulWidget {
   const BookPage({super.key});
@@ -25,6 +27,9 @@ class _BookPageState extends State<BookPage>
   final TextEditingController b2bPageController = TextEditingController();
   final TextEditingController b2cPageController = TextEditingController();
   bool areOrdersFetched = false;
+  String selectedCourier = 'All';
+  String _selectedDate = 'Select Date';
+  String bookingCourier = 'bookingCourier';
 
   @override
   void initState() {
@@ -39,18 +44,18 @@ class _BookPageState extends State<BookPage>
         _b2cSearchController.clear();
       }
     });
-    _b2bSearchController.addListener(() {
-      if (_b2bSearchController.text.isEmpty) {
-        _refreshOrders('B2B');
-        Provider.of<BookProvider>(context, listen: false).clearSearchResults();
-      }
-    });
-    _b2cSearchController.addListener(() {
-      if (_b2cSearchController.text.isEmpty) {
-        _refreshOrders('B2C');
-        Provider.of<BookProvider>(context, listen: false).clearSearchResults();
-      }
-    });
+    // _b2bSearchController.addListener(() {
+    //   if (_b2bSearchController.text.isEmpty) {
+    //     _refreshOrders('B2B');
+    //     Provider.of<BookProvider>(context, listen: false).clearSearchResults();
+    //   }
+    // });
+    // _b2cSearchController.addListener(() {
+    //   if (_b2cSearchController.text.isEmpty) {
+    //     _refreshOrders('B2C');
+    //     Provider.of<BookProvider>(context, listen: false).clearSearchResults();
+    //   }
+    // });
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final bookProvider = Provider.of<BookProvider>(context, listen: false);
       bookProvider.fetchOrders('B2B', bookProvider.currentPageB2B);
@@ -126,76 +131,115 @@ class _BookPageState extends State<BookPage>
     );
   }
 
+  String selectedSearchType = 'Order ID'; // Default selection
+
   Widget _searchBar(String orderType) {
     final TextEditingController controller =
         orderType == 'B2B' ? _b2bSearchController : _b2cSearchController;
 
     return Padding(
       padding: const EdgeInsets.all(8.0),
-      child: Container(
-        width: 200,
-        height: 34,
-        decoration: BoxDecoration(
-          border: Border.all(
-            color: AppColors.green,
-            width: 1.5,
-          ),
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: Row(
-          children: [
-            Expanded(
-              child: TextField(
-                controller: controller,
-                decoration: InputDecoration(
-                  prefixIcon: IconButton(
-                    icon: const Icon(
-                      Icons.search,
-                      color: Color.fromRGBO(117, 117, 117, 1),
-                    ),
-                    onPressed: () {},
-                  ),
-                  hintText: 'Search Orders',
-                  hintStyle: const TextStyle(
-                    color: Color.fromRGBO(117, 117, 117, 1),
-                    fontSize: 16,
-                  ),
-                  border: InputBorder.none,
-                  contentPadding: const EdgeInsets.symmetric(vertical: 10.0),
-                ),
-                style: const TextStyle(color: AppColors.black),
-                onChanged: (text) {
-                  if (text.isEmpty) {
-                    Provider.of<BookProvider>(context, listen: false)
-                        .clearSearchResults();
-                  }
-                },
-                onSubmitted: (text) {
-                  if (orderType == 'B2B') {
-                    Provider.of<BookProvider>(context, listen: false)
-                        .searchB2BOrders(text);
-                  } else {
-                    Provider.of<BookProvider>(context, listen: false)
-                        .searchB2COrders(text);
-                  }
-                },
+      child: Row(
+        children: [
+          Container(
+            width: 120,
+            height: 34,
+            margin: const EdgeInsets.only(right: 16),
+            child: DropdownButtonFormField<String>(
+              value: selectedSearchType,
+              decoration: const InputDecoration(
+                border: OutlineInputBorder(),
+                contentPadding:
+                    EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
               ),
+              items: const [
+                DropdownMenuItem(value: 'Order ID', child: Text('Order ID')),
+                DropdownMenuItem(value: 'AWB No.', child: Text('AWB No.')),
+              ],
+              onChanged: (value) {
+                log(value!);
+                setState(() {
+                  selectedSearchType = value;
+                });
+              },
             ),
-            if (controller.text.isNotEmpty)
-              IconButton(
-                icon: Icon(
-                  Icons.close,
-                  color: Colors.grey.shade600,
-                ),
-                onPressed: () {
-                  controller.clear();
-                  // _refreshOrders(orderType);
-                  Provider.of<BookProvider>(context, listen: false)
-                      .clearSearchResults();
-                },
+          ),
+          Container(
+            width: 150,
+            height: 34,
+            decoration: BoxDecoration(
+              border: Border.all(
+                color: AppColors.primaryBlue,
+                width: 1.5,
               ),
-          ],
-        ),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: controller,
+                    decoration: InputDecoration(
+                      prefixIcon: IconButton(
+                        icon: const Icon(
+                          Icons.search,
+                          color: Color.fromRGBO(117, 117, 117, 1),
+                        ),
+                        onPressed: () {},
+                      ),
+                      hintText: 'Search Orders',
+                      hintStyle: const TextStyle(
+                        color: Color.fromRGBO(117, 117, 117, 1),
+                        fontSize: 16,
+                      ),
+                      border: InputBorder.none,
+                      contentPadding:
+                          const EdgeInsets.symmetric(vertical: 10.0),
+                    ),
+                    style: const TextStyle(color: AppColors.black),
+                    onChanged: (text) {
+                      if (text.isEmpty) {
+                        orderType == 'B2B'
+                            ? _refreshOrders('B2B')
+                            : _refreshOrders('B2C');
+                      } else {
+                        if (orderType == 'B2B') {
+                          Provider.of<BookProvider>(context, listen: false)
+                              .searchB2BOrders(text, selectedSearchType);
+                        } else {
+                          Provider.of<BookProvider>(context, listen: false)
+                              .searchB2COrders(text, selectedSearchType);
+                        }
+                      }
+                    },
+                    onSubmitted: (text) {
+                      if (orderType == 'B2B') {
+                        Provider.of<BookProvider>(context, listen: false)
+                            .searchB2BOrders(text, selectedSearchType);
+                      } else {
+                        Provider.of<BookProvider>(context, listen: false)
+                            .searchB2COrders(text, selectedSearchType);
+                      }
+                    },
+                  ),
+                ),
+                if (controller.text.isNotEmpty)
+                  IconButton(
+                    icon: Icon(
+                      Icons.close,
+                      color: Colors.grey.shade600,
+                    ),
+                    onPressed: () {
+                      controller.clear();
+                      _refreshOrders(orderType);
+                      Provider.of<BookProvider>(context, listen: false)
+                          .clearSearchResults();
+                    },
+                  ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -387,46 +431,130 @@ class _BookPageState extends State<BookPage>
         child: Row(
           mainAxisAlignment: MainAxisAlignment.end,
           children: [
-            Consumer<MarketplaceProvider>(
-              builder: (context, provider, child) {
-                return PopupMenuButton<String>(
-                  tooltip: 'Filter by Marketplace',
-                  initialValue: 'All',
-                  onSelected: (String value) {
-                    if (value == 'All') {
-                      bookProvider.fetchOrders(
-                          orderType, bookProvider.currentPageB2B);
-                    } else {
-                      bookProvider.fetchOrdersByMarketplace(
-                          value,
-                          orderType,
-                          orderType == 'B2B'
-                              ? bookProvider.currentPageB2B
-                              : bookProvider.currentPageB2C);
-                    }
-                    log('Selected: $value');
-                  },
-                  itemBuilder: (BuildContext context) =>
-                      <PopupMenuEntry<String>>[
-                    ...provider.marketplaces
-                        .map((marketplace) => PopupMenuItem<String>(
-                              value: marketplace.name,
-                              child: Text(marketplace.name),
-                            )), // Fetched marketplaces
-                    const PopupMenuItem<String>(
-                      value: 'All', // Hardcoded marketplace
-                      child: Text('All'),
-                    ),
-                  ],
-                  child: const IconButton(
-                    onPressed: null,
-                    icon: Icon(
-                      Icons.filter_alt_outlined,
+            Column(
+              children: [
+                Text(
+                  _selectedDate,
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: _selectedDate == 'Select Date'
+                        ? Colors.grey
+                        : AppColors.primaryBlue,
+                  ),
+                ),
+                Tooltip(
+                  message: 'Filter by Date',
+                  child: IconButton(
+                    onPressed: () async {
+                      final DateTime? picked = await showDatePicker(
+                        context: context,
+                        initialDate: DateTime.now(),
+                        firstDate: DateTime(2020),
+                        lastDate: DateTime.now(),
+                        builder: (context, child) {
+                          return Theme(
+                            data: Theme.of(context).copyWith(
+                              colorScheme: const ColorScheme.light(
+                                primary: AppColors.primaryBlue,
+                                onPrimary: Colors.white,
+                                surface: Colors.white,
+                                onSurface: Colors.black,
+                              ),
+                            ),
+                            child: child!,
+                          );
+                        },
+                      );
+
+                      if (picked != null) {
+                        String formattedDate =
+                            DateFormat('dd-MM-yyyy').format(picked);
+                        setState(() {
+                          _selectedDate = formattedDate;
+                        });
+
+                        if (selectedCourier != 'All') {
+                          bookProvider.fetchOrdersByMarketplace(
+                            selectedCourier,
+                            orderType,
+                            bookProvider.currentPageB2B,
+                            date: picked,
+                          );
+                        } else {
+                          bookProvider.fetchOrders(
+                            orderType,
+                            bookProvider.currentPageB2B,
+                            date: picked,
+                          );
+                        }
+                      }
+                    },
+                    icon: const Icon(
+                      Icons.calendar_today,
                       size: 30,
+                      color: AppColors.primaryBlue,
                     ),
                   ),
-                );
-              },
+                ),
+              ],
+            ),
+            const SizedBox(width: 8),
+            Column(
+              children: [
+                Text(
+                  selectedCourier,
+                ),
+                Consumer<MarketplaceProvider>(
+                  builder: (context, provider, child) {
+                    return PopupMenuButton<String>(
+                      tooltip: 'Filter by Marketplace',
+                      initialValue: 'All',
+                      onSelected: (String value) {
+                        setState(() {
+                          selectedCourier = value;
+                        });
+                        if (value == 'All') {
+                          bookProvider.fetchOrders(
+                              orderType, bookProvider.currentPageB2B,
+                              date: _selectedDate == 'Select Date'
+                                  ? null
+                                  : DateTime.parse(_selectedDate));
+                        } else {
+                          bookProvider.fetchOrdersByMarketplace(
+                              value,
+                              orderType,
+                              orderType == 'B2B'
+                                  ? bookProvider.currentPageB2B
+                                  : bookProvider.currentPageB2C,
+                              date: _selectedDate == 'Select Date'
+                                  ? null
+                                  : DateTime.parse(_selectedDate));
+                        }
+                        log('Selected: $value');
+                      },
+                      itemBuilder: (BuildContext context) =>
+                          <PopupMenuEntry<String>>[
+                        ...provider.marketplaces
+                            .map((marketplace) => PopupMenuItem<String>(
+                                  value: marketplace.name,
+                                  child: Text(marketplace.name),
+                                )), // Fetched marketplaces
+                        const PopupMenuItem<String>(
+                          value: 'All', // Hardcoded marketplace
+                          child: Text('All'),
+                        ),
+                      ],
+                      child: const IconButton(
+                        onPressed: null,
+                        icon: Icon(
+                          Icons.filter_alt_outlined,
+                          size: 30,
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ],
             ),
             const SizedBox(width: 8),
             _buildBookButton('Delhivery', orderType, AppColors.primaryBlue),
@@ -460,6 +588,8 @@ class _BookPageState extends State<BookPage>
 
                             if (selectedOrderIds.isEmpty) {
                               // Show an error message if no orders are selected
+                              ScaffoldMessenger.of(context)
+                                  .removeCurrentSnackBar();
                               ScaffoldMessenger.of(context).showSnackBar(
                                 const SnackBar(
                                   content: Text('No orders selected'),
@@ -492,6 +622,8 @@ class _BookPageState extends State<BookPage>
                               }
 
                               // Show feedback based on the result
+                              ScaffoldMessenger.of(context)
+                                  .removeCurrentSnackBar();
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
                                   content: Text(resultMessage),
@@ -534,6 +666,8 @@ class _BookPageState extends State<BookPage>
 
                             if (selectedOrderIds.isEmpty) {
                               // Show an error message if no orders are selected
+                              ScaffoldMessenger.of(context)
+                                  .removeCurrentSnackBar();
                               ScaffoldMessenger.of(context).showSnackBar(
                                 const SnackBar(
                                   content: Text('No orders selected'),
@@ -566,6 +700,8 @@ class _BookPageState extends State<BookPage>
                               }
 
                               // Show feedback based on the result
+                              ScaffoldMessenger.of(context)
+                                  .removeCurrentSnackBar();
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
                                   content: Text(resultMessage),
@@ -616,11 +752,15 @@ class _BookPageState extends State<BookPage>
     );
   }
 
-  Widget _buildBookButton(String provider, String orderType, Color color) {
+  Widget _buildBookButton(
+    String courier,
+    String orderType,
+    Color color,
+  ) {
     final bookProvider = Provider.of<BookProvider>(context);
 
     bool isLoading;
-    switch (provider) {
+    switch (courier) {
       case 'Delhivery':
         isLoading = bookProvider.isDelhiveryLoading;
         break;
@@ -637,7 +777,7 @@ class _BookPageState extends State<BookPage>
       onPressed: isLoading
           ? null
           : () async {
-              await _handleBooking(provider, orderType);
+              await _handleBooking(courier, orderType);
             },
       style: ElevatedButton.styleFrom(
         backgroundColor: color,
@@ -652,29 +792,38 @@ class _BookPageState extends State<BookPage>
                 strokeWidth: 2,
               ),
             )
-          : Text(provider),
+          : Text(courier),
     );
   }
 
-  Future<void> _handleBooking(String provider, String orderType) async {
+  Future<void> _handleBooking(String courier, String orderType) async {
     final bookProvider = Provider.of<BookProvider>(context, listen: false);
-    List<String> selectedOrderIds = [];
+    List<Map<String, String>> selectedOrderIds = [];
 
     // Collect selected order IDs based on the order type
     if (orderType == 'B2B') {
       selectedOrderIds = bookProvider.ordersB2B
           .where((order) => order.isSelected)
-          .map((order) => order.orderId)
+          .map((order) => {
+                'orderId': order.orderId,
+                'courierId': order.selectedCourierId!,
+                'selectedCourier': order.selectedCourier!
+              })
           .toList();
     } else {
       selectedOrderIds = bookProvider.ordersB2C
           .where((order) => order.isSelected)
-          .map((order) => order.orderId)
+          .map((order) => {
+                'orderId': order.orderId,
+                'courierId': order.selectedCourierId!,
+                'selectedCourier': order.selectedCourier!
+              })
           .toList();
     }
 
     // If no orders are selected, show a message
     if (selectedOrderIds.isEmpty) {
+      ScaffoldMessenger.of(context).removeCurrentSnackBar();
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('No orders selected'),
@@ -684,10 +833,16 @@ class _BookPageState extends State<BookPage>
       return;
     }
 
+    log('Selected Orders: $selectedOrderIds');
+
     // Confirm the selected orders using the new API
     try {
       String responseMessage = await bookProvider.bookOrders(
-          context, selectedOrderIds, provider.toLowerCase(), provider);
+          context,
+          selectedOrderIds,
+          courier.toLowerCase(),
+          courier); ////////////////////
+      ScaffoldMessenger.of(context).removeCurrentSnackBar();
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(responseMessage),
@@ -703,9 +858,10 @@ class _BookPageState extends State<BookPage>
             : bookProvider.currentPageB2C,
       );
     } catch (e) {
+      ScaffoldMessenger.of(context).removeCurrentSnackBar();
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Failed to book orders with $provider: $e'),
+          content: Text('Failed to book orders with $courier: $e'),
           backgroundColor: AppColors.cardsred,
         ),
       );
@@ -736,9 +892,9 @@ class _BookPageState extends State<BookPage>
               ],
             ),
           ),
-          buildHeader('ORDERS', flex: 7),
+          buildHeader('ORDERS', flex: 5),
           buildHeader('DELHIVERY', flex: 1),
-          buildHeader('SHIPROCKET', flex: 1),
+          buildHeader('SHIPROCKET', flex: 2),
         ],
       ),
     );
@@ -772,6 +928,12 @@ class _BookPageState extends State<BookPage>
           child: Checkbox(
             value: order.isSelected,
             onChanged: (value) {
+              setState(() {
+                if (value == false) {
+                  order.selectedCourier = null;
+                }
+              });
+              // order.isSelected = false;
               bookProvider.handleRowCheckboxChange(
                 order.orderId,
                 value!,
@@ -786,18 +948,154 @@ class _BookPageState extends State<BookPage>
     return Row(
       children: [
         Expanded(
-          flex: 9,
-          child: OrderCard(
+          flex: 6,
+          child: OrderComboCard(
             order: order,
-            isBookPage: true,
+            toShowBy: true,
+            toShowOrderDetails: true,
             checkboxWidget: checkboxWidget,
+            isBookPage: true,
           ),
         ),
-        const SizedBox(width: 20),
-        buildCell(order.freightCharge?.delhivery!, order.totalAmount!, flex: 1),
-        const SizedBox(width: 10),
-        buildCell(order.freightCharge?.shiprocket!, order.totalAmount!,
-            flex: 1),
+        // const SizedBox(width: 20),
+        order.freightCharge == null
+            ? const Text('No freight charge found')
+            : buildCell(order.freightCharge?.delhivery!, order.totalAmount!,
+                flex: 1),
+
+        order.availableCouriers!.isEmpty || order.availableCouriers == null
+            ? const Expanded(
+                flex: 2,
+                child: Center(
+                  child: Text(
+                    'Not Available',
+                  ),
+                ),
+              )
+            : Expanded(
+                flex: 2,
+                child: Column(
+                  children: [
+                    Container(
+                      decoration: BoxDecoration(
+                        border: Border.all(color: AppColors.cardsred),
+                        borderRadius: BorderRadius.circular(8.0),
+                      ),
+                      child: TextButton.icon(
+                        icon: const Icon(
+                          Icons.clear,
+                          color: AppColors.cardsred,
+                          size: 20,
+                        ),
+                        label: const Text(
+                          'Clear Selection',
+                          style: TextStyle(
+                            color: AppColors.cardsred,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                        style: TextButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 12,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8.0),
+                          ),
+                          backgroundColor: AppColors.cardsred.withOpacity(0.1),
+                        ),
+                        onPressed: () {
+                          setState(() {
+                            order.selectedCourier = null;
+                            order.isSelected = false;
+                            order.selectedCourierId = null;
+                          });
+                        },
+                      ),
+                    ),
+                    ListView.builder(
+                      shrinkWrap: true,
+                      itemCount: order.availableCouriers!.length,
+                      itemBuilder: (context, index) {
+                        var courier = order.availableCouriers![index];
+                        var freightCharge = courier['freight_charge'];
+                        var courierCompanyId = courier['courier_company_id'];
+
+                        Logger().e(courier);
+
+                        var total = order.totalAmount!;
+                        final percent = double.parse(
+                            ((freightCharge! / total) * 100)
+                                .toStringAsFixed(2));
+                        return RadioListTile(
+                          title: Text(
+                            courier['name'],
+                            style: const TextStyle(fontSize: 16),
+                          ),
+                          subtitle: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              courierCompanyId != null
+                                  ? Text.rich(
+                                      TextSpan(
+                                        text: 'Courier ID: ',
+                                        children: [
+                                          TextSpan(
+                                            text: courierCompanyId.toString(),
+                                            style: const TextStyle(
+                                              fontWeight: FontWeight.normal,
+                                              fontSize: 15,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 15,
+                                      ),
+                                    )
+                                  : const SizedBox(),
+                              Row(
+                                children: [
+                                  Text(
+                                    "Rs. $freightCharge",
+                                    style: const TextStyle(
+                                      color: AppColors.grey,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 15,
+                                    ),
+                                  ),
+                                  Text(
+                                    percent > 20
+                                        ? "($percent %)"
+                                        : "($percent %)",
+                                    style: TextStyle(
+                                      color: percent > 20
+                                          ? AppColors.cardsred
+                                          : AppColors.primaryGreen,
+                                      fontSize: 15,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                          value: courier['name'],
+                          groupValue: order.selectedCourier,
+                          onChanged: (value) {
+                            setState(() {
+                              order.isSelected = true;
+                              order.selectedCourier = value;
+                              order.selectedCourierId = courierCompanyId;
+                            });
+                          },
+                        );
+                      },
+                    ),
+                  ],
+                ),
+              )
       ],
     );
   }
@@ -805,31 +1103,27 @@ class _BookPageState extends State<BookPage>
   Widget buildCell(double? freightCharge, double total, {int flex = 1}) {
     final percent =
         double.parse(((freightCharge! / total) * 100).toStringAsFixed(2));
-    return Flexible(
+    return Expanded(
       flex: flex,
-      child: Container(
-        padding: const EdgeInsets.all(6.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
-              "Rs. $freightCharge",
-              style: const TextStyle(
-                color: AppColors.grey,
-                fontWeight: FontWeight.bold,
-                fontSize: 15,
-              ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text(
+            "Rs. $freightCharge",
+            style: const TextStyle(
+              color: AppColors.grey,
+              fontWeight: FontWeight.bold,
+              fontSize: 15,
             ),
-            Text(
-              percent > 20 ? "($percent %)" : "($percent %)",
-              style: TextStyle(
-                color:
-                    percent > 20 ? AppColors.cardsred : AppColors.primaryGreen,
-                fontSize: 15,
-              ),
+          ),
+          Text(
+            percent > 20 ? "($percent %)" : "($percent %)",
+            style: TextStyle(
+              color: percent > 20 ? AppColors.cardsred : AppColors.primaryGreen,
+              fontSize: 15,
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

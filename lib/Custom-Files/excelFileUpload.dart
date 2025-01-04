@@ -1,10 +1,14 @@
+import 'dart:developer';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:excel/excel.dart' as excel;
 import 'package:file_picker/file_picker.dart';
 import 'package:inventory_management/Custom-Files/colors.dart';
+import 'package:inventory_management/provider/label_data_provider.dart';
+// import 'package:path/path.dart';
+import 'package:provider/provider.dart';
 
-class ExcelFileUploader extends StatelessWidget {
+class ExcelFileUploader extends StatefulWidget {
   final String sheetName;
   final Function(List<Map<String, String>>) onUploadSuccess;
   final Function(String) onError;
@@ -16,17 +20,27 @@ class ExcelFileUploader extends StatelessWidget {
     required this.onError,
   });
 
+  @override
+  State<ExcelFileUploader> createState() => _ExcelFileUploaderState();
+}
+
+class _ExcelFileUploaderState extends State<ExcelFileUploader> {
   Future<void> _pickFile(BuildContext context) async {
+    final labelDataProvider = context.read<LabelDataProvider>();
+
     try {
       FilePickerResult? result = await FilePicker.platform
           .pickFiles(type: FileType.custom, allowedExtensions: ['xlsx']);
 
       if (result != null && result.files.single.bytes != null) {
+        labelDataProvider.setLoadingDataGroups(true);
+
         final Uint8List bytes = result.files.single.bytes!;
         var excelFile = excel.Excel.decodeBytes(bytes);
 
-        if (excelFile.tables.containsKey(sheetName)) {
-          List<List<dynamic>> rows = excelFile.tables[sheetName]?.rows ?? [];
+        if (excelFile.tables.containsKey(widget.sheetName)) {
+          List<List<dynamic>> rows =
+              excelFile.tables[widget.sheetName]?.rows ?? [];
 
           if (rows.isNotEmpty) {
             List<String> headers =
@@ -57,32 +71,42 @@ class ExcelFileUploader extends StatelessWidget {
               }
             }
 
-            onUploadSuccess(tempDataGroups);
+            widget.onUploadSuccess(tempDataGroups);
             _showMessage(context, 'Excel file uploaded successfully!');
             print('------------------------------');
           } else {
+            labelDataProvider.setLoadingDataGroups(false);
             _showMessage(
                 context, 'The uploaded sheet is empty. Please check your file.',
                 isError: true);
             print('------------------------------');
           }
         } else {
+          labelDataProvider.setLoadingDataGroups(false);
+
           _showMessage(context,
-              'Couldn\'t find "$sheetName" in the uploaded file. Please ensure it exists.',
+              'Couldn\'t find "${widget.sheetName}" in the uploaded file. Please ensure it exists.',
               isError: true);
           print('------------------------------');
         }
       } else {
+        labelDataProvider.setLoadingDataGroups(false);
+
         _showMessage(
             context, 'Please upload an Excel file (.xlsx) only. Try again.',
             isError: true);
         print('------------------------------');
       }
     } catch (e) {
-      onError('An unexpected error occurred: ${e.toString()}');
+      labelDataProvider.setLoadingDataGroups(false);
+      log('error: $e');
+
+      widget.onError('An unexpected error occurred: ${e.toString()}');
       _showMessage(context, 'An unexpected error occurred. Please try again.',
           isError: true);
       print('------------------------------');
+    } finally {
+      labelDataProvider.setLoadingDataGroups(false);
     }
   }
 

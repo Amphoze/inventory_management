@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:inventory_management/Custom-Files/colors.dart';
 import 'package:inventory_management/model/orders_model.dart';
 
-class ProductDetailsCard extends StatelessWidget {
+class ProductCard extends StatelessWidget {
   final Product product;
   final int index;
 
-  const ProductDetailsCard({
+  const ProductCard({
     super.key,
     required this.product,
     required this.index,
@@ -40,9 +40,10 @@ class ProductDetailsCard extends StatelessWidget {
   Column _buildProductColumn() {
     return Column(
       children: [
-        Text(
-          'Product ${index + 1}',
-          style: const TextStyle(fontWeight: FontWeight.bold),
+        const Text(
+          'Product',
+          // 'Product ${index + 1}',
+          style: TextStyle(fontWeight: FontWeight.bold),
           textAlign: TextAlign.center,
         ),
         const SizedBox(height: 2.0),
@@ -159,7 +160,7 @@ class ProductDetailsCard extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildInfoRow('Color:', product.color!.name ?? ''),
+        // _buildInfoRow('Color:', product.color!.name ?? ''),
         _buildInfoRow('Net Weight:',
             product.netWeight != null ? '${product.netWeight} kg' : ''),
         _buildInfoRow('Gross Weight:',

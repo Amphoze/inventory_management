@@ -1,4 +1,6 @@
 import 'dart:developer';
+import 'package:intl/intl.dart';
+import 'package:inventory_management/constants/constants.dart';
 import 'package:logger/logger.dart';
 import 'package:flutter/material.dart';
 import 'package:inventory_management/model/orders_model.dart'; // Ensure you have the Order model defined here
@@ -21,11 +23,13 @@ class OrdersProvider with ChangeNotifier {
   String? _selectedPayment;
   String? _selectedFilter;
   String? _selectedMarketplace;
+  String? _selectedOrderType;
+  String? _selectedCustomerType;
   String _expectedDeliveryDate = '';
   String _paymentDateTime = '';
   String _normalDate = '';
-  List<Order> filteredReadyOrders = [];
-  List<Order> filteredFailedOrders = [];
+  // List<Order> readyOrders = [];
+  // List<Order> failedOrders = [];
 
   int currentPage = 1;
   int totalPages = 1;
@@ -46,6 +50,8 @@ class OrdersProvider with ChangeNotifier {
   String? get selectedCourier => _selectedCourier;
   String? get selectedPayment => _selectedPayment;
   String? get selectedMarketplace => _selectedMarketplace;
+  String? get selectedOrderType => _selectedOrderType;
+  String? get selectedCustomerType => _selectedCustomerType;
   String? get selectedFilter => _selectedFilter;
   String get expectedDeliveryDate => _expectedDeliveryDate;
   String get paymentDateTime => _paymentDateTime;
@@ -116,6 +122,16 @@ class OrdersProvider with ChangeNotifier {
     notifyListeners();
   }
 
+  void selectOrderType(String? orderType) {
+    _selectedOrderType = orderType;
+    notifyListeners();
+  }
+
+  void selectCustomerType(String? customerType) {
+    _selectedCustomerType = customerType;
+    notifyListeners();
+  }
+
   // Method to set an initial value for pre-filling
   void setInitialMarketplace(String? marketplace) {
     _selectedMarketplace =
@@ -163,8 +179,7 @@ class OrdersProvider with ChangeNotifier {
       return;
     }
 
-    final url =
-        'https://inventory-management-backend-s37u.onrender.com/orders/$id';
+    final url = '${await ApiUrls.getBaseUrl()}/orders/$id';
     try {
       final response = await http.put(
         Uri.parse(url),
@@ -175,8 +190,10 @@ class OrdersProvider with ChangeNotifier {
         body: json.encode(updatedData),
       );
 
+      log("response: ${response.statusCode}");
+
       if (response.statusCode == 200) {
-        print('Order updated successfully');
+        Logger().e('Order updated successfully');
 
         await fetchFailedOrders();
         await fetchReadyOrders();
@@ -185,20 +202,65 @@ class OrdersProvider with ChangeNotifier {
       } else if (response.statusCode == 400) {
         final responseBody = json.decode(response.body);
         if (responseBody['message'] == 'orderId and status are required.') {
-          print('Error: Order ID and status are required.');
+          log('Error: Order ID and status are required.');
         }
       } else {
-        print('Failed to update order: ${response.body}');
+        log('Failed to update order: ${response.body}');
         return;
       }
     } catch (error) {
-      print('Error updating order: $error');
+      log('Error updating order: $error');
       rethrow;
     }
     notifyListeners();
   }
 
-  Future<void> fetchFailedOrders({int page = 1}) async {
+  Future<String> writeRemark(String id, String msg) async {
+    // Get the auth token
+    final token = await _getToken();
+
+    // Check if the token is valid
+    if (token == null || token.isEmpty) {
+      isLoading = false;
+      notifyListeners();
+      print('Token is missing. Please log in again.');
+      return 'Token is missing. Please log in again.';
+    }
+
+    final url = '${await ApiUrls.getBaseUrl()}/orders/$id';
+    try {
+      final response = await http.put(
+        Uri.parse(url),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+        body: json.encode({
+          "messages": {"confirmerMessage": msg}
+        }),
+      );
+
+      log("response: ${response.statusCode}");
+
+      if (response.statusCode == 200) {
+        // Logger().e('code: ${response.statusCode}');
+        // Logger().e('body: ${response.body}');
+
+        // await fetchReadyOrders();
+
+        notifyListeners();
+        return 'Remark added successfully';
+      } else {
+        log('Failed to update order: ${response.body}');
+        return 'Failed to add remark';
+      }
+    } catch (error) {
+      log('Error updating order: $error');
+      return 'Error updating order: $error';
+    }
+  }
+
+  Future<void> fetchFailedOrders({int page = 1, DateTime? date}) async {
     log("called");
     // Ensure the requested page number is valid
     if (page < 1 || page > totalFailedPages) {
@@ -209,8 +271,13 @@ class OrdersProvider with ChangeNotifier {
     isLoading = true;
     notifyListeners();
 
-    final String failedOrdersUrl =
-        'https://inventory-management-backend-s37u.onrender.com/orders?orderStatus=0&page=$page';
+    var failedOrdersUrl =
+        '${await ApiUrls.getBaseUrl()}/orders?orderStatus=0&page=$page';
+
+    if (date != null || date == 'Select Date') {
+      String formattedDate = DateFormat('yyyy-MM-dd').format(date!);
+      failedOrdersUrl += '&date=$formattedDate';
+    }
 
     // Get the auth token
     final token = await _getToken();
@@ -234,10 +301,10 @@ class OrdersProvider with ChangeNotifier {
       );
 
       if (responseFailed.statusCode == 200) {
-        log("Status: ${responseFailed.statusCode}");
+        // log("Status: ${responseFailed.statusCode}");
         final jsonData = json.decode(responseFailed.body);
 
-        log("jsonData: $jsonData");
+        // log("jsonData: $jsonData");
 
         failedOrders = (jsonData['orders'] as List)
             .map((order) => Order.fromJson(order))
@@ -249,12 +316,12 @@ class OrdersProvider with ChangeNotifier {
         // totalFailedPages = jsonData['totalPages'] ?? 1; // Default to 1 if null
         currentPageFailed = page; // Update the current page for failed orders
 
-        log("failedOrders: $failedOrders");
+        // log("failedOrders: $failedOrders");
 
         // Reset selections
         resetSelections();
         _selectedFailedOrders = List<bool>.filled(failedOrders.length, false);
-        filteredFailedOrders = failedOrders;
+        failedOrders = failedOrders;
       } else {
         throw Exception('Failed to load failed orders: ${responseFailed.body}');
       }
@@ -278,7 +345,7 @@ class OrdersProvider with ChangeNotifier {
   //   notifyListeners();
 
   //   final String failedOrdersUrl =
-  //       'https://inventory-management-backend-s37u.onrender.com/orders?orderStatus=0&page=$page';
+  //       '${await ApiUrls.getBaseUrl()}/orders?orderStatus=0&page=$page';
 
   //   // Get the auth token
   //   final token = await _getToken();
@@ -318,7 +385,7 @@ class OrdersProvider with ChangeNotifier {
   //       // Reset selections
   //       resetSelections();
   //       _selectedFailedOrders = List<bool>.filled(failedOrders.length, false);
-  //       filteredFailedOrders = failedOrders;
+  //       failedOrders = failedOrders;
   //     } else {
   //       throw Exception('Failed to load failed orders: ${responseFailed.body}');
   //     }
@@ -330,7 +397,8 @@ class OrdersProvider with ChangeNotifier {
   //   }
   // }
 
-  Future<void> fetchReadyOrders({int page = 1}) async {
+  Future<void> fetchReadyOrders({int page = 1, DateTime? date}) async {
+    log(date.toString());
     // Ensure the requested page number is valid
     if (page < 1 || page > totalReadyPages) {
       print('Invalid page number for ready orders: $page');
@@ -340,8 +408,15 @@ class OrdersProvider with ChangeNotifier {
     isLoading = true;
     notifyListeners();
 
-    final String readyOrdersUrl =
-        'https://inventory-management-backend-s37u.onrender.com/orders?orderStatus=1&page=$page';
+    var readyOrdersUrl =
+        '${await ApiUrls.getBaseUrl()}/orders?orderStatus=1&page=$page';
+
+    if (date != null || date == 'Select Date') {
+      String formattedDate = DateFormat('yyyy-MM-dd').format(date!);
+      readyOrdersUrl += '&date=$formattedDate';
+    }
+
+    log("readyOrdersUrl: $readyOrdersUrl");
 
     // Get the auth token
     final token = await _getToken();
@@ -369,10 +444,12 @@ class OrdersProvider with ChangeNotifier {
         totalReadyPages = jsonData['totalPages'] ?? 1; // Update total pages
         currentPageReady = page; // Update the current page for ready orders
 
+        // log("readyOrders: $readyOrders");
+
         // Reset selections
         resetSelections();
         _selectedReadyOrders = List<bool>.filled(readyOrders.length, false);
-        filteredReadyOrders = readyOrders;
+        readyOrders = readyOrders;
       } else {
         throw Exception('Failed to load ready orders: ${responseReady.body}');
       }
@@ -386,9 +463,8 @@ class OrdersProvider with ChangeNotifier {
 
   Future<String> confirmOrders(
       BuildContext context, List<String> orderIds) async {
-    const String baseUrl =
-        'https://inventory-management-backend-s37u.onrender.com';
-    const String confirmOrderUrl = '$baseUrl/orders/confirm';
+    String baseUrl = await ApiUrls.getBaseUrl();
+    String confirmOrderUrl = '$baseUrl/orders/confirm';
     final String? token = await _getToken();
     setConfirmStatus(true);
     notifyListeners();
@@ -428,23 +504,23 @@ class OrdersProvider with ChangeNotifier {
         setConfirmStatus(false);
         notifyListeners(); // Notify the UI to rebuild
 
-        return responseData['message'] ?? 'Orders confirmed successfully';
+        return responseData['message'] + "$orderIds" ??
+            'Orders Confirmed successfully';
       } else {
         return responseData['message'] ?? 'Failed to confirm orders';
       }
     } catch (error) {
       setConfirmStatus(false);
       notifyListeners();
-      print('Error during API request: $error');
+      Logger().e('Error during API request: $error');
       return 'An error occurred: $error';
     }
   }
 
   Future<String> cancelOrders(
       BuildContext context, List<String> orderIds) async {
-    const String baseUrl =
-        'https://inventory-management-backend-s37u.onrender.com';
-    const String cancelOrderUrl = '$baseUrl/orders/cancel';
+    String baseUrl = await ApiUrls.getBaseUrl();
+    String cancelOrderUrl = '$baseUrl/orders/cancel';
     final String? token = await _getToken();
     setCancelStatus(true);
     notifyListeners();
@@ -484,9 +560,9 @@ class OrdersProvider with ChangeNotifier {
         setCancelStatus(false);
         notifyListeners(); // Notify the UI to rebuild
 
-        return responseData['message'] ?? 'Orders confirmed successfully';
+        return responseData['message'] ?? 'Orders cancelled successfully';
       } else {
-        return responseData['message'] ?? 'Failed to confirm orders';
+        return responseData['message'] ?? 'Failed to cancel orders';
       }
     } catch (error) {
       setCancelStatus(false);
@@ -547,15 +623,18 @@ class OrdersProvider with ChangeNotifier {
   }
 
   // Update status for failed orders
-  Future<void> updateFailedOrders(BuildContext context) async {
+  Future<void> approveFailedOrders(BuildContext context) async {
     setUpdating(true);
     notifyListeners();
+    Logger().e('failedOrders: $failedOrders');
+
     final List<String> failedOrderIds = failedOrders
         .asMap()
         .entries
         .where((entry) => _selectedFailedOrders[entry.key])
         .map((entry) => entry.value.orderId)
         .toList();
+    Logger().e('failedOrderIds: $failedOrderIds');
 
     if (failedOrderIds.isEmpty) {
       _showSnackbar(context, 'No orders selected to update.');
@@ -621,7 +700,7 @@ class OrdersProvider with ChangeNotifier {
 
     // Define the URL for the update with query parameters
     final String url =
-        'https://inventory-management-backend-s37u.onrender.com/orders?orderId=$orderId&status=$newStatus';
+        '${await ApiUrls.getBaseUrl()}/orders/ApprovedFailed?order_id=$orderId';
 
     // Set up the headers for the request
     final headers = {
@@ -631,14 +710,15 @@ class OrdersProvider with ChangeNotifier {
 
     try {
       // Make the PUT request
-      final response = await http.put(
+      final response = await http.get(
         Uri.parse(url),
         headers: headers,
       );
 
       if (response.statusCode == 200) {
         // Show snackbar and trigger fetchOrders in parallel
-        _showSnackbar(context, 'Order status updated successfully');
+        _showSnackbar(
+            context, 'Order status updated successfully with $orderId');
         // Reload orders immediately after the snackbar is shown
         await fetchFailedOrders(); // Refresh failed orders
         await fetchReadyOrders(); // Refresh ready orders
@@ -690,14 +770,14 @@ class OrdersProvider with ChangeNotifier {
   }
 
   void clearSearchResults() {
-    filteredReadyOrders = readyOrders;
-    filteredFailedOrders = failedOrders;
+    readyOrders = readyOrders;
+    failedOrders = failedOrders;
     notifyListeners();
   }
 
   Future<void> searchReadyToConfirmOrders(String orderId) async {
     final url = Uri.parse(
-        'https://inventory-management-backend-s37u.onrender.com/orders?orderStatus=1&order_id=$orderId');
+        '${await ApiUrls.getBaseUrl()}/orders?orderStatus=1&order_id=$orderId');
     final token = await _getToken();
     if (token == null) return;
 
@@ -715,15 +795,15 @@ class OrdersProvider with ChangeNotifier {
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        print(response.body);
-
-        filteredReadyOrders = [Order.fromJson(data)];
-        print(response.body);
+        log('data: $data');
+        readyOrders = [Order.fromJson(data)];
+        // log('readyOrders: $readyOrders');
       } else {
-        filteredReadyOrders = [];
+        readyOrders = [];
       }
     } catch (e) {
-      filteredReadyOrders = [];
+      log('Search ready orders error: $e');
+      readyOrders = [];
     } finally {
       isLoading = false;
       notifyListeners();
@@ -732,7 +812,7 @@ class OrdersProvider with ChangeNotifier {
 
   Future<void> searchFailedOrders(String orderId) async {
     final url = Uri.parse(
-        'https://inventory-management-backend-s37u.onrender.com/orders?orderStatus=0&order_id=$orderId');
+        '${await ApiUrls.getBaseUrl()}/orders?orderStatus=0&order_id=$orderId');
     final token = await _getToken();
     if (token == null) return;
 
@@ -752,13 +832,14 @@ class OrdersProvider with ChangeNotifier {
         final data = jsonDecode(response.body);
         print(response.body);
 
-        filteredFailedOrders = [Order.fromJson(data)];
+        failedOrders = [Order.fromJson(data)];
         print(response.body);
       } else {
-        filteredFailedOrders = [];
+        failedOrders = [];
       }
     } catch (e) {
-      filteredFailedOrders = [];
+      Logger().e('Search failed orders error: $e');
+      failedOrders = [];
     } finally {
       isLoading = false;
       notifyListeners();
@@ -766,11 +847,21 @@ class OrdersProvider with ChangeNotifier {
   }
 
   Future<void> fetchOrdersByMarketplace(
-      String marketplace, int orderStatus, int page) async {
-    const String baseUrl =
-        'https://inventory-management-backend-s37u.onrender.com/orders';
+      String marketplace, int orderStatus, int page,
+      {DateTime? date}) async {
+    String baseUrl = '${await ApiUrls.getBaseUrl()}/orders';
+
+    // Build URL with base parameters
     String url =
         '$baseUrl?orderStatus=$orderStatus&marketplace=$marketplace&page=$page';
+
+    // Add date parameter if provided
+    if (date != null || date == 'Select Date') {
+      String formattedDate = DateFormat('yyyy-MM-dd').format(date!);
+      url += '&date=$formattedDate';
+    }
+
+    log("url: $url");
 
     String? token =
         await _getToken(); // Assuming you have a method to get the token
@@ -808,13 +899,13 @@ class OrdersProvider with ChangeNotifier {
 
         // Store fetched orders and update pagination state
         if (orderStatus == 1) {
-          filteredReadyOrders = orders;
+          readyOrders = orders;
           currentPageReady = page; // Track current page for B2B
           totalReadyPages =
               jsonResponse['totalPages']; // Assuming API returns total pages
           notifyListeners();
         } else {
-          filteredFailedOrders = orders;
+          failedOrders = orders;
           currentPageFailed = page; // Track current page for B2C
           totalFailedPages =
               jsonResponse['totalPages']; // Assuming API returns total pages
@@ -824,10 +915,10 @@ class OrdersProvider with ChangeNotifier {
         print('Unauthorized access - Token might be expired or invalid.');
       } else if (response.statusCode == 404) {
         if (orderStatus == 1) {
-          filteredReadyOrders = [];
+          readyOrders = [];
           notifyListeners();
         } else {
-          filteredFailedOrders = [];
+          failedOrders = [];
           notifyListeners();
         }
         print('Orders not found - Check the filter type.');

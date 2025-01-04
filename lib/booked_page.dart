@@ -1,0 +1,973 @@
+import 'dart:developer';
+import 'package:flutter/material.dart';
+import 'package:inventory_management/Custom-Files/colors.dart';
+import 'package:inventory_management/Custom-Files/custom_pagination.dart';
+import 'package:inventory_management/Custom-Files/loading_indicator.dart';
+import 'package:inventory_management/Widgets/order_combo_card.dart';
+import 'package:inventory_management/provider/marketplace_provider.dart';
+import 'package:provider/provider.dart';
+import 'package:inventory_management/provider/book_provider.dart';
+import 'package:inventory_management/model/orders_model.dart';
+import 'package:intl/intl.dart';
+
+class BookedPage extends StatefulWidget {
+  const BookedPage({super.key});
+
+  @override
+  _BookedPageState createState() => _BookedPageState();
+}
+
+class _BookedPageState extends State<BookedPage>
+    with SingleTickerProviderStateMixin {
+  final TextEditingController _searchController = TextEditingController();
+  final TextEditingController _pageController = TextEditingController();
+  bool areOrdersFetched = false;
+  String selectedCourier = 'All';
+  String _selectedDate = 'Select Date';
+  String selectedSearchType = 'Order ID'; // Default selection
+
+  @override
+  void initState() {
+    super.initState();
+    // _searchController.addListener(() {
+    //   if (_searchController.text.isEmpty) {
+    //     _refreshOrders();
+    //     Provider.of<BookProvider>(context, listen: false).clearSearchResults();
+    //   }
+    // });
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final bookProvider = Provider.of<BookProvider>(context, listen: false);
+      bookProvider.fetchBookedOrders(bookProvider.currentPageBooked);
+    });
+
+    context.read<MarketplaceProvider>().fetchMarketplaces();
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    _pageController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return ChangeNotifierProvider(
+      create: (_) => BookProvider(),
+      child: Scaffold(
+        backgroundColor: Colors.white,
+        body: Padding(
+          padding: const EdgeInsets.only(top: 3.0),
+          child: _buildOrderList(),
+        ),
+      ),
+    );
+  }
+
+// Refresh orders for both B2B and B2C
+  void _refreshOrders() {
+    final bookProvider = Provider.of<BookProvider>(context, listen: false);
+    bookProvider.fetchBookedOrders(bookProvider.currentPageBooked);
+  }
+
+  Widget _searchBar() {
+    final TextEditingController controller = _searchController;
+    return Padding(
+      padding: const EdgeInsets.all(8.0),
+      child: Row(
+        children: [
+          Container(
+            width: 200,
+            height: 34,
+            margin: const EdgeInsets.only(right: 16),
+            child: DropdownButtonFormField<String>(
+              value: selectedSearchType,
+              decoration: const InputDecoration(
+                border: OutlineInputBorder(),
+                contentPadding:
+                    EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
+              ),
+              items: const [
+                DropdownMenuItem(value: 'Order ID', child: Text('Order ID')),
+                DropdownMenuItem(value: 'AWB No.', child: Text('AWB No.')),
+              ],
+              onChanged: (value) {
+                log(value!);
+                setState(() {
+                  selectedSearchType = value;
+                });
+              },
+            ),
+          ),
+          Container(
+            width: 200,
+            height: 34,
+            decoration: BoxDecoration(
+              border: Border.all(
+                color: AppColors.green,
+                width: 1.5,
+              ),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: controller,
+                    decoration: InputDecoration(
+                      prefixIcon: IconButton(
+                        icon: const Icon(
+                          Icons.search,
+                          color: Color.fromRGBO(117, 117, 117, 1),
+                        ),
+                        onPressed: () {},
+                      ),
+                      hintText: 'Search Orders',
+                      hintStyle: const TextStyle(
+                        color: Color.fromRGBO(117, 117, 117, 1),
+                        fontSize: 16,
+                      ),
+                      border: InputBorder.none,
+                      contentPadding:
+                          const EdgeInsets.symmetric(vertical: 10.0),
+                    ),
+                    style: const TextStyle(color: AppColors.black),
+                    onChanged: (text) {
+                      if (text.isEmpty) {
+                        Provider.of<BookProvider>(context, listen: false)
+                            .clearSearchResults();
+                        _refreshOrders();
+                        // context.read<BookProvider>().fetchBookedOrders(page);
+                      } else {
+                        Provider.of<BookProvider>(context, listen: false)
+                            .searchBookedOrders(text, selectedSearchType);
+                      }
+                    },
+                    onSubmitted: (text) {
+                      Provider.of<BookProvider>(context, listen: false)
+                          .searchBookedOrders(text, selectedSearchType);
+                    },
+                  ),
+                ),
+                if (controller.text.isNotEmpty)
+                  IconButton(
+                    icon: Icon(
+                      Icons.close,
+                      color: Colors.grey.shade600,
+                    ),
+                    onPressed: () {
+                      controller.clear();
+                      // _refreshOrders(orderType);
+                      Provider.of<BookProvider>(context, listen: false)
+                          .clearSearchResults();
+                    },
+                  ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildOrderList() {
+    final bookProvider = Provider.of<BookProvider>(context);
+    List<Order> orders = bookProvider.ordersBooked;
+
+    int selectedCount = orders.where((order) => order.isSelected).length;
+
+    // Update flag when orders are fetched
+    if (orders.isNotEmpty) {
+      areOrdersFetched = true; // Set flag to true when orders are available
+    }
+
+    return Column(
+      children: [
+        Row(
+          children: [
+            _searchBar(),
+            const Spacer(),
+            // Add the Confirm button here
+            _buildConfirmButtons(),
+          ],
+        ),
+        _buildTableHeader(selectedCount),
+        Expanded(
+          child: bookProvider.isLoadingBooked
+              ? const Center(
+                  child: LoadingAnimation(
+                    icon: Icons.book_online,
+                    beginColor: Color.fromRGBO(189, 189, 189, 1),
+                    endColor: AppColors.primaryBlue,
+                    size: 80.0,
+                  ),
+                )
+              : orders.isEmpty
+                  ? const Center(
+                      child: Text(
+                        'No Orders Found',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.grey,
+                        ),
+                      ),
+                    )
+                  : ListView.builder(
+                      itemCount: orders.length,
+                      itemBuilder: (context, index) {
+                        return Column(
+                          children: [
+                            _buildOrderCard(orders[index]),
+                            const Divider(thickness: 1, color: Colors.grey),
+                          ],
+                        );
+                      },
+                    ),
+        ),
+        if (areOrdersFetched)
+          CustomPaginationFooter(
+            currentPage: bookProvider.currentPageBooked,
+            totalPages: bookProvider.totalPagesBooked,
+            buttonSize: 30,
+            pageController: _pageController,
+            onFirstPage: () {
+              bookProvider.fetchBookedOrders(1);
+            },
+            onLastPage: () {
+              bookProvider.fetchBookedOrders(bookProvider.totalPagesBooked);
+            },
+            onNextPage: () {
+              int currentPage = bookProvider.currentPageBooked;
+
+              int totalPages = bookProvider.totalPagesBooked;
+
+              if (currentPage < totalPages) {
+                bookProvider.fetchBookedOrders(currentPage + 1);
+              }
+            },
+            onPreviousPage: () {
+              int currentPage = bookProvider.currentPageBooked;
+
+              if (currentPage > 1) {
+                bookProvider.fetchBookedOrders(currentPage - 1);
+              }
+            },
+            onGoToPage: (int page) {
+              int totalPages = bookProvider.totalPagesBooked;
+
+              if (page > 0 && page <= totalPages) {
+                bookProvider.fetchBookedOrders(page);
+              } else {
+                _showSnackbar(context,
+                    'Please enter a valid page number between 1 and $totalPages.');
+              }
+            },
+            onJumpToPage: () {
+              final String pageText = _pageController.text;
+              int? page = int.tryParse(pageText);
+              int totalPages = bookProvider.totalPagesBooked;
+
+              if (page == null || page < 1 || page > totalPages) {
+                _showSnackbar(context,
+                    'Please enter a valid page number between 1 and $totalPages.');
+                return;
+              }
+
+              bookProvider.fetchBookedOrders(page);
+
+              _pageController.clear();
+            },
+          ),
+      ],
+    );
+  }
+
+  void _showSnackbar(BuildContext context, String message) {
+    ScaffoldMessenger.of(context).removeCurrentSnackBar();
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message)),
+    );
+  }
+
+  Widget _buildConfirmButtons() {
+    final bookProvider = Provider.of<BookProvider>(context, listen: false);
+    return Align(
+      alignment: Alignment.topRight,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.end,
+          children: [
+            // Add date filter button
+            // ElevatedButton.icon(
+            //   style: ElevatedButton.styleFrom(
+            //     backgroundColor: AppColors.primaryBlue,
+            //   ),
+            //   onPressed: () => _selectDate(context),
+            //   icon: const Icon(Icons.calendar_today, color: Colors.white),
+            //   label: Text(
+            //     _selectedDate == null
+            //         ? 'Select Date'
+            //         : DateFormat('yyyy-MM-dd').format(_selectedDate!),
+            //     style: const TextStyle(color: Colors.white),
+            //   ),
+            // ),
+            Column(
+              children: [
+                Text(
+                  _selectedDate,
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: _selectedDate == 'Select Date'
+                        ? Colors.grey
+                        : AppColors.primaryBlue,
+                  ),
+                ),
+                Tooltip(
+                  message: 'Filter by Date',
+                  child: IconButton(
+                    onPressed: () async {
+                      final DateTime? picked = await showDatePicker(
+                        context: context,
+                        initialDate: DateTime.now(),
+                        firstDate: DateTime(2020),
+                        lastDate: DateTime.now(),
+                        builder: (context, child) {
+                          return Theme(
+                            data: Theme.of(context).copyWith(
+                              colorScheme: const ColorScheme.light(
+                                primary: AppColors.primaryBlue,
+                                onPrimary: Colors.white,
+                                surface: Colors.white,
+                                onSurface: Colors.black,
+                              ),
+                            ),
+                            child: child!,
+                          );
+                        },
+                      );
+
+                      if (picked != null) {
+                        String formattedDate =
+                            DateFormat('dd-MM-yyyy').format(picked);
+                        setState(() {
+                          _selectedDate = formattedDate;
+                        });
+
+                        if (selectedCourier != 'All') {
+                          bookProvider.fetchBookedOrdersByMarketplace(
+                            selectedCourier,
+                            bookProvider.currentPageBooked,
+                            date: picked,
+                          );
+                        } else {
+                          bookProvider.fetchBookedOrders(
+                            bookProvider.currentPageBooked,
+                            date: picked,
+                          );
+                        }
+                      }
+                    },
+                    icon: const Icon(
+                      Icons.calendar_today,
+                      size: 30,
+                      color: AppColors.primaryBlue,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(width: 8),
+            Column(
+              children: [
+                Text(selectedCourier),
+                Consumer<MarketplaceProvider>(
+                  builder: (context, provider, child) {
+                    return PopupMenuButton<String>(
+                      tooltip: 'Filter by Marketplace',
+                      initialValue: 'All',
+                      onSelected: (String value) {
+                        setState(() {
+                          selectedCourier = value;
+                        });
+                        if (value == 'All') {
+                          bookProvider.fetchBookedOrders(
+                              bookProvider.currentPageBooked,
+                              date: _selectedDate == 'Select Date'
+                                  ? null
+                                  : DateTime.parse(_selectedDate));
+                        } else {
+                          bookProvider.fetchBookedOrdersByMarketplace(
+                              value, bookProvider.currentPageBooked,
+                              date: _selectedDate == 'Select Date'
+                                  ? null
+                                  : DateTime.parse(_selectedDate));
+                        }
+                        log('Selected: $value');
+                      },
+                      itemBuilder: (BuildContext context) =>
+                          <PopupMenuEntry<String>>[
+                        ...provider.marketplaces
+                            .map((marketplace) => PopupMenuItem<String>(
+                                  value: marketplace.name,
+                                  child: Text(marketplace.name),
+                                )), // Fetched marketplaces
+                        const PopupMenuItem<String>(
+                          value: 'All', // Hardcoded marketplace
+                          child: Text('All'),
+                        ),
+                      ],
+                      child: const IconButton(
+                        onPressed: null,
+                        icon: Icon(
+                          Icons.filter_alt_outlined,
+                          size: 30,
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ],
+            ),
+            const SizedBox(width: 8),
+            // _buildBookButton('Cancel', orderType, AppColors.cardsred),
+            // const SizedBox(width: 8),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primaryBlue,
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8)),
+              ),
+              onPressed: bookProvider.isRebook
+                  ? null
+                  : () async {
+                      log("B2C");
+                      final provider =
+                          Provider.of<BookProvider>(context, listen: false);
+                      List<String> selectedOrderIds = provider.ordersBooked
+                          .where((order) => order.isSelected)
+                          .map((order) => order.orderId)
+                          .toList();
+
+                      log("Selected Order IDs: $selectedOrderIds");
+
+                      if (selectedOrderIds.isEmpty) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: const Row(
+                              children: [
+                                Icon(Icons.error_outline, color: Colors.white),
+                                SizedBox(width: 8),
+                                Text('Please select at least one order'),
+                              ],
+                            ),
+                            backgroundColor: AppColors.cardsred,
+                            behavior: SnackBarBehavior.floating,
+                            margin: const EdgeInsets.all(8),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                          ),
+                        );
+                      } else {
+                        provider.setRebookingStatus(true);
+                        String resultMessage =
+                            await provider.rebookOrders(selectedOrderIds);
+                        provider.setRebookingStatus(false);
+
+                        bool isSuccess = resultMessage.contains('success');
+
+                        if (context.mounted) {
+                          showDialog(
+                            context: context,
+                            builder: (context) => AlertDialog(
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              titlePadding: EdgeInsets.zero,
+                              title: Container(
+                                padding: const EdgeInsets.all(16),
+                                decoration: BoxDecoration(
+                                  color: isSuccess
+                                      ? AppColors.green.withOpacity(0.1)
+                                      : AppColors.cardsred.withOpacity(0.1),
+                                  borderRadius: const BorderRadius.only(
+                                    topLeft: Radius.circular(12),
+                                    topRight: Radius.circular(12),
+                                  ),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Icon(
+                                      isSuccess
+                                          ? Icons.check_circle
+                                          : Icons.error_outline,
+                                      color: isSuccess
+                                          ? AppColors.green
+                                          : AppColors.cardsred,
+                                      size: 28,
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: Text(
+                                        isSuccess
+                                            ? 'Orders Rebooked Successfully'
+                                            : 'Rebooking Status',
+                                        style: TextStyle(
+                                          color: isSuccess
+                                              ? AppColors.green
+                                              : AppColors.cardsred,
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 18,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              content: Container(
+                                width: double.maxFinite,
+                                constraints:
+                                    const BoxConstraints(maxHeight: 400),
+                                child: SingleChildScrollView(
+                                  child: Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        resultMessage,
+                                        style: const TextStyle(fontSize: 16),
+                                      ),
+                                      if (isSuccess &&
+                                          selectedOrderIds.isNotEmpty) ...[
+                                        const SizedBox(height: 20),
+                                        Container(
+                                          padding: const EdgeInsets.all(12),
+                                          decoration: BoxDecoration(
+                                            color: Colors.grey.withOpacity(0.1),
+                                            borderRadius:
+                                                BorderRadius.circular(8),
+                                          ),
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                'Rebooked Orders (${selectedOrderIds.length})',
+                                                style: const TextStyle(
+                                                  fontWeight: FontWeight.w600,
+                                                  fontSize: 16,
+                                                ),
+                                              ),
+                                              const SizedBox(height: 8),
+                                              Text(
+                                                'These orders can be found in the confirm section:',
+                                                style: TextStyle(
+                                                  color: Colors.grey[600],
+                                                  fontSize: 14,
+                                                ),
+                                              ),
+                                              const SizedBox(height: 12),
+                                              ...selectedOrderIds
+                                                  .map((orderId) => Padding(
+                                                        padding:
+                                                            const EdgeInsets
+                                                                .symmetric(
+                                                                vertical: 4),
+                                                        child: Row(
+                                                          children: [
+                                                            Icon(Icons.circle,
+                                                                size: 8,
+                                                                color: Colors
+                                                                    .grey[600]),
+                                                            const SizedBox(
+                                                                width: 8),
+                                                            Text(
+                                                              'Order ID: $orderId',
+                                                              style:
+                                                                  const TextStyle(
+                                                                      fontSize:
+                                                                          14),
+                                                            ),
+                                                          ],
+                                                        ),
+                                                      )),
+                                            ],
+                                          ),
+                                        ),
+                                      ],
+                                    ],
+                                  ),
+                                ),
+                              ),
+                              actions: [
+                                TextButton(
+                                  onPressed: () => Navigator.of(context).pop(),
+                                  style: TextButton.styleFrom(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 24, vertical: 12),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(6),
+                                    ),
+                                  ),
+                                  child: const Text(
+                                    'OK',
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w500,
+                                      color: AppColors.primaryBlue,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                        }
+                      }
+                    },
+              child: bookProvider.isRebook
+                  ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(color: Colors.white),
+                    )
+                  : const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.refresh, size: 20),
+                        SizedBox(width: 8),
+                        Text(
+                          'Rebook Orders',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
+            ),
+            const SizedBox(width: 8),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.cardsred,
+              ),
+              onPressed: bookProvider.isCancel
+                  ? null // Disable button while loading
+                  : () async {
+                      log("B2C");
+                      final provider =
+                          Provider.of<BookProvider>(context, listen: false);
+
+                      // Collect selected order IDs
+                      List<String> selectedOrderIds = provider.ordersBooked
+                          .where((order) => order.isSelected)
+                          .map((order) => order.orderId)
+                          .toList();
+
+                      log("Selected Order IDs: $selectedOrderIds");
+                      if (selectedOrderIds.isEmpty) {
+                        // Show an error message if no orders are selected
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('No orders selected'),
+                            backgroundColor: AppColors.cardsred,
+                          ),
+                        );
+                      } else {
+                        // Set loading status to true before starting the operation
+                        provider.setCancelStatus(true);
+
+                        // Call confirmOrders method with selected IDs
+                        String resultMessage = await provider.cancelOrders(
+                            context, selectedOrderIds);
+
+                        // Set loading status to false after operation completes
+                        provider.setCancelStatus(false);
+
+                        // Determine the background color based on the result
+                        Color snackBarColor;
+                        if (resultMessage.contains('success')) {
+                          snackBarColor = AppColors.green; // Success: Green
+                        } else if (resultMessage.contains('error') ||
+                            resultMessage.contains('failed')) {
+                          snackBarColor = AppColors.cardsred; // Error: Red
+                        } else {
+                          snackBarColor = AppColors.orange; // Other: Orange
+                        }
+
+                        // Show feedback based on the result
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(resultMessage),
+                            backgroundColor: snackBarColor,
+                          ),
+                        );
+                      }
+                    },
+              child: bookProvider.isCancel
+                  ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(color: Colors.white),
+                    )
+                  : const Text(
+                      'Cancel Orders',
+                      style: TextStyle(color: Colors.white),
+                    ),
+            ),
+            const SizedBox(width: 8),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primaryBlue,
+              ),
+              onPressed: bookProvider.isRefreshingOrders
+                  ? null
+                  : () async {
+                      _refreshOrders();
+                    },
+              child: bookProvider.isRefreshingOrders
+                  ? const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(
+                        color: Colors.white,
+                        strokeWidth: 2,
+                      ),
+                    )
+                  : const Text(
+                      'Refresh',
+                      style: TextStyle(color: Colors.white),
+                    ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTableHeader(int selectedCount) {
+    final bookProvider = Provider.of<BookProvider>(context);
+    return Container(
+      color: Colors.grey[300],
+      padding: const EdgeInsets.symmetric(vertical: 12),
+      child: Row(
+        children: [
+          SizedBox(
+            width: 140,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Checkbox(
+                  value: bookProvider.selectAllBooked,
+                  onChanged: (value) {
+                    bookProvider.toggleBookedSelectAll(value);
+                  },
+                ),
+                Text("Select All ($selectedCount)"),
+              ],
+            ),
+          ),
+          buildHeader('ORDERS', flex: 7),
+          buildHeader('Booked', flex: 2),
+        ],
+      ),
+    );
+  }
+
+  Widget buildHeader(String title, {int flex = 1}) {
+    return Flexible(
+      flex: flex,
+      child: Center(
+        child: Text(
+          title,
+          style: const TextStyle(
+              fontWeight: FontWeight.bold, fontSize: 16, color: Colors.black87),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildOrderCard(Order order) {
+    final bookProvider = Provider.of<BookProvider>(context);
+    Widget? checkboxWidget;
+    bool isBookPage = true;
+
+    // checkbox widget if it's for the book page
+    if (isBookPage) {
+      checkboxWidget = SizedBox(
+        width: 30,
+        height: 30,
+        child: Transform.scale(
+          scale: 0.9,
+          child: Checkbox(
+            value: order.isSelected,
+            onChanged: (value) {
+              bookProvider.handleRowCheckboxChangeBooked(
+                order.orderId,
+                value!,
+              );
+            },
+          ),
+        ),
+      );
+    }
+
+    return Row(
+      children: [
+        Expanded(
+          flex: 14,
+          child: OrderComboCard(
+            order: order,
+            toShowBy: true,
+            isBookedPage: true,
+            toShowOrderDetails: true,
+            checkboxWidget: checkboxWidget,
+          ),
+        ),
+        const SizedBox(width: 50),
+        buildCell(order.isBooked, flex: 2),
+        // buildCell(order['isBooked']['status'], flex: 2),
+      ],
+    );
+  }
+
+  Widget buildCell(bool isBooked, {int flex = 1}) {
+    return Flexible(
+      flex: flex,
+      child: Container(
+        padding: const EdgeInsets.all(6.0),
+        child: isBooked
+            ? const Icon(
+                Icons.check,
+                size: 40,
+                color: AppColors.green,
+              )
+            : const Icon(
+                Icons.close,
+                size: 40,
+                color: AppColors.cardsred,
+              ),
+      ),
+    );
+  }
+
+  void _showPicklistSourceDialog(BuildContext context) {
+    final bookProvider = context.read<BookProvider>();
+    showDialog(
+      context: context,
+      builder: (_) {
+        // Add a state variable to track the selected option
+        String? selectedMarketplace;
+
+        return AlertDialog(
+          title: const Text(
+            'Select Marketplace',
+            style: TextStyle(
+              fontWeight: FontWeight.w500,
+              color: AppColors.primaryBlue,
+            ),
+          ),
+          content: StatefulBuilder(
+            builder: (BuildContext context, StateSetter setState) {
+              return Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  RadioListTile<String>(
+                    contentPadding: const EdgeInsets.all(0),
+                    title:
+                        const Text('Website', style: TextStyle(fontSize: 16)),
+                    value: 'website',
+                    groupValue: selectedMarketplace,
+                    onChanged: (value) {
+                      setState(() {
+                        selectedMarketplace = value; // Store selected option
+                      });
+                    },
+                  ),
+                  RadioListTile<String>(
+                    contentPadding: const EdgeInsets.all(0),
+                    title:
+                        const Text('Offline', style: TextStyle(fontSize: 16)),
+                    value: 'offline',
+                    groupValue: selectedMarketplace,
+                    onChanged: (value) {
+                      setState(() {
+                        selectedMarketplace = value; // Store selected option
+                      });
+                    },
+                  ),
+                  RadioListTile<String>(
+                    contentPadding: const EdgeInsets.all(0),
+                    title: const Text('All', style: TextStyle(fontSize: 16)),
+                    value: 'all',
+                    groupValue: selectedMarketplace,
+                    onChanged: (value) {
+                      setState(() {
+                        selectedMarketplace = value; // Store selected option
+                      });
+                    },
+                  ),
+                ],
+              );
+            },
+          ),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          backgroundColor: Colors.white,
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(); // Close the dialog
+              },
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () {
+                if (selectedMarketplace != null) {
+                  log('Selected Marketplace: $selectedMarketplace');
+
+                  // Show loading dialog
+                  showDialog(
+                    context: context,
+                    barrierDismissible: false, // Prevent dismissing the dialog
+                    builder: (BuildContext context) {
+                      return const AlertDialog(
+                        content: Row(
+                          children: [
+                            CircularProgressIndicator(),
+                            SizedBox(width: 10),
+                            Text("Generating picklist"),
+                          ],
+                        ),
+                      );
+                    },
+                  ).then((_) {
+                    // Close the marketplace selection dialog after loading dialog is dismissed
+                    Navigator.of(context).pop();
+                  });
+
+                  // Fetch order picker data
+                  bookProvider
+                      .generatePicklist(context, selectedMarketplace!)
+                      .then((_) {
+                    Navigator.of(context).pop(); // Close loading dialog
+                  });
+                }
+              },
+              child: const Text(
+                'Ok',
+                style: TextStyle(color: AppColors.primaryBlue),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+}
