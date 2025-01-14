@@ -1,5 +1,4 @@
 import 'dart:developer';
-
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:inventory_management/Custom-Files/colors.dart';
@@ -503,13 +502,39 @@ class _OrderComboCardState extends State<OrderComboCard> {
                                               ),
                                               const SizedBox(width: 16),
                                               ElevatedButton(
-                                                onPressed: () {
-                                                  Navigator.of(context).pop();
-                                                  log('remark${bookRemark.text}');
+                                                onPressed: () async {
+                                                  showDialog(
+                                                    context: context,
+                                                    barrierDismissible: false, // Prevent dismissing the dialog by tapping outside
+                                                    builder: (_) {
+                                                      return AlertDialog(
+                                                        shape: RoundedRectangleBorder(
+                                                          borderRadius: BorderRadius.circular(16),
+                                                        ),
+                                                        insetPadding: const EdgeInsets.symmetric(horizontal: 20),
+                                                        content: const Row(
+                                                          mainAxisSize: MainAxisSize.min,
+                                                          children: [
+                                                            CircularProgressIndicator(),
+                                                            SizedBox(width: 20), // Adjust to create horizontal spacing
+                                                            Text(
+                                                              'Submitting Remark',
+                                                              style: TextStyle(fontSize: 16),
+                                                            ),
+                                                          ],
+                                                        ),
+                                                      );
+                                                    },
+                                                  );
 
-                                                  pro.writeRemark(context, widget.order.id, bookRemark.text);
+                                                  final res = await pro.writeRemark(context, widget.order.id, bookRemark.text);
 
-                                                  log('between');
+                                                  log('saved :)');
+
+                                                  Navigator.pop(context);
+                                                  Navigator.pop(context);
+
+                                                  res ? await pro.fetchBookedOrders(pro.currentPageBooked) : null;
                                                 },
                                                 style: ElevatedButton.styleFrom(
                                                   padding: const EdgeInsets.symmetric(
@@ -541,7 +566,6 @@ class _OrderComboCardState extends State<OrderComboCard> {
                               setState(() {
                                 accountsRemark.text = widget.order.messages!['accountMessage'].toString() ?? '';
                               });
-
                               showDialog(
                                 context: context,
                                 builder: (_) {
@@ -593,12 +617,39 @@ class _OrderComboCardState extends State<OrderComboCard> {
                                               ),
                                               const SizedBox(width: 16),
                                               ElevatedButton(
-                                                onPressed: () {
-                                                  log(accountsRemark.text);
+                                                onPressed: () async {
+                                                  showDialog(
+                                                    context: context,
+                                                    barrierDismissible: false, // Prevent dismissing the dialog by tapping outside
+                                                    builder: (_) {
+                                                      return AlertDialog(
+                                                        shape: RoundedRectangleBorder(
+                                                          borderRadius: BorderRadius.circular(16),
+                                                        ),
+                                                        insetPadding: const EdgeInsets.symmetric(horizontal: 20),
+                                                        content: const Row(
+                                                          mainAxisSize: MainAxisSize.min,
+                                                          children: [
+                                                            CircularProgressIndicator(),
+                                                            SizedBox(width: 20), // Adjust to create horizontal spacing
+                                                            Text(
+                                                              'Submitting Remark',
+                                                              style: TextStyle(fontSize: 16),
+                                                            ),
+                                                          ],
+                                                        ),
+                                                      );
+                                                    },
+                                                  );
 
-                                                  pro.writeRemark(context, widget.order.id, accountsRemark.text);
+                                                  final res = await pro.writeRemark(context, widget.order.id, accountsRemark.text);
 
-                                                  Navigator.of(context).pop();
+                                                  log('saved :)');
+
+                                                  Navigator.pop(context);
+                                                  Navigator.pop(context);
+
+                                                  res ? await pro.fetchAccountedOrders(pro.currentPageBooked) : null;
                                                 },
                                                 style: ElevatedButton.styleFrom(
                                                   padding: const EdgeInsets.symmetric(
@@ -624,16 +675,21 @@ class _OrderComboCardState extends State<OrderComboCard> {
                           )
                         : const SizedBox(),
                     ///////////////////////////////////////////////////////////////
-                    if (widget.order.messages != null && widget.order.messages!['confirmerMessage'] != null && widget.order.messages!['confirmerMessage'].toString().isNotEmpty) Utils().showMessage(context, 'Confirmer Remark', widget.order.messages!['confirmerMessage'].toString()),
+                    if (widget.order.messages != null && widget.order.messages!['confirmerMessage'] != null && widget.order.messages!['confirmerMessage'].toString().isNotEmpty) ...[
+                      Utils().showMessage(context, 'Confirmer Remark', widget.order.messages!['confirmerMessage'].toString())
+                    ],
                     ///////////////////////////////////////////////////////////
-                    if (widget.order.messages != null && widget.order.messages!['accountMessage'] != null && widget.order.messages!['accountMessage'].toString().isNotEmpty) Utils().showMessage(context, 'Account Remark', widget.order.messages!['accountMessage'].toString()),
+                    if (widget.order.messages != null && widget.order.messages!['accountMessage'] != null && widget.order.messages!['accountMessage'].toString().isNotEmpty) ...[
+                      Utils().showMessage(context, 'Account Remark', widget.order.messages!['accountMessage'].toString()),
+                    ],
                     /////////////////////////////////////////////////////////
-                    if (widget.order.messages != null && widget.order.messages!['bookerMessage'] != null && widget.order.messages!['bookerMessage'].toString().isNotEmpty) Utils().showMessage(context, 'Booker Remark', widget.order.messages!['bookerMessage'].toString()),
+                    if (widget.order.messages != null && widget.order.messages!['bookerMessage'] != null && widget.order.messages!['bookerMessage'].toString().isNotEmpty && widget.isBookedPage) ...[
+                      Utils().showMessage(context, 'Booker Remark', widget.order.messages!['bookerMessage'].toString())
+                    ],
                   ],
                 ),
               ],
             ),
-
             /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
             ListView.builder(
               shrinkWrap: true,
@@ -1005,7 +1061,7 @@ class _OrderComboCardState extends State<OrderComboCard> {
         onTap: () {
           showDialog(
             context: context,
-            builder: (BuildContext context) {
+            builder: (_) {
               return AlertDialog(
                 title: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,

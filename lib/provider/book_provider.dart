@@ -101,8 +101,7 @@ class BookProvider with ChangeNotifier {
     await fetchOrders('B2B', page);
   }
 
-  Future<String> cancelOrders(
-      BuildContext context, List<String> orderIds) async {
+  Future<String> cancelOrders(BuildContext context, List<String> orderIds) async {
     String baseUrl = await ApiUrls.getBaseUrl();
     String cancelOrderUrl = '$baseUrl/orders/cancel';
     // final String? token = await _getToken();
@@ -153,19 +152,13 @@ class BookProvider with ChangeNotifier {
     }
   }
 
-  Future<void> writeRemark(BuildContext context, String id, String msg) async {
+  Future<bool> writeRemark(BuildContext context, String id, String msg) async {
     // Get the auth token
     final token = await _getToken();
-
-    isLoadingBooked = true;
     notifyListeners();
-
-    // Check if the token is valid
     if (token!.isEmpty) {
-      isLoadingBooked = false;
-      notifyListeners();
       print('Token is missing. Please log in again.');
-      return;
+      return false;
     }
 
     final url = '${await ApiUrls.getBaseUrl()}/orders/$id';
@@ -177,99 +170,24 @@ class BookProvider with ChangeNotifier {
           'Authorization': 'Bearer $token',
         },
         body: json.encode({
-          "messages": {"bookerMessage": msg}
+          "messages": {
+            "bookerMessage": msg
+          }
         }),
       );
 
       log("response: ${response.statusCode}");
 
       if (response.statusCode == 200) {
-        // Logger().e('code: ${response.statusCode}');
-        // Logger().e('body: ${response.body}');
-
-        // ScaffoldMessenger.of(context).showSnackBar(
-        //   SnackBar(
-        //     behavior: SnackBarBehavior.floating,
-        //     margin: const EdgeInsets.all(10),
-        //     padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-        //     backgroundColor: Colors.green.shade600,
-        //     duration: const Duration(seconds: 3),
-        //     shape: RoundedRectangleBorder(
-        //       borderRadius: BorderRadius.circular(12),
-        //     ),
-        //     elevation: 6,
-        //     content: TweenAnimationBuilder<double>(
-        //       tween: Tween(begin: 0.0, end: 1.0),
-        //       duration: const Duration(milliseconds: 400),
-        //       curve: Curves.easeOutCubic,
-        //       builder: (context, value, child) => Transform.scale(
-        //         scale: value,
-        //         child: Opacity(
-        //           opacity: value,
-        //           child: Row(
-        //             children: [
-        //               Container(
-        //                 padding: const EdgeInsets.all(4),
-        //                 decoration: BoxDecoration(
-        //                   color: Colors.white.withOpacity(0.2),
-        //                   shape: BoxShape.circle,
-        //                 ),
-        //                 child: const Icon(
-        //                   Icons.check_circle_rounded,
-        //                   color: Colors.white,
-        //                   size: 22,
-        //                 ),
-        //               ),
-        //               const SizedBox(width: 16),
-        //               const Expanded(
-        //                 child: Text(
-        //                   'Remark added successfully',
-        //                   style: TextStyle(
-        //                     color: Colors.white,
-        //                     fontSize: 15,
-        //                     fontWeight: FontWeight.w500,
-        //                     letterSpacing: 0.2,
-        //                   ),
-        //                 ),
-        //               ),
-        //               const SizedBox(width: 8),
-        //               IconButton(
-        //                 constraints: const BoxConstraints(),
-        //                 padding: EdgeInsets.zero,
-        //                 icon: const Icon(
-        //                   Icons.close,
-        //                   color: Colors.white70,
-        //                   size: 20,
-        //                 ),
-        //                 onPressed: () {
-        //                   ScaffoldMessenger.of(context).hideCurrentSnackBar();
-        //                 },
-        //               ),
-        //             ],
-        //           ),
-        //         ),
-        //       ),
-        //     ),
-        //   ),
-        // );
-
-        // await fetchFailedOrders();
-        log('fetch called');
-        fetchBookedOrders(currentPageBooked);
-
-        notifyListeners();
+        return true;
       } else {
         log('Failed to update order: ${response.body}');
-        return;
+        return false;
       }
     } catch (error) {
       log('Error updating order: $error');
-      rethrow;
-    } finally {
-      isLoadingBooked = false;
-      notifyListeners();
+      return false;
     }
-    notifyListeners();
   }
 
   Future<String> rebookOrders(List<String> orderIds) async {
@@ -337,8 +255,7 @@ class BookProvider with ChangeNotifier {
       return;
     }
 
-    String url =
-        '${await ApiUrls.getBaseUrl()}/orders?filter=$type&orderStatus=3&page=$page';
+    String url = '${await ApiUrls.getBaseUrl()}/orders?filter=$type&orderStatus=3&page=$page';
 
     if (date != null || date == 'Select Date') {
       String formattedDate = DateFormat('yyyy-MM-dd').format(date!);
@@ -373,21 +290,17 @@ class BookProvider with ChangeNotifier {
 
       if (response.statusCode == 200) {
         final jsonResponse = jsonDecode(response.body);
-        List<Order> orders = (jsonResponse['orders'] as List)
-            .map((orderJson) => Order.fromJson(orderJson))
-            .toList();
+        List<Order> orders = (jsonResponse['orders'] as List).map((orderJson) => Order.fromJson(orderJson)).toList();
 
         // Store fetched orders and update pagination state
         if (type == 'B2B') {
           ordersB2B = orders;
           currentPageB2B = page; // Track current page for B2B
-          totalPagesB2B =
-              jsonResponse['totalPages']; // Assuming API returns total pages
+          totalPagesB2B = jsonResponse['totalPages']; // Assuming API returns total pages
         } else {
           ordersB2C = orders;
           currentPageB2C = page; // Track current page for B2C
-          totalPagesB2C =
-              jsonResponse['totalPages']; // Assuming API returns total pages
+          totalPagesB2C = jsonResponse['totalPages']; // Assuming API returns total pages
         }
       } else if (response.statusCode == 401) {
         print('Unauthorized access - Token might be expired or invalid.');
@@ -419,8 +332,7 @@ class BookProvider with ChangeNotifier {
     }
 
     // Base URL
-    String url =
-        '${await ApiUrls.getBaseUrl()}/orders?isBooked=true&page=$page';
+    String url = '${await ApiUrls.getBaseUrl()}/orders?isBooked=true&page=$page';
 
     // Add date parameter if provided
     if (date != null) {
@@ -451,9 +363,7 @@ class BookProvider with ChangeNotifier {
 
       if (response.statusCode == 200) {
         final jsonResponse = jsonDecode(response.body);
-        List<Order> orders = (jsonResponse['orders'] as List)
-            .map((orderJson) => Order.fromJson(orderJson))
-            .toList();
+        List<Order> orders = (jsonResponse['orders'] as List).map((orderJson) => Order.fromJson(orderJson)).toList();
 
         Logger().e(jsonResponse['orders'][0]['isBooked']['status']);
 
@@ -477,11 +387,7 @@ class BookProvider with ChangeNotifier {
   }
 
   // Function to book orders
-  Future<String> bookOrders(
-      BuildContext context,
-      List<Map<String, String>> orderIds,
-      String lowerCase,
-      String courier) async {
+  Future<String> bookOrders(BuildContext context, List<Map<String, String>> orderIds, String lowerCase, String courier) async {
     log('courier: $courier');
     setLoading(courier, true);
     String baseUrl = await ApiUrls.getBaseUrl();
@@ -505,8 +411,7 @@ class BookProvider with ChangeNotifier {
       return '';
     }
 
-    List<String?> orderIdsList =
-        orderIds.map((orderId) => orderId['orderId']).toList();
+    List<String?> orderIdsList = orderIds.map((orderId) => orderId['orderId']).toList();
 
     log('orderIdsList: $orderIdsList');
 
@@ -560,8 +465,7 @@ class BookProvider with ChangeNotifier {
     }
   }
 
-  Future<String> bookShiprocketOrder(BuildContext context, String orderId,
-      String courierId, String lowerCase, String courier) async {
+  Future<String> bookShiprocketOrder(BuildContext context, String orderId, String courierId, String lowerCase, String courier) async {
     // setLoading(courier, true);
     String baseUrl = await ApiUrls.getBaseUrl();
     String bookOrderUrl = '$baseUrl/orders/book';
@@ -575,7 +479,9 @@ class BookProvider with ChangeNotifier {
 
     // Request body containing the order IDs
     final body = json.encode({
-      'orderIds': [orderId],
+      'orderIds': [
+        orderId
+      ],
       'service': lowerCase,
       'courierId': courierId,
     });
@@ -697,8 +603,7 @@ class BookProvider with ChangeNotifier {
 
   void toggleBookedSelectAll(bool? value) {
     selectAllBooked = value!;
-    selectedBookedItems.fillRange(
-        0, selectedBookedItems.length, selectAllBooked);
+    selectedBookedItems.fillRange(0, selectedBookedItems.length, selectAllBooked);
     // Update the selection state for B2B orders
     for (int i = 0; i < ordersBooked.length; i++) {
       ordersBooked[i].isSelected = selectAllBooked;
@@ -724,8 +629,7 @@ class BookProvider with ChangeNotifier {
   }
 
   Future<void> searchB2BOrders(String query, String searchType) async {
-    String url =
-        '${await ApiUrls.getBaseUrl()}/orders?orderStatus=3&filter=B2B&order_id=$query';
+    String url = '${await ApiUrls.getBaseUrl()}/orders?orderStatus=3&filter=B2B&order_id=$query';
     final token = await _getToken();
     if (token == null) return;
 
@@ -751,7 +655,9 @@ class BookProvider with ChangeNotifier {
         final data = jsonDecode(response.body);
         print(response.body);
 
-        ordersB2B = [Order.fromJson(data)];
+        ordersB2B = [
+          Order.fromJson(data)
+        ];
         print(response.body);
       } else {
         ordersB2B = [];
@@ -765,8 +671,7 @@ class BookProvider with ChangeNotifier {
   }
 
   Future<void> searchB2COrders(String query, String searchType) async {
-    String url =
-        '${await ApiUrls.getBaseUrl()}/orders?orderStatus=3&filter=B2C&order_id=$query';
+    String url = '${await ApiUrls.getBaseUrl()}/orders?orderStatus=3&filter=B2C&order_id=$query';
     final token = await _getToken();
     if (token == null) return;
 
@@ -792,7 +697,9 @@ class BookProvider with ChangeNotifier {
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
 
-        ordersB2C = [Order.fromJson(data)];
+        ordersB2C = [
+          Order.fromJson(data)
+        ];
         log('ordersB2C: $ordersB2C');
       } else {
         ordersB2C = [];
@@ -834,9 +741,10 @@ class BookProvider with ChangeNotifier {
         final data = jsonDecode(response.body);
         // print(response.body);
 
-        final newData = data['orders']
-            [0]; //////////////////////////////////////////////////////////////
-        ordersBooked = [Order.fromJson(newData)];
+        final newData = data['orders'][0]; //////////////////////////////////////////////////////////////
+        ordersBooked = [
+          Order.fromJson(newData)
+        ];
         // ordersBooked = [Order.fromJson(data)];
         log('ordersBooked: $ordersBooked');
       } else {
@@ -852,8 +760,7 @@ class BookProvider with ChangeNotifier {
   }
 
   // Add this method to the BookProvider class
-  Future<void> generatePicklist(
-      BuildContext context, String marketplace) async {
+  Future<void> generatePicklist(BuildContext context, String marketplace) async {
     // Get the current time in ISO 8601 format
     String currentTime = DateTime.now().toIso8601String();
 
@@ -861,8 +768,7 @@ class BookProvider with ChangeNotifier {
     log("marketplace: $marketplace");
 
     String baseUrl = await ApiUrls.getBaseUrl();
-    String url =
-        '$baseUrl/order-picker?currentTime=$currentTime&marketplace=$marketplace';
+    String url = '$baseUrl/order-picker?currentTime=$currentTime&marketplace=$marketplace';
 
     String? token = await _getToken();
     if (token == null) {
@@ -912,14 +818,11 @@ class BookProvider with ChangeNotifier {
     }
   }
 
-  Future<void> fetchOrdersByMarketplace(
-      String marketplace, String orderType, int page,
-      {DateTime? date}) async {
+  Future<void> fetchOrdersByMarketplace(String marketplace, String orderType, int page, {DateTime? date}) async {
     String baseUrl = '${await ApiUrls.getBaseUrl()}/orders';
 
     // Build URL with base parameters
-    String url =
-        '$baseUrl?orderStatus=3&customerType=$orderType&marketplace=$marketplace&page=$page';
+    String url = '$baseUrl?orderStatus=3&customerType=$orderType&marketplace=$marketplace&page=$page';
 
     // Add date parameter if provided
     if (date != null || date == 'Select Date') {
@@ -951,9 +854,7 @@ class BookProvider with ChangeNotifier {
 
       if (response.statusCode == 200) {
         final jsonResponse = jsonDecode(response.body);
-        List<Order> orders = (jsonResponse['orders'] as List)
-            .map((orderJson) => Order.fromJson(orderJson))
-            .toList();
+        List<Order> orders = (jsonResponse['orders'] as List).map((orderJson) => Order.fromJson(orderJson)).toList();
 
         // Store fetched orders and update pagination state
         if (orderType == 'B2B') {
@@ -992,8 +893,7 @@ class BookProvider with ChangeNotifier {
     }
   }
 
-  Future<void> fetchBookedOrdersByMarketplace(String marketplace, int page,
-      {DateTime? date}) async {
+  Future<void> fetchBookedOrdersByMarketplace(String marketplace, int page, {DateTime? date}) async {
     log("$marketplace, $page");
     String baseUrl = '${await ApiUrls.getBaseUrl()}/orders';
 
@@ -1006,8 +906,7 @@ class BookProvider with ChangeNotifier {
       url += '&date=$formattedDate';
     }
 
-    String? token =
-        await _getToken(); // Assuming you have a method to get the token
+    String? token = await _getToken(); // Assuming you have a method to get the token
     if (token == null) {
       print('Token is null, unable to fetch orders.');
       return;
@@ -1035,16 +934,13 @@ class BookProvider with ChangeNotifier {
 
       if (response.statusCode == 200) {
         final jsonResponse = jsonDecode(response.body);
-        List<Order> orders = (jsonResponse['orders'] as List)
-            .map((orderJson) => Order.fromJson(orderJson))
-            .toList();
+        List<Order> orders = (jsonResponse['orders'] as List).map((orderJson) => Order.fromJson(orderJson)).toList();
 
         Logger().e("length: ${orders.length}");
 
         ordersBooked = orders;
         currentPageBooked = page; // Track current page for B2B
-        totalPagesBooked =
-            jsonResponse['totalPages']; // Assuming API returns total pages
+        totalPagesBooked = jsonResponse['totalPages']; // Assuming API returns total pages
       } else if (response.statusCode == 401) {
         print('Unauthorized access - Token might be expired or invalid.');
       } else if (response.statusCode == 404) {

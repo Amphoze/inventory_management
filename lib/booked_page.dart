@@ -17,8 +17,7 @@ class BookedPage extends StatefulWidget {
   _BookedPageState createState() => _BookedPageState();
 }
 
-class _BookedPageState extends State<BookedPage>
-    with SingleTickerProviderStateMixin {
+class _BookedPageState extends State<BookedPage> with SingleTickerProviderStateMixin {
   final TextEditingController _searchController = TextEditingController();
   final TextEditingController _pageController = TextEditingController();
   bool areOrdersFetched = false;
@@ -52,9 +51,8 @@ class _BookedPageState extends State<BookedPage>
 
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider(
-      create: (_) => BookProvider(),
-      child: Scaffold(
+    return Consumer<BookProvider>(
+      builder: (context, pro, child) => Scaffold(
         backgroundColor: Colors.white,
         body: Padding(
           padding: const EdgeInsets.only(top: 3.0),
@@ -84,8 +82,7 @@ class _BookedPageState extends State<BookedPage>
               value: selectedSearchType,
               decoration: const InputDecoration(
                 border: OutlineInputBorder(),
-                contentPadding:
-                    EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
+                contentPadding: EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
               ),
               items: const [
                 DropdownMenuItem(value: 'Order ID', child: Text('Order ID')),
@@ -128,24 +125,20 @@ class _BookedPageState extends State<BookedPage>
                         fontSize: 16,
                       ),
                       border: InputBorder.none,
-                      contentPadding:
-                          const EdgeInsets.symmetric(vertical: 10.0),
+                      contentPadding: const EdgeInsets.symmetric(vertical: 10.0),
                     ),
                     style: const TextStyle(color: AppColors.black),
                     onChanged: (text) {
                       if (text.isEmpty) {
-                        Provider.of<BookProvider>(context, listen: false)
-                            .clearSearchResults();
+                        Provider.of<BookProvider>(context, listen: false).clearSearchResults();
                         _refreshOrders();
                         // context.read<BookProvider>().fetchBookedOrders(page);
                       } else {
-                        Provider.of<BookProvider>(context, listen: false)
-                            .searchBookedOrders(text, selectedSearchType);
+                        Provider.of<BookProvider>(context, listen: false).searchBookedOrders(text, selectedSearchType);
                       }
                     },
                     onSubmitted: (text) {
-                      Provider.of<BookProvider>(context, listen: false)
-                          .searchBookedOrders(text, selectedSearchType);
+                      Provider.of<BookProvider>(context, listen: false).searchBookedOrders(text, selectedSearchType);
                     },
                   ),
                 ),
@@ -158,8 +151,7 @@ class _BookedPageState extends State<BookedPage>
                     onPressed: () {
                       controller.clear();
                       // _refreshOrders(orderType);
-                      Provider.of<BookProvider>(context, listen: false)
-                          .clearSearchResults();
+                      Provider.of<BookProvider>(context, listen: false).clearSearchResults();
                     },
                   ),
               ],
@@ -259,8 +251,7 @@ class _BookedPageState extends State<BookedPage>
               if (page > 0 && page <= totalPages) {
                 bookProvider.fetchBookedOrders(page);
               } else {
-                _showSnackbar(context,
-                    'Please enter a valid page number between 1 and $totalPages.');
+                _showSnackbar(context, 'Please enter a valid page number between 1 and $totalPages.');
               }
             },
             onJumpToPage: () {
@@ -269,8 +260,7 @@ class _BookedPageState extends State<BookedPage>
               int totalPages = bookProvider.totalPagesBooked;
 
               if (page == null || page < 1 || page > totalPages) {
-                _showSnackbar(context,
-                    'Please enter a valid page number between 1 and $totalPages.');
+                _showSnackbar(context, 'Please enter a valid page number between 1 and $totalPages.');
                 return;
               }
 
@@ -319,9 +309,7 @@ class _BookedPageState extends State<BookedPage>
                   _selectedDate,
                   style: TextStyle(
                     fontSize: 11,
-                    color: _selectedDate == 'Select Date'
-                        ? Colors.grey
-                        : AppColors.primaryBlue,
+                    color: _selectedDate == 'Select Date' ? Colors.grey : AppColors.primaryBlue,
                   ),
                 ),
                 Tooltip(
@@ -349,8 +337,7 @@ class _BookedPageState extends State<BookedPage>
                       );
 
                       if (picked != null) {
-                        String formattedDate =
-                            DateFormat('dd-MM-yyyy').format(picked);
+                        String formattedDate = DateFormat('dd-MM-yyyy').format(picked);
                         setState(() {
                           _selectedDate = formattedDate;
                         });
@@ -392,27 +379,17 @@ class _BookedPageState extends State<BookedPage>
                           selectedCourier = value;
                         });
                         if (value == 'All') {
-                          bookProvider.fetchBookedOrders(
-                              bookProvider.currentPageBooked,
-                              date: _selectedDate == 'Select Date'
-                                  ? null
-                                  : DateTime.parse(_selectedDate));
+                          bookProvider.fetchBookedOrders(bookProvider.currentPageBooked, date: _selectedDate == 'Select Date' ? null : DateTime.parse(_selectedDate));
                         } else {
-                          bookProvider.fetchBookedOrdersByMarketplace(
-                              value, bookProvider.currentPageBooked,
-                              date: _selectedDate == 'Select Date'
-                                  ? null
-                                  : DateTime.parse(_selectedDate));
+                          bookProvider.fetchBookedOrdersByMarketplace(value, bookProvider.currentPageBooked, date: _selectedDate == 'Select Date' ? null : DateTime.parse(_selectedDate));
                         }
                         log('Selected: $value');
                       },
-                      itemBuilder: (BuildContext context) =>
-                          <PopupMenuEntry<String>>[
-                        ...provider.marketplaces
-                            .map((marketplace) => PopupMenuItem<String>(
-                                  value: marketplace.name,
-                                  child: Text(marketplace.name),
-                                )), // Fetched marketplaces
+                      itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
+                        ...provider.marketplaces.map((marketplace) => PopupMenuItem<String>(
+                              value: marketplace.name,
+                              child: Text(marketplace.name),
+                            )), // Fetched marketplaces
                         const PopupMenuItem<String>(
                           value: 'All', // Hardcoded marketplace
                           child: Text('All'),
@@ -436,21 +413,15 @@ class _BookedPageState extends State<BookedPage>
             ElevatedButton(
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primaryBlue,
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8)),
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
               ),
               onPressed: bookProvider.isRebook
                   ? null
                   : () async {
                       log("B2C");
-                      final provider =
-                          Provider.of<BookProvider>(context, listen: false);
-                      List<String> selectedOrderIds = provider.ordersBooked
-                          .where((order) => order.isSelected)
-                          .map((order) => order.orderId)
-                          .toList();
+                      final provider = Provider.of<BookProvider>(context, listen: false);
+                      List<String> selectedOrderIds = provider.ordersBooked.where((order) => order.isSelected).map((order) => order.orderId).toList();
 
                       log("Selected Order IDs: $selectedOrderIds");
 
@@ -474,8 +445,7 @@ class _BookedPageState extends State<BookedPage>
                         );
                       } else {
                         provider.setRebookingStatus(true);
-                        String resultMessage =
-                            await provider.rebookOrders(selectedOrderIds);
+                        String resultMessage = await provider.rebookOrders(selectedOrderIds);
                         provider.setRebookingStatus(false);
 
                         bool isSuccess = resultMessage.contains('success');
@@ -491,9 +461,7 @@ class _BookedPageState extends State<BookedPage>
                               title: Container(
                                 padding: const EdgeInsets.all(16),
                                 decoration: BoxDecoration(
-                                  color: isSuccess
-                                      ? AppColors.green.withOpacity(0.1)
-                                      : AppColors.cardsred.withOpacity(0.1),
+                                  color: isSuccess ? AppColors.green.withOpacity(0.1) : AppColors.cardsred.withOpacity(0.1),
                                   borderRadius: const BorderRadius.only(
                                     topLeft: Radius.circular(12),
                                     topRight: Radius.circular(12),
@@ -502,24 +470,16 @@ class _BookedPageState extends State<BookedPage>
                                 child: Row(
                                   children: [
                                     Icon(
-                                      isSuccess
-                                          ? Icons.check_circle
-                                          : Icons.error_outline,
-                                      color: isSuccess
-                                          ? AppColors.green
-                                          : AppColors.cardsred,
+                                      isSuccess ? Icons.check_circle : Icons.error_outline,
+                                      color: isSuccess ? AppColors.green : AppColors.cardsred,
                                       size: 28,
                                     ),
                                     const SizedBox(width: 12),
                                     Expanded(
                                       child: Text(
-                                        isSuccess
-                                            ? 'Orders Rebooked Successfully'
-                                            : 'Rebooking Status',
+                                        isSuccess ? 'Orders Rebooked Successfully' : 'Rebooking Status',
                                         style: TextStyle(
-                                          color: isSuccess
-                                              ? AppColors.green
-                                              : AppColors.cardsred,
+                                          color: isSuccess ? AppColors.green : AppColors.cardsred,
                                           fontWeight: FontWeight.bold,
                                           fontSize: 18,
                                         ),
@@ -530,31 +490,26 @@ class _BookedPageState extends State<BookedPage>
                               ),
                               content: Container(
                                 width: double.maxFinite,
-                                constraints:
-                                    const BoxConstraints(maxHeight: 400),
+                                constraints: const BoxConstraints(maxHeight: 400),
                                 child: SingleChildScrollView(
                                   child: Column(
                                     mainAxisSize: MainAxisSize.min,
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
+                                    crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
                                       Text(
                                         resultMessage,
                                         style: const TextStyle(fontSize: 16),
                                       ),
-                                      if (isSuccess &&
-                                          selectedOrderIds.isNotEmpty) ...[
+                                      if (isSuccess && selectedOrderIds.isNotEmpty) ...[
                                         const SizedBox(height: 20),
                                         Container(
                                           padding: const EdgeInsets.all(12),
                                           decoration: BoxDecoration(
                                             color: Colors.grey.withOpacity(0.1),
-                                            borderRadius:
-                                                BorderRadius.circular(8),
+                                            borderRadius: BorderRadius.circular(8),
                                           ),
                                           child: Column(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
+                                            crossAxisAlignment: CrossAxisAlignment.start,
                                             children: [
                                               Text(
                                                 'Rebooked Orders (${selectedOrderIds.length})',
@@ -572,30 +527,19 @@ class _BookedPageState extends State<BookedPage>
                                                 ),
                                               ),
                                               const SizedBox(height: 12),
-                                              ...selectedOrderIds
-                                                  .map((orderId) => Padding(
-                                                        padding:
-                                                            const EdgeInsets
-                                                                .symmetric(
-                                                                vertical: 4),
-                                                        child: Row(
-                                                          children: [
-                                                            Icon(Icons.circle,
-                                                                size: 8,
-                                                                color: Colors
-                                                                    .grey[600]),
-                                                            const SizedBox(
-                                                                width: 8),
-                                                            Text(
-                                                              'Order ID: $orderId',
-                                                              style:
-                                                                  const TextStyle(
-                                                                      fontSize:
-                                                                          14),
-                                                            ),
-                                                          ],
+                                              ...selectedOrderIds.map((orderId) => Padding(
+                                                    padding: const EdgeInsets.symmetric(vertical: 4),
+                                                    child: Row(
+                                                      children: [
+                                                        Icon(Icons.circle, size: 8, color: Colors.grey[600]),
+                                                        const SizedBox(width: 8),
+                                                        Text(
+                                                          'Order ID: $orderId',
+                                                          style: const TextStyle(fontSize: 14),
                                                         ),
-                                                      )),
+                                                      ],
+                                                    ),
+                                                  )),
                                             ],
                                           ),
                                         ),
@@ -608,8 +552,7 @@ class _BookedPageState extends State<BookedPage>
                                 TextButton(
                                   onPressed: () => Navigator.of(context).pop(),
                                   style: TextButton.styleFrom(
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: 24, vertical: 12),
+                                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                                     shape: RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(6),
                                     ),
@@ -638,7 +581,6 @@ class _BookedPageState extends State<BookedPage>
                   : const Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(Icons.refresh, size: 20),
                         SizedBox(width: 8),
                         Text(
                           'Rebook Orders',
@@ -660,14 +602,10 @@ class _BookedPageState extends State<BookedPage>
                   ? null // Disable button while loading
                   : () async {
                       log("B2C");
-                      final provider =
-                          Provider.of<BookProvider>(context, listen: false);
+                      final provider = Provider.of<BookProvider>(context, listen: false);
 
                       // Collect selected order IDs
-                      List<String> selectedOrderIds = provider.ordersBooked
-                          .where((order) => order.isSelected)
-                          .map((order) => order.orderId)
-                          .toList();
+                      List<String> selectedOrderIds = provider.ordersBooked.where((order) => order.isSelected).map((order) => order.orderId).toList();
 
                       log("Selected Order IDs: $selectedOrderIds");
                       if (selectedOrderIds.isEmpty) {
@@ -683,8 +621,7 @@ class _BookedPageState extends State<BookedPage>
                         provider.setCancelStatus(true);
 
                         // Call confirmOrders method with selected IDs
-                        String resultMessage = await provider.cancelOrders(
-                            context, selectedOrderIds);
+                        String resultMessage = await provider.cancelOrders(context, selectedOrderIds);
 
                         // Set loading status to false after operation completes
                         provider.setCancelStatus(false);
@@ -693,8 +630,7 @@ class _BookedPageState extends State<BookedPage>
                         Color snackBarColor;
                         if (resultMessage.contains('success')) {
                           snackBarColor = AppColors.green; // Success: Green
-                        } else if (resultMessage.contains('error') ||
-                            resultMessage.contains('failed')) {
+                        } else if (resultMessage.contains('error') || resultMessage.contains('failed')) {
                           snackBarColor = AppColors.cardsred; // Error: Red
                         } else {
                           snackBarColor = AppColors.orange; // Other: Orange
@@ -785,8 +721,7 @@ class _BookedPageState extends State<BookedPage>
       child: Center(
         child: Text(
           title,
-          style: const TextStyle(
-              fontWeight: FontWeight.bold, fontSize: 16, color: Colors.black87),
+          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.black87),
         ),
       ),
     );
@@ -879,8 +814,7 @@ class _BookedPageState extends State<BookedPage>
                 children: [
                   RadioListTile<String>(
                     contentPadding: const EdgeInsets.all(0),
-                    title:
-                        const Text('Website', style: TextStyle(fontSize: 16)),
+                    title: const Text('Website', style: TextStyle(fontSize: 16)),
                     value: 'website',
                     groupValue: selectedMarketplace,
                     onChanged: (value) {
@@ -891,8 +825,7 @@ class _BookedPageState extends State<BookedPage>
                   ),
                   RadioListTile<String>(
                     contentPadding: const EdgeInsets.all(0),
-                    title:
-                        const Text('Offline', style: TextStyle(fontSize: 16)),
+                    title: const Text('Offline', style: TextStyle(fontSize: 16)),
                     value: 'offline',
                     groupValue: selectedMarketplace,
                     onChanged: (value) {
@@ -953,9 +886,7 @@ class _BookedPageState extends State<BookedPage>
                   });
 
                   // Fetch order picker data
-                  bookProvider
-                      .generatePicklist(context, selectedMarketplace!)
-                      .then((_) {
+                  bookProvider.generatePicklist(context, selectedMarketplace!).then((_) {
                     Navigator.of(context).pop(); // Close loading dialog
                   });
                 }

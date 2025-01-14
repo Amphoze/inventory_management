@@ -37,6 +37,7 @@ class AccountsProvider with ChangeNotifier {
   bool isUpdatingOrder = false;
   bool isRefreshingOrders = false;
   bool isCancel = false;
+  // bool isRemarking = false;
 
   // New variables for booked orders
   List<bool> selectedBookedItems = List.generate(40, (index) => false);
@@ -63,6 +64,11 @@ class AccountsProvider with ChangeNotifier {
     isRefreshingOrders = value;
     notifyListeners();
   }
+
+  // void setRemarkingStatus(bool value) {
+  //   isRemarking = value;
+  //   notifyListeners();
+  // }
 
   void handleRowCheckboxChange(int index, bool isSelected) {
     _selectedProducts[index] = isSelected;
@@ -416,16 +422,12 @@ class AccountsProvider with ChangeNotifier {
     return prefs.getString('authToken');
   }
 
-  Future<void> writeRemark(BuildContext context, String id, String msg) async {
-    // Get the auth token
-    final token = await _getToken();
+  Future<bool> writeRemark(BuildContext context, String id, String msg) async {
 
-    // Check if the token is valid
+    final token = await _getToken();
     if (token == null || token.isEmpty) {
-      _isLoading = false;
-      notifyListeners();
       print('Token is missing. Please log in again.');
-      return;
+      return false;
     }
 
     final url = '${await ApiUrls.getBaseUrl()}/orders/$id';
@@ -446,89 +448,16 @@ class AccountsProvider with ChangeNotifier {
       log("response: ${response.statusCode}");
 
       if (response.statusCode == 200) {
-        // Logger().e('code: ${response.statusCode}');
         Logger().e('body: ${response.body}');
-
-        // if (!context.mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            behavior: SnackBarBehavior.floating,
-            margin: const EdgeInsets.all(10),
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-            backgroundColor: Colors.green.shade600,
-            duration: const Duration(seconds: 3),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-            elevation: 6,
-            content: TweenAnimationBuilder<double>(
-              tween: Tween(begin: 0.0, end: 1.0),
-              duration: const Duration(milliseconds: 400),
-              curve: Curves.easeOutCubic,
-              builder: (context, value, child) => Transform.scale(
-                scale: value,
-                child: Opacity(
-                  opacity: value,
-                  child: Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(4),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.2),
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Icon(
-                          Icons.check_circle_rounded,
-                          color: Colors.white,
-                          size: 22,
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      const Expanded(
-                        child: Text(
-                          'Remark added successfully',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 15,
-                            fontWeight: FontWeight.w500,
-                            letterSpacing: 0.2,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      IconButton(
-                        constraints: const BoxConstraints(),
-                        padding: EdgeInsets.zero,
-                        icon: const Icon(
-                          Icons.close,
-                          color: Colors.white70,
-                          size: 20,
-                        ),
-                        onPressed: () {
-                          ScaffoldMessenger.of(context).hideCurrentSnackBar();
-                        },
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ),
-        );
-
-        // await fetchFailedOrders();
-        await fetchAccountedOrders(currentPageBooked);
-
-        notifyListeners();
+        return true;
       } else {
         log('Failed to update order: ${response.body}');
-        return;
+        return false;
       }
     } catch (error) {
       log('Error updating order: $error');
-      rethrow;
+      return false;
     }
-    notifyListeners();
   }
 
   Future<void> fetchAccountedOrders(int page, {DateTime? date}) async {

@@ -31,8 +31,7 @@ class _AccountsPageState extends State<AccountsPage> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      Provider.of<AccountsProvider>(context, listen: false)
-          .fetchOrdersWithStatus2();
+      Provider.of<AccountsProvider>(context, listen: false).fetchOrdersWithStatus2();
     });
 
     context.read<MarketplaceProvider>().fetchMarketplaces();
@@ -41,15 +40,12 @@ class _AccountsPageState extends State<AccountsPage> {
   void _onSearchButtonPressed() {
     final query = _searchController.text.trim();
     if (query.isNotEmpty) {
-      Provider.of<AccountsProvider>(context, listen: false)
-          .onSearchChanged(query);
+      Provider.of<AccountsProvider>(context, listen: false).onSearchChanged(query);
     }
   }
 
   String formatIsoDate(String isoDate) {
-    final dateTime = DateTime.parse(isoDate)
-        .toUtc()
-        .add(const Duration(hours: 5, minutes: 30));
+    final dateTime = DateTime.parse(isoDate).toUtc().add(const Duration(hours: 5, minutes: 30));
     final date = DateFormat('yyyy-MM-dd').format(dateTime);
     final time = DateFormat('hh:mm:ss a').format(dateTime);
     return " ($date, $time)";
@@ -93,15 +89,11 @@ class _AccountsPageState extends State<AccountsPage> {
                         value: selectedSearchType,
                         decoration: const InputDecoration(
                           border: OutlineInputBorder(),
-                          contentPadding: EdgeInsets.symmetric(
-                              horizontal: 12.0, vertical: 8.0),
+                          contentPadding: EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
                         ),
                         items: const [
-                          DropdownMenuItem(
-                              value: 'Order ID', child: Text('Order ID')),
-                          DropdownMenuItem(
-                              value: 'Transaction No.',
-                              child: Text('Transaction No.')),
+                          DropdownMenuItem(value: 'Order ID', child: Text('Order ID')),
+                          DropdownMenuItem(value: 'Transaction No.', child: Text('Transaction No.')),
                         ],
                         onChanged: (value) {
                           setState(() {
@@ -161,9 +153,7 @@ class _AccountsPageState extends State<AccountsPage> {
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.primaryBlue,
                       ),
-                      onPressed: _searchController.text.isNotEmpty
-                          ? _onSearchButtonPressed
-                          : null,
+                      onPressed: _searchController.text.isNotEmpty ? _onSearchButtonPressed : null,
                       child: const Text(
                         'Search',
                         style: TextStyle(color: Colors.white),
@@ -180,9 +170,7 @@ class _AccountsPageState extends State<AccountsPage> {
                               _selectedDate,
                               style: TextStyle(
                                 fontSize: 11,
-                                color: _selectedDate == 'Select Date'
-                                    ? Colors.grey
-                                    : AppColors.primaryBlue,
+                                color: _selectedDate == 'Select Date' ? Colors.grey : AppColors.primaryBlue,
                               ),
                             ),
                             Tooltip(
@@ -210,18 +198,13 @@ class _AccountsPageState extends State<AccountsPage> {
                                   );
 
                                   if (picked != null) {
-                                    String formattedDate =
-                                        DateFormat('dd-MM-yyyy').format(picked);
+                                    String formattedDate = DateFormat('dd-MM-yyyy').format(picked);
                                     setState(() {
                                       _selectedDate = formattedDate;
                                     });
 
                                     if (selectedCourier != 'All') {
-                                      accountsProvider.fetchOrdersByMarketplace(
-                                          selectedCourier,
-                                          2,
-                                          accountsProvider.currentPage,
-                                          date: picked);
+                                      accountsProvider.fetchOrdersByMarketplace(selectedCourier, 2, accountsProvider.currentPage, date: picked);
                                     } else {
                                       accountsProvider.fetchOrdersWithStatus2(
                                         date: picked,
@@ -253,29 +236,19 @@ class _AccountsPageState extends State<AccountsPage> {
                                     if (value == 'All') {
                                       selectedCourier = value;
                                       accountsProvider.fetchOrdersWithStatus2(
-                                        date: _selectedDate == 'Select Date'
-                                            ? null
-                                            : DateTime.parse(_selectedDate),
+                                        date: _selectedDate == 'Select Date' ? null : DateTime.parse(_selectedDate),
                                       );
                                     } else {
                                       selectedCourier = value;
-                                      accountsProvider.fetchOrdersByMarketplace(
-                                          value,
-                                          2,
-                                          accountsProvider.currentPage,
-                                          date: _selectedDate == 'Select Date'
-                                              ? null
-                                              : DateTime.parse(_selectedDate));
+                                      accountsProvider.fetchOrdersByMarketplace(value, 2, accountsProvider.currentPage, date: _selectedDate == 'Select Date' ? null : DateTime.parse(_selectedDate));
                                     }
                                     log('Selected: $value');
                                   },
-                                  itemBuilder: (BuildContext context) =>
-                                      <PopupMenuEntry<String>>[
-                                    ...provider.marketplaces.map(
-                                        (marketplace) => PopupMenuItem<String>(
-                                              value: marketplace.name,
-                                              child: Text(marketplace.name),
-                                            )), // Fetched marketplaces
+                                  itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
+                                    ...provider.marketplaces.map((marketplace) => PopupMenuItem<String>(
+                                          value: marketplace.name,
+                                          child: Text(marketplace.name),
+                                        )), // Fetched marketplaces
                                     const PopupMenuItem<String>(
                                       value: 'All', // Hardcoded marketplace
                                       child: Text('All'),
@@ -326,24 +299,14 @@ class _AccountsPageState extends State<AccountsPage> {
                           onPressed: accountsProvider.isCancel
                               ? null // Disable button while loading
                               : () async {
-                                  final provider =
-                                      Provider.of<AccountsProvider>(context,
-                                          listen: false);
+                                  final provider = Provider.of<AccountsProvider>(context, listen: false);
 
                                   // Collect selected order IDs
-                                  List<String> selectedOrderIds = provider
-                                      .orders
-                                      .asMap()
-                                      .entries
-                                      .where((entry) =>
-                                          provider.selectedProducts[entry.key])
-                                      .map((entry) => entry.value.orderId)
-                                      .toList();
+                                  List<String> selectedOrderIds = provider.orders.asMap().entries.where((entry) => provider.selectedProducts[entry.key]).map((entry) => entry.value.orderId).toList();
 
                                   if (selectedOrderIds.isEmpty) {
                                     // Show an error message if no orders are selected
-                                    ScaffoldMessenger.of(context)
-                                        .removeCurrentSnackBar();
+                                    ScaffoldMessenger.of(context).removeCurrentSnackBar();
                                     ScaffoldMessenger.of(context).showSnackBar(
                                       const SnackBar(
                                         content: Text('No orders selected'),
@@ -355,9 +318,7 @@ class _AccountsPageState extends State<AccountsPage> {
                                     provider.setCancelStatus(true);
 
                                     // Call confirmOrders method with selected IDs
-                                    String resultMessage =
-                                        await provider.cancelOrders(
-                                            context, selectedOrderIds);
+                                    String resultMessage = await provider.cancelOrders(context, selectedOrderIds);
 
                                     // Set loading status to false after operation completes
                                     provider.setCancelStatus(false);
@@ -365,21 +326,15 @@ class _AccountsPageState extends State<AccountsPage> {
                                     // Determine the background color based on the result
                                     Color snackBarColor;
                                     if (resultMessage.contains('success')) {
-                                      snackBarColor =
-                                          AppColors.green; // Success: Green
-                                    } else if (resultMessage
-                                            .contains('error') ||
-                                        resultMessage.contains('failed')) {
-                                      snackBarColor =
-                                          AppColors.cardsred; // Error: Red
+                                      snackBarColor = AppColors.green; // Success: Green
+                                    } else if (resultMessage.contains('error') || resultMessage.contains('failed')) {
+                                      snackBarColor = AppColors.cardsred; // Error: Red
                                     } else {
-                                      snackBarColor =
-                                          AppColors.orange; // Other: Orange
+                                      snackBarColor = AppColors.orange; // Other: Orange
                                     }
 
                                     // Show feedback based on the result
-                                    ScaffoldMessenger.of(context)
-                                        .removeCurrentSnackBar();
+                                    ScaffoldMessenger.of(context).removeCurrentSnackBar();
                                     ScaffoldMessenger.of(context).showSnackBar(
                                       SnackBar(
                                         content: Text(resultMessage),
@@ -410,8 +365,7 @@ class _AccountsPageState extends State<AccountsPage> {
                           onPressed: accountsProvider.isRefreshingOrders
                               ? null
                               : () async {
-                                  await accountsProvider
-                                      .fetchOrdersWithStatus2();
+                                  await accountsProvider.fetchOrdersWithStatus2();
                                 },
                           child: accountsProvider.isRefreshingOrders
                               ? const SizedBox(
@@ -433,8 +387,7 @@ class _AccountsPageState extends State<AccountsPage> {
                 ),
               ),
               const SizedBox(height: 8),
-              _buildTableHeader(
-                  accountsProvider.orders.length, accountsProvider),
+              _buildTableHeader(accountsProvider.orders.length, accountsProvider),
               const SizedBox(height: 4),
               Expanded(
                 child: Stack(
@@ -469,23 +422,15 @@ class _AccountsPageState extends State<AccountsPage> {
                           final Map<String, List<Item>> groupedComboItems = {};
                           for (var item in order.items) {
                             if (item.isCombo == true && item.comboSku != null) {
-                              if (!groupedComboItems
-                                  .containsKey(item.comboSku)) {
+                              if (!groupedComboItems.containsKey(item.comboSku)) {
                                 groupedComboItems[item.comboSku!] = [];
                               }
                               groupedComboItems[item.comboSku]!.add(item);
                             }
                           }
-                          final List<List<Item>> comboItemGroups =
-                              groupedComboItems.values
-                                  .where((items) => items.length > 1)
-                                  .toList();
+                          final List<List<Item>> comboItemGroups = groupedComboItems.values.where((items) => items.length > 1).toList();
 
-                          final List<Item> remainingItems = order.items
-                              .where((item) => !(item.isCombo == true &&
-                                  item.comboSku != null &&
-                                  groupedComboItems[item.comboSku]!.length > 1))
-                              .toList();
+                          final List<Item> remainingItems = order.items.where((item) => !(item.isCombo == true && item.comboSku != null && groupedComboItems[item.comboSku]!.length > 1)).toList();
 
                           return Card(
                             surfaceTintColor: Colors.white,
@@ -498,26 +443,20 @@ class _AccountsPageState extends State<AccountsPage> {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Row(
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.spaceBetween,
+                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                     children: [
                                       Checkbox(
-                                        value: accountsProvider
-                                            .selectedProducts[index],
+                                        value: accountsProvider.selectedProducts[index],
                                         onChanged: (isSelected) {
-                                          accountsProvider
-                                              .handleRowCheckboxChange(
-                                                  index, isSelected!);
+                                          accountsProvider.handleRowCheckboxChange(index, isSelected!);
                                         },
                                       ),
                                       Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
+                                        crossAxisAlignment: CrossAxisAlignment.start,
                                         children: [
                                           const Text(
                                             'Order ID: ',
-                                            style: TextStyle(
-                                                fontWeight: FontWeight.bold),
+                                            style: TextStyle(fontWeight: FontWeight.bold),
                                           ),
                                           Text(
                                             order.orderId ?? 'N/A',
@@ -529,71 +468,54 @@ class _AccountsPageState extends State<AccountsPage> {
                                         ],
                                       ),
                                       Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
+                                        crossAxisAlignment: CrossAxisAlignment.start,
                                         children: [
                                           const Text(
                                             'Date: ',
-                                            style: TextStyle(
-                                                fontWeight: FontWeight.bold),
+                                            style: TextStyle(fontWeight: FontWeight.bold),
                                           ),
                                           Text(
-                                            accountsProvider
-                                                .formatDate(order.date!),
-                                            style: const TextStyle(
-                                                fontWeight: FontWeight.bold,
-                                                color: AppColors.primaryBlue),
+                                            accountsProvider.formatDate(order.date!),
+                                            style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.primaryBlue),
                                           ),
                                         ],
                                       ),
                                       Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
+                                        crossAxisAlignment: CrossAxisAlignment.start,
                                         children: [
                                           const Text(
                                             'Total Amount: ',
-                                            style: TextStyle(
-                                                fontWeight: FontWeight.bold),
+                                            style: TextStyle(fontWeight: FontWeight.bold),
                                           ),
                                           Text(
                                             'Rs. ${order.totalAmount ?? ''}',
-                                            style: const TextStyle(
-                                                fontWeight: FontWeight.bold,
-                                                color: AppColors.primaryBlue),
+                                            style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.primaryBlue),
                                           ),
                                         ],
                                       ),
                                       Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
+                                        crossAxisAlignment: CrossAxisAlignment.start,
                                         children: [
                                           const Text(
                                             'Total Items: ',
-                                            style: TextStyle(
-                                                fontWeight: FontWeight.bold),
+                                            style: TextStyle(fontWeight: FontWeight.bold),
                                           ),
                                           Text(
                                             '${order.items.fold(0, (total, item) => total + item.qty!)}',
-                                            style: const TextStyle(
-                                                fontWeight: FontWeight.bold,
-                                                color: AppColors.primaryBlue),
+                                            style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.primaryBlue),
                                           ),
                                         ],
                                       ),
                                       Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
+                                        crossAxisAlignment: CrossAxisAlignment.start,
                                         children: [
                                           const Text(
                                             'Total Weight: ',
-                                            style: TextStyle(
-                                                fontWeight: FontWeight.bold),
+                                            style: TextStyle(fontWeight: FontWeight.bold),
                                           ),
                                           Text(
                                             '${order.totalWeight ?? ''}',
-                                            style: const TextStyle(
-                                                fontWeight: FontWeight.bold,
-                                                color: AppColors.primaryBlue),
+                                            style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.primaryBlue),
                                           ),
                                         ],
                                       ),
@@ -602,42 +524,25 @@ class _AccountsPageState extends State<AccountsPage> {
                                           final result = await Navigator.push(
                                             context,
                                             MaterialPageRoute(
-                                              builder: (context) =>
-                                                  EditOrderPage(
+                                              builder: (context) => EditOrderPage(
                                                 order: order,
                                                 isBookPage: false,
                                               ),
                                             ),
                                           );
                                           if (result == true) {
-                                            final searched =
-                                                _searchController.text;
+                                            final searched = _searchController.text;
 
                                             // Ready
                                             if (searched.isNotEmpty) {
-                                              accountsProvider
-                                                  .searchOrders(searched, selectedSearchType);
-                                            } else if (selectedCourier !=
-                                                'All') {
-                                              accountsProvider
-                                                  .fetchOrdersByMarketplace(
-                                                      selectedCourier,
-                                                      2,
-                                                      accountsProvider
-                                                          .currentPage);
-                                            } else if (searched.isNotEmpty &&
-                                                selectedCourier != 'All') {
-                                              accountsProvider
-                                                  .fetchOrdersByMarketplace(
-                                                      selectedCourier,
-                                                      2,
-                                                      accountsProvider
-                                                          .currentPage);
-                                              accountsProvider
-                                                  .searchOrders(searched, selectedSearchType);
+                                              accountsProvider.searchOrders(searched, selectedSearchType);
+                                            } else if (selectedCourier != 'All') {
+                                              accountsProvider.fetchOrdersByMarketplace(selectedCourier, 2, accountsProvider.currentPage);
+                                            } else if (searched.isNotEmpty && selectedCourier != 'All') {
+                                              accountsProvider.fetchOrdersByMarketplace(selectedCourier, 2, accountsProvider.currentPage);
+                                              accountsProvider.searchOrders(searched, selectedSearchType);
                                             } else {
-                                              accountsProvider
-                                                  .fetchOrdersWithStatus2();
+                                              accountsProvider.fetchOrdersWithStatus2();
                                             }
                                           }
                                         },
@@ -661,372 +566,149 @@ class _AccountsPageState extends State<AccountsPage> {
                                   Padding(
                                     padding: const EdgeInsets.all(8.0),
                                     child: Row(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
+                                      crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
-                                        Flexible(
-                                          child: Column(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
-                                            children: [
-                                              buildLabelValueRow('Payment Mode',
-                                                  order.paymentMode ?? ''),
-                                              buildLabelValueRow(
-                                                  'Currency Code',
-                                                  order.currencyCode ?? ''),
-                                              buildLabelValueRow(
-                                                  'COD Amount',
-                                                  order.codAmount.toString() ??
-                                                      ''),
-                                              buildLabelValueRow(
-                                                  'Prepaid Amount',
-                                                  order.prepaidAmount
-                                                          .toString() ??
-                                                      ''),
-                                              buildLabelValueRow('Coin',
-                                                  order.coin.toString() ?? ''),
-                                              buildLabelValueRow(
-                                                  'Tax Percent',
-                                                  order.taxPercent.toString() ??
-                                                      ''),
-                                              buildLabelValueRow('Courier Name',
-                                                  order.courierName ?? ''),
-                                              buildLabelValueRow('Order Type',
-                                                  order.orderType ?? ''),
-                                              buildLabelValueRow('Payment Bank',
-                                                  order.paymentBank ?? ''),
-                                            ],
+                                        Expanded(
+                                          child: Padding(
+                                            padding: const EdgeInsets.only(right: 8.0),
+                                            child: Column(
+                                              crossAxisAlignment: CrossAxisAlignment.start,
+                                              children: [
+                                                buildLabelValueRow('Payment Mode', order.paymentMode ?? ''),
+                                                buildLabelValueRow('Currency Code', order.currencyCode ?? ''),
+                                                buildLabelValueRow('COD Amount', order.codAmount.toString() ?? ''),
+                                                buildLabelValueRow('Prepaid Amount', order.prepaidAmount.toString() ?? ''),
+                                                buildLabelValueRow('Coin', order.coin.toString() ?? ''),
+                                                buildLabelValueRow('Tax Percent', order.taxPercent.toString() ?? ''),
+                                                buildLabelValueRow('Courier Name', order.courierName ?? ''),
+                                                buildLabelValueRow('Order Type', order.orderType ?? ''),
+                                                buildLabelValueRow('Payment Bank', order.paymentBank ?? ''),
+                                              ],
+                                            ),
                                           ),
                                         ),
-                                        const SizedBox(width: 12.0),
-                                        Flexible(
-                                          child: Column(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
-                                            children: [
-                                              buildLabelValueRow(
-                                                  'Discount Amount',
-                                                  order.discountAmount
-                                                          .toString() ??
-                                                      ''),
-                                              buildLabelValueRow(
-                                                  'Discount Scheme',
-                                                  order.discountScheme ?? ''),
-                                              buildLabelValueRow(
-                                                  'Discount Percent',
-                                                  order.discountPercent
-                                                          .toString() ??
-                                                      ''),
-                                              buildLabelValueRow(
-                                                  'Agent', order.agent ?? ''),
-                                              buildLabelValueRow(
-                                                  'Notes', order.notes ?? ''),
-                                              buildLabelValueRow(
-                                                  'Marketplace',
-                                                  order.marketplace?.name ??
-                                                      ''),
-                                              buildLabelValueRow(
-                                                  'Filter', order.filter ?? ''),
-                                              buildLabelValueRow(
-                                                'Expected Delivery Date',
-                                                order.expectedDeliveryDate !=
-                                                        null
-                                                    ? accountsProvider
-                                                        .formatDate(order
-                                                            .expectedDeliveryDate!)
-                                                    : '',
-                                              ),
-                                              buildLabelValueRow(
-                                                  'Preferred Courier',
-                                                  order.preferredCourier ?? ''),
-                                              buildLabelValueRow(
-                                                'Payment Date Time',
-                                                order.paymentDateTime != null
-                                                    ? accountsProvider
-                                                        .formatDateTime(order
-                                                            .paymentDateTime!)
-                                                    : '',
-                                              ),
-                                            ],
+                                        // const SizedBox(width: 12.0),
+                                        Expanded(
+                                          child: Padding(
+                                            padding: const EdgeInsets.only(right: 8.0),
+                                            child: Column(
+                                              crossAxisAlignment: CrossAxisAlignment.start,
+                                              children: [
+                                                buildLabelValueRow('Discount Amount', order.discountAmount.toString() ?? ''),
+                                                buildLabelValueRow('Discount Scheme', order.discountScheme ?? ''),
+                                                buildLabelValueRow('Discount Percent', order.discountPercent.toString() ?? ''),
+                                                buildLabelValueRow('Agent', order.agent ?? ''),
+                                                buildLabelValueRow('Notes', order.notes ?? ''),
+                                                buildLabelValueRow('Marketplace', order.marketplace?.name ?? ''),
+                                                buildLabelValueRow('Filter', order.filter ?? ''),
+                                                buildLabelValueRow(
+                                                  'Expected Delivery Date',
+                                                  order.expectedDeliveryDate != null ? accountsProvider.formatDate(order.expectedDeliveryDate!) : '',
+                                                ),
+                                                buildLabelValueRow('Preferred Courier', order.preferredCourier ?? ''),
+                                                buildLabelValueRow(
+                                                  'Payment Date Time',
+                                                  order.paymentDateTime != null ? accountsProvider.formatDateTime(order.paymentDateTime!) : '',
+                                                ),
+                                              ],
+                                            ),
                                           ),
                                         ),
-                                        const SizedBox(width: 12.0),
-                                        Flexible(
-                                          child: Column(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
-                                            children: [
-                                              buildLabelValueRow(
-                                                  'Delivery Term',
-                                                  order.deliveryTerm ?? ''),
-                                              buildLabelValueRow(
-                                                  'Transaction Number',
-                                                  order.transactionNumber ??
-                                                      ''),
-                                              buildLabelValueRow(
-                                                  'Micro Dealer Order',
-                                                  order.microDealerOrder ?? ''),
-                                              buildLabelValueRow(
-                                                  'Fulfillment Type',
-                                                  order.fulfillmentType ?? ''),
-                                              buildLabelValueRow(
-                                                  'No. of Boxes',
-                                                  order.numberOfBoxes
-                                                          .toString() ??
-                                                      ''),
-                                              buildLabelValueRow(
-                                                  'Total Quantity',
-                                                  order.totalQuantity
-                                                          .toString() ??
-                                                      ''),
-                                              buildLabelValueRow(
-                                                  'SKU Qty',
-                                                  order.skuQty.toString() ??
-                                                      ''),
-                                              buildLabelValueRow(
-                                                  'Calc Entry No.',
-                                                  order.calcEntryNumber ?? ''),
-                                              buildLabelValueRow('Currency',
-                                                  order.currency ?? ''),
-                                            ],
+                                        // const SizedBox(width: 12.0),
+                                        Expanded(
+                                          child: Padding(
+                                            padding: const EdgeInsets.only(right: 8.0),
+                                            child: Column(
+                                              crossAxisAlignment: CrossAxisAlignment.start,
+                                              children: [
+                                                buildLabelValueRow('Delivery Term', order.deliveryTerm ?? ''),
+                                                buildLabelValueRow('Transaction Number', order.transactionNumber ?? ''),
+                                                buildLabelValueRow('Micro Dealer Order', order.microDealerOrder ?? ''),
+                                                buildLabelValueRow('Fulfillment Type', order.fulfillmentType ?? ''),
+                                                buildLabelValueRow('No. of Boxes', order.numberOfBoxes.toString() ?? ''),
+                                                buildLabelValueRow('Total Quantity', order.totalQuantity.toString() ?? ''),
+                                                buildLabelValueRow('SKU Qty', order.skuQty.toString() ?? ''),
+                                                buildLabelValueRow('Calc Entry No.', order.calcEntryNumber ?? ''),
+                                                buildLabelValueRow('Currency', order.currency ?? ''),
+                                              ],
+                                            ),
                                           ),
                                         ),
-                                        const SizedBox(width: 12.0),
-                                        Flexible(
+                                        // const SizedBox(width: 12.0),
+                                        Expanded(
                                           child: Column(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
+                                            crossAxisAlignment: CrossAxisAlignment.start,
                                             children: [
                                               buildLabelValueRow(
                                                 'Dimensions',
                                                 '${order.length.toString() ?? ''} x ${order.breadth.toString() ?? ''} x ${order.height.toString() ?? ''}',
                                               ),
-                                              buildLabelValueRow(
-                                                  'Tracking Status',
-                                                  order.trackingStatus ?? ''),
+                                              buildLabelValueRow('Tracking Status', order.trackingStatus ?? ''),
                                               const SizedBox(
                                                 height: 7,
                                               ),
                                               const Text(
                                                 'Customer Details:',
-                                                style: TextStyle(
-                                                    fontWeight: FontWeight.bold,
-                                                    fontSize: 12.0,
-                                                    color:
-                                                        AppColors.primaryBlue),
+                                                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12.0, color: AppColors.primaryBlue),
                                               ),
                                               buildLabelValueRow(
                                                 'Customer ID',
-                                                order.customer?.customerId ??
-                                                    '',
+                                                order.customer?.customerId ?? '',
                                               ),
-                                              buildLabelValueRow(
-                                                  'Full Name',
-                                                  order.customer?.firstName !=
-                                                          order.customer
-                                                              ?.lastName
-                                                      ? '${order.customer?.firstName ?? ''} ${order.customer?.lastName ?? ''}'
-                                                          .trim()
-                                                      : order.customer
-                                                              ?.firstName ??
-                                                          ''),
+                                              buildLabelValueRow('Full Name', order.customer?.firstName != order.customer?.lastName ? '${order.customer?.firstName ?? ''} ${order.customer?.lastName ?? ''}'.trim() : order.customer?.firstName ?? ''),
                                               buildLabelValueRow(
                                                 'Email',
                                                 order.customer?.email ?? '',
                                               ),
                                               buildLabelValueRow(
                                                 'Phone',
-                                                maskPhoneNumber(order
-                                                        .customer?.phone
-                                                        ?.toString()) ??
-                                                    '',
+                                                maskPhoneNumber(order.customer?.phone?.toString()) ?? '',
                                               ),
                                               buildLabelValueRow(
                                                 'GSTIN',
-                                                order.customer?.customerGstin ??
-                                                    '',
+                                                order.customer?.customerGstin ?? '',
                                               ),
                                             ],
                                           ),
                                         ),
-                                        const SizedBox(width: 12.0),
-                                        // Flexible(
-                                        //   child: Column(
-                                        //     crossAxisAlignment:
-                                        //         CrossAxisAlignment.start,
-                                        //     children: [
-                                        //       const Text(
-                                        //         'Shipping Address:',
-                                        //         style: TextStyle(
-                                        //             fontWeight: FontWeight.bold,
-                                        //             fontSize: 12.0,
-                                        //             color:
-                                        //                 AppColors.primaryBlue),
-                                        //       ),
-                                        //       buildLabelValueRow(
-                                        //         'Address',
-                                        //         [
-                                        //           order.shippingAddress
-                                        //               ?.address1,
-                                        //           order.shippingAddress
-                                        //               ?.address2,
-                                        //           order.shippingAddress?.city,
-                                        //           order.shippingAddress?.state,
-                                        //           order
-                                        //               .shippingAddress?.country,
-                                        //           order.shippingAddress?.pincode
-                                        //               ?.toString(),
-                                        //         ]
-                                        //             .where((element) =>
-                                        //                 element != null &&
-                                        //                 element.isNotEmpty)
-                                        //             .join(', '),
-                                        //       ),
-                                        //       buildLabelValueRow(
-                                        //         'Name',
-                                        //         order.shippingAddress
-                                        //                     ?.firstName !=
-                                        //                 order.shippingAddress
-                                        //                     ?.lastName
-                                        //             ? '${order.shippingAddress?.firstName ?? ''} ${order.shippingAddress?.lastName ?? ''}'
-                                        //                 .trim()
-                                        //             : order.shippingAddress
-                                        //                     ?.firstName ??
-                                        //                 '',
-                                        //       ),
-                                        //       buildLabelValueRow(
-                                        //           'Phone',
-                                        //           order.shippingAddress?.phone
-                                        //                   ?.toString() ??
-                                        //               ''),
-                                        //       buildLabelValueRow(
-                                        //           'Email',
-                                        //           order.shippingAddress
-                                        //                   ?.email ??
-                                        //               ''),
-                                        //       buildLabelValueRow(
-                                        //           'Country Code',
-                                        //           order.shippingAddress
-                                        //                   ?.countryCode ??
-                                        //               ''),
-                                        //       const SizedBox(height: 8.0),
-                                        //       const Text(
-                                        //         'Billing Address:',
-                                        //         style: TextStyle(
-                                        //             fontWeight: FontWeight.bold,
-                                        //             fontSize: 12.0,
-                                        //             color:
-                                        //                 AppColors.primaryBlue),
-                                        //       ),
-                                        //       buildLabelValueRow(
-                                        //         'Address',
-                                        //         [
-                                        //           order
-                                        //               .billingAddress?.address1,
-                                        //           order
-                                        //               .billingAddress?.address2,
-                                        //           order.billingAddress?.city,
-                                        //           order.billingAddress?.state,
-                                        //           order.billingAddress?.country,
-                                        //           order.billingAddress?.pincode
-                                        //               ?.toString(),
-                                        //         ]
-                                        //             .where((element) =>
-                                        //                 element != null &&
-                                        //                 element.isNotEmpty)
-                                        //             .join(', '),
-                                        //       ),
-                                        //       buildLabelValueRow(
-                                        //         'Name',
-                                        //         order.billingAddress?.firstName !=
-                                        //                 order.billingAddress
-                                        //                     ?.lastName
-                                        //             ? '${order.billingAddress?.firstName ?? ''} ${order.billingAddress?.lastName ?? ''}'
-                                        //                 .trim()
-                                        //             : order.billingAddress
-                                        //                     ?.firstName ??
-                                        //                 '',
-                                        //       ),
-                                        //       buildLabelValueRow(
-                                        //           'Phone',
-                                        //           order.billingAddress?.phone
-                                        //                   ?.toString() ??
-                                        //               ''),
-                                        //       buildLabelValueRow(
-                                        //           'Email',
-                                        //           order.billingAddress?.email ??
-                                        //               ''),
-                                        //       buildLabelValueRow(
-                                        //           'Country Code',
-                                        //           order.billingAddress
-                                        //                   ?.countryCode ??
-                                        //               ''),
-                                        //     ],
-                                        //   ),
-                                        // ),
                                       ],
                                     ),
                                   ),
                                   Padding(
                                     padding: const EdgeInsets.all(16.0),
                                     child: Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.start,
+                                      mainAxisAlignment: MainAxisAlignment.start,
                                       children: [
                                         Expanded(
                                           // flex: 1,
                                           child: FittedBox(
                                             fit: BoxFit.scaleDown,
                                             child: Column(
-                                              crossAxisAlignment:
-                                                  CrossAxisAlignment.start,
+                                              crossAxisAlignment: CrossAxisAlignment.start,
                                               children: [
                                                 const Text(
                                                   'Shipping Address:',
-                                                  style: TextStyle(
-                                                      fontWeight:
-                                                          FontWeight.bold,
-                                                      fontSize: 12.0,
-                                                      color: AppColors
-                                                          .primaryBlue),
+                                                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12.0, color: AppColors.primaryBlue),
                                                 ),
                                                 Row(
-                                                  crossAxisAlignment:
-                                                      CrossAxisAlignment.start,
+                                                  crossAxisAlignment: CrossAxisAlignment.start,
                                                   children: [
                                                     const Text(
                                                       'Address: ',
                                                       style: TextStyle(
-                                                        fontWeight:
-                                                            FontWeight.bold,
+                                                        fontWeight: FontWeight.bold,
                                                         fontSize: 12.0,
                                                       ),
                                                     ),
                                                     Text(
                                                       [
-                                                        order.shippingAddress
-                                                            ?.address1,
-                                                        order.shippingAddress
-                                                            ?.address2,
-                                                        order.shippingAddress
-                                                            ?.city,
-                                                        order.shippingAddress
-                                                            ?.state,
-                                                        order.shippingAddress
-                                                            ?.country,
-                                                        order.shippingAddress
-                                                            ?.pincode
-                                                            ?.toString(),
-                                                      ]
-                                                          .where((element) =>
-                                                              element != null &&
-                                                              element
-                                                                  .isNotEmpty)
-                                                          .join(', ')
-                                                          .replaceAllMapped(
-                                                              RegExp('.{1,50}'),
-                                                              (match) =>
-                                                                  '${match.group(0)}\n'),
+                                                        order.shippingAddress?.address1,
+                                                        order.shippingAddress?.address2,
+                                                        order.shippingAddress?.city,
+                                                        order.shippingAddress?.state,
+                                                        order.shippingAddress?.country,
+                                                        order.shippingAddress?.pincode?.toString(),
+                                                      ].where((element) => element != null && element.isNotEmpty).join(', ').replaceAllMapped(RegExp('.{1,50}'), (match) => '${match.group(0)}\n'),
                                                       softWrap: true,
                                                       maxLines: null,
                                                       style: const TextStyle(
@@ -1037,27 +719,10 @@ class _AccountsPageState extends State<AccountsPage> {
                                                 ),
                                                 buildLabelValueRow(
                                                   'Name',
-                                                  order.shippingAddress
-                                                              ?.firstName !=
-                                                          order.shippingAddress
-                                                              ?.lastName
-                                                      ? '${order.shippingAddress?.firstName ?? ''} ${order.shippingAddress?.lastName ?? ''}'
-                                                          .trim()
-                                                      : order.shippingAddress
-                                                              ?.firstName ??
-                                                          '',
+                                                  order.shippingAddress?.firstName != order.shippingAddress?.lastName ? '${order.shippingAddress?.firstName ?? ''} ${order.shippingAddress?.lastName ?? ''}'.trim() : order.shippingAddress?.firstName ?? '',
                                                 ),
-                                                buildLabelValueRow(
-                                                    'Pincode',
-                                                    order.shippingAddress
-                                                            ?.pincode
-                                                            ?.toString() ??
-                                                        ''),
-                                                buildLabelValueRow(
-                                                    'Country Code',
-                                                    order.shippingAddress
-                                                            ?.countryCode ??
-                                                        ''),
+                                                buildLabelValueRow('Pincode', order.shippingAddress?.pincode?.toString() ?? ''),
+                                                buildLabelValueRow('Country Code', order.shippingAddress?.countryCode ?? ''),
                                               ],
                                             ),
                                           ),
@@ -1067,55 +732,31 @@ class _AccountsPageState extends State<AccountsPage> {
                                           child: FittedBox(
                                             fit: BoxFit.scaleDown,
                                             child: Column(
-                                              crossAxisAlignment:
-                                                  CrossAxisAlignment.start,
+                                              crossAxisAlignment: CrossAxisAlignment.start,
                                               children: [
                                                 const Text(
                                                   'Billing Address:',
-                                                  style: TextStyle(
-                                                      fontWeight:
-                                                          FontWeight.bold,
-                                                      fontSize: 12.0,
-                                                      color: AppColors
-                                                          .primaryBlue),
+                                                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12.0, color: AppColors.primaryBlue),
                                                 ),
                                                 Row(
-                                                  crossAxisAlignment:
-                                                      CrossAxisAlignment.start,
+                                                  crossAxisAlignment: CrossAxisAlignment.start,
                                                   children: [
                                                     const Text(
                                                       'Address: ',
                                                       style: TextStyle(
-                                                        fontWeight:
-                                                            FontWeight.bold,
+                                                        fontWeight: FontWeight.bold,
                                                         fontSize: 12.0,
                                                       ),
                                                     ),
                                                     Text(
                                                       [
-                                                        order.billingAddress
-                                                            ?.address1,
-                                                        order.billingAddress
-                                                            ?.address2,
-                                                        order.billingAddress
-                                                            ?.city,
-                                                        order.billingAddress
-                                                            ?.state,
-                                                        order.billingAddress
-                                                            ?.country,
-                                                        order.billingAddress
-                                                            ?.pincode
-                                                            ?.toString(),
-                                                      ]
-                                                          .where((element) =>
-                                                              element != null &&
-                                                              element
-                                                                  .isNotEmpty)
-                                                          .join(', ')
-                                                          .replaceAllMapped(
-                                                              RegExp('.{1,50}'),
-                                                              (match) =>
-                                                                  '${match.group(0)}\n'),
+                                                        order.billingAddress?.address1,
+                                                        order.billingAddress?.address2,
+                                                        order.billingAddress?.city,
+                                                        order.billingAddress?.state,
+                                                        order.billingAddress?.country,
+                                                        order.billingAddress?.pincode?.toString(),
+                                                      ].where((element) => element != null && element.isNotEmpty).join(', ').replaceAllMapped(RegExp('.{1,50}'), (match) => '${match.group(0)}\n'),
                                                       softWrap: true,
                                                       maxLines: null,
                                                       style: const TextStyle(
@@ -1150,27 +791,10 @@ class _AccountsPageState extends State<AccountsPage> {
                                                 // ),
                                                 buildLabelValueRow(
                                                   'Name',
-                                                  order.billingAddress
-                                                              ?.firstName !=
-                                                          order.billingAddress
-                                                              ?.lastName
-                                                      ? '${order.billingAddress?.firstName ?? ''} ${order.billingAddress?.lastName ?? ''}'
-                                                          .trim()
-                                                      : order.billingAddress
-                                                              ?.firstName ??
-                                                          '',
+                                                  order.billingAddress?.firstName != order.billingAddress?.lastName ? '${order.billingAddress?.firstName ?? ''} ${order.billingAddress?.lastName ?? ''}'.trim() : order.billingAddress?.firstName ?? '',
                                                 ),
-                                                buildLabelValueRow(
-                                                    'Pincode',
-                                                    order.billingAddress
-                                                            ?.pincode
-                                                            ?.toString() ??
-                                                        ''),
-                                                buildLabelValueRow(
-                                                    'Country Code',
-                                                    order.billingAddress
-                                                            ?.countryCode ??
-                                                        ''),
+                                                buildLabelValueRow('Pincode', order.billingAddress?.pincode?.toString() ?? ''),
+                                                buildLabelValueRow('Country Code', order.billingAddress?.countryCode ?? ''),
                                               ],
                                             ),
                                           ),
@@ -1181,28 +805,20 @@ class _AccountsPageState extends State<AccountsPage> {
                                   // const SizedBox(height: 6),
                                   if (order.confirmedBy!['status'] == true)
                                     Padding(
-                                      padding: const EdgeInsets.symmetric(
-                                          horizontal: 16.0),
+                                      padding: const EdgeInsets.symmetric(horizontal: 16.0),
                                       child: Text.rich(
                                         TextSpan(
                                             text: "Confirmed By: ",
                                             children: [
                                               TextSpan(
-                                                  text: order.confirmedBy![
-                                                          'confirmedBy']
-                                                      .toString()
-                                                      .split('@')[0],
+                                                  text: order.confirmedBy!['confirmedBy'].toString().split('@')[0],
                                                   style: const TextStyle(
-                                                    fontWeight:
-                                                        FontWeight.normal,
+                                                    fontWeight: FontWeight.normal,
                                                   )),
                                               TextSpan(
-                                                  text: formatIsoDate(
-                                                      order.confirmedBy![
-                                                          'timestamp']),
+                                                  text: formatIsoDate(order.confirmedBy!['timestamp']),
                                                   style: const TextStyle(
-                                                    fontWeight:
-                                                        FontWeight.normal,
+                                                    fontWeight: FontWeight.normal,
                                                   )),
                                             ],
                                             style: const TextStyle(
@@ -1212,26 +828,20 @@ class _AccountsPageState extends State<AccountsPage> {
                                     ),
                                   if (order.baApprovedBy!['status'] == true)
                                     Padding(
-                                      padding: const EdgeInsets.symmetric(
-                                          horizontal: 16.0),
+                                      padding: const EdgeInsets.symmetric(horizontal: 16.0),
                                       child: Text.rich(
                                         TextSpan(
                                             text: "BA Approved By: ",
                                             children: [
                                               TextSpan(
-                                                  text: order.baApprovedBy![
-                                                      'baApprovedBy'],
+                                                  text: order.baApprovedBy!['baApprovedBy'],
                                                   style: const TextStyle(
-                                                    fontWeight:
-                                                        FontWeight.normal,
+                                                    fontWeight: FontWeight.normal,
                                                   )),
                                               TextSpan(
-                                                  text: formatIsoDate(
-                                                      order.baApprovedBy![
-                                                          'timestamp']),
+                                                  text: formatIsoDate(order.baApprovedBy!['timestamp']),
                                                   style: const TextStyle(
-                                                    fontWeight:
-                                                        FontWeight.normal,
+                                                    fontWeight: FontWeight.normal,
                                                   )),
                                             ],
                                             style: const TextStyle(
@@ -1241,26 +851,20 @@ class _AccountsPageState extends State<AccountsPage> {
                                     ),
 
                                   Padding(
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: 16.0),
+                                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
                                     child: Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.spaceBetween,
+                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                       children: [
                                         Text.rich(
                                           TextSpan(
                                               text: "Updated on: ",
                                               children: [
                                                 TextSpan(
-                                                    text: DateFormat(
-                                                            'yyyy-MM-dd\',\' hh:mm a')
-                                                        .format(
-                                                      DateTime.parse(
-                                                          "${order.updatedAt}"),
+                                                    text: DateFormat('yyyy-MM-dd\',\' hh:mm a').format(
+                                                      DateTime.parse("${order.updatedAt}"),
                                                     ),
                                                     style: const TextStyle(
-                                                      fontWeight:
-                                                          FontWeight.normal,
+                                                      fontWeight: FontWeight.normal,
                                                     )),
                                               ],
                                               style: const TextStyle(
@@ -1268,23 +872,11 @@ class _AccountsPageState extends State<AccountsPage> {
                                               )),
                                         ),
                                         Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.end,
+                                          crossAxisAlignment: CrossAxisAlignment.end,
                                           children: [
-                                            if (order.messages != null &&
-                                                order.messages![
-                                                        'confirmerMessage'] !=
-                                                    null &&
-                                                order.messages![
-                                                        'confirmerMessage']
-                                                    .toString()
-                                                    .isNotEmpty)
-                                              Utils().showMessage(
-                                                  context,
-                                                  'Confirmer Remark',
-                                                  order.messages![
-                                                          'confirmerMessage']
-                                                      .toString()),
+                                            if (order.messages != null && order.messages!['confirmerMessage'] != null && order.messages!['confirmerMessage'].toString().isNotEmpty) ...[
+                                              Utils().showMessage(context, 'Confirmer Remark', order.messages!['confirmerMessage'].toString())
+                                            ],
                                           ],
                                         ),
                                       ],
@@ -1298,8 +890,7 @@ class _AccountsPageState extends State<AccountsPage> {
                                   const SizedBox(height: 6),
                                   ListView.builder(
                                     shrinkWrap: true,
-                                    physics:
-                                        const NeverScrollableScrollPhysics(),
+                                    physics: const NeverScrollableScrollPhysics(),
                                     itemCount: comboItemGroups.length,
                                     itemBuilder: (context, comboIndex) {
                                       final combo = comboItemGroups[comboIndex];
@@ -1316,13 +907,11 @@ class _AccountsPageState extends State<AccountsPage> {
                                   ),
                                   ListView.builder(
                                     shrinkWrap: true,
-                                    physics:
-                                        const NeverScrollableScrollPhysics(),
+                                    physics: const NeverScrollableScrollPhysics(),
                                     itemCount: remainingItems.length,
                                     itemBuilder: (context, itemIndex) {
                                       final item = remainingItems[itemIndex];
-                                      print(
-                                          'Item $itemIndex: ${item.product?.displayName.toString() ?? ''}, Quantity: ${item.qty ?? 0}');
+                                      print('Item $itemIndex: ${item.product?.displayName.toString() ?? ''}, Quantity: ${item.qty ?? 0}');
                                       return ProductDetailsCard(
                                         item: item,
                                         index: itemIndex,
@@ -1370,8 +959,7 @@ class _AccountsPageState extends State<AccountsPage> {
                   accountsProvider.goToPage(accountsProvider.totalPages);
                 },
                 onNextPage: () {
-                  if (accountsProvider.currentPage <
-                      accountsProvider.totalPages) {
+                  if (accountsProvider.currentPage < accountsProvider.totalPages) {
                     accountsProvider.goToPage(accountsProvider.currentPage + 1);
                   }
                 },
@@ -1384,11 +972,8 @@ class _AccountsPageState extends State<AccountsPage> {
                   accountsProvider.goToPage(page);
                 },
                 onJumpToPage: () {
-                  final page =
-                      int.tryParse(accountsProvider.textEditingController.text);
-                  if (page != null &&
-                      page > 0 &&
-                      page <= accountsProvider.totalPages) {
+                  final page = int.tryParse(accountsProvider.textEditingController.text);
+                  if (page != null && page > 0 && page <= accountsProvider.totalPages) {
                     accountsProvider.goToPage(page);
                   }
                 },
@@ -1491,6 +1076,7 @@ class _AccountsPageState extends State<AccountsPage> {
 Widget buildLabelValueRow(String label, String? value) {
   return Row(
     crossAxisAlignment: CrossAxisAlignment.start,
+    mainAxisSize: MainAxisSize.min,
     children: [
       Text(
         '$label: ',
@@ -1499,12 +1085,18 @@ Widget buildLabelValueRow(String label, String? value) {
           fontSize: 12.0,
         ),
       ),
-      Text(
-        value ?? '',
-        softWrap: true,
-        maxLines: 2,
-        style: const TextStyle(
-          fontSize: 12.0,
+      Flexible(
+        child: Tooltip(
+          message: value ?? '',
+          child: Text(
+            value ?? '',
+            // softWrap: true,
+            overflow: TextOverflow.ellipsis,
+            maxLines: 1,
+            style: const TextStyle(
+              fontSize: 12.0,
+            ),
+          ),
         ),
       ),
     ],

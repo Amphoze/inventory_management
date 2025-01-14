@@ -53,9 +53,8 @@ class _AccountsSectionPageState extends State<AccountsSectionPage> with SingleTi
 
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider(
-      create: (_) => AccountsProvider(),
-      child: Scaffold(
+    return Consumer<AccountsProvider>(
+      builder: (context, pro, child) => Scaffold(
         backgroundColor: Colors.white,
         body: Padding(
           padding: const EdgeInsets.only(top: 3.0),
