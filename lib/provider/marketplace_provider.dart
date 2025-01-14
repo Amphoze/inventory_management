@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:inventory_management/Api/combo_api.dart';
 import 'package:inventory_management/model/combo_model.dart'; // for product model
@@ -54,7 +56,7 @@ class MarketplaceProvider with ChangeNotifier {
       _loading = false;
     } catch (e) {
       // Handle general errors
-      print('Error fetching marketplaces: $e');
+      log('Error fetching marketplaces: $e');
       _marketplaces = []; // Clear the list on error
     } finally {
       _loading = false;

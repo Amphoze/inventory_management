@@ -61,6 +61,37 @@ class Product {
     required this.height,
     required this.variantName,
   });
+
+  // factory Product.fromJson(Map<String, dynamic> json) {
+  //   return Product(
+  //     sku: json['sku'] ?? '',
+  //     tax_rule: json['tax_rule'] ?? '',
+  //     categoryName: json['category']?['name'] ?? '',
+  //     brand: json['brand']?['name'] ?? '',
+  //     mrp: json['mrp']?.toString() ?? '',
+  //     createdDate: json['createdAt'] ?? '',
+  //     lastUpdated: json['updatedAt'] ?? '',
+  //     colour: json['color']?['name'] ?? '',
+  //     displayName: json['displayName'] ?? '',
+  //     parentSku: json['parentSku'] ?? '',
+  //     netWeight: json['netWeight']?.toString() ?? '',
+  //     grossWeight: json['grossWeight']?.toString() ?? '',
+  //     ean: json['ean'] ?? '',
+  //     description: json['description'] ?? '',
+  //     technicalName: json['technicalName'] ?? '',
+  //     labelSku: json['label']?['activeLabel']?['labelSku'] ?? '',
+  //     outerPackage_name: json['outerPackage']?['outerPackage_name'] ?? '',
+  //     outerPackage_quantity:
+  //         json['outerPackage_quantity']?.toString() ?? '0',
+  //     length: json['dimensions']?['length']?.toString() ?? '',
+  //     width: json['dimensions']?['width']?.toString() ?? '',
+  //     height: json['dimensions']?['height']?.toString() ?? '',
+  //     cost: json['cost']?.toString() ?? '',
+  //     grade: json['grade'] ?? '',
+  //     shopifyImage: json['shopifyImage'] ?? '',
+  //     variantName: json['variant_name'] ?? '',
+  //   );
+  // }
 }
 
 class ProductCard extends StatelessWidget {

@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
+import 'package:inventory_management/constants/constants.dart';
 import 'package:inventory_management/model/orders_model.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -57,9 +58,8 @@ class PackerProvider with ChangeNotifier {
 
   Future<String> cancelOrders(
       BuildContext context, List<String> orderIds) async {
-    const String baseUrl =
-        'https://inventory-management-backend-s37u.onrender.com';
-    const String cancelOrderUrl = '$baseUrl/orders/cancel';
+    String baseUrl = await ApiUrls.getBaseUrl();
+    String cancelOrderUrl = '$baseUrl/orders/cancel';
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('authToken') ?? '';
     setCancelStatus(true);
@@ -96,9 +96,9 @@ class PackerProvider with ChangeNotifier {
         setCancelStatus(false);
         notifyListeners(); // Notify the UI to rebuild
 
-        return responseData['message'] ?? 'Orders confirmed successfully';
+        return responseData['message'] ?? 'Orders cancelled successfully';
       } else {
-        return responseData['message'] ?? 'Failed to confirm orders';
+        return responseData['message'] ?? 'Failed to cancel orders';
       }
     } catch (error) {
       setCancelStatus(false);
@@ -108,7 +108,6 @@ class PackerProvider with ChangeNotifier {
     }
   }
 
-
   Future<void> fetchOrdersWithStatus5() async {
     _isLoading = true;
     setRefreshingOrders(true);
@@ -116,8 +115,7 @@ class PackerProvider with ChangeNotifier {
 
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('authToken') ?? '';
-    const url =
-        'https://inventory-management-backend-s37u.onrender.com/orders?orderStatus=5&page=';
+    String url = '${await ApiUrls.getBaseUrl()}/orders?orderStatus=5&page=';
 
     try {
       final response = await http.get(Uri.parse('$url$_currentPage'), headers: {
@@ -182,7 +180,7 @@ class PackerProvider with ChangeNotifier {
     final token = prefs.getString('authToken') ?? '';
 
     final url =
-        'https://inventory-management-backend-s37u.onrender.com/orders?orderStatus=5&order_id=$query';
+        '${await ApiUrls.getBaseUrl()}/orders?orderStatus=5&order_id=$query';
 
     print('Searching failed orders with term: $query');
 

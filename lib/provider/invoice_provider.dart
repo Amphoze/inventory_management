@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:inventory_management/constants/constants.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../model/invoice_model.dart';
 
@@ -20,10 +21,18 @@ class InvoiceProvider with ChangeNotifier {
   int get currentPage => _currentPage;
   int get totalPages => _totalPages;
 
-  final String apiUrl =
-      'https://inventory-management-backend-s37u.onrender.com';
+  // late final String apiUrl;
+
+  // InvoiceProvider() {
+  //   _initialize();
+  // }
+
+  // Future<void> _initialize() async {
+  //   apiUrl = await ApiUrls.getBaseUrl();
+  // }
 
   Future<void> fetchInvoices({int page = 1}) async {
+    String apiUrl = await ApiUrls.getBaseUrl();
     _isLoading = true;
     _error = null;
     _currentPage = page;
@@ -113,18 +122,41 @@ class InvoiceProvider with ChangeNotifier {
   //   }
   // }
   Future<void> searchInvoiceByNumber(String invoiceNumber) async {
+    String apiUrl = await ApiUrls.getBaseUrl();
     _isLoading = true;
     _error = null;
     notifyListeners();
 
+    if (invoiceNumber.isEmpty) {
+      fetchInvoices();
+      return;
+    }
+
+    log('Searching for invoice: $invoiceNumber');
+
+    final token = await _getToken();
+    if (token == null || token.isEmpty) {
+      notifyListeners();
+      print('Token is missing. Please log in again.');
+      return;
+    }
+
     try {
+      final headers = {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json'
+      };
       final response = await http.get(
-        Uri.parse('$apiUrl/invoice?invoice_number=$invoiceNumber'),
-      );
+          Uri.parse('$apiUrl/invoice?invoice_number=$invoiceNumber'),
+          headers: headers);
+
+      log('Response: ${response.statusCode}');
 
       if (response.statusCode == 200) {
         final List<dynamic> data = json.decode(response.body)['invoices'];
         _invoices = data.map((json) => Invoice.fromJson(json)).toList();
+
+        log('Invoices: $_invoices');
       } else {
         _error = 'No invoice found with that number';
         log("No invoice found with that number");

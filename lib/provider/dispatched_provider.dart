@@ -4,33 +4,35 @@ import 'dart:developer';
 
 import 'package:flutter/material.dart';
 import 'package:inventory_management/Custom-Files/colors.dart';
+import 'package:inventory_management/constants/constants.dart';
+import 'package:logger/logger.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 import '../model/orders_model.dart';
 
-class DispatchedProvider extends ChangeNotifier {
-  bool _isLoading = false;
-  bool _selectAll = false;
-  List<bool> _selectedProducts = [];
-  List<Order> _orders = [];
-  int _currentPage = 1; // Ensure this starts at 1
-  int _totalPages = 1;
-  final PageController _pageController = PageController();
-  final TextEditingController _textEditingController = TextEditingController();
-  Timer? _debounce;
+class DispatchedProvider with ChangeNotifier {
+  bool isLoading = false;
+  bool selectAll = false;
+  List<bool> selectedProducts = [];
+  List<Order> orders0 = [];
+  int currentPage = 1; // Ensure this starts at 1
+  int totalPages = 1;
+  final PageController pageController = PageController();
+  final TextEditingController textEditingController = TextEditingController();
+  Timer? debounce;
 
-  bool get selectAll => _selectAll;
-  List<bool> get selectedProducts => _selectedProducts;
-  List<Order> get orders => _orders;
-  bool get isLoading => _isLoading;
+  // bool get selectAll => selectAll;
+  // List<bool> get selectedProducts => selectedProducts;
+  List<Order> get orders => orders0;
+  // bool get isLoading => isLoading;
 
-  int get currentPage => _currentPage;
-  int get totalPages => _totalPages;
-  PageController get pageController => _pageController;
-  TextEditingController get textEditingController => _textEditingController;
+  // int get currentPage => currentPage;
+  // int get totalPages => totalPages;
+  // PageController get pageController => pageController;
+  // TextEditingController get textEditingController => textEditingController;
 
   int get selectedCount =>
-      _selectedProducts.where((isSelected) => isSelected).length;
+      selectedProducts.where((isSelected) => isSelected).length;
 
   bool isRefreshingOrders = false;
 
@@ -40,9 +42,9 @@ class DispatchedProvider extends ChangeNotifier {
   }
 
   void toggleSelectAll(bool value) {
-    _selectAll = value;
-    _selectedProducts =
-        List<bool>.generate(_orders.length, (index) => _selectAll);
+    selectAll = value;
+    selectedProducts =
+        List<bool>.generate(orders0.length, (index) => selectAll);
     notifyListeners();
   }
 
@@ -54,9 +56,8 @@ class DispatchedProvider extends ChangeNotifier {
 
   Future<String> cancelOrders(
       BuildContext context, List<String> orderIds) async {
-    const String baseUrl =
-        'https://inventory-management-backend-s37u.onrender.com';
-    const String cancelOrderUrl = '$baseUrl/orders/cancel';
+    String baseUrl = await ApiUrls.getBaseUrl();
+    String cancelOrderUrl = '$baseUrl/orders/cancel';
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('authToken') ?? '';
     setCancelStatus(true);
@@ -93,9 +94,9 @@ class DispatchedProvider extends ChangeNotifier {
         setCancelStatus(false);
         notifyListeners(); // Notify the UI to rebuild
 
-        return responseData['message'] ?? 'Orders confirmed successfully';
+        return responseData['message'] ?? 'Orders cancelled successfully';
       } else {
-        return responseData['message'] ?? 'Failed to confirm orders';
+        return responseData['message'] ?? 'Failed to cancel orders';
       }
     } catch (error) {
       setCancelStatus(false);
@@ -106,17 +107,16 @@ class DispatchedProvider extends ChangeNotifier {
   }
 
   Future<void> fetchOrdersWithStatus9() async {
-    _isLoading = true;
+    isLoading = true;
     setRefreshingOrders(true);
     notifyListeners();
 
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('authToken') ?? '';
-    const url =
-        'https://inventory-management-backend-s37u.onrender.com/orders?orderStatus=9&page=';
+    String url = '${await ApiUrls.getBaseUrl()}/orders?orderStatus=9&page=';
 
     try {
-      final response = await http.get(Uri.parse('$url$_currentPage'), headers: {
+      final response = await http.get(Uri.parse('$url$currentPage'), headers: {
         'Authorization': 'Bearer $token',
         'Content-Type': 'application/json',
       });
@@ -127,39 +127,41 @@ class DispatchedProvider extends ChangeNotifier {
         List<Order> orders = (data['orders'] as List)
             .map((order) => Order.fromJson(order))
             .toList();
-        initializeSelection();
+        // initializeSelection();
 
-        _totalPages = data['totalPages']; // Get total pages from response
-        _orders = orders; // Set the orders for the current page
+        totalPages = data['totalPages']; // Get total pages from response
+        orders0 = orders; // Set the orders for the current page
 
-        // Logger().e(orders);
+        Logger().e(orders);
 
         // Initialize selected products list
-        _selectedProducts = List<bool>.filled(_orders.length, false);
+        selectedProducts = List<bool>.filled(orders0.length, false);
 
         // Logger().e(_selectedProducts);
         // Print the total number of orders fetched from the current page
-        print('Total Orders Fetched from Page $_currentPage: ${orders.length}');
+        print('Total Orders Fetched from Page $currentPage: ${orders.length}');
       } else {
         // Handle non-success responses
-        _orders = [];
-        _totalPages = 1; // Reset total pages if there’s an error
+
+        orders0 = [];
+        totalPages = 1; // Reset total pages if there’s an error
       }
     } catch (e) {
       // Handle errors
-      _orders = [];
-      _totalPages = 1; // Reset total pages if there’s an error
+      log(e.toString());
+      orders0 = [];
+      totalPages = 1; // Reset total pages if there’s an error
     } finally {
-      _isLoading = false;
+      isLoading = false;
       setRefreshingOrders(false);
       notifyListeners();
     }
   }
 
   void goToPage(int page) {
-    if (page < 1 || page > _totalPages) return;
-    _currentPage = page;
-    print('Current page set to: $_currentPage'); // Debugging line
+    if (page < 1 || page > totalPages) return;
+    currentPage = page;
+    print('Current page set to: $currentPage'); // Debugging line
     fetchOrdersWithStatus9();
     notifyListeners();
   }
@@ -178,13 +180,13 @@ class DispatchedProvider extends ChangeNotifier {
   bool selectAllDispatched = false;
 
   void initializeSelection() {
-    _selectedProducts = List<bool>.filled(_orders.length, false);
+    selectedProducts = List<bool>.filled(orders0.length, false);
     selectedDispatchedItems = List<bool>.filled(ordersDispatched.length, false);
   }
 
   // Handle individual row checkbox change for orders
   void handleRowCheckboxChange(int index, bool isSelected) {
-    _selectedProducts[index] = isSelected;
+    selectedProducts[index] = isSelected;
     notifyListeners();
   }
 
@@ -195,21 +197,21 @@ class DispatchedProvider extends ChangeNotifier {
     if (index != -1) {
       selectedDispatchedItems[index] = isSelected;
       ordersDispatched[index].isSelected = isSelected;
-      _updateSelectAllStateForDispatched();
+      updateSelectAllStateForDispatched();
     }
     notifyListeners();
   }
 
-  void _updateSelectAllStateForDispatched() {
+  void updateSelectAllStateForDispatched() {
     selectAllDispatched = selectedDispatchedItems.every((item) => item);
     notifyListeners();
   }
 
-  bool _isDispatching = false;
-  bool get isDispatching => _isDispatching;
+  bool isDispatching = false;
+  // bool get isDispatching => isDispatching;
 
   Future<void> returnSelectedOrders() async {
-    _isDispatching = true; // Set loading state
+    isDispatching = true; // Set loading state
     notifyListeners();
 
     final prefs = await SharedPreferences.getInstance();
@@ -218,16 +220,14 @@ class DispatchedProvider extends ChangeNotifier {
     List<String> selectedOrderIds = [];
 
     // Collect the IDs of orders where trackingStatus is 'NA' (null or empty)
-    for (int i = 0; i < _selectedProducts.length; i++) {
-      if (_selectedProducts[i] &&
-          (_orders[i].trackingStatus?.isEmpty ?? true)) {
-        selectedOrderIds.add(_orders[i].orderId);
+    for (int i = 0; i < selectedProducts.length; i++) {
+      if (selectedProducts[i] && (orders0[i].trackingStatus?.isEmpty ?? true)) {
+        selectedOrderIds.add(orders0[i].orderId);
       }
     }
 
     if (selectedOrderIds.isNotEmpty) {
-      const url =
-          'https://inventory-management-backend-s37u.onrender.com/orders/return';
+      String url = '${await ApiUrls.getBaseUrl()}/orders/return';
 
       try {
         final body = json.encode({
@@ -252,10 +252,10 @@ class DispatchedProvider extends ChangeNotifier {
         if (response.statusCode == 200) {
           print('Orders returned successfully!');
           // Update local order tracking status
-          for (int i = 0; i < _orders.length; i++) {
-            if (_selectedProducts[i] &&
-                (_orders[i].trackingStatus?.isEmpty ?? true)) {
-              _orders[i].trackingStatus = 'return'; // Update locally
+          for (int i = 0; i < orders0.length; i++) {
+            if (selectedProducts[i] &&
+                (orders0[i].trackingStatus?.isEmpty ?? true)) {
+              orders0[i].trackingStatus = 'return'; // Update locally
             }
           }
 
@@ -266,7 +266,7 @@ class DispatchedProvider extends ChangeNotifier {
       } catch (e) {
         print('Error: $e');
       } finally {
-        _isDispatching = false; // Reset loading state
+        isDispatching = false; // Reset loading state
         notifyListeners();
       }
     } else {
@@ -275,8 +275,8 @@ class DispatchedProvider extends ChangeNotifier {
   }
 
   void onSearchChanged(String query) {
-    if (_debounce?.isActive ?? false) _debounce!.cancel();
-    _debounce = Timer(const Duration(milliseconds: 500), () {
+    if (debounce?.isActive ?? false) debounce!.cancel();
+    debounce = Timer(const Duration(milliseconds: 500), () {
       if (query.isEmpty) {
         // If query is empty, reload all orders
         fetchOrdersWithStatus9();
@@ -289,17 +289,17 @@ class DispatchedProvider extends ChangeNotifier {
   Future<List<Order>> searchOrders(String query) async {
     if (query.isEmpty) {
       await fetchOrdersWithStatus9();
-      return _orders;
+      return orders0;
     }
 
-    _isLoading = true;
+    isLoading = true;
     notifyListeners();
 
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('authToken') ?? '';
 
     final url =
-        'https://inventory-management-backend-s37u.onrender.com/orders?orderStatus=9&order_id=$query';
+        '${await ApiUrls.getBaseUrl()}/orders?orderStatus=9&order_id=$query';
 
     print('Searching failed orders with term: $query');
 
@@ -325,28 +325,27 @@ class DispatchedProvider extends ChangeNotifier {
           print('No data found in response.');
         }
 
-        _orders = orders;
+        orders0 = orders;
         print('Orders fetched: ${orders.length}');
       } else {
         print('Failed to load orders: ${response.statusCode}');
-        _orders = [];
+        orders0 = [];
       }
     } catch (error) {
       print('Error searching failed orders: $error');
-      _orders = [];
+      orders0 = [];
     } finally {
-      _isLoading = false;
+      isLoading = false;
       notifyListeners();
     }
 
-    return _orders;
+    return orders0;
   }
 
   Future<String> updateOrderTrackingStatus(
       BuildContext context, String id, String trackingStatus) async {
-    const String baseUrl =
-        'https://inventory-management-backend-s37u.onrender.com';
-    final String updateOrderUrl = '$baseUrl/orders/$id';
+    String baseUrl = await ApiUrls.getBaseUrl();
+    String updateOrderUrl = '$baseUrl/orders/$id';
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('authToken') ?? '';
 

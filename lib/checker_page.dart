@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:inventory_management/Custom-Files/loading_indicator.dart';
-import 'package:inventory_management/Widgets/order_card.dart';
+import 'package:inventory_management/Widgets/order_combo_card.dart';
 import 'package:inventory_management/model/orders_model.dart';
 import 'package:provider/provider.dart';
 import 'package:inventory_management/Custom-Files/colors.dart';
@@ -350,7 +350,11 @@ class _CheckerPageState extends State<CheckerPage> {
         children: [
           Expanded(
             flex: 9,
-            child: OrderCard(order: order),
+            child: OrderComboCard(
+              order: order,
+              toShowBy: false,
+              toShowOrderDetails: false,
+            ),
           ),
           const SizedBox(width: 4),
           buildCell(
@@ -442,11 +446,18 @@ class _CheckerPageState extends State<CheckerPage> {
     );
   }
 
+  static String maskPhoneNumber(dynamic phone) {
+    if (phone == null) return '';
+    String phoneStr = phone.toString();
+    if (phoneStr.length < 4) return phoneStr;
+    return '${'*' * (phoneStr.length - 4)}${phoneStr.substring(phoneStr.length - 4)}';
+  }
+
   String _getCustomerPhoneNumber(dynamic phoneNumber) {
     if (phoneNumber == null) return 'Unknown';
 
     // Convert to string if it's an int, otherwise return as is
-    return phoneNumber.toString();
+    return maskPhoneNumber(phoneNumber.toString());
   }
 
   String _getCustomerFullName(Customer? customer) {

@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 // import 'package:inventory_management/Api/auth_provider.dart';
 import 'package:inventory_management/Api/auth_provider.dart';
 import 'package:inventory_management/Api/products-provider.dart';
+import 'package:inventory_management/constants/constants.dart';
 import 'package:provider/provider.dart';
 
 class CustomDropdown extends StatefulWidget {
@@ -40,6 +41,7 @@ class CustomDropdown extends StatefulWidget {
 class CustomDropdownState extends State<CustomDropdown> {
   String? _selectedItem = 'Select option';
   bool isLoading = false;
+  bool isDropdownOpen = false;
   final List<String> _items = ['Select option'];
   TextEditingController searchController = TextEditingController();
 
@@ -51,7 +53,7 @@ class CustomDropdownState extends State<CustomDropdown> {
       }
     } else if (widget.isboxSize) {
       for (int i = 0; i < widget.option.length; i++) {
-        _items.add('${widget.option[i]['box_name']}');
+        _items.add('${widget.option[i]['outerPackage_name']}');
       }
     } else if (widget.grade) {
       _items.addAll(['A', 'B', 'C', 'D']);
@@ -78,8 +80,7 @@ class CustomDropdownState extends State<CustomDropdown> {
   }
 
   void searchData(String brandName) async {
-    const String baseUrl =
-        'https://inventory-management-backend-s37u.onrender.com';
+    String baseUrl = await ApiUrls.getBaseUrl();
 
     final token = await AuthProvider().getToken();
     final url = Uri.parse('$baseUrl/category?name=$brandName');
@@ -98,81 +99,83 @@ class CustomDropdownState extends State<CustomDropdown> {
 
   @override
   Widget build(BuildContext context) {
-    return DropdownButtonHideUnderline(
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+          isDropdownOpen = !isDropdownOpen;
+          if (!isDropdownOpen) {
+            searchController.clear();
+          }
+        });
+      },
       child: Container(
-        alignment: Alignment.topCenter,
-        // padding: const EdgeInsets.symmetric(horizontal: 16),
+        padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
         decoration: BoxDecoration(
-          // errorStyle:'',
-          border: Border.all(color: Colors.blue.withOpacity(0.2)),
-          borderRadius: BorderRadius.circular(8),
-          color: Colors.white,
+          border: Border.all(color: Colors.grey),
+          borderRadius: BorderRadius.circular(5.0),
         ),
-        child: DropdownSearch<String>(
-          items: _items,
-          selectedItem: _selectedItem,
-          // filterFn: (s, d) {
-          //   isLoading = true;
-          //   setState(() {});
-          //   searchData(d);
-          //   return true;
-          // },
-          popupProps: PopupProps.menu(
-            fit: FlexFit.tight,
-            showSelectedItems: true,
-            showSearchBox: true,
-            loadingBuilder: ((context, searchEntry) {
-              print("hete is loading bilder");
-              return const Text('data');
-            }),
-
-            menuProps: const MenuProps(
-              elevation: 10,
-            ),
-            searchFieldProps: TextFieldProps(
-              controller: searchController,
-              decoration: const InputDecoration(
-                hintText: "Search for an option",
-                prefixIcon: Icon(
-                  Icons.search,
-                  size: 20,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    _selectedItem ?? 'Select option',
+                    style: TextStyle(
+                      color: _selectedItem == 'Select option'
+                          ? Colors.grey
+                          : Colors.black,
+                    ),
+                  ),
                 ),
-                border: OutlineInputBorder(),
-                constraints: BoxConstraints(maxHeight: 30),
-                isDense: true,
-                filled: true,
-                label: Text('Search'),
-                contentPadding: EdgeInsets.all(0),
+                Icon(
+                  isDropdownOpen ? Icons.arrow_drop_up : Icons.arrow_drop_down,
+                  color: Colors.grey,
+                ),
+              ],
+            ),
+            if (isDropdownOpen) ...[
+              const SizedBox(height: 8),
+              TextField(
+                controller: searchController,
+                decoration: const InputDecoration(
+                  hintText: 'Search...',
+                  border: OutlineInputBorder(),
+                  contentPadding: EdgeInsets.symmetric(horizontal: 8.0),
+                ),
+                onChanged: (query) {
+                  // Implement search logic here if needed
+                },
               ),
-            ),
-            // scrollbarOrientation:ScrollEndNotification
-            //       // notificationPredicate:(b){
-            //       //   print("b is ssssss $b");
-            //       //   return true;
-            //       // }
-            scrollbarProps: ScrollbarProps(
-              notificationPredicate: (a) {
-                print(
-                    "heelo i am dipu pix ${a.metrics.pixels}  max ${a.metrics.maxScrollExtent}  nn${a.metrics.devicePixelRatio}");
-                return true;
-              },
-            ),
-            listViewProps: const ListViewProps(),
-          ),
-          onChanged: (String? newValue) {
-            widget.selectedIndex =
-                _items.indexWhere((element) => element == newValue);
-            if (widget.onSelectedChanged != null) {
-              widget.onSelectedChanged!(widget.selectedIndex);
-            }
-            if (widget.grade) {
-              Provider.of<ProductProvider>(context, listen: false)
-                  .grade(newValue!);
-            }
-            setState(() {
-              _selectedItem = newValue;
-            });
-          },
+              Container(
+                constraints: const BoxConstraints(maxHeight: 250),
+                child: ListView.builder(
+                  shrinkWrap: true,
+                  itemCount: _items.length,
+                  itemBuilder: (context, index) {
+                    return ListTile(
+                      title: Text(_items[index]),
+                      onTap: () {
+                        setState(() {
+                          _selectedItem = _items[index];
+                          widget.selectedIndex = index;
+                          isDropdownOpen = false;
+                          if (widget.onSelectedChanged != null) {
+                            widget.onSelectedChanged!(widget.selectedIndex);
+                          }
+                          if (widget.grade) {
+                            Provider.of<ProductProvider>(context, listen: false)
+                                .grade(_selectedItem!);
+                          }
+                        });
+                      },
+                    );
+                  },
+                ),
+              ),
+            ],
+          ],
         ),
       ),
     );

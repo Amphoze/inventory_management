@@ -3,9 +3,11 @@ import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:inventory_management/Custom-Files/colors.dart';
+import 'package:inventory_management/constants/constants.dart';
 import 'package:inventory_management/model/orders_model.dart';
 import 'package:logger/logger.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:intl/intl.dart';
 
 class BookProvider with ChangeNotifier {
   final TextEditingController searchController = TextEditingController();
@@ -13,14 +15,17 @@ class BookProvider with ChangeNotifier {
   // Store selected states for B2B and B2C orders
   List<bool> selectedB2BItems = List.generate(40, (index) => false);
   List<bool> selectedB2CItems = List.generate(40, (index) => false);
+  List<bool> selectedBookedItems = List.generate(40, (index) => false);
 
   // Select all flags for B2B and B2C
   bool selectAllB2B = false;
   bool selectAllB2C = false;
+  bool selectAllBooked = false;
 
   // Loading states for B2B and B2C orders
   bool isLoadingB2B = false;
   bool isLoadingB2C = false;
+  bool isLoadingBooked = false;
 
   // Sort option for orders
   String? _sortOption;
@@ -29,15 +34,19 @@ class BookProvider with ChangeNotifier {
   // Lists for storing fetched orders
   List<Order> ordersB2B = [];
   List<Order> ordersB2C = [];
+  List<Order> ordersBooked = [];
 
   List<Order> B2BOrders = []; // List to store fetched ready orders
   List<Order> B2COrders = [];
+  List<Order> BookedOrders = [];
 
   // Pagination
   int currentPageB2B = 1;
   int currentPageB2C = 1;
+  int currentPageBooked = 1;
   int totalPagesB2B = 0;
   int totalPagesB2C = 0;
+  int totalPagesBooked = 0;
 
   bool isRefreshingOrders = false;
   bool isDelhiveryLoading = false;
@@ -45,9 +54,15 @@ class BookProvider with ChangeNotifier {
   bool isOthersLoading = false;
 
   bool isCancel = false;
+  bool isRebook = false;
 
   void setCancelStatus(bool status) {
     isCancel = status;
+    notifyListeners();
+  }
+
+  void setRebookingStatus(bool status) {
+    isRebook = status;
     notifyListeners();
   }
 
@@ -71,6 +86,11 @@ class BookProvider with ChangeNotifier {
     notifyListeners();
   }
 
+  void setRefreshingBookedOrders(bool value) {
+    isRefreshingOrders = value;
+    notifyListeners();
+  }
+
   // Set the sort option and notify listeners
   void setSortOption(String? option) {
     _sortOption = option;
@@ -83,9 +103,8 @@ class BookProvider with ChangeNotifier {
 
   Future<String> cancelOrders(
       BuildContext context, List<String> orderIds) async {
-    const String baseUrl =
-        'https://inventory-management-backend-s37u.onrender.com';
-    const String cancelOrderUrl = '$baseUrl/orders/cancel';
+    String baseUrl = await ApiUrls.getBaseUrl();
+    String cancelOrderUrl = '$baseUrl/orders/cancel';
     // final String? token = await _getToken();
 
     final prefs = await SharedPreferences.getInstance();
@@ -122,9 +141,9 @@ class BookProvider with ChangeNotifier {
         setCancelStatus(false);
         notifyListeners(); // Notify the UI to rebuild
 
-        return responseData['message'] ?? 'Orders confirmed successfully';
+        return responseData['message'] ?? 'Orders cancelled successfully';
       } else {
-        return responseData['message'] ?? 'Failed to confirm orders';
+        return responseData['message'] ?? 'Failed to cancel orders';
       }
     } catch (error) {
       setCancelStatus(false);
@@ -134,12 +153,184 @@ class BookProvider with ChangeNotifier {
     }
   }
 
+  Future<void> writeRemark(BuildContext context, String id, String msg) async {
+    // Get the auth token
+    final token = await _getToken();
+
+    isLoadingBooked = true;
+    notifyListeners();
+
+    // Check if the token is valid
+    if (token!.isEmpty) {
+      isLoadingBooked = false;
+      notifyListeners();
+      print('Token is missing. Please log in again.');
+      return;
+    }
+
+    final url = '${await ApiUrls.getBaseUrl()}/orders/$id';
+    try {
+      final response = await http.put(
+        Uri.parse(url),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+        body: json.encode({
+          "messages": {"bookerMessage": msg}
+        }),
+      );
+
+      log("response: ${response.statusCode}");
+
+      if (response.statusCode == 200) {
+        // Logger().e('code: ${response.statusCode}');
+        // Logger().e('body: ${response.body}');
+
+        // ScaffoldMessenger.of(context).showSnackBar(
+        //   SnackBar(
+        //     behavior: SnackBarBehavior.floating,
+        //     margin: const EdgeInsets.all(10),
+        //     padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+        //     backgroundColor: Colors.green.shade600,
+        //     duration: const Duration(seconds: 3),
+        //     shape: RoundedRectangleBorder(
+        //       borderRadius: BorderRadius.circular(12),
+        //     ),
+        //     elevation: 6,
+        //     content: TweenAnimationBuilder<double>(
+        //       tween: Tween(begin: 0.0, end: 1.0),
+        //       duration: const Duration(milliseconds: 400),
+        //       curve: Curves.easeOutCubic,
+        //       builder: (context, value, child) => Transform.scale(
+        //         scale: value,
+        //         child: Opacity(
+        //           opacity: value,
+        //           child: Row(
+        //             children: [
+        //               Container(
+        //                 padding: const EdgeInsets.all(4),
+        //                 decoration: BoxDecoration(
+        //                   color: Colors.white.withOpacity(0.2),
+        //                   shape: BoxShape.circle,
+        //                 ),
+        //                 child: const Icon(
+        //                   Icons.check_circle_rounded,
+        //                   color: Colors.white,
+        //                   size: 22,
+        //                 ),
+        //               ),
+        //               const SizedBox(width: 16),
+        //               const Expanded(
+        //                 child: Text(
+        //                   'Remark added successfully',
+        //                   style: TextStyle(
+        //                     color: Colors.white,
+        //                     fontSize: 15,
+        //                     fontWeight: FontWeight.w500,
+        //                     letterSpacing: 0.2,
+        //                   ),
+        //                 ),
+        //               ),
+        //               const SizedBox(width: 8),
+        //               IconButton(
+        //                 constraints: const BoxConstraints(),
+        //                 padding: EdgeInsets.zero,
+        //                 icon: const Icon(
+        //                   Icons.close,
+        //                   color: Colors.white70,
+        //                   size: 20,
+        //                 ),
+        //                 onPressed: () {
+        //                   ScaffoldMessenger.of(context).hideCurrentSnackBar();
+        //                 },
+        //               ),
+        //             ],
+        //           ),
+        //         ),
+        //       ),
+        //     ),
+        //   ),
+        // );
+
+        // await fetchFailedOrders();
+        log('fetch called');
+        fetchBookedOrders(currentPageBooked);
+
+        notifyListeners();
+      } else {
+        log('Failed to update order: ${response.body}');
+        return;
+      }
+    } catch (error) {
+      log('Error updating order: $error');
+      rethrow;
+    } finally {
+      isLoadingBooked = false;
+      notifyListeners();
+    }
+    notifyListeners();
+  }
+
+  Future<String> rebookOrders(List<String> orderIds) async {
+    String baseUrl = await ApiUrls.getBaseUrl();
+    String url = '$baseUrl/orders/reBooking';
+    // final String? token = await _getToken();
+
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('authToken') ?? '';
+    setRebookingStatus(true);
+    notifyListeners();
+
+    // Headers for the API request
+    final headers = {
+      'Authorization': 'Bearer $token',
+      'Content-Type': 'application/json',
+    };
+
+    // Request body containing the order IDs
+    final body = json.encode({
+      'orderIds': orderIds,
+    });
+
+    try {
+      // Make the POST request to confirm the orders
+      final response = await http.post(
+        Uri.parse(url),
+        headers: headers,
+        body: body,
+      );
+
+      print('Response status: ${response.statusCode}');
+      //print('Response body: ${response.body}');
+
+      final responseData = json.decode(response.body);
+
+      if (response.statusCode == 200) {
+        setRefreshingOrders(false); // Clear selected order IDs
+        setRebookingStatus(false);
+        notifyListeners(); // Notify the UI to rebuild
+
+        return responseData['message'] ?? 'Orders cancelled successfully';
+      } else {
+        return responseData['message'] ?? 'Failed to cancel orders';
+      }
+    } catch (error) {
+      setRebookingStatus(false);
+      notifyListeners();
+      print('Error during API request: $error');
+      return 'An error occurred: $error';
+    }
+  }
+
   Future<void> fetchPaginatedOrdersB2C(int page) async {
+    Logger().e('ye le call ho gaya');
     await fetchOrders('B2C', page);
   }
 
   // Fetch orders based on type (B2B or B2C)
-  Future<void> fetchOrders(String type, int page) async {
+  Future<void> fetchOrders(String type, int page, {DateTime? date}) async {
+    log("akkakakakkaa+$type");
     String? token = await _getToken();
     if (token == null) {
       print('Token is null, unable to fetch orders.');
@@ -147,7 +338,12 @@ class BookProvider with ChangeNotifier {
     }
 
     String url =
-        'https://inventory-management-backend-s37u.onrender.com/orders?filter=$type&orderStatus=3&page=$page';
+        '${await ApiUrls.getBaseUrl()}/orders?filter=$type&orderStatus=3&page=$page';
+
+    if (date != null || date == 'Select Date') {
+      String formattedDate = DateFormat('yyyy-MM-dd').format(date!);
+      url += '&date=$formattedDate';
+    }
 
     try {
       // Set loading state based on order type
@@ -215,19 +411,104 @@ class BookProvider with ChangeNotifier {
     }
   }
 
+  Future<void> fetchBookedOrders(int page, {DateTime? date}) async {
+    String? token = await _getToken();
+    if (token == null) {
+      print('Token is null, unable to fetch orders.');
+      return;
+    }
+
+    // Base URL
+    String url =
+        '${await ApiUrls.getBaseUrl()}/orders?isBooked=true&page=$page';
+
+    // Add date parameter if provided
+    if (date != null) {
+      String formattedDate = DateFormat('yyyy-MM-dd').format(date);
+      url += '&date=$formattedDate';
+    }
+
+    try {
+      isLoadingBooked = true;
+      setRefreshingBookedOrders(true);
+      notifyListeners();
+
+      clearAllSelections();
+
+      final response = await http.get(
+        Uri.parse(url),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+      );
+
+      // Log response for debugging
+      // log('Response status: ${response.statusCode}');
+      // log('Response body: ${response.body}');
+
+      Logger().e('book provider');
+
+      if (response.statusCode == 200) {
+        final jsonResponse = jsonDecode(response.body);
+        List<Order> orders = (jsonResponse['orders'] as List)
+            .map((orderJson) => Order.fromJson(orderJson))
+            .toList();
+
+        Logger().e(jsonResponse['orders'][0]['isBooked']['status']);
+
+        ordersBooked = orders;
+        currentPageBooked = page;
+        totalPagesBooked = jsonResponse['totalPages'];
+      } else if (response.statusCode == 401) {
+        print('Unauthorized access - Token might be expired or invalid.');
+      } else if (response.statusCode == 404) {
+        print('Orders not found');
+      } else {
+        throw Exception('Failed to load orders: ${response.statusCode}');
+      }
+    } catch (e) {
+      log('Error fetching orders: $e');
+    } finally {
+      isLoadingBooked = false;
+      setRefreshingBookedOrders(false);
+      notifyListeners();
+    }
+  }
+
   // Function to book orders
-  Future<String> bookOrders(BuildContext context, List<String> orderIds,
-      String lowerCase, String provider) async {
-    setLoading(provider, true);
-    const String baseUrl =
-        'https://inventory-management-backend-s37u.onrender.com';
-    const String bookOrderUrl = '$baseUrl/orders/book';
+  Future<String> bookOrders(
+      BuildContext context,
+      List<Map<String, String>> orderIds,
+      String lowerCase,
+      String courier) async {
+    log('courier: $courier');
+    setLoading(courier, true);
+    String baseUrl = await ApiUrls.getBaseUrl();
+    String bookOrderUrl = '$baseUrl/orders/book';
     final String? token = await _getToken();
 
     if (token == null) {
-      setLoading(provider, false);
+      setLoading(courier, false);
       return 'No auth token found';
     }
+
+    log('list: $orderIds');
+
+    if (courier == 'Shiprocket') {
+      for (int i = 0; i < orderIds.length; i++) {
+        String orderId = orderIds[i]['orderId']!;
+        String courierId = orderIds[i]['courierId']!;
+
+        bookShiprocketOrder(context, orderId, courierId, lowerCase, courier);
+      }
+      return '';
+    }
+
+    List<String?> orderIdsList =
+        orderIds.map((orderId) => orderId['orderId']).toList();
+
+    log('orderIdsList: $orderIdsList');
 
     // Headers for the API request
     final headers = {
@@ -237,7 +518,7 @@ class BookProvider with ChangeNotifier {
 
     // Request body containing the order IDs
     final body = json.encode({
-      'orderIds': orderIds,
+      'orderIds': orderIdsList,
       'service': lowerCase,
     });
     log(body);
@@ -251,8 +532,8 @@ class BookProvider with ChangeNotifier {
       );
 
       // Log response status and body
-      print('Response status: ${response.statusCode}');
-      print('Response body: ${response.body}');
+      // print('Response status: ${response.statusCode}');
+      // print('Response body: ${response.body}');
 
       // Parse the response
       final responseData = json.decode(response.body);
@@ -261,20 +542,82 @@ class BookProvider with ChangeNotifier {
       if (response.statusCode == 200) {
         // Optionally, you can also clear the selected orders here
         clearAllSelections();
-        setLoading(provider, false);
+        setLoading(courier, false);
         // Notify listeners after successful booking
         notifyListeners();
         return responseData['message'] ?? 'Orders booked successfully';
       } else {
         // If the API returns an error, return the error message
-        setLoading(provider, false);
+        setLoading(courier, false);
         return responseData['message'] ?? 'Failed to book orders';
       }
     } catch (error) {
-      print('Error during API request: $error');
-      setLoading(provider, false);
+      log('Error during API request: $error');
       return 'An error occurred: $error';
+    } finally {
+      setLoading(courier, false);
+      notifyListeners();
     }
+  }
+
+  Future<String> bookShiprocketOrder(BuildContext context, String orderId,
+      String courierId, String lowerCase, String courier) async {
+    // setLoading(courier, true);
+    String baseUrl = await ApiUrls.getBaseUrl();
+    String bookOrderUrl = '$baseUrl/orders/book';
+    final String? token = await _getToken();
+
+    // Headers for the API request
+    final headers = {
+      'Authorization': 'Bearer $token',
+      'Content-Type': 'application/json',
+    };
+
+    // Request body containing the order IDs
+    final body = json.encode({
+      'orderIds': [orderId],
+      'service': lowerCase,
+      'courierId': courierId,
+    });
+
+    log('body: $body');
+
+    try {
+      // Make the POST request to book the orders
+      final response = await http.post(
+        Uri.parse(bookOrderUrl),
+        headers: headers,
+        body: body,
+      );
+
+      // Log response status and body
+      // log('Response status: ${response.statusCode}');
+      // log('Response body: ${response.body}');
+
+      // Parse the response
+      final responseData = json.decode(response.body);
+
+      // Check if the response is successful
+      if (response.statusCode == 200) {
+        // Optionally, you can also clear the selected orders here
+        clearAllSelections();
+        setLoading(courier, false);
+        // Notify listeners after successful booking
+        notifyListeners();
+        return responseData['message'] ?? 'Orders booked successfully';
+      } else {
+        // If the API returns an error, return the error message
+        setLoading(courier, false);
+        return responseData['message'] ?? 'Failed to book orders';
+      }
+    } catch (error) {
+      log('Error during API request: $error');
+      setLoading(courier, false);
+    } finally {
+      setLoading(courier, false);
+      notifyListeners();
+    }
+    return '';
   }
 
   // Get the auth token from SharedPreferences
@@ -309,6 +652,19 @@ class BookProvider with ChangeNotifier {
     notifyListeners();
   }
 
+  void handleRowCheckboxChangeBooked(String? orderId, bool isSelected) {
+    int index;
+    index = ordersBooked.indexWhere((order) => order.orderId == orderId);
+    if (index != -1) {
+      selectedBookedItems[index] = isSelected;
+      ordersBooked[index].isSelected = isSelected;
+    }
+
+    selectAllBooked = selectedBookedItems.every((item) => item);
+    // _updateSelectAllState(isB2B);
+    notifyListeners();
+  }
+
   // Update the select all state based on selected items
   void _updateSelectAllState(bool isB2B) {
     if (isB2B) {
@@ -339,6 +695,18 @@ class BookProvider with ChangeNotifier {
     notifyListeners();
   }
 
+  void toggleBookedSelectAll(bool? value) {
+    selectAllBooked = value!;
+    selectedBookedItems.fillRange(
+        0, selectedBookedItems.length, selectAllBooked);
+    // Update the selection state for B2B orders
+    for (int i = 0; i < ordersBooked.length; i++) {
+      ordersBooked[i].isSelected = selectAllBooked;
+    }
+
+    notifyListeners();
+  }
+
   // Clear all checkboxes when the page is changed
   void clearAllSelections() {
     selectedB2BItems.fillRange(0, selectedB2BItems.length, false);
@@ -351,21 +719,28 @@ class BookProvider with ChangeNotifier {
   void clearSearchResults() {
     ordersB2B = B2BOrders;
     ordersB2C = B2COrders;
+    ordersBooked = BookedOrders;
     notifyListeners();
   }
 
-  Future<void> searchB2BOrders(String orderId) async {
-    final url = Uri.parse(
-        'https://inventory-management-backend-s37u.onrender.com/orders?orderStatus=3&filter=B2B&order_id=$orderId');
+  Future<void> searchB2BOrders(String query, String searchType) async {
+    String url =
+        '${await ApiUrls.getBaseUrl()}/orders?orderStatus=3&filter=B2B&order_id=$query';
     final token = await _getToken();
     if (token == null) return;
+
+    if (searchType == 'Order ID') {
+      url += '&order_id=$query';
+    } else {
+      url += '&awb_number=$query';
+    }
 
     try {
       isLoadingB2B = true;
       notifyListeners();
 
       final response = await http.get(
-        url,
+        Uri.parse(url),
         headers: {
           'Authorization': 'Bearer $token',
           'Content-Type': 'application/json',
@@ -389,18 +764,66 @@ class BookProvider with ChangeNotifier {
     }
   }
 
-  Future<void> searchB2COrders(String orderId) async {
-    final url = Uri.parse(
-        'https://inventory-management-backend-s37u.onrender.com/orders?orderStatus=3&filter=B2C&order_id=$orderId');
+  Future<void> searchB2COrders(String query, String searchType) async {
+    String url =
+        '${await ApiUrls.getBaseUrl()}/orders?orderStatus=3&filter=B2C&order_id=$query';
     final token = await _getToken();
     if (token == null) return;
+
+    if (searchType == 'Order ID') {
+      url += '&order_id=$query';
+    } else {
+      url += '&awb_number=$query';
+    }
 
     try {
       isLoadingB2C = true;
       notifyListeners();
 
       final response = await http.get(
-        url,
+        Uri.parse(url),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+      );
+      log('res: ${response.body}');
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+
+        ordersB2C = [Order.fromJson(data)];
+        log('ordersB2C: $ordersB2C');
+      } else {
+        ordersB2C = [];
+      }
+    } catch (e) {
+      ordersB2C = [];
+    } finally {
+      isLoadingB2C = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> searchBookedOrders(String query, String searchType) async {
+    var url = '${await ApiUrls.getBaseUrl()}/orders?isBooked=true';
+    final token = await _getToken();
+    if (token == null) return;
+
+    if (searchType == 'Order ID') {
+      url += '&order_id=$query';
+    } else {
+      url += '&awb_number=$query';
+    }
+
+    log('url: $url');
+
+    try {
+      isLoadingBooked = true;
+      notifyListeners();
+
+      final response = await http.get(
+        Uri.parse(url),
         headers: {
           'Authorization': 'Bearer $token',
           'Content-Type': 'application/json',
@@ -409,17 +832,21 @@ class BookProvider with ChangeNotifier {
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        print(response.body);
+        // print(response.body);
 
-        ordersB2C = [Order.fromJson(data)];
-        print(response.body);
+        final newData = data['orders']
+            [0]; //////////////////////////////////////////////////////////////
+        ordersBooked = [Order.fromJson(newData)];
+        // ordersBooked = [Order.fromJson(data)];
+        log('ordersBooked: $ordersBooked');
       } else {
-        ordersB2C = [];
+        ordersBooked = [];
       }
     } catch (e) {
-      ordersB2C = [];
+      log('error: $e');
+      ordersBooked = [];
     } finally {
-      isLoadingB2C = false;
+      isLoadingBooked = false;
       notifyListeners();
     }
   }
@@ -433,8 +860,7 @@ class BookProvider with ChangeNotifier {
     log("currentTime: $currentTime");
     log("marketplace: $marketplace");
 
-    const String baseUrl =
-        'https://inventory-management-backend-s37u.onrender.com';
+    String baseUrl = await ApiUrls.getBaseUrl();
     String url =
         '$baseUrl/order-picker?currentTime=$currentTime&marketplace=$marketplace';
 
@@ -458,16 +884,22 @@ class BookProvider with ChangeNotifier {
       log('Status: ${response.statusCode}');
       log('Body: ${response.body}');
 
-      if (response.statusCode == 200) {
-        // Handle the successful response
-        final data = jsonDecode(response.body);
-        // Process the data as needed
+      final data = jsonDecode(response.body);
 
+      if (response.statusCode == 201) {
+        // Handle the successful response
+        // Process the data as needed
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(data['error']['message']),
+            backgroundColor: AppColors.cardsred,
+          ),
+        );
         log("data: $data");
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('No pick time found for the given time range'),
+          SnackBar(
+            content: Text(data['error']['message']),
             backgroundColor: AppColors.cardsred,
           ),
         );
@@ -481,12 +913,98 @@ class BookProvider with ChangeNotifier {
   }
 
   Future<void> fetchOrdersByMarketplace(
-      String marketplace, String type, int page) async {
-    log("$marketplace, $type, $page");
-    const String baseUrl =
-        'https://inventory-management-backend-s37u.onrender.com/orders';
+      String marketplace, String orderType, int page,
+      {DateTime? date}) async {
+    String baseUrl = '${await ApiUrls.getBaseUrl()}/orders';
+
+    // Build URL with base parameters
     String url =
-        '$baseUrl?orderStatus=3&marketplace=$marketplace&filter=$type&page=$page';
+        '$baseUrl?orderStatus=3&customerType=$orderType&marketplace=$marketplace&page=$page';
+
+    // Add date parameter if provided
+    if (date != null || date == 'Select Date') {
+      String formattedDate = DateFormat('yyyy-MM-dd').format(date!);
+      url += '&date=$formattedDate';
+    }
+
+    String? token = await _getToken();
+    if (token == null) {
+      print('Token is null, unable to fetch orders.');
+      return;
+    }
+
+    try {
+      if (orderType == 'B2B') {
+        isLoadingB2B = true;
+      } else {
+        isLoadingB2C = true;
+      }
+      notifyListeners();
+
+      final response = await http.get(
+        Uri.parse(url),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final jsonResponse = jsonDecode(response.body);
+        List<Order> orders = (jsonResponse['orders'] as List)
+            .map((orderJson) => Order.fromJson(orderJson))
+            .toList();
+
+        // Store fetched orders and update pagination state
+        if (orderType == 'B2B') {
+          ordersB2B = orders;
+          currentPageB2B = page;
+          totalPagesB2B = jsonResponse['totalPages'];
+          selectedB2BItems = List<bool>.filled(orders.length, false);
+        } else {
+          ordersB2C = orders;
+          currentPageB2C = page;
+          totalPagesB2C = jsonResponse['totalPages'];
+          selectedB2CItems = List<bool>.filled(orders.length, false);
+        }
+        notifyListeners();
+      } else if (response.statusCode == 401) {
+        print('Unauthorized access - Token might be expired or invalid.');
+      } else if (response.statusCode == 404) {
+        if (orderType == 'B2B') {
+          ordersB2B = [];
+        } else {
+          ordersB2C = [];
+        }
+        notifyListeners();
+      } else {
+        throw Exception('Failed to load orders: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Error fetching orders: $e');
+    } finally {
+      if (orderType == 'B2B') {
+        isLoadingB2B = false;
+      } else {
+        isLoadingB2C = false;
+      }
+      notifyListeners();
+    }
+  }
+
+  Future<void> fetchBookedOrdersByMarketplace(String marketplace, int page,
+      {DateTime? date}) async {
+    log("$marketplace, $page");
+    String baseUrl = '${await ApiUrls.getBaseUrl()}/orders';
+
+    // Base URL with marketplace filter
+    String url = '$baseUrl?isBooked=true&marketplace=$marketplace&page=$page';
+
+    // Add date parameter if provided
+    if (date != null || date == 'Select Date') {
+      String formattedDate = DateFormat('yyyy-MM-dd').format(date!);
+      url += '&date=$formattedDate';
+    }
 
     String? token =
         await _getToken(); // Assuming you have a method to get the token
@@ -496,14 +1014,8 @@ class BookProvider with ChangeNotifier {
     }
 
     try {
-      // Set loading state based on order type
-      if (type == 'B2B') {
-        isLoadingB2B = true;
-        setRefreshingOrders(true);
-      } else {
-        isLoadingB2C = true;
-        setRefreshingOrders(true);
-      }
+      isLoadingBooked = true;
+      setRefreshingBookedOrders(true);
       notifyListeners();
 
       // Clear checkboxes when a new page is fetched
@@ -529,44 +1041,26 @@ class BookProvider with ChangeNotifier {
 
         Logger().e("length: ${orders.length}");
 
-        // Store fetched orders and update pagination state
-        if (type == 'B2B') {
-          ordersB2B = orders;
-          currentPageB2B = page; // Track current page for B2B
-          totalPagesB2B =
-              jsonResponse['totalPages']; // Assuming API returns total pages
-        } else {
-          ordersB2C = orders;
-          currentPageB2C = page; // Track current page for B2C
-          totalPagesB2C =
-              jsonResponse['totalPages']; // Assuming API returns total pages
-        }
+        ordersBooked = orders;
+        currentPageBooked = page; // Track current page for B2B
+        totalPagesBooked =
+            jsonResponse['totalPages']; // Assuming API returns total pages
       } else if (response.statusCode == 401) {
         print('Unauthorized access - Token might be expired or invalid.');
       } else if (response.statusCode == 404) {
-        if (type == 'B2C') {
-          ordersB2C = [];
-          notifyListeners();
-        } else {
-          ordersB2B = [];
-          notifyListeners();
-        }
+        ordersBooked = [];
+        notifyListeners();
 
-        log('Orders not found - Check the filter type.');
+        log('Orders not found');
       } else {
         throw Exception('Failed to load orders: ${response.statusCode}');
       }
     } catch (e) {
-      print('Error fetching $type orders: $e');
+      print('Error fetching orders: $e');
     } finally {
-      // Reset loading states
-      if (type == 'B2B') {
-        isLoadingB2B = false;
-        setRefreshingOrders(false);
-      } else {
-        isLoadingB2C = false;
-        setRefreshingOrders(false);
-      }
+      isLoadingBooked = false;
+      setRefreshingBookedOrders(false);
+
       notifyListeners();
     }
   }

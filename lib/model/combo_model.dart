@@ -4,17 +4,23 @@ class Combo {
   String mrp;
   String cost;
   String comboSku;
+  double? comboWeight;
+  String? comboQty;
+  String? comboAmount;
   List<Map<String, String>> products; // List of product IDs
   List<String>? images; // Nullable list of image filenames
 
   // Constructor
   Combo({
     this.id,
+    this.comboWeight,
     required this.name,
     required this.mrp,
     required this.cost,
     required this.comboSku,
     required this.products,
+    this.comboQty,
+    this.comboAmount,
     this.images, // Nullable images
   });
 
@@ -29,8 +35,19 @@ class Combo {
           '0', // Convert to string, default to '0' if null
       comboSku:
           json['comboSku'] as String? ?? '', // Default to empty string if null
-      products: List<Map<String, String>>.from(
-          json['products'] ?? []), // Default to empty list if null
+      comboWeight:
+          json['comboWeight'] as double? ?? 0.0, // Default to empty string if null
+      products: (json['products'] as List<dynamic>?)
+              ?.map((product) => {
+                    'id': (product as Map<String, dynamic>)['_id'] as String? ??
+                        '',
+                    'sku': product['sku'] as String? ?? '',
+                    'displayName' : product['displayName'] as String,
+                  })
+              .toList() ??
+          [], // Default to empty list if null
+      comboQty: json['comboQty'] as String? ?? '0',
+      comboAmount: json['comboAmount'] as String? ?? '0',
       images: (json['images'] as List<dynamic>?)
               ?.map((image) => image as String)
               .toList() ??
@@ -46,6 +63,8 @@ class Combo {
       'cost': cost,
       'comboSku': comboSku,
       'products': products,
+      'comboQty': comboQty,
+      'comboAmount': comboAmount,
       'images': images ?? [], // Default to empty list if null
     };
   }

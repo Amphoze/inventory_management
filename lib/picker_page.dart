@@ -1,10 +1,6 @@
-import 'dart:developer';
-
 import 'package:flutter/material.dart';
-import 'package:inventory_management/Widgets/picker_order_card.dart';
 import 'package:intl/intl.dart';
 // import 'package:inventory_management/Widgets/picker_order_card.dart';
-import 'package:inventory_management/model/orders_model.dart';
 import 'package:provider/provider.dart';
 import 'package:inventory_management/Custom-Files/colors.dart';
 import 'package:inventory_management/provider/picker_provider.dart';
@@ -388,7 +384,7 @@ class _PickerPageState extends State<PickerPage> {
             //       text: "Updated on: ",
             //       children: [
             //         TextSpan(
-            //             text: DateFormat('dd-MM-yyyy\',\' hh:mm a').format(
+            //             text: DateFormat('yyyy-MM-dd\',\' hh:mm a').format(
             //               DateTime.parse("${order['items'][index]['product_id']}"),
             //             ),
             //             style: const TextStyle(
@@ -399,6 +395,25 @@ class _PickerPageState extends State<PickerPage> {
             //         fontWeight: FontWeight.bold,
             //       )),
             // ),
+            Text.rich(
+              TextSpan(
+                  text: "Order ID: ",
+                  children: [
+                    TextSpan(
+                      text: (order['orderIds'] as List).join(', '),
+                      style: const TextStyle(
+                        fontWeight: FontWeight.normal,
+                      ),
+                    ),
+                    TextSpan(
+                      text: " (${order['orderIds'].length})",
+                    ),
+                  ],
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                  )),
+            ),
+            const SizedBox(height: 8),
             Row(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
@@ -562,9 +577,7 @@ class _PickerPageState extends State<PickerPage> {
                                           vertical: 2.0, horizontal: 2.0),
                                       child: Center(
                                         child: Text(
-                                          order['items'][index]['product_id']
-                                                  ['itemQty']
-                                              .toString(),
+                                          "${order['items'][index]['product_id']['itemQty']}",
                                           style: const TextStyle(
                                             fontSize: 20,
                                             fontWeight: FontWeight.bold,
@@ -580,30 +593,30 @@ class _PickerPageState extends State<PickerPage> {
                                 const SizedBox(
                                   height: 8,
                                 ),
-                                Row(
-                                  mainAxisAlignment: MainAxisAlignment.end,
-                                  children: [
-                                    Text.rich(
-                                      TextSpan(
-                                          text: "Created on: ",
-                                          children: [
-                                            TextSpan(
-                                                text: DateFormat(
-                                                        'dd-MM-yyyy\',\' hh:mm a')
-                                                    .format(
-                                                  DateTime.parse(
-                                                      "${order['items'][index]['product_id']['createdAt']}"),
-                                                ),
-                                                style: const TextStyle(
-                                                  fontWeight: FontWeight.normal,
-                                                )),
-                                          ],
-                                          style: const TextStyle(
-                                            fontWeight: FontWeight.bold,
-                                          )),
-                                    ),
-                                  ],
-                                ),
+                                // Row(
+                                //   mainAxisAlignment: MainAxisAlignment.end,
+                                //   children: [
+                                //     Text.rich(
+                                //       TextSpan(
+                                //           text: "Created on: ",
+                                //           children: [
+                                //             TextSpan(
+                                //                 text: DateFormat(
+                                //                         'yyyy-MM-dd\',\' hh:mm a')
+                                //                     .format(
+                                //                   DateTime.parse(
+                                //                       "${order['items'][index]['product_id']['createdAt']}"),
+                                //                 ),
+                                //                 style: const TextStyle(
+                                //                   fontWeight: FontWeight.normal,
+                                //                 )),
+                                //           ],
+                                //           style: const TextStyle(
+                                //             fontWeight: FontWeight.bold,
+                                //           )),
+                                //     ),
+                                //   ],
+                                // ),
                               ],
                             ),
                           ),
@@ -614,15 +627,35 @@ class _PickerPageState extends State<PickerPage> {
                 ),
                 const SizedBox(width: 4),
                 buildCell(
-                  Text("${order['picklistId']}",
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
-                        color: Colors.blueAccent,
-                      )),
+                  Text(
+                    "${order['picklistId']}",
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                      color: Colors.blueAccent,
+                    ),
+                  ),
                   flex: 3,
                 ),
               ],
+            ),
+            const SizedBox(height: 8),
+            Text.rich(
+              TextSpan(
+                  text: "Created on: ",
+                  children: [
+                    TextSpan(
+                      text: DateFormat('yyyy-MM-dd, hh:mm a').format(
+                        DateTime.parse(order['createdAt']).toLocal(),
+                      ),
+                      style: const TextStyle(
+                        fontWeight: FontWeight.normal,
+                      ),
+                    ),
+                  ],
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                  )),
             ),
           ],
         ),
@@ -742,254 +775,254 @@ class _PickerPageState extends State<PickerPage> {
   //   );
   // }
 
-  Widget _buildProductCard(
-      Order order, int index, PickerProvider pickerProvider) {
-    final item = order.items[index];
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 2.0, horizontal: 8.0),
-      child: Row(
-        children: [
-          Expanded(
-            flex: 9,
-            child: Container(
-              decoration: BoxDecoration(
-                color: AppColors.lightGrey,
-                borderRadius: BorderRadius.circular(
-                    10), // Slightly smaller rounded corners
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black
-                        .withOpacity(0.08), // Lighter shadow for smaller card
-                    offset: const Offset(0, 1),
-                    blurRadius: 3,
-                  ),
-                ],
-              ),
-              margin: const EdgeInsets.symmetric(vertical: 4.0),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildProductImage(item),
-                  const SizedBox(
-                      width: 8.0), // Reduced spacing between image and text
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        _buildProductName(item),
-                        const SizedBox(
-                            height:
-                                6.0), // Reduced spacing between text elements
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment
-                              .spaceBetween, // Space between widgets
-                          children: [
-                            // SKU at the extreme left
-                            RichText(
-                              text: TextSpan(
-                                children: [
-                                  const TextSpan(
-                                    text: 'SKU: ',
-                                    style: TextStyle(
-                                      color: Colors.blueAccent,
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 13, // Reduced font size
-                                    ),
-                                  ),
-                                  TextSpan(
-                                    text: item.product?.sku ?? 'N/A',
-                                    style: const TextStyle(
-                                      color: Colors.black87,
-                                      fontWeight: FontWeight.w500,
-                                      fontSize: 13, // Reduced font size
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            // Amount at the extreme right
-                            RichText(
-                              text: TextSpan(
-                                children: [
-                                  const TextSpan(
-                                    text: 'Amount: ',
-                                    style: TextStyle(
-                                      color: Colors.blueAccent,
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 13, // Reduced font size
-                                    ),
-                                  ),
-                                  TextSpan(
-                                    text: 'Rs.${item.amount.toString()}',
-                                    style: const TextStyle(
-                                      color: Colors.black87,
-                                      fontWeight: FontWeight.w500,
-                                      fontSize: 13, // Reduced font size
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          const SizedBox(width: 4),
-          buildCell(
-            Text(
-              order.items[index].qty.toString(),
-              style: const TextStyle(fontSize: 16),
-            ),
-            flex: 3,
-          ),
-          const SizedBox(width: 4),
-          buildCell(
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                Text(
-                  _getCustomerFullName(order.customer),
-                  style: const TextStyle(fontSize: 16),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 4),
-                if (order.customer?.phone != null) ...[
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      IconButton(
-                        onPressed: () {
-                          // Add your phone action here
-                        },
-                        icon: const Icon(
-                          Icons.phone,
-                          color: AppColors.green,
-                          size: 14,
-                        ),
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        _getCustomerPhoneNumber(order.customer?.phone),
-                        style: const TextStyle(
-                          fontSize: 14,
-                          color: Colors.orange,
-                          fontWeight: FontWeight.bold,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                    ],
-                  ),
-                ] else ...[
-                  const Text(
-                    'Phone not available',
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Colors.grey,
-                    ),
-                  ),
-                ],
-              ],
-            ),
-            flex: 3,
-          ),
-          const SizedBox(width: 4),
-          buildCell(
-            Text(
-              pickerProvider.formatDate(order.date!),
-              style: const TextStyle(fontSize: 16),
-            ),
-            flex: 3,
-          ),
-          const SizedBox(width: 4),
-          buildCell(
-            Text(
-              'Rs.${order.totalAmount!}',
-              style: const TextStyle(fontSize: 16),
-            ),
-            flex: 2,
-          ),
-          const SizedBox(width: 4),
-          buildCell(
-            order.isPickerFullyScanned
-                ? const Icon(
-                    Icons.check_circle,
-                    color: Colors.green,
-                    size: 24,
-                  )
-                : const SizedBox.shrink(),
-            flex: 2,
-          ),
-        ],
-      ),
-    );
-  }
+  // Widget _buildProductCard(
+  //     Order order, int index, PickerProvider pickerProvider) {
+  //   final item = order.items[index];
+  //   return Padding(
+  //     padding: const EdgeInsets.symmetric(vertical: 2.0, horizontal: 8.0),
+  //     child: Row(
+  //       children: [
+  //         Expanded(
+  //           flex: 9,
+  //           child: Container(
+  //             decoration: BoxDecoration(
+  //               color: AppColors.lightGrey,
+  //               borderRadius: BorderRadius.circular(
+  //                   10), // Slightly smaller rounded corners
+  //               boxShadow: [
+  //                 BoxShadow(
+  //                   color: Colors.black
+  //                       .withOpacity(0.08), // Lighter shadow for smaller card
+  //                   offset: const Offset(0, 1),
+  //                   blurRadius: 3,
+  //                 ),
+  //               ],
+  //             ),
+  //             margin: const EdgeInsets.symmetric(vertical: 4.0),
+  //             child: Row(
+  //               crossAxisAlignment: CrossAxisAlignment.start,
+  //               children: [
+  //                 _buildProductImage(item),
+  //                 const SizedBox(
+  //                     width: 8.0), // Reduced spacing between image and text
+  //                 Expanded(
+  //                   child: Column(
+  //                     crossAxisAlignment: CrossAxisAlignment.start,
+  //                     children: [
+  //                       _buildProductName(item),
+  //                       const SizedBox(
+  //                           height:
+  //                               6.0), // Reduced spacing between text elements
+  //                       Row(
+  //                         mainAxisAlignment: MainAxisAlignment
+  //                             .spaceBetween, // Space between widgets
+  //                         children: [
+  //                           // SKU at the extreme left
+  //                           RichText(
+  //                             text: TextSpan(
+  //                               children: [
+  //                                 const TextSpan(
+  //                                   text: 'SKU: ',
+  //                                   style: TextStyle(
+  //                                     color: Colors.blueAccent,
+  //                                     fontWeight: FontWeight.bold,
+  //                                     fontSize: 13, // Reduced font size
+  //                                   ),
+  //                                 ),
+  //                                 TextSpan(
+  //                                   text: item.product?.sku ?? 'N/A',
+  //                                   style: const TextStyle(
+  //                                     color: Colors.black87,
+  //                                     fontWeight: FontWeight.w500,
+  //                                     fontSize: 13, // Reduced font size
+  //                                   ),
+  //                                 ),
+  //                               ],
+  //                             ),
+  //                           ),
+  //                           // Amount at the extreme right
+  //                           RichText(
+  //                             text: TextSpan(
+  //                               children: [
+  //                                 const TextSpan(
+  //                                   text: 'Amount: ',
+  //                                   style: TextStyle(
+  //                                     color: Colors.blueAccent,
+  //                                     fontWeight: FontWeight.bold,
+  //                                     fontSize: 13, // Reduced font size
+  //                                   ),
+  //                                 ),
+  //                                 TextSpan(
+  //                                   text: 'Rs.${item.amount.toString()}',
+  //                                   style: const TextStyle(
+  //                                     color: Colors.black87,
+  //                                     fontWeight: FontWeight.w500,
+  //                                     fontSize: 13, // Reduced font size
+  //                                   ),
+  //                                 ),
+  //                               ],
+  //                             ),
+  //                           ),
+  //                         ],
+  //                       ),
+  //                     ],
+  //                   ),
+  //                 ),
+  //               ],
+  //             ),
+  //           ),
+  //         ),
+  //         const SizedBox(width: 4),
+  //         buildCell(
+  //           Text(
+  //             order.items[index].qty.toString(),
+  //             style: const TextStyle(fontSize: 16),
+  //           ),
+  //           flex: 3,
+  //         ),
+  //         const SizedBox(width: 4),
+  //         buildCell(
+  //           Column(
+  //             crossAxisAlignment: CrossAxisAlignment.center,
+  //             children: [
+  //               Text(
+  //                 _getCustomerFullName(order.customer),
+  //                 style: const TextStyle(fontSize: 16),
+  //                 textAlign: TextAlign.center,
+  //               ),
+  //               const SizedBox(height: 4),
+  //               if (order.customer?.phone != null) ...[
+  //                 Row(
+  //                   mainAxisAlignment: MainAxisAlignment.center,
+  //                   children: [
+  //                     IconButton(
+  //                       onPressed: () {
+  //                         // Add your phone action here
+  //                       },
+  //                       icon: const Icon(
+  //                         Icons.phone,
+  //                         color: AppColors.green,
+  //                         size: 14,
+  //                       ),
+  //                     ),
+  //                     const SizedBox(width: 4),
+  //                     Text(
+  //                       _getCustomerPhoneNumber(order.customer?.phone),
+  //                       style: const TextStyle(
+  //                         fontSize: 14,
+  //                         color: Colors.orange,
+  //                         fontWeight: FontWeight.bold,
+  //                       ),
+  //                       textAlign: TextAlign.center,
+  //                     ),
+  //                   ],
+  //                 ),
+  //               ] else ...[
+  //                 const Text(
+  //                   'Phone not available',
+  //                   style: TextStyle(
+  //                     fontSize: 14,
+  //                     color: Colors.grey,
+  //                   ),
+  //                 ),
+  //               ],
+  //             ],
+  //           ),
+  //           flex: 3,
+  //         ),
+  //         const SizedBox(width: 4),
+  //         buildCell(
+  //           Text(
+  //             pickerProvider.formatDate(order.date!),
+  //             style: const TextStyle(fontSize: 16),
+  //           ),
+  //           flex: 3,
+  //         ),
+  //         const SizedBox(width: 4),
+  //         buildCell(
+  //           Text(
+  //             'Rs.${order.totalAmount!}',
+  //             style: const TextStyle(fontSize: 16),
+  //           ),
+  //           flex: 2,
+  //         ),
+  //         const SizedBox(width: 4),
+  //         buildCell(
+  //           order.isPickerFullyScanned
+  //               ? const Icon(
+  //                   Icons.check_circle,
+  //                   color: Colors.green,
+  //                   size: 24,
+  //                 )
+  //               : const SizedBox.shrink(),
+  //           flex: 2,
+  //         ),
+  //       ],
+  //     ),
+  //   );
+  // }
 
-  Widget _buildProductImage(Item item) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(6),
-      child: SizedBox(
-        width: 60, // Smaller image size
-        height: 60,
-        child: item.product?.shopifyImage != null &&
-                item.product!.shopifyImage!.isNotEmpty
-            ? Image.network(
-                item.product!.shopifyImage!,
-                fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) {
-                  return const Icon(
-                    Icons.image_not_supported,
-                    size: 40, // Smaller fallback icon size
-                    color: AppColors.grey,
-                  );
-                },
-              )
-            : const Icon(
-                Icons.image_not_supported,
-                size: 40, // Smaller fallback icon size
-                color: AppColors.grey,
-              ),
-      ),
-    );
-  }
+  // Widget _buildProductImage(Item item) {
+  //   return ClipRRect(
+  //     borderRadius: BorderRadius.circular(6),
+  //     child: SizedBox(
+  //       width: 60, // Smaller image size
+  //       height: 60,
+  //       child: item.product?.shopifyImage != null &&
+  //               item.product!.shopifyImage!.isNotEmpty
+  //           ? Image.network(
+  //               item.product!.shopifyImage!,
+  //               fit: BoxFit.cover,
+  //               errorBuilder: (context, error, stackTrace) {
+  //                 return const Icon(
+  //                   Icons.image_not_supported,
+  //                   size: 40, // Smaller fallback icon size
+  //                   color: AppColors.grey,
+  //                 );
+  //               },
+  //             )
+  //           : const Icon(
+  //               Icons.image_not_supported,
+  //               size: 40, // Smaller fallback icon size
+  //               color: AppColors.grey,
+  //             ),
+  //     ),
+  //   );
+  // }
 
-  Widget _buildProductName(Item item) {
-    return Text(
-      item.product?.displayName ?? 'No Name',
-      style: const TextStyle(
-        fontWeight: FontWeight.w600,
-        fontSize: 14, // Reduced font size
-        color: Colors.black87,
-      ),
-      maxLines: 2,
-      overflow: TextOverflow.ellipsis,
-    );
-  }
+  // Widget _buildProductName(Item item) {
+  //   return Text(
+  //     item.product?.displayName ?? 'No Name',
+  //     style: const TextStyle(
+  //       fontWeight: FontWeight.w600,
+  //       fontSize: 14, // Reduced font size
+  //       color: Colors.black87,
+  //     ),
+  //     maxLines: 2,
+  //     overflow: TextOverflow.ellipsis,
+  //   );
+  // }
 
-  String _getCustomerPhoneNumber(dynamic phoneNumber) {
-    if (phoneNumber == null) return 'Unknown';
+  // String _getCustomerPhoneNumber(dynamic phoneNumber) {
+  //   if (phoneNumber == null) return 'Unknown';
 
-    // Convert to string if it's an int, otherwise return as is
-    return phoneNumber.toString();
-  }
+  //   // Convert to string if it's an int, otherwise return as is
+  //   return phoneNumber.toString();
+  // }
 
-  String _getCustomerFullName(Customer? customer) {
-    if (customer == null) return 'Unknown';
+  // String _getCustomerFullName(Customer? customer) {
+  //   if (customer == null) return 'Unknown';
 
-    final firstName = customer.firstName ?? '';
-    final lastName = customer.lastName ?? '';
+  //   final firstName = customer.firstName ?? '';
+  //   final lastName = customer.lastName ?? '';
 
-    // Check if both first name and last name are empty
-    if (firstName.isEmpty && lastName.isEmpty) {
-      return 'Unknown';
-    }
+  //   // Check if both first name and last name are empty
+  //   if (firstName.isEmpty && lastName.isEmpty) {
+  //     return 'Unknown';
+  //   }
 
-    return (firstName + (lastName.isNotEmpty ? ' $lastName' : '')).trim();
-  }
+  //   return (firstName + (lastName.isNotEmpty ? ' $lastName' : '')).trim();
+  // }
 
   Widget buildCell(Widget content, {int flex = 1}) {
     return Expanded(

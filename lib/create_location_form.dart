@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:inventory_management/Custom-Files/custom-dropdown.dart';
@@ -24,15 +26,20 @@ class _NewLocationFormState extends State<NewLocationForm> {
   final _formKey = GlobalKey<FormState>();
 
   final _warehouseNameController = TextEditingController();
+  final _warehouseIDController = TextEditingController();
   final _userEmailController = TextEditingController();
   final _taxIdController = TextEditingController();
   final _billingAddress1Controller = TextEditingController();
   final _billingAddress2Controller = TextEditingController();
+  final _billingCountryController = TextEditingController();
+  final _billingStateController = TextEditingController();
   final _cityController = TextEditingController();
   final _zipCodeController = TextEditingController();
   final _phoneNumberController = TextEditingController();
   final _shippingAddress1Controller = TextEditingController();
   final _shippingAddress2Controller = TextEditingController();
+  final _shippingCountryController = TextEditingController();
+  final _shippingStateController = TextEditingController();
   final _shippingCityController = TextEditingController();
   final _shippingZipCodeController = TextEditingController();
   final _shippingPhoneNumberController = TextEditingController();
@@ -46,127 +53,127 @@ class _NewLocationFormState extends State<NewLocationForm> {
   void initState() {
     super.initState();
 
-    _userEmailController.addListener(_onEmailChanged);
+    // _userEmailController.addListener(_onEmailChanged);
 
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final locationProvider =
-          Provider.of<LocationProvider>(context, listen: false);
+    // WidgetsBinding.instance.addPostFrameCallback((_) {
+    //   final locationProvider =
+    //       Provider.of<LocationProvider>(context, listen: false);
 
-      if (widget.isEditing && widget.warehouseData != null) {
-        //print("1");
-        //print("Data loaded in form - ${widget.warehouseData}");
-        _warehouseNameController.text = widget.warehouseData!['name'] ?? '';
-        _userEmailController.text = widget.warehouseData!['userEmail'] ??
-            ''; // Adjust based on your data
-        _taxIdController.text = widget.warehouseData!['location']
-                    ['otherDetails']?['taxIdentificationNumber']
-                ?.toString() ??
-            '';
+    //   if (widget.isEditing && widget.warehouseData != null) {
+    //     //print("1");
+    //     //print("Data loaded in form - ${widget.warehouseData}");
+    //     _warehouseNameController.text = widget.warehouseData!['name'] ?? '';
+    //     _userEmailController.text = widget.warehouseData!['userEmail'] ??
+    //         ''; // Adjust based on your data
+    //     _taxIdController.text = widget.warehouseData!['location']
+    //                 ['otherDetails']?['taxIdentificationNumber']
+    //             ?.toString() ??
+    //         '';
 
-        _billingAddress1Controller.text = widget.warehouseData!['location']
-                ['billingAddress']['addressLine1'] ??
-            '';
-        _billingAddress2Controller.text = widget.warehouseData!['location']
-                ['billingAddress']['addressLine2'] ??
-            '';
+    //     _billingAddress1Controller.text = widget.warehouseData!['location']
+    //             ['billingAddress']['addressLine1'] ??
+    //         '';
+    //     _billingAddress2Controller.text = widget.warehouseData!['location']
+    //             ['billingAddress']['addressLine2'] ??
+    //         '';
 
-        final billingAddress =
-            widget.warehouseData!['location']['billingAddress'];
+    //     final billingAddress =
+    //         widget.warehouseData!['location']['billingAddress'];
 
-        // Get country index based on warehouseData
-        final selectedBillingCountryIndex =
-            locationProvider.countries.indexWhere(
-          (country) => country['name'] == billingAddress['country'],
-        );
-        if (selectedBillingCountryIndex != -1) {
-          locationProvider.selectBillingCountry(selectedBillingCountryIndex);
-        }
+    //     // Get country index based on warehouseData
+    //     final selectedBillingCountryIndex =
+    //         locationProvider.countries.indexWhere(
+    //       (country) => country['name'] == billingAddress['country'],
+    //     );
+    //     if (selectedBillingCountryIndex != -1) {
+    //       locationProvider.selectBillingCountry(selectedBillingCountryIndex);
+    //     }
 
-        // Get state index based on warehouseData
-        final selectedBillingStateIndex = locationProvider.states.indexWhere(
-          (state) => state['name'] == billingAddress['state'],
-        );
-        if (selectedBillingStateIndex != -1) {
-          locationProvider.selectBillingState(selectedBillingStateIndex);
-        }
+    //     // Get state index based on warehouseData
+    //     final selectedBillingStateIndex = locationProvider.states.indexWhere(
+    //       (state) => state['name'] == billingAddress['state'],
+    //     );
+    //     if (selectedBillingStateIndex != -1) {
+    //       locationProvider.selectBillingState(selectedBillingStateIndex);
+    //     }
 
-        final shippingAddress =
-            widget.warehouseData!['location']['shippingAddress'];
+    //     final shippingAddress =
+    //         widget.warehouseData!['location']['shippingAddress'];
 
-        // Get country index based on warehouseData
-        final selectedShippingCountryIndex =
-            locationProvider.countries.indexWhere(
-          (country) => country['name'] == shippingAddress['country'],
-        );
-        if (selectedShippingCountryIndex != -1) {
-          locationProvider.selectShippingCountry(selectedShippingCountryIndex);
-        }
+    //     // Get country index based on warehouseData
+    //     final selectedShippingCountryIndex =
+    //         locationProvider.countries.indexWhere(
+    //       (country) => country['name'] == shippingAddress['country'],
+    //     );
+    //     if (selectedShippingCountryIndex != -1) {
+    //       locationProvider.selectShippingCountry(selectedShippingCountryIndex);
+    //     }
 
-        // Get state index based on warehouseData
-        final selectedShippingStateIndex = locationProvider.states.indexWhere(
-          (state) => state['name'] == shippingAddress['state'],
-        );
-        if (selectedShippingStateIndex != -1) {
-          locationProvider.selectShippingState(selectedShippingStateIndex);
-          // }
+    //     // Get state index based on warehouseData
+    //     final selectedShippingStateIndex = locationProvider.states.indexWhere(
+    //       (state) => state['name'] == shippingAddress['state'],
+    //     );
+    //     if (selectedShippingStateIndex != -1) {
+    //       locationProvider.selectShippingState(selectedShippingStateIndex);
+    //       // }
 
-          // Get location type index based on warehouseData
-          final selectedLocationTypeIndex =
-              locationProvider.locationTypes.indexWhere(
-            (type) =>
-                type['name'] ==
-                widget.warehouseData!['location']['locationType'],
-          );
-          if (selectedLocationTypeIndex != -1) {
-            locationProvider.selectLocationType(selectedLocationTypeIndex);
-          }
+    //       // Get location type index based on warehouseData
+    //       final selectedLocationTypeIndex =
+    //           locationProvider.locationTypes.indexWhere(
+    //         (type) =>
+    //             type['name'] ==
+    //             widget.warehouseData!['location']['locationType'],
+    //       );
+    //       if (selectedLocationTypeIndex != -1) {
+    //         locationProvider.selectLocationType(selectedLocationTypeIndex);
+    //       }
 
-          _cityController.text =
-              widget.warehouseData!['location']['billingAddress']['city'] ?? '';
-          _zipCodeController.text = widget.warehouseData!['location']
-                      ['billingAddress']['zipCode']
-                  ?.toString() ??
-              '';
-          _phoneNumberController.text = widget.warehouseData!['location']
-                      ['billingAddress']['phoneNumber']
-                  ?.toString() ??
-              '';
-          _shippingAddress1Controller.text = widget.warehouseData!['location']
-                  ['shippingAddress']['addressLine1'] ??
-              '';
-          _shippingAddress2Controller.text = widget.warehouseData!['location']
-                  ['shippingAddress']['addressLine2'] ??
-              '';
-          _shippingCityController.text = widget.warehouseData!['location']
-                  ['shippingAddress']['city'] ??
-              '';
-          _shippingZipCodeController.text = widget.warehouseData!['location']
-                      ['shippingAddress']['zipCode']
-                  ?.toString() ??
-              '';
-          _shippingPhoneNumberController.text = widget
-                  .warehouseData!['location']['shippingAddress']['phoneNumber']
-                  ?.toString() ??
-              '';
-          _warehousePincodeController.text =
-              widget.warehouseData!['warehousePincode']?.toString() ?? '';
-          _pincodeController.text = (widget
-                      .warehouseData!['pincode']?.isNotEmpty ==
-                  true)
-              ? widget.warehouseData!['pincode'][0]
-                  .toString() // Just an example, modify according to your needs
-              : '';
+    //       _cityController.text =
+    //           widget.warehouseData!['location']['billingAddress']['city'] ?? '';
+    //       _zipCodeController.text = widget.warehouseData!['location']
+    //                   ['billingAddress']['zipCode']
+    //               ?.toString() ??
+    //           '';
+    //       _phoneNumberController.text = widget.warehouseData!['location']
+    //                   ['billingAddress']['phoneNumber']
+    //               ?.toString() ??
+    //           '';
+    //       _shippingAddress1Controller.text = widget.warehouseData!['location']
+    //               ['shippingAddress']['addressLine1'] ??
+    //           '';
+    //       _shippingAddress2Controller.text = widget.warehouseData!['location']
+    //               ['shippingAddress']['addressLine2'] ??
+    //           '';
+    //       _shippingCityController.text = widget.warehouseData!['location']
+    //               ['shippingAddress']['city'] ??
+    //           '';
+    //       _shippingZipCodeController.text = widget.warehouseData!['location']
+    //                   ['shippingAddress']['zipCode']
+    //               ?.toString() ??
+    //           '';
+    //       _shippingPhoneNumberController.text = widget
+    //               .warehouseData!['location']['shippingAddress']['phoneNumber']
+    //               ?.toString() ??
+    //           '';
+    //       _warehousePincodeController.text =
+    //           widget.warehouseData!['warehousePincode']?.toString() ?? '';
+    //       _pincodeController.text = (widget
+    //                   .warehouseData!['pincode']?.isNotEmpty ==
+    //               true)
+    //           ? widget.warehouseData!['pincode'][0]
+    //               .toString() // Just an example, modify according to your needs
+    //           : '';
 
-          // // Prefill holdsStock
-          // locationProvider
-          //     .updateHoldsStock(widget.warehouseData!['holdStocks'] ?? false);
+    //       // // Prefill holdsStock
+    //       // locationProvider
+    //       //     .updateHoldsStock(widget.warehouseData!['holdStocks'] ?? false);
 
-          // // Prefill copyStock
-          // locationProvider.updateCopysku(
-          //     widget.warehouseData!['copyMasterSkuFromPrimary'] ?? false);
-        }
-      }
-    });
+    //       // // Prefill copyStock
+    //       // locationProvider.updateCopysku(
+    //       //     widget.warehouseData!['copyMasterSkuFromPrimary'] ?? false);
+    //     }
+    //   }
+    // });
   }
 
   @override
@@ -189,17 +196,21 @@ class _NewLocationFormState extends State<NewLocationForm> {
     super.dispose();
   }
 
-  void _onEmailChanged() {
-    // Notify the provider whenever the email changes
-    Provider.of<LocationProvider>(context, listen: false)
-        .validateEmail(_userEmailController.text);
-  }
+  // void _onEmailChanged() {
+  //   // Notify the provider whenever the email changes
+  //   Provider.of<LocationProvider>(context, listen: false)
+  //       .validateEmail(_userEmailController.text);
+  // }
+
+  // Add to state class
+  final List<PincodeData> _pincodeList = [PincodeData()];
+  bool _isPrimary = false;
 
   @override
   Widget build(BuildContext context) {
     final locationProvider = Provider.of<LocationProvider>(context);
     final isWideScreen = MediaQuery.of(context).size.width > 800;
-    String? errorMessage;
+    // String? errorMessage;
     final isEmailValid = Provider.of<LocationProvider>(context).isEmailValid;
 
     // print(
@@ -257,6 +268,42 @@ class _NewLocationFormState extends State<NewLocationForm> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
+                            const Text(
+                              'Warehouse ID',
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: AppColors.black,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            // labelWithRequiredSymbol('Warehouse ID'),
+                            const SizedBox(height: 8),
+                            TextFormField(
+                              controller: _warehouseIDController,
+                              decoration: InputDecoration(
+                                labelText: 'Warehouse ID',
+                                hintText: 'Warehouse ID',
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                floatingLabelBehavior:
+                                    FloatingLabelBehavior.never,
+                              ),
+                              // validator: (value) {
+                              //   if (value == null || value.isEmpty) {
+                              //     return 'Please enter warehouse ID';
+                              //   }
+                              //   return null;
+                              // },
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
                             labelWithRequiredSymbol('Warehouse Name'),
                             const SizedBox(height: 8),
                             TextFormField(
@@ -285,9 +332,22 @@ class _NewLocationFormState extends State<NewLocationForm> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            labelWithRequiredSymbol('User Email'),
+                            // labelWithRequiredSymbol('User Email'),
+                            const Text(
+                              'User Email',
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: AppColors.black,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
                             TextFormField(
                               controller: _userEmailController,
+                              onChanged: (text) {
+                                Provider.of<LocationProvider>(context,
+                                        listen: false)
+                                    .validateEmail(text);
+                              },
                               decoration: InputDecoration(
                                 labelText: 'User Email',
                                 hintText: 'User Email',
@@ -302,15 +362,15 @@ class _NewLocationFormState extends State<NewLocationForm> {
                                     : const Icon(Icons.error,
                                         color: Colors.red),
                               ),
-                              validator: (value) {
-                                if (value == null || value.isEmpty) {
-                                  return 'Please enter user email';
-                                }
-                                // Basic email validation is handled by the provider
-                                return isEmailValid
-                                    ? null
-                                    : 'Please enter a valid email address';
-                              },
+                              // validator: (value) {
+                              //   if (value == null || value.isEmpty) {
+                              //     return 'Please enter user email';
+                              //   }
+                              //   // Basic email validation is handled by the provider
+                              //   return isEmailValid
+                              //       ? null
+                              //       : 'Please enter a valid email address';
+                              // },
                             ),
                           ],
                         ),
@@ -346,7 +406,15 @@ class _NewLocationFormState extends State<NewLocationForm> {
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      labelWithRequiredSymbol('User Email'),
+                      // labelWithRequiredSymbol('User Email'),
+                      const Text(
+                        'User Email',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: AppColors.black,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                       const SizedBox(height: 8),
                       TextFormField(
                         controller: _userEmailController,
@@ -362,21 +430,29 @@ class _NewLocationFormState extends State<NewLocationForm> {
                                   color: Colors.green)
                               : const Icon(Icons.error, color: Colors.red),
                         ),
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Please enter user email';
-                          }
-                          // Basic email validation is handled by the provider
-                          return isEmailValid
-                              ? null
-                              : 'Please enter a valid email address';
-                        },
+                        // validator: (value) {
+                        //   if (value == null || value.isEmpty) {
+                        //     return 'Please enter user email';
+                        //   }
+                        //   // Basic email validation is handled by the provider
+                        //   return isEmailValid
+                        //       ? null
+                        //       : 'Please enter a valid email address';
+                        // },
                       ),
                     ],
                   ),
                 ],
                 const SizedBox(height: 24),
-                labelWithRequiredSymbol('Enter Other Details'),
+                // labelWithRequiredSymbol('Enter Other Details'),
+                const Text(
+                  'Enter Other Details',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: AppColors.black,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
                 const SizedBox(height: 8),
                 Divider(
                   color: Colors.grey.shade400,
@@ -392,21 +468,29 @@ class _NewLocationFormState extends State<NewLocationForm> {
                       borderRadius: BorderRadius.circular(8),
                     ),
                   ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter tax identification number';
-                    }
-                    if (value.length != 11) {
-                      return 'Tax identification number must be 11 digits';
-                    }
-                    return null;
-                  },
+                  // validator: (value) {
+                  //   if (value == null || value.isEmpty) {
+                  //     return 'Please enter tax identification number';
+                  //   }
+                  //   if (value.length != 11) {
+                  //     return 'Tax identification number must be 11 digits';
+                  //   }
+                  //   return null;
+                  // },
                   inputFormatters: [
                     FilteringTextInputFormatter.digitsOnly,
                   ],
                 ),
                 const SizedBox(height: 24),
-                labelWithRequiredSymbol('Billing Address'),
+                // labelWithRequiredSymbol('Billing Address'),
+                const Text(
+                  'Billing Address',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: AppColors.black,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
                 const SizedBox(height: 8),
                 Divider(
                   color: Colors.grey.shade400,
@@ -421,12 +505,12 @@ class _NewLocationFormState extends State<NewLocationForm> {
                       borderRadius: BorderRadius.circular(8),
                     ),
                   ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter billing address line 1';
-                    }
-                    return null;
-                  },
+                  // validator: (value) {
+                  //   if (value == null || value.isEmpty) {
+                  //     return 'Please enter billing address line 1';
+                  //   }
+                  //   return null;
+                  // },
                 ),
                 const SizedBox(height: 16),
                 TextFormField(
@@ -439,38 +523,47 @@ class _NewLocationFormState extends State<NewLocationForm> {
                   ),
                 ),
                 const SizedBox(height: 16),
-                const Text(
-                  'Country',
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: AppColors.black,
-                    fontWeight: FontWeight.bold,
+                TextFormField(
+                  controller: _billingCountryController,
+                  decoration: InputDecoration(
+                    labelText: 'Country',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
                   ),
                 ),
                 const SizedBox(height: 8),
-                CustomDropdown(
-                  option: locationProvider.countries,
-                  selectedIndex: locationProvider.selectedBillingCountryIndex,
-                  onSelectedChanged: (country) {
-                    locationProvider.selectBillingCountry(country);
-                  },
-                ),
-                const SizedBox(height: 16),
-                const Text(
-                  'State',
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: AppColors.black,
-                    fontWeight: FontWeight.bold,
+                // CustomDropdown(
+                //   option: locationProvider.countries,
+                //   selectedIndex: locationProvider.selectedBillingCountryIndex,
+                //   onSelectedChanged: (country) {
+                //     locationProvider.selectBillingCountry(country);
+                //   },
+                // ),
+                // const Text(
+                //   'State',
+                //   style: TextStyle(
+                //     fontSize: 13,
+                //     color: AppColors.black,
+                //     fontWeight: FontWeight.bold,
+                //   ),
+                // ),
+                // const SizedBox(height: 8),
+                // CustomDropdown(
+                //   option: locationProvider.states,
+                //   selectedIndex: locationProvider.selectedBillingStateIndex,
+                //   onSelectedChanged: (state) {
+                //     locationProvider.selectBillingState(state);
+                //   },
+                // ),
+                TextFormField(
+                  controller: _billingStateController,
+                  decoration: InputDecoration(
+                    labelText: 'State',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
                   ),
-                ),
-                const SizedBox(height: 8),
-                CustomDropdown(
-                  option: locationProvider.states,
-                  selectedIndex: locationProvider.selectedBillingStateIndex,
-                  onSelectedChanged: (state) {
-                    locationProvider.selectBillingState(state);
-                  },
                 ),
                 const SizedBox(height: 16),
                 TextFormField(
@@ -481,12 +574,12 @@ class _NewLocationFormState extends State<NewLocationForm> {
                       borderRadius: BorderRadius.circular(8),
                     ),
                   ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter city';
-                    }
-                    return null;
-                  },
+                  // validator: (value) {
+                  //   if (value == null || value.isEmpty) {
+                  //     return 'Please enter city';
+                  //   }
+                  //   return null;
+                  // },
                 ),
                 const SizedBox(height: 16),
                 TextFormField(
@@ -497,12 +590,12 @@ class _NewLocationFormState extends State<NewLocationForm> {
                       borderRadius: BorderRadius.circular(8),
                     ),
                   ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter ZIP/Postal code';
-                    }
-                    return null;
-                  },
+                  // validator: (value) {
+                  //   if (value == null || value.isEmpty) {
+                  //     return 'Please enter ZIP/Postal code';
+                  //   }
+                  //   return null;
+                  // },
                 ),
                 const SizedBox(height: 16),
                 TextFormField(
@@ -513,12 +606,12 @@ class _NewLocationFormState extends State<NewLocationForm> {
                       borderRadius: BorderRadius.circular(8),
                     ),
                   ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter phone number';
-                    }
-                    return null;
-                  },
+                  // validator: (value) {
+                  //   if (value == null || value.isEmpty) {
+                  //     return 'Please enter phone number';
+                  //   }
+                  //   return null;
+                  // },
                 ),
                 const SizedBox(height: 24),
                 Consumer<LocationProvider>(
@@ -582,7 +675,15 @@ class _NewLocationFormState extends State<NewLocationForm> {
                   },
                 ),
                 const SizedBox(height: 16),
-                labelWithRequiredSymbol('Shipping Address'),
+                // labelWithRequiredSymbol('Shipping Address'),
+                const Text(
+                  'Shipping Address',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: AppColors.black,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
                 const SizedBox(height: 8),
                 Divider(
                   color: Colors.grey.shade400,
@@ -597,12 +698,12 @@ class _NewLocationFormState extends State<NewLocationForm> {
                       borderRadius: BorderRadius.circular(8),
                     ),
                   ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter shipping address line 1';
-                    }
-                    return null;
-                  },
+                  // validator: (value) {
+                  //   if (value == null || value.isEmpty) {
+                  //     return 'Please enter shipping address line 1';
+                  //   }
+                  //   return null;
+                  // },
                 ),
                 const SizedBox(height: 16),
                 TextFormField(
@@ -615,38 +716,56 @@ class _NewLocationFormState extends State<NewLocationForm> {
                   ),
                 ),
                 const SizedBox(height: 16),
-                const Text(
-                  'Country',
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: AppColors.black,
-                    fontWeight: FontWeight.bold,
+                TextFormField(
+                  controller: _shippingCountryController,
+                  decoration: InputDecoration(
+                    labelText: 'Country',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
                   ),
                 ),
-                const SizedBox(height: 8),
-                CustomDropdown(
-                  option: locationProvider.countries,
-                  selectedIndex: locationProvider.selectedShippingCountryIndex,
-                  onSelectedChanged: (country) {
-                    locationProvider.selectShippingCountry(country);
-                  },
-                ),
+                // const Text(
+                //   'Country',
+                //   style: TextStyle(
+                //     fontSize: 13,
+                //     color: AppColors.black,
+                //     fontWeight: FontWeight.bold,
+                //   ),
+                // ),
+                // const SizedBox(height: 8),
+                // CustomDropdown(
+                //   option: locationProvider.countries,
+                //   selectedIndex: locationProvider.selectedShippingCountryIndex,
+                //   onSelectedChanged: (country) {
+                //     locationProvider.selectShippingCountry(country);
+                //   },
+                // ),
                 const SizedBox(height: 16),
-                const Text(
-                  'State',
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: AppColors.black,
-                    fontWeight: FontWeight.bold,
+                // const Text(
+                //   'State',
+                //   style: TextStyle(
+                //     fontSize: 13,
+                //     color: AppColors.black,
+                //     fontWeight: FontWeight.bold,
+                //   ),
+                // ),
+                // const SizedBox(height: 8),
+                // CustomDropdown(
+                //     option: locationProvider.states,
+                //     selectedIndex: locationProvider.selectedShippingStateIndex,
+                //     onSelectedChanged: (state) {
+                //       locationProvider.selectShippingState(state);
+                //     }),
+                TextFormField(
+                  controller: _shippingStateController,
+                  decoration: InputDecoration(
+                    labelText: 'State',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
                   ),
                 ),
-                const SizedBox(height: 8),
-                CustomDropdown(
-                    option: locationProvider.states,
-                    selectedIndex: locationProvider.selectedShippingStateIndex,
-                    onSelectedChanged: (state) {
-                      locationProvider.selectShippingState(state);
-                    }),
                 const SizedBox(height: 16),
                 TextFormField(
                   controller: _shippingCityController,
@@ -656,12 +775,12 @@ class _NewLocationFormState extends State<NewLocationForm> {
                       borderRadius: BorderRadius.circular(8),
                     ),
                   ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter shipping city';
-                    }
-                    return null;
-                  },
+                  // validator: (value) {
+                  //   if (value == null || value.isEmpty) {
+                  //     return 'Please enter shipping city';
+                  //   }
+                  //   return null;
+                  // },
                 ),
                 const SizedBox(height: 16),
                 TextFormField(
@@ -672,12 +791,12 @@ class _NewLocationFormState extends State<NewLocationForm> {
                       borderRadius: BorderRadius.circular(8),
                     ),
                   ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter shipping ZIP/Postal code';
-                    }
-                    return null;
-                  },
+                  // validator: (value) {
+                  //   if (value == null || value.isEmpty) {
+                  //     return 'Please enter shipping ZIP/Postal code';
+                  //   }
+                  //   return null;
+                  // },
                 ),
                 const SizedBox(height: 16),
                 TextFormField(
@@ -688,12 +807,12 @@ class _NewLocationFormState extends State<NewLocationForm> {
                       borderRadius: BorderRadius.circular(8),
                     ),
                   ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter shipping phone number';
-                    }
-                    return null;
-                  },
+                  // validator: (value) {
+                  //   if (value == null || value.isEmpty) {
+                  //     return 'Please enter shipping phone number';
+                  //   }
+                  //   return null;
+                  // },
                 ),
                 const SizedBox(height: 16),
                 Divider(
@@ -702,7 +821,7 @@ class _NewLocationFormState extends State<NewLocationForm> {
                 ),
                 const SizedBox(height: 16),
                 const Text(
-                  'Location Type',
+                  'Warehouse Type',
                   style: TextStyle(
                     fontSize: 13,
                     color: AppColors.black,
@@ -717,74 +836,91 @@ class _NewLocationFormState extends State<NewLocationForm> {
                     locationProvider.selectLocationType(locationType);
                   },
                 ),
+                // const SizedBox(height: 16),
+                // labelWithRequiredSymbol('Holds Stock'),
+                // const Text(
+                //   'Holds Stock',
+                //   style: TextStyle(
+                //     fontSize: 14,
+                //     color: AppColors.black,
+                //     fontWeight: FontWeight.bold,
+                //   ),
+                // ),
+                // Row(
+                //   children: [
+                //     const Text("Yes"),
+                //     Radio<String>(
+                //       value: "Yes",
+                //       groupValue: locationProvider.holdsStock == null
+                //           ? null
+                //           : locationProvider.holdsStock!
+                //               ? "Yes"
+                //               : "No",
+                //       onChanged: (String? value) {
+                //         locationProvider.updateHoldsStock(value);
+                //       },
+                //     ),
+                //     const Text("No"),
+                //     Radio<String>(
+                //       value: "No",
+                //       groupValue: locationProvider.holdsStock == null
+                //           ? null
+                //           : locationProvider.holdsStock!
+                //               ? "Yes"
+                //               : "No",
+                //       onChanged: (String? value) {
+                //         locationProvider.updateHoldsStock(value);
+                //       },
+                //     ),
+                //   ],
+                // ),
+                // const SizedBox(height: 16),
+                // // labelWithRequiredSymbol('Copy Master SKU from Primary'),
+                // const Text(
+                //   'Copy Master SKU from Primary',
+                //   style: TextStyle(
+                //     fontSize: 14,
+                //     color: AppColors.black,
+                //     fontWeight: FontWeight.bold,
+                //   ),
+                // ),
+                // Row(
+                //   children: [
+                //     const Text("Yes"),
+                //     Radio<String>(
+                //       value: "Yes",
+                //       groupValue: locationProvider.copysku == null
+                //           ? null
+                //           : locationProvider.copysku!
+                //               ? "Yes"
+                //               : "No",
+                //       onChanged: (String? value) {
+                //         locationProvider.updateCopysku(value);
+                //       },
+                //     ),
+                //     const Text("No"),
+                //     Radio<String>(
+                //       value: "No",
+                //       groupValue: locationProvider.copysku == null
+                //           ? null
+                //           : locationProvider.copysku!
+                //               ? "Yes"
+                //               : "No",
+                //       onChanged: (String? value) {
+                //         locationProvider.updateCopysku(value);
+                //       },
+                //     ),
+                //   ],
+                // ),
                 const SizedBox(height: 16),
-                labelWithRequiredSymbol('Holds Stock'),
-                Row(
-                  children: [
-                    const Text("Yes"),
-                    Radio<String>(
-                      value: "Yes",
-                      groupValue: locationProvider.holdsStock == null
-                          ? null
-                          : locationProvider.holdsStock!
-                              ? "Yes"
-                              : "No",
-                      onChanged: (String? value) {
-                        locationProvider.updateHoldsStock(value);
-                      },
-                    ),
-                    const Text("No"),
-                    Radio<String>(
-                      value: "No",
-                      groupValue: locationProvider.holdsStock == null
-                          ? null
-                          : locationProvider.holdsStock!
-                              ? "Yes"
-                              : "No",
-                      onChanged: (String? value) {
-                        locationProvider.updateHoldsStock(value);
-                      },
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                labelWithRequiredSymbol('Copy Master SKU from Primary'),
-                Row(
-                  children: [
-                    const Text("Yes"),
-                    Radio<String>(
-                      value: "Yes",
-                      groupValue: locationProvider.copysku == null
-                          ? null
-                          : locationProvider.copysku!
-                              ? "Yes"
-                              : "No",
-                      onChanged: (String? value) {
-                        locationProvider.updateCopysku(value);
-                      },
-                    ),
-                    const Text("No"),
-                    Radio<String>(
-                      value: "No",
-                      groupValue: locationProvider.copysku == null
-                          ? null
-                          : locationProvider.copysku!
-                              ? "Yes"
-                              : "No",
-                      onChanged: (String? value) {
-                        locationProvider.updateCopysku(value);
-                      },
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                const Text(
-                  'Warehouse Pincode',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
+                // const Text(
+                //   'Warehouse Pincode',
+                //   style: TextStyle(
+                //     fontSize: 14,
+                //     fontWeight: FontWeight.bold,
+                //   ),
+                // ),
+                labelWithRequiredSymbol('Warehouse Pincode'),
                 const SizedBox(height: 8),
                 TextFormField(
                   controller: _warehousePincodeController,
@@ -796,43 +932,138 @@ class _NewLocationFormState extends State<NewLocationForm> {
                     ),
                     floatingLabelBehavior: FloatingLabelBehavior.never,
                   ),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Please enter your Warehouse Pincode';
+                    }
+                    return null;
+                  },
                 ),
+
                 const SizedBox(height: 16),
-                const Text(
-                  'Pincodes',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                  ),
+                Row(
+                  children: [
+                    Checkbox(
+                      value: _isPrimary,
+                      onChanged: (bool? value) {
+                        setState(() {
+                          _isPrimary = value ?? false;
+                        });
+                      },
+                    ),
+                    // const Text('Is Primary Location'),
+                    labelWithRequiredSymbol('Is Primary Location'),
+                  ],
                 ),
+
+                const SizedBox(height: 16),
+                labelWithRequiredSymbol('Pincodes'),
+                // const Text(
+                //   'Pincodes',
+                //   style: TextStyle(
+                //     fontSize: 14,
+                //     fontWeight: FontWeight.bold,
+                //   ),
+                // ),
                 const SizedBox(height: 8),
-                SizedBox(
-                  width: 250,
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: TextField(
-                          controller: _pincodeController,
-                          decoration: InputDecoration(
-                            hintText: 'Enter Pincode',
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(8),
+                Column(
+                  children: [
+                    ..._pincodeList.asMap().entries.map((entry) {
+                      final index = entry.key;
+                      final data = entry.value;
+
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 8.0),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: TextFormField(
+                                controller: data.startController,
+                                keyboardType: TextInputType.number,
+                                decoration: const InputDecoration(
+                                  labelText: 'Start Pincode',
+                                  border: OutlineInputBorder(),
+                                ),
+                                validator: (value) =>
+                                    value == null || value.isEmpty
+                                        ? 'Please enter start pincode'
+                                        : null,
+                              ),
                             ),
-                            suffixIcon: IconButton(
-                              icon:
-                                  const Icon(Icons.add, color: AppColors.green),
-                              onPressed: () {
-                                locationProvider
-                                    .addPincode(_pincodeController.text);
-                                _pincodeController.clear();
-                              },
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: TextFormField(
+                                controller: data.endController,
+                                keyboardType: TextInputType.number,
+                                decoration: const InputDecoration(
+                                  labelText: 'End Pincode',
+                                  border: OutlineInputBorder(),
+                                ),
+                                validator: (value) =>
+                                    value == null || value.isEmpty
+                                        ? 'Please enter end pincode'
+                                        : null,
+                              ),
                             ),
-                          ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: TextFormField(
+                                controller: data.cityController,
+                                decoration: const InputDecoration(
+                                  labelText: 'City',
+                                  border: OutlineInputBorder(),
+                                ),
+                                validator: (value) =>
+                                    value == null || value.isEmpty
+                                        ? 'Please enter city'
+                                        : null,
+                              ),
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.delete),
+                              onPressed: _pincodeList.length > 1
+                                  ? () => setState(
+                                      () => _pincodeList.removeAt(index))
+                                  : null,
+                            )
+                          ],
                         ),
-                      ),
-                    ],
-                  ),
+                      );
+                    }),
+                    ElevatedButton(
+                      onPressed: () =>
+                          setState(() => _pincodeList.add(PincodeData())),
+                      child: const Text('Add Pincode Range'),
+                    ),
+                  ],
                 ),
+                // SizedBox(
+                //   width: 250,
+                //   child: Row(
+                //     children: [
+                //       Expanded(
+                //         child: TextField(
+                //           controller: _pincodeController,
+                //           decoration: InputDecoration(
+                //             hintText: 'Enter Pincode',
+                //             border: OutlineInputBorder(
+                //               borderRadius: BorderRadius.circular(8),
+                //             ),
+                //             suffixIcon: IconButton(
+                //               icon:
+                //                   const Icon(Icons.add, color: AppColors.green),
+                //               onPressed: () {
+                //                 locationProvider
+                //                     .addPincode(_pincodeController.text);
+                //                 _pincodeController.clear();
+                //               },
+                //             ),
+                //           ),
+                //         ),
+                //       ),
+                //     ],
+                //   ),
+                // ),
                 if (locationProvider.validationMessage != null)
                   Padding(
                     padding: const EdgeInsets.only(top: 4.0),
@@ -845,42 +1076,42 @@ class _NewLocationFormState extends State<NewLocationForm> {
                     ),
                   ),
                 const SizedBox(height: 16),
-                Wrap(
-                  spacing: 8,
-                  children: locationProvider.pincodes.map((pincode) {
-                    final index = locationProvider.pincodes.indexOf(pincode);
-                    return GestureDetector(
-                      child: Chip(
-                        elevation: 4,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          side: const BorderSide(
-                            color: Colors.green,
-                            width: 2,
-                          ),
-                        ),
-                        backgroundColor: AppColors.white,
-                        label: Text(
-                          pincode,
-                          style: const TextStyle(
-                              color: Colors.black, fontWeight: FontWeight.bold),
-                        ),
-                        deleteIcon: const Icon(Icons.delete_outline,
-                            color: AppColors.cardsred),
-                        onDeleted: () {
-                          locationProvider.removePincode(index);
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text('Pincode $pincode removed')),
-                          );
-                        },
-                        avatar: const CircleAvatar(
-                          backgroundColor: AppColors.green,
-                          child: Icon(Icons.pin_drop, color: AppColors.white),
-                        ),
-                      ),
-                    );
-                  }).toList(),
-                ),
+                // Wrap(
+                //   spacing: 8,
+                //   children: locationProvider.pincodes.map((pincode) {
+                //     final index = locationProvider.pincodes.indexOf(pincode);
+                //     return GestureDetector(
+                //       child: Chip(
+                //         elevation: 4,
+                //         shape: RoundedRectangleBorder(
+                //           borderRadius: BorderRadius.circular(12),
+                //           side: const BorderSide(
+                //             color: Colors.green,
+                //             width: 2,
+                //           ),
+                //         ),
+                //         backgroundColor: AppColors.white,
+                //         label: Text(
+                //           pincode,
+                //           style: const TextStyle(
+                //               color: Colors.black, fontWeight: FontWeight.bold),
+                //         ),
+                //         deleteIcon: const Icon(Icons.delete_outline,
+                //             color: AppColors.cardsred),
+                //         onDeleted: () {
+                //           locationProvider.removePincode(index);
+                //           ScaffoldMessenger.of(context).showSnackBar(
+                //             SnackBar(content: Text('Pincode $pincode removed')),
+                //           );
+                //         },
+                //         avatar: const CircleAvatar(
+                //           backgroundColor: AppColors.green,
+                //           child: Icon(Icons.pin_drop, color: AppColors.white),
+                //         ),
+                //       ),
+                //     );
+                //   }).toList(),
+                // ),
                 const SizedBox(height: 16),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.end,
@@ -913,71 +1144,72 @@ class _NewLocationFormState extends State<NewLocationForm> {
                       // Within the onTap method of the Save Location button:
                       onTap: () async {
                         if (_formKey.currentState?.validate() ?? false) {
-                          final location = {
+                          final body = {
                             'name': _warehouseNameController.text,
                             'email': _userEmailController.text,
-                            'taxIdentificationNumber':
-                                int.tryParse(_taxIdController.text) ?? 0,
-
-                            // Billing address
-                            'billingAddress': {
-                              'addressLine1': _billingAddress1Controller.text,
-                              'addressLine2': _billingAddress2Controller.text,
-                              'country': locationProvider
-                                      .selectedBillingCountryIndex
+                            'location': {
+                              'otherDetails': {
+                                'taxIdentificationNumber':
+                                    int.tryParse(_taxIdController.text) ?? 0,
+                              },
+                              // Billing address
+                              'billingAddress': {
+                                'addressLine1': _billingAddress1Controller.text,
+                                'addressLine2': _billingAddress2Controller.text,
+                                'country':
+                                    _billingCountryController.text.toString() ??
+                                        '',
+                                'state':
+                                    _billingStateController.text.toString() ??
+                                        '',
+                                'city': _cityController.text,
+                                'zipCode':
+                                    int.tryParse(_zipCodeController.text) ?? 0,
+                                'phoneNumber':
+                                    int.tryParse(_phoneNumberController.text) ??
+                                        0,
+                              },
+                              // Shipping address
+                              'shippingAddress': {
+                                'addressLine1':
+                                    _shippingAddress1Controller.text,
+                                'addressLine2':
+                                    _shippingAddress2Controller.text,
+                                'country': _shippingCountryController.text
+                                        .toString() ??
+                                    '',
+                                'state':
+                                    _shippingStateController.text.toString() ??
+                                        '',
+                                'city': _shippingCityController.text,
+                                'zipCode': int.tryParse(
+                                        _shippingZipCodeController.text) ??
+                                    0,
+                                'phoneNumber': int.tryParse(
+                                        _shippingPhoneNumberController.text) ??
+                                    0,
+                              },
+                              // Other fields
+                              'locationType': locationProvider
+                                      .selectedLocationTypeIndex
                                       .toString() ??
                                   '',
-                              'state': locationProvider
-                                      .selectedBillingStateIndex
-                                      .toString() ??
-                                  '',
-                              'city': _cityController.text,
-                              'zipCode':
-                                  int.tryParse(_zipCodeController.text) ?? 0,
-                              'phoneNumber':
-                                  int.tryParse(_phoneNumberController.text) ??
-                                      0,
+                              // 'holdStocks':
+                              //     locationProvider.holdsStock ?? false,
+                              // 'copyMasterSkuFromPrimary':
+                              //     locationProvider.copysku ?? false,
                             },
-
-                            // Shipping address
-                            'shippingAddress': {
-                              'addressLine1': _shippingAddress1Controller.text,
-                              'addressLine2': _shippingAddress2Controller.text,
-                              'country': locationProvider
-                                      .selectedShippingCountryIndex
-                                      .toString() ??
-                                  '',
-                              'state': locationProvider
-                                      .selectedShippingStateIndex
-                                      .toString() ??
-                                  '',
-                              'city': _shippingCityController.text,
-                              'zipCode': int.tryParse(
-                                      _shippingZipCodeController.text) ??
-                                  0,
-                              'phoneNumber': int.tryParse(
-                                      _shippingPhoneNumberController.text) ??
-                                  0,
-                            },
-
-                            // Other fields
-                            'locationType': locationProvider
-                                    .selectedLocationTypeIndex
-                                    .toString() ??
-                                '',
-                            'holdStocks': locationProvider.holdsStock ?? false,
-                            'copyMasterSkuFromPrimary':
-                                locationProvider.copysku ?? false,
-                            'pincode': locationProvider.pincodes.isNotEmpty
-                                ? locationProvider.pincodes
-                                : [],
-                            'warehousePincode': int.tryParse(
-                                    _warehousePincodeController.text) ??
-                                0,
+                            "pinCodes": _pincodeList
+                                .map((pincode) => pincode.toJson())
+                                .toList(),
+                            "isPrimary": _isPrimary,
+                            'warehouse_id': ''
                           };
 
+                          log('Body: $body');
+
                           final success =
-                              await locationProvider.createWarehouse(location);
+                              await locationProvider.createWarehouse(body);
 
                           final snackBar = success
                               ? const SnackBar(
@@ -998,15 +1230,16 @@ class _NewLocationFormState extends State<NewLocationForm> {
                             _formKey.currentState?.reset();
                             locationProvider.toggleCreatingNewLocation();
                           }
-                        } else {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content:
-                                  Text('Please fill in all required fields.'),
-                              backgroundColor: Colors.orange,
-                            ),
-                          );
                         }
+                        // else {
+                        //   ScaffoldMessenger.of(context).showSnackBar(
+                        //     const SnackBar(
+                        //       content:
+                        //           Text('Please fill in all required fields.'),
+                        //       backgroundColor: Colors.orange,
+                        //     ),
+                        //   );
+                        // }
                       },
 
                       color: AppColors.primaryGreen,
@@ -1051,4 +1284,16 @@ class _NewLocationFormState extends State<NewLocationForm> {
       ],
     );
   }
+}
+
+class PincodeData {
+  final TextEditingController startController = TextEditingController();
+  final TextEditingController endController = TextEditingController();
+  final TextEditingController cityController = TextEditingController();
+
+  Map<String, dynamic> toJson() => {
+        'startPincode': int.parse(startController.text),
+        'endPincode': int.parse(endController.text),
+        'city': cityController.text
+      };
 }

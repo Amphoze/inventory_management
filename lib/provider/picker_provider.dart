@@ -3,8 +3,8 @@ import 'dart:convert';
 import 'dart:developer';
 import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
+import 'package:inventory_management/constants/constants.dart';
 import 'package:inventory_management/model/orders_model.dart';
-import 'package:logger/logger.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class PickerProvider with ChangeNotifier {
@@ -62,9 +62,8 @@ class PickerProvider with ChangeNotifier {
 
   Future<String> cancelOrders(
       BuildContext context, List<String> orderIds) async {
-    const String baseUrl =
-        'https://inventory-management-backend-s37u.onrender.com';
-    const String cancelOrderUrl = '$baseUrl/orders/cancel';
+    String baseUrl = await ApiUrls.getBaseUrl();
+    String cancelOrderUrl = '$baseUrl/orders/cancel';
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('authToken') ?? '';
     setCancelStatus(true);
@@ -101,9 +100,9 @@ class PickerProvider with ChangeNotifier {
         setCancelStatus(false);
         notifyListeners(); // Notify the UI to rebuild
 
-        return responseData['message'] ?? 'Orders confirmed successfully';
+        return responseData['message'] ?? 'Orders cancelled successfully';
       } else {
-        return responseData['message'] ?? 'Failed to confirm orders';
+        return responseData['message'] ?? 'Failed to cancel orders';
       }
     } catch (error) {
       setCancelStatus(false);
@@ -120,7 +119,7 @@ class PickerProvider with ChangeNotifier {
   //   final prefs = await SharedPreferences.getInstance();
   //   final token = prefs.getString('authToken') ?? '';
   //   const url =
-  //       'https://inventory-management-backend-s37u.onrender.com/orders?orderStatus=4&page=';
+  //       '${await ApiUrls.getBaseUrl()}/orders?orderStatus=4&page=';
   //   try {
   //     final response = await http.get(Uri.parse('$url$_currentPage'), headers: {
   //       'Authorization': 'Bearer $token',
@@ -160,8 +159,7 @@ class PickerProvider with ChangeNotifier {
 
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('authToken') ?? '';
-    const url =
-        'https://inventory-management-backend-s37u.onrender.com/order-picker';
+    String url = '${await ApiUrls.getBaseUrl()}/order-picker';
 
     try {
       final response = await http.get(Uri.parse(url), headers: {
@@ -219,7 +217,7 @@ class PickerProvider with ChangeNotifier {
     final token = prefs.getString('authToken') ?? ''; // Fetch the token
 
     final url =
-        'https://inventory-management-backend-s37u.onrender.com/orders?orderStatus=4&order_id=$query';
+        '${await ApiUrls.getBaseUrl()}/orders?orderStatus=4&order_id=$query';
 
     print('Searching orders with term: $query');
 
@@ -268,7 +266,7 @@ class PickerProvider with ChangeNotifier {
   //   _isLoading = true;
   //   notifyListeners();
   //
-  //   final url = Uri.parse('https://inventory-management-backend-s37u.onrender.com/orders?orderStatus=3&order_id=$query');
+  //   final url = Uri.parse('${await ApiUrls.getBaseUrl()}/orders?orderStatus=3&order_id=$query');
   //
   //   final prefs = await SharedPreferences.getInstance();
   //   final token = prefs.getString('token') ?? '';

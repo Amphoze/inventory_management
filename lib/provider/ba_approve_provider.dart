@@ -3,10 +3,12 @@ import 'dart:convert';
 import 'dart:developer';
 import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
+import 'package:inventory_management/constants/constants.dart';
 import 'package:inventory_management/model/orders_model.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:intl/intl.dart';
 
-class BAApproveProvider with ChangeNotifier {
+class BaApproveProvider with ChangeNotifier {
   bool _isLoading = false;
   bool _selectAll = false;
   List<bool> _selectedProducts = [];
@@ -98,11 +100,15 @@ class BAApproveProvider with ChangeNotifier {
     return '$day-$month-$year $hour:$minute:$second';
   }
 
+  Future<String> _getToken() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString('authToken') ?? '';
+  }
+
   Future<String> cancelOrders(
       BuildContext context, List<String> orderIds) async {
-    const String baseUrl =
-        'https://inventory-management-backend-s37u.onrender.com';
-    const String cancelOrderUrl = '$baseUrl/orders/cancel';
+    String baseUrl = await ApiUrls.getBaseUrl();
+    String cancelOrderUrl = '$baseUrl/orders/cancel';
     // final String? token = await _getToken();
 
     final prefs = await SharedPreferences.getInstance();
@@ -141,9 +147,9 @@ class BAApproveProvider with ChangeNotifier {
         setCancelStatus(false);
         notifyListeners(); // Notify the UI to rebuild
 
-        return responseData['message'] ?? 'Orders confirmed successfully';
+        return responseData['message'] ?? 'Orders cancelled successfully';
       } else {
-        return responseData['message'] ?? 'Failed to confirm orders';
+        return responseData['message'] ?? 'Failed to cancel orders';
       }
     } catch (error) {
       setCancelStatus(false);
@@ -153,18 +159,29 @@ class BAApproveProvider with ChangeNotifier {
     }
   }
 
-  Future<void> fetchOrdersWithStatus2() async {
+  Future<void> fetchOrdersWithStatus2({DateTime? date}) async {
     _isLoading = true;
     setRefreshingOrders(true);
     notifyListeners();
 
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('authToken') ?? '';
-    const url =
-        'https://inventory-management-backend-s37u.onrender.com/orders?orderStatus=2&ba_approve=false&page=';
+    var url =
+        '${await ApiUrls.getBaseUrl()}/orders?orderStatus=2&ba_approve=false&page=';
+
+    if (date != null || date == 'Select Date') {
+      String formattedDate = DateFormat('yyyy-MM-dd').format(date!);
+      url += '&date=$formattedDate';
+    }
 
     try {
-      final response = await http.get(Uri.parse('$url$_currentPage'), headers: {
+      String requestUrl = '$url$_currentPage';
+      if (date != null || date == 'Select Date') {
+        String formattedDate = DateFormat('yyyy-MM-dd').format(date!);
+        requestUrl += '&date=$formattedDate';
+      }
+
+      final response = await http.get(Uri.parse(requestUrl), headers: {
         'Authorization': 'Bearer $token',
         'Content-Type': 'application/json',
       });
@@ -174,6 +191,8 @@ class BAApproveProvider with ChangeNotifier {
         List<Order> orders = (data['orders'] as List)
             .map((order) => Order.fromJson(order))
             .toList();
+
+        log('orders: $orders');
 
         _totalPages = data['totalPages']; // Get total pages from response
         _orders = orders; // Set the orders for the current page
@@ -189,6 +208,7 @@ class BAApproveProvider with ChangeNotifier {
         _totalPages = 1; // Reset total pages if there’s an error
       }
     } catch (e) {
+      log('Error fetching orders: $e');
       // Handle errors
       _orders = [];
       _totalPages = 1; // Reset total pages if there’s an error
@@ -224,7 +244,7 @@ class BAApproveProvider with ChangeNotifier {
     final token = prefs.getString('authToken') ?? ''; // Fetch the token
 
     final url =
-        'https://inventory-management-backend-s37u.onrender.com/orders?orderStatus=2&ba_approve=false&order_id=$query';
+        '${await ApiUrls.getBaseUrl()}/orders?orderStatus=2&ba_approve=false&order_id=$query';
 
     print('Searching orders with term: $query');
 
@@ -283,13 +303,13 @@ class BAApproveProvider with ChangeNotifier {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('No orders selected to update')),
       );
+      setUpdatingOrder(false);
       return;
     }
 
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('authToken') ?? '';
-    const url =
-        'https://inventory-management-backend-s37u.onrender.com/orders/ba_approve';
+    String url = '${await ApiUrls.getBaseUrl()}/orders/ba_approve';
 
     try {
       final response = await http.post(
@@ -318,17 +338,23 @@ class BAApproveProvider with ChangeNotifier {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Error while updating orders')),
       );
+    } finally {
+      setUpdatingOrder(false);
+      notifyListeners();
     }
-    setUpdatingOrder(false);
-    notifyListeners();
   }
 
   Future<void> fetchOrdersByMarketplace(
-      String marketplace, int orderStatus, int page) async {
-    const String baseUrl =
-        'https://inventory-management-backend-s37u.onrender.com/orders';
+      String marketplace, int orderStatus, int page,
+      {DateTime? date}) async {
+    String baseUrl = '${await ApiUrls.getBaseUrl()}/orders';
     String url =
-        '$baseUrl?orderStatus=$orderStatus&marketplace=$marketplace&page=$page';
+        '$baseUrl?orderStatus=$orderStatus&ba_approve=false&marketplace=$marketplace&page=$page';
+
+    if (date != null || date == 'Select Date') {
+      String formattedDate = DateFormat('yyyy-MM-dd').format(date!);
+      url += '&date=$formattedDate';
+    }
 
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('authToken') ?? '';

@@ -1,4 +1,7 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:inventory_management/Custom-Files/loading_indicator.dart';
 import 'package:inventory_management/Widgets/order_card.dart';
 import 'package:inventory_management/model/orders_model.dart';
@@ -16,6 +19,7 @@ class ManifestPage extends StatefulWidget {
 
 class _ManifestPageState extends State<ManifestPage> {
   final TextEditingController _searchController = TextEditingController();
+  String _selectedDate = 'Select Date';
 
   @override
   void initState() {
@@ -39,6 +43,7 @@ class _ManifestPageState extends State<ManifestPage> {
 
   @override
   Widget build(BuildContext context) {
+    String selectedCourier = 'All';
     return Consumer<ManifestProvider>(
       builder: (context, manifestProvider, child) {
         return Scaffold(
@@ -50,7 +55,6 @@ class _ManifestPageState extends State<ManifestPage> {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.start,
                   children: [
-                    // Search TextField
                     SizedBox(
                       width: 200,
                       child: Container(
@@ -128,7 +132,6 @@ class _ManifestPageState extends State<ManifestPage> {
                     //           final provider = Provider.of<ManifestProvider>(
                     //               context,
                     //               listen: false);
-
                     //           // Collect selected order IDs
                     //           List<String> selectedOrderIds = provider.orders
                     //               .asMap()
@@ -137,7 +140,6 @@ class _ManifestPageState extends State<ManifestPage> {
                     //                   provider.selectedProducts[entry.key])
                     //               .map((entry) => entry.value.orderId)
                     //               .toList();
-
                     //           if (selectedOrderIds.isEmpty) {
                     //             // Show an error message if no orders are selected
                     //             ScaffoldMessenger.of(context).showSnackBar(
@@ -149,14 +151,11 @@ class _ManifestPageState extends State<ManifestPage> {
                     //           } else {
                     //             // Set loading status to true before starting the operation
                     //             provider.setCancelStatus(true);
-
                     //             // Call confirmOrders method with selected IDs
                     //             String resultMessage = await provider
-                    //                 .cancelOrders(context, selectedOrderIds);
-
+                    //                 .cancelOrders(context, selectedOrderIds)
                     //             // Set loading status to false after operation completes
                     //             provider.setCancelStatus(false);
-
                     //             // Determine the background color based on the result
                     //             Color snackBarColor;
                     //             if (resultMessage.contains('success')) {
@@ -170,7 +169,6 @@ class _ManifestPageState extends State<ManifestPage> {
                     //               snackBarColor =
                     //                   AppColors.orange; // Other: Orange
                     //             }
-
                     //             // Show feedback based on the result
                     //             ScaffoldMessenger.of(context).showSnackBar(
                     //               SnackBar(
@@ -192,8 +190,160 @@ class _ManifestPageState extends State<ManifestPage> {
                     //           style: TextStyle(color: Colors.white),
                     //         ),
                     // ),
-                    // const SizedBox(width: 8),
+                    Column(
+                      children: [
+                        Text(
+                          _selectedDate,
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: _selectedDate == 'Select Date'
+                                ? Colors.grey
+                                : AppColors.primaryBlue,
+                          ),
+                        ),
+                        Tooltip(
+                          message: 'Filter by Date',
+                          child: IconButton(
+                            onPressed: () async {
+                              final DateTime? picked = await showDatePicker(
+                                context: context,
+                                initialDate: DateTime.now(),
+                                firstDate: DateTime(2020),
+                                lastDate: DateTime.now(),
+                                builder: (context, child) {
+                                  return Theme(
+                                    data: Theme.of(context).copyWith(
+                                      colorScheme: const ColorScheme.light(
+                                        primary: AppColors.primaryBlue,
+                                        onPrimary: Colors.white,
+                                        surface: Colors.white,
+                                        onSurface: Colors.black,
+                                      ),
+                                    ),
+                                    child: child!,
+                                  );
+                                },
+                              );
+
+                              if (picked != null) {
+                                String formattedDate =
+                                    DateFormat('yyyy-MM-dd').format(picked);
+                                setState(() {
+                                  _selectedDate = formattedDate;
+                                });
+
+                                if (selectedCourier != 'All') {
+                                  manifestProvider.fetchOrdersByBookingCourier(
+                                    selectedCourier,
+                                    manifestProvider.currentPage,
+                                    date: picked,
+                                  );
+                                } else {
+                                  manifestProvider.fetchOrdersWithStatus8(
+                                    date: picked,
+                                  );
+                                }
+                              }
+                            },
+                            icon: const Icon(
+                              Icons.calendar_today,
+                              size: 30,
+                              color: AppColors.primaryBlue,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(width: 8),
                     // Refresh Button
+                    StatefulBuilder(builder: (context, setState) {
+                      return Column(
+                        children: [
+                          Text(
+                            selectedCourier,
+                          ),
+                          PopupMenuButton<String>(
+                            tooltip: 'Filter by Booking Courier',
+                            onSelected: (String value) {
+                              setState(() {
+                                selectedCourier = value;
+                              });
+                              if (value == 'All') {
+                                manifestProvider.fetchOrdersWithStatus8(
+                                  date: _selectedDate == 'Select Date'
+                                      ? null
+                                      : DateTime.parse(_selectedDate),
+                                );
+                              } else {
+                                selectedCourier = value;
+                                manifestProvider.fetchOrdersByBookingCourier(
+                                    value, manifestProvider.currentPage,
+                                    date: _selectedDate == 'Select Date'
+                                        ? null
+                                        : DateTime.parse(_selectedDate));
+                              }
+                              log('Selected: $value');
+                            },
+                            itemBuilder: (BuildContext context) =>
+                                <PopupMenuEntry<String>>[
+                              const PopupMenuItem<String>(
+                                value: 'Delhivery', // Hardcoded marketplace
+                                child: Text('Delhivery'),
+                              ),
+                              const PopupMenuItem<String>(
+                                value: 'Shiprocket', // Hardcoded marketplace
+                                child: Text('Shiprocket'),
+                              ),
+                              const PopupMenuItem<String>(
+                                value: 'Others', // Hardcoded marketplace
+                                child: Text('Others'),
+                              ),
+                              const PopupMenuItem<String>(
+                                value: 'All', // Hardcoded marketplace
+                                child: Text('All'),
+                              ),
+                            ],
+                            child: const IconButton(
+                              onPressed: null,
+                              icon: Icon(
+                                Icons.filter_alt_outlined,
+                                size: 30,
+                              ),
+                            ),
+                          ),
+                        ],
+                      );
+                    }),
+                    const SizedBox(
+                      width: 8,
+                    ),
+                    ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primaryBlue,
+                      ),
+                      onPressed: manifestProvider.isCreatingManifest
+                          ? null
+                          : () async {
+                              manifestProvider.createManifest(
+                                  context, selectedCourier);
+                            },
+                      child: manifestProvider.isCreatingManifest
+                          ? const SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(
+                                color: Colors.white,
+                                strokeWidth: 2,
+                              ),
+                            )
+                          : const Text(
+                              'Create Manifest',
+                              style: TextStyle(color: Colors.white),
+                            ),
+                    ),
+                    const SizedBox(
+                      width: 8,
+                    ),
                     ElevatedButton(
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.primaryBlue,
@@ -263,7 +413,6 @@ class _ManifestPageState extends State<ManifestPage> {
                   ],
                 ),
               ),
-
               CustomPaginationFooter(
                 currentPage:
                     manifestProvider.currentPage, // Ensure correct currentPage
@@ -317,10 +466,22 @@ class _ManifestPageState extends State<ManifestPage> {
       padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
       child: Row(
         children: [
+          Transform.scale(
+            scale: 0.8,
+            child: Checkbox(
+              value: manifestProvider.selectAll,
+              onChanged: (value) {
+                manifestProvider.toggleSelectAll(value!);
+              },
+            ),
+          ),
+          Text(
+            'Select All(${manifestProvider.selectedCount})',
+          ),
           buildHeader('ORDERS', flex: 8), // Increased flex
-          buildHeader('DELIVERY PARTNER SIGNATURE',
-              flex: 5), // Decreased flex for better alignment
-          buildHeader('CONFIRM', flex: 3),
+          // buildHeader('DELIVERY PARTNER SIGNATURE',
+          //     flex: 5), // Decreased flex for better alignment
+          // buildHeader('CONFIRM', flex: 3),
         ],
       ),
     );
@@ -351,28 +512,34 @@ class _ManifestPageState extends State<ManifestPage> {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
+          Checkbox(
+            value: manifestProvider.selectedProducts[index],
+            onChanged: (isSelected) {
+              manifestProvider.handleRowCheckboxChange(index, isSelected!);
+            },
+          ),
           Expanded(
             flex: 5, // Increased flex for wider order card
             child: OrderCard(order: order),
           ),
-          const SizedBox(
-              width: 20), // Reduced space between order card and signature
-          buildCell(
-            // Use the getOrderImage method to handle image display
-            order.getOrderImage(),
-            flex: 3,
-          ),
-          const SizedBox(width: 4),
-          buildCell(
-            order.checkManifest!.approved
-                ? const Icon(
-                    Icons.check_circle,
-                    color: Colors.green,
-                    size: 24,
-                  )
-                : const SizedBox.shrink(),
-            flex: 2,
-          ),
+          // const SizedBox(
+          //     width: 20), // Reduced space between order card and signature
+          // buildCell(
+          //   // Use the getOrderImage method to handle image display
+          //   order.getOrderImage(),
+          //   flex: 3,
+          // ),
+          // const SizedBox(width: 4),
+          // buildCell(
+          //   order.checkManifest!.approved
+          //       ? const Icon(
+          //           Icons.check_circle,
+          //           color: Colors.green,
+          //           size: 24,
+          //         )
+          //       : const SizedBox.shrink(),
+          //   flex: 2,
+          // ),
         ],
       ),
     );

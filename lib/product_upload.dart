@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:inventory_management/Custom-Files/excelFileUpload.dart';
 import 'package:inventory_management/provider/product_data_provider.dart';
+import 'package:logger/logger.dart';
 import 'package:provider/provider.dart';
 import 'package:inventory_management/Custom-Files/colors.dart';
 import 'package:inventory_management/Api/auth_provider.dart';
@@ -17,6 +18,7 @@ class ProductDataDisplay extends StatefulWidget {
 class _ProductDataDisplayState extends State<ProductDataDisplay> {
   List<Map<String, dynamic>> failedProducts = [];
   bool showFailedProducts = false;
+
   Future<void> _uploadProducts(BuildContext context) async {
     final authProvider = AuthProvider();
     final productDataProvider =
@@ -248,7 +250,8 @@ class _ProductDataDisplayState extends State<ProductDataDisplay> {
                 ],
                 const SizedBox(width: 16),
                 ElevatedButton(
-                  onPressed: () => AuthProvider().downloadTemplate(context,'product'),
+                  onPressed: () =>
+                      AuthProvider().downloadTemplate(context, 'product'),
                   child: const Text('Download Template'),
                 ),
                 const SizedBox(width: 16.0),
@@ -281,6 +284,8 @@ class _ProductDataDisplayState extends State<ProductDataDisplay> {
                       itemBuilder: (context, index) {
                         Map<String, String> dataMap =
                             productDataProvider.dataGroups[index];
+
+                        Logger().e('sheet data: $dataMap');
 
                         return GestureDetector(
                           child: Container(
@@ -362,7 +367,7 @@ class _ProductDataDisplayState extends State<ProductDataDisplay> {
     );
   }
 
-  Widget _buildRowContent(Map<String, String> dataMap, double baseTextSize) {
+  Widget _buildRowContent(Map<String, dynamic> dataMap, double baseTextSize) {
     final List<String> fieldsToShow = dataMap.keys.toList();
 
     List<Widget> rowWidgets = [];
@@ -391,7 +396,11 @@ class _ProductDataDisplayState extends State<ProductDataDisplay> {
   }
 
   Widget _buildTwoColumnRow(
-      String fieldName, String? value, double baseTextSize) {
+      String fieldName, dynamic value, double baseTextSize) {
+    String displayValue =
+        value != null && value.isNotEmpty ? value.toString() : '';
+    // String displayValue = value != null ? value.toString() : '';
+
     return Expanded(
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 4.0),
@@ -412,7 +421,7 @@ class _ProductDataDisplayState extends State<ProductDataDisplay> {
             Expanded(
               flex: 5,
               child: Text(
-                value != null && value.isNotEmpty ? value : '',
+                displayValue,
                 style: TextStyle(fontSize: baseTextSize),
               ),
             ),

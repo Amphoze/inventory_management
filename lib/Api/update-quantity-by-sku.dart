@@ -1,10 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:inventory_management/Api/auth_provider.dart';
 import 'package:http/http.dart' as http;
+import 'package:inventory_management/constants/constants.dart';
 
 class UpdateQuantityBySku with ChangeNotifier {
-  final String _baseUrl =
-      'https://inventory-management-backend-s37u.onrender.com';
+  // late final String _baseUrl;
+
+  // UpdateQuantityBySku() {
+  //   _initialize();
+  // }
+
+  // Future<void> _initialize() async {
+  //   _baseUrl = await ApiUrls.getBaseUrl();
+  // }
+
   bool _jsonHaveData = false;
   bool get jsonHaveData => _jsonHaveData;
   void updateJsonData({bool? isfalse}) {
@@ -18,12 +27,13 @@ class UpdateQuantityBySku with ChangeNotifier {
   }
 
   Future updateQuantityBySku(Map<String, Map<String, dynamic>> data) async {
+    String baseUrl = await ApiUrls.getBaseUrl();
     int count = 0;
     String? token = await AuthProvider().getToken();
     try {
       for (var label in data.keys) {
         count++;
-        Uri url = Uri.parse('$_baseUrl/inventory?sku=$label');
+        Uri url = Uri.parse('$baseUrl/inventory?sku=$label');
         var response = await http.put(url,
             headers: {
               'Content-Type': 'application/json',

@@ -1,17 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:inventory_management/Custom-Files/colors.dart';
+import 'package:inventory_management/constants/constants.dart';
+import 'package:logger/logger.dart';
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class SearchableDropdown extends StatefulWidget {
   final String label;
   final Function(Map<String, String>?)? onChanged;
+  final bool isCombo;
 
   const SearchableDropdown({
     super.key,
     required this.label,
     this.onChanged,
+    this.isCombo = false,
   });
 
   @override
@@ -27,6 +31,8 @@ class _SearchableDropdownState extends State<SearchableDropdown> {
   bool isSearching = false;
   TextEditingController searchController = TextEditingController();
   bool isDropdownOpen = false;
+  bool hasMore = true;
+  String? errorMessage;
 
   @override
   void initState() {
@@ -35,31 +41,71 @@ class _SearchableDropdownState extends State<SearchableDropdown> {
   }
 
   Future<void> fetchProducts({String query = ''}) async {
-    if (isLoading) return;
+    if (isLoading || !hasMore) return;
 
     setState(() {
       isLoading = true;
+      errorMessage = null;
     });
 
-    final response = await getAllProducts(page: currentPage, search: query);
-    if (response['success']) {
+    try {
+      final response = await getAllProducts(page: currentPage, search: query);
+      if (response['success']) {
+        final newItems = response['data'];
+        setState(() {
+          products.addAll(newItems);
+          currentPage++;
+          hasMore = newItems.length >= 10;
+        });
+      } else {
+        setState(() {
+          errorMessage = response['message'];
+        });
+      }
+    } catch (e) {
       setState(() {
-        products.addAll(response['data']);
-        currentPage++;
+        errorMessage = 'Error loading items: $e';
       });
-    } else {
-      print(response['message']);
+    } finally {
+      setState(() {
+        isLoading = false;
+      });
+    }
+  }
+
+  void _handleItemSelection(Map<String, dynamic> product) {
+    Logger().d('Item selected: ${product['displayName']}');
+    if (widget.onChanged != null) {
+      final selectedData = {
+        'id': product['id'].toString(),
+        'name': product['displayName'].toString(),
+        'sku': product['sku'].toString(),
+      };
+      widget.onChanged!(selectedData);
     }
 
     setState(() {
-      isLoading = false;
+      selectedProductId = product['id'];
+      selectedProductName = product['displayName'];
+      isDropdownOpen = false;
+      searchController.text = '${product['sku']}: ${product['displayName']}';
     });
   }
 
   // Search for a specific product by SKU
-  Future<Map<String, dynamic>> searchProductBySku(String sku) async {
-    final url = Uri.parse(
-        'https://inventory-management-backend-s37u.onrender.com/products?sku=$sku');
+  Future<Map<String, dynamic>> searchProduct(String query) async {
+    Uri url;
+    final isCombo = widget.isCombo;
+
+    Logger().e('isCombo: $isCombo');
+
+    if (isCombo) {
+      url = Uri.parse(
+          '${await ApiUrls.getBaseUrl()}/combo?${query.contains('-') ? 'comboSku' : 'name'}=$query');
+    } else {
+      url = Uri.parse(
+          '${await ApiUrls.getBaseUrl()}/products?${query.contains('-') ? 'sku' : 'displayName'}=$query');
+    }
 
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -74,34 +120,28 @@ class _SearchableDropdownState extends State<SearchableDropdown> {
       );
 
       if (response.statusCode == 200) {
-        final products = json.decode(response.body)['products'];
+        final data = json.decode(response.body);
+        final items = isCombo ? data['combos'] : data['products'];
 
-        if (products.isNotEmpty) {
-          final productList = products.map((product) {
+        if (items != null && items.isNotEmpty) {
+          final itemList = items.map((item) {
             return {
-              'id': product['_id'] ?? '',
-              'displayName': product['displayName'] ?? '',
-              'sku': product['sku'] ?? '',
+              'id': item['_id'] ?? '',
+              'displayName': isCombo ? item['name'] : item['displayName'] ?? '',
+              'sku': isCombo ? item['comboSku'] : item['sku'] ?? '',
             };
           }).toList();
 
           return {
             'success': true,
-            'data': productList,
-          };
-        } else {
-          return {
-            'success': false,
-            'message': 'No products found for the provided SKU.',
+            'data': itemList,
           };
         }
-      } else {
-        return {
-          'success': false,
-          'message':
-              'Failed to fetch product. Status code: ${response.statusCode}',
-        };
       }
+      return {
+        'success': false,
+        'message': 'No ${isCombo ? 'combos' : 'products'} found.',
+      };
     } catch (error) {
       return {'success': false, 'message': 'Error: $error'};
     }
@@ -112,8 +152,13 @@ class _SearchableDropdownState extends State<SearchableDropdown> {
     int itemsPerPage = 10,
     String search = '',
   }) async {
-    final url = Uri.parse(
-        'https://inventory-management-backend-s37u.onrender.com/products?page=$page&limit=$itemsPerPage&search=$search');
+    final isCombo = widget.isCombo;
+    String baseUrl = await ApiUrls.getBaseUrl();
+    final endpoint = isCombo ? '/combo' : '/products';
+    final url = Uri.parse('$baseUrl$endpoint?page=$page&limit=$itemsPerPage');
+
+    // Logger().e("isCombo: $isCombo");
+    // Logger().e("Fetching from URL: $url");
 
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -127,26 +172,35 @@ class _SearchableDropdownState extends State<SearchableDropdown> {
         },
       );
 
-      if (response.statusCode == 200) {
-        final List<dynamic> data = json.decode(response.body)['products'];
-        final products = data.map((product) {
-          return {
-            'id': product['_id'] ?? '',
-            'displayName': product['displayName'] ?? '',
-            'sku': product['sku'] ?? ''
-          };
-        }).toList();
+      // Logger().e("Response status: ${response.statusCode}");
+      // Logger().e("Response body: ${response.body}");
 
-        return {'success': true, 'data': products};
-      } else {
-        return {
-          'success': false,
-          'message':
-              'Failed to load products. Status code: ${response.statusCode}',
-        };
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        final items = isCombo ? data['combos'] : data['products'];
+
+        if (items != null) {
+          final itemList = items.map((item) {
+            return {
+              'id': item['_id'] ?? '',
+              'displayName': isCombo ? item['name'] : item['displayName'] ?? '',
+              'sku': isCombo ? item['comboSku'] : item['sku'] ?? '',
+            };
+          }).toList();
+
+          return {'success': true, 'data': itemList};
+        }
       }
+      return {
+        'success': false,
+        'message': 'Failed to load ${isCombo ? "combos" : "products"}',
+      };
     } catch (error) {
-      return {'success': false, 'message': 'Error fetching products'};
+      Logger().e("Error in getAllProducts: $error");
+      return {
+        'success': false,
+        'message': 'Error fetching ${isCombo ? "combos" : "products"}'
+      };
     }
   }
 
@@ -157,43 +211,29 @@ class _SearchableDropdownState extends State<SearchableDropdown> {
         searchController.clear();
         products.clear();
         currentPage = 1;
+        hasMore = true;
+        errorMessage = null;
         fetchProducts();
       }
     });
   }
 
-  // void _addNewProduct(String name) {
-  //   setState(() {
-  //     products.insert(0, {'displayName': name, 'id': 'new'});
-  //     selectedProductId = 'new';
-  //     selectedProductName = name;
-  //     isDropdownOpen = false;
-  //   });
-
-  //   if (widget.onChanged != null) {
-  //     widget
-  //         .onChanged!({'id': selectedProductId!, 'name': selectedProductName!});
-  //   }
-
-  //   searchController.clear();
-  // }
-
   void _performSearch() async {
-    String sku = searchController.text.trim();
-    if (sku.isNotEmpty) {
+    String query = searchController.text.trim();
+    if (query.isNotEmpty) {
       setState(() {
         isSearching = true;
       });
 
-      final response = await searchProductBySku(sku);
+      final response = await searchProduct(query);
       if (response['success']) {
         setState(() {
           products = response['data'];
         });
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            // content: Text('Found ${response['data'].length} product(s) for SKU: $sku.'),
-            content: Text('Found product with SKU: $sku.'),
+            content: Text(
+                'Found ${widget.isCombo ? 'combo' : 'product'} with query: $query.'),
             backgroundColor: AppColors.green,
             duration: const Duration(seconds: 2),
           ),
@@ -202,22 +242,22 @@ class _SearchableDropdownState extends State<SearchableDropdown> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content:
-                Text('Search Error: ${response['message']} for SKU: $sku.'),
+                Text('Search Error: ${response['message']} for query: $query.'),
             backgroundColor: AppColors.cardsred,
             duration: const Duration(seconds: 2),
           ),
         );
-        print('Search Error: ${response['message']}');
       }
       setState(() {
         isSearching = false;
       });
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please enter a SKU to search.'),
+        SnackBar(
+          content: Text(
+              'Please enter a ${widget.isCombo ? 'combo name' : 'SKU'} to search.'),
           backgroundColor: AppColors.cardsred,
-          duration: Duration(seconds: 2),
+          duration: const Duration(seconds: 2),
         ),
       );
     }
@@ -225,112 +265,87 @@ class _SearchableDropdownState extends State<SearchableDropdown> {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: _toggleDropdown,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
-        decoration: BoxDecoration(
-          border: Border.all(color: Colors.grey),
-          borderRadius: BorderRadius.circular(5.0),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    widget.label,
-                    style: const TextStyle(
-                      color: Colors.grey,
-                    ),
-                  ),
-                ),
-                Icon(
-                  isDropdownOpen ? Icons.arrow_drop_up : Icons.arrow_drop_down,
-                  color: Colors.grey,
-                ),
-              ],
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        TextField(
+          controller: searchController,
+          onTap: _toggleDropdown,
+          onSubmitted: (_) => _performSearch(),
+          onChanged: (value) {
+            setState(() {
+              isDropdownOpen = true;
+              if (value == '') {
+                fetchProducts();
+              }
+            });
+          },
+          decoration: InputDecoration(
+            hintText: widget.isCombo
+                ? 'Search Combo by Name or SKU'
+                : 'Search Product by Name or SKU',
+            border: const OutlineInputBorder(),
+            contentPadding: const EdgeInsets.symmetric(horizontal: 12.0),
+            suffixIcon: Icon(
+              isDropdownOpen ? Icons.arrow_drop_up : Icons.arrow_drop_down,
+              color: Colors.grey,
             ),
-            if (isDropdownOpen) ...[
-              Row(
-                children: [
-                  Expanded(
-                    child: TextField(
-                      controller: searchController,
-                      decoration: const InputDecoration(
-                        hintText: 'Search by SKU',
-                        border: OutlineInputBorder(),
-                        contentPadding: EdgeInsets.symmetric(horizontal: 8.0),
-                      ),
-                      onSubmitted: (_) => _performSearch(),
-                    ),
-                  ),
-                  const SizedBox(width: 20),
-                  isSearching
-                      ? const Center(
-                          child: SizedBox(
-                            width: 24,
-                            height: 24,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              valueColor: AlwaysStoppedAnimation<Color>(
-                                  AppColors.green),
-                            ),
-                          ),
-                        )
-                      : IconButton(
-                          icon: const Icon(Icons.search),
-                          onPressed: _performSearch,
-                        ),
-                ],
-              ),
-              Container(
-                constraints: const BoxConstraints(maxHeight: 250),
-                child: NotificationListener<ScrollNotification>(
-                  onNotification: (ScrollNotification scrollInfo) {
-                    if (!isLoading &&
-                        scrollInfo.metrics.pixels ==
-                            scrollInfo.metrics.maxScrollExtent) {
-                      fetchProducts();
-                    }
-                    return true;
-                  },
-                  child: ListView.builder(
-                    itemCount:
-                        isLoading ? products.length + 1 : products.length,
-                    itemBuilder: (context, index) {
-                      if (index == products.length && isLoading) {
-                        return const Center(child: CircularProgressIndicator());
-                      }
-
-                      final product = products[index];
-                      return ListTile(
-                        title: Text(
-                            '${product['sku']}: ${product['displayName']}'),
-                        onTap: () {
-                          setState(() {
-                            selectedProductId = product['id'];
-                            selectedProductName = product['displayName'];
-                            isDropdownOpen = false;
-                          });
-                          if (widget.onChanged != null) {
-                            widget.onChanged!({
-                              'id': selectedProductId!,
-                              'name': selectedProductName!,
-                              'sku': product['sku']!,
-                            });
-                          }
-                        },
-                      );
-                    },
-                  ),
-                ),
-              ),
-            ],
-          ],
+          ),
         ),
-      ),
+        if (isDropdownOpen) ...[
+          Container(
+            decoration: BoxDecoration(
+              border: Border.all(color: Colors.grey.shade300),
+              borderRadius: BorderRadius.circular(4),
+            ),
+            constraints: const BoxConstraints(maxHeight: 250),
+            child: NotificationListener<ScrollNotification>(
+              onNotification: (scrollInfo) {
+                if (!isLoading &&
+                    scrollInfo.metrics.pixels ==
+                        scrollInfo.metrics.maxScrollExtent) {
+                  fetchProducts(query: searchController.text);
+                }
+                return true;
+              },
+              child: ListView.builder(
+                itemCount: products.length + (hasMore ? 1 : 0),
+                itemBuilder: (context, index) {
+                  if (index == products.length) {
+                    if (errorMessage != null) {
+                      return Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: Text(
+                          errorMessage!,
+                          style: const TextStyle(color: Colors.red),
+                        ),
+                      );
+                    }
+
+                    if (isLoading) {
+                      return const Center(
+                        child: Padding(
+                          padding: EdgeInsets.all(8.0),
+                          child: CircularProgressIndicator(),
+                        ),
+                      );
+                    }
+
+                    return const SizedBox();
+                  }
+
+                  final product = products[index];
+                  return ListTile(
+                    title: Text('${product['sku']}: ${product['displayName']}'),
+                    onTap: () => _handleItemSelection(product),
+                  );
+                },
+              ),
+            ),
+          ),
+        ],
+      ],
     );
   }
 }

@@ -2,8 +2,11 @@ import 'dart:developer';
 
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:inventory_management/Custom-Files/utils.dart';
+import 'package:inventory_management/Widgets/big_combo_card.dart';
 import 'package:inventory_management/Widgets/product_details_card.dart';
 import 'package:inventory_management/edit_order_page.dart';
+import 'package:inventory_management/model/orders_model.dart';
 import 'package:inventory_management/provider/accounts_provider.dart';
 import 'package:inventory_management/provider/marketplace_provider.dart';
 import 'package:provider/provider.dart';
@@ -11,8 +14,6 @@ import 'package:provider/provider.dart';
 import 'Custom-Files/colors.dart';
 import 'Custom-Files/custom_pagination.dart';
 import 'Custom-Files/loading_indicator.dart';
-import 'Widgets/order_card.dart';
-import 'model/orders_model.dart';
 
 class AccountsPage extends StatefulWidget {
   const AccountsPage({super.key});
@@ -23,6 +24,8 @@ class AccountsPage extends StatefulWidget {
 
 class _AccountsPageState extends State<AccountsPage> {
   final TextEditingController _searchController = TextEditingController();
+  String _selectedDate = 'Select Date';
+  final remarkController = TextEditingController();
 
   @override
   void initState() {
@@ -43,8 +46,34 @@ class _AccountsPageState extends State<AccountsPage> {
     }
   }
 
+  String formatIsoDate(String isoDate) {
+    final dateTime = DateTime.parse(isoDate)
+        .toUtc()
+        .add(const Duration(hours: 5, minutes: 30));
+    final date = DateFormat('yyyy-MM-dd').format(dateTime);
+    final time = DateFormat('hh:mm:ss a').format(dateTime);
+    return " ($date, $time)";
+  }
+
+  static String maskPhoneNumber(dynamic phone) {
+    if (phone == null) return '';
+    String phoneStr = phone.toString();
+    if (phoneStr.length < 4) return phoneStr;
+    return '${'*' * (phoneStr.length - 4)}${phoneStr.substring(phoneStr.length - 4)}';
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    remarkController.dispose();
+    super.dispose();
+  }
+
+  String selectedSearchType = 'Order ID'; // Default selection
+
   @override
   Widget build(BuildContext context) {
+    String selectedCourier = 'All';
     return Consumer<AccountsProvider>(
       builder: (context, accountsProvider, child) {
         return Scaffold(
@@ -56,6 +85,32 @@ class _AccountsPageState extends State<AccountsPage> {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
+                    Container(
+                      width: 200,
+                      height: 34,
+                      margin: const EdgeInsets.only(right: 16),
+                      child: DropdownButtonFormField<String>(
+                        value: selectedSearchType,
+                        decoration: const InputDecoration(
+                          border: OutlineInputBorder(),
+                          contentPadding: EdgeInsets.symmetric(
+                              horizontal: 12.0, vertical: 8.0),
+                        ),
+                        items: const [
+                          DropdownMenuItem(
+                              value: 'Order ID', child: Text('Order ID')),
+                          DropdownMenuItem(
+                              value: 'Transaction No.',
+                              child: Text('Transaction No.')),
+                        ],
+                        onChanged: (value) {
+                          setState(() {
+                            selectedSearchType = value!;
+                          });
+                        },
+                      ),
+                    ),
+
                     SizedBox(
                       width: 200,
                       child: Container(
@@ -91,7 +146,7 @@ class _AccountsPageState extends State<AccountsPage> {
                           },
                           onSubmitted: (query) {
                             if (query.isNotEmpty) {
-                              accountsProvider.searchOrders(query);
+                              accountsProvider.searchOrders(query, selectedSearchType);
                             }
                           },
                           onEditingComplete: () {
@@ -115,44 +170,128 @@ class _AccountsPageState extends State<AccountsPage> {
                       ),
                     ),
                     const Spacer(),
-                    const SizedBox(width: 8),
+                    // const SizedBox(width: 8),
                     // Refresh Button
                     Row(
                       children: [
-                        Consumer<MarketplaceProvider>(
-                          builder: (context, provider, child) {
-                            return PopupMenuButton<String>(
-                              tooltip: 'Filter by Marketplace',
-                              onSelected: (String value) {
-                                if (value == 'All') {
-                                  accountsProvider.fetchOrdersWithStatus2();
-                                } else {
-                                  accountsProvider.fetchOrdersByMarketplace(
-                                      value, 2, accountsProvider.currentPage);
-                                }
-                                log('Selected: $value');
-                              },
-                              itemBuilder: (BuildContext context) =>
-                                  <PopupMenuEntry<String>>[
-                                ...provider.marketplaces
-                                    .map((marketplace) => PopupMenuItem<String>(
-                                          value: marketplace.name,
-                                          child: Text(marketplace.name),
-                                        )), // Fetched marketplaces
-                                const PopupMenuItem<String>(
-                                  value: 'All', // Hardcoded marketplace
-                                  child: Text('All'),
-                                ),
-                              ],
-                              child: const IconButton(
-                                onPressed: null,
-                                icon: Icon(
-                                  Icons.filter_alt_outlined,
+                        Column(
+                          children: [
+                            Text(
+                              _selectedDate,
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: _selectedDate == 'Select Date'
+                                    ? Colors.grey
+                                    : AppColors.primaryBlue,
+                              ),
+                            ),
+                            Tooltip(
+                              message: 'Filter by Date',
+                              child: IconButton(
+                                onPressed: () async {
+                                  final DateTime? picked = await showDatePicker(
+                                    context: context,
+                                    initialDate: DateTime.now(),
+                                    firstDate: DateTime(2020),
+                                    lastDate: DateTime.now(),
+                                    builder: (context, child) {
+                                      return Theme(
+                                        data: Theme.of(context).copyWith(
+                                          colorScheme: const ColorScheme.light(
+                                            primary: AppColors.primaryBlue,
+                                            onPrimary: Colors.white,
+                                            surface: Colors.white,
+                                            onSurface: Colors.black,
+                                          ),
+                                        ),
+                                        child: child!,
+                                      );
+                                    },
+                                  );
+
+                                  if (picked != null) {
+                                    String formattedDate =
+                                        DateFormat('dd-MM-yyyy').format(picked);
+                                    setState(() {
+                                      _selectedDate = formattedDate;
+                                    });
+
+                                    if (selectedCourier != 'All') {
+                                      accountsProvider.fetchOrdersByMarketplace(
+                                          selectedCourier,
+                                          2,
+                                          accountsProvider.currentPage,
+                                          date: picked);
+                                    } else {
+                                      accountsProvider.fetchOrdersWithStatus2(
+                                        date: picked,
+                                      );
+                                    }
+                                  }
+                                },
+                                icon: const Icon(
+                                  Icons.calendar_today,
                                   size: 30,
+                                  color: AppColors.primaryBlue,
                                 ),
                               ),
-                            );
-                          },
+                            ),
+                          ],
+                        ),
+                        const SizedBox(width: 8),
+                        // Refresh Button
+                        Column(
+                          children: [
+                            Text(
+                              selectedCourier,
+                            ),
+                            Consumer<MarketplaceProvider>(
+                              builder: (context, provider, child) {
+                                return PopupMenuButton<String>(
+                                  tooltip: 'Filter by Marketplace',
+                                  onSelected: (String value) {
+                                    if (value == 'All') {
+                                      selectedCourier = value;
+                                      accountsProvider.fetchOrdersWithStatus2(
+                                        date: _selectedDate == 'Select Date'
+                                            ? null
+                                            : DateTime.parse(_selectedDate),
+                                      );
+                                    } else {
+                                      selectedCourier = value;
+                                      accountsProvider.fetchOrdersByMarketplace(
+                                          value,
+                                          2,
+                                          accountsProvider.currentPage,
+                                          date: _selectedDate == 'Select Date'
+                                              ? null
+                                              : DateTime.parse(_selectedDate));
+                                    }
+                                    log('Selected: $value');
+                                  },
+                                  itemBuilder: (BuildContext context) =>
+                                      <PopupMenuEntry<String>>[
+                                    ...provider.marketplaces.map(
+                                        (marketplace) => PopupMenuItem<String>(
+                                              value: marketplace.name,
+                                              child: Text(marketplace.name),
+                                            )), // Fetched marketplaces
+                                    const PopupMenuItem<String>(
+                                      value: 'All', // Hardcoded marketplace
+                                      child: Text('All'),
+                                    ),
+                                  ],
+                                  child: const IconButton(
+                                    onPressed: null,
+                                    icon: Icon(
+                                      Icons.filter_alt_outlined,
+                                      size: 30,
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
+                          ],
                         ),
                         const SizedBox(width: 8),
                         ElevatedButton(
@@ -203,6 +342,8 @@ class _AccountsPageState extends State<AccountsPage> {
 
                                   if (selectedOrderIds.isEmpty) {
                                     // Show an error message if no orders are selected
+                                    ScaffoldMessenger.of(context)
+                                        .removeCurrentSnackBar();
                                     ScaffoldMessenger.of(context).showSnackBar(
                                       const SnackBar(
                                         content: Text('No orders selected'),
@@ -237,6 +378,8 @@ class _AccountsPageState extends State<AccountsPage> {
                                     }
 
                                     // Show feedback based on the result
+                                    ScaffoldMessenger.of(context)
+                                        .removeCurrentSnackBar();
                                     ScaffoldMessenger.of(context).showSnackBar(
                                       SnackBar(
                                         content: Text(resultMessage),
@@ -290,7 +433,6 @@ class _AccountsPageState extends State<AccountsPage> {
                 ),
               ),
               const SizedBox(height: 8),
-              const SizedBox(height: 8),
               _buildTableHeader(
                   accountsProvider.orders.length, accountsProvider),
               const SizedBox(height: 4),
@@ -322,6 +464,28 @@ class _AccountsPageState extends State<AccountsPage> {
                         itemCount: accountsProvider.orders.length,
                         itemBuilder: (context, index) {
                           final order = accountsProvider.orders[index];
+
+                          ///////////////////////////////////////////////////////////////////
+                          final Map<String, List<Item>> groupedComboItems = {};
+                          for (var item in order.items) {
+                            if (item.isCombo == true && item.comboSku != null) {
+                              if (!groupedComboItems
+                                  .containsKey(item.comboSku)) {
+                                groupedComboItems[item.comboSku!] = [];
+                              }
+                              groupedComboItems[item.comboSku]!.add(item);
+                            }
+                          }
+                          final List<List<Item>> comboItemGroups =
+                              groupedComboItems.values
+                                  .where((items) => items.length > 1)
+                                  .toList();
+
+                          final List<Item> remainingItems = order.items
+                              .where((item) => !(item.isCombo == true &&
+                                  item.comboSku != null &&
+                                  groupedComboItems[item.comboSku]!.length > 1))
+                              .toList();
 
                           return Card(
                             surfaceTintColor: Colors.white,
@@ -446,10 +610,35 @@ class _AccountsPageState extends State<AccountsPage> {
                                             ),
                                           );
                                           if (result == true) {
-                                            Provider.of<AccountsProvider>(
-                                                    context,
-                                                    listen: false)
-                                                .fetchOrdersWithStatus2();
+                                            final searched =
+                                                _searchController.text;
+
+                                            // Ready
+                                            if (searched.isNotEmpty) {
+                                              accountsProvider
+                                                  .searchOrders(searched, selectedSearchType);
+                                            } else if (selectedCourier !=
+                                                'All') {
+                                              accountsProvider
+                                                  .fetchOrdersByMarketplace(
+                                                      selectedCourier,
+                                                      2,
+                                                      accountsProvider
+                                                          .currentPage);
+                                            } else if (searched.isNotEmpty &&
+                                                selectedCourier != 'All') {
+                                              accountsProvider
+                                                  .fetchOrdersByMarketplace(
+                                                      selectedCourier,
+                                                      2,
+                                                      accountsProvider
+                                                          .currentPage);
+                                              accountsProvider
+                                                  .searchOrders(searched, selectedSearchType);
+                                            } else {
+                                              accountsProvider
+                                                  .fetchOrdersWithStatus2();
+                                            }
                                           }
                                         },
                                         style: ElevatedButton.styleFrom(
@@ -475,18 +664,6 @@ class _AccountsPageState extends State<AccountsPage> {
                                       crossAxisAlignment:
                                           CrossAxisAlignment.start,
                                       children: [
-                                        Container(
-                                          child: const SizedBox(
-                                            height: 50,
-                                            width: 130,
-                                            child: Text(
-                                              'ORDER DETAILS:',
-                                              style: TextStyle(
-                                                  fontWeight: FontWeight.bold),
-                                            ),
-                                          ),
-                                        ),
-                                        const SizedBox(width: 12.0),
                                         Flexible(
                                           child: Column(
                                             crossAxisAlignment:
@@ -535,6 +712,11 @@ class _AccountsPageState extends State<AccountsPage> {
                                               buildLabelValueRow(
                                                   'Discount Scheme',
                                                   order.discountScheme ?? ''),
+                                              buildLabelValueRow(
+                                                  'Discount Percent',
+                                                  order.discountPercent
+                                                          .toString() ??
+                                                      ''),
                                               buildLabelValueRow(
                                                   'Agent', order.agent ?? ''),
                                               buildLabelValueRow(
@@ -654,8 +836,9 @@ class _AccountsPageState extends State<AccountsPage> {
                                               ),
                                               buildLabelValueRow(
                                                 'Phone',
-                                                order.customer?.phone
-                                                        ?.toString() ??
+                                                maskPhoneNumber(order
+                                                        .customer?.phone
+                                                        ?.toString()) ??
                                                     '',
                                               ),
                                               buildLabelValueRow(
@@ -667,144 +850,444 @@ class _AccountsPageState extends State<AccountsPage> {
                                           ),
                                         ),
                                         const SizedBox(width: 12.0),
-                                        Flexible(
-                                          child: Column(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
-                                            children: [
-                                              const Text(
-                                                'Shipping Address:',
-                                                style: TextStyle(
-                                                    fontWeight: FontWeight.bold,
-                                                    fontSize: 12.0,
-                                                    color:
-                                                        AppColors.primaryBlue),
-                                              ),
-                                              buildLabelValueRow(
-                                                'Address',
-                                                [
-                                                  order.shippingAddress
-                                                      ?.address1,
-                                                  order.shippingAddress
-                                                      ?.address2,
-                                                  order.shippingAddress?.city,
-                                                  order.shippingAddress?.state,
-                                                  order
-                                                      .shippingAddress?.country,
-                                                  order.shippingAddress?.pincode
-                                                      ?.toString(),
-                                                ]
-                                                    .where((element) =>
-                                                        element != null &&
-                                                        element.isNotEmpty)
-                                                    .join(', '),
-                                              ),
-                                              buildLabelValueRow(
-                                                'Name',
-                                                order.shippingAddress
-                                                            ?.firstName !=
+                                        // Flexible(
+                                        //   child: Column(
+                                        //     crossAxisAlignment:
+                                        //         CrossAxisAlignment.start,
+                                        //     children: [
+                                        //       const Text(
+                                        //         'Shipping Address:',
+                                        //         style: TextStyle(
+                                        //             fontWeight: FontWeight.bold,
+                                        //             fontSize: 12.0,
+                                        //             color:
+                                        //                 AppColors.primaryBlue),
+                                        //       ),
+                                        //       buildLabelValueRow(
+                                        //         'Address',
+                                        //         [
+                                        //           order.shippingAddress
+                                        //               ?.address1,
+                                        //           order.shippingAddress
+                                        //               ?.address2,
+                                        //           order.shippingAddress?.city,
+                                        //           order.shippingAddress?.state,
+                                        //           order
+                                        //               .shippingAddress?.country,
+                                        //           order.shippingAddress?.pincode
+                                        //               ?.toString(),
+                                        //         ]
+                                        //             .where((element) =>
+                                        //                 element != null &&
+                                        //                 element.isNotEmpty)
+                                        //             .join(', '),
+                                        //       ),
+                                        //       buildLabelValueRow(
+                                        //         'Name',
+                                        //         order.shippingAddress
+                                        //                     ?.firstName !=
+                                        //                 order.shippingAddress
+                                        //                     ?.lastName
+                                        //             ? '${order.shippingAddress?.firstName ?? ''} ${order.shippingAddress?.lastName ?? ''}'
+                                        //                 .trim()
+                                        //             : order.shippingAddress
+                                        //                     ?.firstName ??
+                                        //                 '',
+                                        //       ),
+                                        //       buildLabelValueRow(
+                                        //           'Phone',
+                                        //           order.shippingAddress?.phone
+                                        //                   ?.toString() ??
+                                        //               ''),
+                                        //       buildLabelValueRow(
+                                        //           'Email',
+                                        //           order.shippingAddress
+                                        //                   ?.email ??
+                                        //               ''),
+                                        //       buildLabelValueRow(
+                                        //           'Country Code',
+                                        //           order.shippingAddress
+                                        //                   ?.countryCode ??
+                                        //               ''),
+                                        //       const SizedBox(height: 8.0),
+                                        //       const Text(
+                                        //         'Billing Address:',
+                                        //         style: TextStyle(
+                                        //             fontWeight: FontWeight.bold,
+                                        //             fontSize: 12.0,
+                                        //             color:
+                                        //                 AppColors.primaryBlue),
+                                        //       ),
+                                        //       buildLabelValueRow(
+                                        //         'Address',
+                                        //         [
+                                        //           order
+                                        //               .billingAddress?.address1,
+                                        //           order
+                                        //               .billingAddress?.address2,
+                                        //           order.billingAddress?.city,
+                                        //           order.billingAddress?.state,
+                                        //           order.billingAddress?.country,
+                                        //           order.billingAddress?.pincode
+                                        //               ?.toString(),
+                                        //         ]
+                                        //             .where((element) =>
+                                        //                 element != null &&
+                                        //                 element.isNotEmpty)
+                                        //             .join(', '),
+                                        //       ),
+                                        //       buildLabelValueRow(
+                                        //         'Name',
+                                        //         order.billingAddress?.firstName !=
+                                        //                 order.billingAddress
+                                        //                     ?.lastName
+                                        //             ? '${order.billingAddress?.firstName ?? ''} ${order.billingAddress?.lastName ?? ''}'
+                                        //                 .trim()
+                                        //             : order.billingAddress
+                                        //                     ?.firstName ??
+                                        //                 '',
+                                        //       ),
+                                        //       buildLabelValueRow(
+                                        //           'Phone',
+                                        //           order.billingAddress?.phone
+                                        //                   ?.toString() ??
+                                        //               ''),
+                                        //       buildLabelValueRow(
+                                        //           'Email',
+                                        //           order.billingAddress?.email ??
+                                        //               ''),
+                                        //       buildLabelValueRow(
+                                        //           'Country Code',
+                                        //           order.billingAddress
+                                        //                   ?.countryCode ??
+                                        //               ''),
+                                        //     ],
+                                        //   ),
+                                        // ),
+                                      ],
+                                    ),
+                                  ),
+                                  Padding(
+                                    padding: const EdgeInsets.all(16.0),
+                                    child: Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.start,
+                                      children: [
+                                        Expanded(
+                                          // flex: 1,
+                                          child: FittedBox(
+                                            fit: BoxFit.scaleDown,
+                                            child: Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                              children: [
+                                                const Text(
+                                                  'Shipping Address:',
+                                                  style: TextStyle(
+                                                      fontWeight:
+                                                          FontWeight.bold,
+                                                      fontSize: 12.0,
+                                                      color: AppColors
+                                                          .primaryBlue),
+                                                ),
+                                                Row(
+                                                  crossAxisAlignment:
+                                                      CrossAxisAlignment.start,
+                                                  children: [
+                                                    const Text(
+                                                      'Address: ',
+                                                      style: TextStyle(
+                                                        fontWeight:
+                                                            FontWeight.bold,
+                                                        fontSize: 12.0,
+                                                      ),
+                                                    ),
+                                                    Text(
+                                                      [
                                                         order.shippingAddress
-                                                            ?.lastName
-                                                    ? '${order.shippingAddress?.firstName ?? ''} ${order.shippingAddress?.lastName ?? ''}'
-                                                        .trim()
-                                                    : order.shippingAddress
-                                                            ?.firstName ??
-                                                        '',
-                                              ),
-                                              buildLabelValueRow(
-                                                  'Phone',
-                                                  order.shippingAddress?.phone
-                                                          ?.toString() ??
-                                                      ''),
-                                              buildLabelValueRow(
-                                                  'Email',
+                                                            ?.address1,
+                                                        order.shippingAddress
+                                                            ?.address2,
+                                                        order.shippingAddress
+                                                            ?.city,
+                                                        order.shippingAddress
+                                                            ?.state,
+                                                        order.shippingAddress
+                                                            ?.country,
+                                                        order.shippingAddress
+                                                            ?.pincode
+                                                            ?.toString(),
+                                                      ]
+                                                          .where((element) =>
+                                                              element != null &&
+                                                              element
+                                                                  .isNotEmpty)
+                                                          .join(', ')
+                                                          .replaceAllMapped(
+                                                              RegExp('.{1,50}'),
+                                                              (match) =>
+                                                                  '${match.group(0)}\n'),
+                                                      softWrap: true,
+                                                      maxLines: null,
+                                                      style: const TextStyle(
+                                                        fontSize: 12.0,
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                                buildLabelValueRow(
+                                                  'Name',
                                                   order.shippingAddress
-                                                          ?.email ??
-                                                      ''),
-                                              buildLabelValueRow(
-                                                  'Country Code',
-                                                  order.shippingAddress
-                                                          ?.countryCode ??
-                                                      ''),
-                                              const SizedBox(height: 8.0),
-                                              const Text(
-                                                'Billing Address:',
-                                                style: TextStyle(
-                                                    fontWeight: FontWeight.bold,
-                                                    fontSize: 12.0,
-                                                    color:
-                                                        AppColors.primaryBlue),
-                                              ),
-                                              buildLabelValueRow(
-                                                'Address',
-                                                [
-                                                  order
-                                                      .billingAddress?.address1,
-                                                  order
-                                                      .billingAddress?.address2,
-                                                  order.billingAddress?.city,
-                                                  order.billingAddress?.state,
-                                                  order.billingAddress?.country,
-                                                  order.billingAddress?.pincode
-                                                      ?.toString(),
-                                                ]
-                                                    .where((element) =>
-                                                        element != null &&
-                                                        element.isNotEmpty)
-                                                    .join(', '),
-                                              ),
-                                              buildLabelValueRow(
-                                                'Name',
-                                                order.billingAddress?.firstName !=
+                                                              ?.firstName !=
+                                                          order.shippingAddress
+                                                              ?.lastName
+                                                      ? '${order.shippingAddress?.firstName ?? ''} ${order.shippingAddress?.lastName ?? ''}'
+                                                          .trim()
+                                                      : order.shippingAddress
+                                                              ?.firstName ??
+                                                          '',
+                                                ),
+                                                buildLabelValueRow(
+                                                    'Pincode',
+                                                    order.shippingAddress
+                                                            ?.pincode
+                                                            ?.toString() ??
+                                                        ''),
+                                                buildLabelValueRow(
+                                                    'Country Code',
+                                                    order.shippingAddress
+                                                            ?.countryCode ??
+                                                        ''),
+                                              ],
+                                            ),
+                                          ),
+                                        ),
+                                        Expanded(
+                                          // flex: 1,
+                                          child: FittedBox(
+                                            fit: BoxFit.scaleDown,
+                                            child: Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                              children: [
+                                                const Text(
+                                                  'Billing Address:',
+                                                  style: TextStyle(
+                                                      fontWeight:
+                                                          FontWeight.bold,
+                                                      fontSize: 12.0,
+                                                      color: AppColors
+                                                          .primaryBlue),
+                                                ),
+                                                Row(
+                                                  crossAxisAlignment:
+                                                      CrossAxisAlignment.start,
+                                                  children: [
+                                                    const Text(
+                                                      'Address: ',
+                                                      style: TextStyle(
+                                                        fontWeight:
+                                                            FontWeight.bold,
+                                                        fontSize: 12.0,
+                                                      ),
+                                                    ),
+                                                    Text(
+                                                      [
                                                         order.billingAddress
-                                                            ?.lastName
-                                                    ? '${order.billingAddress?.firstName ?? ''} ${order.billingAddress?.lastName ?? ''}'
-                                                        .trim()
-                                                    : order.billingAddress
-                                                            ?.firstName ??
-                                                        '',
-                                              ),
-                                              buildLabelValueRow(
-                                                  'Phone',
-                                                  order.billingAddress?.phone
-                                                          ?.toString() ??
-                                                      ''),
-                                              buildLabelValueRow(
-                                                  'Email',
-                                                  order.billingAddress?.email ??
-                                                      ''),
-                                              buildLabelValueRow(
-                                                  'Country Code',
+                                                            ?.address1,
+                                                        order.billingAddress
+                                                            ?.address2,
+                                                        order.billingAddress
+                                                            ?.city,
+                                                        order.billingAddress
+                                                            ?.state,
+                                                        order.billingAddress
+                                                            ?.country,
+                                                        order.billingAddress
+                                                            ?.pincode
+                                                            ?.toString(),
+                                                      ]
+                                                          .where((element) =>
+                                                              element != null &&
+                                                              element
+                                                                  .isNotEmpty)
+                                                          .join(', ')
+                                                          .replaceAllMapped(
+                                                              RegExp('.{1,50}'),
+                                                              (match) =>
+                                                                  '${match.group(0)}\n'),
+                                                      softWrap: true,
+                                                      maxLines: null,
+                                                      style: const TextStyle(
+                                                        fontSize: 12.0,
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                                // buildLabelValueRow(
+                                                //   'Address',
+                                                //   [
+                                                //     order.billingAddress
+                                                //         ?.address1,
+                                                //     order.billingAddress
+                                                //         ?.address2,
+                                                //     order.billingAddress?.city,
+                                                //     order.billingAddress?.state,
+                                                //     order.billingAddress
+                                                //         ?.country,
+                                                //     order
+                                                //         .billingAddress?.pincode
+                                                //         ?.toString(),
+                                                //   ]
+                                                //       .where((element) =>
+                                                //           element != null &&
+                                                //           element.isNotEmpty)
+                                                //       .join(', ')
+                                                //       .replaceAllMapped(
+                                                //           RegExp('.{1,50}'),
+                                                //           (match) =>
+                                                //               '${match.group(0)}\n'),
+                                                // ),
+                                                buildLabelValueRow(
+                                                  'Name',
                                                   order.billingAddress
-                                                          ?.countryCode ??
-                                                      ''),
-                                            ],
+                                                              ?.firstName !=
+                                                          order.billingAddress
+                                                              ?.lastName
+                                                      ? '${order.billingAddress?.firstName ?? ''} ${order.billingAddress?.lastName ?? ''}'
+                                                          .trim()
+                                                      : order.billingAddress
+                                                              ?.firstName ??
+                                                          '',
+                                                ),
+                                                buildLabelValueRow(
+                                                    'Pincode',
+                                                    order.billingAddress
+                                                            ?.pincode
+                                                            ?.toString() ??
+                                                        ''),
+                                                buildLabelValueRow(
+                                                    'Country Code',
+                                                    order.billingAddress
+                                                            ?.countryCode ??
+                                                        ''),
+                                              ],
+                                            ),
                                           ),
                                         ),
                                       ],
                                     ),
                                   ),
-                                  const SizedBox(height: 6),
+                                  // const SizedBox(height: 6),
+                                  if (order.confirmedBy!['status'] == true)
+                                    Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 16.0),
+                                      child: Text.rich(
+                                        TextSpan(
+                                            text: "Confirmed By: ",
+                                            children: [
+                                              TextSpan(
+                                                  text: order.confirmedBy![
+                                                          'confirmedBy']
+                                                      .toString()
+                                                      .split('@')[0],
+                                                  style: const TextStyle(
+                                                    fontWeight:
+                                                        FontWeight.normal,
+                                                  )),
+                                              TextSpan(
+                                                  text: formatIsoDate(
+                                                      order.confirmedBy![
+                                                          'timestamp']),
+                                                  style: const TextStyle(
+                                                    fontWeight:
+                                                        FontWeight.normal,
+                                                  )),
+                                            ],
+                                            style: const TextStyle(
+                                              fontWeight: FontWeight.bold,
+                                            )),
+                                      ),
+                                    ),
+                                  if (order.baApprovedBy!['status'] == true)
+                                    Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 16.0),
+                                      child: Text.rich(
+                                        TextSpan(
+                                            text: "BA Approved By: ",
+                                            children: [
+                                              TextSpan(
+                                                  text: order.baApprovedBy![
+                                                      'baApprovedBy'],
+                                                  style: const TextStyle(
+                                                    fontWeight:
+                                                        FontWeight.normal,
+                                                  )),
+                                              TextSpan(
+                                                  text: formatIsoDate(
+                                                      order.baApprovedBy![
+                                                          'timestamp']),
+                                                  style: const TextStyle(
+                                                    fontWeight:
+                                                        FontWeight.normal,
+                                                  )),
+                                            ],
+                                            style: const TextStyle(
+                                              fontWeight: FontWeight.bold,
+                                            )),
+                                      ),
+                                    ),
+
                                   Padding(
-                                    padding: const EdgeInsets.all(8.0),
-                                    child: Text.rich(
-                                      TextSpan(
-                                          text: "Updated on: ",
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 16.0),
+                                    child: Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        Text.rich(
+                                          TextSpan(
+                                              text: "Updated on: ",
+                                              children: [
+                                                TextSpan(
+                                                    text: DateFormat(
+                                                            'yyyy-MM-dd\',\' hh:mm a')
+                                                        .format(
+                                                      DateTime.parse(
+                                                          "${order.updatedAt}"),
+                                                    ),
+                                                    style: const TextStyle(
+                                                      fontWeight:
+                                                          FontWeight.normal,
+                                                    )),
+                                              ],
+                                              style: const TextStyle(
+                                                fontWeight: FontWeight.bold,
+                                              )),
+                                        ),
+                                        Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.end,
                                           children: [
-                                            TextSpan(
-                                                text: DateFormat(
-                                                        'dd-MM-yyyy\',\' hh:mm a')
-                                                    .format(
-                                                  DateTime.parse(
-                                                      "${order.updatedAt}"),
-                                                ),
-                                                style: const TextStyle(
-                                                  fontWeight: FontWeight.normal,
-                                                )),
+                                            if (order.messages != null &&
+                                                order.messages![
+                                                        'confirmerMessage'] !=
+                                                    null &&
+                                                order.messages![
+                                                        'confirmerMessage']
+                                                    .toString()
+                                                    .isNotEmpty)
+                                              Utils().showMessage(
+                                                  context,
+                                                  'Confirmer Remark',
+                                                  order.messages![
+                                                          'confirmerMessage']
+                                                      .toString()),
                                           ],
-                                          style: const TextStyle(
-                                            fontWeight: FontWeight.bold,
-                                          )),
+                                        ),
+                                      ],
                                     ),
                                   ),
                                   const Divider(
@@ -817,19 +1300,55 @@ class _AccountsPageState extends State<AccountsPage> {
                                     shrinkWrap: true,
                                     physics:
                                         const NeverScrollableScrollPhysics(),
-                                    itemCount: order.items.length,
-                                    itemBuilder: (context, itemIndex) {
-                                      final item = order.items[itemIndex];
-
-                                      return OrderItemCard(
-                                        item: item,
-                                        index: itemIndex,
-                                        courierName: order.courierName,
-                                        orderStatus:
-                                            order.orderStatus.toString(),
+                                    itemCount: comboItemGroups.length,
+                                    itemBuilder: (context, comboIndex) {
+                                      final combo = comboItemGroups[comboIndex];
+                                      // print(
+                                      //     'Item $itemIndex: ${item.product?.displayName.toString() ?? ''}, Quantity: ${item.qty ?? 0}');
+                                      return BigComboCard(
+                                        items: combo,
+                                        index: comboIndex,
+                                        // courierName: order.courierName,
+                                        // orderStatus:
+                                        //     order.orderStatus.toString(),
                                       );
                                     },
                                   ),
+                                  ListView.builder(
+                                    shrinkWrap: true,
+                                    physics:
+                                        const NeverScrollableScrollPhysics(),
+                                    itemCount: remainingItems.length,
+                                    itemBuilder: (context, itemIndex) {
+                                      final item = remainingItems[itemIndex];
+                                      print(
+                                          'Item $itemIndex: ${item.product?.displayName.toString() ?? ''}, Quantity: ${item.qty ?? 0}');
+                                      return ProductDetailsCard(
+                                        item: item,
+                                        index: itemIndex,
+                                        // courierName: order.courierName,
+                                        // orderStatus:
+                                        //     order.orderStatus.toString(),
+                                      );
+                                    },
+                                  ),
+                                  // ListView.builder(
+                                  //   shrinkWrap: true,
+                                  //   physics:
+                                  //       const NeverScrollableScrollPhysics(),
+                                  //   itemCount: order.items.length,
+                                  //   itemBuilder: (context, itemIndex) {
+                                  //     final item = order.items[itemIndex];
+
+                                  //     return ProductDetailsCard(
+                                  //       item: item,
+                                  //       index: itemIndex,
+                                  //       courierName: order.courierName,
+                                  //       // orderStatus:
+                                  //       //     order.orderStatus.toString(),
+                                  //     );
+                                  //   },
+                                  // ),
                                 ],
                               ),
                             ),
@@ -881,42 +1400,42 @@ class _AccountsPageState extends State<AccountsPage> {
     );
   }
 
-  Widget _buildOrderCard(
-      Order order, int index, AccountsProvider accountsProvider) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4.0, horizontal: 8.0),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Checkbox(
-            value: accountsProvider
-                .selectedProducts[index], // Accessing selected products
-            onChanged: (isSelected) {
-              accountsProvider.handleRowCheckboxChange(index, isSelected!);
-            },
-          ),
-          Expanded(
-            flex: 5,
-            child: Row(
-              mainAxisAlignment:
-                  MainAxisAlignment.spaceBetween, // Space between elements
-              children: [
-                Expanded(
-                  child:
-                      OrderCard(order: order), // Your existing OrderCard widget
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 20),
-          // if (dispatchProvider.isReturning)
-          //   Center(
-          //     child: CircularProgressIndicator(), // Loading indicator
-          //   ),
-        ],
-      ),
-    );
-  }
+  // Widget _buildOrderCard(
+  //     Order order, int index, AccountsProvider accountsProvider) {
+  //   return Padding(
+  //     padding: const EdgeInsets.symmetric(vertical: 4.0, horizontal: 8.0),
+  //     child: Row(
+  //       crossAxisAlignment: CrossAxisAlignment.center,
+  //       children: [
+  //         Checkbox(
+  //           value: accountsProvider
+  //               .selectedProducts[index], // Accessing selected products
+  //           onChanged: (isSelected) {
+  //             accountsProvider.handleRowCheckboxChange(index, isSelected!);
+  //           },
+  //         ),
+  //         Expanded(
+  //           flex: 5,
+  //           child: Row(
+  //             mainAxisAlignment:
+  //                 MainAxisAlignment.spaceBetween, // Space between elements
+  //             children: [
+  //               Expanded(
+  //                 child:
+  //                     OrderCard(order: order), // Your existing OrderCard widget
+  //               ),
+  //             ],
+  //           ),
+  //         ),
+  //         const SizedBox(width: 20),
+  //         // if (dispatchProvider.isReturning)
+  //         //   Center(
+  //         //     child: CircularProgressIndicator(), // Loading indicator
+  //         //   ),
+  //       ],
+  //     ),
+  //   );
+  // }
 
   Widget _buildTableHeader(int totalCount, AccountsProvider accountsProvider) {
     return Container(
@@ -980,14 +1499,12 @@ Widget buildLabelValueRow(String label, String? value) {
           fontSize: 12.0,
         ),
       ),
-      Flexible(
-        child: Text(
-          value ?? '',
-          softWrap: true,
-          maxLines: null,
-          style: const TextStyle(
-            fontSize: 12.0,
-          ),
+      Text(
+        value ?? '',
+        softWrap: true,
+        maxLines: 2,
+        style: const TextStyle(
+          fontSize: 12.0,
         ),
       ),
     ],

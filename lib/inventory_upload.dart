@@ -7,6 +7,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:inventory_management/Api/inventory_api.dart';
+import 'package:inventory_management/constants/constants.dart';
 
 class InventoryUpload extends StatefulWidget {
   const InventoryUpload({super.key});
@@ -70,6 +71,7 @@ class _InventoryUploadState extends State<InventoryUpload> {
 
     try {
       final token = await getToken();
+      final warehouse = await getWarehouseId();
       if (token == null) {
         throw Exception('No authentication token found');
       }
@@ -81,28 +83,30 @@ class _InventoryUploadState extends State<InventoryUpload> {
 
         final sku = _csvData[i][0].toString();
         final quantity = num.parse(_csvData[i][1].toString());
-        log("https://inventory-management-backend-s37u.onrender.com/inventory?sku=$sku");
-        log({
-          "newTotal": quantity,
-          "warehouseId": "66fceb5163c6d5c106cfa809",
-          "additionalInfo": {"reason": "Excel update"}
-        }.toString());
+        final binName = _csvData[i][2].toString();
+        // log("${await ApiUrls.getBaseUrl()}/inventory?sku=$sku");
+        // log({
+        //   "newTotal": quantity,
+        //   "warehouseId": warehouse,
+        //   "additionalInfo": {"reason": "Excel update"}
+        // }.toString());
 
         final response = await http.put(
-          Uri.parse(
-              'https://inventory-management-backend-s37u.onrender.com/inventory?sku=$sku'),
+          Uri.parse('${await ApiUrls.getBaseUrl()}/inventory?sku=$sku'),
           headers: {
             'Content-Type': 'application/json',
             'Authorization': 'Bearer $token',
           },
           body: json.encode({
             "action": type,
-            "newTotal": quantity,
-            "warehouseId": "66fceb5163c6d5c106cfa809",
-            "additionalInfo": {"reason": "Excel update"}
+            "quantityChange": quantity,
+            "warehouseId": warehouse,
+            "binName": binName
           }),
         );
-        log(response.statusCode.toString());
+
+        log('Code: ${response.statusCode}');
+        log('Response body: ${response.body}');
 
         // if (response.statusCode != 201) {
         //   throw Exception('Failed to upload SKU: $sku');
@@ -113,6 +117,7 @@ class _InventoryUploadState extends State<InventoryUpload> {
         const SnackBar(content: Text('Upload completed successfully!')),
       );
     } catch (e) {
+      log('bada error: $e');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error during upload: $e')),
       );
@@ -153,7 +158,8 @@ class _InventoryUploadState extends State<InventoryUpload> {
                 ),
                 const SizedBox(width: 16),
                 ElevatedButton(
-                  onPressed: () => AuthProvider().downloadTemplate(context,'inventory'),
+                  onPressed: () =>
+                      AuthProvider().downloadTemplate(context, 'inventory'),
                   child: const Text('Download Template'),
                 ),
                 const SizedBox(width: 16),
@@ -242,6 +248,12 @@ class _InventoryUploadState extends State<InventoryUpload> {
                             child: Text('Quantity'),
                           ),
                         ),
+                        DataColumn(
+                          label: Padding(
+                            padding: EdgeInsets.symmetric(horizontal: 8.0),
+                            child: Text('Bin Name'),
+                          ),
+                        ),
                       ],
                       rows: _csvData.skip(1).map((row) {
                         return DataRow(
@@ -255,6 +267,11 @@ class _InventoryUploadState extends State<InventoryUpload> {
                               padding:
                                   const EdgeInsets.symmetric(horizontal: 8.0),
                               child: Text(row[1].toString()),
+                            )),
+                            DataCell(Padding(
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 8.0),
+                              child: Text(row[2].toString()),
                             )),
                           ],
                         );

@@ -192,7 +192,7 @@ class CreateAccountFormState extends State<CreateAccountForm> {
   bool _isOtpVerified = false;
   bool _isLoading = false;
   bool _isSendingOtp = false;
-  bool _isVerifyingOtp = false;
+  final bool _isVerifyingOtp = false;
   bool _canResendOtp = false;
   int _remainingSeconds = 60;
   Timer? _timer;
@@ -622,6 +622,7 @@ class CreateAccountFormState extends State<CreateAccountForm> {
                               height: 20,
                               width: 20,
                               child: CircularProgressIndicator(
+                                strokeWidth: 2.0,
                                 valueColor: AlwaysStoppedAnimation<Color>(
                                     AppColors.white),
                               ),

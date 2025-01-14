@@ -1,6 +1,6 @@
-import 'package:flutter/material.dart';
+// import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:inventory_management/Custom-Files/colors.dart';
+// import 'package:inventory_management/Custom-Files/colors.dart';
 
 class Order {
   final Customer? customer;
@@ -19,7 +19,7 @@ class Order {
   final double prepaidAmount;
   final String discountCode;
   final String discountScheme;
-  final int discountPercent;
+  final double discountPercent;
   final double discountAmount;
   final int taxPercent;
   final Address? billingAddress;
@@ -29,7 +29,9 @@ class Order {
   final String outerPackage;
   final bool replacement;
   int orderStatus;
-  final List<OrderStatusMap>? orderStatusMap;
+  bool isBooked;
+  bool checkInvoice;
+  final List<dynamic>? orderStatusMap;
   final Marketplace? marketplace;
   final String agent;
   final String? filter;
@@ -64,69 +66,111 @@ class Order {
   final Racker? racker;
   final CheckManifest? checkManifest;
   late String? trackingStatus;
+  final List<Map<String, dynamic>>? availableCouriers;
+  final Map<String, dynamic>? outBoundBy;
+  final Map<String, dynamic>? confirmedBy;
+  final Map<String, dynamic>? baApprovedBy;
+  final Map<String, dynamic>? checkInvoiceBy;
+  final Map<String, dynamic>? bookedBy;
+  final Map<String, dynamic>? rebookedBy;
+  final Map<String, dynamic>? pickedBy;
+  final Map<String, dynamic>? packedBy;
+  final Map<String, dynamic>? checkedBy;
+  final Map<String, dynamic>? rackedBy;
+  final Map<String, dynamic>? manifestedBy;
+  final Map<String, dynamic>? messages;
+  final String? bookingCourier;
+  final String? warehouseId;
+  final String? warehouseName;
+  final bool? isHold;
+  String? selectedCourier;
+  String? selectedCourierId;
+  // final String? status;
 
-  Order(
-      {this.customer,
-      this.source = '',
-      this.id = '',
-      this.orderId = '',
-      this.date,
-      this.paymentMode = '',
-      this.currencyCode = '',
-      required this.items,
-      this.skuTrackingId = '',
-      this.totalWeight = 0.0,
-      this.totalAmount = 0.0,
-      this.coin = 0,
-      this.codAmount = 0.0,
-      this.prepaidAmount = 0.0,
-      this.discountCode = '',
-      this.discountScheme = '',
-      this.discountPercent = 0,
-      this.discountAmount = 0.0,
-      this.taxPercent = 0,
-      this.billingAddress,
-      this.shippingAddress,
-      this.courierName = '',
-      this.orderType = '',
-      this.outerPackage = '',
-      this.replacement = false,
-      required this.orderStatus,
-      this.orderStatusMap,
-      this.marketplace,
-      this.agent = '',
-      this.filter = '',
-      this.freightCharge,
-      this.notes = '',
-      this.createdAt,
-      this.updatedAt,
-      this.isSelected = false,
-      this.isPickerFullyScanned = false,
-      this.isPackerFullyScanned = false,
-      this.expectedDeliveryDate,
-      this.preferredCourier = '',
-      this.deliveryTerm = '',
-      this.transactionNumber = '',
-      this.microDealerOrder = '',
-      this.fulfillmentType = '',
-      this.numberOfBoxes = 0,
-      this.totalQuantity = 0,
-      this.skuQty = 0,
-      this.calcEntryNumber = '',
-      this.currency = '',
-      this.paymentDateTime,
-      this.paymentBank = '',
-      this.length = 0.0,
-      this.breadth = 0.0,
-      this.height = 0.0,
-      this.shipmentId = '',
-      this.shiprocketOrderId = '',
-      this.awbNumber = '',
-      this.image = '',
-      required this.checker,
-      required this.racker,
-      required this.checkManifest,
-      this.trackingStatus});
+  Order({
+    this.rebookedBy,
+    this.isHold,
+    this.selectedCourier = '',
+    this.selectedCourierId = '',
+    this.warehouseId,
+    this.warehouseName,
+    this.bookingCourier,
+    this.messages,
+    this.isBooked = false,
+    this.outBoundBy,
+    this.confirmedBy,
+    this.baApprovedBy,
+    this.checkInvoiceBy,
+    this.bookedBy,
+    this.pickedBy,
+    this.packedBy,
+    this.checkedBy,
+    this.rackedBy,
+    this.manifestedBy,
+    this.availableCouriers,
+    this.checkInvoice = false,
+    this.customer,
+    this.source = '',
+    this.id = '',
+    this.orderId = '',
+    this.date,
+    this.paymentMode = '',
+    this.currencyCode = '',
+    required this.items,
+    this.skuTrackingId = '',
+    this.totalWeight = 0.0,
+    this.totalAmount = 0.0,
+    this.coin = 0,
+    this.codAmount = 0.0,
+    this.prepaidAmount = 0.0,
+    this.discountCode = '',
+    this.discountScheme = '',
+    this.discountPercent = 0,
+    this.discountAmount = 0.0,
+    this.taxPercent = 0,
+    this.billingAddress,
+    this.shippingAddress,
+    this.courierName = '',
+    this.orderType = '',
+    this.outerPackage = '',
+    this.replacement = false,
+    required this.orderStatus,
+    this.orderStatusMap,
+    this.marketplace,
+    this.agent = '',
+    this.filter = '',
+    this.freightCharge,
+    this.notes = '',
+    this.createdAt,
+    this.updatedAt,
+    this.isSelected = false,
+    this.isPickerFullyScanned = false,
+    this.isPackerFullyScanned = false,
+    this.expectedDeliveryDate,
+    this.preferredCourier = '',
+    this.deliveryTerm = '',
+    this.transactionNumber = '',
+    this.microDealerOrder = '',
+    this.fulfillmentType = '',
+    this.numberOfBoxes = 0,
+    this.totalQuantity = 0,
+    this.skuQty = 0,
+    this.calcEntryNumber = '',
+    this.currency = '',
+    this.paymentDateTime,
+    this.paymentBank = '',
+    this.length = 0.0,
+    this.breadth = 0.0,
+    this.height = 0.0,
+    this.shipmentId = '',
+    this.shiprocketOrderId = '',
+    this.awbNumber = '',
+    this.image = '',
+    required this.checker,
+    required this.racker,
+    required this.checkManifest,
+    this.trackingStatus,
+  });
 
   // Utility function to safely parse a string from any data type
   static String _parseString(dynamic value) {
@@ -148,27 +192,27 @@ class Order {
   }
 
   // Method to get the image or a default icon if the image is not available
-  Widget getOrderImage() {
-    if (image != null && image!.isNotEmpty) {
-      return Image.network(
-        image!,
-        width: 200, // You can adjust the size as needed
-        height: 200,
-        errorBuilder: (context, error, stackTrace) {
-          return const Icon(
-            Icons.broken_image,
-            size: 200,
-            color: AppColors.grey,
-          ); // Fallback to an icon if the image fails to load
-        },
-      );
-    } else {
-      return const Icon(Icons.image,
-          size: 200,
-          color:
-              AppColors.grey); // Dispatched an icon if the image is not present
-    }
-  }
+  // Widget getOrderImage() {
+  //   if (image != null && image!.isNotEmpty) {
+  //     return Image.network(
+  //       image!,
+  //       width: 200, // You can adjust the size as needed
+  //       height: 200,
+  //       errorBuilder: (context, error, stackTrace) {
+  //         return const Icon(
+  //           Icons.broken_image,
+  //           size: 200,
+  //           color: AppColors.grey,
+  //         ); // Fallback to an icon if the image fails to load
+  //       },
+  //     );
+  //   } else {
+  //     return const Icon(Icons.image,
+  //         size: 200,
+  //         color:
+  //             AppColors.grey); // Dispatched an icon if the image is not present
+  //   }
+  // }
 
 // Function to parse a string and return a DateTime? object
   /// Parses a date string and returns a DateTime object, handling multiple formats.
@@ -227,6 +271,38 @@ class Order {
 
   factory Order.fromJson(Map<String, dynamic> json) {
     return Order(
+        availableCouriers: (json['availableCouriers'] as List?)
+                ?.map((courier) => {
+                      'name': _parseString(courier['name']),
+                      'freight_charge': _parseDouble(courier['freight_charge']),
+                      'courier_company_id':
+                          _parseString(courier['courier_company_id']),
+                    })
+                .toList() ??
+            [],
+        warehouseId: json['warehouse']['warehouse_id'] != null
+            ? json['warehouse']['warehouse_id']['_id'] ?? ''
+            : '',
+        warehouseName: json['warehouse']['warehouse_id'] != null
+            ? json['warehouse']['warehouse_id']['name'] ?? ''
+            : '',
+        isHold: json['warehouse']['warehouse_id'] != null
+            ? json['warehouse']['isHold'] ?? false
+            : false,
+        messages: json['messages'] ?? {},
+        outBoundBy: json['isOutBound'] ?? {}, // status
+        confirmedBy: json['confirmedBy']?? {},
+        baApprovedBy: json['baApprovedBy']?? {},
+        checkInvoiceBy: json['checkInvoice']?? {},
+        bookedBy: json['isBooked']?? {},
+        rebookedBy: json['reBooked']?? {},
+        pickedBy: json['isPicked']?? {}, // status
+        packedBy: json['ispacked']?? {}, // status
+        checkedBy: json['checker']?? {}, // approved
+        rackedBy: json['racker']?? {}, // approved
+        manifestedBy: json['checkManifest']?? {}, // approved
+        isBooked: json['isBooked']['status'] ?? false,
+        checkInvoice: json['checkInvoice']['approved'] ?? false,
         customer: json['customer'] != null
             ? Customer.fromJson(json['customer'])
             : null,
@@ -248,7 +324,7 @@ class Order {
         prepaidAmount: _parseDouble(json['prepaid_amount']),
         discountCode: _parseString(json['discount_code']),
         discountScheme: _parseString(json['discount_scheme']),
-        discountPercent: _parseInt(json['discount_percent']),
+        discountPercent: _parseDouble(json['discount_percent']),
         discountAmount: _parseDouble(json['discount_amount']),
         taxPercent: _parseInt(json['tax_percent']),
         billingAddress: json['billing_addr'] is Map<String, dynamic>
@@ -262,6 +338,7 @@ class Order {
         outerPackage: _parseString(json['outerPackage']),
         replacement: json['replacement'] is bool ? json['replacement'] : false,
         orderStatus: _parseInt(json['order_status']),
+        // orderStatusMap: (json['order_status_map'] as List?) ?? [],
         orderStatusMap: (json['order_status_map'] as List?)
                 ?.map((status) => OrderStatusMap.fromJson(status))
                 .toList() ??
@@ -298,7 +375,8 @@ class Order {
         height: _parseDouble(json['height']),
         shipmentId: _parseString(json['shipment_id']),
         shiprocketOrderId: _parseString(json['shiprocket_order_id']),
-        awbNumber: _parseString(json['awb_number']),
+        awbNumber: _parseString(json['awb_number']) ?? '',
+        bookingCourier: _parseString(json['bookingCourier']) ?? '',
         image: json['image'] ?? '',
         checker: Checker.fromJson(json['checker']),
         racker: Racker.fromJson(json['racker']),
@@ -315,6 +393,7 @@ class Customer {
   final String? email;
   final String? billingAddress;
   final String? customerGstin;
+  final String? customerType;
 
   Customer({
     required this.customerId,
@@ -324,6 +403,7 @@ class Customer {
     required this.email,
     required this.billingAddress,
     required this.customerGstin,
+    this.customerType,
   });
 
   factory Customer.fromJson(Map<String, dynamic> json) {
@@ -338,6 +418,7 @@ class Customer {
       billingAddress: json['billing_addr']?.toString() ?? '',
       email: json['email']?.toString() ?? '',
       customerGstin: json['customer_gstin']?.toString() ?? '',
+      customerType: json['customer_type']?.toString() ?? '',
     );
   }
 }
@@ -347,12 +428,21 @@ class Item {
   //final String? productId;
   final Product? product;
   final double? amount;
+  final double? comboWeight;
   final String? sku;
   final String? id;
+  final bool? isCombo;
+  final String? comboSku;
+  final String? comboName;
+  int? comboAmount = 0;
 
   Item({
+    this.comboWeight,
     required this.qty,
-    //this.productId,
+    this.isCombo,
+    this.comboAmount,
+    this.comboSku,
+    this.comboName,
     this.product,
     required this.amount,
     required this.sku,
@@ -362,7 +452,13 @@ class Item {
   factory Item.fromJson(Map<String, dynamic> json) {
     return Item(
       qty: json['qty']?.toInt() ?? 0, // Handle null and non-integer data
-      //productId: json['product_id']?.toString() ?? '',
+      // productId: json['product_id']?.toString() ?? '',
+      isCombo: json['isCombo'] ?? false,
+      comboAmount: json['comboAmount'] ?? 0,
+      comboSku: json['comboSku'] ?? '',
+      comboName: json['combo_id'] != null ? json['combo_id']['name'] : '',
+      comboWeight:
+          json['combo_id'] != null ? json['combo_id']['comboWeight'] : 0,
       product: json['product_id'] != null
           ? Product.fromJson(json['product_id'])
           : null,
@@ -386,7 +482,7 @@ class Product {
   final Category? category;
   final String? technicalName;
   final Label? label;
-  final Colour? color;
+  // final Colour? color;
   final String? taxRule;
   final BoxSize? boxSize;
   final OuterPackage? outerPackage;
@@ -412,7 +508,7 @@ class Product {
     required this.category,
     required this.technicalName,
     this.label,
-    required this.color,
+    // required this.color,
     required this.taxRule,
     this.boxSize,
     this.outerPackage,
@@ -450,9 +546,9 @@ class Product {
       label: json['label'] is Map<String, dynamic>
           ? Label.fromJson(json['label'])
           : (json['label'] is String ? Label(id: json['label']) : null),
-      color: json['color'] is Map<String, dynamic>
-          ? Colour.fromJson(json['color'])
-          : (json['color'] is String ? Colour(id: json['color']) : null),
+      // color: json['color'] is Map<String, dynamic>
+      //     ? Colour.fromJson(json['color'])
+      //     : (json['color'] is String ? Colour(id: json['color']) : null),
       taxRule: json['tax_rule']?.toString() ?? '',
       boxSize: json['boxSize'] is Map<String, dynamic>
           ? BoxSize.fromJson(json['boxSize'])
@@ -477,40 +573,40 @@ class Product {
   }
 }
 
-class Colour {
-  final String? id;
-  final String? name;
-  final DateTime? createdAt;
-  final DateTime? updatedAt;
+// class Colour {
+//   final String? id;
+//   final String? name;
+//   final DateTime? createdAt;
+//   final DateTime? updatedAt;
 
-  // Constructor
-  Colour({
-    this.id,
-    this.name,
-    this.createdAt,
-    this.updatedAt,
-  });
+//   // Constructor
+//   Colour({
+//     this.id,
+//     this.name,
+//     this.createdAt,
+//     this.updatedAt,
+//   });
 
-  // Factory constructor to create a Color object from JSON
-  factory Colour.fromJson(Map<String, dynamic> json) {
-    return Colour(
-      id: json['_id'],
-      name: json['name'],
-      createdAt: DateTime.parse(json['createdAt']),
-      updatedAt: DateTime.parse(json['updatedAt']),
-    );
-  }
+//   // Factory constructor to create a Color object from JSON
+//   factory Colour.fromJson(Map<String, dynamic> json) {
+//     return Colour(
+//       id: json['_id'],
+//       name: json['name'],
+//       createdAt: DateTime.parse(json['createdAt']),
+//       updatedAt: DateTime.parse(json['updatedAt']),
+//     );
+//   }
 
-  // Method to convert the Color object to JSON
-  Map<String, dynamic> toJson() {
-    return {
-      '_id': id,
-      'name': name,
-      'createdAt': createdAt!.toIso8601String(),
-      'updatedAt': updatedAt!.toIso8601String(),
-    };
-  }
-}
+//   // Method to convert the Color object to JSON
+//   Map<String, dynamic> toJson() {
+//     return {
+//       '_id': id,
+//       'name': name,
+//       'createdAt': createdAt!.toIso8601String(),
+//       'updatedAt': updatedAt!.toIso8601String(),
+//     };
+//   }
+// }
 
 class Brand {
   final String? id;
@@ -782,7 +878,8 @@ class Address {
       address2: json['address2']?.toString() ?? '',
       phone: (json['phone'] as num?)?.toInt(), // Handle numeric conversion
       city: json['city']?.toString() ?? '',
-      pincode: (json['pincode'] as num?)?.toInt(), // Handle numeric conversion
+      pincode:
+          (json['pincode'] as num?)?.toInt() ?? 0, // Handle numeric conversion
       state: json['state']?.toString() ?? '',
       country: json['country']?.toString() ?? '',
       countryCode: json['country_code']?.toString() ?? '',
@@ -910,15 +1007,13 @@ class Racker {
 
 class CheckManifest {
   final bool approved;
-  final List<dynamic> image; // Adjust the type as necessary for your use case
   final DateTime? timestamp;
 
-  CheckManifest({required this.approved, required this.image, this.timestamp});
+  CheckManifest({required this.approved, this.timestamp});
 
   factory CheckManifest.fromJson(Map<String, dynamic> json) {
     return CheckManifest(
       approved: json['approved'] ?? false,
-      image: json['image'] ?? [],
       timestamp: DateTime.tryParse(json['timestamp'] ?? ''),
     );
   }

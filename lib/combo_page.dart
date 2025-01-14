@@ -46,18 +46,17 @@ class _ComboPageState extends State<ComboPage> {
   }
 
   void saveCombo(BuildContext context) async {
-    ComboProvider comboProvider =
-        Provider.of<ComboProvider>(context, listen: false);
+    ComboProvider comboProvider = Provider.of<ComboProvider>(context, listen: false);
 
     // Map selected products to IDs
-    List<Map<String, String>> selectedProductIds =
-        selectedProducts.map((product) {
-      return {'product': product['id'] ?? ''};
+    List<Map<String, String>> selectedProductIds = selectedProducts.map((product) {
+      return {
+        'product': product['sku'] ?? ''
+      };
     }).toList();
 
     for (int i = 0; i < selectedProductIds.length; i++) {
-      print(
-          "Creating combo with product ID: ${selectedProductIds[i]['product']}");
+      print("Creating combo with product ID: ${selectedProductIds[i]['product']}");
     }
 
     final combo = Combo(
@@ -78,8 +77,7 @@ class _ComboPageState extends State<ComboPage> {
     );
 
     try {
-      await comboApi.createCombo(
-          combo, comboProvider.selectedImages, comboProvider.imageNames);
+      await comboApi.createCombo(combo, comboProvider.selectedImages, comboProvider.imageNames);
       refreshCombos();
 
       _clearFormFields();
@@ -139,8 +137,7 @@ class _ComboPageState extends State<ComboPage> {
     print("getDropValue");
 
     List<DropdownItem<String>> newItems = [];
-    ComboProvider comboProvider =
-        Provider.of<ComboProvider>(context, listen: false);
+    ComboProvider comboProvider = Provider.of<ComboProvider>(context, listen: false);
 
     for (int i = 0; i < comboProvider.products.length; i++) {
       newItems.add(DropdownItem<String>(
@@ -174,6 +171,7 @@ class _ComboPageState extends State<ComboPage> {
 
   //   // });
   // }
+  final TextEditingController _searchController = TextEditingController();
 
   @override
   Widget build(BuildContext context) {
@@ -182,24 +180,72 @@ class _ComboPageState extends State<ComboPage> {
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Consumer<ComboProvider>(
-          builder: (context, comboProvider, child) {
+          builder: (context, pro, child) {
             return Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                if (!comboProvider.isFormVisible)
+                if (!pro.isFormVisible)
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text('Existing Combos',
-                          style: TextStyle(
-                              fontSize: 24,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.black87)),
+                      const Text('Existing Combos', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.black87)),
                       Row(
                         children: [
+                          Container(
+                            width: 200,
+                            height: 34,
+                            decoration: BoxDecoration(
+                              border: Border.all(
+                                color: AppColors.primaryBlue,
+                                width: 1.5,
+                              ),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Expanded(
+                                  child: TextField(
+                                    controller: _searchController,
+                                    decoration: InputDecoration(
+                                      prefixIcon: IconButton(
+                                        icon: const Icon(
+                                          Icons.search,
+                                          color: Color.fromRGBO(117, 117, 117, 1),
+                                        ),
+                                        onPressed: () {},
+                                      ),
+                                      hintText: 'Search Orders',
+                                      hintStyle: const TextStyle(
+                                        color: Color.fromRGBO(117, 117, 117, 1),
+                                        fontSize: 16,
+                                      ),
+                                      border: InputBorder.none,
+                                      contentPadding: const EdgeInsets.symmetric(vertical: 10.0),
+                                    ),
+                                    style: const TextStyle(color: AppColors.black),
+                                    onChanged: (text) {
+                                      if (_searchController.text.isEmpty) {
+                                        pro.fetchCombos();
+                                      }
+                                    },
+                                    onSubmitted: (text) {
+                                      if (_searchController.text.isEmpty) {
+                                        pro.fetchCombos();
+                                      } else {
+                                        pro.searchCombos(_searchController.text.trim());
+                                      }
+                                    },
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 16),
                           ElevatedButton(
                               onPressed: () {
-                                comboProvider.toggleFormVisibility();
+                                pro.toggleFormVisibility();
                               },
                               child: const Text('Create Combo')),
                           const SizedBox(width: 16),
@@ -207,12 +253,12 @@ class _ComboPageState extends State<ComboPage> {
                             style: ElevatedButton.styleFrom(
                               backgroundColor: AppColors.primaryBlue,
                             ),
-                            onPressed: comboProvider.isRefreshingOrders
+                            onPressed: pro.isRefreshingOrders
                                 ? null
                                 : () async {
                                     refreshCombos();
                                   },
-                            child: comboProvider.isRefreshingOrders
+                            child: pro.isRefreshingOrders
                                 ? const SizedBox(
                                     width: 16,
                                     height: 16,
@@ -230,7 +276,7 @@ class _ComboPageState extends State<ComboPage> {
                       ),
                     ],
                   ),
-                if (comboProvider.isFormVisible)
+                if (pro.isFormVisible)
                   Row(
                     children: [
                       ElevatedButton(
@@ -244,13 +290,13 @@ class _ComboPageState extends State<ComboPage> {
                       TextButton(
                           onPressed: () {
                             _clearFormFields();
-                            comboProvider.clearSelectedImages();
-                            comboProvider.toggleFormVisibility();
+                            pro.clearSelectedImages();
+                            pro.toggleFormVisibility();
                           },
                           child: const Text('Cancel')),
                     ],
                   ),
-                if (comboProvider.isFormVisible)
+                if (pro.isFormVisible)
                   Expanded(
                     child: SingleChildScrollView(
                       child: Form(
@@ -261,8 +307,7 @@ class _ComboPageState extends State<ComboPage> {
                             const SizedBox(height: 16),
                             TextFormField(
                               controller: _nameController,
-                              decoration:
-                                  const InputDecoration(labelText: 'Name'),
+                              decoration: const InputDecoration(labelText: 'Name'),
                               validator: (value) {
                                 if (value == null || value.isEmpty) {
                                   return 'Please enter Combo Name';
@@ -274,9 +319,7 @@ class _ComboPageState extends State<ComboPage> {
                             SearchableDropdown(
                               label: "Add Products",
                               onChanged: (selected) {
-                                if (selected != null &&
-                                    !selectedProducts.any((product) =>
-                                        product['sku'] == selected['sku'])) {
+                                if (selected != null && !selectedProducts.any((product) => product['sku'] == selected['sku'])) {
                                   setState(() {
                                     selectedProducts.add({
                                       'sku': selected['sku'] ?? '',
@@ -311,8 +354,7 @@ class _ComboPageState extends State<ComboPage> {
                                   ),
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(12),
-                                    side:
-                                        const BorderSide(color: Colors.yellow),
+                                    side: const BorderSide(color: Colors.yellow),
                                   ),
                                   onDeleted: () {
                                     setState(() {
@@ -325,8 +367,7 @@ class _ComboPageState extends State<ComboPage> {
                             const SizedBox(height: 16),
                             TextFormField(
                               controller: _mrpController,
-                              decoration:
-                                  const InputDecoration(labelText: 'MRP'),
+                              decoration: const InputDecoration(labelText: 'MRP'),
                               keyboardType: TextInputType.number,
                               validator: (value) {
                                 if (value == null || value.isEmpty) {
@@ -338,8 +379,7 @@ class _ComboPageState extends State<ComboPage> {
                             const SizedBox(height: 16),
                             TextFormField(
                               controller: _costController,
-                              decoration:
-                                  const InputDecoration(labelText: 'Cost'),
+                              decoration: const InputDecoration(labelText: 'Cost'),
                               keyboardType: TextInputType.number,
                               validator: (value) {
                                 if (value == null || value.isEmpty) {
@@ -351,8 +391,7 @@ class _ComboPageState extends State<ComboPage> {
                             const SizedBox(height: 16),
                             TextFormField(
                               controller: _skuController,
-                              decoration:
-                                  const InputDecoration(labelText: 'SKU'),
+                              decoration: const InputDecoration(labelText: 'SKU'),
                               validator: (value) {
                                 if (value == null || value.isEmpty) {
                                   return 'Please enter SKU';
@@ -362,21 +401,18 @@ class _ComboPageState extends State<ComboPage> {
                             ),
                             const SizedBox(height: 16),
                             ElevatedButton(
-                              onPressed:
-                                  comboProvider.selectImages, // Pick images
+                              onPressed: pro.selectImages, // Pick images
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: Colors.orange,
                               ),
                               child: const Text('Upload Images'),
                             ),
-                            comboProvider.selectedImages != null &&
-                                    comboProvider.selectedImages!.isNotEmpty
+                            pro.selectedImages != null && pro.selectedImages!.isNotEmpty
                                 ? SizedBox(
                                     height: 100,
                                     child: ListView.builder(
                                       scrollDirection: Axis.horizontal,
-                                      itemCount:
-                                          comboProvider.selectedImages!.length,
+                                      itemCount: pro.selectedImages!.length,
                                       itemBuilder: (context, index) {
                                         return Padding(
                                           padding: const EdgeInsets.all(8.0),
@@ -387,9 +423,7 @@ class _ComboPageState extends State<ComboPage> {
                                                 children: [
                                                   Expanded(
                                                     child: Image.memory(
-                                                      comboProvider
-                                                              .selectedImages![
-                                                          index],
+                                                      pro.selectedImages![index],
                                                       width: 80,
                                                       height: 80,
                                                       fit: BoxFit.cover,
@@ -397,10 +431,8 @@ class _ComboPageState extends State<ComboPage> {
                                                   ),
                                                   const SizedBox(height: 4),
                                                   Text(
-                                                    comboProvider
-                                                        .imageNames[index],
-                                                    style: const TextStyle(
-                                                        fontSize: 12),
+                                                    pro.imageNames[index],
+                                                    style: const TextStyle(fontSize: 12),
                                                   ),
                                                 ],
                                               ),
@@ -408,12 +440,9 @@ class _ComboPageState extends State<ComboPage> {
                                                 top: 0,
                                                 right: -8,
                                                 child: IconButton(
-                                                  icon: const Icon(Icons.close,
-                                                      color: Colors.red),
+                                                  icon: const Icon(Icons.close, color: Colors.red),
                                                   onPressed: () {
-                                                    comboProvider
-                                                        .removeSelectedImage(
-                                                            index);
+                                                    pro.removeSelectedImage(index);
                                                   },
                                                 ),
                                               ),
@@ -425,8 +454,7 @@ class _ComboPageState extends State<ComboPage> {
                                   )
                                 : const Text(
                                     'No Images Selected.',
-                                    style: TextStyle(
-                                        fontSize: 14, color: Colors.grey),
+                                    style: TextStyle(fontSize: 14, color: Colors.grey),
                                   ),
                             const SizedBox(height: 60),
                           ],
@@ -436,10 +464,10 @@ class _ComboPageState extends State<ComboPage> {
                   ),
 
                 // Do not touch this code - Begin - This is for getCombos
-                if (!comboProvider.isFormVisible) ...[
+                if (!pro.isFormVisible) ...[
                   const SizedBox(height: 16),
                   Expanded(
-                    child: comboProvider.loading
+                    child: pro.loading
                         ? const Center(
                             child: LoadingAnimation(
                               icon: Icons.collections,
@@ -448,15 +476,13 @@ class _ComboPageState extends State<ComboPage> {
                               size: 80.0,
                             ),
                           )
-                        : comboProvider.combosList.isNotEmpty
+                        : pro.combosList.isNotEmpty
                             ? ListView.builder(
-                                itemCount: comboProvider.combosList.length,
+                                itemCount: pro.combosList.length,
                                 itemBuilder: (context, index) {
-                                  final combo = comboProvider.combosList[index];
-                                  final images =
-                                      combo['images'] as List<dynamic>? ?? [];
-                                  final products =
-                                      combo['products'] as List<dynamic>? ?? [];
+                                  final combo = pro.combosList[index];
+                                  final images = combo['images'] as List<dynamic>? ?? [];
+                                  final products = combo['products'] as List<dynamic>? ?? [];
 
                                   return Card(
                                     color: Colors.white,
@@ -464,23 +490,18 @@ class _ComboPageState extends State<ComboPage> {
                                     shape: RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(15),
                                     ),
-                                    margin: const EdgeInsets.symmetric(
-                                        vertical: 7, horizontal: 16),
+                                    margin: const EdgeInsets.symmetric(vertical: 7, horizontal: 16),
                                     child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.stretch,
+                                      crossAxisAlignment: CrossAxisAlignment.stretch,
                                       children: [
                                         Container(
                                           padding: const EdgeInsets.all(16),
                                           decoration: BoxDecoration(
                                             color: Colors.grey[200],
-                                            borderRadius:
-                                                const BorderRadius.vertical(
-                                                    top: Radius.circular(15)),
+                                            borderRadius: const BorderRadius.vertical(top: Radius.circular(15)),
                                           ),
                                           child: Row(
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.spaceBetween,
+                                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                             children: [
                                               Expanded(
                                                 child: Text(
@@ -494,19 +515,9 @@ class _ComboPageState extends State<ComboPage> {
                                               ),
                                               Row(
                                                 children: [
-                                                  _buildCompactInfo(
-                                                      label: 'MRP',
-                                                      value:
-                                                          '₹${combo['mrp'] ?? 'N/A'}'),
-                                                  _buildCompactInfo(
-                                                      label: 'Cost',
-                                                      value:
-                                                          '₹${combo['cost'] ?? 'N/A'}'),
-                                                  _buildCompactInfo(
-                                                      label: 'SKU',
-                                                      value:
-                                                          combo['comboSku'] ??
-                                                              'N/A'),
+                                                  _buildCompactInfo(label: 'MRP', value: '₹${combo['mrp'] ?? 'N/A'}'),
+                                                  _buildCompactInfo(label: 'Cost', value: '₹${combo['cost'] ?? 'N/A'}'),
+                                                  _buildCompactInfo(label: 'SKU', value: combo['comboSku'] ?? 'N/A'),
                                                 ],
                                               ),
                                             ],
@@ -515,8 +526,7 @@ class _ComboPageState extends State<ComboPage> {
                                         Padding(
                                           padding: const EdgeInsets.all(16.0),
                                           child: Column(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
+                                            crossAxisAlignment: CrossAxisAlignment.start,
                                             children: [
                                               if (images.isNotEmpty) ...[
                                                 const Text(
@@ -531,40 +541,26 @@ class _ComboPageState extends State<ComboPage> {
                                                 SizedBox(
                                                   height: 80,
                                                   child: ListView.builder(
-                                                    scrollDirection:
-                                                        Axis.horizontal,
+                                                    scrollDirection: Axis.horizontal,
                                                     itemCount: images.length,
-                                                    itemBuilder:
-                                                        (context, index) {
+                                                    itemBuilder: (context, index) {
                                                       return Padding(
-                                                        padding:
-                                                            const EdgeInsets
-                                                                .only(
-                                                                right: 8.0),
+                                                        padding: const EdgeInsets.only(right: 8.0),
                                                         child: ClipRRect(
-                                                          borderRadius:
-                                                              BorderRadius
-                                                                  .circular(
-                                                                      8.0),
+                                                          borderRadius: BorderRadius.circular(8.0),
                                                           child: Image.network(
                                                             images[index],
                                                             width: 80,
                                                             height: 80,
                                                             fit: BoxFit.cover,
-                                                            errorBuilder:
-                                                                (context, error,
-                                                                    stackTrace) {
+                                                            errorBuilder: (context, error, stackTrace) {
                                                               return Container(
                                                                 width: 80,
                                                                 height: 80,
-                                                                color: Colors
-                                                                    .grey[200],
-                                                                child:
-                                                                    const Icon(
-                                                                  Icons
-                                                                      .broken_image,
-                                                                  color: Colors
-                                                                      .red,
+                                                                color: Colors.grey[200],
+                                                                child: const Icon(
+                                                                  Icons.broken_image,
+                                                                  color: Colors.red,
                                                                   size: 40,
                                                                 ),
                                                               );
@@ -588,68 +584,97 @@ class _ComboPageState extends State<ComboPage> {
                                                 ),
                                                 const SizedBox(height: 8),
                                                 Column(
-                                                  children:
-                                                      products.map((product) {
+                                                  children: products.map((product) {
+                                                    // String? qty = pro.fetchQuantityBySku(product['sku']).toString() ?? '0';
                                                     return Padding(
-                                                      padding: const EdgeInsets
-                                                          .symmetric(
-                                                          vertical: 4.0),
+                                                      padding: const EdgeInsets.symmetric(vertical: 6.0),
                                                       child: Container(
-                                                        padding:
-                                                            const EdgeInsets
-                                                                .symmetric(
-                                                                horizontal: 12,
-                                                                vertical: 8),
-                                                        decoration:
-                                                            BoxDecoration(
-                                                          color:
-                                                              Colors.grey[200],
-                                                          borderRadius:
-                                                              BorderRadius
-                                                                  .circular(10),
+                                                        padding: const EdgeInsets.all(12),
+                                                        decoration: BoxDecoration(
+                                                          color: Colors.white,
+                                                          borderRadius: BorderRadius.circular(12),
+                                                          boxShadow: [
+                                                            BoxShadow(
+                                                              color: Colors.grey.withOpacity(0.1),
+                                                              spreadRadius: 1,
+                                                              blurRadius: 4,
+                                                              offset: const Offset(0, 2),
+                                                            ),
+                                                          ],
+                                                          border: Border.all(color: Colors.grey.shade200),
                                                         ),
                                                         child: Row(
                                                           children: [
-                                                            Flexible(
-                                                              child:
-                                                                  SingleChildScrollView(
-                                                                scrollDirection:
-                                                                    Axis.horizontal,
-                                                                child: Text(
-                                                                  'SKU: ${product['sku']?.toString() ?? 'N/A'}',
-                                                                  style:
-                                                                      const TextStyle(
-                                                                    fontSize:
-                                                                        14,
-                                                                    fontWeight:
-                                                                        FontWeight
-                                                                            .bold,
-                                                                    color: Colors
-                                                                        .black87,
+                                                            Expanded(
+                                                              flex: 2,
+                                                              child: Column(
+                                                                crossAxisAlignment: CrossAxisAlignment.start,
+                                                                children: [
+                                                                  Text(
+                                                                    product['displayName']?.toString() ?? 'No Name Available',
+                                                                    style: const TextStyle(
+                                                                      fontSize: 16,
+                                                                      fontWeight: FontWeight.w500,
+                                                                      color: Colors.black87,
+                                                                    ),
+                                                                    maxLines: 1,
+                                                                    overflow: TextOverflow.ellipsis,
                                                                   ),
-                                                                ),
+                                                                  const SizedBox(height: 4),
+                                                                  Text(
+                                                                    'SKU: ${product['sku']?.toString() ?? 'N/A'}',
+                                                                    style: TextStyle(
+                                                                      fontSize: 14,
+                                                                      color: Colors.grey[600],
+                                                                    ),
+                                                                  ),
+                                                                ],
                                                               ),
                                                             ),
-                                                            const SizedBox(
-                                                                width: 8),
-                                                            Flexible(
-                                                              child:
-                                                                  SingleChildScrollView(
-                                                                scrollDirection:
-                                                                    Axis.horizontal,
-                                                                child: Text(
-                                                                  product['displayName']
-                                                                          ?.toString() ??
-                                                                      'No Name Available',
-                                                                  style:
-                                                                      TextStyle(
-                                                                    fontSize:
-                                                                        16,
-                                                                    color: Colors
-                                                                            .grey[
-                                                                        800],
-                                                                  ),
-                                                                ),
+                                                            const SizedBox(width: 16),
+                                                            Container(
+                                                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                                              decoration: BoxDecoration(
+                                                                color: Colors.blue.shade50,
+                                                                borderRadius: BorderRadius.circular(20),
+                                                              ),
+                                                              child: FutureBuilder<int?>(
+                                                                future: pro.fetchQuantityBySku(product['sku']),
+                                                                builder: (context, snapshot) {
+                                                                  String quantityText = 'Loading...';
+                                                                  Color textColor = Colors.grey;
+
+                                                                  if (snapshot.hasError) {
+                                                                    quantityText = 'Error';
+                                                                    textColor = Colors.red;
+                                                                  } else if (snapshot.hasData) {
+                                                                    quantityText = snapshot.data?.toString() ?? '0';
+                                                                    textColor = Colors.blue.shade700;
+                                                                  } else if (snapshot.connectionState == ConnectionState.done) {
+                                                                    quantityText = '0';
+                                                                    textColor = Colors.grey;
+                                                                  }
+
+                                                                  return Row(
+                                                                    mainAxisSize: MainAxisSize.min,
+                                                                    children: [
+                                                                      Icon(
+                                                                        Icons.inventory_2_outlined,
+                                                                        size: 16,
+                                                                        color: textColor,
+                                                                      ),
+                                                                      const SizedBox(width: 4),
+                                                                      Text(
+                                                                        quantityText,
+                                                                        style: TextStyle(
+                                                                          fontSize: 15,
+                                                                          fontWeight: FontWeight.w600,
+                                                                          color: textColor,
+                                                                        ),
+                                                                      ),
+                                                                    ],
+                                                                  );
+                                                                },
                                                               ),
                                                             ),
                                                           ],
@@ -657,14 +682,12 @@ class _ComboPageState extends State<ComboPage> {
                                                       ),
                                                     );
                                                   }).toList(),
-                                                ),
+                                                )
                                               ] else ...[
                                                 const SizedBox(height: 8),
                                                 const Text(
                                                   '*No products available for this combo.',
-                                                  style: TextStyle(
-                                                      fontSize: 14,
-                                                      color: Colors.grey),
+                                                  style: TextStyle(fontSize: 14, color: Colors.grey),
                                                 ),
                                               ],
                                             ],
@@ -678,14 +701,12 @@ class _ComboPageState extends State<ComboPage> {
                             : const Center(
                                 child: Text(
                                   'No combos available.',
-                                  style: TextStyle(
-                                      fontSize: 16, color: Colors.grey),
+                                  style: TextStyle(fontSize: 16, color: Colors.grey),
                                 ),
                               ),
                   ),
                   // Pagination Controls
-                  if (!comboProvider.loading &&
-                      comboProvider.combosList.isNotEmpty) ...[
+                  if (!pro.loading && pro.combosList.isNotEmpty) ...[
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
@@ -697,7 +718,7 @@ class _ComboPageState extends State<ComboPage> {
                                     setState(() {
                                       currentPage--;
                                     });
-                                    loadMoreCombos();
+                                    loadCombos();
                                   }
                                 : null,
                             child: const Text('Previous'),

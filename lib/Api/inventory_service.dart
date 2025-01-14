@@ -1,13 +1,22 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:inventory_management/constants/constants.dart';
 
 class InventoryService {
-  final String baseUrl =
-      'https://inventory-management-backend-s37u.onrender.com';
+  // late final String baseUrl;
+
+  // InventoryService() {
+  //   _initialize();
+  // }
+
+  // Future<void> _initialize() async {
+  //   baseUrl = await ApiUrls.getBaseUrl();
+  // }
 
   // Method to create a new inventory
   Future<Map<String, dynamic>> createInventory(
       Map<String, dynamic> data, String token) async {
+        String baseUrl = await ApiUrls.getBaseUrl();
     final response = await http.post(
       Uri.parse('$baseUrl/inventory/'),
       headers: {
@@ -26,6 +35,7 @@ class InventoryService {
 
   Future<Map<String, dynamic>> getInventory(
       String token, int selectedPage, int jump) async {
+        String baseUrl = await ApiUrls.getBaseUrl();
     final response = await http.get(
       Uri.parse('$baseUrl/inventory?page=$selectedPage&limit=$jump'),
       headers: {
@@ -43,6 +53,7 @@ class InventoryService {
 
   // Method to get inventory by ID
   Future<Map<String, dynamic>> getInventoryById(String id, String token) async {
+    String baseUrl = await ApiUrls.getBaseUrl();
     final response = await http.get(
       Uri.parse('$baseUrl/inventory/$id'),
       headers: {
@@ -61,6 +72,7 @@ class InventoryService {
   // Method to update an inventory
   Future<Map<String, dynamic>> updateInventory(
       String id, Map<String, dynamic> data, String token) async {
+        String baseUrl = await ApiUrls.getBaseUrl();
     final response = await http.put(
       Uri.parse('$baseUrl/inventory/$id'),
       headers: {
@@ -79,6 +91,7 @@ class InventoryService {
 
   // Method to delete an inventory
   Future<void> deleteInventory(String id, String token) async {
+    String baseUrl = await ApiUrls.getBaseUrl();
     final response = await http.delete(
       Uri.parse('$baseUrl/inventory/$id'),
       headers: {

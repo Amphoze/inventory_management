@@ -1,17 +1,17 @@
 class LabelModel {
   String name;
   String labelSku;
-  String image;
+  // String image;
   String description;
-  List<Map<String, String>> products; 
+  // List<Map<String, String>> products; 
   int quantity;
 
   LabelModel({
     required this.name,
     required this.labelSku,
-    required this.image,
+    // required this.image,
     required this.description,
-    required this.products,
+    // required this.products,
     required this.quantity,
   });
 
@@ -20,9 +20,9 @@ class LabelModel {
     return LabelModel(
       name: json['name'] as String,
       labelSku: json['labelSku'] as String,
-      image: json['image'] as String,
+      // image: json['image'] as String,
       description: json['description'] as String,
-      products: List<Map<String, String>>.from(json['products'] ?? []), 
+      // products: List<Map<String, String>>.from(json['products'] ?? []), 
       quantity: json['quantity'] as int,
     );
   }
@@ -32,9 +32,9 @@ class LabelModel {
     return {
       'name': name,
       'labelSku': labelSku,
-      'image': image,
+      // 'image': image,
       'description': description,
-      'products':products, 
+      // 'products':products, 
       'quantity': quantity,
     };
   }

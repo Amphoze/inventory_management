@@ -22,6 +22,7 @@ class ProductDashboardPage extends StatefulWidget {
 class _ProductDashboardPageState extends State<ProductDashboardPage> {
   final int _itemsPerPage = 30;
   final List<Product> _products = [];
+  int totalProducts = 0;
   bool _isLoading = false;
   bool _hasMore = true;
   bool _showCreateProduct = false;
@@ -104,6 +105,7 @@ class _ProductDashboardPageState extends State<ProductDashboardPage> {
         }).toList();
 
         setState(() {
+          totalProducts = response['totalProducts'];
           _products.addAll(newProducts);
           _hasMore = newProducts.length == _itemsPerPage;
           if (_hasMore) _currentPage++;
@@ -176,30 +178,30 @@ class _ProductDashboardPageState extends State<ProductDashboardPage> {
   //   );
   // }
 
-  Widget _buildSearchField() {
-    return SizedBox(
-      width: 300,
-      child: TextField(
-        controller: _searchController,
-        decoration: InputDecoration(
-          filled: true,
-          fillColor: Colors.white,
-          hintText: 'Search...',
-          prefixIcon: const Icon(Icons.search, color: Colors.orange),
-          contentPadding:
-              const EdgeInsets.symmetric(vertical: 10.0, horizontal: 16.0),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12.0),
-            borderSide: const BorderSide(color: Colors.orange, width: 2.0),
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12.0),
-            borderSide: const BorderSide(color: Colors.orange, width: 2.0),
-          ),
-        ),
-      ),
-    );
-  }
+  // Widget _buildSearchField() {
+  //   return SizedBox(
+  //     width: 300,
+  //     child: TextField(
+  //       controller: _searchController,
+  //       decoration: InputDecoration(
+  //         filled: true,
+  //         fillColor: Colors.white,
+  //         hintText: 'Search...',
+  //         prefixIcon: const Icon(Icons.search, color: Colors.orange),
+  //         contentPadding:
+  //             const EdgeInsets.symmetric(vertical: 10.0, horizontal: 16.0),
+  //         enabledBorder: OutlineInputBorder(
+  //           borderRadius: BorderRadius.circular(12.0),
+  //           borderSide: const BorderSide(color: Colors.orange, width: 2.0),
+  //         ),
+  //         focusedBorder: OutlineInputBorder(
+  //           borderRadius: BorderRadius.circular(12.0),
+  //           borderSide: const BorderSide(color: Colors.orange, width: 2.0),
+  //         ),
+  //       ),
+  //     ),
+  //   );
+  // }
 
   Widget _buildFilterSections() {
     return SingleChildScrollView(
@@ -254,7 +256,7 @@ class _ProductDashboardPageState extends State<ProductDashboardPage> {
           _buildConditionalSearchBar(),
         const SizedBox(width: 300),
         if (!_showCreateProduct)
-          Text('Total Products: ${_products.length}',
+          Text('Total Products: $totalProducts',
               style: const TextStyle(fontSize: 16)),
         const SizedBox(width: 20),
         CustomButton(
@@ -454,7 +456,7 @@ class _ProductDashboardPageState extends State<ProductDashboardPage> {
         );
       }
     } catch (error) {
-      print("error - $error");
+      log("error - $error");
 
       // Handle exceptions
       ScaffoldMessenger.of(context).showSnackBar(
@@ -471,7 +473,7 @@ class _ProductDashboardPageState extends State<ProductDashboardPage> {
   void _refreshPage() {
     setState(() {
       _products.clear(); // Clear the displayed products
-      _selectedSearchOption = null; // Reset the selected option
+      // _selectedSearchOption = null; // Reset the selected option
       _searchbarController.clear(); // Clear the search input
     });
   }
