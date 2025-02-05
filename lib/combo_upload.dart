@@ -92,7 +92,7 @@ class _ComboUploadState extends State<ComboUpload> {
         log(mrp.toString());
         final cost = num.parse(_csvData[i][4].toString());
         log(cost.toString());
-        log("${await ApiUrls.getBaseUrl()}/combo?sku=$comboSku");
+        log("${await Constants.getBaseUrl()}/combo?sku=$comboSku");
         log({
           "comboSku": comboSku,
           "name": name,
@@ -102,7 +102,7 @@ class _ComboUploadState extends State<ComboUpload> {
         }.toString());
 
         final response = await http.post(
-          Uri.parse('${await ApiUrls.getBaseUrl()}/combo'),
+          Uri.parse('${await Constants.getBaseUrl()}/combo'),
           headers: {
             'Content-Type': 'application/json',
             'Authorization': 'Bearer $token',

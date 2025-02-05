@@ -18,13 +18,16 @@ class AccountsSectionPage extends StatefulWidget {
   _AccountsSectionPageState createState() => _AccountsSectionPageState();
 }
 
-class _AccountsSectionPageState extends State<AccountsSectionPage> with SingleTickerProviderStateMixin {
+class _AccountsSectionPageState extends State<AccountsSectionPage>
+    with SingleTickerProviderStateMixin {
   final TextEditingController _searchController = TextEditingController();
   final TextEditingController _pageController = TextEditingController();
   bool areOrdersFetched = false;
   String selectedCourier = 'All';
   String _selectedDate = 'Select Date';
   String selectedSearchType = 'Order ID'; // Default selection
+  String? selectedPaymentMode = ''; // Default selection
+  DateTime? picked;
 
   @override
   void initState() {
@@ -37,7 +40,8 @@ class _AccountsSectionPageState extends State<AccountsSectionPage> with SingleTi
     //   }
     // });
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final accountsProvider = Provider.of<AccountsProvider>(context, listen: false);
+      final accountsProvider =
+          Provider.of<AccountsProvider>(context, listen: false);
       accountsProvider.fetchAccountedOrders(accountsProvider.currentPage);
     });
 
@@ -66,8 +70,12 @@ class _AccountsSectionPageState extends State<AccountsSectionPage> with SingleTi
 
 // Refresh ordersBooked for both B2B and B2C
   void _refreshBookedOrders() {
-    final accountsProvider = Provider.of<AccountsProvider>(context, listen: false);
+    final accountsProvider =
+        Provider.of<AccountsProvider>(context, listen: false);
     accountsProvider.fetchAccountedOrders(accountsProvider.currentPage);
+    setState(() {
+      selectedCourier = 'All';
+    });
   }
 
   Widget _searchBar() {
@@ -87,11 +95,13 @@ class _AccountsSectionPageState extends State<AccountsSectionPage> with SingleTi
               value: selectedSearchType,
               decoration: const InputDecoration(
                 border: OutlineInputBorder(),
-                contentPadding: EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
+                contentPadding:
+                    EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
               ),
               items: const [
                 DropdownMenuItem(value: 'Order ID', child: Text('Order ID')),
-                DropdownMenuItem(value: 'Transaction No.', child: Text('Transaction No.')),
+                DropdownMenuItem(
+                    value: 'Transaction No.', child: Text('Transaction No.')),
               ],
               onChanged: (value) {
                 setState(() {
@@ -131,18 +141,21 @@ class _AccountsSectionPageState extends State<AccountsSectionPage> with SingleTi
                         fontSize: 16,
                       ),
                       border: InputBorder.none,
-                      contentPadding: const EdgeInsets.symmetric(vertical: 10.0),
+                      contentPadding:
+                          const EdgeInsets.symmetric(vertical: 10.0),
                     ),
                     style: const TextStyle(color: AppColors.black),
                     onChanged: (text) {
                       if (_searchController.text.isEmpty) {
                         _refreshBookedOrders();
-                        Provider.of<AccountsProvider>(context, listen: false).clearSearchResults();
+                        Provider.of<AccountsProvider>(context, listen: false)
+                            .clearSearchResults();
                       }
                     },
                     onSubmitted: (text) {
                       Logger().e(selectedSearchType);
-                      Provider.of<AccountsProvider>(context, listen: false).searchBookedOrders(text, selectedSearchType);
+                      Provider.of<AccountsProvider>(context, listen: false)
+                          .searchBookedOrders(text, selectedSearchType);
                     },
                   ),
                 ),
@@ -154,7 +167,8 @@ class _AccountsSectionPageState extends State<AccountsSectionPage> with SingleTi
                     ),
                     onPressed: () {
                       controller.clear();
-                      Provider.of<AccountsProvider>(context, listen: false).clearSearchResults();
+                      Provider.of<AccountsProvider>(context, listen: false)
+                          .clearSearchResults();
                       _refreshBookedOrders();
                     },
                   ),
@@ -174,7 +188,8 @@ class _AccountsSectionPageState extends State<AccountsSectionPage> with SingleTi
 
     // Update flag when ordersBooked are fetched
     if (ordersBooked.isNotEmpty) {
-      areOrdersFetched = true; // Set flag to true when ordersBooked are available
+      areOrdersFetched =
+          true; // Set flag to true when ordersBooked are available
     }
 
     return Column(
@@ -231,7 +246,8 @@ class _AccountsSectionPageState extends State<AccountsSectionPage> with SingleTi
               accountsProvider.goToBookedPage(1);
             },
             onLastPage: () {
-              accountsProvider.goToBookedPage(accountsProvider.totalPagesBooked);
+              accountsProvider
+                  .goToBookedPage(accountsProvider.totalPagesBooked);
             },
             onNextPage: () {
               int currentPage = accountsProvider.currentPageBooked;
@@ -239,14 +255,16 @@ class _AccountsSectionPageState extends State<AccountsSectionPage> with SingleTi
               int totalPages = accountsProvider.totalPagesBooked;
 
               if (currentPage < totalPages) {
-                accountsProvider.goToBookedPage(accountsProvider.currentPageBooked + 1);
+                accountsProvider
+                    .goToBookedPage(accountsProvider.currentPageBooked + 1);
               }
             },
             onPreviousPage: () {
               int currentPage = accountsProvider.currentPageBooked;
 
               if (currentPage > 1) {
-                accountsProvider.goToBookedPage(accountsProvider.currentPageBooked - 1);
+                accountsProvider
+                    .goToBookedPage(accountsProvider.currentPageBooked - 1);
               }
             },
             onGoToPage: (int page) {
@@ -255,7 +273,8 @@ class _AccountsSectionPageState extends State<AccountsSectionPage> with SingleTi
               if (page > 0 && page <= totalPages) {
                 accountsProvider.goToBookedPage(page);
               } else {
-                _showSnackbar(context, 'Please enter a valid page number between 1 and $totalPages.');
+                _showSnackbar(context,
+                    'Please enter a valid page number between 1 and $totalPages.');
               }
             },
             onJumpToPage: () {
@@ -264,7 +283,8 @@ class _AccountsSectionPageState extends State<AccountsSectionPage> with SingleTi
               int totalPages = accountsProvider.totalPages;
 
               if (page == null || page < 1 || page > totalPages) {
-                _showSnackbar(context, 'Please enter a valid page number between 1 and $totalPages.');
+                _showSnackbar(context,
+                    'Please enter a valid page number between 1 and $totalPages.');
                 return;
               }
 
@@ -285,7 +305,8 @@ class _AccountsSectionPageState extends State<AccountsSectionPage> with SingleTi
   }
 
   Widget _buildConfirmButtons() {
-    final accountsProvider = Provider.of<AccountsProvider>(context, listen: false);
+    final accountsProvider =
+        Provider.of<AccountsProvider>(context, listen: false);
 
     return Align(
       alignment: Alignment.topRight,
@@ -296,18 +317,68 @@ class _AccountsSectionPageState extends State<AccountsSectionPage> with SingleTi
           children: [
             Column(
               children: [
+                Text(selectedPaymentMode ?? ''),
+                PopupMenuButton<String>(
+                  tooltip: 'Filter by Payment Mode',
+                  onSelected: (String value) {
+                    if (value != '') {
+                      setState(() {
+                        selectedPaymentMode = value;
+                      });
+                      if (selectedCourier == 'All') {
+                        accountsProvider.fetchOrdersByMarketplace(
+                            selectedCourier, 2, accountsProvider.currentPage,
+                            date: picked, mode: selectedPaymentMode);
+                      }
+                      accountsProvider.fetchAccountedOrders(
+                        accountsProvider.currentPageBooked,
+                        date: picked,
+                        mode: selectedPaymentMode ?? '',
+                      );
+                    }
+
+                    log('Selected: $value');
+                  },
+                  itemBuilder: (BuildContext context) =>
+                      <PopupMenuEntry<String>>[
+                    ...[
+                      'COD',
+                      'Prepaid',
+                      'Partial Payment',
+                    ].map(
+                      (paymentMode) => PopupMenuItem<String>(
+                        value: paymentMode,
+                        child: Text(paymentMode),
+                      ),
+                    ),
+                  ],
+                  child: const IconButton(
+                    onPressed: null,
+                    icon: Icon(
+                      Icons.payment,
+                      size: 30,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(width: 8),
+            Column(
+              children: [
                 Text(
                   _selectedDate,
                   style: TextStyle(
                     fontSize: 11,
-                    color: _selectedDate == 'Select Date' ? Colors.grey : AppColors.primaryBlue,
+                    color: _selectedDate == 'Select Date'
+                        ? Colors.grey
+                        : AppColors.primaryBlue,
                   ),
                 ),
                 Tooltip(
                   message: 'Filter by Date',
                   child: IconButton(
                     onPressed: () async {
-                      final DateTime? picked = await showDatePicker(
+                      picked = await showDatePicker(
                         context: context,
                         initialDate: DateTime.now(),
                         firstDate: DateTime(2020),
@@ -328,22 +399,23 @@ class _AccountsSectionPageState extends State<AccountsSectionPage> with SingleTi
                       );
 
                       if (picked != null) {
-                        String formattedDate = DateFormat('dd-MM-yyyy').format(picked);
+                        String formattedDate =
+                            DateFormat('dd-MM-yyyy').format(picked!);
                         setState(() {
                           _selectedDate = formattedDate;
                         });
 
                         if (selectedCourier != 'All') {
                           accountsProvider.fetchBookedOrdersByMarketplace(
-                            selectedCourier,
-                            accountsProvider.currentPageBooked,
-                            date: picked,
-                          );
+                              selectedCourier,
+                              accountsProvider.currentPageBooked,
+                              date: picked,
+                              mode: selectedPaymentMode);
                         } else {
                           accountsProvider.fetchAccountedOrders(
-                            accountsProvider.currentPageBooked,
-                            date: picked,
-                          );
+                              accountsProvider.currentPageBooked,
+                              date: picked,
+                              mode: selectedPaymentMode ?? '');
                         }
                       }
                     },
@@ -369,19 +441,30 @@ class _AccountsSectionPageState extends State<AccountsSectionPage> with SingleTi
                       tooltip: 'Filter by Marketplace',
                       onSelected: (String value) {
                         if (value == 'All') {
-                          selectedCourier = value;
-                          accountsProvider.fetchAccountedOrders(accountsProvider.currentPageBooked, date: _selectedDate == 'Select Date' ? null : DateTime.parse(_selectedDate));
+                          setState(() {
+                            selectedCourier = value;
+                          });
+                          accountsProvider.fetchAccountedOrders(
+                              accountsProvider.currentPageBooked,
+                              date: picked,
+                              mode: selectedPaymentMode ?? '');
                         } else {
-                          selectedCourier = value;
-                          accountsProvider.fetchBookedOrdersByMarketplace(value, accountsProvider.currentPageBooked, date: _selectedDate == 'Select Date' ? null : DateTime.parse(_selectedDate));
+                          setState(() {
+                            selectedCourier = value;
+                          });
+                          accountsProvider.fetchBookedOrdersByMarketplace(
+                              value, accountsProvider.currentPageBooked,
+                              date: picked, mode: selectedPaymentMode);
                         }
                         log('Selected: $value');
                       },
-                      itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
-                        ...provider.marketplaces.map((marketplace) => PopupMenuItem<String>(
-                              value: marketplace.name,
-                              child: Text(marketplace.name),
-                            )), // Fetched marketplaces
+                      itemBuilder: (BuildContext context) =>
+                          <PopupMenuEntry<String>>[
+                        ...provider.marketplaces
+                            .map((marketplace) => PopupMenuItem<String>(
+                                  value: marketplace.name,
+                                  child: Text(marketplace.name),
+                                )), // Fetched marketplaces
                         const PopupMenuItem<String>(
                           value: 'All', // Hardcoded marketplace
                           child: Text('All'),
@@ -410,10 +493,17 @@ class _AccountsSectionPageState extends State<AccountsSectionPage> with SingleTi
                   ? null // Disable button while loading
                   : () async {
                       log("B2C");
-                      final provider = Provider.of<AccountsProvider>(context, listen: false);
+                      final provider =
+                          Provider.of<AccountsProvider>(context, listen: false);
 
                       // Collect selected order IDs
-                      List<String> selectedOrderIds = provider.ordersBooked.asMap().entries.where((entry) => provider.selectedProducts[entry.key]).map((entry) => entry.value.orderId).toList();
+                      List<String> selectedOrderIds = provider.ordersBooked
+                          .asMap()
+                          .entries
+                          .where(
+                              (entry) => provider.selectedProducts[entry.key])
+                          .map((entry) => entry.value.orderId)
+                          .toList();
 
                       if (selectedOrderIds.isEmpty) {
                         // Show an error message if no ordersBooked are selected
@@ -429,7 +519,8 @@ class _AccountsSectionPageState extends State<AccountsSectionPage> with SingleTi
                         provider.setCancelStatus(true);
 
                         // Call confirmOrders method with selected IDs
-                        String resultMessage = await provider.cancelOrders(context, selectedOrderIds);
+                        String resultMessage = await provider.cancelOrders(
+                            context, selectedOrderIds);
 
                         // Set loading status to false after operation completes
                         provider.setCancelStatus(false);
@@ -437,8 +528,23 @@ class _AccountsSectionPageState extends State<AccountsSectionPage> with SingleTi
                         // Determine the background color based on the result
                         Color snackBarColor;
                         if (resultMessage.contains('success')) {
+                          if (selectedCourier != 'All') {
+                            await accountsProvider.fetchOrdersByMarketplace(
+                                selectedCourier,
+                                2,
+                                accountsProvider.currentPage,
+                                date: picked,
+                                mode: selectedPaymentMode);
+                          } else {
+                            await accountsProvider.fetchAccountedOrders(
+                                accountsProvider.currentPageBooked,
+                                date: picked,
+                                mode: selectedPaymentMode);
+                          }
+
                           snackBarColor = AppColors.green; // Success: Green
-                        } else if (resultMessage.contains('error') || resultMessage.contains('failed')) {
+                        } else if (resultMessage.contains('error') ||
+                            resultMessage.contains('failed')) {
                           snackBarColor = AppColors.cardsred; // Error: Red
                         } else {
                           snackBarColor = AppColors.orange; // Other: Orange
@@ -473,6 +579,12 @@ class _AccountsSectionPageState extends State<AccountsSectionPage> with SingleTi
               onPressed: accountsProvider.isRefreshingOrders
                   ? null
                   : () async {
+                      setState(() {
+                        selectedCourier = 'All';
+                        _selectedDate = 'Select Date';
+                        picked = null;
+                        selectedPaymentMode = '';
+                      });
                       _refreshBookedOrders();
                     },
               child: accountsProvider.isRefreshingOrders
@@ -495,7 +607,8 @@ class _AccountsSectionPageState extends State<AccountsSectionPage> with SingleTi
     );
   }
 
-  Widget _buildTableHeader(int selectedCount, AccountsProvider accountsProvider) {
+  Widget _buildTableHeader(
+      int selectedCount, AccountsProvider accountsProvider) {
     return Container(
       color: Colors.grey[300],
       padding: const EdgeInsets.symmetric(vertical: 12),
@@ -529,7 +642,8 @@ class _AccountsSectionPageState extends State<AccountsSectionPage> with SingleTi
       child: Center(
         child: Text(
           title,
-          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.black87),
+          style: const TextStyle(
+              fontWeight: FontWeight.bold, fontSize: 16, color: Colors.black87),
         ),
       ),
     );

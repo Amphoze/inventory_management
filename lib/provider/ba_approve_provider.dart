@@ -107,7 +107,7 @@ class BaApproveProvider with ChangeNotifier {
 
   Future<String> cancelOrders(
       BuildContext context, List<String> orderIds) async {
-    String baseUrl = await ApiUrls.getBaseUrl();
+    String baseUrl = await Constants.getBaseUrl();
     String cancelOrderUrl = '$baseUrl/orders/cancel';
     // final String? token = await _getToken();
 
@@ -167,7 +167,7 @@ class BaApproveProvider with ChangeNotifier {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('authToken') ?? '';
     var url =
-        '${await ApiUrls.getBaseUrl()}/orders?orderStatus=2&ba_approve=false&page=';
+        '${await Constants.getBaseUrl()}/orders?orderStatus=2&ba_approve=false&page=';
 
     if (date != null || date == 'Select Date') {
       String formattedDate = DateFormat('yyyy-MM-dd').format(date!);
@@ -244,7 +244,7 @@ class BaApproveProvider with ChangeNotifier {
     final token = prefs.getString('authToken') ?? ''; // Fetch the token
 
     final url =
-        '${await ApiUrls.getBaseUrl()}/orders?orderStatus=2&ba_approve=false&order_id=$query';
+        '${await Constants.getBaseUrl()}/orders?orderStatus=2&ba_approve=false&order_id=$query';
 
     print('Searching orders with term: $query');
 
@@ -309,7 +309,7 @@ class BaApproveProvider with ChangeNotifier {
 
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('authToken') ?? '';
-    String url = '${await ApiUrls.getBaseUrl()}/orders/ba_approve';
+    String url = '${await Constants.getBaseUrl()}/orders/ba_approve';
 
     try {
       final response = await http.post(
@@ -347,7 +347,7 @@ class BaApproveProvider with ChangeNotifier {
   Future<void> fetchOrdersByMarketplace(
       String marketplace, int orderStatus, int page,
       {DateTime? date}) async {
-    String baseUrl = '${await ApiUrls.getBaseUrl()}/orders';
+    String baseUrl = '${await Constants.getBaseUrl()}/orders';
     String url =
         '$baseUrl?orderStatus=$orderStatus&ba_approve=false&marketplace=$marketplace&page=$page';
 

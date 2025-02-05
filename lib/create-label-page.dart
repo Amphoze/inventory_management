@@ -321,7 +321,7 @@ class _CreateLabelPageState extends State<CreateLabelPage> {
   //   );
   // }
 
-//   Widget dropDown() {
+  //   Widget dropDown() {
 //     return DropdownButtonHideUnderline(
 //       child: Card(
 //         elevation: 10,
@@ -419,7 +419,6 @@ class _CreateLabelPageState extends State<CreateLabelPage> {
 //           //     List<String> parts = newValue.split(':');
 //           //     int selectedIndex = int.parse(parts[0]);
 //           //     String displayName = parts[1];
-
 //           //     labelPageProvider!.updateSelectedIndex(selectedIndex);
 //           //     // var selectedProduct = labelPageProvider!.productDeatils[selectedIndex];
 //           //     // print("Full product details: $selectedProduct");

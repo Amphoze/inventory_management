@@ -114,7 +114,7 @@ class InventoryProvider with ChangeNotifier {
   // }
 
   Future<void> fetchInventory({int page = 1}) async {
-    String baseUrl = await ApiUrls.getBaseUrl();
+    String baseUrl = await Constants.getBaseUrl();
     isLoading = true;
     errorMessage = null;
     notifyListeners();
@@ -224,7 +224,7 @@ class InventoryProvider with ChangeNotifier {
   final List<Map<String, dynamic>> replicationInventory = [];
 
   Future<Map<String, dynamic>> searchByInventory(String query) async {
-    String baseUrl = await ApiUrls.getBaseUrl();
+    String baseUrl = await Constants.getBaseUrl();
     log(query);
 
     final pref = await SharedPreferences.getInstance();
@@ -355,7 +355,7 @@ class InventoryProvider with ChangeNotifier {
 
   Future<void> updateInventoryQuantity(String inventoryId, int newQuantity,
       String warehousId, String reason) async {
-    String baseUrl = await ApiUrls.getBaseUrl();
+    String baseUrl = await Constants.getBaseUrl();
     isLoading = true;
     errorMessage = null;
     notifyListeners();
@@ -380,9 +380,11 @@ class InventoryProvider with ChangeNotifier {
           'Authorization': 'Bearer $token',
         },
         body: json.encode({
-          'newTotal': newQuantity,
+          'quantityChange': newQuantity,
+          // 'newTotal': newQuantity,
           'warehouseId': warehousId,
           'additionalInfo': {'reason': reason},
+          'action': 'change'
         }),
       );
 
@@ -415,7 +417,7 @@ class InventoryProvider with ChangeNotifier {
     String sku,
     int newQuantity,
   ) async {
-    String baseUrl = await ApiUrls.getBaseUrl();
+    String baseUrl = await Constants.getBaseUrl();
     isLoading = true;
     errorMessage = null;
     notifyListeners();
@@ -476,7 +478,7 @@ class InventoryProvider with ChangeNotifier {
   }
 
   Future<String?> getInventoryItems() async {
-    String baseUrl = await ApiUrls.getBaseUrl();
+    String baseUrl = await Constants.getBaseUrl();
     // _isLoading = true;
     errorMessage = null;
     notifyListeners();

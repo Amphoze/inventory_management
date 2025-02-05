@@ -26,7 +26,7 @@ class _RoutingPageState extends State<RoutingPage>
   late TextEditingController _searchControllerFailed;
   final TextEditingController _pageController = TextEditingController();
   final TextEditingController pageController = TextEditingController();
-  String _selectedReadyDate = 'Select Date';
+  String _selectedDate = 'Select Date';
   String selectedCourier = 'All';
 
   @override
@@ -39,7 +39,7 @@ class _RoutingPageState extends State<RoutingPage>
     _tabController.addListener(() {
       if (_tabController.indexIsChanging) {
         setState(() {
-          _selectedReadyDate = 'Select Date';
+          _selectedDate = 'Select Date';
         });
         _reloadOrders();
         _searchController.clear();
@@ -153,10 +153,10 @@ class _RoutingPageState extends State<RoutingPage>
                     Column(
                       children: [
                         Text(
-                          _selectedReadyDate,
+                          _selectedDate,
                           style: TextStyle(
                             fontSize: 11,
-                            color: _selectedReadyDate == 'Select Date'
+                            color: _selectedDate == 'Select Date'
                                 ? Colors.grey
                                 : AppColors.primaryBlue,
                           ),
@@ -189,7 +189,7 @@ class _RoutingPageState extends State<RoutingPage>
                                 String formattedDate =
                                     DateFormat('dd-MM-yyyy').format(picked);
                                 setState(() {
-                                  _selectedReadyDate = formattedDate;
+                                  _selectedDate = formattedDate;
                                 });
 
                                 if (selectedCourier != 'All') {
@@ -239,18 +239,18 @@ class _RoutingPageState extends State<RoutingPage>
                                 if (value == 'All') {
                                   log("value: $value");
                                   log("selectedCourier: $selectedCourier");
-                                  log("selectedDate: $_selectedReadyDate");
+                                  log("selectedDate: $_selectedDate");
                                   pro.fetchOrders(
                                     page: pro.currentPageReady,
-                                    date: _selectedReadyDate == 'Select Date'
+                                    date: _selectedDate == 'Select Date'
                                         ? null
-                                        : DateTime.parse(_selectedReadyDate),
+                                        : DateTime.parse(_selectedDate),
                                   );
                                 } else {
                                   DateTime? selectedDate;
-                                  if (_selectedReadyDate != 'Select Date') {
+                                  if (_selectedDate != 'Select Date') {
                                     selectedDate = DateFormat('yyyy-MM-dd')
-                                        .parse(_selectedReadyDate);
+                                        .parse(_selectedDate);
                                   }
 
                                   log("selectedDate: $selectedDate");
@@ -373,6 +373,10 @@ class _RoutingPageState extends State<RoutingPage>
                       ),
                       onPressed: () {
                         // Call fetchOrders method on refresh button press
+                        setState(() {
+                        selectedCourier = 'All';
+                        _selectedDate = 'Select Date';
+                      });
                         Provider.of<RoutingProvider>(context, listen: false)
                             .fetchOrders();
                         Provider.of<RoutingProvider>(context, listen: false)

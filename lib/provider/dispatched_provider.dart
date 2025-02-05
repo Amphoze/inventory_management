@@ -56,7 +56,7 @@ class DispatchedProvider with ChangeNotifier {
 
   Future<String> cancelOrders(
       BuildContext context, List<String> orderIds) async {
-    String baseUrl = await ApiUrls.getBaseUrl();
+    String baseUrl = await Constants.getBaseUrl();
     String cancelOrderUrl = '$baseUrl/orders/cancel';
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('authToken') ?? '';
@@ -113,7 +113,7 @@ class DispatchedProvider with ChangeNotifier {
 
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('authToken') ?? '';
-    String url = '${await ApiUrls.getBaseUrl()}/orders?orderStatus=9&page=';
+    String url = '${await Constants.getBaseUrl()}/orders?orderStatus=9&page=';
 
     try {
       final response = await http.get(Uri.parse('$url$currentPage'), headers: {
@@ -227,7 +227,7 @@ class DispatchedProvider with ChangeNotifier {
     }
 
     if (selectedOrderIds.isNotEmpty) {
-      String url = '${await ApiUrls.getBaseUrl()}/orders/return';
+      String url = '${await Constants.getBaseUrl()}/orders/return';
 
       try {
         final body = json.encode({
@@ -299,7 +299,7 @@ class DispatchedProvider with ChangeNotifier {
     final token = prefs.getString('authToken') ?? '';
 
     final url =
-        '${await ApiUrls.getBaseUrl()}/orders?orderStatus=9&order_id=$query';
+        '${await Constants.getBaseUrl()}/orders?orderStatus=9&order_id=$query';
 
     print('Searching failed orders with term: $query');
 
@@ -344,7 +344,7 @@ class DispatchedProvider with ChangeNotifier {
 
   Future<String> updateOrderTrackingStatus(
       BuildContext context, String id, String trackingStatus) async {
-    String baseUrl = await ApiUrls.getBaseUrl();
+    String baseUrl = await Constants.getBaseUrl();
     String updateOrderUrl = '$baseUrl/orders/$id';
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('authToken') ?? '';

@@ -6,7 +6,6 @@ import 'package:provider/provider.dart';
 import 'package:inventory_management/Custom-Files/colors.dart';
 import 'package:inventory_management/Api/auth_provider.dart';
 import 'package:intl/intl.dart';
-// Import the html library
 
 class ProductDataDisplay extends StatefulWidget {
   const ProductDataDisplay({super.key});
@@ -21,8 +20,7 @@ class _ProductDataDisplayState extends State<ProductDataDisplay> {
 
   Future<void> _uploadProducts(BuildContext context) async {
     final authProvider = AuthProvider();
-    final productDataProvider =
-        Provider.of<ProductDataProvider>(context, listen: false);
+    final productDataProvider = Provider.of<ProductDataProvider>(context, listen: false);
 
     if (productDataProvider.dataGroups.isEmpty) {
       _showMessage(context, 'No data available to upload.', isError: true);
@@ -37,8 +35,7 @@ class _ProductDataDisplayState extends State<ProductDataDisplay> {
 
     List<Map<String, dynamic>> productApiData = [];
     for (var productData in productDataProvider.dataGroups) {
-      if ((productData['sku']?.isEmpty ?? true) &&
-          (productData['displayName']?.isEmpty ?? true)) {
+      if ((productData['sku']?.isEmpty ?? true) && (productData['displayName']?.isEmpty ?? true)) {
         invalidProducts.add(productData);
         failedProducts.add({
           'sku': 'N/A',
@@ -50,8 +47,7 @@ class _ProductDataDisplayState extends State<ProductDataDisplay> {
         invalidProducts.add(productData);
         failedProducts.add({
           'sku': 'N/A',
-          'reason':
-              'Product with display name "${productData['displayName']}" is missing a SKU.',
+          'reason': 'Product with display name "${productData['displayName']}" is missing a SKU.',
           'timestamp': DateFormat('yyyy-MM-dd - kk:mm').format(DateTime.now()),
         });
         continue;
@@ -59,65 +55,33 @@ class _ProductDataDisplayState extends State<ProductDataDisplay> {
         invalidProducts.add(productData);
         failedProducts.add({
           'sku': productData['sku'] ?? 'N/A',
-          'reason':
-              'Product with SKU "${productData['sku']}" is missing a display name.',
+          'reason': 'Product with SKU "${productData['sku']}" is missing a display name.',
           'timestamp': DateFormat('yyyy-MM-dd - kk:mm').format(DateTime.now()),
         });
         continue;
       }
 
       Map<String, dynamic> productMap = {
-        'displayName': productData['displayName']?.isEmpty ?? true
-            ? null
-            : productData['displayName'],
-        'parentSku': productData['parentSku']?.isEmpty ?? true
-            ? null
-            : productData['parentSku'],
+        'displayName': productData['displayName']?.isEmpty ?? true ? null : productData['displayName'],
+        'parentSku': productData['parentSku']?.isEmpty ?? true ? null : productData['parentSku'],
         'sku': productData['sku']?.isEmpty ?? true ? null : productData['sku'],
-        'netWeight': productData['netWeight']?.isEmpty ?? true
-            ? null
-            : productData['netWeight'],
-        'grossWeight': productData['grossWeight']?.isEmpty ?? true
-            ? null
-            : productData['grossWeight'],
-        'cost':
-            productData['cost']?.isEmpty ?? true ? null : productData['cost'],
+        'netWeight': productData['netWeight']?.isEmpty ?? true ? null : productData['netWeight'],
+        'grossWeight': productData['grossWeight']?.isEmpty ?? true ? null : productData['grossWeight'],
+        'cost': productData['cost']?.isEmpty ?? true ? null : productData['cost'],
         'mrp': productData['mrp']?.isEmpty ?? true ? null : productData['mrp'],
         'ean': productData['ean']?.isEmpty ?? true ? null : productData['ean'],
-        'brand_id': productData['brand_id']?.isEmpty ?? true
-            ? null
-            : productData['brand_id'],
-        'tax_rule': productData['tax_rule']?.isEmpty ?? true
-            ? null
-            : productData['tax_rule'],
-        'description': productData['description']?.isEmpty ?? true
-            ? null
-            : productData['description'],
-        'technicalName': productData['technicalName']?.isEmpty ?? true
-            ? null
-            : productData['technicalName'],
-        'labelSku': productData['labelSku']?.isEmpty ?? true
-            ? null
-            : productData['labelSku'],
-        'box_name': productData['box_name']?.isEmpty ?? true
-            ? null
-            : productData['box_name'],
-        'categoryName': productData['categoryName']?.isEmpty ?? true
-            ? null
-            : productData['categoryName'],
-        'length': productData['length']?.isEmpty ?? true
-            ? null
-            : productData['length'],
-        'width':
-            productData['width']?.isEmpty ?? true ? null : productData['width'],
-        'height': productData['height']?.isEmpty ?? true
-            ? null
-            : productData['height'],
-        'shopifyImage': productData['shopifyImage']?.isEmpty ?? true
-            ? null
-            : productData['shopifyImage'],
-        'grade':
-            productData['grade']?.isEmpty ?? true ? null : productData['grade'],
+        'brand_id': productData['brand_id']?.isEmpty ?? true ? null : productData['brand_id'],
+        'tax_rule': productData['tax_rule']?.isEmpty ?? true ? null : productData['tax_rule'],
+        'description': productData['description']?.isEmpty ?? true ? null : productData['description'],
+        'technicalName': productData['technicalName']?.isEmpty ?? true ? null : productData['technicalName'],
+        'labelSku': productData['labelSku']?.isEmpty ?? true ? null : productData['labelSku'],
+        'box_name': productData['box_name']?.isEmpty ?? true ? null : productData['box_name'],
+        'categoryName': productData['categoryName']?.isEmpty ?? true ? null : productData['categoryName'],
+        'length': productData['length']?.isEmpty ?? true ? null : productData['length'],
+        'width': productData['width']?.isEmpty ?? true ? null : productData['width'],
+        'height': productData['height']?.isEmpty ?? true ? null : productData['height'],
+        'shopifyImage': productData['shopifyImage']?.isEmpty ?? true ? null : productData['shopifyImage'],
+        'grade': productData['grade']?.isEmpty ?? true ? null : productData['grade'],
       };
 
       productApiData.add(productMap);
@@ -143,8 +107,7 @@ class _ProductDataDisplayState extends State<ProductDataDisplay> {
           failedProducts.add({
             'sku': sku,
             'reason': reason,
-            'timestamp':
-                DateFormat('yyyy-MM-dd - kk:mm').format(DateTime.now()),
+            'timestamp': DateFormat('yyyy-MM-dd - kk:mm').format(DateTime.now()),
           });
 
           errorMessages.add('Failed to upload SKU: $sku - Reason: $reason');
@@ -171,14 +134,11 @@ class _ProductDataDisplayState extends State<ProductDataDisplay> {
 
     // Notify user of invalid products
     if (invalidProducts.isNotEmpty) {
-      _showMessage(context,
-          '${invalidProducts.length} products are invalid and were not uploaded.',
-          isError: true);
+      _showMessage(context, '${invalidProducts.length} products are invalid and were not uploaded.', isError: true);
     }
   }
 
-  void _showMessage(BuildContext context, String message,
-      {bool isError = false}) {
+  void _showMessage(BuildContext context, String message, {bool isError = false}) {
     print(message);
 
     ScaffoldMessenger.of(context).showSnackBar(
@@ -202,8 +162,7 @@ class _ProductDataDisplayState extends State<ProductDataDisplay> {
     final productDataProvider = Provider.of<ProductDataProvider>(context);
 
     final double screenWidth = MediaQuery.of(context).size.width;
-    final double baseTextSize =
-        screenWidth > 1200 ? 16.0 : (screenWidth > 800 ? 15.0 : 14.0);
+    final double baseTextSize = screenWidth > 1200 ? 16.0 : (screenWidth > 800 ? 15.0 : 14.0);
 
     return Scaffold(
       backgroundColor: AppColors.white,
@@ -231,12 +190,9 @@ class _ProductDataDisplayState extends State<ProductDataDisplay> {
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(10),
                       ),
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 24.0, vertical: 12.0),
+                      padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 12.0),
                     ),
-                    onPressed: productDataProvider.isUploading
-                        ? null
-                        : () => _uploadProducts(context),
+                    onPressed: productDataProvider.isUploading ? null : () => _uploadProducts(context),
                     child: const Text('Upload Products'),
                   ),
                   IconButton(
@@ -250,8 +206,7 @@ class _ProductDataDisplayState extends State<ProductDataDisplay> {
                 ],
                 const SizedBox(width: 16),
                 ElevatedButton(
-                  onPressed: () =>
-                      AuthProvider().downloadTemplate(context, 'product'),
+                  onPressed: () => AuthProvider().downloadTemplate(context, 'product'),
                   child: const Text('Download Template'),
                 ),
                 const SizedBox(width: 16.0),
@@ -268,8 +223,7 @@ class _ProductDataDisplayState extends State<ProductDataDisplay> {
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10),
                     ),
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 24.0, vertical: 12.0),
+                    padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 12.0),
                   ),
                   child: const Text('Failed Products'),
                 ),
@@ -282,8 +236,7 @@ class _ProductDataDisplayState extends State<ProductDataDisplay> {
                   : ListView.builder(
                       itemCount: productDataProvider.dataGroups.length,
                       itemBuilder: (context, index) {
-                        Map<String, String> dataMap =
-                            productDataProvider.dataGroups[index];
+                        Map<String, String> dataMap = productDataProvider.dataGroups[index];
 
                         Logger().e('sheet data: $dataMap');
 
@@ -293,8 +246,7 @@ class _ProductDataDisplayState extends State<ProductDataDisplay> {
                             decoration: BoxDecoration(
                               color: AppColors.white,
                               borderRadius: BorderRadius.circular(8),
-                              border: Border.all(
-                                  color: AppColors.blueAccent, width: 1),
+                              border: Border.all(color: AppColors.blueAccent, width: 1),
                               boxShadow: [
                                 BoxShadow(
                                   color: AppColors.grey.withOpacity(0.5),
@@ -308,8 +260,7 @@ class _ProductDataDisplayState extends State<ProductDataDisplay> {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                if (dataMap['shopifyImage'] != null &&
-                                    dataMap['shopifyImage']!.isNotEmpty)
+                                if (dataMap['shopifyImage'] != null && dataMap['shopifyImage']!.isNotEmpty)
                                   ClipRRect(
                                     borderRadius: BorderRadius.circular(8),
                                     child: Image.network(
@@ -347,8 +298,7 @@ class _ProductDataDisplayState extends State<ProductDataDisplay> {
                           title: Text('SKU: ${failedProduct['sku']}'),
                           subtitle: Text(
                             'Reason: ${failedProduct['reason']}\nFailed at: ${failedProduct['timestamp']}',
-                            style: const TextStyle(
-                                color: Colors.red), // Optional styling
+                            style: const TextStyle(color: Colors.red), // Optional styling
                           ),
                         );
                       },
@@ -374,16 +324,14 @@ class _ProductDataDisplayState extends State<ProductDataDisplay> {
 
     for (int i = 0; i < fieldsToShow.length; i += 2) {
       String leftField = fieldsToShow[i];
-      String rightField =
-          fieldsToShow.length > i + 1 ? fieldsToShow[i + 1] : '';
+      String rightField = fieldsToShow.length > i + 1 ? fieldsToShow[i + 1] : '';
 
       rowWidgets.add(
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             _buildTwoColumnRow(leftField, dataMap[leftField], baseTextSize),
-            if (rightField.isNotEmpty)
-              _buildTwoColumnRow(rightField, dataMap[rightField], baseTextSize),
+            if (rightField.isNotEmpty) _buildTwoColumnRow(rightField, dataMap[rightField], baseTextSize),
           ],
         ),
       );
@@ -395,10 +343,8 @@ class _ProductDataDisplayState extends State<ProductDataDisplay> {
     );
   }
 
-  Widget _buildTwoColumnRow(
-      String fieldName, dynamic value, double baseTextSize) {
-    String displayValue =
-        value != null && value.isNotEmpty ? value.toString() : '';
+  Widget _buildTwoColumnRow(String fieldName, dynamic value, double baseTextSize) {
+    String displayValue = value != null && value.isNotEmpty ? value.toString() : '';
     // String displayValue = value != null ? value.toString() : '';
 
     return Expanded(

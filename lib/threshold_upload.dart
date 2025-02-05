@@ -75,7 +75,7 @@ class _ThresholdUploadState extends State<ThresholdUpload> {
         final quantity = num.parse(_csvData[i][1].toString());
 
         final response = await http.put(
-          Uri.parse('${await ApiUrls.getBaseUrl()}/inventory?sku=$sku'),
+          Uri.parse('${await Constants.getBaseUrl()}/inventory?sku=$sku'),
           headers: {
             'Content-Type': 'application/json',
             'Authorization': 'Bearer $token',

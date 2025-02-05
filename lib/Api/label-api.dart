@@ -13,17 +13,7 @@ class LabelApi with ChangeNotifier {
   int _currentPage = 1;
   int _totalPage = 0;
   bool _loading = false;
-  // late final String _baseUrl;
-
-  // LabelApi() {
-  //   _initialize();
-  // }
-
-  // Future<void> _initialize() async {
-  //   _baseUrl = await ApiUrls.getBaseUrl();
-  // }
-
-  // Get all labels
+  
   List<Map<String, dynamic>> get labelInformation => _labelInformation;
   int get totalPage => _totalPage;
   int get currentPage => _currentPage;
@@ -50,7 +40,7 @@ class LabelApi with ChangeNotifier {
 
   Future<void> updateLabelQuantity(
       String labelId, int newQuantity, String reason) async {
-    String baseUrl = await ApiUrls.getBaseUrl();
+    String baseUrl = await Constants.getBaseUrl();
     loadingStatus(true);
     log("Id $labelId");
 
@@ -106,7 +96,7 @@ class LabelApi with ChangeNotifier {
   }
 
   Future<Map<String, dynamic>> getLabel({int page = 1}) async {
-    String baseUrl = await ApiUrls.getBaseUrl();
+    String baseUrl = await Constants.getBaseUrl();
     loadingStatus(true);
 
     final url = Uri.parse('$baseUrl/label?page=$page');
@@ -158,7 +148,7 @@ class LabelApi with ChangeNotifier {
 
   // Search by label
   Future<Map<String, dynamic>> searchByLabel(String lbl) async {
-    String baseUrl = await ApiUrls.getBaseUrl();
+    String baseUrl = await Constants.getBaseUrl();
     final url = Uri.parse('$baseUrl/label?labelSku=$lbl');
     try {
       final token = await AuthProvider().getToken();

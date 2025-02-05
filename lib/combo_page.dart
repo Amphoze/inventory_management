@@ -28,6 +28,7 @@ class _ComboPageState extends State<ComboPage> {
   final _idController = TextEditingController();
   final _nameController = TextEditingController();
   final _skuController = TextEditingController();
+  final _weightController = TextEditingController();
   final _mrpController = TextEditingController();
   final _costController = TextEditingController();
 
@@ -39,6 +40,7 @@ class _ComboPageState extends State<ComboPage> {
   void _clearFormFields() {
     _idController.clear();
     _nameController.clear();
+    _weightController.clear();
     _mrpController.clear();
     _costController.clear();
     _skuController.clear();
@@ -63,6 +65,7 @@ class _ComboPageState extends State<ComboPage> {
       id: _idController.text,
       products: selectedProductIds,
       name: _nameController.text,
+      comboWeight: double.tryParse(_weightController.text.trim()),
       mrp: _mrpController.text,
       cost: _costController.text,
       comboSku: _skuController.text,
@@ -173,12 +176,26 @@ class _ComboPageState extends State<ComboPage> {
   // }
   final TextEditingController _searchController = TextEditingController();
 
+  // In your provider class
+  final Map<String, ValueNotifier<int?>> _quantityNotifiers = {};
+
+  ValueNotifier<int?> getQuantityNotifier(String sku) {
+    if (!_quantityNotifiers.containsKey(sku)) {
+      _quantityNotifiers[sku] = ValueNotifier<int?>(null);
+      // Fetch the initial value
+      context.read<ComboProvider>().fetchQuantityBySku(sku).then((value) {
+        _quantityNotifiers[sku]?.value = value;
+      });
+    }
+    return _quantityNotifiers[sku]!;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.white,
       body: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(8.0),
         child: Consumer<ComboProvider>(
           builder: (context, pro, child) {
             return Column(
@@ -366,6 +383,18 @@ class _ComboPageState extends State<ComboPage> {
                             ),
                             const SizedBox(height: 16),
                             TextFormField(
+                              controller: _weightController,
+                              decoration: const InputDecoration(labelText: 'Weight'),
+                              keyboardType: TextInputType.number,
+                              validator: (value) {
+                                if (value == null || value.isEmpty) {
+                                  return 'Please enter combo weight';
+                                }
+                                return null;
+                              },
+                            ),
+                            const SizedBox(height: 16),
+                            TextFormField(
                               controller: _mrpController,
                               decoration: const InputDecoration(labelText: 'MRP'),
                               keyboardType: TextInputType.number,
@@ -484,13 +513,15 @@ class _ComboPageState extends State<ComboPage> {
                                   final images = combo['images'] as List<dynamic>? ?? [];
                                   final products = combo['products'] as List<dynamic>? ?? [];
 
+                                  print("combo hai: $combo");
+
                                   return Card(
                                     color: Colors.white,
                                     elevation: 4,
                                     shape: RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(15),
                                     ),
-                                    margin: const EdgeInsets.symmetric(vertical: 7, horizontal: 16),
+                                    margin: const EdgeInsets.symmetric(vertical: 7, horizontal: 8),
                                     child: Column(
                                       crossAxisAlignment: CrossAxisAlignment.stretch,
                                       children: [
@@ -515,9 +546,149 @@ class _ComboPageState extends State<ComboPage> {
                                               ),
                                               Row(
                                                 children: [
+                                                  _buildCompactInfo(label: 'Weight', value: '${combo['comboWeight'] ?? 'N/A'} Kg'),
                                                   _buildCompactInfo(label: 'MRP', value: '₹${combo['mrp'] ?? 'N/A'}'),
                                                   _buildCompactInfo(label: 'Cost', value: '₹${combo['cost'] ?? 'N/A'}'),
                                                   _buildCompactInfo(label: 'SKU', value: combo['comboSku'] ?? 'N/A'),
+                                                  Padding(
+                                                    padding: const EdgeInsets.only(left: 8.0),
+                                                    child: ElevatedButton(
+                                                      onPressed: () async {
+                                                        final nameController = TextEditingController(text: combo['name'] ?? '');
+                                                        final weightController = TextEditingController(text: combo['comboWeight']?.toString() ?? '');
+
+                                                        try {
+                                                          await showDialog(
+                                                            context: context,
+                                                            builder: (BuildContext context) => AlertDialog(
+                                                              title: const Text('Edit Combo'),
+                                                              content: Column(
+                                                                mainAxisSize: MainAxisSize.min,
+                                                                children: [
+                                                                  TextFormField(
+                                                                    controller: nameController,
+                                                                    decoration: const InputDecoration(
+                                                                      labelText: 'Name',
+                                                                      hintText: 'Enter combo name',
+                                                                    ),
+                                                                    textInputAction: TextInputAction.next,
+                                                                    validator: (value) => value?.isEmpty ?? true ? 'Name is required' : null,
+                                                                  ),
+                                                                  const SizedBox(height: 16),
+                                                                  TextFormField(
+                                                                    controller: weightController,
+                                                                    decoration: const InputDecoration(
+                                                                      labelText: 'Weight',
+                                                                      hintText: 'Enter weight',
+                                                                    ),
+                                                                    keyboardType: TextInputType.numberWithOptions(decimal: true),
+                                                                    textInputAction: TextInputAction.done,
+                                                                    validator: (value) {
+                                                                      if (value?.isEmpty ?? true) return 'Weight is required';
+                                                                      if (double.tryParse(value!) == null) return 'Invalid weight';
+                                                                      return null;
+                                                                    },
+                                                                  ),
+                                                                ],
+                                                              ),
+                                                              actions: [
+                                                                TextButton(
+                                                                  onPressed: () => Navigator.of(context).pop(),
+                                                                  child: const Text('Cancel'),
+                                                                ),
+                                                                TextButton(
+                                                                  onPressed: () async {
+                                                                    if (nameController.text.isEmpty || weightController.text.isEmpty) {
+                                                                      ScaffoldMessenger.of(context).showSnackBar(
+                                                                        const SnackBar(content: Text('Please fill all fields')),
+                                                                      );
+                                                                      return;
+                                                                    }
+
+                                                                    try {
+                                                                      // Show loading dialog
+                                                                      showDialog(
+                                                                        context: context,
+                                                                        barrierDismissible: false,
+                                                                        builder: (context) => const Dialog(
+                                                                          child: Padding(
+                                                                            padding: EdgeInsets.symmetric(vertical: 20, horizontal: 24),
+                                                                            child: Row(
+                                                                              mainAxisSize: MainAxisSize.min,
+                                                                              children: [
+                                                                                CircularProgressIndicator(),
+                                                                                SizedBox(width: 16),
+                                                                                Text('Updating...'),
+                                                                              ],
+                                                                            ),
+                                                                          ),
+                                                                        ),
+                                                                      );
+
+                                                                      // Perform update
+                                                                      final res = await pro.updateCombo(
+                                                                        combo['_id'],
+                                                                        nameController.text.trim(),
+                                                                        weightController.text.trim(),
+                                                                      );
+
+                                                                      // Close loading dialog
+                                                                      if (context.mounted) Navigator.of(context).pop();
+
+                                                                      // Show result dialog
+                                                                      if (context.mounted) {
+                                                                        await showDialog(
+                                                                          context: context,
+                                                                          builder: (context) => AlertDialog(
+                                                                            content: Text(res),
+                                                                            actions: [
+                                                                              TextButton(
+                                                                                onPressed: () => Navigator.of(context).pop(),
+                                                                                child: const Text('OK'),
+                                                                              ),
+                                                                            ],
+                                                                          ),
+                                                                        );
+                                                                      }
+
+                                                                      // Close edit dialog
+                                                                      if (context.mounted) Navigator.of(context).pop();
+                                                                      pro.fetchCombos();
+                                                                    } catch (e) {
+                                                                      // Close loading dialog if open
+                                                                      if (context.mounted) Navigator.of(context).pop();
+
+                                                                      // Show error dialog
+                                                                      if (context.mounted) {
+                                                                        await showDialog(
+                                                                          context: context,
+                                                                          builder: (context) => AlertDialog(
+                                                                            title: const Text('Error'),
+                                                                            content: Text('Failed to update: ${e.toString()}'),
+                                                                            actions: [
+                                                                              TextButton(
+                                                                                onPressed: () => Navigator.of(context).pop(),
+                                                                                child: const Text('OK'),
+                                                                              ),
+                                                                            ],
+                                                                          ),
+                                                                        );
+                                                                      }
+                                                                    }
+                                                                  },
+                                                                  child: const Text('Submit'),
+                                                                ),
+                                                              ],
+                                                            ),
+                                                          );
+                                                        } finally {
+                                                          nameController.dispose();
+                                                          weightController.dispose();
+                                                        }
+                                                      },
+                                                      child: const Text('Edit'),
+                                                    ),
+                                                  ),
                                                 ],
                                               ),
                                             ],
@@ -638,21 +809,18 @@ class _ComboPageState extends State<ComboPage> {
                                                                 color: Colors.blue.shade50,
                                                                 borderRadius: BorderRadius.circular(20),
                                                               ),
-                                                              child: FutureBuilder<int?>(
-                                                                future: pro.fetchQuantityBySku(product['sku']),
-                                                                builder: (context, snapshot) {
-                                                                  String quantityText = 'Loading...';
-                                                                  Color textColor = Colors.grey;
+                                                              child: ValueListenableBuilder<int?>(
+                                                                valueListenable: getQuantityNotifier(product['sku']),
+                                                                builder: (context, quantity, child) {
+                                                                  String quantityText;
+                                                                  Color textColor;
 
-                                                                  if (snapshot.hasError) {
-                                                                    quantityText = 'Error';
-                                                                    textColor = Colors.red;
-                                                                  } else if (snapshot.hasData) {
-                                                                    quantityText = snapshot.data?.toString() ?? '0';
-                                                                    textColor = Colors.blue.shade700;
-                                                                  } else if (snapshot.connectionState == ConnectionState.done) {
-                                                                    quantityText = '0';
+                                                                  if (quantity == null) {
+                                                                    quantityText = 'Loading...';
                                                                     textColor = Colors.grey;
+                                                                  } else {
+                                                                    quantityText = quantity.toString();
+                                                                    textColor = Colors.blue.shade700;
                                                                   }
 
                                                                   return Row(

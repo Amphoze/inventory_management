@@ -52,8 +52,7 @@ class ProductDetailsCard extends StatelessWidget {
           textAlign: TextAlign.center,
         ),
         const SizedBox(height: 2.0),
-        if (item.product?.shopifyImage != null &&
-            item.product!.shopifyImage!.isNotEmpty)
+        if (item.product?.shopifyImage != null && item.product!.shopifyImage!.isNotEmpty)
           Image.network(
             item.product!.shopifyImage!,
             key: ValueKey(item.product!.shopifyImage),
@@ -111,8 +110,7 @@ class ProductDetailsCard extends StatelessWidget {
       children: [
         _buildInfoRow('SKU:', item.product?.sku ?? ''),
         _buildInfoRow('Quantity:', item.qty?.toString() ?? ''),
-        _buildInfoRow('Rate:',
-            'Rs.${(item.amount! / item.qty!).toStringAsFixed(1) ?? ''}'),
+        _buildInfoRow('Rate:', 'Rs.${(item.amount! / item.qty!).toStringAsFixed(1) ?? ''}'),
         _buildInfoRow('Amount:', 'Rs.${item.amount ?? ''}'),
         _buildInfoRow('Description:', item.product?.description ?? ''),
         _buildInfoRow('Technical Name:', item.product?.technicalName ?? ''),
@@ -125,13 +123,13 @@ class ProductDetailsCard extends StatelessWidget {
               child: _buildFirstDetailsColumn(),
             ),
             const SizedBox(width: 8.0),
-            Expanded(
-              child: _buildSecondDetailsColumn(),
-            ),
+            // Expanded(
+            //   child: _buildSecondDetailsColumn(),
+            // ),
             const SizedBox(width: 8.0),
-            Expanded(
-              child: _buildThirdDetailsColumn(),
-            ),
+            // Expanded(
+            //   child: _buildThirdDetailsColumn(),
+            // ),
           ],
         ),
       ],
@@ -149,7 +147,8 @@ class ProductDetailsCard extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildInfoRow('Brand:', item.product?.brand!.name ?? ''),
+        // _buildInfoRow('Brand:', 'kjdsd'),
+        _buildInfoRow('Brand:', item.product != null && item.product!.brand != null ? item.product!.brand!.name ?? '' : ''),
         _buildInfoRow(
           'Dimensions:',
           '${item.product?.dimensions?.length ?? ''} x ${item.product?.dimensions?.width ?? ''} x ${item.product?.dimensions?.height ?? ''}',
@@ -169,10 +168,8 @@ class ProductDetailsCard extends StatelessWidget {
         _buildInfoRow('EAN:', item.product?.ean ?? ''),
         _buildInfoRow('Product Grade:', item.product?.grade ?? ''),
         _buildInfoRow('Active:', item.product?.active?.toString() ?? ''),
-        _buildInfoRow(
-            'Label SKU:', item.product?.label?.labelSku.toString() ?? ''),
-        _buildInfoRow(
-            'Category:', item.product?.category?.name.toString() ?? ''),
+        _buildInfoRow('Label SKU:', item.product?.label?.labelSku.toString() ?? ''),
+        _buildInfoRow('Category:', item.product?.category?.name.toString() ?? ''),
       ],
     );
   }
@@ -187,16 +184,8 @@ class ProductDetailsCard extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         // _buildInfoRow('Color:', item.product?.color!.name ?? ''),
-        _buildInfoRow(
-            'Net Weight:',
-            item.product?.netWeight != null
-                ? '${item.product!.netWeight} kg'
-                : ''),
-        _buildInfoRow(
-            'Gross Weight:',
-            item.product?.grossWeight != null
-                ? '${item.product!.grossWeight} kg'
-                : ''),
+        _buildInfoRow('Net Weight:', item.product?.netWeight != null ? '${item.product!.netWeight} kg' : ''),
+        _buildInfoRow('Gross Weight:', item.product?.grossWeight != null ? '${item.product!.grossWeight} kg' : ''),
         // _buildInfoRow('Box Size:', item.product?.boxSize?.boxName ?? ''),
         // _buildInfoRow('Outer Package Name:',
         //     item.product?.outerPackage?.outerPackageName ?? ''),

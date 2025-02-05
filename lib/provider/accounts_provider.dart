@@ -118,7 +118,7 @@ class AccountsProvider with ChangeNotifier {
   }
 
   Future<String> cancelOrders(BuildContext context, List<String> orderIds) async {
-    String baseUrl = await ApiUrls.getBaseUrl();
+    String baseUrl = await Constants.getBaseUrl();
     String cancelOrderUrl = '$baseUrl/orders/cancel';
     // final String? token = await _getToken();
 
@@ -152,11 +152,10 @@ class AccountsProvider with ChangeNotifier {
       final responseData = json.decode(response.body);
 
       if (response.statusCode == 200) {
-        // After successful confirmation, fetch updated orders and notify listeners
-        await fetchOrdersWithStatus2(); // Assuming fetchOrders is a function that reloads the orders
-        setRefreshingOrders(false); // Clear selected order IDs
+        // await fetchOrdersWithStatus2();
+        // setRefreshingOrders(false);
         setCancelStatus(false);
-        notifyListeners(); // Notify the UI to rebuild
+        notifyListeners();
 
         return responseData['message'] ?? 'Orders cancelled successfully';
       } else {
@@ -170,25 +169,37 @@ class AccountsProvider with ChangeNotifier {
     }
   }
 
-  Future<void> fetchOrdersWithStatus2({DateTime? date}) async {
+  Future<void> fetchOrdersWithStatus2({
+    DateTime? date,
+    String? mode,
+  }) async {
     _isLoading = true;
     setRefreshingOrders(true);
     notifyListeners();
 
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('authToken') ?? '';
-    var url = '${await ApiUrls.getBaseUrl()}/orders?orderStatus=2&ba_approve=true&page=';
+    var url = '${await Constants.getBaseUrl()}/orders?orderStatus=2&ba_approve=true';
 
-    if (date != null || date == 'Select Date') {
-      String formattedDate = DateFormat('yyyy-MM-dd').format(date!);
+    if (date != null) {
+      String formattedDate = DateFormat('yyyy-MM-dd').format(date);
       url += '&date=$formattedDate';
+      if (mode != '') {
+        url += '&payment_mode=$mode';
+      }
+      url += '&page=$_currentPage';
     }
 
+    Logger().e('final url: $url');
+
     try {
-      final response = await http.get(Uri.parse('$url$_currentPage'), headers: {
-        'Authorization': 'Bearer $token',
-        'Content-Type': 'application/json',
-      });
+      final response = await http.get(
+        Uri.parse(url),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+      );
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
@@ -244,7 +255,7 @@ class AccountsProvider with ChangeNotifier {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('authToken') ?? ''; // Fetch the token
 
-    String url = '${await ApiUrls.getBaseUrl()}/orders?orderStatus=2&ba_approve=true&order_id=$query';
+    String url = '${await Constants.getBaseUrl()}/orders?orderStatus=2&ba_approve=true&order_id=$query';
 
     if (searchType == "Order ID") {
       url += '&order_id=$query';
@@ -295,7 +306,9 @@ class AccountsProvider with ChangeNotifier {
   }
 
   // New function to update status of selected orders
-  Future<void> statusUpdate(BuildContext context) async {
+  Future<bool> statusUpdate(
+    BuildContext context,
+  ) async {
     setUpdatingOrder(true);
     notifyListeners();
     final selectedOrderIds = _orders.asMap().entries.where((entry) => _selectedProducts[entry.key]).map((entry) => entry.value.orderId).toList();
@@ -306,12 +319,12 @@ class AccountsProvider with ChangeNotifier {
       );
       setUpdatingOrder(false);
       notifyListeners();
-      return;
+      return false;
     }
 
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('authToken') ?? '';
-    String url = '${await ApiUrls.getBaseUrl()}/orders/invoice';
+    String url = '${await Constants.getBaseUrl()}/orders/invoice';
 
     try {
       final response = await http.post(
@@ -330,32 +343,40 @@ class AccountsProvider with ChangeNotifier {
           const SnackBar(content: Text('Orders updated successfully')),
         );
 
-        // Refresh the orders after updating status
-        fetchOrdersWithStatus2();
+        return true;
+
+        // fetchOrdersWithStatus2();
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Failed to update orders')),
         );
+        return false;
       }
     } catch (error) {
       print('Error updating order status: $error');
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Error while updating orders')),
       );
+      return false;
     } finally {
       setUpdatingOrder(false);
       notifyListeners();
     }
   }
 
-  Future<void> fetchOrdersByMarketplace(String marketplace, int orderStatus, int page, {DateTime? date}) async {
-    String baseUrl = '${await ApiUrls.getBaseUrl()}/orders';
+  Future<void> fetchOrdersByMarketplace(String marketplace, int orderStatus, int page, {DateTime? date, String? mode}) async {
+    String baseUrl = '${await Constants.getBaseUrl()}/orders';
     String url = '$baseUrl?orderStatus=$orderStatus&ba_approve=true&marketplace=$marketplace&page=$_currentPage';
 
-    if (date != null || date == 'Select Date') {
-      String formattedDate = DateFormat('yyyy-MM-dd').format(date!);
+    if (date != null) {
+      String formattedDate = DateFormat('yyyy-MM-dd').format(date);
       url += '&date=$formattedDate';
+      if (mode != '') {
+        url += '&payment_mode=$mode';
+      }
     }
+
+    Logger().e('ye hai url: $url');
 
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('authToken') ?? '';
@@ -423,14 +444,13 @@ class AccountsProvider with ChangeNotifier {
   }
 
   Future<bool> writeRemark(BuildContext context, String id, String msg) async {
-
     final token = await _getToken();
     if (token == null || token.isEmpty) {
       print('Token is missing. Please log in again.');
       return false;
     }
 
-    final url = '${await ApiUrls.getBaseUrl()}/orders/$id';
+    final url = '${await Constants.getBaseUrl()}/orders/$id';
     try {
       final response = await http.put(
         Uri.parse(url),
@@ -460,15 +480,19 @@ class AccountsProvider with ChangeNotifier {
     }
   }
 
-  Future<void> fetchAccountedOrders(int page, {DateTime? date}) async {
+  Future<void> fetchAccountedOrders(int page, {DateTime? date, String? mode}) async {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('authToken') ?? '';
 
-    String url = '${await ApiUrls.getBaseUrl()}/orders?checkInvoice=true&page=$page';
+    String url = '${await Constants.getBaseUrl()}/orders?checkInvoice=true';
 
     if (date != null) {
       String formattedDate = DateFormat('yyyy-MM-dd').format(date);
       url += '&date=$formattedDate';
+      if (mode != '') {
+        url += '&payment_mode=$mode';
+      }
+      url += '&page=$page';
     }
 
     try {
@@ -518,14 +542,18 @@ class AccountsProvider with ChangeNotifier {
     }
   }
 
-  Future<void> fetchBookedOrdersByMarketplace(String marketplace, int page, {DateTime? date}) async {
+  Future<void> fetchBookedOrdersByMarketplace(String marketplace, int page, {DateTime? date, String? mode}) async {
     log("$marketplace, $page");
-    String baseUrl = '${await ApiUrls.getBaseUrl()}/orders';
+    String baseUrl = '${await Constants.getBaseUrl()}/orders';
     String url = '$baseUrl?checkInvoice=true&marketplace=$marketplace&page=$page';
 
-    if (date != null || date == 'Select Date') {
-      String formattedDate = DateFormat('yyyy-MM-dd').format(date!);
+    if (date != null) {
+      String formattedDate = DateFormat('yyyy-MM-dd').format(date);
       url += '&date=$formattedDate';
+      if (mode != '') {
+        url += '&payment_mode=$mode';
+      }
+      url += '&page=$page';
     }
 
     final prefs = await SharedPreferences.getInstance();
@@ -580,7 +608,7 @@ class AccountsProvider with ChangeNotifier {
   }
 
   Future<void> searchBookedOrders(String query, String searchType) async {
-    String url = '${await ApiUrls.getBaseUrl()}/orders?checkInvoice=true';
+    String url = '${await Constants.getBaseUrl()}/orders?checkInvoice=true';
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('authToken') ?? '';
 
@@ -607,9 +635,9 @@ class AccountsProvider with ChangeNotifier {
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         // log(response.body);
-        final newData = data['orders'][0]; //////////////////////////////////////////////////////////////
+        // final newData = data['orders'][0]; //////////////////////////////////////////////////////////////
         _ordersBooked = [
-          Order.fromJson(newData)
+          Order.fromJson(data)
         ]; ////////////////////////////////////////////
         log('Orders found: $_ordersBooked');
       } else {

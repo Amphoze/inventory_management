@@ -38,9 +38,19 @@ class AuthProvider with ChangeNotifier {
 
   bool get isAuthenticated => _isAuthenticated;
 
-  Future<Map<String, dynamic>> register(String email, String password,
-      List<Map<String, dynamic>> assignedRoles) async {
-    String baseUrl = await ApiUrls.getBaseUrl();
+  void resetRoles() {
+    _isSuperAdminAssigned = false;
+    _isAdminAssigned = false;
+    _isPickerAssigned = false;
+    _isPackerAssigned = false;
+    _isCheckerAssigned = false;
+    _isRackerAssigned = false;
+    _isManifestAssigned = false;
+    notifyListeners();
+  }
+
+  Future<Map<String, dynamic>> register(String email, String password, List<Map<String, dynamic>> assignedRoles) async {
+    String baseUrl = await Constants.getBaseUrl();
 
     final url = Uri.parse('$baseUrl/register');
 
@@ -48,7 +58,9 @@ class AuthProvider with ChangeNotifier {
     try {
       final response = await http.post(
         url,
-        headers: {'Content-Type': 'application/json'},
+        headers: {
+          'Content-Type': 'application/json'
+        },
         body: json.encode({
           'email': email,
           'password': password,
@@ -64,40 +76,48 @@ class AuthProvider with ChangeNotifier {
 
       if (response.statusCode == 200) {
         // await _saveCredentials(email, password, '');
-        return {'success': true, 'data': json.decode(response.body)};
+        return {
+          'success': true,
+          'data': json.decode(response.body)
+        };
       } else if (response.statusCode == 400) {
         final errorResponse = json.decode(response.body);
         if (errorResponse['error'] == 'Email already exists') {
           return {
             'success': false,
-            'message':
-                'This email is already registered. Please use a different email or log in.'
+            'message': 'This email is already registered. Please use a different email or log in.'
           };
         }
-        return {'success': false, 'message': 'Registration failed'};
+        return {
+          'success': false,
+          'message': 'Registration failed'
+        };
       } else {
         return {
           'success': false,
-          'message':
-              'Registration failed with status code: ${response.statusCode}'
+          'message': 'Registration failed with status code: ${response.statusCode}'
         };
       }
     } catch (error) {
       print('An error occurred during registration: $error');
-      return {'success': false, 'message': 'An error occurred'};
+      return {
+        'success': false,
+        'message': 'An error occurred'
+      };
     }
   }
 
-  Future<Map<String, dynamic>> registerOtp(
-      String email, String otp, String password) async {
-    String baseUrl = await ApiUrls.getBaseUrl();
+  Future<Map<String, dynamic>> registerOtp(String email, String otp, String password) async {
+    String baseUrl = await Constants.getBaseUrl();
 
     final url = Uri.parse('$baseUrl/register-otp');
 
     try {
       final response = await http.post(
         url,
-        headers: {'Content-Type': 'application/json'},
+        headers: {
+          'Content-Type': 'application/json'
+        },
         body: json.encode({
           'email': email,
           'otp': otp,
@@ -106,28 +126,38 @@ class AuthProvider with ChangeNotifier {
       );
 
       if (response.statusCode == 200 || response.statusCode == 201) {
-        return {'success': true, 'data': json.decode(response.body)};
+        return {
+          'success': true,
+          'data': json.decode(response.body)
+        };
       } else {
-        print(
-            'OTP verification failed with status code: ${response.statusCode}');
+        print('OTP verification failed with status code: ${response.statusCode}');
         print('Response body: ${response.body}');
-        return {'success': false, 'message': 'OTP verification failed'};
+        return {
+          'success': false,
+          'message': 'OTP verification failed'
+        };
       }
     } catch (error) {
       print('An error occurred during OTP verification: $error');
-      return {'success': false, 'message': 'An error occurred'};
+      return {
+        'success': false,
+        'message': 'An error occurred'
+      };
     }
   }
 
   Future<Map<String, dynamic>> login(String email, String password) async {
-    String baseUrl = await ApiUrls.getBaseUrl();
+    String baseUrl = await Constants.getBaseUrl();
 
     final url = Uri.parse('$baseUrl/login');
 
     try {
       final response = await http.post(
         url,
-        headers: {'Content-Type': 'application/json'},
+        headers: {
+          'Content-Type': 'application/json'
+        },
         body: json.encode({
           'email': email,
           'password': password,
@@ -228,13 +258,22 @@ class AuthProvider with ChangeNotifier {
           };
         } else {
           print('Token not retrieved');
-          return {'success': false, 'data': responseData};
+          return {
+            'success': false,
+            'data': responseData
+          };
         }
       } else if (response.statusCode == 400) {
         final errorResponse = json.decode(response.body);
-        return {'success': false, 'message': errorResponse['error']};
+        return {
+          'success': false,
+          'message': errorResponse['error']
+        };
       } else if (response.statusCode == 404) {
-        return {'success': false, 'message': 'User does not exist'};
+        return {
+          'success': false,
+          'message': 'User does not exist'
+        };
       } else {
         return {
           'success': false,
@@ -243,87 +282,116 @@ class AuthProvider with ChangeNotifier {
       }
     } catch (error) {
       print('An error occurred during login: $error');
-      return {'success': false, 'message': 'An error occurred'};
+      return {
+        'success': false,
+        'message': 'An error occurred'
+      };
     }
   }
 
   Future<void> _saveToken(String token) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('authToken', token);
-    await prefs.setString(
-        'date', DateFormat('dd-MMMM-yyyy').format(DateTime.now()));
+    await prefs.setString('date', DateFormat('dd-MMMM-yyyy').format(DateTime.now()));
   }
 
   Future<Map<String, dynamic>> forgotPassword(String email) async {
-    String baseUrl = await ApiUrls.getBaseUrl();
+    String baseUrl = await Constants.getBaseUrl();
 
     final url = Uri.parse('$baseUrl/forgot-password');
 
     try {
       final response = await http.post(
         url,
-        headers: {'Content-Type': 'application/json'},
-        body: json.encode({'email': email}),
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: json.encode({
+          'email': email
+        }),
       );
 
       log('Forgot Password Response: ${response.statusCode}');
       log('Forgot Password Response Body: ${response.body}');
 
       if (response.statusCode == 200) {
-        return {'success': true, 'message': 'OTP sent to email'};
+        return {
+          'success': true,
+          'message': 'OTP sent to email'
+        };
       } else if (response.statusCode == 400) {
         final errorResponse = json.decode(response.body);
-        return {'success': false, 'message': errorResponse['error']};
+        return {
+          'success': false,
+          'message': errorResponse['error']
+        };
       } else {
         return {
           'success': false,
-          'message':
-              'Forgot password request failed with status code: ${response.statusCode}'
+          'message': 'Forgot password request failed with status code: ${response.statusCode}'
         };
       }
     } catch (error) {
       print('An error occurred during forgot password request: $error');
-      return {'success': false, 'message': 'An error occurred'};
+      return {
+        'success': false,
+        'message': 'An error occurred'
+      };
     }
   }
 
   Future<Map<String, dynamic>> verifyOtp(String email, String otp) async {
-    String baseUrl = await ApiUrls.getBaseUrl();
+    String baseUrl = await Constants.getBaseUrl();
 
     final url = Uri.parse('$baseUrl/verify-otp');
 
     try {
       final response = await http.post(
         url,
-        headers: {'Content-Type': 'application/json'},
-        body: json.encode({'email': email, 'otp': otp}),
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: json.encode({
+          'email': email,
+          'otp': otp
+        }),
       );
 
       print('Verify OTP Response: ${response.statusCode}');
       print('Verify OTP Response Body: ${response.body}');
 
       if (response.statusCode == 200 || response.statusCode == 201) {
-        return {'success': true, 'message': 'OTP verified successfully'};
+        return {
+          'success': true,
+          'message': 'OTP verified successfully'
+        };
       } else {
         final errorResponse = json.decode(response.body);
-        return {'success': false, 'message': errorResponse['error']};
+        return {
+          'success': false,
+          'message': errorResponse['error']
+        };
       }
     } catch (error) {
       print('An error occurred during OTP verification: $error');
-      return {'success': false, 'message': 'An error occurred'};
+      return {
+        'success': false,
+        'message': 'An error occurred'
+      };
     }
   }
 
-  Future<Map<String, dynamic>> resetPassword(
-      String email, String newPassword) async {
-    String baseUrl = await ApiUrls.getBaseUrl();
+  Future<Map<String, dynamic>> resetPassword(String email, String newPassword) async {
+    String baseUrl = await Constants.getBaseUrl();
 
     final url = Uri.parse('$baseUrl/reset-password');
 
     try {
       final response = await http.post(
         url,
-        headers: {'Content-Type': 'application/json'},
+        headers: {
+          'Content-Type': 'application/json'
+        },
         body: json.encode({
           'email': email,
           'newPassword': newPassword,
@@ -334,26 +402,33 @@ class AuthProvider with ChangeNotifier {
       print('Reset Password Response Body: ${response.body}');
 
       if (response.statusCode == 200) {
-        return {'success': true, 'message': 'Password reset successfully'};
+        return {
+          'success': true,
+          'message': 'Password reset successfully'
+        };
       } else if (response.statusCode == 400) {
         final errorResponse = json.decode(response.body);
-        return {'success': false, 'message': errorResponse['error']};
+        return {
+          'success': false,
+          'message': errorResponse['error']
+        };
       } else {
         return {
           'success': false,
-          'message':
-              'Password reset failed with status code: ${response.statusCode}'
+          'message': 'Password reset failed with status code: ${response.statusCode}'
         };
       }
     } catch (error) {
       print('An error occurred during password reset: $error');
-      return {'success': false, 'message': 'An error occurred'};
+      return {
+        'success': false,
+        'message': 'An error occurred'
+      };
     }
   }
 
-  Future<Map<String, dynamic>> getAllCategories(
-      {int page = 1, int limit = 70, String? name}) async {
-    String baseUrl = await ApiUrls.getBaseUrl();
+  Future<Map<String, dynamic>> getAllCategories({int page = 1, int limit = 70, String? name}) async {
+    String baseUrl = await Constants.getBaseUrl();
 
     final url = Uri.parse('$baseUrl/category/?page=$page&limit=$limit');
 
@@ -377,11 +452,7 @@ class AuthProvider with ChangeNotifier {
 
           // If a name is provided, filter the categories by the name
           if (name != null && name.isNotEmpty) {
-            categories = categories
-                .where((category) =>
-                    category['name'].toString().toLowerCase() ==
-                    name.toLowerCase())
-                .toList();
+            categories = categories.where((category) => category['name'].toString().toLowerCase() == name.toLowerCase()).toList();
 
             if (categories.isEmpty) {
               return {
@@ -391,36 +462,42 @@ class AuthProvider with ChangeNotifier {
             }
           }
 
-          return {'success': true, 'data': categories};
+          return {
+            'success': true,
+            'data': categories
+          };
         } else {
           print('Unexpected response format: $data');
-          return {'success': false, 'message': 'Unexpected response format'};
+          return {
+            'success': false,
+            'message': 'Unexpected response format'
+          };
         }
       } else {
         return {
           'success': false,
-          'message':
-              'Failed to fetch categories with status code: ${response.statusCode}'
+          'message': 'Failed to fetch categories with status code: ${response.statusCode}'
         };
       }
     } catch (error, stackTrace) {
       print('An error occurred while fetching categories: $error');
       print('Stack trace: $stackTrace');
-      return {'success': false, 'message': 'An error occurred: $error'};
+      return {
+        'success': false,
+        'message': 'An error occurred: $error'
+      };
     }
   }
 
   Future<String?> getToken() async {
     final prefs = await SharedPreferences.getInstance();
-    _isAuthenticated = prefs.getString('authToken') != null &&
-        prefs.getString('date') ==
-            DateFormat('dd-MMMM-yyyy').format(DateTime.now());
+    _isAuthenticated = prefs.getString('authToken') != null && prefs.getString('date') == DateFormat('dd-MMMM-yyyy').format(DateTime.now());
     // notifyListeners();
     return prefs.getString('authToken');
   }
 
   Future<Map<String, dynamic>> createCategory(String name) async {
-    String baseUrl = await ApiUrls.getBaseUrl();
+    String baseUrl = await Constants.getBaseUrl();
 
     final url = Uri.parse('$baseUrl/category/');
 
@@ -428,7 +505,10 @@ class AuthProvider with ChangeNotifier {
       final token = await getToken();
 
       if (token == null) {
-        return {'success': false, 'message': 'No token provided'};
+        return {
+          'success': false,
+          'message': 'No token provided'
+        };
       }
 
       final response = await http.post(
@@ -446,7 +526,10 @@ class AuthProvider with ChangeNotifier {
       // print('Create Category Response Body: ${response.body}');
 
       if (response.statusCode == 200 || response.statusCode == 201) {
-        return {'success': true, 'data': json.decode(response.body)};
+        return {
+          'success': true,
+          'data': json.decode(response.body)
+        };
       } else if (response.statusCode == 400) {
         final errorResponse = json.decode(response.body);
         return {
@@ -456,26 +539,31 @@ class AuthProvider with ChangeNotifier {
       } else {
         return {
           'success': false,
-          'message':
-              'Create category failed with status code: ${response.statusCode}'
+          'message': 'Create category failed with status code: ${response.statusCode}'
         };
       }
     } catch (error, stackTrace) {
       print('An error occurred while creating the category: $error');
       print('Stack trace: $stackTrace');
-      return {'success': false, 'message': 'An error occurred: $error'};
+      return {
+        'success': false,
+        'message': 'An error occurred: $error'
+      };
     }
   }
 
   Future<Map<String, dynamic>> getCategoryById(String id) async {
-    String baseUrl = await ApiUrls.getBaseUrl();
+    String baseUrl = await Constants.getBaseUrl();
 
     final url = Uri.parse('$baseUrl/category/$id');
 
     try {
       final token = await getToken();
       if (token == null) {
-        return {'success': false, 'message': 'No token found'};
+        return {
+          'success': false,
+          'message': 'No token found'
+        };
       }
 
       final response = await http.get(
@@ -491,29 +579,40 @@ class AuthProvider with ChangeNotifier {
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
-        return {'success': true, 'data': data};
+        return {
+          'success': true,
+          'data': data
+        };
       } else {
         print('Failed to load category. Status code: ${response.statusCode}');
         print('Response body: ${response.body}');
-        return {'success': false, 'message': 'Failed to load category'};
+        return {
+          'success': false,
+          'message': 'Failed to load category'
+        };
       }
     } catch (error) {
       print('Error fetching category by ID: $error');
-      return {'success': false, 'message': 'Error fetching category by ID'};
+      return {
+        'success': false,
+        'message': 'Error fetching category by ID'
+      };
     }
   }
 
-  Future<Map<String, dynamic>> getAllProducts(
-      {int page = 1, int itemsPerPage = 10}) async {
+  Future<Map<String, dynamic>> getAllProducts({int page = 1, int itemsPerPage = 10}) async {
     // Append query parameters for pagination (page number and items per page)
-    String baseUrl = await ApiUrls.getBaseUrl();
+    String baseUrl = await Constants.getBaseUrl();
 
     final url = Uri.parse('$baseUrl/products?page=$page&limit=$itemsPerPage');
 
     try {
       final token = await getToken();
       if (token == null) {
-        return {'success': false, 'message': 'No token found'};
+        return {
+          'success': false,
+          'message': 'No token found'
+        };
       }
 
       final response = await http.get(
@@ -546,10 +645,8 @@ class AuthProvider with ChangeNotifier {
             'technicalName': product['technicalName'] ?? '',
             'labelSku': product['label']?['labelSku'] ?? '',
             'colour': product['color']?['name'] ?? '',
-            'outerPackage_quantity':
-                product['outerPackage_quantity']?.toString() ?? '',
-            'outerPackage_name':
-                product['outerPackage']?['outerPackage_name'] ?? '',
+            'outerPackage_quantity': product['outerPackage_quantity']?.toString() ?? '',
+            'outerPackage_name': product['outerPackage']?['outerPackage_name'] ?? '',
             'length': product['dimensions']?['length']?.toString() ?? '',
             'width': product['dimensions']?['width']?.toString() ?? '',
             'height': product['dimensions']?['height']?.toString() ?? '',
@@ -577,24 +674,29 @@ class AuthProvider with ChangeNotifier {
       } else {
         return {
           'success': false,
-          'message':
-              'Failed to load products. Status code: ${response.statusCode}',
+          'message': 'Failed to load products. Status code: ${response.statusCode}',
         };
       }
     } catch (error) {
       print('Error fetching products: $error');
-      return {'success': false, 'message': 'Error fetching products'};
+      return {
+        'success': false,
+        'message': 'Error fetching products'
+      };
     }
   }
 
   Future<Map<String, dynamic>> getAllWarehouses() async {
-    String baseUrl = await ApiUrls.getBaseUrl();
+    String baseUrl = await Constants.getBaseUrl();
     final url = Uri.parse('$baseUrl/warehouse');
 
     try {
       final token = await getToken();
       if (token == null) {
-        return {'success': false, 'message': 'No token found'};
+        return {
+          'success': false,
+          'message': 'No token found'
+        };
       }
 
       final response = await http.get(
@@ -609,8 +711,7 @@ class AuthProvider with ChangeNotifier {
       print('Get All Warehouses Response Body: ${response.body}');
 
       if (response.statusCode == 200) {
-        final data =
-            json.decode(response.body)['data']['warehouses'] as List<dynamic>;
+        final data = json.decode(response.body)['data']['warehouses'] as List<dynamic>;
 
         // Extract the required fields for each warehouse
         final warehouses = data.map((warehouse) {
@@ -641,18 +742,22 @@ class AuthProvider with ChangeNotifier {
 
         return {
           'success': true,
-          'data': {'warehouses': warehouses}
+          'data': {
+            'warehouses': warehouses
+          }
         };
       } else {
         return {
           'success': false,
-          'message':
-              'Failed to load warehouses. Status code: ${response.statusCode}'
+          'message': 'Failed to load warehouses. Status code: ${response.statusCode}'
         };
       }
     } catch (error) {
       log('Error fetching warehouses: $error');
-      return {'success': false, 'message': 'Error fetching warehouses'};
+      return {
+        'success': false,
+        'message': 'Error fetching warehouses'
+      };
     }
   }
 
@@ -681,7 +786,7 @@ class AuthProvider with ChangeNotifier {
     // required List<String> pincodes,
     // required int warehousePincode,
   }) async {
-    String baseUrl = await ApiUrls.getBaseUrl();
+    String baseUrl = await Constants.getBaseUrl();
     final url = Uri.parse('$baseUrl/warehouse');
     // final body = {
     //   "location": {
@@ -745,7 +850,7 @@ class AuthProvider with ChangeNotifier {
 
   // Method to fetch warehouse data using the warehouse ID
   Future<Map<String, dynamic>> fetchWarehouseById(String warehouseId) async {
-    String baseUrl = await ApiUrls.getBaseUrl();
+    String baseUrl = await Constants.getBaseUrl();
 
     try {
       final token = await getToken();
@@ -794,10 +899,9 @@ class AuthProvider with ChangeNotifier {
   }
 
   Future<Map<String, dynamic>> searchCategoryByName(String name) async {
-    String baseUrl = await ApiUrls.getBaseUrl();
+    String baseUrl = await Constants.getBaseUrl();
 
-    final url =
-        Uri.parse('$baseUrl/category?name=${Uri.encodeComponent(name)}');
+    final url = Uri.parse('$baseUrl/category?name=${Uri.encodeComponent(name)}');
 
     try {
       final token = await getToken();
@@ -821,24 +925,28 @@ class AuthProvider with ChangeNotifier {
           };
         } else {
           print('Unexpected response format: $data'); // Debugging line
-          return {'success': false, 'message': 'Unexpected response format'};
+          return {
+            'success': false,
+            'message': 'Unexpected response format'
+          };
         }
       } else {
         return {
           'success': false,
-          'message':
-              'Failed to search categories with status code: ${response.statusCode}'
+          'message': 'Failed to search categories with status code: ${response.statusCode}'
         };
       }
     } catch (error) {
       print('Error: $error'); // Debugging line
-      return {'success': false, 'message': 'An error occurred'};
+      return {
+        'success': false,
+        'message': 'An error occurred'
+      };
     }
   }
 
-  Future<Map<String, dynamic>?> createProduct(
-      List<Map<String, dynamic>> productData) async {
-    String baseUrl = await ApiUrls.getBaseUrl();
+  Future<Map<String, dynamic>?> createProduct(List<Map<String, dynamic>> productData) async {
+    String baseUrl = await Constants.getBaseUrl();
 
     final url = Uri.parse('$baseUrl/products/');
     try {
@@ -849,7 +957,9 @@ class AuthProvider with ChangeNotifier {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer $token',
         },
-        body: json.encode({'products': productData}),
+        body: json.encode({
+          'products': productData
+        }),
       );
 
       // Print the full response for debugging purposes
@@ -858,12 +968,10 @@ class AuthProvider with ChangeNotifier {
 
       if (response.statusCode == 201 || response.statusCode == 200) {
         final responseData = json.decode(response.body);
-        print(
-            'Response Data: ${jsonEncode(responseData)}'); // Print structured response
+        print('Response Data: ${jsonEncode(responseData)}'); // Print structured response
 
         return {
-          'message':
-              responseData['message'] ?? 'Products uploaded successfully.',
+          'message': responseData['message'] ?? 'Products uploaded successfully.',
           'successfulProducts': responseData['successfulProducts'],
           'failedProducts': responseData['failedProducts'],
         };
@@ -876,12 +984,10 @@ class AuthProvider with ChangeNotifier {
         } else if (response.statusCode == 401) {
           errorMessage = 'Authorization failed. Please check your credentials.';
         } else {
-          errorMessage =
-              'Failed to create product. Status code: ${response.statusCode} - ${errorResponse['message'] ?? 'Unknown error'}';
+          errorMessage = 'Failed to create product. Status code: ${response.statusCode} - ${errorResponse['message'] ?? 'Unknown error'}';
         }
 
-        print(
-            'Error Response: ${jsonEncode(errorResponse)}'); // Print structured error response
+        print('Error Response: ${jsonEncode(errorResponse)}'); // Print structured error response
 
         return {
           'message': errorMessage,
@@ -900,7 +1006,7 @@ class AuthProvider with ChangeNotifier {
   }
 
   Future<String?> createLabel(Map<String, dynamic> labelData) async {
-    String baseUrl = await ApiUrls.getBaseUrl();
+    String baseUrl = await Constants.getBaseUrl();
 
     final url = Uri.parse('$baseUrl/label/');
     try {
@@ -926,7 +1032,7 @@ class AuthProvider with ChangeNotifier {
   }
 
   Future<bool> deleteWarehouse(String warehouseId) async {
-    String baseUrl = await ApiUrls.getBaseUrl();
+    String baseUrl = await Constants.getBaseUrl();
 
     final String url = "$baseUrl/warehouse/$warehouseId";
 
@@ -959,19 +1065,21 @@ class AuthProvider with ChangeNotifier {
     }
   }
 
-  Future<Map<String, dynamic>> searchProductsByDisplayName(
-      String displayName) async {
-    String baseUrl = await ApiUrls.getBaseUrl();
+  Future<Map<String, dynamic>> searchProductsByDisplayName(String displayName) async {
+    log('searchProductsByDisplayName');
+    String baseUrl = await Constants.getBaseUrl();
 
-    final url =
-        '$baseUrl/products?displayName=${Uri.encodeComponent(displayName)}';
+    final url = '$baseUrl/products?displayName=${Uri.encodeComponent(displayName)}';
 
     Logger().e("Request URL: $url");
 
     try {
       final token = await getToken();
       if (token == null) {
-        return {'success': false, 'message': 'No token found'};
+        return {
+          'success': false,
+          'message': 'No token found'
+        };
       }
 
       final response = await http.get(
@@ -985,35 +1093,167 @@ class AuthProvider with ChangeNotifier {
       Logger().e("Response Status: ${response.statusCode}");
 
       if (response.statusCode == 200) {
-        final decodedBody = json.decode(response.body);
-        Logger().e("Response Body: $decodedBody");
+        final res = json.decode(response.body);
+        // Logger().e("Response Body: $decodedBody");
 
-        if (decodedBody['products'] is! List ||
-            decodedBody['totalProducts'] is! int ||
-            decodedBody['totalPages'] is! int ||
-            decodedBody['currentPage'] is! int) {
+        if (res['products'] is! List || res['totalProducts'] is! int || res['totalPages'] is! int || res['currentPage'] is! int) {
           return {
             'success': false,
             'message': 'Unexpected response format',
           };
         }
 
+        final products = res['products'].map((product) {
+          final extractedProduct = {
+            'id': product['_id'] ?? '',
+            'displayName': product['displayName'] ?? '',
+            'parentSku': product['parentSku'] ?? '',
+            'sku': product['sku'] ?? '',
+            'description': product['description'] ?? '',
+            'brand': product['brand']?['name'] ?? '',
+            'categoryName': product['category']?['name'] ?? '',
+            'netWeight': product['netWeight']?.toString() ?? '',
+            'grossWeight': product['grossWeight']?.toString() ?? '',
+            'ean': product['ean'] ?? '',
+            'technicalName': product['technicalName'] ?? '',
+            'labelSku': product['label']?['labelSku'] ?? '',
+            'colour': product['color']?['name'] ?? '',
+            'outerPackage_quantity': product['outerPackage_quantity']?.toString() ?? '',
+            'outerPackage_name': product['outerPackage']?['outerPackage_name'] ?? '',
+            'length': product['dimensions']?['length']?.toString() ?? '',
+            'width': product['dimensions']?['width']?.toString() ?? '',
+            'height': product['dimensions']?['height']?.toString() ?? '',
+            'tax_rule': product['tax_rule'] ?? '',
+            //'weight': product['weight'] ?? '-',
+            'mrp': product['mrp']?.toString() ?? '',
+            'cost': product['cost']?.toString() ?? '',
+            'grade': product['grade'] ?? '',
+            'shopifyImage': product['shopifyImage'] ?? '',
+            'createdAt': product['createdAt'] ?? '',
+            'updatedAt': product['updatedAt'] ?? '',
+          };
+
+          // Print each product's required fields
+          //print('Product Details: $extractedProduct');
+          //print('------------------------------------------------');
+          return extractedProduct;
+        }).toList();
+
+        log('lets see: ${res['products']}');
         return {
           'success': true,
-          'products': decodedBody['products'],
-          'totalProducts': decodedBody['totalProducts'],
-          'totalPages': decodedBody['totalPages'],
-          'currentPage': decodedBody['currentPage'],
+          'products': products,
+          'totalProducts': res['totalProducts'],
+          'totalPages': res['totalPages'],
+          'currentPage': res['currentPage'],
         };
       } else {
         return {
           'success': false,
-          'message':
-              'Failed to load products, status code: ${response.statusCode}',
+          'message': 'Failed to load products, status code: ${response.statusCode}',
         };
       }
     } catch (error) {
-      Logger().e('Error: $error');
+      log('error in catch: $error');
+      // Logger().e('error in catch: $error');
+      return {
+        'success': false,
+        'message': 'An error occurred: $error',
+      };
+    }
+  }
+
+  Future<Map<String, dynamic>> searchProductsBySKU(String displayName) async {
+    log('searchProductsByDisplayName');
+    String baseUrl = await Constants.getBaseUrl();
+
+    final url = '$baseUrl/products?sku=${Uri.encodeComponent(displayName)}';
+
+    Logger().e("Request URL: $url");
+
+    try {
+      final token = await getToken();
+      if (token == null) {
+        return {
+          'success': false,
+          'message': 'No token found'
+        };
+      }
+
+      final response = await http.get(
+        Uri.parse(url),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      Logger().e("Response Status: ${response.statusCode}");
+
+      if (response.statusCode == 200) {
+        final res = json.decode(response.body);
+        // Logger().e("Response Body: $decodedBody");
+
+        if (res['products'] is! List || res['totalProducts'] is! int || res['totalPages'] is! int || res['currentPage'] is! int) {
+          return {
+            'success': false,
+            'message': 'Unexpected response format',
+          };
+        }
+
+        final products = res['products'].map((product) {
+          final extractedProduct = {
+            'id': product['_id'] ?? '',
+            'displayName': product['displayName'] ?? '',
+            'parentSku': product['parentSku'] ?? '',
+            'sku': product['sku'] ?? '',
+            'description': product['description'] ?? '',
+            'brand': product['brand']?['name'] ?? '',
+            'categoryName': product['category']?['name'] ?? '',
+            'netWeight': product['netWeight']?.toString() ?? '',
+            'grossWeight': product['grossWeight']?.toString() ?? '',
+            'ean': product['ean'] ?? '',
+            'technicalName': product['technicalName'] ?? '',
+            'labelSku': product['label']?['labelSku'] ?? '',
+            'colour': product['color']?['name'] ?? '',
+            'outerPackage_quantity': product['outerPackage_quantity']?.toString() ?? '',
+            'outerPackage_name': product['outerPackage']?['outerPackage_name'] ?? '',
+            'length': product['dimensions']?['length']?.toString() ?? '',
+            'width': product['dimensions']?['width']?.toString() ?? '',
+            'height': product['dimensions']?['height']?.toString() ?? '',
+            'tax_rule': product['tax_rule'] ?? '',
+            //'weight': product['weight'] ?? '-',
+            'mrp': product['mrp']?.toString() ?? '',
+            'cost': product['cost']?.toString() ?? '',
+            'grade': product['grade'] ?? '',
+            'shopifyImage': product['shopifyImage'] ?? '',
+            'createdAt': product['createdAt'] ?? '',
+            'updatedAt': product['updatedAt'] ?? '',
+          };
+
+          // Print each product's required fields
+          //print('Product Details: $extractedProduct');
+          //print('------------------------------------------------');
+          return extractedProduct;
+        }).toList();
+
+        log('lets see: ${res['products']}');
+        return {
+          'success': true,
+          'products': products,
+          'totalProducts': res['totalProducts'],
+          'totalPages': res['totalPages'],
+          'currentPage': res['currentPage'],
+        };
+      } else {
+        return {
+          'success': false,
+          'message': 'Failed to load products, status code: ${response.statusCode}',
+        };
+      }
+    } catch (error) {
+      log('error in catch: $error');
+      // Logger().e('error in catch: $error');
       return {
         'success': false,
         'message': 'An error occurred: $error',
@@ -1069,61 +1309,71 @@ class AuthProvider with ChangeNotifier {
   //   }
   // }
 
-  Future<Map<String, dynamic>> searchProductsBySKU(String sku) async {
-    String baseUrl = await ApiUrls.getBaseUrl();
+  // Future<Map<String, dynamic>> searchProductsBySKU(String sku) async {
+  //   log('searchProductsBySKU');
+  //   String baseUrl = await Constants.getBaseUrl();
 
-    final url = '$baseUrl/products?sku=${Uri.encodeComponent(sku)}';
+  //   final url = '$baseUrl/products?sku=${Uri.encodeComponent(sku)}';
 
-    try {
-      final token = await getToken();
-      if (token == null) {
-        return {'success': false, 'message': 'No token found'};
-      }
+  //   try {
+  //     final token = await getToken();
+  //     if (token == null) {
+  //       return {
+  //         'success': false,
+  //         'message': 'No token found'
+  //       };
+  //     }
 
-      // Make the HTTP GET request
-      final response = await http.get(
-        Uri.parse(url),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer $token',
-        },
-      );
+  //     // Make the HTTP GET request
+  //     final response = await http.get(
+  //       Uri.parse(url),
+  //       headers: {
+  //         'Content-Type': 'application/json',
+  //         'Authorization': 'Bearer $token',
+  //       },
+  //     );
 
-      // Check the response status code
-      if (response.statusCode == 200) {
-        //print("Response Status: ${response.statusCode}");
-        //print("Response Body: ${response.body}");
+  //     // Check the response status code
+  //     if (response.statusCode == 200) {
+  //       //print("Response Status: ${response.statusCode}");
+  //       //print("Response Body: ${response.body}");
 
-        // Correctly parsing the 'products' key from the response
-        final data = json.decode(response.body);
+  //       // Correctly parsing the 'products' key from the response
+  //       final res = json.decode(response.body);
 
-        if (data != null && data['products'] != null) {
-          return {'success': true, 'data': data['products']};
-        } else {
-          return {
-            'success': false,
-            'message': 'No products found',
-          };
-        }
-      } else {
-        return {
-          'success': false,
-          'message':
-              'Failed to load products, status code: ${response.statusCode}',
-        };
-      }
-    } catch (error) {
-      // Handle exceptions (network errors, JSON parsing errors, etc.)
-      return {
-        'success': false,
-        'message': 'An error occurred: $error',
-      };
-    }
-  }
+  //       log('ye le res: $res');
+
+  //       if (res != null && res['products'] != null) {
+  //         return {
+  //           'success': true,
+  //           'data': res['products']
+  //         };
+  //       } else {
+  //         return {
+  //           'success': false,
+  //           'message': 'No products found',
+  //         };
+  //       }
+  //     } else {
+  //       return {
+  //         'success': false,
+  //         'message': 'Failed to load products, status code: ${response.statusCode}',
+  //       };
+  //     }
+  //   } catch (error) {
+  //     // Handle exceptions (network errors, JSON parsing errors, etc.)
+  //     // log('error in catch: $error');
+  //     Logger().e('le ye error: $error');
+  //     return {
+  //       'success': false,
+  //       'message': 'An error occurred: $error',
+  //     };
+  //   }
+  // }
 
   Future<String> getTemplateURL(BuildContext context, String title) async {
     // Retrieve the token from shared preferences
-    String baseUrl = await ApiUrls.getBaseUrl();
+    String baseUrl = await Constants.getBaseUrl();
     final token = await getToken();
 
     // Check if the token is valid
@@ -1139,8 +1389,7 @@ class AuthProvider with ChangeNotifier {
 
     try {
       // Make the GET request
-      final response = await http.get(Uri.parse('$baseUrl/links?title=$title'),
-          headers: headers);
+      final response = await http.get(Uri.parse('$baseUrl/links?title=$title'), headers: headers);
 
       // Print the received response for debugging
       //print('Response status: ${response.statusCode}');
@@ -1154,8 +1403,7 @@ class AuthProvider with ChangeNotifier {
         // Check if the response has an "orders" key
         return jsonBody['data']['url'];
       } else {
-        throw Exception(
-            'Failed to load template: ${response.statusCode} ${response.body}');
+        throw Exception('Failed to load template: ${response.statusCode} ${response.body}');
       }
     } catch (error) {
       print('Error during HTTP request: $error');

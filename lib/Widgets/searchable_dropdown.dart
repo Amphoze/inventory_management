@@ -101,10 +101,10 @@ class _SearchableDropdownState extends State<SearchableDropdown> {
 
     if (isCombo) {
       url = Uri.parse(
-          '${await ApiUrls.getBaseUrl()}/combo?${query.contains('-') ? 'comboSku' : 'name'}=$query');
+          '${await Constants.getBaseUrl()}/combo?${query.contains('-') ? 'comboSku' : 'name'}=$query');
     } else {
       url = Uri.parse(
-          '${await ApiUrls.getBaseUrl()}/products?${query.contains('-') ? 'sku' : 'displayName'}=$query');
+          '${await Constants.getBaseUrl()}/products?${query.contains('-') ? 'sku' : 'displayName'}=$query');
     }
 
     try {
@@ -153,7 +153,7 @@ class _SearchableDropdownState extends State<SearchableDropdown> {
     String search = '',
   }) async {
     final isCombo = widget.isCombo;
-    String baseUrl = await ApiUrls.getBaseUrl();
+    String baseUrl = await Constants.getBaseUrl();
     final endpoint = isCombo ? '/combo' : '/products';
     final url = Uri.parse('$baseUrl$endpoint?page=$page&limit=$itemsPerPage');
 

@@ -206,7 +206,7 @@ class _PaginatedSearchDropdownState extends State<PaginatedSearchDropdown> {
 Future<Map<String, dynamic>> fetchCategoryFromApi(
     String searchKey, int page) async {
   final url =
-      Uri.parse('${await ApiUrls.getBaseUrl()}/category?name=$searchKey');
+      Uri.parse('${await Constants.getBaseUrl()}/category?name=$searchKey');
   final prefs = await SharedPreferences.getInstance();
   final token = prefs.getString('authToken') ?? '';
   try {
@@ -247,7 +247,7 @@ Future<Map<String, dynamic>> fetchBrandsFromApi(String query, int page) async {
   final prefs = await SharedPreferences.getInstance();
   final token = prefs.getString('authToken') ?? '';
   final url = Uri.parse(
-      '${await ApiUrls.getBaseUrl()}/brand?name=$query'); // Assume pagination and search parameters
+      '${await Constants.getBaseUrl()}/brand?name=$query'); // Assume pagination and search parameters
 
   try {
     final response = await http.get(url, headers: {
@@ -283,7 +283,7 @@ Future<Map<String, dynamic>> fetchLabelFromApi(String query, int page) async {
   final prefs = await SharedPreferences.getInstance();
   final token = prefs.getString('authToken') ?? '';
   final url = Uri.parse(
-      '${await ApiUrls.getBaseUrl()}/label?labelSku=$query'); // Assume pagination and search parameters
+      '${await Constants.getBaseUrl()}/label?labelSku=$query'); // Assume pagination and search parameters
 
   try {
     final response = await http.get(url, headers: {
@@ -319,7 +319,7 @@ Future<Map<String, dynamic>> fetchBoxSizeFromApi(String query, int page) async {
   final prefs = await SharedPreferences.getInstance();
   final token = prefs.getString('authToken') ?? '';
   final url = Uri.parse(
-      '${await ApiUrls.getBaseUrl()}/boxsize?outerPackage_name=$query');
+      '${await Constants.getBaseUrl()}/boxsize?outerPackage_name=$query');
 
   try {
     final response = await http.get(
@@ -359,7 +359,7 @@ Future<Map<String, dynamic>> fetchParentSkusFromApi(
   final prefs = await SharedPreferences.getInstance();
   final token = prefs.getString('authToken') ?? '';
   final url =
-      Uri.parse('${await ApiUrls.getBaseUrl()}/products/fetch-products/$query');
+      Uri.parse('${await Constants.getBaseUrl()}/products/fetch-products/$query');
 
   try {
     final response = await http.get(

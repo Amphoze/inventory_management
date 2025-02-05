@@ -54,7 +54,7 @@ class ReturnProvider with ChangeNotifier {
 
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('authToken') ?? '';
-    String url = '${await ApiUrls.getBaseUrl()}/orders?orderStatus=11&page=';
+    String url = '${await Constants.getBaseUrl()}/orders?orderStatus=11&page=';
 
     try {
       final response = await http.get(Uri.parse('$url$currentPage'), headers: {
@@ -164,7 +164,7 @@ class ReturnProvider with ChangeNotifier {
     }
 
     if (selectedOrderIds.isNotEmpty) {
-      String url = '${await ApiUrls.getBaseUrl()}/orders/return';
+      String url = '${await Constants.getBaseUrl()}/orders/return';
 
       try {
         final body = json.encode({
@@ -236,7 +236,7 @@ class ReturnProvider with ChangeNotifier {
     final token = prefs.getString('authToken') ?? '';
 
     final url =
-        '${await ApiUrls.getBaseUrl()}/orders?orderStatus=11&order_id=$query';
+        '${await Constants.getBaseUrl()}/orders?orderStatus=11&order_id=$query';
 
     print('Searching failed orders with term: $query');
 

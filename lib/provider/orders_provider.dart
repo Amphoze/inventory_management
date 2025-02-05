@@ -183,7 +183,7 @@ class OrdersProvider with ChangeNotifier {
       return;
     }
 
-    final url = '${await ApiUrls.getBaseUrl()}/orders/$id';
+    final url = '${await Constants.getBaseUrl()}/orders/$id';
     try {
       final response = await http.put(
         Uri.parse(url),
@@ -219,7 +219,7 @@ class OrdersProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  Future<String> writeRemark(String id, String msg) async {
+  Future<bool> writeRemark(String id, String msg) async {
     // Get the auth token
     final token = await _getToken();
 
@@ -228,10 +228,10 @@ class OrdersProvider with ChangeNotifier {
       isLoading = false;
       notifyListeners();
       print('Token is missing. Please log in again.');
-      return 'Token is missing. Please log in again.';
+      return false;
     }
 
-    final url = '${await ApiUrls.getBaseUrl()}/orders/$id';
+    final url = '${await Constants.getBaseUrl()}/orders/$id';
     try {
       final response = await http.put(
         Uri.parse(url),
@@ -255,14 +255,14 @@ class OrdersProvider with ChangeNotifier {
         // await fetchReadyOrders();
 
         notifyListeners();
-        return 'Remark added successfully';
+        return true;
       } else {
         log('Failed to update order: ${response.body}');
-        return 'Failed to add remark';
+        return false;
       }
     } catch (error) {
       log('Error updating order: $error');
-      return 'Error updating order: $error';
+      return false;
     }
   }
 
@@ -277,7 +277,7 @@ class OrdersProvider with ChangeNotifier {
     isLoading = true;
     notifyListeners();
 
-    var failedOrdersUrl = '${await ApiUrls.getBaseUrl()}/orders?orderStatus=0&page=$page';
+    var failedOrdersUrl = '${await Constants.getBaseUrl()}/orders?orderStatus=0&page=$page';
 
     if (date != null || date == 'Select Date') {
       String formattedDate = DateFormat('yyyy-MM-dd').format(date!);
@@ -412,11 +412,13 @@ class OrdersProvider with ChangeNotifier {
     isLoading = true;
     notifyListeners();
 
-    var readyOrdersUrl = '${await ApiUrls.getBaseUrl()}/orders?orderStatus=1&page=$page';
+    var readyOrdersUrl = '${await Constants.getBaseUrl()}/orders?orderStatus=1&isOutBound=true';
 
-    if (date != null || date == 'Select Date') {
-      String formattedDate = DateFormat('yyyy-MM-dd').format(date!);
+    if (date != null) {
+      String formattedDate = DateFormat('yyyy-MM-dd').format(date);
       readyOrdersUrl += '&date=$formattedDate';
+    } else {
+      readyOrdersUrl += '&page=$page';
     }
 
     log("readyOrdersUrl: $readyOrdersUrl");
@@ -455,8 +457,8 @@ class OrdersProvider with ChangeNotifier {
       } else {
         throw Exception('Failed to load ready orders: ${responseReady.body}');
       }
-    } catch (e) {
-      print('Error fetching ready orders: $e');
+    } catch (e, s) {
+      log('\nError fetching ready orders: $e\n\n$s\n\n');
     } finally {
       isLoading = false;
       notifyListeners();
@@ -464,7 +466,7 @@ class OrdersProvider with ChangeNotifier {
   }
 
   Future<String> confirmOrders(BuildContext context, List<String> orderIds) async {
-    String baseUrl = await ApiUrls.getBaseUrl();
+    String baseUrl = await Constants.getBaseUrl();
     String confirmOrderUrl = '$baseUrl/orders/confirm';
     final String? token = await _getToken();
     setConfirmStatus(true);
@@ -494,7 +496,7 @@ class OrdersProvider with ChangeNotifier {
       );
 
       print('Response status: ${response.statusCode}');
-      //print('Response body: ${response.body}');
+      print('Response body: ${response.body}');
 
       final responseData = json.decode(response.body);
 
@@ -518,7 +520,7 @@ class OrdersProvider with ChangeNotifier {
   }
 
   Future<String> cancelOrders(BuildContext context, List<String> orderIds) async {
-    String baseUrl = await ApiUrls.getBaseUrl();
+    String baseUrl = await Constants.getBaseUrl();
     String cancelOrderUrl = '$baseUrl/orders/cancel';
     final String? token = await _getToken();
     setCancelStatus(true);
@@ -673,7 +675,7 @@ class OrdersProvider with ChangeNotifier {
     }
 
     // Define the URL for the update with query parameters
-    final String url = '${await ApiUrls.getBaseUrl()}/orders/ApprovedFailed?order_id=$orderId';
+    final String url = '${await Constants.getBaseUrl()}/orders/ApprovedFailed?order_id=$orderId';
 
     // Set up the headers for the request
     final headers = {
@@ -744,7 +746,7 @@ class OrdersProvider with ChangeNotifier {
   }
 
   Future<void> searchReadyToConfirmOrders(String orderId) async {
-    final url = Uri.parse('${await ApiUrls.getBaseUrl()}/orders?orderStatus=1&order_id=$orderId');
+    final url = Uri.parse('${await Constants.getBaseUrl()}/orders?orderStatus=1&isOutBound=true&order_id=$orderId');
     final token = await _getToken();
     if (token == null) return;
 
@@ -766,7 +768,7 @@ class OrdersProvider with ChangeNotifier {
         readyOrders = [
           Order.fromJson(data)
         ];
-        // log('readyOrders: $readyOrders');
+        log('selectedReadyOrders: $selectedReadyOrders');
       } else {
         readyOrders = [];
       }
@@ -780,7 +782,7 @@ class OrdersProvider with ChangeNotifier {
   }
 
   Future<void> searchFailedOrders(String orderId) async {
-    final url = Uri.parse('${await ApiUrls.getBaseUrl()}/orders?orderStatus=0&order_id=$orderId');
+    final url = Uri.parse('${await Constants.getBaseUrl()}/orders?orderStatus=0&order_id=$orderId');
     final token = await _getToken();
     if (token == null) return;
 
@@ -817,7 +819,7 @@ class OrdersProvider with ChangeNotifier {
   }
 
   Future<void> fetchOrdersByMarketplace(String marketplace, int orderStatus, int page, {DateTime? date}) async {
-    String baseUrl = '${await ApiUrls.getBaseUrl()}/orders';
+    String baseUrl = '${await Constants.getBaseUrl()}/orders';
 
     // Build URL with base parameters
     String url = '$baseUrl?orderStatus=$orderStatus&marketplace=$marketplace&page=$page';

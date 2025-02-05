@@ -17,7 +17,7 @@ import 'package:inventory_management/constants/constants.dart';
 class ProductPageApi {
   Future<Map<String, dynamic>> getAllBrandName(
       {int page = 1, int limit = 20, String? name}) async {
-    String baseUrl = await ApiUrls.getBaseUrl();
+    String baseUrl = await Constants.getBaseUrl();
     final url = Uri.parse('$baseUrl/brand/');
 
     try {
@@ -67,7 +67,7 @@ class ProductPageApi {
   //label url
   Future<Map<String, dynamic>> getLabel(
       {int page = 1, int limit = 20, String? name}) async {
-    String baseUrl = await ApiUrls.getBaseUrl();
+    String baseUrl = await Constants.getBaseUrl();
     final url = Uri.parse('$baseUrl/label/');
 
     try {
@@ -116,7 +116,7 @@ class ProductPageApi {
   //boxsize
   Future<Map<String, dynamic>> getBoxSize(
       {int page = 1, int limit = 20, String? name}) async {
-    String baseUrl = await ApiUrls.getBaseUrl();
+    String baseUrl = await Constants.getBaseUrl();
     final url = Uri.parse('$baseUrl/boxsize/');
 
     try {
@@ -161,7 +161,7 @@ class ProductPageApi {
   //colors dropdown api
   Future<Map<String, dynamic>> getColorDrop(
       {int page = 1, int limit = 20, String? name}) async {
-    String baseUrl = await ApiUrls.getBaseUrl();
+    String baseUrl = await Constants.getBaseUrl();
     final url = Uri.parse('$baseUrl/color/');
 
     try {
@@ -198,7 +198,7 @@ class ProductPageApi {
 
   Future<Map<String, dynamic>> getParentSku(
       {int page = 1, int limit = 20, String? name}) async {
-    String baseUrl = await ApiUrls.getBaseUrl();
+    String baseUrl = await Constants.getBaseUrl();
     final url = Uri.parse('$baseUrl/products/');
 
     try {
@@ -269,7 +269,7 @@ class ProductPageApi {
     required String variant_name,
     required String itemQty,
   }) async {
-    String baseUrl = await ApiUrls.getBaseUrl();
+    String baseUrl = await Constants.getBaseUrl();
     final url = Uri.parse('$baseUrl/products/');
 
     try {

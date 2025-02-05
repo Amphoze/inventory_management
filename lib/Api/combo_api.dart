@@ -18,22 +18,61 @@ class ComboApi with ChangeNotifier {
   //   baseUrl = await ApiUrls.getBaseUrl();
   // }
 
-  Future<List<Map<String, dynamic>>> searchCombo(String query) async {
-    String baseUrl = await ApiUrls.getBaseUrl();
+  Future<String> updateCombo(String comboId, String name, String weight) async {
+    String baseUrl = await Constants.getBaseUrl();
     try {
       final token = await _getToken();
       if (token == null) {
         throw Exception('No authentication token found');
       }
 
-      var url =
-          '$baseUrl/combo?${query.contains('-') ? 'comboSku' : 'name'}=$query';
+      final url = '$baseUrl/combo/$comboId';
+
+      final response = await http.put(
+        Uri.parse(url),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode({
+          'name': name,
+          'comboWeight': weight,
+        }),
+      );
+
+      final res = jsonDecode(response.body);
+
+      log('Response status: ${response.statusCode}');
+      log('Response body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        return res['message'];
+      } else {
+        return res['message'];
+      }
+    } catch (e) {
+      log('Error updating combo: $e');
+      return 'Error updating combo: $e';
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> searchCombo(String query) async {
+    String baseUrl = await Constants.getBaseUrl();
+    try {
+      final token = await _getToken();
+      if (token == null) {
+        throw Exception('No authentication token found');
+      }
+
+      var url = '$baseUrl/combo?${query.contains('-') ? 'comboSku' : 'name'}=$query';
 
       log('url: $url');
 
       final response = await http.get(
         Uri.parse(url),
-        headers: {'Authorization': 'Bearer $token'},
+        headers: {
+          'Authorization': 'Bearer $token'
+        },
       );
 
       //print('Response status: ${response.statusCode}');
@@ -66,9 +105,8 @@ class ComboApi with ChangeNotifier {
     }
   }
 
-  Future<void> createCombo(
-      Combo combo, List<Uint8List>? images, List<String> imageNames) async {
-    String baseUrl = await ApiUrls.getBaseUrl();
+  Future<void> createCombo(Combo combo, List<Uint8List>? images, List<String> imageNames) async {
+    String baseUrl = await Constants.getBaseUrl();
     try {
       // Get the token using the token retrieval method
       final token = await _getToken();
@@ -125,9 +163,8 @@ class ComboApi with ChangeNotifier {
   }
 
   // Get all combos
-  Future<List<Map<String, dynamic>>> getCombos(
-      {int page = 1, int limit = 10}) async {
-    String baseUrl = await ApiUrls.getBaseUrl();
+  Future<List<Map<String, dynamic>>> getCombos({int page = 1, int limit = 10}) async {
+    String baseUrl = await Constants.getBaseUrl();
     try {
       final token = await _getToken();
       if (token == null) {
@@ -136,7 +173,9 @@ class ComboApi with ChangeNotifier {
 
       final response = await http.get(
         Uri.parse('$baseUrl/combo?page=$page&limit=$limit'),
-        headers: {'Authorization': 'Bearer $token'},
+        headers: {
+          'Authorization': 'Bearer $token'
+        },
       );
 
       //print('Response status: ${response.statusCode}');
@@ -170,7 +209,7 @@ class ComboApi with ChangeNotifier {
   }
 
   Future<Map<String, dynamic>> getAllProducts() async {
-    String baseUrl = await ApiUrls.getBaseUrl();
+    String baseUrl = await Constants.getBaseUrl();
     try {
       final token = await _getToken(); // Fetch token dynamically
 
@@ -200,7 +239,7 @@ class ComboApi with ChangeNotifier {
   }
 
   Future<Product> getProductById(String productId) async {
-    String baseUrl = await ApiUrls.getBaseUrl();
+    String baseUrl = await Constants.getBaseUrl();
     try {
       final token = await _getToken();
       //print(token);

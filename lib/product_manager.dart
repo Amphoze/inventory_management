@@ -1,5 +1,5 @@
 import 'dart:developer';
-
+//
 import 'package:flutter/material.dart';
 import 'package:inventory_management/Api/auth_provider.dart';
 import 'package:inventory_management/Custom-Files/custom-button.dart';
@@ -12,13 +12,15 @@ import 'Custom-Files/product-card.dart';
 import 'Custom-Files/filter-section.dart';
 import 'Custom-Files/dropdown.dart';
 
+//
 class ProductDashboardPage extends StatefulWidget {
   const ProductDashboardPage({super.key});
-
+//
   @override
   _ProductDashboardPageState createState() => _ProductDashboardPageState();
 }
 
+//
 class _ProductDashboardPageState extends State<ProductDashboardPage> {
   final int _itemsPerPage = 30;
   final List<Product> _products = [];
@@ -29,7 +31,7 @@ class _ProductDashboardPageState extends State<ProductDashboardPage> {
   int _currentPage = 1;
   final TextEditingController _searchController = TextEditingController();
   final TextEditingController _searchbarController = TextEditingController();
-
+//
   String _searchQuery = '';
   //String? _selectedSearchOption;
   String? _selectedSearchOption = 'Display Name';
@@ -40,11 +42,11 @@ class _ProductDashboardPageState extends State<ProductDashboardPage> {
     'SKU',
     'Show All Products'
   ];
-
+//
   @override
   void initState() {
     super.initState();
-    _loadMoreProducts();
+    loadMoreProducts();
     _searchController.addListener(() {
       setState(() {
         _searchQuery = _searchController.text;
@@ -52,6 +54,7 @@ class _ProductDashboardPageState extends State<ProductDashboardPage> {
     });
   }
 
+//
   @override
   void dispose() {
     _searchController.dispose();
@@ -59,18 +62,18 @@ class _ProductDashboardPageState extends State<ProductDashboardPage> {
     super.dispose();
   }
 
-  Future<void> _loadMoreProducts() async {
+//
+  Future<void> loadMoreProducts() async {
     if (_isLoading || !_hasMore) return;
-
+//
     setState(() {
       _isLoading = true;
     });
-
+//
     try {
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
-      final response = await authProvider.getAllProducts(
-          page: _currentPage, itemsPerPage: _itemsPerPage);
-
+      final response = await authProvider.getAllProducts(page: _currentPage, itemsPerPage: _itemsPerPage);
+//
       if (response['success']) {
         final List<dynamic> productData = response['data'];
         final newProducts = productData.map((data) {
@@ -85,8 +88,7 @@ class _ProductDashboardPageState extends State<ProductDashboardPage> {
             netWeight: data['netWeight']?.toString() ?? '',
             grossWeight: data['grossWeight']?.toString() ?? '',
             labelSku: data['labelSku'] ?? '',
-            outerPackage_quantity:
-                data['outerPackage_quantity']?.toString() ?? '',
+            outerPackage_quantity: data['outerPackage_quantity']?.toString() ?? '',
             outerPackage_name: data['outerPackage_name'] ?? '',
             grade: data['grade'] ?? '',
             technicalName: data['technicalName'] ?? '',
@@ -103,7 +105,7 @@ class _ProductDashboardPageState extends State<ProductDashboardPage> {
             variantName: data['variant_name'] ?? '',
           );
         }).toList();
-
+//
         setState(() {
           totalProducts = response['totalProducts'];
           _products.addAll(newProducts);
@@ -126,6 +128,7 @@ class _ProductDashboardPageState extends State<ProductDashboardPage> {
     }
   }
 
+//
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -144,9 +147,7 @@ class _ProductDashboardPageState extends State<ProductDashboardPage> {
                   _buildHeader(),
                   const SizedBox(height: 16),
                   Expanded(
-                    child: !_showCreateProduct
-                        ? _buildProductList()
-                        : const Products(),
+                    child: !_showCreateProduct ? _buildProductList() : const Products(),
                   ),
                 ],
               ),
@@ -157,6 +158,7 @@ class _ProductDashboardPageState extends State<ProductDashboardPage> {
     );
   }
 
+//
   // Widget _buildSidebar() {
   //   return ConstrainedBox(
   //     constraints: BoxConstraints(
@@ -177,7 +179,7 @@ class _ProductDashboardPageState extends State<ProductDashboardPage> {
   //     ),
   //   );
   // }
-
+//
   // Widget _buildSearchField() {
   //   return SizedBox(
   //     width: 300,
@@ -202,7 +204,7 @@ class _ProductDashboardPageState extends State<ProductDashboardPage> {
   //     ),
   //   );
   // }
-
+//
   Widget _buildFilterSections() {
     return SingleChildScrollView(
       child: Column(
@@ -233,6 +235,7 @@ class _ProductDashboardPageState extends State<ProductDashboardPage> {
     );
   }
 
+//
   Widget _buildHeader() {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -246,18 +249,15 @@ class _ProductDashboardPageState extends State<ProductDashboardPage> {
     );
   }
 
+//
   Widget _buildActionButtons() {
     return Row(
       children: [
         _buildSearchDropdown(),
         const SizedBox(width: 16),
-        if (_selectedSearchOption != null &&
-            _selectedSearchOption != 'Show All Products')
-          _buildConditionalSearchBar(),
+        if (_selectedSearchOption != null && _selectedSearchOption != 'Show All Products') _buildConditionalSearchBar(),
         const SizedBox(width: 300),
-        if (!_showCreateProduct)
-          Text('Total Products: $totalProducts',
-              style: const TextStyle(fontSize: 16)),
+        if (!_showCreateProduct) Text('Total Products: $totalProducts', style: const TextStyle(fontSize: 16)),
         const SizedBox(width: 20),
         CustomButton(
           width: 150,
@@ -273,6 +273,7 @@ class _ProductDashboardPageState extends State<ProductDashboardPage> {
     );
   }
 
+//
   Widget _buildSearchDropdown() {
     return CustomDropdown<String>(
       items: _searchOptions,
@@ -282,13 +283,13 @@ class _ProductDashboardPageState extends State<ProductDashboardPage> {
         setState(() {
           _selectedSearchOption = newValue; // Update the selected option
           _searchbarController.clear();
-
+//
           // Load all products if "Show All Products" is selected
           if (_selectedSearchOption == 'Show All Products') {
             _currentPage = 1; // Reset the current page
             _hasMore = true;
             _products.clear(); // Clear the existing products
-            _loadMoreProducts(); // Call the method to load products
+            loadMoreProducts(); // Call the method to load products
           }
         });
       },
@@ -301,6 +302,7 @@ class _ProductDashboardPageState extends State<ProductDashboardPage> {
     );
   }
 
+//
   Widget _buildConditionalSearchBar() {
     return SizedBox(
       width: 300,
@@ -314,24 +316,33 @@ class _ProductDashboardPageState extends State<ProductDashboardPage> {
                 hintText: _getSearchHint(),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12.0),
-                  borderSide:
-                      const BorderSide(color: Colors.orange, width: 2.0),
+                  borderSide: const BorderSide(color: Colors.orange, width: 2.0),
                 ),
               ),
+              onSubmitted: (value) => _performSearch(),
             ),
           ),
           const SizedBox(width: 8),
           ElevatedButton(
             onPressed: _performSearch,
-            style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primaryBlue),
+            // style: ElevatedButton.styleFrom(backgroundColor: AppColors.primaryBlue),
             child: const Text('Search'),
+          ),
+          const SizedBox(width: 8),
+          ElevatedButton(
+            onPressed: loadMoreProducts,
+            // style: ElevatedButton.styleFrom(backgroundColor: AppColors.primaryBlue),
+            child: const Icon(
+              Icons.refresh,
+              color: Colors.white,
+            ),
           ),
         ],
       ),
     );
   }
 
+//
   String _getSearchHint() {
     switch (_selectedSearchOption) {
       case 'Display Name':
@@ -343,61 +354,60 @@ class _ProductDashboardPageState extends State<ProductDashboardPage> {
     }
   }
 
+//
   void _performSearch() async {
     // Check if search option is selected and search term is not empty
     if (_selectedSearchOption == null || _searchbarController.text.isEmpty) {
       _refreshPage();
       return;
     }
-
     // Show loading indicator
     setState(() {
       _isLoading = true;
       _hasMore = false;
     });
-
+//
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     final searchTerm = _searchbarController.text;
-
+//
     Logger().e(
       "searchTerm: $searchTerm",
     );
-
+//
     try {
       Map<String, dynamic> response;
-
+//
       // Fetch products based on selected search option
       if (_selectedSearchOption == 'Display Name') {
         response = await authProvider.searchProductsByDisplayName(searchTerm);
-        log("response in UI page - $response");
+        // log("response in UI page - $response");
       } else if (_selectedSearchOption == 'SKU') {
         response = await authProvider.searchProductsBySKU(searchTerm);
-        print("response in UI page - $response");
+        // print("response in UI page - $response");
       } else {
         _refreshPage();
         return;
       }
-
+//
       // Check if the response is successful
       if (response['success'] == true) {
         print("1");
-        final List<dynamic>? productData =
-            response['products'] ?? response['data'];
-
-        // Logger().e(
-        //   "productData: $productData",
-        // );
-
+        final List<dynamic>? productData = response['products'] ?? response['data'];
+//
+        Logger().e(
+          "productData: $productData",
+        );
+//
         if (productData != null) {
           print("Products retrieved successfully.");
-
+//
           // Clear previous products and add new results
           setState(() {
             _products.clear();
             _products.addAll(productData.map((data) {
               // Log the data to see its structure
-              Logger().e("Product data: $data");
-
+              // Logger().e("Product data: $data");
+//
               // Check each field to ensure it's a string or primitive
               return Product(
                 sku: data['sku'] ?? '',
@@ -410,8 +420,7 @@ class _ProductDashboardPageState extends State<ProductDashboardPage> {
                 netWeight: data['netWeight']?.toString() ?? '',
                 grossWeight: data['grossWeight']?.toString() ?? '',
                 labelSku: data['labelSku'] ?? '',
-                outerPackage_quantity:
-                    data['outerPackage_quantity']?.toString() ?? '',
+                outerPackage_quantity: data['outerPackage_quantity']?.toString() ?? '',
                 outerPackage_name: data['outerPackage_name'] ?? '',
                 grade: data['grade'] ?? '',
                 technicalName: data['technicalName'] ?? '',
@@ -438,7 +447,7 @@ class _ProductDashboardPageState extends State<ProductDashboardPage> {
           setState(() {
             _products.clear(); // Clear previous products
           });
-
+//
           // Optionally show a message to the user
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text(response['message'])),
@@ -449,7 +458,7 @@ class _ProductDashboardPageState extends State<ProductDashboardPage> {
         setState(() {
           _products.clear(); // Clear previous products
         });
-
+//
         // Show failure message to the user
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(response['message'])),
@@ -457,7 +466,7 @@ class _ProductDashboardPageState extends State<ProductDashboardPage> {
       }
     } catch (error) {
       log("error - $error");
-
+//
       // Handle exceptions
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('An error occurred: $error')),
@@ -470,6 +479,7 @@ class _ProductDashboardPageState extends State<ProductDashboardPage> {
     }
   }
 
+//
   void _refreshPage() {
     setState(() {
       _products.clear(); // Clear the displayed products
@@ -478,12 +488,12 @@ class _ProductDashboardPageState extends State<ProductDashboardPage> {
     });
   }
 
+//
   Widget _buildProductList() {
     return NotificationListener<ScrollNotification>(
       onNotification: (ScrollNotification scrollInfo) {
-        if (!_isLoading &&
-            scrollInfo.metrics.pixels == scrollInfo.metrics.maxScrollExtent) {
-          _loadMoreProducts();
+        if (!_isLoading && scrollInfo.metrics.pixels == scrollInfo.metrics.maxScrollExtent) {
+          loadMoreProducts();
         }
         return false;
       },
@@ -515,6 +525,7 @@ class _ProductDashboardPageState extends State<ProductDashboardPage> {
     );
   }
 
+//
   // Sample data for filter sections
   List<String> get _categories => const [
         'NPK Fertilizer',
@@ -523,7 +534,7 @@ class _ProductDashboardPageState extends State<ProductDashboardPage> {
         'Organic Pest Control',
         'Lure & Traps',
       ];
-
+//
   List<String> get _brands => const [
         'Katyayani Organics',
         'Katyayani',
@@ -531,14 +542,14 @@ class _ProductDashboardPageState extends State<ProductDashboardPage> {
         'Samarthaa (Bulk)',
         'quinalphos 25%ec',
       ];
-
+//
   List<String> get _productTypes => const [
         'Simple Products',
         'Products with Variants',
         'Virtual Combos',
         'Physical Combos(Kits)',
       ];
-
+//
   List<String> get _colours => const [
         'NA',
         'shown an image',
@@ -546,3 +557,305 @@ class _ProductDashboardPageState extends State<ProductDashboardPage> {
         '0',
       ];
 }
+
+
+
+
+// import 'package:flutter/material.dart';
+// // import 'package:inventory_management/Custom-Files/custom-button.dart';
+// import 'package:inventory_management/Custom-Files/loading_indicator.dart';
+// import 'package:inventory_management/Custom-Files/colors.dart';
+// import 'package:inventory_management/Custom-Files/product-card.dart';
+// import 'package:inventory_management/Custom-Files/dropdown.dart';
+// import 'package:inventory_management/provider/products-provider.dart';
+// import 'package:provider/provider.dart';
+
+// // import 'product_provider.dart';
+
+// class ProductDashboardPage extends StatefulWidget {
+//   const ProductDashboardPage({super.key});
+
+//   @override
+//   _ProductDashboardPageState createState() => _ProductDashboardPageState();
+// }
+
+// class _ProductDashboardPageState extends State<ProductDashboardPage> {
+//   final TextEditingController _searchbarController = TextEditingController();
+//   String? _selectedSearchOption = 'Display Name';
+//   final List<String> _searchOptions = [
+//     'Display Name',
+//     'SKU',
+//     'Show All Products'
+//   ];
+
+//   @override
+//   void initState() {
+//     super.initState();
+//     WidgetsBinding.instance.addPostFrameCallback((_) {
+//       final productProvider = Provider.of<ProductsProvider>(context, listen: false);
+//       productProvider.loadMoreProducts();
+//     });
+//   }
+
+//   @override
+//   void dispose() {
+//     _searchbarController.dispose();
+//     super.dispose();
+//   }
+
+//   @override
+//   Widget build(BuildContext context) {
+//     final productProvider = Provider.of<ProductsProvider>(context);
+
+//     return Scaffold(
+//       backgroundColor: AppColors.white,
+//       body: Row(
+//         children: [
+//           Expanded(
+//             child: Container(
+//               padding: const EdgeInsets.all(16.0),
+//               child: Column(
+//                 crossAxisAlignment: CrossAxisAlignment.start,
+//                 children: [
+//                   _buildHeader(productProvider),
+//                   const SizedBox(height: 16),
+//                   Expanded(
+//                     child: _buildProductList(productProvider),
+//                   ),
+//                 ],
+//               ),
+//             ),
+//           ),
+//         ],
+//       ),
+//     );
+//   }
+
+//   Widget _buildHeader(ProductsProvider productProvider) {
+//     return Row(
+//       mainAxisAlignment: MainAxisAlignment.spaceBetween,
+//       children: [
+//         _buildSearchDropdown(productProvider),
+//         const SizedBox(width: 16),
+//         Text('Total Products: ${productProvider.totalProducts}', style: const TextStyle(fontSize: 16)),
+//       ],
+//     );
+//   }
+
+//   Widget _buildSearchDropdown(ProductsProvider productProvider) {
+//     return CustomDropdown<String>(
+//       items: _searchOptions,
+//       selectedItem: _selectedSearchOption,
+//       hint: 'Search by',
+//       onChanged: (String? newValue) {
+//         setState(() {
+//           _selectedSearchOption = newValue;
+//           _searchbarController.clear();
+
+//           if (_selectedSearchOption == 'Show All Products') {
+//             productProvider.reset();
+//             productProvider.loadMoreProducts();
+//           }
+//         });
+//       },
+//       hintStyle: const TextStyle(color: Colors.grey),
+//       itemStyle: const TextStyle(color: Colors.black),
+//       borderColor: Colors.orange,
+//       borderWidth: 2.0,
+//       elevation: 8.0,
+//     );
+//   }
+
+//   Widget _buildProductList(ProductsProvider productProvider) {
+//     return NotificationListener<ScrollNotification>(
+//       onNotification: (ScrollNotification scrollInfo) {
+//         if (!productProvider.isLoading && scrollInfo.metrics.pixels == scrollInfo.metrics.maxScrollExtent) {
+//           productProvider.loadMoreProducts();
+//         }
+//         return false;
+//       },
+//       child: productProvider.products.isEmpty
+//           ? const Center(
+//               child: LoadingAnimation(
+//                 icon: Icons.production_quantity_limits_rounded,
+//                 beginColor: Color.fromRGBO(189, 189, 189, 1),
+//                 endColor: AppColors.primaryBlue,
+//                 size: 80.0,
+//               ),
+//             )
+//           : ListView.builder(
+//               itemCount: productProvider.products.length + (productProvider.hasMore ? 1 : 0),
+//               itemBuilder: (context, index) {
+//                 if (index == productProvider.products.length) {
+//                   return const Center(
+//                     child: LoadingAnimation(
+//                       icon: Icons.production_quantity_limits_rounded,
+//                       beginColor: Color.fromRGBO(189, 189, 189, 1),
+//                       endColor: AppColors.primaryBlue,
+//                       size: 80.0,
+//                     ),
+//                   );
+//                 }
+//                 return ProductCard(product: productProvider.products[index]);
+//               },
+//             ),
+//     );
+//   }
+// }
+
+
+
+
+// import 'package:flutter/material.dart';
+// import 'package:inventory_management/Custom-Files/custom-button.dart';
+// import 'package:inventory_management/Custom-Files/loading_indicator.dart';
+// import 'package:inventory_management/Custom-Files/colors.dart';
+// import 'package:inventory_management/Custom-Files/product-card.dart';
+// import 'package:inventory_management/Custom-Files/dropdown.dart';
+// import 'package:inventory_management/products.dart';
+// import 'package:inventory_management/provider/products-provider.dart';
+// import 'package:provider/provider.dart';
+
+// class ProductDashboardPage extends StatefulWidget {
+//   const ProductDashboardPage({super.key});
+
+//   @override
+//   _ProductDashboardPageState createState() => _ProductDashboardPageState();
+// }
+
+// class _ProductDashboardPageState extends State<ProductDashboardPage> {
+//   final TextEditingController _searchbarController = TextEditingController();
+//   String? _selectedSearchOption = 'Display Name';
+//   final List<String> _searchOptions = ['Display Name', 'SKU', 'Show All Products'];
+//   bool _showCreateProduct = false;
+
+//   @override
+//   void initState() {
+//     super.initState();
+//     WidgetsBinding.instance.addPostFrameCallback((_) {
+//       final productProvider = Provider.of<ProductsProvider>(context, listen: false);
+//       productProvider.loadMoreProducts();
+//     });
+//   }
+
+//   @override
+//   void dispose() {
+//     _searchbarController.dispose();
+//     super.dispose();
+//   }
+
+//   @override
+//   Widget build(BuildContext context) {
+//     final productProvider = Provider.of<ProductsProvider>(context);
+
+//     return Scaffold(
+//       backgroundColor: AppColors.white,
+//       body: Row(
+//         children: [
+//           Expanded(
+//             child: Container(
+//               padding: const EdgeInsets.all(16.0),
+//               child: Column(
+//                 crossAxisAlignment: CrossAxisAlignment.start,
+//                 children: [
+//                   _buildHeader(productProvider),
+//                   const SizedBox(height: 16),
+//                   Expanded(
+//                     child: !_showCreateProduct
+//                         ? _buildProductList(productProvider)
+//                         : const Products(),
+//                   ),
+//                 ],
+//               ),
+//             ),
+//           ),
+//         ],
+//       ),
+//     );
+//   }
+
+//   Widget _buildHeader(ProductsProvider productProvider) {
+//     return Row(
+//       mainAxisAlignment: MainAxisAlignment.spaceBetween,
+//       children: [
+//         _buildSearchDropdown(productProvider),
+//         const SizedBox(width: 16),
+//         Text(
+//           'Total Products: ${productProvider.totalProducts}',
+//           style: const TextStyle(fontSize: 16),
+//         ),
+//         const SizedBox(width: 20),
+//         CustomButton(
+//           width: 150,
+//           height: 37,
+//           onTap: () => setState(() => _showCreateProduct = !_showCreateProduct),
+//           color: AppColors.primaryBlue,
+//           textColor: Colors.white,
+//           fontSize: 16,
+//           text: _showCreateProduct ? 'Back' : 'Create Product',
+//           borderRadius: BorderRadius.circular(8.0),
+//         ),
+//       ],
+//     );
+//   }
+
+//   Widget _buildSearchDropdown(ProductsProvider productProvider) {
+//     return CustomDropdown<String>(
+//       items: _searchOptions,
+//       selectedItem: _selectedSearchOption,
+//       hint: 'Search by',
+//       onChanged: (String? newValue) {
+//         setState(() {
+//           _selectedSearchOption = newValue;
+//           _searchbarController.clear();
+
+//           if (_selectedSearchOption == 'Show All Products') {
+//             productProvider.reset();
+//             productProvider.loadMoreProducts();
+//           }
+//         });
+//       },
+//       hintStyle: const TextStyle(color: Colors.grey),
+//       itemStyle: const TextStyle(color: Colors.black),
+//       borderColor: Colors.orange,
+//       borderWidth: 2.0,
+//       elevation: 8.0,
+//     );
+//   }
+
+//   Widget _buildProductList(ProductsProvider productProvider) {
+//     return NotificationListener<ScrollNotification>(
+//       onNotification: (ScrollNotification scrollInfo) {
+//         if (!productProvider.isLoading && scrollInfo.metrics.pixels == scrollInfo.metrics.maxScrollExtent) {
+//           productProvider.loadMoreProducts();
+//         }
+//         return false;
+//       },
+//       child: productProvider.products.isEmpty
+//           ? const Center(
+//         child: LoadingAnimation(
+//           icon: Icons.production_quantity_limits_rounded,
+//           beginColor: Color.fromRGBO(189, 189, 189, 1),
+//           endColor: AppColors.primaryBlue,
+//           size: 80.0,
+//         ),
+//       )
+//           : ListView.builder(
+//         itemCount: productProvider.products.length + (productProvider.hasMore ? 1 : 0),
+//         itemBuilder: (context, index) {
+//           if (index == productProvider.products.length) {
+//             return const Center(
+//               child: LoadingAnimation(
+//                 icon: Icons.production_quantity_limits_rounded,
+//                 beginColor: Color.fromRGBO(189, 189, 189, 1),
+//                 endColor: AppColors.primaryBlue,
+//                 size: 80.0,
+//               ),
+//             );
+//           }
+//           return ProductCard(product: productProvider.products[index]);
+//         },
+//       ),
+//     );
+//   }
+// }

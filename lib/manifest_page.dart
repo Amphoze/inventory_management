@@ -25,19 +25,15 @@ class _ManifestPageState extends State<ManifestPage> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      Provider.of<ManifestProvider>(context, listen: false)
-          .fetchOrdersWithStatus8();
+      Provider.of<ManifestProvider>(context, listen: false).fetchOrdersWithStatus8();
     });
-    Provider.of<ManifestProvider>(context, listen: false)
-        .textEditingController
-        .clear();
+    Provider.of<ManifestProvider>(context, listen: false).textEditingController.clear();
   }
 
   void _onSearchButtonPressed() {
     final query = _searchController.text.trim();
     if (query.isNotEmpty) {
-      Provider.of<ManifestProvider>(context, listen: false)
-          .onSearchChanged(query);
+      Provider.of<ManifestProvider>(context, listen: false).onSearchChanged(query);
     }
   }
 
@@ -101,8 +97,7 @@ class _ManifestPageState extends State<ManifestPage> {
                           },
                           onEditingComplete: () {
                             // Mark it as not focused when done
-                            FocusScope.of(context)
-                                .unfocus(); // Dismiss the keyboard
+                            FocusScope.of(context).unfocus(); // Dismiss the keyboard
                           },
                         ),
                       ),
@@ -113,9 +108,7 @@ class _ManifestPageState extends State<ManifestPage> {
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.primaryBlue,
                       ),
-                      onPressed: _searchController.text.isNotEmpty
-                          ? _onSearchButtonPressed
-                          : null,
+                      onPressed: _searchController.text.isNotEmpty ? _onSearchButtonPressed : null,
                       child: const Text(
                         'Search',
                         style: TextStyle(color: Colors.white),
@@ -196,9 +189,7 @@ class _ManifestPageState extends State<ManifestPage> {
                           _selectedDate,
                           style: TextStyle(
                             fontSize: 11,
-                            color: _selectedDate == 'Select Date'
-                                ? Colors.grey
-                                : AppColors.primaryBlue,
+                            color: _selectedDate == 'Select Date' ? Colors.grey : AppColors.primaryBlue,
                           ),
                         ),
                         Tooltip(
@@ -226,8 +217,7 @@ class _ManifestPageState extends State<ManifestPage> {
                               );
 
                               if (picked != null) {
-                                String formattedDate =
-                                    DateFormat('yyyy-MM-dd').format(picked);
+                                String formattedDate = DateFormat('yyyy-MM-dd').format(picked);
                                 setState(() {
                                   _selectedDate = formattedDate;
                                 });
@@ -270,22 +260,15 @@ class _ManifestPageState extends State<ManifestPage> {
                               });
                               if (value == 'All') {
                                 manifestProvider.fetchOrdersWithStatus8(
-                                  date: _selectedDate == 'Select Date'
-                                      ? null
-                                      : DateTime.parse(_selectedDate),
+                                  date: _selectedDate == 'Select Date' ? null : DateTime.parse(_selectedDate),
                                 );
                               } else {
                                 selectedCourier = value;
-                                manifestProvider.fetchOrdersByBookingCourier(
-                                    value, manifestProvider.currentPage,
-                                    date: _selectedDate == 'Select Date'
-                                        ? null
-                                        : DateTime.parse(_selectedDate));
+                                manifestProvider.fetchOrdersByBookingCourier(value, manifestProvider.currentPage, date: _selectedDate == 'Select Date' ? null : DateTime.parse(_selectedDate));
                               }
                               log('Selected: $value');
                             },
-                            itemBuilder: (BuildContext context) =>
-                                <PopupMenuEntry<String>>[
+                            itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
                               const PopupMenuItem<String>(
                                 value: 'Delhivery', // Hardcoded marketplace
                                 child: Text('Delhivery'),
@@ -324,8 +307,7 @@ class _ManifestPageState extends State<ManifestPage> {
                       onPressed: manifestProvider.isCreatingManifest
                           ? null
                           : () async {
-                              manifestProvider.createManifest(
-                                  context, selectedCourier);
+                              manifestProvider.createManifest(context, selectedCourier);
                             },
                       child: manifestProvider.isCreatingManifest
                           ? const SizedBox(
@@ -351,6 +333,10 @@ class _ManifestPageState extends State<ManifestPage> {
                       onPressed: manifestProvider.isRefreshingOrders
                           ? null
                           : () async {
+                              setState(() {
+                                selectedCourier = 'All';
+                                _selectedDate = 'Select Date';
+                              });
                               manifestProvider.fetchOrdersWithStatus8();
                             },
                       child: manifestProvider.isRefreshingOrders
@@ -371,8 +357,7 @@ class _ManifestPageState extends State<ManifestPage> {
                 ),
               ),
               const SizedBox(height: 8), // Decreased space here
-              _buildTableHeader(
-                  manifestProvider.orders.length, manifestProvider),
+              _buildTableHeader(manifestProvider.orders.length, manifestProvider),
               const SizedBox(height: 4), // New space for alignment
               Expanded(
                 child: Stack(
@@ -414,8 +399,7 @@ class _ManifestPageState extends State<ManifestPage> {
                 ),
               ),
               CustomPaginationFooter(
-                currentPage:
-                    manifestProvider.currentPage, // Ensure correct currentPage
+                currentPage: manifestProvider.currentPage, // Ensure correct currentPage
                 totalPages: manifestProvider.totalPages,
                 buttonSize: 30,
                 pageController: manifestProvider.textEditingController,
@@ -426,17 +410,14 @@ class _ManifestPageState extends State<ManifestPage> {
                   manifestProvider.goToPage(manifestProvider.totalPages);
                 },
                 onNextPage: () {
-                  if (manifestProvider.currentPage <
-                      manifestProvider.totalPages) {
-                    print(
-                        'Navigating to page: ${manifestProvider.currentPage + 1}');
+                  if (manifestProvider.currentPage < manifestProvider.totalPages) {
+                    print('Navigating to page: ${manifestProvider.currentPage + 1}');
                     manifestProvider.goToPage(manifestProvider.currentPage + 1);
                   }
                 },
                 onPreviousPage: () {
                   if (manifestProvider.currentPage > 1) {
-                    print(
-                        'Navigating to page: ${manifestProvider.currentPage - 1}');
+                    print('Navigating to page: ${manifestProvider.currentPage - 1}');
                     manifestProvider.goToPage(manifestProvider.currentPage - 1);
                   }
                 },
@@ -444,11 +425,8 @@ class _ManifestPageState extends State<ManifestPage> {
                   manifestProvider.goToPage(page);
                 },
                 onJumpToPage: () {
-                  final page =
-                      int.tryParse(manifestProvider.textEditingController.text);
-                  if (page != null &&
-                      page > 0 &&
-                      page <= manifestProvider.totalPages) {
+                  final page = int.tryParse(manifestProvider.textEditingController.text);
+                  if (page != null && page > 0 && page <= manifestProvider.totalPages) {
                     manifestProvider.goToPage(page);
                   }
                 },
@@ -503,12 +481,9 @@ class _ManifestPageState extends State<ManifestPage> {
     );
   }
 
-  Widget _buildOrderCard(
-      Order order, int index, ManifestProvider manifestProvider) {
+  Widget _buildOrderCard(Order order, int index, ManifestProvider manifestProvider) {
     return Padding(
-      padding: const EdgeInsets.symmetric(
-          vertical: 4.0,
-          horizontal: 8.0), // Increased vertical space for order cards
+      padding: const EdgeInsets.symmetric(vertical: 4.0, horizontal: 8.0), // Increased vertical space for order cards
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [

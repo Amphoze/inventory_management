@@ -32,7 +32,7 @@ class InvoiceProvider with ChangeNotifier {
   // }
 
   Future<void> fetchInvoices({int page = 1}) async {
-    String apiUrl = await ApiUrls.getBaseUrl();
+    String apiUrl = await Constants.getBaseUrl();
     _isLoading = true;
     _error = null;
     _currentPage = page;
@@ -122,7 +122,7 @@ class InvoiceProvider with ChangeNotifier {
   //   }
   // }
   Future<void> searchInvoiceByNumber(String invoiceNumber) async {
-    String apiUrl = await ApiUrls.getBaseUrl();
+    String apiUrl = await Constants.getBaseUrl();
     _isLoading = true;
     _error = null;
     notifyListeners();

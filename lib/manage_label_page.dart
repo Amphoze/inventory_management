@@ -90,7 +90,7 @@ class _ManageLabelPageState extends State<ManageLabelPage> {
         }.toString());
 
         final response = await http.put(
-          Uri.parse('${await ApiUrls.getBaseUrl()}/label?labelSku=$sku'),
+          Uri.parse('${await Constants.getBaseUrl()}/label?labelSku=$sku'),
           headers: {
             'Content-Type': 'application/json',
             'Authorization': 'Bearer $token',

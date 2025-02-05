@@ -20,7 +20,7 @@ Future<String?> getWarehouseId() async {
 }
 
 Future<Map<String, dynamic>> getAllInventory({int limit = 10}) async {
-  String baseUrl = await ApiUrls.getBaseUrl();
+  String baseUrl = await Constants.getBaseUrl();
   final url = Uri.parse('$baseUrl/inventory');
   List<Map<String, dynamic>> allInventories = [];
   int currentPage = 1;

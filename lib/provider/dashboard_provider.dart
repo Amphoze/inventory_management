@@ -75,7 +75,7 @@ class DashboardProvider with ChangeNotifier {
       };
 
       final url =
-          '${await ApiUrls.getBaseUrl()}/dashboard/search?date=$formattedDate';
+          '${await Constants.getBaseUrl()}/dashboard/search?date=$formattedDate';
 
       log('url: $url');
 
@@ -119,7 +119,7 @@ class DashboardProvider with ChangeNotifier {
       };
 
       final url =
-          '${await ApiUrls.getBaseUrl()}/dashboard/fetch?date=$formattedDate';
+          '${await Constants.getBaseUrl()}/dashboard/fetch?date=$formattedDate';
 
       log('done: $url');
 

@@ -58,13 +58,15 @@ class Combo {
   // Method to convert a Combo to JSON
   Map<String, dynamic> toJson() {
     return {
+      'id': id, // Include ID if it's not null
       'name': name,
       'mrp': mrp,
       'cost': cost,
       'comboSku': comboSku,
-      'products': products,
+      'comboWeight': comboWeight, // Nullable, will be null if not set
       'comboQty': comboQty,
       'comboAmount': comboAmount,
+      'products': products,
       'images': images ?? [], // Default to empty list if null
     };
   }
@@ -97,5 +99,15 @@ class Product {
           ? List<String>.from(json['images'])
           : [], // Fallback to empty list if null
     );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'displayName': displayName,
+      'sku': sku,
+      'active': active,
+      'images': images ?? [], // Default to empty list if null
+    };
   }
 }

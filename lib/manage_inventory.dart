@@ -127,7 +127,7 @@ class _ManageInventoryPageState extends State<ManageInventoryPage> {
     try {
       final token = await getToken();
       final response = await http.post(
-        Uri.parse('${await ApiUrls.getBaseUrl()}/inventory'),
+        Uri.parse('${await Constants.getBaseUrl()}/inventory'),
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer $token',
@@ -201,7 +201,7 @@ class _ManageInventoryPageState extends State<ManageInventoryPage> {
       final token = prefs.getString('authToken');
       final warehouseId = prefs.getString('warehouseId');
 
-      String baseUrl = await ApiUrls.getBaseUrl();
+      String baseUrl = await Constants.getBaseUrl();
 
       if (token == null || token.isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -314,9 +314,9 @@ class _ManageInventoryPageState extends State<ManageInventoryPage> {
     try {
       final prefs = await SharedPreferences.getInstance();
       final token = prefs.getString('authToken');
-      final warehouseId = prefs.getString('warehouseId');
+      // final warehouseId = prefs.getString('warehouseId');
 
-      String baseUrl = await ApiUrls.getBaseUrl();
+      String baseUrl = await Constants.getBaseUrl();
 
       if (token == null || token.isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(

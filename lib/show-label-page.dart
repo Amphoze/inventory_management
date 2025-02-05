@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:developer';
 import 'package:dropdown_search/dropdown_search.dart';
 import 'package:flutter/material.dart';
@@ -7,10 +8,14 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:inventory_management/Api/label-api.dart';
 import 'package:inventory_management/Custom-Files/colors.dart';
 import 'package:inventory_management/Custom-Files/custom_pagination.dart';
+import 'package:inventory_management/constants/constants.dart';
 import 'package:inventory_management/provider/combo_provider.dart';
 // import 'package:pagination_flutter/pagination.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'Api/lable-page-api.dart';
+import 'package:http/http.dart' as http;
 
 final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
 bool showLabelForm = false;
@@ -25,8 +30,7 @@ class ManageLabel extends StatefulWidget {
 class _ManageLabelState extends State<ManageLabel> {
   LabelPageApi? labelPageProvider;
   //final ScrollController controller = ScrollController();
-  final GlobalKey<DropdownSearchState<String>> _dropdownKey =
-      GlobalKey<DropdownSearchState<String>>();
+  final GlobalKey<DropdownSearchState<String>> _dropdownKey = GlobalKey<DropdownSearchState<String>>();
 
   void _toggleFormVisibility() {
     setState(() {
@@ -86,8 +90,7 @@ class _ManageLabelState extends State<ManageLabel> {
   //   );
   // }
 
-  void _showDetailsDialog(
-      BuildContext context, Map<String, dynamic> data) async {
+  void _showDetailsDialog(BuildContext context, Map<String, dynamic> data) async {
     List<dynamic> labelLogs = data['labelLog'] ?? [];
 
     log('labelLogs: $labelLogs');
@@ -173,8 +176,10 @@ class _ManageLabelState extends State<ManageLabel> {
                           itemCount: labelLogs.length,
                           itemBuilder: (context, index) {
                             final log = labelLogs[index];
-                            final (icon, iconColor) =
-                                _getIconProperties(log['changeType']);
+                            final (
+                              icon,
+                              iconColor
+                            ) = _getIconProperties(log['changeType']);
 
                             return Card(
                               margin: const EdgeInsets.symmetric(vertical: 8),
@@ -227,8 +232,7 @@ class _ManageLabelState extends State<ManageLabel> {
                                     // Enhanced Log Details Section
                                     Expanded(
                                       child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
+                                        crossAxisAlignment: CrossAxisAlignment.start,
                                         children: [
                                           _buildEnhancedDetailRow(
                                             'Quantity Changed',
@@ -327,14 +331,26 @@ class _ManageLabelState extends State<ManageLabel> {
     );
   }
 
-  (IconData, Color) _getIconProperties(String changeType) {
+  (
+    IconData,
+    Color
+  ) _getIconProperties(String changeType) {
     switch (changeType) {
       case 'Addition':
-        return (Icons.add_circle_outline, Colors.green);
+        return (
+          Icons.add_circle_outline,
+          Colors.green
+        );
       case 'Subtraction':
-        return (Icons.remove_circle_outline, Colors.red);
+        return (
+          Icons.remove_circle_outline,
+          Colors.red
+        );
       default:
-        return (Icons.info_outline, Colors.blue);
+        return (
+          Icons.info_outline,
+          Colors.blue
+        );
     }
   }
 
@@ -372,13 +388,10 @@ class _ManageLabelState extends State<ManageLabel> {
   }
 
   String _formatProductSkus(List<dynamic> products) {
-    return products
-        .map((product) => product['productSku'].toString())
-        .join(', ');
+    return products.map((product) => product['productSku'].toString()).join(', ');
   }
 
-  void _showUpdateQuantityDialog(
-      BuildContext context, Map<String, dynamic> data) {
+  void _showUpdateQuantityDialog(BuildContext context, Map<String, dynamic> data) {
     TextEditingController quantityController = TextEditingController();
     TextEditingController reasonController = TextEditingController();
 
@@ -423,8 +436,7 @@ class _ManageLabelState extends State<ManageLabel> {
               onPressed: () {
                 Navigator.of(context).pop();
               },
-              child:
-                  const Text('Cancel', style: TextStyle(color: Colors.white)),
+              child: const Text('Cancel', style: TextStyle(color: Colors.white)),
             ),
             const SizedBox(
               width: 5,
@@ -443,8 +455,7 @@ class _ManageLabelState extends State<ManageLabel> {
                   return;
                 }
 
-                final labelProvider =
-                    Provider.of<LabelApi>(context, listen: false);
+                final labelProvider = Provider.of<LabelApi>(context, listen: false);
 
                 await labelProvider.updateLabelQuantity(
                   data['_id'],
@@ -465,8 +476,7 @@ class _ManageLabelState extends State<ManageLabel> {
                 // Close the dialog
                 // Navigator.of(context).pop();
               },
-              child:
-                  const Text('Update', style: TextStyle(color: Colors.white)),
+              child: const Text('Update', style: TextStyle(color: Colors.white)),
             ),
           ],
         );
@@ -495,7 +505,13 @@ class _ManageLabelState extends State<ManageLabel> {
 
   @override
   Widget build(BuildContext context) {
-    final columns = ['IMAGE', 'Label SKU', 'Name', 'Quantity', 'Product SKU'];
+    final columns = [
+      'IMAGE',
+      'Label SKU',
+      'Name',
+      'Quantity',
+      'Product SKU'
+    ];
     return Consumer<LabelApi>(
       builder: (context, l, child) => Scaffold(
         body: l.labelInformation.isNotEmpty && l.loading == false
@@ -516,30 +532,25 @@ class _ManageLabelState extends State<ManageLabel> {
                                 controller: searchController,
                                 decoration: InputDecoration(
                                   hintText: 'Search...',
-                                  prefixIcon: const Icon(Icons.search,
-                                      color: Colors.grey),
+                                  prefixIcon: const Icon(Icons.search, color: Colors.grey),
                                   border: OutlineInputBorder(
                                     borderRadius: BorderRadius.circular(30.0),
-                                    borderSide:
-                                        BorderSide.none, // No border line
+                                    borderSide: BorderSide.none, // No border line
                                   ),
                                   filled: true,
                                   fillColor: Colors.white,
-                                  contentPadding: const EdgeInsets.symmetric(
-                                      vertical: 15.0, horizontal: 20.0),
+                                  contentPadding: const EdgeInsets.symmetric(vertical: 15.0, horizontal: 20.0),
                                   focusedBorder: OutlineInputBorder(
                                     borderRadius: BorderRadius.circular(30.0),
                                     borderSide: const BorderSide(
-                                      color: AppColors
-                                          .primaryBlue, // Border color when focused
+                                      color: AppColors.primaryBlue, // Border color when focused
                                       width: 2.0,
                                     ),
                                   ),
                                   enabledBorder: OutlineInputBorder(
                                     borderRadius: BorderRadius.circular(30.0),
                                     borderSide: BorderSide(
-                                      color: Colors.grey.withOpacity(
-                                          0.5), // Border color when enabled
+                                      color: Colors.grey.withOpacity(0.5), // Border color when enabled
                                       width: 1.0,
                                     ),
                                   ),
@@ -556,27 +567,39 @@ class _ManageLabelState extends State<ManageLabel> {
                           child: const Icon(Icons.restart_alt),
                           onTap: () {
                             l.cancel();
+                            // l.getLabel();
                           },
                         ),
                         const SizedBox(width: 10),
                         ElevatedButton(
                           style: ElevatedButton.styleFrom(
-                            backgroundColor:
-                                AppColors.primaryBlue, // Button color
+                            backgroundColor: AppColors.primaryBlue, // Button color
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(30.0),
                             ),
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 16, vertical: 12),
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                           ),
                           onPressed: () {
                             _toggleFormVisibility(); // Toggle form visibility
                           },
                           child: Text(
                             showLabelForm ? 'Back' : 'Create Label',
-                            style: const TextStyle(
-                                fontSize: 16, color: Colors.white),
+                            style: const TextStyle(fontSize: 16, color: Colors.white),
                           ),
+                        ),
+                        const SizedBox(width: 10),
+                        ElevatedButton(
+                          onPressed: downloadCsv,
+                          child: isDownloadingCsv
+                              ? const SizedBox(
+                                  width: 16,
+                                  height: 16,
+                                  child: CircularProgressIndicator(
+                                    color: AppColors.white,
+                                    strokeWidth: 2,
+                                  ),
+                                )
+                              : const Text('Download Label CSV'),
                         ),
                       ],
                     ),
@@ -589,20 +612,14 @@ class _ManageLabelState extends State<ManageLabel> {
                           children: [
                             const Padding(
                               padding: EdgeInsets.only(top: 2, left: 16),
-                              child: Text("Create Label",
-                                  style: TextStyle(
-                                      fontSize: 24,
-                                      fontWeight: FontWeight.bold)),
+                              child: Text("Create Label", style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
                             ),
                             const SizedBox(height: 10),
                             Padding(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 8, vertical: 5),
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
                               child: SizedBox(
                                 width: 620,
-                                child: SingleChildScrollView(
-                                    child: LabelFormFields(
-                                        labelPageProvider: labelPageProvider)),
+                                child: SingleChildScrollView(child: LabelFormFields(labelPageProvider: labelPageProvider)),
                               ),
                             ),
                             const SizedBox(height: 7),
@@ -618,8 +635,7 @@ class _ManageLabelState extends State<ManageLabel> {
                       ),
                     ),
                   if (!showLabelForm) ...[
-                    if (searchController.text.isEmpty &&
-                        l.labelInformation.isEmpty)
+                    if (searchController.text.isEmpty && l.labelInformation.isEmpty)
                       const Padding(
                         padding: EdgeInsets.all(8.0),
                         child: Text(
@@ -654,13 +670,10 @@ class _ManageLabelState extends State<ManageLabel> {
                                   // Image column
                                   DataCell(
                                     Image.network(
-                                      item['images']?.isNotEmpty ?? false
-                                          ? item['images'][0]
-                                          : "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAKIAAACUCAMAAAAnDwKZAAAAaVBMVEX///9NTU1JSUnJycne3t7q6uouLS5jY2NCQkJgYGDw8PD7+/vh4eFGRkZzc3MnJyd9fX2EhIQ1NTU7OzukpKTQ0NCUlJRra2vAwMDX19eurq6amppWVla6uroaGhq0tLSMjIwAAAALCwuxY5kvAAAFIElEQVR4nO2b6ZKrKhSFUUJEcEDBAcXo6fd/yItmjsPpToGdU5fvR6raIFmuzd4g2gA4HA6Hw+FwOBwOh8PhcDgcvwCtoU0KExJTzyJx8vESfWMSfSsYlRjYwZzEmCFig8g3KJEa6GgO+XyJyEk0gAu0CZyLJvgHJLpAm2APF2kEuwK93fUOLkaZl3Ou2nc9ti8xivG05MOMvNe19UCTKr4snXn5XtfWXaz5bXnP3xuPtiXSAd8k5v1bXdsONE3im0TcvtW1dRfZXSJv3uraerqI+1jM5aqKrWS3ni7SvyqMw1UhItvo2n5d7C82+v6qiQXeGgM7TIACc/0jPF7fl1Gxr6LVb/dYRkRtqKpmvSi2fHPX5gMWY3DKeb5akX5/MUaDc1ny1wbC70u8Tj9xsDIUfj3Q8FY3MVtu8dsuosC/l/Z6sclvu5jdJx/NYamJTRe/oRgeHxXiRSUWJRbLpjz9eug/SvS4WGhkL9ARxuovtwKPi8mLjwuVx5qLkTYID9uxrvmLQs+v5ldly8UojjenjBE0U6jPmFceSy6iy5TBl+vI+ZQsnkv0criPRHS77Vud1u6rtJdQq9cksxJoEtzSYHVa0+m0pHCsPC8D2IaLhD38Oq5WzkhWJM4qjwWJJHmKIB8WTxBrCvVwfB4c5iXS7GWMxUu3z1L5y/rG4Rg8VR7jY5GWM3viWZICEC5l821wDFYllvM89fEsZUS+ofBlzWM60GKpksTJy5whNwVq1MNFGZa4qHA2Z5BgK8yvF2U20JSt5Onx6T65Xb6Qp4u6Vx6zLtJsrZT4DylTrNebO/ltkjHs4rrE+0z49zBPJ9y2V/Zy0YvVdV5rv2OirjzXTd3dJOobvLPG4rja5JnjpfLsFWjvugP6ei+wxbny7OeiztJON5xPPqtcZtQdXZzuTOD2tPJyTVPl2dNFvT6Q3vfDPGo87C3RO78Y9H2myrNroH/OWHn2dfHncPjpLo4PQv4BiR8faOMushyb5WjaRYAiwxyIWRcjZANpTqLnhXb4/BdVfZMSrWFG4p+jRdLQhER5sMn6Q0yHw/F/RQQEIO9h001tPNBYxuuouuyrdN74ScKF3dP3KfMSoJMuYPSyMyLGN0ro5e/zwcs3160T+vBsYNzBaSU9wfPh5jS2IuNeKH3nMfciLY4PKI2AZNV5NyYrSNZULQwYArAKBgq6ijUCRCxoJtVNUDVk0DcniTwkYRYBVtAjpEIfBg0WgZgk9lWy+vbMDykrFqAUHXDZecN44NihrxLmYaFKknSQ15ILmGcUD3LaoS+UFCkZQiCUycrIa8Gpp6mUYdGcSJ/2NW4ohzCvG+/9V0hfJB7yJkddDsbf1AfyDqUFiDvAGEDdgLsmpoBlUdr2YTCeIZskJ0V8SFpAOuGXINUSoT7MjqQ/ARAMJIelapovE/96NUoMQBnnqOf0LjGXVEvMGArbQnW9lphoiaKGYxZAXHecAMViRJNEVpPEo4R+U+eTxGogvBjCrq5NuRgCitMo4i30psGYahcl5aOL8lR0vEd46LkOdCnDcQNK8KhNEehPFUCx0ANkDPRJCk+KLx1oUXOtGBZ53SlDEptBl4ogAkWlyikHK4iqA00gaFvaKpE1OpMEY1QmYTm6rNNGMAlIpS3tVSZaWkEaHBCr9OE6E6qlJCmACIPa5NvY9/pyrjdPdaaoOqJa8FB07p9Ty0vzh1Me+9sDWoaKffrKD6EdHXE4HA6Hw+FwOBwOh8PhcHw6/wFnwnFzLAiC/AAAAABJRU5ErkJggg==",
+                                      item['images']?.isNotEmpty ?? false ? item['images'][0] : "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAKIAAACUCAMAAAAnDwKZAAAAaVBMVEX///9NTU1JSUnJycne3t7q6uouLS5jY2NCQkJgYGDw8PD7+/vh4eFGRkZzc3MnJyd9fX2EhIQ1NTU7OzukpKTQ0NCUlJRra2vAwMDX19eurq6amppWVla6uroaGhq0tLSMjIwAAAALCwuxY5kvAAAFIElEQVR4nO2b6ZKrKhSFUUJEcEDBAcXo6fd/yItmjsPpToGdU5fvR6raIFmuzd4g2gA4HA6Hw+FwOBwOh8PhcDgcvwCtoU0KExJTzyJx8vESfWMSfSsYlRjYwZzEmCFig8g3KJEa6GgO+XyJyEk0gAu0CZyLJvgHJLpAm2APF2kEuwK93fUOLkaZl3Ou2nc9ti8xivG05MOMvNe19UCTKr4snXn5XtfWXaz5bXnP3xuPtiXSAd8k5v1bXdsONE3im0TcvtW1dRfZXSJv3uraerqI+1jM5aqKrWS3ni7SvyqMw1UhItvo2n5d7C82+v6qiQXeGgM7TIACc/0jPF7fl1Gxr6LVb/dYRkRtqKpmvSi2fHPX5gMWY3DKeb5akX5/MUaDc1ny1wbC70u8Tj9xsDIUfj3Q8FY3MVtu8dsuosC/l/Z6sclvu5jdJx/NYamJTRe/oRgeHxXiRSUWJRbLpjz9eug/SvS4WGhkL9ARxuovtwKPi8mLjwuVx5qLkTYID9uxrvmLQs+v5ldly8UojjenjBE0U6jPmFceSy6iy5TBl+vI+ZQsnkv0criPRHS77Vud1u6rtJdQq9cksxJoEtzSYHVa0+m0pHCsPC8D2IaLhD38Oq5WzkhWJM4qjwWJJHmKIB8WTxBrCvVwfB4c5iXS7GWMxUu3z1L5y/rG4Rg8VR7jY5GWM3viWZICEC5l821wDFYllvM89fEsZUS+ofBlzWM60GKpksTJy5whNwVq1MNFGZa4qHA2Z5BgK8yvF2U20JSt5Onx6T65Xb6Qp4u6Vx6zLtJsrZT4DylTrNebO/ltkjHs4rrE+0z49zBPJ9y2V/Zy0YvVdV5rv2OirjzXTd3dJOobvLPG4rja5JnjpfLsFWjvugP6ei+wxbny7OeiztJON5xPPqtcZtQdXZzuTOD2tPJyTVPl2dNFvT6Q3vfDPGo87C3RO78Y9H2myrNroH/OWHn2dfHncPjpLo4PQv4BiR8faOMushyb5WjaRYAiwxyIWRcjZANpTqLnhXb4/BdVfZMSrWFG4p+jRdLQhER5sMn6Q0yHw/F/RQQEIO9h001tPNBYxuuouuyrdN74ScKF3dP3KfMSoJMuYPSyMyLGN0ro5e/zwcs3160T+vBsYNzBaSU9wfPh5jS2IuNeKH3nMfciLY4PKI2AZNV5NyYrSNZULQwYArAKBgq6ijUCRCxoJtVNUDVk0DcniTwkYRYBVtAjpEIfBg0WgZgk9lWy+vbMDykrFqAUHXDZecN44NihrxLmYaFKknSQ15ILmGcUD3LaoS+UFCkZQiCUycrIa8Gpp6mUYdGcSJ/2NW4ohzCvG+/9V0hfJB7yJkddDsbf1AfyDqUFiDvAGEDdgLsmpoBlUdr2YTCeIZskJ0V8SFpAOuGXINUSoT7MjqQ/ARAMJIelapovE/96NUoMQBnnqOf0LjGXVEvMGArbQnW9lphoiaKGYxZAXHecAMViRJNEVpPEo4R+U+eTxGogvBjCrq5NuRgCitMo4i30psGYahcl5aOL8lR0vEd46LkOdCnDcQNK8KhNEehPFUCx0ANkDPRJCk+KLx1oUXOtGBZ53SlDEptBl4ogAkWlyikHK4iqA00gaFvaKpE1OpMEY1QmYTm6rNNGMAlIpS3tVSZaWkEaHBCr9OE6E6qlJCmACIPa5NvY9/pyrjdPdaaoOqJa8FB07p9Ty0vzh1Me+9sDWoaKffrKD6EdHXE4HA6Hw+FwOBwOh8PhcHw6/wFnwnFzLAiC/AAAAABJRU5ErkJggg==",
                                       width: 50,
                                       height: 50,
-                                      errorBuilder:
-                                          (context, error, stackTrace) {
+                                      errorBuilder: (context, error, stackTrace) {
                                         return const Icon(
                                           Icons.image,
                                           color: Colors.grey,
@@ -671,11 +684,9 @@ class _ManageLabelState extends State<ManageLabel> {
                                     ),
                                   ),
                                   // Label SKU column
-                                  DataCell(Text(
-                                      item['labelSku']?.toString() ?? 'N/A')),
+                                  DataCell(Text(item['labelSku']?.toString() ?? 'N/A')),
                                   // Name column
-                                  DataCell(
-                                      Text(item['name']?.toString() ?? 'N/A')),
+                                  DataCell(Text(item['name']?.toString() ?? 'N/A')),
                                   // Quantity column
                                   DataCell(
                                     Center(
@@ -684,32 +695,25 @@ class _ManageLabelState extends State<ManageLabel> {
                                         children: [
                                           Row(
                                             mainAxisSize: MainAxisSize.min,
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.center,
+                                            mainAxisAlignment: MainAxisAlignment.center,
                                             children: [
                                               Text(
-                                                item['quantity']?.toString() ??
-                                                    '0',
-                                                style: const TextStyle(
-                                                    fontSize: 16),
+                                                item['quantity']?.toString() ?? '0',
+                                                style: const TextStyle(fontSize: 16),
                                               ),
                                               IconButton(
-                                                icon: const Icon(Icons.edit,
-                                                    size: 16),
+                                                icon: const Icon(Icons.edit, size: 16),
                                                 onPressed: () {
-                                                  _showUpdateQuantityDialog(
-                                                      context, item);
+                                                  _showUpdateQuantityDialog(context, item);
                                                 },
                                               ),
                                             ],
                                           ),
                                           TextButton(
-                                            onPressed: () => _showDetailsDialog(
-                                                context, item),
+                                            onPressed: () => _showDetailsDialog(context, item),
                                             child: const Text(
                                               'View Details',
-                                              style:
-                                                  TextStyle(color: Colors.blue),
+                                              style: TextStyle(color: Colors.blue),
                                             ),
                                           ),
                                         ],
@@ -717,8 +721,7 @@ class _ManageLabelState extends State<ManageLabel> {
                                     ),
                                   ),
                                   // Product SKU column
-                                  DataCell(Text(_formatProductSkus(
-                                      item['products'] ?? []))),
+                                  DataCell(Text(_formatProductSkus(item['products'] ?? []))),
                                 ],
                               );
                             }).toList(),
@@ -734,8 +737,7 @@ class _ManageLabelState extends State<ManageLabel> {
                     CustomPaginationFooter(
                       currentPage: l.currentPage,
                       totalPages: l.totalPage,
-                      buttonSize:
-                          MediaQuery.of(context).size.width > 600 ? 32 : 24,
+                      buttonSize: MediaQuery.of(context).size.width > 600 ? 32 : 24,
                       pageController: _pageController,
                       onFirstPage: () => _goToPage(1),
                       onLastPage: () => _goToPage(l.totalPage),
@@ -752,84 +754,6 @@ class _ManageLabelState extends State<ManageLabel> {
                       onGoToPage: _goToPage,
                       onJumpToPage: _jumpToPage,
                     ),
-                    // Row(
-                    //   children: [
-                    //     InkWell(
-                    //       child: const FaIcon(FontAwesomeIcons.chevronLeft),
-                    //       onTap: () async {
-                    //         l.updateCurrentPage(l.totalPage);
-                    //         await l.getLabel();
-                    //       },
-                    //     ),
-                    //     Pagination(
-                    //       numOfPages: l.totalPage,
-                    //       selectedPage: l.currentPage,
-                    //       pagesVisible: 5,
-                    //       spacing: 10,
-                    //       onPageChanged: (page) async {
-                    //         l.updateCurrentPage(page);
-                    //         await l.getLabel();
-                    //       },
-                    //       nextIcon: const Icon(
-                    //         Icons.chevron_right_rounded,
-                    //         color: AppColors.primaryBlue,
-                    //         size: 20,
-                    //       ),
-                    //       previousIcon: const Icon(
-                    //         Icons.chevron_left_rounded,
-                    //         color: AppColors.primaryBlue,
-                    //         size: 20,
-                    //       ),
-                    //       activeTextStyle: const TextStyle(
-                    //         color: Colors.white,
-                    //         fontSize: 14,
-                    //         fontWeight: FontWeight.w700,
-                    //       ),
-                    //       activeBtnStyle: ButtonStyle(
-                    //         backgroundColor:
-                    //             WidgetStateProperty.all(AppColors.primaryBlue),
-                    //         shape: WidgetStateProperty.all(const CircleBorder(
-                    //           side: BorderSide(
-                    //               color: AppColors.primaryBlue, width: 1),
-                    //         )),
-                    //       ),
-                    //       inactiveBtnStyle: ButtonStyle(
-                    //         elevation: WidgetStateProperty.all(0),
-                    //         backgroundColor:
-                    //             WidgetStateProperty.all(Colors.white),
-                    //         shape: WidgetStateProperty.all(const CircleBorder(
-                    //           side: BorderSide(
-                    //               color: AppColors.primaryBlue, width: 1),
-                    //         )),
-                    //       ),
-                    //       inactiveTextStyle: const TextStyle(
-                    //         fontSize: 14,
-                    //         color: AppColors.primaryBlue,
-                    //         fontWeight: FontWeight.w700,
-                    //       ),
-                    //     ),
-                    //     InkWell(
-                    //       child: const FaIcon(FontAwesomeIcons.chevronRight),
-                    //       onTap: () async {
-                    //         l.updateCurrentPage(l.totalPage);
-                    //         await l.getLabel();
-                    //       },
-                    //     ),
-                    //     Padding(
-                    //       padding: const EdgeInsets.all(8.0),
-                    //       child: Container(
-                    //         height: 30,
-                    //         width: 50,
-                    //         decoration: BoxDecoration(
-                    //           border: Border.all(color: AppColors.lightBlue),
-                    //         ),
-                    //         child: Center(
-                    //           child: Text('${l.currentPage}/${l.totalPage}'),
-                    //         ),
-                    //       ),
-                    //     ),
-                    //   ],
-                    // ),
                   ],
                 ],
               )
@@ -838,10 +762,7 @@ class _ManageLabelState extends State<ManageLabel> {
     );
   }
 
-  Widget fieldTitle(String filTitle, String value,
-      {bool show = true,
-      double width = 133,
-      var fontWeight = FontWeight.bold}) {
+  Widget fieldTitle(String filTitle, String value, {bool show = true, double width = 133, var fontWeight = FontWeight.bold}) {
     return Container(
       alignment: Alignment.topRight,
       child: Row(
@@ -850,29 +771,134 @@ class _ManageLabelState extends State<ManageLabel> {
         children: [
           SizedBox(
             width: width,
-            child: Align(
-                alignment: Alignment.topLeft,
-                child: Text(filTitle,
-                    style: GoogleFonts.daiBannaSil(
-                        fontSize: 20, fontWeight: fontWeight))),
+            child: Align(alignment: Alignment.topLeft, child: Text(filTitle, style: GoogleFonts.daiBannaSil(fontSize: 20, fontWeight: fontWeight))),
           ),
-          const Text(":",
-              style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  fontFamily: 'googlefont')),
+          const Text(":", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, fontFamily: 'googlefont')),
           show
               ? Expanded(
                   child: Text(
                     value,
-                    style: GoogleFonts.daiBannaSil(
-                        fontSize: 20, fontWeight: FontWeight.normal),
+                    style: GoogleFonts.daiBannaSil(fontSize: 20, fontWeight: FontWeight.normal),
                   ),
                 )
               : const Text('  '),
         ],
       ),
     );
+  }
+
+  bool isDownloadingCsv = false;
+  Future<void> downloadCsv() async {
+    setState(() {
+      isDownloadingCsv = true;
+    });
+
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('authToken');
+      // final warehouseId = prefs.getString('warehouseId');
+
+      String baseUrl = await Constants.getBaseUrl();
+
+      if (token == null || token.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Row(
+              children: [
+                Icon(Icons.error_outline, color: Colors.white),
+                SizedBox(width: 8),
+                Expanded(
+                  child: Text('Authorization token is missing or invalid'),
+                ),
+              ],
+            ),
+            backgroundColor: Colors.red,
+            duration: Duration(seconds: 3),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+        throw Exception('Authorization token is missing or invalid.');
+      }
+
+      final headers = {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      };
+
+      final response = await http.post(
+        Uri.parse('$baseUrl/label/download'),
+        headers: headers,
+      );
+
+      log('Response body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        final jsonBody = json.decode(response.body);
+        log("jsonBody: $jsonBody");
+
+        final downloadUrl = jsonBody['downloadUrl'];
+
+        if (downloadUrl != null) {
+          final canLaunch = await canLaunchUrl(Uri.parse(downloadUrl));
+          if (canLaunch) {
+            await launchUrl(Uri.parse(downloadUrl));
+
+            // Show success message
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Row(
+                  children: [
+                    Icon(Icons.check_circle, color: Colors.white),
+                    SizedBox(width: 8),
+                    Expanded(
+                      child: Text('CSV download started successfully'),
+                    ),
+                  ],
+                ),
+                backgroundColor: Colors.green,
+                duration: Duration(seconds: 3),
+                behavior: SnackBarBehavior.floating,
+              ),
+            );
+          } else {
+            throw 'Could not launch $downloadUrl';
+          }
+        } else {
+          throw Exception('No download URL found');
+        }
+      } else {
+        throw Exception('Failed to load CSV: ${response.statusCode} ${response.body}');
+      }
+    } catch (error) {
+      log('error: $error');
+      log('Error during report generation: $error');
+
+      // Show error message
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Row(
+            children: [
+              Icon(Icons.error_outline, color: Colors.white),
+              SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'Error downloading CSV',
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
+          ),
+          backgroundColor: Colors.red,
+          duration: Duration(seconds: 3),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    } finally {
+      setState(() {
+        isDownloadingCsv = false;
+      });
+    }
   }
 }
 
@@ -883,8 +909,7 @@ class LoadingLabelAnimation extends StatefulWidget {
   _LoadingLabelAnimationState createState() => _LoadingLabelAnimationState();
 }
 
-class _LoadingLabelAnimationState extends State<LoadingLabelAnimation>
-    with SingleTickerProviderStateMixin {
+class _LoadingLabelAnimationState extends State<LoadingLabelAnimation> with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _scaleAnimation;
   late Animation<Color?> _colorAnimation;
@@ -903,8 +928,7 @@ class _LoadingLabelAnimationState extends State<LoadingLabelAnimation>
 
     _colorAnimation = ColorTween(
       begin: Colors.grey.shade400,
-      end: Colors
-          .blue, // You can use AppColors.primaryGreen or any color you prefer
+      end: Colors.blue, // You can use AppColors.primaryGreen or any color you prefer
     ).animate(_controller);
   }
 
@@ -953,36 +977,24 @@ class _LabelFormFieldsState extends State<LabelFormFields> {
     return null;
   }
 
-  String? _quantityValidator(String? value) {
-    if (value == null || value.isEmpty) {
-      return 'Please enter a quantity';
-    }
-    if (int.tryParse(value) == null) {
-      return 'Please enter a valid number';
-    }
-    if (int.parse(value) <= 0) {
-      return 'Quantity must be greater than 0';
-    }
-    return null;
-  }
-
-  String? _descValidator(String? value) {
-    if (value == null || value.isEmpty) {
-      return 'Please enter a deacription';
-    }
-    return null;
-  }
+  // String? _quantityValidator(String? value) {
+  //   if (value == null || value.isEmpty) {
+  //     return 'Please enter a quantity';
+  //   }
+  //   if (int.tryParse(value) == null) {
+  //     return 'Please enter a valid number';
+  //   }
+  //   if (int.parse(value) <= 0) {
+  //     return 'Quantity must be greater than 0';
+  //   }
+  //   return null;
+  // }
 
   @override
   Widget build(BuildContext context) {
-    final comboProvider = context.watch<ComboProvider>();
-    final TextEditingController searchController = TextEditingController();
-
     return Form(
       key: _formKey,
-      autovalidateMode: _autoValidateMode
-          ? AutovalidateMode.onUserInteraction
-          : AutovalidateMode.disabled,
+      autovalidateMode: _autoValidateMode ? AutovalidateMode.onUserInteraction : AutovalidateMode.disabled,
       child: Column(
         children: [
           _buildFormSection(
@@ -1075,22 +1087,16 @@ class _LabelFormFieldsState extends State<LabelFormFields> {
               //   prefixIcon: const Icon(Icons.image),
               //   keyboardType: TextInputType.url,
               // ),
-              _buildCardTextField(
-                  controller: widget.labelPageProvider!.descriptionController,
-                  label: "Description",
-                  validator: (value) =>
-                      _requiredFieldValidator(value, 'a Description'),
-                  prefixIcon: const Icon(Icons.description),
-                  maxLines: 3,
-                  required: true),
+              _buildCardTextField(controller: widget.labelPageProvider!.descriptionController, label: "Description", validator: (value) => _requiredFieldValidator(value, 'a Description'), prefixIcon: const Icon(Icons.description), maxLines: 3, required: true),
               _buildCardTextField(
                   controller: widget.labelPageProvider!.quantityController,
                   label: "Quantity",
-                  validator: (value) =>
-                      _requiredFieldValidator(value, 'a Quantity'),
+                  validator: (value) => _requiredFieldValidator(value, 'a Quantity'),
                   prefixIcon: const Icon(Icons.numbers),
                   keyboardType: TextInputType.number,
-                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                  inputFormatters: [
+                    FilteringTextInputFormatter.digitsOnly
+                  ],
                   required: true),
             ],
           ),
@@ -1206,15 +1212,12 @@ class _LabelButtonsState extends State<LabelButtons> {
           widget.labelPageProvider!.clearControllers(widget.dropdownKey);
         }),
         const SizedBox(width: 16),
-        _buildRoundedButton(
-            "Save", Colors.blueAccent, () => _saveLabel(context),
-            loader: true),
+        _buildRoundedButton("Save", Colors.blueAccent, () => _saveLabel(context), loader: true),
       ],
     );
   }
 
-  Widget _buildRoundedButton(String text, Color color, VoidCallback onPressed,
-      {bool loader = false}) {
+  Widget _buildRoundedButton(String text, Color color, VoidCallback onPressed, {bool loader = false}) {
     return Consumer<LabelPageApi>(
       builder: (context, provider, child) {
         final isLoading = loader && provider.buttonTap;
@@ -1262,7 +1265,7 @@ class _LabelButtonsState extends State<LabelButtons> {
     }
 
     final labelProvider = context.read<LabelPageApi>();
-    final labelApi = context.read<LabelApi>();
+    // final labelApi = context.read<LabelApi>();
 
     try {
       // Set loading states
@@ -1270,8 +1273,7 @@ class _LabelButtonsState extends State<LabelButtons> {
       // labelApi.loadingStatus(true);
 
       // Validate required fields
-      if (labelProvider.nameController.text.isEmpty ||
-          labelProvider.labelSkuController.text.isEmpty) {
+      if (labelProvider.nameController.text.isEmpty || labelProvider.labelSkuController.text.isEmpty) {
         throw 'Name and SKU are required fields';
       }
 

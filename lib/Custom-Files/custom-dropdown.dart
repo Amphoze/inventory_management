@@ -80,7 +80,7 @@ class CustomDropdownState extends State<CustomDropdown> {
   }
 
   void searchData(String brandName) async {
-    String baseUrl = await ApiUrls.getBaseUrl();
+    String baseUrl = await Constants.getBaseUrl();
 
     final token = await AuthProvider().getToken();
     final url = Uri.parse('$baseUrl/category?name=$brandName');

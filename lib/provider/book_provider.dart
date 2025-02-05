@@ -6,8 +6,12 @@ import 'package:inventory_management/Custom-Files/colors.dart';
 import 'package:inventory_management/constants/constants.dart';
 import 'package:inventory_management/model/orders_model.dart';
 import 'package:logger/logger.dart';
+import 'package:pdf/pdf.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:intl/intl.dart';
+import 'dart:html' as html; // Required for downloading in Flutter web.
+import 'dart:typed_data';
+import 'package:pdf/widgets.dart' as pw;
 
 class BookProvider with ChangeNotifier {
   final TextEditingController searchController = TextEditingController();
@@ -102,7 +106,7 @@ class BookProvider with ChangeNotifier {
   }
 
   Future<String> cancelOrders(BuildContext context, List<String> orderIds) async {
-    String baseUrl = await ApiUrls.getBaseUrl();
+    String baseUrl = await Constants.getBaseUrl();
     String cancelOrderUrl = '$baseUrl/orders/cancel';
     // final String? token = await _getToken();
 
@@ -161,7 +165,7 @@ class BookProvider with ChangeNotifier {
       return false;
     }
 
-    final url = '${await ApiUrls.getBaseUrl()}/orders/$id';
+    final url = '${await Constants.getBaseUrl()}/orders/$id';
     try {
       final response = await http.put(
         Uri.parse(url),
@@ -191,7 +195,7 @@ class BookProvider with ChangeNotifier {
   }
 
   Future<String> rebookOrders(List<String> orderIds) async {
-    String baseUrl = await ApiUrls.getBaseUrl();
+    String baseUrl = await Constants.getBaseUrl();
     String url = '$baseUrl/orders/reBooking';
     // final String? token = await _getToken();
 
@@ -255,7 +259,7 @@ class BookProvider with ChangeNotifier {
       return;
     }
 
-    String url = '${await ApiUrls.getBaseUrl()}/orders?filter=$type&orderStatus=3&page=$page';
+    String url = '${await Constants.getBaseUrl()}/orders?filter=$type&orderStatus=3&page=$page';
 
     if (date != null || date == 'Select Date') {
       String formattedDate = DateFormat('yyyy-MM-dd').format(date!);
@@ -332,7 +336,7 @@ class BookProvider with ChangeNotifier {
     }
 
     // Base URL
-    String url = '${await ApiUrls.getBaseUrl()}/orders?isBooked=true&page=$page';
+    String url = '${await Constants.getBaseUrl()}/orders?isBooked=true&page=$page';
 
     // Add date parameter if provided
     if (date != null) {
@@ -390,7 +394,7 @@ class BookProvider with ChangeNotifier {
   Future<String> bookOrders(BuildContext context, List<Map<String, String>> orderIds, String lowerCase, String courier) async {
     log('courier: $courier');
     setLoading(courier, true);
-    String baseUrl = await ApiUrls.getBaseUrl();
+    String baseUrl = await Constants.getBaseUrl();
     String bookOrderUrl = '$baseUrl/orders/book';
     final String? token = await _getToken();
 
@@ -467,7 +471,7 @@ class BookProvider with ChangeNotifier {
 
   Future<String> bookShiprocketOrder(BuildContext context, String orderId, String courierId, String lowerCase, String courier) async {
     // setLoading(courier, true);
-    String baseUrl = await ApiUrls.getBaseUrl();
+    String baseUrl = await Constants.getBaseUrl();
     String bookOrderUrl = '$baseUrl/orders/book';
     final String? token = await _getToken();
 
@@ -629,7 +633,7 @@ class BookProvider with ChangeNotifier {
   }
 
   Future<void> searchB2BOrders(String query, String searchType) async {
-    String url = '${await ApiUrls.getBaseUrl()}/orders?orderStatus=3&filter=B2B&order_id=$query';
+    String url = '${await Constants.getBaseUrl()}/orders?orderStatus=3&filter=B2B&order_id=$query';
     final token = await _getToken();
     if (token == null) return;
 
@@ -671,7 +675,7 @@ class BookProvider with ChangeNotifier {
   }
 
   Future<void> searchB2COrders(String query, String searchType) async {
-    String url = '${await ApiUrls.getBaseUrl()}/orders?orderStatus=3&filter=B2C&order_id=$query';
+    String url = '${await Constants.getBaseUrl()}/orders?orderStatus=3&filter=B2C&order_id=$query';
     final token = await _getToken();
     if (token == null) return;
 
@@ -713,7 +717,7 @@ class BookProvider with ChangeNotifier {
   }
 
   Future<void> searchBookedOrders(String query, String searchType) async {
-    var url = '${await ApiUrls.getBaseUrl()}/orders?isBooked=true';
+    var url = '${await Constants.getBaseUrl()}/orders?isBooked=true';
     final token = await _getToken();
     if (token == null) return;
 
@@ -741,9 +745,9 @@ class BookProvider with ChangeNotifier {
         final data = jsonDecode(response.body);
         // print(response.body);
 
-        final newData = data['orders'][0]; //////////////////////////////////////////////////////////////
+        // final newData = data['orders'][0]; //////////////////////////////////////////////////////////////
         ordersBooked = [
-          Order.fromJson(newData)
+          Order.fromJson(data)
         ];
         // ordersBooked = [Order.fromJson(data)];
         log('ordersBooked: $ordersBooked');
@@ -760,6 +764,64 @@ class BookProvider with ChangeNotifier {
   }
 
   // Add this method to the BookProvider class
+  // Future<void> generatePicklist(BuildContext context, String marketplace) async {
+  //   // Get the current time in ISO 8601 format
+  //   String currentTime = DateTime.now().toIso8601String();
+
+  //   log("currentTime: $currentTime");
+  //   log("marketplace: $marketplace");
+
+  //   String baseUrl = await Constants.getBaseUrl();
+  //   String url = '$baseUrl/order-picker?currentTime=$currentTime&marketplace=$marketplace';
+
+  //   String? token = await _getToken();
+  //   if (token == null) {
+  //     print('Token is null, unable to fetch order picker data.');
+  //     return;
+  //   }
+
+  //   try {
+  //     // Make the GET request
+  //     final response = await http.post(
+  //       Uri.parse(url),
+  //       headers: {
+  //         'Authorization': 'Bearer $token',
+  //         'Content-Type': 'application/json',
+  //       },
+  //     );
+
+  //     // Log response for debugging
+  //     log('Status: ${response.statusCode}');
+  //     log('Body: ${response.body}');
+
+  //     final data = jsonDecode(response.body);
+
+  //     if (response.statusCode == 201) {
+  //       // Handle the successful response
+  //       // Process the data as needed
+  //       ScaffoldMessenger.of(context).showSnackBar(
+  //         SnackBar(
+  //           content: Text(data['error']['message']),
+  //           backgroundColor: AppColors.green,
+  //         ),
+  //       );
+  //       log("data: $data");
+  //     } else {
+  //       ScaffoldMessenger.of(context).showSnackBar(
+  //         SnackBar(
+  //           content: Text(data['error']['message']),
+  //           backgroundColor: AppColors.cardsred,
+  //         ),
+  //       );
+  //       print('Failed to post order picker data: ${response.statusCode}');
+  //     }
+  //   } catch (e) {
+  //     print('Error posting order picker data: $e');
+  //   } finally {
+  //     notifyListeners();
+  //   }
+  // }
+
   Future<void> generatePicklist(BuildContext context, String marketplace) async {
     // Get the current time in ISO 8601 format
     String currentTime = DateTime.now().toIso8601String();
@@ -767,7 +829,7 @@ class BookProvider with ChangeNotifier {
     log("currentTime: $currentTime");
     log("marketplace: $marketplace");
 
-    String baseUrl = await ApiUrls.getBaseUrl();
+    String baseUrl = await Constants.getBaseUrl();
     String url = '$baseUrl/order-picker?currentTime=$currentTime&marketplace=$marketplace';
 
     String? token = await _getToken();
@@ -787,21 +849,25 @@ class BookProvider with ChangeNotifier {
       );
 
       // Log response for debugging
-      log('Status: ${response.statusCode}');
-      log('Body: ${response.body}');
+      log('Picklist Status: ${response.statusCode}');
+      debugPrint('Picklist Body: ${response.body}');
 
       final data = jsonDecode(response.body);
 
       if (response.statusCode == 201) {
-        // Handle the successful response
-        // Process the data as needed
+        // Extract the order data
+        // final List<dynamic> orders = data['data'] ?? [];
+
+        // Generate and download PDF
+        // final pdfBytes = await generatePdf(orders);
+        // downloadPdf(pdfBytes, "order_picklist_${marketplace}_$currentTime.pdf");
+
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(data['error']['message']),
-            backgroundColor: AppColors.cardsred,
+            backgroundColor: AppColors.green,
           ),
         );
-        log("data: $data");
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -818,8 +884,127 @@ class BookProvider with ChangeNotifier {
     }
   }
 
+  Future<Uint8List> generatePdf(List<Map<String, dynamic>> data) async {
+    final pdf = pw.Document();
+
+    int totalAmount = data.fold(0, (sum, item) => sum + int.parse(item["amount"]));
+
+    pdf.addPage(
+      pw.Page(
+        pageFormat: PdfPageFormat.a4,
+        build: (pw.Context context) {
+          return pw.Padding(
+            padding: const pw.EdgeInsets.all(16.0),
+            child: pw.Column(
+              crossAxisAlignment: pw.CrossAxisAlignment.start,
+              children: [
+                // Title
+                pw.Text(
+                  "Picklist",
+                  style: pw.TextStyle(
+                    fontSize: 20,
+                    fontWeight: pw.FontWeight.bold,
+                  ),
+                ),
+                pw.SizedBox(height: 10),
+
+                // Table Header
+                pw.Table(
+                  border: pw.TableBorder.all(width: 1),
+                  columnWidths: {
+                    0: const pw.FlexColumnWidth(3),
+                    1: const pw.FlexColumnWidth(1),
+                  },
+                  children: [
+                    pw.TableRow(
+                      decoration: const pw.BoxDecoration(color: PdfColors.grey300),
+                      children: [
+                        pw.Padding(
+                          padding: const pw.EdgeInsets.all(8),
+                          child: pw.Text("Item Name", style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
+                        ),
+                        pw.Padding(
+                          padding: const pw.EdgeInsets.all(8),
+                          child: pw.Text(" SUM of Single Qty", style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
+                        ),
+                        // pw.Padding(
+                        //   padding: pw.EdgeInsets.all(8),
+                        //   child: pw.Text("SKU", style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
+                        // ),
+                        // pw.Padding(
+                        //   padding: pw.EdgeInsets.all(8),
+                        //   child: pw.Text("Amount", style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
+                        // ),
+                      ],
+                    ),
+                    ...data.map(
+                      (item) => pw.TableRow(
+                        children: [
+                          pw.Padding(
+                            padding: const pw.EdgeInsets.all(8),
+                            child: pw.Text(item["displayName"]),
+                          ),
+                          pw.Padding(
+                            padding: const pw.EdgeInsets.all(8),
+                            child: pw.Text(item["qty"].toString()),
+                          ),
+                          // pw.Padding(
+                          //   padding: pw.EdgeInsets.all(8),
+                          //   child: pw.Text(item["sku"]),
+                          // ),
+                          // pw.Padding(
+                          //   padding: pw.EdgeInsets.all(8),
+                          //   child: pw.Text("₹${item["amount"]}"),
+                          // ),
+                        ],
+                      ),
+                    ),
+                    // Total Row
+                    pw.TableRow(
+                      decoration: const pw.BoxDecoration(color: PdfColors.grey300),
+                      children: [
+                        pw.Padding(
+                          padding: const pw.EdgeInsets.all(8),
+                          child: pw.Text("Grand Total", style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
+                        ),
+                        pw.Padding(
+                          padding: const pw.EdgeInsets.all(8),
+                          child: pw.Text("₹$totalAmount", style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
+                        ),
+                        // pw.Padding(
+                        //   padding: pw.EdgeInsets.all(8),
+                        //   child: pw.Text("-"),
+                        // ),
+                        // pw.Padding(
+                        //   padding: pw.EdgeInsets.all(8),
+                        //   child: pw.Text("-"),
+                        // ),
+                      ],
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+
+    return pdf.save();
+  }
+
+  void downloadPdf(List<Map<String, dynamic>> data) async {
+    final pdfBytes = await generatePdf(data);
+    final blob = html.Blob([pdfBytes], 'application/pdf');
+    final url = html.Url.createObjectUrlFromBlob(blob);
+    final anchor = html.AnchorElement(href: url)
+      ..setAttribute("download", "picklist.pdf")
+      ..click();
+    html.Url.revokeObjectUrl(url);
+  }
+
   Future<void> fetchOrdersByMarketplace(String marketplace, String orderType, int page, {DateTime? date}) async {
-    String baseUrl = '${await ApiUrls.getBaseUrl()}/orders';
+    String baseUrl = '${await Constants.getBaseUrl()}/orders';
 
     // Build URL with base parameters
     String url = '$baseUrl?orderStatus=3&customerType=$orderType&marketplace=$marketplace&page=$page';
@@ -895,7 +1080,7 @@ class BookProvider with ChangeNotifier {
 
   Future<void> fetchBookedOrdersByMarketplace(String marketplace, int page, {DateTime? date}) async {
     log("$marketplace, $page");
-    String baseUrl = '${await ApiUrls.getBaseUrl()}/orders';
+    String baseUrl = '${await Constants.getBaseUrl()}/orders';
 
     // Base URL with marketplace filter
     String url = '$baseUrl?isBooked=true&marketplace=$marketplace&page=$page';

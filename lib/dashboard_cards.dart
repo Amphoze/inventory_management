@@ -7,7 +7,32 @@ import 'Custom-Files/colors.dart';
 
 class DashboardCards extends StatefulWidget {
   final DateTime? date;
-  const DashboardCards({super.key, required this.date});
+  final bool? isSuperAdmin;
+  final bool? isAdmin;
+  final bool? isConfirmer;
+  final bool? isBooker;
+  final bool? isAccounts;
+  final bool? isPicker;
+  final bool? isPacker;
+  final bool? isChecker;
+  final bool? isRacker;
+  final bool? isManifest;
+  final bool? isOutbound;
+  const DashboardCards({
+    super.key,
+    required this.date,
+    this.isSuperAdmin,
+    this.isAdmin,
+    this.isConfirmer,
+    this.isBooker,
+    this.isAccounts,
+    this.isPicker,
+    this.isPacker,
+    this.isChecker,
+    this.isRacker,
+    this.isManifest,
+    this.isOutbound,
+  });
 
   @override
   _DashboardCardsState createState() => _DashboardCardsState();
@@ -99,291 +124,345 @@ class _DashboardCardsState extends State<DashboardCards> {
               Text(
                   'Error: ${dashboardProvider.errorMessage}') // Show error if there is one
             else if (dashboardData != null) ...[
-              Wrap(
-                spacing: 8.0,
-                runSpacing: 8.0,
-                alignment: WrapAlignment.center,
-                children: [
-                  DashboardCard(
-                    title: isToday(widget.date!)
-                        ? "Today's Gross Revenue"
-                        : "Gross Revenue",
-                    value:
-                        '₹${dashboardData.totalAmountToday}', // Dynamic value from API
-                    subtitle:
-                        'Yesterday: ₹${dashboardData.totalAmountYesterday}', // Dynamic subtitle from API
-                    percentageChange: calculatePercentageChange(
-                        dashboardData.totalAmountToday as double,
-                        dashboardData.totalAmountYesterday
-                            as double), // Calculate percentage change
-                    changeColor: calculateChangeColor(
-                        dashboardData.totalAmountToday as double,
-                        dashboardData.totalAmountYesterday
-                            as double), // Dynamic color based on increase/decrease
-                    chartData: const [
-                      1.0,
-                      0.9,
-                      0.8,
-                      0.7
-                    ], // You can customize this
-                    width: threeCardWidth,
-                    height: cardHeight,
-                  ),
-                  DashboardCard(
-                    title: isToday(widget.date!) ? "Today's Orders" : "Orders",
-                    value:
-                        '${dashboardData.totalOrderToday}', // Dynamic value from API
-                    subtitle:
-                        'Yesterday: ${dashboardData.totalOrderYesterday}', // Dynamic subtitle from API
-                    percentageChange: calculatePercentageChange(
-                        dashboardData.totalOrderToday as double,
-                        dashboardData.totalOrderYesterday
-                            as double), // Calculate percentage change
-                    changeColor: calculateChangeColor(
-                        dashboardData.totalOrderToday as double,
-                        dashboardData.totalOrderYesterday
-                            as double), // Dynamic color based on increase/decrease
-                    chartData: const [
-                      1.0,
-                      0.95,
-                      0.85,
-                      0.7
-                    ], // Customize as needed
-                    width: threeCardWidth,
-                    height: cardHeight,
-                  ),
-                ],
+              if (widget.isSuperAdmin == true) ...[
+                Wrap(
+                  spacing: 8.0,
+                  runSpacing: 8.0,
+                  alignment: WrapAlignment.center,
+                  children: [
+                    DashboardCard(
+                      title: isToday(widget.date!)
+                          ? "Today's Gross Revenue"
+                          : "Gross Revenue",
+                      value:
+                          '₹${dashboardData.totalAmountToday}', // Dynamic value from API
+                      subtitle:
+                          'Yesterday: ₹${dashboardData.totalAmountYesterday}', // Dynamic subtitle from API
+                      percentageChange: calculatePercentageChange(
+                          dashboardData.totalAmountToday as double,
+                          dashboardData.totalAmountYesterday
+                              as double), // Calculate percentage change
+                      changeColor: calculateChangeColor(
+                          dashboardData.totalAmountToday as double,
+                          dashboardData.totalAmountYesterday
+                              as double), // Dynamic color based on increase/decrease
+                      chartData: const [
+                        1.0,
+                        0.9,
+                        0.8,
+                        0.7
+                      ], // You can customize this
+                      width: threeCardWidth,
+                      height: cardHeight,
+                    ),
+                    DashboardCard(
+                      title:
+                          isToday(widget.date!) ? "Today's Orders" : "Orders",
+                      value:
+                          '${dashboardData.totalOrderToday}', // Dynamic value from API
+                      subtitle:
+                          'Yesterday: ${dashboardData.totalOrderYesterday}', // Dynamic subtitle from API
+                      percentageChange: calculatePercentageChange(
+                          dashboardData.totalOrderToday as double,
+                          dashboardData.totalOrderYesterday
+                              as double), // Calculate percentage change
+                      changeColor: calculateChangeColor(
+                          dashboardData.totalOrderToday as double,
+                          dashboardData.totalOrderYesterday
+                              as double), // Dynamic color based on increase/decrease
+                      chartData: const [
+                        1.0,
+                        0.95,
+                        0.85,
+                        0.7
+                      ], // Customize as needed
+                      width: threeCardWidth,
+                      height: cardHeight,
+                    ),
+                  ],
+                ),
+                const Divider(
+                  height: 30,
+                ),
+              ],
+              DashboardCard(
+                title: "Failed Orders",
+                value:
+                    '${dashboardData.failedOrdersToday}', // Dynamic value from API
+                subtitle:
+                    'Yesterday: ${dashboardData.failedOrdersYesterday}', // Dynamic subtitle from API
+                percentageChange: calculatePercentageChange(
+                    dashboardData.failedOrdersToday as double,
+                    dashboardData.failedOrdersYesterday
+                        as double), // Calculate percentage change
+                changeColor: calculateChangeColor(
+                    dashboardData.failedOrdersToday as double,
+                    dashboardData.failedOrdersYesterday
+                        as double), // Dynamic color based on increase/decrease
+                chartData: const [1.0, 0.95, 0.85, 0.7], // Customize as needed
+                width: threeCardWidth,
+                height: cardHeight,
               ),
-              const Divider(
-                height: 30,
-              ),
-              Wrap(
-                spacing: 8.0,
-                runSpacing: 8.0,
-                alignment: WrapAlignment.center,
-                children: [
-                  DashboardCard(
-                    title: "Confirmed Orders",
-                    value:
-                        '${doneData!.confirmedOrderToday}', // Dynamic value from API
-                    subtitle:
-                        'Yesterday: ${doneData.confirmedOrderYesterday}', // Dynamic subtitle
-                    percentageChange: calculatePercentageChange(
-                      doneData.confirmedOrderToday as double,
-                      doneData.confirmedOrderYesterday as double,
+              // outbound
+              if (widget.isOutbound == true || widget.isAdmin == true)
+                Wrap(
+                  spacing: 8.0,
+                  runSpacing: 8.0,
+                  alignment: WrapAlignment.center,
+                  children: [
+                    DashboardCard(
+                      title: "Ready to Outbound Orders",
+                      value:
+                          '${dashboardData.readyToOutBoundToday}', // Dynamic value from API
+                      subtitle:
+                          'Yesterday: ${dashboardData.readyToOutBoundYesterday}', // Dynamic subtitle from API
+                      percentageChange: calculatePercentageChange(
+                          dashboardData.readyToOutBoundToday as double,
+                          dashboardData.readyToOutBoundYesterday
+                              as double), // Calculate percentage change
+                      changeColor: calculateChangeColor(
+                          dashboardData.readyToOutBoundToday as double,
+                          dashboardData.readyToOutBoundYesterday
+                              as double), // Dynamic color based on increase/decrease
+                      chartData: const [
+                        1.0,
+                        0.95,
+                        0.85,
+                        0.7
+                      ], // Customize as needed
+                      width: threeCardWidth,
+                      height: cardHeight,
                     ),
-                    changeColor: calculateChangeColor(
-                      doneData.confirmedOrderToday as double,
-                      doneData.confirmedOrderYesterday as double,
+                    DashboardCard(
+                      title: "Outbound Orders",
+                      value:
+                          '${doneData!.outBoundToday}', // Dynamic value from API
+                      subtitle:
+                          'Yesterday: ${doneData.outBoundYesterday}', // Dynamic subtitle
+                      percentageChange: calculatePercentageChange(
+                        doneData.outBoundToday as double,
+                        doneData.outBoundYesterday as double,
+                      ),
+                      changeColor: calculateChangeColor(
+                        doneData.outBoundToday as double,
+                        doneData.outBoundYesterday as double,
+                      ),
+                      chartData: const [
+                        1.0,
+                        0.95,
+                        0.85,
+                        0.7
+                      ], // Example chart data
+                      width: threeCardWidth,
+                      height: cardHeight,
                     ),
-                    chartData: const [
-                      1.0,
-                      0.95,
-                      0.85,
-                      0.7
-                    ], // Example chart data
-                    width: threeCardWidth,
-                    height: cardHeight,
-                  ),
-                  DashboardCard(
-                    title: "Booked Orders",
-                    value:
-                        '${doneData.bookedOrderToday}', // Dynamic value from API
-                    subtitle:
-                        'Yesterday: ${doneData.bookedOrderYesterday}', // Dynamic subtitle
-                    percentageChange: calculatePercentageChange(
-                      doneData.bookedOrderToday as double,
-                      doneData.bookedOrderYesterday as double,
+                  ],
+                ),
+              // confirm
+              if (widget.isConfirmer == true || widget.isAdmin == true)
+                Wrap(
+                  spacing: 8.0,
+                  runSpacing: 8.0,
+                  alignment: WrapAlignment.center,
+                  children: [
+                    DashboardCard(
+                      title: "Ready to Confirm Orders",
+                      value:
+                          '${dashboardData.readyToConfirmedOrdersToday}', // Dynamic value from API
+                      subtitle:
+                          'Yesterday: ${dashboardData.readyToConfirmedOrdersYesterday}', // Dynamic subtitle from API
+                      percentageChange: calculatePercentageChange(
+                          dashboardData.readyToConfirmedOrdersToday as double,
+                          dashboardData.readyToConfirmedOrdersYesterday
+                              as double), // Calculate percentage change
+                      changeColor: calculateChangeColor(
+                          dashboardData.readyToConfirmedOrdersToday as double,
+                          dashboardData.readyToConfirmedOrdersYesterday
+                              as double), // Dynamic color based on increase/decrease
+                      chartData: const [
+                        1.0,
+                        0.95,
+                        0.85,
+                        0.7
+                      ], // Customize as needed
+                      width: threeCardWidth,
+                      height: cardHeight,
                     ),
-                    changeColor: calculateChangeColor(
-                      doneData.bookedOrderToday as double,
-                      doneData.bookedOrderYesterday as double,
+                    DashboardCard(
+                      title: "Confirmed Orders",
+                      value:
+                          '${doneData!.confirmedOrderToday}', // Dynamic value from API
+                      subtitle:
+                          'Yesterday: ${doneData.confirmedOrderYesterday}', // Dynamic subtitle
+                      percentageChange: calculatePercentageChange(
+                        doneData.confirmedOrderToday as double,
+                        doneData.confirmedOrderYesterday as double,
+                      ),
+                      changeColor: calculateChangeColor(
+                        doneData.confirmedOrderToday as double,
+                        doneData.confirmedOrderYesterday as double,
+                      ),
+                      chartData: const [
+                        1.0,
+                        0.95,
+                        0.85,
+                        0.7
+                      ], // Example chart data
+                      width: threeCardWidth,
+                      height: cardHeight,
                     ),
-                    chartData: const [1.0, 0.95, 0.85, 0.7],
-                    width: threeCardWidth,
-                    height: cardHeight,
-                  ),
-                  DashboardCard(
-                    title: "Account Orders",
-                    value:
-                        '${doneData.accountOrderToday}', // Dynamic value from API
-                    subtitle:
-                        'Yesterday: ${doneData.accountOrderYesterday}', // Dynamic subtitle
-                    percentageChange: calculatePercentageChange(
-                      doneData.accountOrderToday as double,
-                      doneData.accountOrderYesterday as double,
+                  ],
+                ),
+              //hod
+              if (widget.isBooker == true || widget.isAdmin == true)
+                Wrap(
+                  spacing: 8.0,
+                  runSpacing: 8.0,
+                  alignment: WrapAlignment.center,
+                  children: [
+                    DashboardCard(
+                      title: "Ready to HOD Approval",
+                      value:
+                          '${dashboardData.readyToHodApprovalToday}', // Dynamic value from API
+                      subtitle:
+                          'Yesterday: ${dashboardData.readyToHodApprovalYesterday}', // Dynamic subtitle from API
+                      percentageChange: calculatePercentageChange(
+                          dashboardData.readyToHodApprovalToday as double,
+                          dashboardData.readyToHodApprovalYesterday
+                              as double), // Calculate percentage change
+                      changeColor: calculateChangeColor(
+                          dashboardData.readyToHodApprovalToday as double,
+                          dashboardData.readyToHodApprovalYesterday
+                              as double), // Dynamic color based on increase/decrease
+                      chartData: const [
+                        1.0,
+                        0.95,
+                        0.85,
+                        0.7
+                      ], // Customize as needed
+                      width: threeCardWidth,
+                      height: cardHeight,
                     ),
-                    changeColor: calculateChangeColor(
-                      doneData.accountOrderToday as double,
-                      doneData.accountOrderYesterday as double,
+                    DashboardCard(
+                      title: "HOD Approval Orders",
+                      value:
+                          '${doneData!.hodApprovalToday}', // Dynamic value from API
+                      subtitle:
+                          'Yesterday: ${doneData.hodApprovalYesterday}', // Dynamic subtitle
+                      percentageChange: calculatePercentageChange(
+                        doneData.hodApprovalToday as double,
+                        doneData.hodApprovalYesterday as double,
+                      ),
+                      changeColor: calculateChangeColor(
+                        doneData.hodApprovalToday as double,
+                        doneData.hodApprovalYesterday as double,
+                      ),
+                      chartData: const [1.0, 0.95, 0.85, 0.7],
+                      width: threeCardWidth,
+                      height: cardHeight,
                     ),
-                    chartData: const [1.0, 0.95, 0.85, 0.7],
-                    width: threeCardWidth,
-                    height: cardHeight,
-                  ),
-                  DashboardCard(
-                    title: "Outbound Orders",
-                    value:
-                        '${doneData.outBoundToday}', // Dynamic value from API
-                    subtitle:
-                        'Yesterday: ${doneData.outBoundYesterday}', // Dynamic subtitle
-                    percentageChange: calculatePercentageChange(
-                      doneData.outBoundToday as double,
-                      doneData.outBoundYesterday as double,
+                  ],
+                ),
+              // account
+              if (widget.isAccounts == true || widget.isAdmin == true)
+                Wrap(
+                  spacing: 8.0,
+                  runSpacing: 8.0,
+                  alignment: WrapAlignment.center,
+                  children: [
+                    DashboardCard(
+                      title: "Ready to Account Orders",
+                      value:
+                          '${dashboardData.readyToAccountOrdersToday}', // Dynamic value from API
+                      subtitle:
+                          'Yesterday: ${dashboardData.readyToAccountOrdersYesterday}', // Dynamic subtitle from API
+                      percentageChange: calculatePercentageChange(
+                          dashboardData.readyToAccountOrdersToday as double,
+                          dashboardData.readyToAccountOrdersYesterday
+                              as double), // Calculate percentage change
+                      changeColor: calculateChangeColor(
+                          dashboardData.readyToAccountOrdersToday as double,
+                          dashboardData.readyToAccountOrdersYesterday
+                              as double), // Dynamic color based on increase/decrease
+                      chartData: const [
+                        1.0,
+                        0.95,
+                        0.85,
+                        0.7
+                      ], // Customize as needed
+                      width: threeCardWidth,
+                      height: cardHeight,
                     ),
-                    changeColor: calculateChangeColor(
-                      doneData.outBoundToday as double,
-                      doneData.outBoundYesterday as double,
+                    DashboardCard(
+                      title: "Account Orders",
+                      value:
+                          '${doneData!.accountOrderToday}', // Dynamic value from API
+                      subtitle:
+                          'Yesterday: ${doneData.accountOrderYesterday}', // Dynamic subtitle
+                      percentageChange: calculatePercentageChange(
+                        doneData.accountOrderToday as double,
+                        doneData.accountOrderYesterday as double,
+                      ),
+                      changeColor: calculateChangeColor(
+                        doneData.accountOrderToday as double,
+                        doneData.accountOrderYesterday as double,
+                      ),
+                      chartData: const [1.0, 0.95, 0.85, 0.7],
+                      width: threeCardWidth,
+                      height: cardHeight,
                     ),
-                    chartData: const [1.0, 0.95, 0.85, 0.7],
-                    width: threeCardWidth,
-                    height: cardHeight,
-                  ),
-                  DashboardCard(
-                    title: "HOD Approval Orders",
-                    value:
-                        '${doneData.hodApprovalToday}', // Dynamic value from API
-                    subtitle:
-                        'Yesterday: ${doneData.hodApprovalYesterday}', // Dynamic subtitle
-                    percentageChange: calculatePercentageChange(
-                      doneData.hodApprovalToday as double,
-                      doneData.hodApprovalYesterday as double,
+                  ],
+                ),
+              // book
+              if (widget.isBooker == true || widget.isAdmin == true)
+                Wrap(
+                  spacing: 8.0,
+                  runSpacing: 8.0,
+                  alignment: WrapAlignment.center,
+                  children: [
+                    DashboardCard(
+                      title: "Ready to Book Orders",
+                      value:
+                          '${dashboardData.readyToBookedOrdersToday}', // Dynamic value from API
+                      subtitle:
+                          'Yesterday: ${dashboardData.readyToBookedOrdersYesterday}', // Dynamic subtitle from API
+                      percentageChange: calculatePercentageChange(
+                          dashboardData.readyToBookedOrdersToday as double,
+                          dashboardData.readyToBookedOrdersYesterday
+                              as double), // Calculate percentage change
+                      changeColor: calculateChangeColor(
+                          dashboardData.readyToBookedOrdersToday as double,
+                          dashboardData.readyToBookedOrdersYesterday
+                              as double), // Dynamic color based on increase/decrease
+                      chartData: const [
+                        1.0,
+                        0.95,
+                        0.85,
+                        0.7
+                      ], // Customize as needed
+                      width: threeCardWidth,
+                      height: cardHeight,
                     ),
-                    changeColor: calculateChangeColor(
-                      doneData.hodApprovalToday as double,
-                      doneData.hodApprovalYesterday as double,
+                    DashboardCard(
+                      title: "Booked Orders",
+                      value:
+                          '${doneData!.bookedOrderToday}', // Dynamic value from API
+                      subtitle:
+                          'Yesterday: ${doneData.bookedOrderYesterday}', // Dynamic subtitle
+                      percentageChange: calculatePercentageChange(
+                        doneData.bookedOrderToday as double,
+                        doneData.bookedOrderYesterday as double,
+                      ),
+                      changeColor: calculateChangeColor(
+                        doneData.bookedOrderToday as double,
+                        doneData.bookedOrderYesterday as double,
+                      ),
+                      chartData: const [1.0, 0.95, 0.85, 0.7],
+                      width: threeCardWidth,
+                      height: cardHeight,
                     ),
-                    chartData: const [1.0, 0.95, 0.85, 0.7],
-                    width: threeCardWidth,
-                    height: cardHeight,
-                  ),
-                ],
-              ),
-              const Divider(
-                height: 30,
-              ),
-              Wrap(
-                spacing: 8.0,
-                runSpacing: 8.0,
-                alignment: WrapAlignment.center,
-                children: [
-                  DashboardCard(
-                    title: "Failed Orders",
-                    value:
-                        '${dashboardData.failedOrdersToday}', // Dynamic value from API
-                    subtitle:
-                        'Yesterday: ${dashboardData.failedOrdersYesterday}', // Dynamic subtitle from API
-                    percentageChange: calculatePercentageChange(
-                        dashboardData.totalOrderToday as double,
-                        dashboardData.totalOrderYesterday
-                            as double), // Calculate percentage change
-                    changeColor: calculateChangeColor(
-                        dashboardData.totalOrderToday as double,
-                        dashboardData.totalOrderYesterday
-                            as double), // Dynamic color based on increase/decrease
-                    chartData: const [
-                      1.0,
-                      0.95,
-                      0.85,
-                      0.7
-                    ], // Customize as needed
-                    width: fiveCardWidth,
-                    height: cardHeight,
-                  ),
-                  DashboardCard(
-                    title: "Ready to Confirm Orders",
-                    value:
-                        '${dashboardData.readyToConfirmedOrdersToday}', // Dynamic value from API
-                    subtitle:
-                        'Yesterday: ${dashboardData.readyToConfirmedOrdersYesterday}', // Dynamic subtitle from API
-                    percentageChange: calculatePercentageChange(
-                        dashboardData.totalOrderToday as double,
-                        dashboardData.totalOrderYesterday
-                            as double), // Calculate percentage change
-                    changeColor: calculateChangeColor(
-                        dashboardData.totalOrderToday as double,
-                        dashboardData.totalOrderYesterday
-                            as double), // Dynamic color based on increase/decrease
-                    chartData: const [
-                      1.0,
-                      0.95,
-                      0.85,
-                      0.7
-                    ], // Customize as needed
-                    width: fiveCardWidth,
-                    height: cardHeight,
-                  ),
-                  DashboardCard(
-                    title: "Ready to Account Orders",
-                    value:
-                        '${dashboardData.readyToAccountOrdersToday}', // Dynamic value from API
-                    subtitle:
-                        'Yesterday: ${dashboardData.readyToAccountOrdersYesterday}', // Dynamic subtitle from API
-                    percentageChange: calculatePercentageChange(
-                        dashboardData.totalOrderToday as double,
-                        dashboardData.totalOrderYesterday
-                            as double), // Calculate percentage change
-                    changeColor: calculateChangeColor(
-                        dashboardData.totalOrderToday as double,
-                        dashboardData.totalOrderYesterday
-                            as double), // Dynamic color based on increase/decrease
-                    chartData: const [
-                      1.0,
-                      0.95,
-                      0.85,
-                      0.7
-                    ], // Customize as needed
-                    width: fiveCardWidth,
-                    height: cardHeight,
-                  ),
-                  DashboardCard(
-                    title: "Ready to Book Orders",
-                    value:
-                        '${dashboardData.readyToBookedOrdersToday}', // Dynamic value from API
-                    subtitle:
-                        'Yesterday: ${dashboardData.readyToBookedOrdersYesterday}', // Dynamic subtitle from API
-                    percentageChange: calculatePercentageChange(
-                        dashboardData.totalOrderToday as double,
-                        dashboardData.totalOrderYesterday
-                            as double), // Calculate percentage change
-                    changeColor: calculateChangeColor(
-                        dashboardData.totalOrderToday as double,
-                        dashboardData.totalOrderYesterday
-                            as double), // Dynamic color based on increase/decrease
-                    chartData: const [
-                      1.0,
-                      0.95,
-                      0.85,
-                      0.7
-                    ], // Customize as needed
-                    width: fiveCardWidth,
-                    height: cardHeight,
-                  ),
-                  DashboardCard(
-                    title: "Ready to HOD Approval",
-                    value:
-                        '${dashboardData.readyToHodApprovalToday}', // Dynamic value from API
-                    subtitle:
-                        'Yesterday: ${dashboardData.readyToHodApprovalYesterday}', // Dynamic subtitle from API
-                    percentageChange: calculatePercentageChange(
-                        dashboardData.totalOrderToday as double,
-                        dashboardData.totalOrderYesterday
-                            as double), // Calculate percentage change
-                    changeColor: calculateChangeColor(
-                        dashboardData.totalOrderToday as double,
-                        dashboardData.totalOrderYesterday
-                            as double), // Dynamic color based on increase/decrease
-                    chartData: const [
-                      1.0,
-                      0.95,
-                      0.85,
-                      0.7
-                    ], // Customize as needed
-                    width: fiveCardWidth,
-                    height: cardHeight,
-                  ),
-                ],
-              ),
+                  ],
+                ),
             ],
           ],
         );

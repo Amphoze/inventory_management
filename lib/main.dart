@@ -1,5 +1,5 @@
 import 'dart:developer';
-
+import 'dart:html' as html;
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
@@ -19,6 +19,7 @@ import 'package:inventory_management/provider/book_provider.dart';
 import 'package:inventory_management/provider/cancelled_provider.dart';
 import 'package:inventory_management/provider/combo_provider.dart';
 import 'package:inventory_management/provider/dashboard_provider.dart';
+import 'package:inventory_management/provider/inner_provider.dart';
 import 'package:inventory_management/provider/inventory_provider.dart';
 import 'package:inventory_management/provider/invoice_provider.dart';
 import 'package:inventory_management/provider/marketplace_provider.dart';
@@ -30,6 +31,7 @@ import 'package:inventory_management/provider/outbound_provider.dart';
 import 'package:inventory_management/provider/outerbox_provider.dart';
 import 'package:inventory_management/provider/product_data_provider.dart';
 import 'package:inventory_management/provider/dispatched_provider.dart';
+import 'package:inventory_management/provider/products-provider.dart';
 import 'package:inventory_management/provider/return_provoider.dart';
 import 'package:inventory_management/provider/show-details-order-provider.dart';
 import 'package:inventory_management/provider/orders_provider.dart';
@@ -62,6 +64,7 @@ void main() async {
       ChangeNotifierProvider(create: (context) => MarketplaceProvider()),
       ChangeNotifierProvider(create: (context) => BookProvider()),
       ChangeNotifierProvider(create: (context) => ProductProvider()),
+      ChangeNotifierProvider(create: (context) => ProductsProvider(AuthProvider())),
       ChangeNotifierProvider(create: (context) => ComboProvider()),
       ChangeNotifierProvider(create: (context) => PickerProvider()),
       ChangeNotifierProvider(create: (context) => PackerProvider()),
@@ -85,6 +88,7 @@ void main() async {
       ChangeNotifierProvider(create: (context) => BaApproveProvider()),
       ChangeNotifierProvider(create: (context) => WarehousesProvider()),
       ChangeNotifierProvider(create: (context) => OuterboxProvider()),
+      ChangeNotifierProvider(create: (context) => InnerPackagingProvider()),
     ],
     child: const MyApp(),
   ));
@@ -99,6 +103,7 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'StockShip',
       theme: ThemeData(
+        useMaterial3: true,
         fontFamily: 'Poppins',
         primaryColor: const Color.fromRGBO(6, 90, 216, 1),
         colorScheme: ColorScheme.fromSeed(
@@ -157,7 +162,27 @@ class _HomeState extends State<Home> {
   void initState() {
     fetchAndSaveBaseUrl();
     getWarehouseId();
+    _injectSearchableText();
     super.initState();
+  }
+
+  void _injectSearchableText() {
+    // Check if already added to avoid duplication
+    if (html.document.getElementById('searchable-text') != null) return;
+
+    html.DivElement divElement = html.DivElement()
+      ..id = 'searchable-text'
+      ..style.display = 'block' // Make it visible to the browser
+      ..style.position = 'absolute' // Keeps it out of the way
+      ..style.left = '-9999px' // Moves it off-screen (invisible in UI)
+      ..innerHtml = '''
+        <p>Flutter Web now supports Ctrl + F search.</p>
+        <p>Try searching for "Flutter Web" using Ctrl + F.</p>
+        <p>This text is not visible in the UI but can be found.</p>
+      ''';
+
+    // Append the element to the HTML body
+    html.document.body?.append(divElement);
   }
 
   Future<String?> getWarehouseId() async {
@@ -185,6 +210,7 @@ class _HomeState extends State<Home> {
                   return const WarehousesPage();
                   // return const UnderMaintainence();
                 }
+                // _sanitizedEmail = sanitizeEmail(_currentUser!.email);
               } else {
                 return const LoginPage();
                 // return const UnderMaintainence();

@@ -596,6 +596,19 @@ class _BookedPageState extends State<BookedPage> with SingleTickerProviderStateM
             const SizedBox(width: 8),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primaryBlue,
+              ),
+              onPressed: () {
+                _showPicklistSourceDialog(context);
+              },
+              child: const Text(
+                'Generate Picklist',
+                style: TextStyle(color: Colors.white),
+              ),
+            ),
+            const SizedBox(width: 8),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.cardsred,
               ),
               onPressed: bookProvider.isCancel
@@ -664,6 +677,10 @@ class _BookedPageState extends State<BookedPage> with SingleTickerProviderStateM
               onPressed: bookProvider.isRefreshingOrders
                   ? null
                   : () async {
+                      setState(() {
+                        selectedCourier = 'All';
+                        _selectedDate = 'Select Date';
+                      });
                       _refreshOrders();
                     },
               child: bookProvider.isRefreshingOrders
@@ -861,7 +878,7 @@ class _BookedPageState extends State<BookedPage> with SingleTickerProviderStateM
               child: const Text('Cancel'),
             ),
             TextButton(
-              onPressed: () {
+              onPressed: () async{
                 if (selectedMarketplace != null) {
                   log('Selected Marketplace: $selectedMarketplace');
 
@@ -881,12 +898,11 @@ class _BookedPageState extends State<BookedPage> with SingleTickerProviderStateM
                       );
                     },
                   ).then((_) {
-                    // Close the marketplace selection dialog after loading dialog is dismissed
                     Navigator.of(context).pop();
                   });
 
                   // Fetch order picker data
-                  bookProvider.generatePicklist(context, selectedMarketplace!).then((_) {
+                  await bookProvider.generatePicklist(context, selectedMarketplace!).then((_) {
                     Navigator.of(context).pop(); // Close loading dialog
                   });
                 }

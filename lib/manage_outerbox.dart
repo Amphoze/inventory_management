@@ -43,8 +43,7 @@ class _ManageOuterboxState extends State<ManageOuterbox> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      Provider.of<OuterboxProvider>(context, listen: false)
-          .fetchBoxsizes(); // Start at page 1
+      Provider.of<OuterboxProvider>(context, listen: false).fetchBoxsizes(); // Start at page 1
       Provider.of<ComboProvider>(context, listen: false).fetchProducts();
 
       getDropValueForProduct();
@@ -71,8 +70,7 @@ class _ManageOuterboxState extends State<ManageOuterbox> {
   void getDropValueForWarehouse() async {
     await Provider.of<ComboProvider>(context, listen: false).fetchWarehouses();
     List<DropdownMenuItem<String>> newItems = [];
-    ComboProvider comboProvider =
-        Provider.of<ComboProvider>(context, listen: false);
+    ComboProvider comboProvider = Provider.of<ComboProvider>(context, listen: false);
 
     for (var warehouse in comboProvider.warehouses) {
       newItems.add(DropdownMenuItem<String>(
@@ -83,13 +81,19 @@ class _ManageOuterboxState extends State<ManageOuterbox> {
 
     setState(() {
       dropdownItemsForWarehouses = newItems;
-      subInventories.add({'warehouseId': null, 'quantity': null});
+      subInventories.add({
+        'warehouseId': null,
+        'quantity': null
+      });
     });
   }
 
   void addSubInventory() {
     setState(() {
-      subInventories.add({'warehouseId': null, 'quantity': null});
+      subInventories.add({
+        'warehouseId': null,
+        'quantity': null
+      });
     });
   }
 
@@ -128,7 +132,7 @@ class _ManageOuterboxState extends State<ManageOuterbox> {
     try {
       final token = await getToken();
       final response = await http.post(
-        Uri.parse('${await ApiUrls.getBaseUrl()}/inventory'),
+        Uri.parse('${await Constants.getBaseUrl()}/inventory'),
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer $token',
@@ -201,7 +205,7 @@ class _ManageOuterboxState extends State<ManageOuterbox> {
       final prefs = await SharedPreferences.getInstance();
       final token = prefs.getString('authToken');
 
-      String baseUrl = await ApiUrls.getBaseUrl();
+      String baseUrl = await Constants.getBaseUrl();
 
       if (token == null || token.isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -270,8 +274,7 @@ class _ManageOuterboxState extends State<ManageOuterbox> {
           throw Exception('No download URL found');
         }
       } else {
-        throw Exception(
-            'Failed to load template: ${response.statusCode} ${response.body}');
+        throw Exception('Failed to load template: ${response.statusCode} ${response.body}');
       }
     } catch (error) {
       log('error: $error');
@@ -314,7 +317,7 @@ class _ManageOuterboxState extends State<ManageOuterbox> {
       final prefs = await SharedPreferences.getInstance();
       final token = prefs.getString('authToken');
 
-      String baseUrl = await ApiUrls.getBaseUrl();
+      String baseUrl = await Constants.getBaseUrl();
 
       if (token == null || token.isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -383,8 +386,7 @@ class _ManageOuterboxState extends State<ManageOuterbox> {
           throw Exception('No download URL found');
         }
       } else {
-        throw Exception(
-            'Failed to load template: ${response.statusCode} ${response.body}');
+        throw Exception('Failed to load template: ${response.statusCode} ${response.body}');
       }
     } catch (error) {
       log('error: $error');
@@ -445,8 +447,7 @@ class _ManageOuterboxState extends State<ManageOuterbox> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 IconButton(
-                  icon: const Icon(Icons.arrow_left,
-                      color: AppColors.primaryBlue),
+                  icon: const Icon(Icons.arrow_left, color: AppColors.primaryBlue),
                   onPressed: () {
                     _scrollController.animateTo(
                       _scrollController.position.pixels - 200,
@@ -465,19 +466,15 @@ class _ManageOuterboxState extends State<ManageOuterbox> {
                         hintStyle: TextStyle(color: Colors.grey[600]),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(30),
-                          borderSide:
-                              const BorderSide(color: AppColors.primaryBlue),
+                          borderSide: const BorderSide(color: AppColors.primaryBlue),
                         ),
-                        contentPadding: const EdgeInsets.symmetric(
-                            vertical: 10, horizontal: 20),
+                        contentPadding: const EdgeInsets.symmetric(vertical: 10, horizontal: 20),
                         suffixIcon: IconButton(
-                            icon: const Icon(Icons.search,
-                                color: AppColors.primaryBlue),
+                            icon: const Icon(Icons.search, color: AppColors.primaryBlue),
                             onPressed: () {
                               final searchTerm = _searchController.text.trim();
                               if (searchTerm.isNotEmpty) {
-                                provider.filterBoxsize(
-                                    searchTerm); // Fetch filtered data
+                                provider.filterBoxsize(searchTerm); // Fetch filtered data
                               } else {
                                 provider.fetchBoxsizes();
                               }
@@ -500,8 +497,7 @@ class _ManageOuterboxState extends State<ManageOuterbox> {
                   ),
                 ),
                 IconButton(
-                  icon: const Icon(Icons.arrow_right,
-                      color: AppColors.primaryBlue),
+                  icon: const Icon(Icons.arrow_right, color: AppColors.primaryBlue),
                   onPressed: () {
                     _scrollController.animateTo(
                       _scrollController.position.pixels + 200,
@@ -551,19 +547,6 @@ class _ManageOuterboxState extends State<ManageOuterbox> {
                   },
                   child: const Text('Create Outerbox'),
                 ),
-                const SizedBox(width: 10),
-                Consumer<ComboProvider>(builder: (context, provider, child) {
-                  return provider.isFormVisible
-                      ? ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.red),
-                          onPressed: () {
-                            provider.toggleFormVisibility(); // Hide form
-                          },
-                          child: const Text('Cancel'),
-                        )
-                      : Container();
-                }),
               ],
             ),
           Expanded(
@@ -577,11 +560,17 @@ class _ManageOuterboxState extends State<ManageOuterbox> {
                       children: [
                         if (provider.isFormVisible) ...[
                           const SizedBox(height: 16),
-                          const Text("Manage Outerbox",
-                              style: TextStyle(
-                                  fontSize: 24, fontWeight: FontWeight.bold)),
+                          provider.isFormVisible
+                              ? ElevatedButton(
+                                  style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+                                  onPressed: () {
+                                    provider.toggleFormVisibility(); // Hide form
+                                  },
+                                  child: const Text('Cancel'),
+                                )
+                              : Container(),
+                          const Text("Create Outerbox", style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
                           const SizedBox(height: 16),
-
                           const OuterPackageForm(),
                         ],
 
@@ -596,8 +585,7 @@ class _ManageOuterboxState extends State<ManageOuterbox> {
                                       height: 500, // Set appropriate height
                                       child: LoadingAnimation(
                                         icon: Icons.outbox,
-                                        beginColor:
-                                            Color.fromRGBO(189, 189, 189, 1),
+                                        beginColor: Color.fromRGBO(189, 189, 189, 1),
                                         endColor: AppColors.primaryBlue,
                                         size: 80.0,
                                       ),

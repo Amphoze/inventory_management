@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:inventory_management/Custom-Files/colors.dart'; // Adjust the import based on your project structure
 import 'package:inventory_management/edit_order_page.dart';
+import 'package:inventory_management/edit_outbound_page.dart';
 import 'package:inventory_management/model/orders_model.dart';
 import 'package:provider/provider.dart';
 
@@ -65,7 +66,7 @@ class OrderCard extends StatelessWidget {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => EditOrderPage(
+                          builder: (context) => EditOutboundPage(
                             order: order,
                             isBookPage: true,
                           ),

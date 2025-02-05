@@ -109,7 +109,7 @@ class AllOrdersProvider with ChangeNotifier {
 
   Future<String> cancelOrders(
       BuildContext context, List<String> orderIds) async {
-    String baseUrl = await ApiUrls.getBaseUrl();
+    String baseUrl = await Constants.getBaseUrl();
     String cancelOrderUrl = '$baseUrl/orders/cancel';
     // final String? token = await _getToken();
 
@@ -132,7 +132,7 @@ class AllOrdersProvider with ChangeNotifier {
     try {
       // Make the POST request to confirm the orders
       final response = await http.post(
-        Uri.parse(cancelOrderUrl),
+        Uri.parse(Uri.encodeFull(cancelOrderUrl)),
         headers: headers,
         body: body,
       );
@@ -191,11 +191,11 @@ class AllOrdersProvider with ChangeNotifier {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('authToken') ?? '';
     String delhiveryURL =
-        '${await ApiUrls.getBaseUrl()}/orders/track/?waybill=$awb';
+        '${await Constants.getBaseUrl()}/orders/track/?waybill=$awb';
 
     try {
       final response = await http.get(
-        Uri.parse(delhiveryURL),
+        Uri.parse(Uri.encodeFull(delhiveryURL)),
         headers: {
           'Authorization': 'Bearer $token',
           'Content-Type': 'application/json',
@@ -300,17 +300,21 @@ class AllOrdersProvider with ChangeNotifier {
     return '';
   }
 
-  Future<void> fetchAllOrders({int page = 1, DateTime? date}) async {
+  Future<void> fetchAllOrders(
+      {int page = 1, DateTime? date, String? status}) async {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('authToken') ?? '';
 
     log('called');
 
-    String url = '${await ApiUrls.getBaseUrl()}/orders?page=$page';
+    String url = '${await Constants.getBaseUrl()}/orders?page=$page';
 
     if (date != null) {
       String formattedDate = DateFormat('yyyy-MM-dd').format(date);
       url += '&date=$formattedDate';
+      if (status != 'All') {
+        url += '&orderStatus==$status';
+      }
     }
 
     try {
@@ -322,7 +326,7 @@ class AllOrdersProvider with ChangeNotifier {
       clearAllSelections();
 
       final response = await http.get(
-        Uri.parse(url),
+        Uri.parse(Uri.encodeFull(url)),
         headers: {
           'Authorization': 'Bearer $token',
           'Content-Type': 'application/json',
@@ -365,7 +369,7 @@ class AllOrdersProvider with ChangeNotifier {
   Future<void> fetchOrdersByMarketplace(
       String marketplace, int page, DateTime? date, String status) async {
     log("$marketplace, $page");
-    String baseUrl = '${await ApiUrls.getBaseUrl()}/orders';
+    String baseUrl = '${await Constants.getBaseUrl()}/orders';
     String url =
         '$baseUrl?marketplace=$marketplace&orderStatus=$status&page=$page';
 
@@ -386,7 +390,7 @@ class AllOrdersProvider with ChangeNotifier {
       clearAllSelections();
 
       final response = await http.get(
-        Uri.parse(url),
+        Uri.parse(Uri.encodeFull(url)),
         headers: {
           'Authorization': 'Bearer $token',
           'Content-Type': 'application/json',
@@ -431,7 +435,7 @@ class AllOrdersProvider with ChangeNotifier {
   Future<void> fetchOrdersByStatus(
       String marketplace, int page, DateTime? date, String status) async {
     log("$status, $marketplace, $date, $page");
-    String baseUrl = '${await ApiUrls.getBaseUrl()}/orders';
+    String baseUrl = '${await Constants.getBaseUrl()}/orders';
 
     String url = '$baseUrl?orderStatus=$status&page=$page';
 
@@ -444,7 +448,7 @@ class AllOrdersProvider with ChangeNotifier {
       url += '&date=$formattedDate';
     }
 
-    Logger().e(url);
+    // Logger().e(url);
 
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('authToken') ?? '';
@@ -458,7 +462,7 @@ class AllOrdersProvider with ChangeNotifier {
       clearAllSelections();
 
       final response = await http.get(
-        Uri.parse(url),
+        Uri.parse(Uri.encodeFull(url)),
         headers: {
           'Authorization': 'Bearer $token',
           'Content-Type': 'application/json',
@@ -501,14 +505,14 @@ class AllOrdersProvider with ChangeNotifier {
   }
 
   Future<List<Map<String, String>>> getTrackingStatuses() async {
-    String baseUrl = '${await ApiUrls.getBaseUrl()}/status';
+    String baseUrl = '${await Constants.getBaseUrl()}/status';
 
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('authToken') ?? '';
 
     try {
       final response = await http.get(
-        Uri.parse(baseUrl),
+        Uri.parse(Uri.encodeFull(baseUrl)),
         headers: {
           'Authorization': 'Bearer $token',
           'Content-Type': 'application/json',
@@ -551,8 +555,13 @@ class AllOrdersProvider with ChangeNotifier {
   }
 
   Future<void> searchOrders(String orderId) async {
-    final url =
-        Uri.parse('${await ApiUrls.getBaseUrl()}/orders?order_id=$orderId');
+    log('call hua hai');
+    orderId = orderId[0] == '#' ? orderId.replaceFirst('#', '%23') : orderId;
+
+    final url = '${await Constants.getBaseUrl()}/orders?order_id=$orderId';
+    log('ye hai url: $url');
+    final mainUrl = Uri.parse(url);
+    log('mainUrl: $mainUrl');
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('authToken') ?? '';
 
@@ -561,7 +570,7 @@ class AllOrdersProvider with ChangeNotifier {
       notifyListeners();
 
       final response = await http.get(
-        url,
+        mainUrl,
         headers: {
           'Authorization': 'Bearer $token',
           'Content-Type': 'application/json',
@@ -570,14 +579,15 @@ class AllOrdersProvider with ChangeNotifier {
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        print(response.body);
+        Logger().e('ye hai order id: ${data['order_id']}');
 
         _orders = [Order.fromJson(data)];
-        print(response.body);
+        notifyListeners();
       } else {
         _orders = [];
       }
-    } catch (e) {
+    } catch (e, s) {
+      log('catched error: $e $s');
       _orders = [];
     } finally {
       _isLoading = false;
@@ -627,7 +637,7 @@ class AllOrdersProvider with ChangeNotifier {
     _isLoading = true;
     notifyListeners();
 
-    String baseUrl = await ApiUrls.getBaseUrl();
+    String baseUrl = await Constants.getBaseUrl();
     String downloadUrl = '$baseUrl/inventory/download';
 
     try {
@@ -635,7 +645,7 @@ class AllOrdersProvider with ChangeNotifier {
       final token = prefs.getString('authToken') ?? '';
 
       final response = await http.post(
-        Uri.parse(downloadUrl),
+        Uri.parse(Uri.encodeFull(downloadUrl)),
         headers: {
           'Authorization': 'Bearer $token',
           'Content-Type': 'application/json',

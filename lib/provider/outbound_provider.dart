@@ -28,6 +28,10 @@ class OutboundProvider with ChangeNotifier {
   String _expectedDeliveryDate = '';
   String _paymentDateTime = '';
   String _normalDate = '';
+  final String _sanitizedEmail = '';
+  int? dispatchCount;
+  int? rtoCount;
+  int? allCount;
   // List<Order> readyOrders = [];
   // List<Order> failedOrders = [];
 
@@ -56,6 +60,7 @@ class OutboundProvider with ChangeNotifier {
   String get expectedDeliveryDate => _expectedDeliveryDate;
   String get paymentDateTime => _paymentDateTime;
   String get normalDate => _normalDate;
+  String get sanitizedEmail => _sanitizedEmail;
 
   bool isConfirm = false;
   bool isCancel = false;
@@ -164,6 +169,55 @@ class OutboundProvider with ChangeNotifier {
     notifyListeners();
   }
 
+  Future<bool> mergeOrders(BuildContext context, String mergeFrom, String mergeTo) async {
+    String baseUrl = await Constants.getBaseUrl();
+    String mergeOrderUrl = '$baseUrl/orders/mergeOrder';
+    final String? token = await _getToken();
+
+    if (token == null) {
+      return false;
+    }
+
+    // Headers for the API request
+    final headers = {
+      'Authorization': 'Bearer $token',
+      'Content-Type': 'application/json',
+    };
+
+    // Request body containing the order IDs
+    final body = json.encode({
+      'mergeFrom': mergeFrom,
+      'mergeTo': mergeTo,
+    });
+
+    try {
+      // Make the POST request to confirm the orders
+      final response = await http.post(
+        Uri.parse(mergeOrderUrl),
+        headers: headers,
+        body: body,
+      );
+
+      log('Response status: ${response.statusCode}');
+      log('data: ${response.body}');
+      //print('Response body: ${response.body}');
+
+      final responseData = json.decode(response.body);
+
+      if (response.statusCode == 200) {
+        _showSnackbar(context, '${responseData['message']}');
+        return true;
+      } else {
+        _showSnackbar(context, '${responseData['message']}');
+        return false;
+      }
+    } catch (error) {
+      log('error in catch: $error');
+      _showSnackbar(context, 'Response message: $error');
+      return false;
+    }
+  }
+
   // Function to update an order
   Future<void> updateOrder(String id, Map<String, dynamic> updatedData) async {
     // Get the auth token
@@ -177,7 +231,7 @@ class OutboundProvider with ChangeNotifier {
       return;
     }
 
-    final url = '${await ApiUrls.getBaseUrl()}/orders/$id';
+    final url = '${await Constants.getBaseUrl()}/orders/$id';
     try {
       final response = await http.put(
         Uri.parse(url),
@@ -193,7 +247,7 @@ class OutboundProvider with ChangeNotifier {
       if (response.statusCode == 200) {
         Logger().e('Order updated successfully');
 
-        await fetchReadyOrders();
+        await fetchOrders();
 
         notifyListeners();
       } else if (response.statusCode == 400) {
@@ -212,7 +266,8 @@ class OutboundProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> fetchReadyOrders({int page = 1, DateTime? date}) async {
+  Future<void> fetchOrders({int page = 1, DateTime? date}) async {
+    dispatchCount = rtoCount = allCount = null;
     log(date.toString());
     // Ensure the requested page number is valid
     if (page < 1 || page > totalReadyPages) {
@@ -223,7 +278,7 @@ class OutboundProvider with ChangeNotifier {
     isLoading = true;
     notifyListeners();
 
-    var readyOrdersUrl = '${await ApiUrls.getBaseUrl()}/orders?isOutBound=false&page=$page';
+    var readyOrdersUrl = '${await Constants.getBaseUrl()}/orders?marketplace=Shopify,Woocommerce&isOutBound=false&page=$page';
 
     if (date != null || date == 'Select Date') {
       String formattedDate = DateFormat('yyyy-MM-dd').format(date!);
@@ -252,7 +307,9 @@ class OutboundProvider with ChangeNotifier {
 
       if (responseReady.statusCode == 200) {
         final jsonData = json.decode(responseReady.body);
-        outboundOrders = (jsonData['orders'] as List).map((order) => Order.fromJson(order)).toList();
+        final orders = (jsonData['orders'] as List).map((order) => Order.fromJson(order)).toList();
+        // outboundOrders = orders;
+        outboundOrders = orders;
         totalReadyPages = jsonData['totalPages'] ?? 1; // Update total pages
         currentPageReady = page; // Update the current page for ready orders
 
@@ -261,7 +318,7 @@ class OutboundProvider with ChangeNotifier {
         // Reset selections
         resetSelections();
         _selectedReadyOrders = List<bool>.filled(outboundOrders.length, false);
-        outboundOrders = outboundOrders;
+        // outboundOrders = outboundOrders;
       } else {
         throw Exception('Failed to load ready orders: ${responseReady.body}');
       }
@@ -274,7 +331,7 @@ class OutboundProvider with ChangeNotifier {
   }
 
   Future<String> approveOrders(BuildContext context, List<String> orderIds) async {
-    String baseUrl = await ApiUrls.getBaseUrl();
+    String baseUrl = await Constants.getBaseUrl();
     String confirmOrderUrl = '$baseUrl/orders/outBound';
     final String? token = await _getToken();
     setConfirmStatus(true);
@@ -311,7 +368,7 @@ class OutboundProvider with ChangeNotifier {
 
       if (response.statusCode == 200) {
         // After successful confirmation, fetch updated orders and notify listeners
-        await fetchReadyOrders(); // Assuming fetchOrders is a function that reloads the orders
+        await fetchOrders(); // Assuming fetchOrders is a function that reloads the orders
         resetSelections(); // Clear selected order IDs
         setConfirmStatus(false);
         notifyListeners(); // Notify the UI to rebuild
@@ -329,7 +386,7 @@ class OutboundProvider with ChangeNotifier {
   }
 
   Future<String> cancelOrders(BuildContext context, List<String> orderIds) async {
-    String baseUrl = await ApiUrls.getBaseUrl();
+    String baseUrl = await Constants.getBaseUrl();
     String cancelOrderUrl = '$baseUrl/orders?isOutBound=false';
     final String? token = await _getToken();
     setCancelStatus(true);
@@ -365,7 +422,7 @@ class OutboundProvider with ChangeNotifier {
 
       if (response.statusCode == 200) {
         // After successful confirmation, fetch updated orders and notify listeners
-        await fetchReadyOrders(); // Assuming fetchOrders is a function that reloads the orders
+        await fetchOrders(); // Assuming fetchOrders is a function that reloads the orders
         resetSelections(); // Clear selected order IDs
         setCancelStatus(false);
         notifyListeners(); // Notify the UI to rebuild
@@ -391,6 +448,7 @@ class OutboundProvider with ChangeNotifier {
   }
 
   void toggleOrderSelectionReady(bool value, int index) {
+    Logger().e('toggleOrderSelectionReady: $value, $index');
     if (index >= 0 && index < _selectedReadyOrders.length) {
       _selectedReadyOrders[index] = value;
       selectedReadyItemsCount = _selectedReadyOrders.where((selected) => selected).length; // Update count of selected items
@@ -405,7 +463,7 @@ class OutboundProvider with ChangeNotifier {
   // Update status for failed orders
 
 // Update status for ready-to-confirm orders
-  Future<void> updateReadyToConfirmOrders(BuildContext context) async {
+  Future<void> updateOutboundOrders(BuildContext context) async {
     final List<String> readyOrderIds = outboundOrders.asMap().entries.where((entry) => _selectedReadyOrders[entry.key]).map((entry) => entry.value.orderId).toList();
 
     if (readyOrderIds.isEmpty) {
@@ -418,7 +476,7 @@ class OutboundProvider with ChangeNotifier {
     }
 
     // Reload orders after updating
-    await fetchReadyOrders(); // Refresh the orders after update
+    await fetchOrders(); // Refresh the orders after update
 
     // Reset checkbox states
     allSelectedReady = false; // Reset "Select All" checkbox
@@ -437,7 +495,7 @@ class OutboundProvider with ChangeNotifier {
     }
 
     // Define the URL for the update with query parameters
-    final String url = '${await ApiUrls.getBaseUrl()}/orders?order_id=$orderId&status=$newStatus';
+    final String url = '${await Constants.getBaseUrl()}/orders?order_id=$orderId&status=$newStatus';
 
     // Set up the headers for the request
     final headers = {
@@ -456,7 +514,7 @@ class OutboundProvider with ChangeNotifier {
         // Show snackbar and trigger fetchOrders in parallel
         _showSnackbar(context, 'Order status updated successfully with $orderId');
 
-        await fetchReadyOrders(); // Refresh ready orders
+        await fetchOrders(); // Refresh ready orders
       } else {
         final errorResponse = json.decode(response.body);
         String errorMessage = errorResponse['message'] ?? 'Failed to update order status';
@@ -470,8 +528,11 @@ class OutboundProvider with ChangeNotifier {
   }
 
   // Method to display a snackbar
-  void _showSnackbar(BuildContext context, String message) {
-    final snackBar = SnackBar(content: Text(message));
+  void _showSnackbar(BuildContext context, String message, {Color color = Colors.black}) {
+    final snackBar = SnackBar(
+      content: Text(message),
+      backgroundColor: color,
+    );
     ScaffoldMessenger.of(context).showSnackBar(snackBar);
   }
 
@@ -506,11 +567,13 @@ class OutboundProvider with ChangeNotifier {
   }
 
   Future<void> searchOrdersByID(String orderId) async {
-    log('searchOrdersByID');
-    String url = '${await ApiUrls.getBaseUrl()}/orders?isOutBound=false&order_id=$orderId}';
-    // final url = Uri.parse('${await ApiUrls.getBaseUrl()}/orders?isOutBound=false&order_id=$orderId');
+    // log('searchOrdersByID');
+    String url = '${await Constants.getBaseUrl()}/orders?marketplace=Shopify,Woocommerce&isOutBound=false&order_id=$orderId';
+    // final url = Uri.parse('${await ApiUrls.getBaseUrl()}/orders?marketplace=Shopify,Woocommerce&isOutBound=false&order_id=$orderId');
     final token = await _getToken();
     if (token == null) return;
+
+    Logger().e('searchOrdersByID: $url');
 
     try {
       isLoading = true;
@@ -526,11 +589,15 @@ class OutboundProvider with ChangeNotifier {
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        log('data: $data');
         outboundOrders = [
           Order.fromJson(data)
         ];
         // log('readyOrders: $readyOrders');
+
+        log('searchOrdersByID: $outboundOrders');
+        log('selectedReadyOrders: $selectedReadyOrders');
+
+        // notifyListeners();
       } else {
         outboundOrders = [];
       }
@@ -543,9 +610,60 @@ class OutboundProvider with ChangeNotifier {
     }
   }
 
+  Future<void> getOrdersByPhone(String phone) async {
+    String url = 'https://inventory-api.ko-tech.in/orders?phone=$phone';
+    final token = await _getToken();
+    if (token == null) return;
+
+    try {
+      // isLoading = true;
+      // notifyListeners();
+
+      final response = await http.get(
+        Uri.parse(url),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        List<Order> orders = (data['orders'] as List).map((orderJson) => Order.fromJson(orderJson)).toList();
+        allCount = orders.length;
+
+        List<Order> dispatchOrders = orders.where((order) => order.orderStatus == 9).toList();
+        dispatchCount = dispatchOrders.length;
+
+        List<Order> rtoOrders = orders.where((order) => order.orderStatus == 11).toList();
+        rtoCount = rtoOrders.length;
+
+        // Logger().e('all orders: $allCount');
+        // Logger().e('dispatchOrders: $dispatchCount');
+        // Logger().e('rtoOrders: $rtoCount');
+
+        notifyListeners();
+
+        // Use dispatchOrders and rtoOrders as needed
+      } else {
+        // outboundOrders = [];
+        dispatchCount = null;
+        rtoCount = null;
+      }
+    } catch (e) {
+      log('Search orders error: $e');
+      // outboundOrders = [];
+      dispatchCount = null;
+      rtoCount = null;
+    } finally {
+      // isLoading = false;
+      notifyListeners();
+    }
+  }
+
   Future<void> searchOrdersByPhone(String phone) async {
     log('searchOrdersByPhone');
-    String url = '${await ApiUrls.getBaseUrl()}/orders?isOutBound=false&phone=$phone';
+    String url = '${await Constants.getBaseUrl()}/orders?marketplace=Shopify,Woocommerce&isOutBound=false&phone=$phone';
     final token = await _getToken();
     if (token == null) return;
 
@@ -567,6 +685,9 @@ class OutboundProvider with ChangeNotifier {
         final data = jsonDecode(response.body);
         log('data: $data');
         outboundOrders = (data['orders'] as List).map((order) => Order.fromJson(order)).toList();
+        await getOrdersByPhone(phone);
+        // dispatchCount = await getDispatchOrders(phone);
+        // rtoCount = await getRtoOrders(phone);
         log('readyOrders: $outboundOrders');
       } else {
         outboundOrders = [];
@@ -580,8 +701,69 @@ class OutboundProvider with ChangeNotifier {
     }
   }
 
+  // Future<int> getRtoOrders(String phone) async {
+  //   Logger().e('getRtoOrders');
+  //   String url = '${await Constants.getBaseUrl()}/orders?orderStatus=11&phone=$phone';
+  //   final token = await _getToken();
+  //   if (token == null) return 0;
+
+  //   try {
+  //     final response = await http.get(
+  //       Uri.parse(url),
+  //       headers: {
+  //         'Authorization': 'Bearer $token',
+  //         'Content-Type': 'application/json',
+  //       },
+  //     );
+
+  //     if (response.statusCode == 200) {
+  //       final data = jsonDecode(response.body);
+  //       log('rtoOrders: ${data['orders']}');
+  //       return data['orders'].length;
+  //       // log('rtoCount: $rtoCount');
+  //       // return rtoCount!;
+  //     } else {
+  //       return 0;
+  //     }
+  //   } catch (e) {
+  //     log('Error fetching orders: $e');
+  //     return 0;
+  //   }
+  // }
+
+  // Future<int> getDispatchOrders(String phone) async {
+  //   Logger().e('getDispatchOrders');
+  //   String url = '${await Constants.getBaseUrl()}/orders?orderStatus=9&phone=$phone';
+  //   final token = await _getToken();
+  //   if (token == null) return 0;
+
+  //   try {
+  //     final response = await http.get(
+  //       Uri.parse(url),
+  //       headers: {
+  //         'Authorization': 'Bearer $token',
+  //         'Content-Type': 'application/json',
+  //       },
+  //     );
+
+  //     if (response.statusCode == 200) {
+  //       final data = jsonDecode(response.body);
+
+  //       log('dispatchOrders: ${data['orders']}');
+  //       // log('dispatchCount: $dispatchCount');
+  //       // return dispatchCount!;
+  //       return data['orders'].length;
+  //     } else {
+  //       return 0;
+  //     }
+  //   } catch (e) {
+  //     log('Error fetching orders: $e');
+  //     return 0;
+  //   }
+  // }
+
   Future<void> fetchOrdersByMarketplace(String marketplace, int page, {DateTime? date}) async {
-    String baseUrl = '${await ApiUrls.getBaseUrl()}/orders';
+    String baseUrl = '${await Constants.getBaseUrl()}/orders';
 
     // Build URL with base parameters
     String url = '$baseUrl?isOutBound=false&marketplace=$marketplace&page=$page';
@@ -643,6 +825,85 @@ class OutboundProvider with ChangeNotifier {
       print('Error fetching orders: $e');
     } finally {
       isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  String sanitizeEmail(String email) {
+    return email.replaceAll(RegExp(r'[^a-zA-Z0-9_]'), '_');
+  }
+
+  Future<void> clearQueue(String id) async {
+    try {
+      var response = await http.post(
+        Uri.parse('https://callerapp.onrender.com/clear-topic-queue'),
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: jsonEncode({
+          "topic": id,
+        }),
+      );
+      if (response.statusCode != 200) {
+        log('Failed to notify server. Status code: ${response.statusCode}');
+      } else {
+        log('send succusfully ${response.body}');
+      }
+    } catch (e) {
+      log('Error notifying server: $e');
+    }
+  }
+
+
+  Future<void> sendSingleCall(BuildContext context, String phoneNumber, String entityId, String entityType) async {
+    const String url = 'https://callerapp.onrender.com/send-single-call';
+
+    final prefs = await SharedPreferences.getInstance();
+
+    String? email = prefs.getString('email');
+    String id = sanitizeEmail(email!);
+
+    phoneNumber = phoneNumber.replaceFirst('+91', '').trim();
+
+    entityId = entityId.split('-')[1];
+
+    final body = {
+      'phone_number': phoneNumber, // "8839782589"
+      'topic': id, // 'sales2'
+      'entity_id': int.parse(entityId), // 12345
+      'entity_type': entityType,
+    };
+
+    log('body hai: $body');
+
+    try {
+      final response = await http.post(
+        Uri.parse(url),
+        headers: <String, String>{
+          'Content-Type': 'application/json; charset=UTF-8',
+        },
+        body: jsonEncode(body),
+      );
+      log('Started Calling:');
+
+      final res = jsonDecode(response.body);
+
+      if (response.statusCode == 200) {
+        _showSnackbar(context, res['message'], color: Colors.green);
+        clearQueue(id);
+        log('Call Proceeded');
+        return;
+      } else {
+        _showSnackbar(context, res['error'], color: Colors.red);
+        log('Failed to send phone number. Status code: ${response.statusCode}');
+        log('Response body: ${response.body}');
+        return;
+      }
+    } catch (error) {
+      log('Error sending phone number: $error');
+      _showSnackbar(context, 'Error sending phone number: $error');
+      return;
+    } finally {
       notifyListeners();
     }
   }

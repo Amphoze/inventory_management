@@ -28,23 +28,17 @@ class _ProductsState extends State<Products> {
 
   CustomDropdown brandd = CustomDropdown();
   final TextEditingController _productNameController = TextEditingController();
-  final TextEditingController _productIdentifierController =
-      TextEditingController();
+  final TextEditingController _productIdentifierController = TextEditingController();
   final TextEditingController _productBrandController = TextEditingController();
   final TextEditingController _modelNameController = TextEditingController();
   final TextEditingController _modelNumberController = TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();
-  final TextEditingController _accountingItemNameController =
-      TextEditingController();
-  final TextEditingController _accountingItemUnitController =
-      TextEditingController();
+  final TextEditingController _accountingItemNameController = TextEditingController();
+  final TextEditingController _accountingItemUnitController = TextEditingController();
   final TextEditingController _materialTypeController = TextEditingController();
-  final TextEditingController _predefinedTaxRuleController =
-      TextEditingController();
-  final TextEditingController _productTaxCodeController =
-      TextEditingController();
-  final TextEditingController _productSpecificationController =
-      TextEditingController();
+  final TextEditingController _predefinedTaxRuleController = TextEditingController();
+  final TextEditingController _productTaxCodeController = TextEditingController();
+  final TextEditingController _productSpecificationController = TextEditingController();
   final TextEditingController _mrpController = TextEditingController();
   final TextEditingController _costController = TextEditingController();
   final TextEditingController _netWeightController = TextEditingController();
@@ -58,25 +52,18 @@ class _ProductsState extends State<Products> {
 
   final TextEditingController _skuController = TextEditingController();
   final TextEditingController _eanUpcController = TextEditingController();
-  final TextEditingController _technicalNameController =
-      TextEditingController();
+  final TextEditingController _technicalNameController = TextEditingController();
   final TextEditingController _variantNameController = TextEditingController();
   final TextEditingController _parentSkuController = TextEditingController();
   String? token;
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
-  final GlobalKey<CustomDropdownState> dropdownKey =
-      GlobalKey<CustomDropdownState>();
-  final GlobalKey<CustomDropdownState> categoryKey =
-      GlobalKey<CustomDropdownState>();
-  final GlobalKey<CustomDropdownState> labelKey =
-      GlobalKey<CustomDropdownState>();
-  final GlobalKey<CustomDropdownState> colorKey =
-      GlobalKey<CustomDropdownState>();
+  final GlobalKey<CustomDropdownState> dropdownKey = GlobalKey<CustomDropdownState>();
+  final GlobalKey<CustomDropdownState> categoryKey = GlobalKey<CustomDropdownState>();
+  final GlobalKey<CustomDropdownState> labelKey = GlobalKey<CustomDropdownState>();
+  final GlobalKey<CustomDropdownState> colorKey = GlobalKey<CustomDropdownState>();
 
-  final GlobalKey<CustomDropdownState> sizeKey =
-      GlobalKey<CustomDropdownState>();
-  final GlobalKey<CustomDropdownState> gradeKey =
-      GlobalKey<CustomDropdownState>();
+  final GlobalKey<CustomDropdownState> sizeKey = GlobalKey<CustomDropdownState>();
+  final GlobalKey<CustomDropdownState> gradeKey = GlobalKey<CustomDropdownState>();
   // final GlobalKey<CustomDropdown> _scaffoldKey = GlobalKey<CustomDropdown>();
   // Add a form key
   // final _brandDropdownKey = GlobalKey<CustomDropdownState>();
@@ -201,9 +188,7 @@ class _ProductsState extends State<Products> {
       productProvider = Provider.of<ProductProvider>(context, listen: false);
       await productProvider!.getCategories();
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          backgroundColor: Colors.red,
-          content: Text("some error ${e.toString()}")));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(backgroundColor: Colors.red, content: Text("some error ${e.toString()}")));
       productProvider!.update();
     }
   }
@@ -282,9 +267,7 @@ class _ProductsState extends State<Products> {
     // : mobileLayout(context);
   }
 
-  Widget formLayout(Widget title, Widget anyWidget,
-      {MainAxisAlignment mainAxisAlignment = MainAxisAlignment.start,
-      double width = 1200}) {
+  Widget formLayout(Widget title, Widget anyWidget, {MainAxisAlignment mainAxisAlignment = MainAxisAlignment.start, double width = 1200}) {
     return Container(
       width: width,
       padding: const EdgeInsets.symmetric(vertical: 16),
@@ -310,8 +293,7 @@ class _ProductsState extends State<Products> {
     );
   }
 
-  Widget fieldTitle(String filTitle,
-      {double height = 51, double width = 173.3, bool show = false}) {
+  Widget fieldTitle(String filTitle, {double height = 51, double width = 173.3, bool show = false}) {
     return SizedBox(
       height: height,
       width: width,
@@ -402,7 +384,11 @@ class _ProductsState extends State<Products> {
                   : const Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Icons.save, size: 20),
+                        Icon(
+                          Icons.save,
+                          size: 20,
+                          color: Colors.white,
+                        ),
                         SizedBox(width: 8),
                         Text(
                           "Save Product",
@@ -484,8 +470,7 @@ class _ProductsState extends State<Products> {
     }
 
     // Ensure SKU and Parent SKU are the same for 'Variant Product Creation'
-    if (productProvider!.selectedProductCategory ==
-        'Variant Product Creation') {
+    if (productProvider!.selectedProductCategory == 'Variant Product Creation') {
       selectedParentSku = _skuController.text.trim();
     }
 
@@ -495,14 +480,11 @@ class _ProductsState extends State<Products> {
       var res = await ProductPageApi().createProduct(
         context: context,
         displayName: _productNameController.text.trim(),
-        parentSku: productProvider!.selectedProductCategory == 'Create Simple Product'
-            ? _skuController.text.trim()
-            : selectedParentSku ?? '',
+        parentSku: productProvider!.selectedProductCategory == 'Create Simple Product' ? _skuController.text.trim() : selectedParentSku ?? '',
         sku: _skuController.text.trim(),
         ean: _eanUpcController.text.trim(),
         brand_id: selectedBrandId ?? '', ///////////////////////////////////////
-        outerPackage_quantity:
-            selectedBoxName ?? '', ///////////////////////////
+        outerPackage_quantity: selectedBoxName ?? '', ///////////////////////////
         description: _descriptionController.text.trim(),
         technicalName: _technicalNameController.text.trim(),
         label_quantity: selectedLabelSku ?? '', ////////////////////////////
@@ -571,9 +553,7 @@ class _ProductsState extends State<Products> {
     //   _scrollToField('Size');
     //   return false;
     // }
-    if (productProvider!.selectedProductCategory ==
-            'Variant Product Creation' &&
-        selectedParentSku == null) {
+    if (productProvider!.selectedProductCategory == 'Variant Product Creation' && selectedParentSku == null) {
       _scrollToField('Parent SKU');
       return false;
     }
@@ -624,8 +604,7 @@ class _ProductsState extends State<Products> {
               const SizedBox(
                 height: 12,
               ),
-              if (productProvider!.selectedProductCategory ==
-                  'Variant Product Creation')
+              if (productProvider!.selectedProductCategory == 'Variant Product Creation')
                 formLayout(
                   fieldTitle('Parent SKU', show: true),
                   SizedBox(
@@ -644,9 +623,7 @@ class _ProductsState extends State<Products> {
                     ),
                   ),
                 ),
-              if (productProvider!.selectedProductCategory ==
-                  'Variant Product Creation')
-                const SizedBox(height: 12),
+              if (productProvider!.selectedProductCategory == 'Variant Product Creation') const SizedBox(height: 12),
               formLayout(
                 fieldTitle('SKU', show: true, height: 50, width: 110),
                 SizedBox(
@@ -770,12 +747,8 @@ class _ProductsState extends State<Products> {
               //         variantProductCreation(context),
               //       )
               //     : const SizedBox(),
-              productProvider!.selectedProductCategory ==
-                      'Variant Product Creation'
-                  ? const SizedBox(height: 12)
-                  : const SizedBox(),
-              productProvider!.selectedProductCategory ==
-                      'Variant Product Creation'
+              productProvider!.selectedProductCategory == 'Variant Product Creation' ? const SizedBox(height: 12) : const SizedBox(),
+              productProvider!.selectedProductCategory == 'Variant Product Creation'
                   ? formLayout(
                       fieldTitle('Technical Name'),
                       CustomTextField(
@@ -1147,10 +1120,7 @@ class _ProductsState extends State<Products> {
 
   Widget customRadioButtonLayout(BuildContext context) {
     return SizedBox(
-      height: MediaQuery.of(context).size.width > 1200 &&
-              MediaQuery.of(context).size.width < 1400
-          ? 90
-          : 50,
+      height: MediaQuery.of(context).size.width > 1200 && MediaQuery.of(context).size.width < 1400 ? 90 : 50,
       child: Column(
         children: [
           const SizedBox(height: 9.0),
@@ -1203,9 +1173,7 @@ class _ProductsState extends State<Products> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           SizedBox(
-            height: 50 +
-                ((MediaQuery.of(context).size.width > 940 ? 51.0 : 102 + 40.0) *
-                    productProvider!.countVariationFields),
+            height: 50 + ((MediaQuery.of(context).size.width > 940 ? 51.0 : 102 + 40.0) * productProvider!.countVariationFields),
             child: ListView.builder(
               itemBuilder: (context, index) {
                 return MediaQuery.of(context).size.width > 940
@@ -1215,9 +1183,7 @@ class _ProductsState extends State<Products> {
                           Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              index == 0
-                                  ? const Text('Colors')
-                                  : const SizedBox(),
+                              index == 0 ? const Text('Colors') : const SizedBox(),
                               SizedBox(
                                 width: 130,
                                 // color:Colors.brown,
@@ -1233,15 +1199,10 @@ class _ProductsState extends State<Products> {
                           Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              index == 0
-                                  ? const Text('Size')
-                                  : const SizedBox(),
+                              index == 0 ? const Text('Size') : const SizedBox(),
                               SizedBox(
                                 width: 130,
-                                child: CustomTextField(
-                                    controller: productProvider!.size[index],
-                                    height: 51,
-                                    width: 130),
+                                child: CustomTextField(controller: productProvider!.size[index], height: 51, width: 130),
                               ),
                             ],
                           ),
@@ -1254,10 +1215,7 @@ class _ProductsState extends State<Products> {
                               index == 0 ? const Text('SKU') : const SizedBox(),
                               SizedBox(
                                 width: 130,
-                                child: CustomTextField(
-                                    controller: productProvider!.sku[index],
-                                    height: 51,
-                                    width: 130),
+                                child: CustomTextField(controller: productProvider!.sku[index], height: 51, width: 130),
                               ),
                             ],
                           ),
@@ -1267,8 +1225,7 @@ class _ProductsState extends State<Products> {
                                   width: 40,
                                   height: 40,
                                   onTap: () {
-                                    productProvider!
-                                        .deleteTextEditingController(index);
+                                    productProvider!.deleteTextEditingController(index);
                                   },
                                   color: AppColors.cardsgreen,
                                   textColor: AppColors.black,
@@ -1286,9 +1243,7 @@ class _ProductsState extends State<Products> {
                                   child: Column(
                                     children: [
                                       const Text('Colors'),
-                                      CustomTextField(
-                                          controller:
-                                              productProvider!.color[index]),
+                                      CustomTextField(controller: productProvider!.color[index]),
                                     ],
                                   )),
                               const SizedBox(
@@ -1299,9 +1254,7 @@ class _ProductsState extends State<Products> {
                                   child: Column(
                                     children: [
                                       const Text('Size'),
-                                      CustomTextField(
-                                          controller:
-                                              productProvider!.size[index]),
+                                      CustomTextField(controller: productProvider!.size[index]),
                                     ],
                                   ))
                             ],
@@ -1313,9 +1266,7 @@ class _ProductsState extends State<Products> {
                                   child: Column(
                                     children: [
                                       const Text('SKU'),
-                                      CustomTextField(
-                                          controller:
-                                              productProvider!.sku[index]),
+                                      CustomTextField(controller: productProvider!.sku[index]),
                                     ],
                                   )),
                             ],
@@ -1324,8 +1275,7 @@ class _ProductsState extends State<Products> {
                               width: 40,
                               height: 40,
                               onTap: () {
-                                productProvider!
-                                    .deleteTextEditingController(index);
+                                productProvider!.deleteTextEditingController(index);
                               },
                               color: AppColors.cardsgreen,
                               textColor: AppColors.black,

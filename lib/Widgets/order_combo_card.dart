@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import 'package:inventory_management/Custom-Files/colors.dart';
 import 'package:inventory_management/Custom-Files/utils.dart';
 import 'package:inventory_management/edit_order_page.dart';
+import 'package:inventory_management/edit_outbound_page.dart';
 import 'package:inventory_management/model/orders_model.dart';
 import 'package:inventory_management/provider/accounts_provider.dart';
 import 'package:inventory_management/provider/book_provider.dart';
@@ -53,7 +54,9 @@ class _OrderComboCardState extends State<OrderComboCard> {
   }
 
   String formatIsoDate(String isoDate) {
-    final dateTime = DateTime.parse(isoDate).toUtc().add(const Duration(hours: 5, minutes: 30));
+    final dateTime = DateTime.parse(isoDate)
+        .toUtc()
+        .add(const Duration(hours: 5, minutes: 30));
     final date = DateFormat('yyyy-MM-dd').format(dateTime);
     final time = DateFormat('hh:mm:ss a').format(dateTime);
     return "$date, $time";
@@ -77,20 +80,27 @@ class _OrderComboCardState extends State<OrderComboCard> {
     }
 
     // Filter out groups with more than one item
-    final List<List<Item>> comboItemGroups = groupedComboItems.values.where((items) => items.length > 1).toList();
+    final List<List<Item>> comboItemGroups =
+        groupedComboItems.values.where((items) => items.length > 1).toList();
 
     // Remaining items that do not satisfy the combo condition
-    final List<Item> remainingItems = widget.order.items.where((item) => !(item.isCombo == true && item.comboSku != null && groupedComboItems[item.comboSku]!.length > 1)).toList();
+    final List<Item> remainingItems = widget.order.items
+        .where((item) => !(item.isCombo == true &&
+            item.comboSku != null &&
+            groupedComboItems[item.comboSku]!.length > 1))
+        .toList();
 
     return Card(
       color: AppColors.white,
       elevation: 4, // Reduced elevation for less shadow
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12), // Slightly smaller rounded corners
+        borderRadius:
+            BorderRadius.circular(12), // Slightly smaller rounded corners
       ),
       margin: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 12.0),
       child: Padding(
-        padding: const EdgeInsets.all(12.0), // Reduced padding for a smaller card
+        padding:
+            const EdgeInsets.all(12.0), // Reduced padding for a smaller card
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -115,7 +125,7 @@ class _OrderComboCardState extends State<OrderComboCard> {
                           final result = await Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => EditOrderPage(
+                              builder: (context) => EditOutboundPage(
                                 order: widget.order,
                                 isBookPage: true,
                               ),
@@ -123,12 +133,14 @@ class _OrderComboCardState extends State<OrderComboCard> {
                           );
                           log("resulttt$result");
                           if (result != null && result is bool && result) {
-                            final pro = Provider.of<BookProvider>(context, listen: false);
+                            final pro = Provider.of<BookProvider>(context,
+                                listen: false);
                             pro.fetchPaginatedOrdersB2C(pro.currentPageB2C);
                           }
                         },
                         style: ElevatedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(horizontal: 6.0, vertical: 2.0),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 6.0, vertical: 2.0),
                           foregroundColor: AppColors.white,
                           backgroundColor: AppColors.orange,
                           textStyle: const TextStyle(
@@ -158,14 +170,24 @@ class _OrderComboCardState extends State<OrderComboCard> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              buildLabelValueRow('Date', provider.formatDate(widget.order.date!)),
-                              buildLabelValueRow('Total Amount', 'Rs. ${widget.order.totalAmount ?? ''}'),
-                              buildLabelValueRow('Total Items', '${widget.order.items.fold(0, (total, item) => total + item.qty!)}'),
-                              buildLabelValueRow('Total Weight', '${widget.order.totalWeight ?? ''}'),
-                              buildLabelValueRow('Payment Mode', widget.order.paymentMode ?? ''),
-                              buildLabelValueRow('Currency Code', widget.order.currencyCode ?? ''),
-                              buildLabelValueRow('COD Amount', widget.order.codAmount.toString() ?? ''),
-                              buildLabelValueRow('AWB No.', widget.order.awbNumber.toString() ?? ''),
+                              widget.order.date != null
+                                  ? buildLabelValueRow('Date',
+                                      provider.formatDate(widget.order.date!))
+                                  : const SizedBox(),
+                              buildLabelValueRow('Total Amount',
+                                  'Rs. ${widget.order.totalAmount ?? ''}'),
+                              buildLabelValueRow('Total Items',
+                                  '${widget.order.items.fold(0, (total, item) => total + item.qty!)}'),
+                              buildLabelValueRow('Total Weight',
+                                  '${widget.order.totalWeight ?? ''}'),
+                              buildLabelValueRow('Payment Mode',
+                                  widget.order.paymentMode ?? ''),
+                              buildLabelValueRow('Currency Code',
+                                  widget.order.currencyCode ?? ''),
+                              buildLabelValueRow('COD Amount',
+                                  widget.order.codAmount.toString() ?? ''),
+                              buildLabelValueRow('AWB No.',
+                                  widget.order.awbNumber.toString() ?? ''),
                             ],
                           ),
                         ),
@@ -175,15 +197,24 @@ class _OrderComboCardState extends State<OrderComboCard> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              buildLabelValueRow('Discount Amount', widget.order.discountAmount.toString() ?? ''),
-                              buildLabelValueRow('Discount Scheme', widget.order.discountScheme ?? ''),
-                              buildLabelValueRow('Agent', widget.order.agent ?? ''),
-                              buildLabelValueRow('Notes', widget.order.notes ?? ''),
-                              buildLabelValueRow('Marketplace', widget.order.marketplace?.name ?? ''),
-                              buildLabelValueRow('Filter', widget.order.filter ?? ''),
+                              buildLabelValueRow('Discount Amount',
+                                  widget.order.discountAmount.toString() ?? ''),
+                              buildLabelValueRow('Discount Scheme',
+                                  widget.order.discountScheme ?? ''),
+                              buildLabelValueRow(
+                                  'Agent', widget.order.agent ?? ''),
+                              buildLabelValueRow(
+                                  'Notes', widget.order.notes ?? ''),
+                              buildLabelValueRow('Marketplace',
+                                  widget.order.marketplace?.name ?? ''),
+                              buildLabelValueRow(
+                                  'Filter', widget.order.filter ?? ''),
                               buildLabelValueRow(
                                 'Expected Delivery Date',
-                                widget.order.expectedDeliveryDate != null ? provider.formatDate(widget.order.expectedDeliveryDate!) : '',
+                                widget.order.expectedDeliveryDate != null
+                                    ? provider.formatDate(
+                                        widget.order.expectedDeliveryDate!)
+                                    : '',
                               ),
                             ],
                           ),
@@ -194,13 +225,20 @@ class _OrderComboCardState extends State<OrderComboCard> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              buildLabelValueRow('Delivery Term', widget.order.deliveryTerm ?? ''),
-                              buildLabelValueRow('Transaction Number', widget.order.transactionNumber ?? ''),
-                              buildLabelValueRow('Micro Dealer Order', widget.order.microDealerOrder ?? ''),
-                              buildLabelValueRow('Fulfillment Type', widget.order.fulfillmentType ?? ''),
-                              buildLabelValueRow('No. of Boxes', widget.order.numberOfBoxes.toString() ?? ''),
-                              buildLabelValueRow('Total Quantity', widget.order.totalQuantity.toString() ?? ''),
-                              buildLabelValueRow('SKU Qty', widget.order.skuQty.toString() ?? ''),
+                              buildLabelValueRow('Delivery Term',
+                                  widget.order.deliveryTerm ?? ''),
+                              buildLabelValueRow('Transaction Number',
+                                  widget.order.transactionNumber ?? ''),
+                              buildLabelValueRow('Micro Dealer Order',
+                                  widget.order.microDealerOrder ?? ''),
+                              buildLabelValueRow('Fulfillment Type',
+                                  widget.order.fulfillmentType ?? ''),
+                              buildLabelValueRow('No. of Boxes',
+                                  widget.order.numberOfBoxes.toString() ?? ''),
+                              buildLabelValueRow('Total Quantity',
+                                  widget.order.totalQuantity.toString() ?? ''),
+                              buildLabelValueRow('SKU Qty',
+                                  widget.order.skuQty.toString() ?? ''),
                             ],
                           ),
                         ),
@@ -214,14 +252,19 @@ class _OrderComboCardState extends State<OrderComboCard> {
                                 'Dimensions',
                                 '${widget.order.length.toString() ?? ''} x ${widget.order.breadth.toString() ?? ''} x ${widget.order.height.toString() ?? ''}',
                               ),
-                              buildLabelValueRow('Tracking Status', widget.order.trackingStatus ?? ''),
+                              buildLabelValueRow('Tracking Status',
+                                  widget.order.trackingStatus ?? ''),
                               const SizedBox(
                                 height: 7,
                               ),
-                              buildLabelValueRow('Tax Percent', '${widget.order.taxPercent.toString() ?? ''}%'),
-                              buildLabelValueRow('Courier Name', widget.order.courierName ?? ''),
-                              buildLabelValueRow('Order Type', widget.order.orderType ?? ''),
-                              buildLabelValueRow('Payment Bank', widget.order.paymentBank ?? ''),
+                              buildLabelValueRow('Tax Percent',
+                                  '${widget.order.taxPercent.toString() ?? ''}%'),
+                              buildLabelValueRow('Courier Name',
+                                  widget.order.courierName ?? ''),
+                              buildLabelValueRow(
+                                  'Order Type', widget.order.orderType ?? ''),
+                              buildLabelValueRow('Payment Bank',
+                                  widget.order.paymentBank ?? ''),
                             ],
                           ),
                         ),
@@ -231,15 +274,23 @@ class _OrderComboCardState extends State<OrderComboCard> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              buildLabelValueRow('Prepaid Amount', widget.order.prepaidAmount.toString() ?? ''),
-                              buildLabelValueRow('Coin', widget.order.coin.toString() ?? ''),
-                              buildLabelValueRow('Preferred Courier', widget.order.preferredCourier ?? ''),
+                              buildLabelValueRow('Prepaid Amount',
+                                  widget.order.prepaidAmount.toString() ?? ''),
+                              buildLabelValueRow(
+                                  'Coin', widget.order.coin.toString() ?? ''),
+                              buildLabelValueRow('Preferred Courier',
+                                  widget.order.preferredCourier ?? ''),
                               buildLabelValueRow(
                                 'Payment Date Time',
-                                widget.order.paymentDateTime != null ? provider.formatDateTime(widget.order.paymentDateTime!) : '',
+                                widget.order.paymentDateTime != null
+                                    ? provider.formatDateTime(
+                                        widget.order.paymentDateTime!)
+                                    : '',
                               ),
-                              buildLabelValueRow('Calc Entry No.', widget.order.calcEntryNumber ?? ''),
-                              buildLabelValueRow('Currency', widget.order.currency ?? ''),
+                              buildLabelValueRow('Calc Entry No.',
+                                  widget.order.calcEntryNumber ?? ''),
+                              buildLabelValueRow(
+                                  'Currency', widget.order.currency ?? ''),
                             ],
                           ),
                         ),
@@ -259,20 +310,32 @@ class _OrderComboCardState extends State<OrderComboCard> {
                             children: [
                               const Text(
                                 'Customer Details:',
-                                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11.0, color: AppColors.primaryBlue),
+                                style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 11.0,
+                                    color: AppColors.primaryBlue),
                               ),
                               buildLabelValueRow(
                                 'Customer ID',
                                 widget.order.customer?.customerId ?? '',
                               ),
-                              buildLabelValueRow('Full Name', widget.order.customer?.firstName != widget.order.customer?.lastName ? '${widget.order.customer?.firstName ?? ''} ${widget.order.customer?.lastName ?? ''}'.trim() : widget.order.customer?.firstName ?? ''),
+                              buildLabelValueRow(
+                                  'Full Name',
+                                  widget.order.customer?.firstName !=
+                                          widget.order.customer?.lastName
+                                      ? '${widget.order.customer?.firstName ?? ''} ${widget.order.customer?.lastName ?? ''}'
+                                          .trim()
+                                      : widget.order.customer?.firstName ?? ''),
                               buildLabelValueRow(
                                 'Email',
                                 widget.order.customer?.email ?? '',
                               ),
                               buildLabelValueRow(
                                 'Phone',
-                                OrderComboCard.maskPhoneNumber(widget.order.customer?.phone?.toString()) ?? '',
+                                OrderComboCard.maskPhoneNumber(widget
+                                        .order.customer?.phone
+                                        ?.toString()) ??
+                                    '',
                               ),
                               buildLabelValueRow(
                                 'GSTIN',
@@ -289,7 +352,10 @@ class _OrderComboCardState extends State<OrderComboCard> {
                             children: [
                               const Text(
                                 'Shipping Address:',
-                                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11.0, color: AppColors.primaryBlue),
+                                style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 11.0,
+                                    color: AppColors.primaryBlue),
                               ),
                               buildLabelValueRow(
                                 'Address',
@@ -299,16 +365,34 @@ class _OrderComboCardState extends State<OrderComboCard> {
                                   widget.order.shippingAddress?.city,
                                   widget.order.shippingAddress?.state,
                                   widget.order.shippingAddress?.country,
-                                  widget.order.shippingAddress?.pincode?.toString(),
-                                ].where((element) => element != null && element.isNotEmpty).join(', '),
+                                  widget.order.shippingAddress?.pincode
+                                      ?.toString(),
+                                ]
+                                    .where((element) =>
+                                        element != null && element.isNotEmpty)
+                                    .join(', '),
                               ),
                               buildLabelValueRow(
                                 'Name',
-                                widget.order.shippingAddress?.firstName != widget.order.shippingAddress?.lastName ? '${widget.order.shippingAddress?.firstName ?? ''} ${widget.order.shippingAddress?.lastName ?? ''}'.trim() : widget.order.shippingAddress?.firstName ?? '',
+                                widget.order.shippingAddress?.firstName !=
+                                        widget.order.shippingAddress?.lastName
+                                    ? '${widget.order.shippingAddress?.firstName ?? ''} ${widget.order.shippingAddress?.lastName ?? ''}'
+                                        .trim()
+                                    : widget.order.shippingAddress?.firstName ??
+                                        '',
                               ),
-                              buildLabelValueRow('Phone', OrderComboCard.maskPhoneNumber(widget.order.shippingAddress?.phone?.toString()) ?? ''),
-                              buildLabelValueRow('Email', widget.order.shippingAddress?.email ?? ''),
-                              buildLabelValueRow('Country Code', widget.order.shippingAddress?.countryCode ?? ''),
+                              buildLabelValueRow(
+                                  'Phone',
+                                  OrderComboCard.maskPhoneNumber(widget
+                                          .order.shippingAddress?.phone
+                                          ?.toString()) ??
+                                      ''),
+                              buildLabelValueRow('Email',
+                                  widget.order.shippingAddress?.email ?? ''),
+                              buildLabelValueRow(
+                                  'Country Code',
+                                  widget.order.shippingAddress?.countryCode ??
+                                      ''),
                             ],
                           ),
                         ),
@@ -320,7 +404,10 @@ class _OrderComboCardState extends State<OrderComboCard> {
                             children: [
                               const Text(
                                 'Billing Address:',
-                                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11.0, color: AppColors.primaryBlue),
+                                style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 11.0,
+                                    color: AppColors.primaryBlue),
                               ),
                               buildLabelValueRow(
                                 'Address',
@@ -330,16 +417,34 @@ class _OrderComboCardState extends State<OrderComboCard> {
                                   widget.order.billingAddress?.city,
                                   widget.order.billingAddress?.state,
                                   widget.order.billingAddress?.country,
-                                  widget.order.billingAddress?.pincode?.toString(),
-                                ].where((element) => element != null && element.isNotEmpty).join(', '),
+                                  widget.order.billingAddress?.pincode
+                                      ?.toString(),
+                                ]
+                                    .where((element) =>
+                                        element != null && element.isNotEmpty)
+                                    .join(', '),
                               ),
                               buildLabelValueRow(
                                 'Name',
-                                widget.order.billingAddress?.firstName != widget.order.billingAddress?.lastName ? '${widget.order.billingAddress?.firstName ?? ''} ${widget.order.billingAddress?.lastName ?? ''}'.trim() : widget.order.billingAddress?.firstName ?? '',
+                                widget.order.billingAddress?.firstName !=
+                                        widget.order.billingAddress?.lastName
+                                    ? '${widget.order.billingAddress?.firstName ?? ''} ${widget.order.billingAddress?.lastName ?? ''}'
+                                        .trim()
+                                    : widget.order.billingAddress?.firstName ??
+                                        '',
                               ),
-                              buildLabelValueRow('Phone', OrderComboCard.maskPhoneNumber(widget.order.billingAddress?.phone?.toString()) ?? ''),
-                              buildLabelValueRow('Email', widget.order.billingAddress?.email ?? ''),
-                              buildLabelValueRow('Country Code', widget.order.billingAddress?.countryCode ?? ''),
+                              buildLabelValueRow(
+                                  'Phone',
+                                  OrderComboCard.maskPhoneNumber(widget
+                                          .order.billingAddress?.phone
+                                          ?.toString()) ??
+                                      ''),
+                              buildLabelValueRow('Email',
+                                  widget.order.billingAddress?.email ?? ''),
+                              buildLabelValueRow(
+                                  'Country Code',
+                                  widget.order.billingAddress?.countryCode ??
+                                      ''),
                             ],
                           ),
                         ),
@@ -358,14 +463,12 @@ class _OrderComboCardState extends State<OrderComboCard> {
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
-                        colors: [
-                          Colors.blue.shade50,
-                          Colors.blue.shade100
-                        ],
+                        colors: [Colors.blue.shade50, Colors.blue.shade100],
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                       ),
-                      border: Border.all(color: Colors.blue.shade400, width: 1.5),
+                      border:
+                          Border.all(color: Colors.blue.shade400, width: 1.5),
                       borderRadius: BorderRadius.circular(12),
                       boxShadow: [
                         BoxShadow(
@@ -421,7 +524,8 @@ class _OrderComboCardState extends State<OrderComboCard> {
                                   ),
                                   decoration: BoxDecoration(
                                     color: Colors.blue.shade50,
-                                    border: Border.all(color: Colors.blue.shade300),
+                                    border:
+                                        Border.all(color: Colors.blue.shade300),
                                     borderRadius: BorderRadius.circular(4),
                                   ),
                                   child: Text(
@@ -449,7 +553,10 @@ class _OrderComboCardState extends State<OrderComboCard> {
                             onPressed: () {
                               final pro = context.read<BookProvider>();
                               setState(() {
-                                bookRemark.text = widget.order.messages!['bookerMessage'].toString() ?? '';
+                                bookRemark.text = widget
+                                        .order.messages!['bookerMessage']
+                                        .toString() ??
+                                    '';
                               });
                               showDialog(
                                 context: context,
@@ -459,14 +566,18 @@ class _OrderComboCardState extends State<OrderComboCard> {
                                       borderRadius: BorderRadius.circular(16),
                                     ),
                                     // Making dialog wider by using custom insetPadding
-                                    insetPadding: const EdgeInsets.symmetric(horizontal: 20),
+                                    insetPadding: const EdgeInsets.symmetric(
+                                        horizontal: 20),
                                     child: Container(
-                                      width: MediaQuery.of(context).size.width * 0.9, // 90% of screen width
-                                      constraints: const BoxConstraints(maxWidth: 600), // Maximum width limit
+                                      width: MediaQuery.of(context).size.width *
+                                          0.9, // 90% of screen width
+                                      constraints: const BoxConstraints(
+                                          maxWidth: 600), // Maximum width limit
                                       padding: const EdgeInsets.all(20),
                                       child: Column(
                                         mainAxisSize: MainAxisSize.min,
-                                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.stretch,
                                         children: [
                                           const Text(
                                             'Remark',
@@ -481,23 +592,29 @@ class _OrderComboCardState extends State<OrderComboCard> {
                                             maxLines: 10,
                                             decoration: InputDecoration(
                                               border: OutlineInputBorder(
-                                                borderRadius: BorderRadius.circular(8),
+                                                borderRadius:
+                                                    BorderRadius.circular(8),
                                               ),
-                                              hintText: 'Enter your remark here',
+                                              hintText:
+                                                  'Enter your remark here',
                                               filled: true,
                                               fillColor: Colors.grey[50],
-                                              contentPadding: const EdgeInsets.all(16),
+                                              contentPadding:
+                                                  const EdgeInsets.all(16),
                                             ),
                                           ),
                                           const SizedBox(height: 24),
                                           Row(
-                                            mainAxisAlignment: MainAxisAlignment.end,
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.end,
                                             children: [
                                               TextButton(
-                                                onPressed: () => Navigator.of(context).pop(),
+                                                onPressed: () =>
+                                                    Navigator.of(context).pop(),
                                                 child: const Text(
                                                   'Cancel',
-                                                  style: TextStyle(fontSize: 16),
+                                                  style:
+                                                      TextStyle(fontSize: 16),
                                                 ),
                                               ),
                                               const SizedBox(width: 16),
@@ -505,21 +622,32 @@ class _OrderComboCardState extends State<OrderComboCard> {
                                                 onPressed: () async {
                                                   showDialog(
                                                     context: context,
-                                                    barrierDismissible: false, // Prevent dismissing the dialog by tapping outside
+                                                    barrierDismissible:
+                                                        false, // Prevent dismissing the dialog by tapping outside
                                                     builder: (_) {
                                                       return AlertDialog(
-                                                        shape: RoundedRectangleBorder(
-                                                          borderRadius: BorderRadius.circular(16),
+                                                        shape:
+                                                            RoundedRectangleBorder(
+                                                          borderRadius:
+                                                              BorderRadius
+                                                                  .circular(16),
                                                         ),
-                                                        insetPadding: const EdgeInsets.symmetric(horizontal: 20),
+                                                        insetPadding:
+                                                            const EdgeInsets
+                                                                .symmetric(
+                                                                horizontal: 20),
                                                         content: const Row(
-                                                          mainAxisSize: MainAxisSize.min,
+                                                          mainAxisSize:
+                                                              MainAxisSize.min,
                                                           children: [
                                                             CircularProgressIndicator(),
-                                                            SizedBox(width: 20), // Adjust to create horizontal spacing
+                                                            SizedBox(
+                                                                width:
+                                                                    20), // Adjust to create horizontal spacing
                                                             Text(
                                                               'Submitting Remark',
-                                                              style: TextStyle(fontSize: 16),
+                                                              style: TextStyle(
+                                                                  fontSize: 16),
                                                             ),
                                                           ],
                                                         ),
@@ -527,24 +655,34 @@ class _OrderComboCardState extends State<OrderComboCard> {
                                                     },
                                                   );
 
-                                                  final res = await pro.writeRemark(context, widget.order.id, bookRemark.text);
+                                                  final res =
+                                                      await pro.writeRemark(
+                                                          context,
+                                                          widget.order.id,
+                                                          bookRemark.text);
 
                                                   log('saved :)');
 
                                                   Navigator.pop(context);
                                                   Navigator.pop(context);
 
-                                                  res ? await pro.fetchBookedOrders(pro.currentPageBooked) : null;
+                                                  res
+                                                      ? await pro
+                                                          .fetchBookedOrders(pro
+                                                              .currentPageBooked)
+                                                      : null;
                                                 },
                                                 style: ElevatedButton.styleFrom(
-                                                  padding: const EdgeInsets.symmetric(
+                                                  padding: const EdgeInsets
+                                                      .symmetric(
                                                     horizontal: 24,
                                                     vertical: 12,
                                                   ),
                                                 ),
                                                 child: const Text(
                                                   'Submit',
-                                                  style: TextStyle(fontSize: 16),
+                                                  style:
+                                                      TextStyle(fontSize: 16),
                                                 ),
                                               ),
                                             ],
@@ -556,7 +694,14 @@ class _OrderComboCardState extends State<OrderComboCard> {
                                 },
                               );
                             },
-                            child: widget.order.messages != null && widget.order.messages!['bookerMessage'] != null && widget.order.messages!['bookerMessage'].toString().isNotEmpty ? const Text('Edit Remark') : const Text('Write Remark'),
+                            child: widget.order.messages != null &&
+                                    widget.order.messages!['bookerMessage'] !=
+                                        null &&
+                                    widget.order.messages!['bookerMessage']
+                                        .toString()
+                                        .isNotEmpty
+                                ? const Text('Edit Remark')
+                                : const Text('Write Remark'),
                           )
                         : const SizedBox(),
                     widget.isAccountSection
@@ -564,7 +709,10 @@ class _OrderComboCardState extends State<OrderComboCard> {
                             onPressed: () {
                               final pro = context.read<AccountsProvider>();
                               setState(() {
-                                accountsRemark.text = widget.order.messages!['accountMessage'].toString() ?? '';
+                                accountsRemark.text = widget
+                                        .order.messages!['accountMessage']
+                                        .toString() ??
+                                    '';
                               });
                               showDialog(
                                 context: context,
@@ -574,14 +722,18 @@ class _OrderComboCardState extends State<OrderComboCard> {
                                       borderRadius: BorderRadius.circular(16),
                                     ),
                                     // Making dialog wider by using custom insetPadding
-                                    insetPadding: const EdgeInsets.symmetric(horizontal: 20),
+                                    insetPadding: const EdgeInsets.symmetric(
+                                        horizontal: 20),
                                     child: Container(
-                                      width: MediaQuery.of(context).size.width * 0.9, // 90% of screen width
-                                      constraints: const BoxConstraints(maxWidth: 600), // Maximum width limit
+                                      width: MediaQuery.of(context).size.width *
+                                          0.9, // 90% of screen width
+                                      constraints: const BoxConstraints(
+                                          maxWidth: 600), // Maximum width limit
                                       padding: const EdgeInsets.all(20),
                                       child: Column(
                                         mainAxisSize: MainAxisSize.min,
-                                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.stretch,
                                         children: [
                                           const Text(
                                             'Remark',
@@ -596,23 +748,29 @@ class _OrderComboCardState extends State<OrderComboCard> {
                                             maxLines: 10,
                                             decoration: InputDecoration(
                                               border: OutlineInputBorder(
-                                                borderRadius: BorderRadius.circular(8),
+                                                borderRadius:
+                                                    BorderRadius.circular(8),
                                               ),
-                                              hintText: 'Enter your remark here',
+                                              hintText:
+                                                  'Enter your remark here',
                                               filled: true,
                                               fillColor: Colors.grey[50],
-                                              contentPadding: const EdgeInsets.all(16),
+                                              contentPadding:
+                                                  const EdgeInsets.all(16),
                                             ),
                                           ),
                                           const SizedBox(height: 24),
                                           Row(
-                                            mainAxisAlignment: MainAxisAlignment.end,
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.end,
                                             children: [
                                               TextButton(
-                                                onPressed: () => Navigator.of(context).pop(),
+                                                onPressed: () =>
+                                                    Navigator.of(context).pop(),
                                                 child: const Text(
                                                   'Cancel',
-                                                  style: TextStyle(fontSize: 16),
+                                                  style:
+                                                      TextStyle(fontSize: 16),
                                                 ),
                                               ),
                                               const SizedBox(width: 16),
@@ -620,21 +778,32 @@ class _OrderComboCardState extends State<OrderComboCard> {
                                                 onPressed: () async {
                                                   showDialog(
                                                     context: context,
-                                                    barrierDismissible: false, // Prevent dismissing the dialog by tapping outside
+                                                    barrierDismissible:
+                                                        false, // Prevent dismissing the dialog by tapping outside
                                                     builder: (_) {
                                                       return AlertDialog(
-                                                        shape: RoundedRectangleBorder(
-                                                          borderRadius: BorderRadius.circular(16),
+                                                        shape:
+                                                            RoundedRectangleBorder(
+                                                          borderRadius:
+                                                              BorderRadius
+                                                                  .circular(16),
                                                         ),
-                                                        insetPadding: const EdgeInsets.symmetric(horizontal: 20),
+                                                        insetPadding:
+                                                            const EdgeInsets
+                                                                .symmetric(
+                                                                horizontal: 20),
                                                         content: const Row(
-                                                          mainAxisSize: MainAxisSize.min,
+                                                          mainAxisSize:
+                                                              MainAxisSize.min,
                                                           children: [
                                                             CircularProgressIndicator(),
-                                                            SizedBox(width: 20), // Adjust to create horizontal spacing
+                                                            SizedBox(
+                                                                width:
+                                                                    20), // Adjust to create horizontal spacing
                                                             Text(
                                                               'Submitting Remark',
-                                                              style: TextStyle(fontSize: 16),
+                                                              style: TextStyle(
+                                                                  fontSize: 16),
                                                             ),
                                                           ],
                                                         ),
@@ -642,24 +811,34 @@ class _OrderComboCardState extends State<OrderComboCard> {
                                                     },
                                                   );
 
-                                                  final res = await pro.writeRemark(context, widget.order.id, accountsRemark.text);
+                                                  final res =
+                                                      await pro.writeRemark(
+                                                          context,
+                                                          widget.order.id,
+                                                          accountsRemark.text);
 
                                                   log('saved :)');
 
                                                   Navigator.pop(context);
                                                   Navigator.pop(context);
 
-                                                  res ? await pro.fetchAccountedOrders(pro.currentPageBooked) : null;
+                                                  res
+                                                      ? await pro
+                                                          .fetchAccountedOrders(
+                                                              pro.currentPageBooked)
+                                                      : null;
                                                 },
                                                 style: ElevatedButton.styleFrom(
-                                                  padding: const EdgeInsets.symmetric(
+                                                  padding: const EdgeInsets
+                                                      .symmetric(
                                                     horizontal: 24,
                                                     vertical: 12,
                                                   ),
                                                 ),
                                                 child: const Text(
                                                   'Submit',
-                                                  style: TextStyle(fontSize: 16),
+                                                  style:
+                                                      TextStyle(fontSize: 16),
                                                 ),
                                               ),
                                             ],
@@ -671,20 +850,42 @@ class _OrderComboCardState extends State<OrderComboCard> {
                                 },
                               );
                             },
-                            child: widget.order.messages != null && widget.order.messages!['Message'] != null && widget.order.messages!['accountMessage'].toString().isNotEmpty ? const Text('Edit Remark') : const Text('Write Remark'),
+                            child: widget.order.messages != null &&
+                                    widget.order.messages!['Message'] != null &&
+                                    widget.order.messages!['accountMessage']
+                                        .toString()
+                                        .isNotEmpty
+                                ? const Text('Edit Remark')
+                                : const Text('Write Remark'),
                           )
                         : const SizedBox(),
                     ///////////////////////////////////////////////////////////////
-                    if (widget.order.messages != null && widget.order.messages!['confirmerMessage'] != null && widget.order.messages!['confirmerMessage'].toString().isNotEmpty) ...[
-                      Utils().showMessage(context, 'Confirmer Remark', widget.order.messages!['confirmerMessage'].toString())
+                    if (widget.order.messages != null &&
+                        widget.order.messages!['confirmerMessage'] != null &&
+                        widget.order.messages!['confirmerMessage']
+                            .toString()
+                            .isNotEmpty) ...[
+                      Utils().showMessage(context, 'Confirmer Remark',
+                          widget.order.messages!['confirmerMessage'].toString())
                     ],
                     ///////////////////////////////////////////////////////////
-                    if (widget.order.messages != null && widget.order.messages!['accountMessage'] != null && widget.order.messages!['accountMessage'].toString().isNotEmpty) ...[
-                      Utils().showMessage(context, 'Account Remark', widget.order.messages!['accountMessage'].toString()),
+                    if (widget.order.messages != null &&
+                        widget.order.messages!['accountMessage'] != null &&
+                        widget.order.messages!['accountMessage']
+                            .toString()
+                            .isNotEmpty) ...[
+                      Utils().showMessage(context, 'Account Remark',
+                          widget.order.messages!['accountMessage'].toString()),
                     ],
                     /////////////////////////////////////////////////////////
-                    if (widget.order.messages != null && widget.order.messages!['bookerMessage'] != null && widget.order.messages!['bookerMessage'].toString().isNotEmpty && widget.isBookedPage) ...[
-                      Utils().showMessage(context, 'Booker Remark', widget.order.messages!['bookerMessage'].toString())
+                    if (widget.order.messages != null &&
+                        widget.order.messages!['bookerMessage'] != null &&
+                        widget.order.messages!['bookerMessage']
+                            .toString()
+                            .isNotEmpty &&
+                        widget.isBookedPage) ...[
+                      Utils().showMessage(context, 'Booker Remark',
+                          widget.order.messages!['bookerMessage'].toString())
                     ],
                   ],
                 ),
@@ -708,7 +909,8 @@ class _OrderComboCardState extends State<OrderComboCard> {
               itemCount: remainingItems.length,
               itemBuilder: (context, itemIndex) {
                 final item = remainingItems[itemIndex];
-                print('Item $itemIndex: ${item.product?.displayName.toString() ?? ''}, Quantity: ${item.qty ?? 0}');
+                print(
+                    'Item $itemIndex: ${item.product?.displayName.toString() ?? ''}, Quantity: ${item.qty ?? 0}');
                 return _buildProductDetails(item);
               },
             ),
@@ -724,20 +926,45 @@ class _OrderComboCardState extends State<OrderComboCard> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     // Text(widget.order.outBoundBy.toString()),
-                    if (showBy(widget.order.outBoundBy != null && widget.order.outBoundBy!['status']))
+                    Text.rich(
+                      TextSpan(
+                          text: "Outbound: ",
+                          children: [
+                            TextSpan(
+                                text:
+                                "${widget.order.outBoundBy?['status'] ?? false}",
+                                style:
+                                const TextStyle(
+                                  fontWeight:
+                                  FontWeight
+                                      .normal,
+                                )),
+                          ],
+                          style: const TextStyle(
+                              fontWeight:
+                              FontWeight.bold,
+                              fontSize: 15)),
+                    ),
+                    if (showBy(widget.order.outBoundBy != null &&
+                        widget.order.outBoundBy!['status']))
                       Text.rich(
                         TextSpan(
                           text: "Outbound By: ",
                           children: [
                             TextSpan(
-                              text: widget.order.outBoundBy!['outBoundBy'].toString().split('@')[0] ?? '',
+                              text: widget.order.outBoundBy!['outBoundBy']
+                                      .toString()
+                                      .split('@')[0] ??
+                                  '',
                               style: const TextStyle(
                                 fontWeight: FontWeight.normal,
                               ),
                             ),
                             if (widget.order.outBoundBy!['timestamp'] != null)
                               TextSpan(
-                                text: ' (${formatIsoDate(widget.order.outBoundBy!['timestamp'])})' ?? '',
+                                text:
+                                    ' (${formatIsoDate(widget.order.outBoundBy!['timestamp'])})' ??
+                                        '',
                                 style: const TextStyle(
                                   fontWeight: FontWeight.normal,
                                 ),
@@ -748,19 +975,26 @@ class _OrderComboCardState extends State<OrderComboCard> {
                           ),
                         ),
                       ),
-                    if (showBy(widget.order.confirmedBy != null && widget.order.confirmedBy!['status']))
+                    if (showBy(widget.order.confirmedBy != null &&
+                        widget.order.confirmedBy!['status']))
                       Text.rich(
                         TextSpan(
                             text: "Confirmed By: ",
                             children: [
                               TextSpan(
-                                  text: widget.order.confirmedBy!['confirmedBy'].toString().split('@')[0] ?? '',
+                                  text: widget.order.confirmedBy!['confirmedBy']
+                                          .toString()
+                                          .split('@')[0] ??
+                                      '',
                                   style: const TextStyle(
                                     fontWeight: FontWeight.normal,
                                   )),
-                              if (widget.order.confirmedBy!['timestamp'] != null)
+                              if (widget.order.confirmedBy!['timestamp'] !=
+                                  null)
                                 TextSpan(
-                                    text: ' (${formatIsoDate(widget.order.confirmedBy!['timestamp'])})' ?? '',
+                                    text:
+                                        ' (${formatIsoDate(widget.order.confirmedBy!['timestamp'])})' ??
+                                            '',
                                     style: const TextStyle(
                                       fontWeight: FontWeight.normal,
                                     )),
@@ -769,19 +1003,27 @@ class _OrderComboCardState extends State<OrderComboCard> {
                               fontWeight: FontWeight.bold,
                             )),
                       ),
-                    if (showBy(widget.order.baApprovedBy != null && widget.order.baApprovedBy!['status']))
+                    if (showBy(widget.order.baApprovedBy != null &&
+                        widget.order.baApprovedBy!['status']))
                       Text.rich(
                         TextSpan(
                             text: "BA Approved By: ",
                             children: [
                               TextSpan(
-                                  text: widget.order.baApprovedBy!['baApprovedBy'].toString().split('@')[0] ?? '',
+                                  text: widget
+                                          .order.baApprovedBy!['baApprovedBy']
+                                          .toString()
+                                          .split('@')[0] ??
+                                      '',
                                   style: const TextStyle(
                                     fontWeight: FontWeight.normal,
                                   )),
-                              if (widget.order.baApprovedBy!['timestamp'] != null)
+                              if (widget.order.baApprovedBy!['timestamp'] !=
+                                  null)
                                 TextSpan(
-                                    text: ' (${formatIsoDate(widget.order.baApprovedBy!['timestamp'])})' ?? '',
+                                    text:
+                                        ' (${formatIsoDate(widget.order.baApprovedBy!['timestamp'])})' ??
+                                            '',
                                     style: const TextStyle(
                                       fontWeight: FontWeight.normal,
                                     )),
@@ -790,19 +1032,28 @@ class _OrderComboCardState extends State<OrderComboCard> {
                               fontWeight: FontWeight.bold,
                             )),
                       ),
-                    if (showBy(widget.order.checkInvoiceBy != null && widget.order.checkInvoiceBy!['approved']))
+                    if (showBy(widget.order.checkInvoiceBy != null &&
+                        widget.order.checkInvoiceBy!['approved'] != null))
                       Text.rich(
                         TextSpan(
                             text: "Accounted By: ",
                             children: [
                               TextSpan(
-                                  text: widget.order.checkInvoiceBy!['invoiceBy'].toString().split('@')[0] ?? '',
+                                  text: widget
+                                          .order.checkInvoiceBy!['invoiceBy']
+                                          .toString()
+                                          .split('@')[0] ??
+                                      '',
                                   style: const TextStyle(
                                     fontWeight: FontWeight.normal,
                                   )),
-                              if (widget.order.checkInvoiceBy!['timestamp'] != null)
+                              if (widget.order.checkInvoiceBy != null &&
+                                  widget.order.checkInvoiceBy?['timestamp'] !=
+                                      null)
                                 TextSpan(
-                                    text: ' (${formatIsoDate(widget.order.checkInvoiceBy!['timestamp'])})' ?? '',
+                                    text:
+                                        ' (${formatIsoDate(widget.order.checkInvoiceBy!['timestamp'])})' ??
+                                            '',
                                     style: const TextStyle(
                                       fontWeight: FontWeight.normal,
                                     )),
@@ -811,19 +1062,25 @@ class _OrderComboCardState extends State<OrderComboCard> {
                               fontWeight: FontWeight.bold,
                             )),
                       ),
-                    if (widget.order.bookedBy != null && showBy(widget.order.bookedBy!['status']))
+                    if (widget.order.bookedBy != null &&
+                        showBy(widget.order.bookedBy!['status']))
                       Text.rich(
                         TextSpan(
                             text: "Booked By: ",
                             children: [
                               TextSpan(
-                                  text: widget.order.bookedBy!['bookedBy'].toString().split('@')[0] ?? '',
+                                  text: widget.order.bookedBy!['bookedBy']
+                                          .toString()
+                                          .split('@')[0] ??
+                                      '',
                                   style: const TextStyle(
                                     fontWeight: FontWeight.normal,
                                   )),
                               if (widget.order.bookedBy!['timestamp'] != null)
                                 TextSpan(
-                                    text: ' (${formatIsoDate(widget.order.bookedBy!['timestamp'])})' ?? '',
+                                    text:
+                                        ' (${formatIsoDate(widget.order.bookedBy!['timestamp'])})' ??
+                                            '',
                                     style: const TextStyle(
                                       fontWeight: FontWeight.normal,
                                     )),
@@ -832,19 +1089,25 @@ class _OrderComboCardState extends State<OrderComboCard> {
                               fontWeight: FontWeight.bold,
                             )),
                       ),
-                    if (showBy(widget.order.pickedBy != null && widget.order.pickedBy!['status']))
+                    if (showBy(widget.order.pickedBy != null &&
+                        widget.order.pickedBy!['status']))
                       Text.rich(
                         TextSpan(
                             text: "Picked By: ",
                             children: [
                               TextSpan(
-                                  text: widget.order.pickedBy!['pickedBy'].toString().split('@')[0] ?? '',
+                                  text: widget.order.pickedBy!['pickedBy']
+                                          .toString()
+                                          .split('@')[0] ??
+                                      '',
                                   style: const TextStyle(
                                     fontWeight: FontWeight.normal,
                                   )),
                               if (widget.order.pickedBy!['timestamp'] != null)
                                 TextSpan(
-                                    text: ' (${formatIsoDate(widget.order.pickedBy!['timestamp'])})' ?? '',
+                                    text:
+                                        ' (${formatIsoDate(widget.order.pickedBy!['timestamp'])})' ??
+                                            '',
                                     style: const TextStyle(
                                       fontWeight: FontWeight.normal,
                                     )),
@@ -853,19 +1116,25 @@ class _OrderComboCardState extends State<OrderComboCard> {
                               fontWeight: FontWeight.bold,
                             )),
                       ),
-                    if (showBy(widget.order.packedBy != null && widget.order.packedBy!['status']))
+                    if (showBy(widget.order.packedBy != null &&
+                        widget.order.packedBy!['status']))
                       Text.rich(
                         TextSpan(
                             text: "Packed By: ",
                             children: [
                               TextSpan(
-                                  text: widget.order.packedBy!['packedBy'].toString().split('@')[0] ?? '',
+                                  text: widget.order.packedBy!['packedBy']
+                                          .toString()
+                                          .split('@')[0] ??
+                                      '',
                                   style: const TextStyle(
                                     fontWeight: FontWeight.normal,
                                   )),
                               if (widget.order.packedBy!['timestamp'] != null)
                                 TextSpan(
-                                    text: ' (${formatIsoDate(widget.order.packedBy!['timestamp'])})' ?? '',
+                                    text:
+                                        ' (${formatIsoDate(widget.order.packedBy!['timestamp'])})' ??
+                                            '',
                                     style: const TextStyle(
                                       fontWeight: FontWeight.normal,
                                     )),
@@ -874,19 +1143,25 @@ class _OrderComboCardState extends State<OrderComboCard> {
                               fontWeight: FontWeight.bold,
                             )),
                       ),
-                    if (showBy(widget.order.checkedBy != null && widget.order.checkedBy!['approved']))
+                    if (showBy(widget.order.checkedBy != null &&
+                        widget.order.checkedBy!['approved'] != null))
                       Text.rich(
                         TextSpan(
                             text: "Checked By: ",
                             children: [
                               TextSpan(
-                                  text: widget.order.checkedBy!['checkedBy'].toString().split('@')[0] ?? '',
+                                  text: widget.order.checkedBy!['checkedBy']
+                                          .toString()
+                                          .split('@')[0] ??
+                                      '',
                                   style: const TextStyle(
                                     fontWeight: FontWeight.normal,
                                   )),
                               if (widget.order.checkedBy!['timestamp'] != null)
                                 TextSpan(
-                                    text: ' (${formatIsoDate(widget.order.checkedBy!['timestamp'])})' ?? '',
+                                    text:
+                                        ' (${formatIsoDate(widget.order.checkedBy!['timestamp'])})' ??
+                                            '',
                                     style: const TextStyle(
                                       fontWeight: FontWeight.normal,
                                     )),
@@ -895,20 +1170,26 @@ class _OrderComboCardState extends State<OrderComboCard> {
                               fontWeight: FontWeight.bold,
                             )),
                       ),
-                    if (showBy(widget.order.rackedBy != null && widget.order.rackedBy!['approved']))
+                    if (showBy(widget.order.rackedBy != null &&
+                        (widget.order.rackedBy?['approved'] ?? false)))
                       Text.rich(
                         TextSpan(
                             text: "Racked By: ",
                             children: [
                               TextSpan(
-                                text: widget.order.rackedBy!['rackedBy'].toString().split('@')[0] ?? '',
+                                text: widget.order.rackedBy!['rackedBy']
+                                        .toString()
+                                        .split('@')[0] ??
+                                    '',
                                 style: const TextStyle(
                                   fontWeight: FontWeight.normal,
                                 ),
                               ),
                               if (widget.order.rackedBy!['timestamp'] != null)
                                 TextSpan(
-                                  text: ' (${formatIsoDate(widget.order.rackedBy!['timestamp'])})' ?? '',
+                                  text:
+                                      ' (${formatIsoDate(widget.order.rackedBy!['timestamp'])})' ??
+                                          '',
                                   style: const TextStyle(
                                     fontWeight: FontWeight.normal,
                                   ),
@@ -918,20 +1199,27 @@ class _OrderComboCardState extends State<OrderComboCard> {
                               fontWeight: FontWeight.bold,
                             )),
                       ),
-                    if (showBy(widget.order.manifestedBy != null && widget.order.manifestedBy!['approved']))
+                    if (showBy(widget.order.manifestedBy != null &&
+                        widget.order.manifestedBy!['approved'] != null))
                       Text.rich(
                         TextSpan(
                             text: "Manifested By: ",
                             children: [
                               TextSpan(
-                                text: widget.order.manifestedBy!['manifestBy'].toString().split('@')[0] ?? '',
+                                text: widget.order.manifestedBy!['manifestBy']
+                                        .toString()
+                                        .split('@')[0] ??
+                                    '',
                                 style: const TextStyle(
                                   fontWeight: FontWeight.normal,
                                 ),
                               ),
-                              if (widget.order.manifestedBy!['timestamp'] != null)
+                              if (widget.order.manifestedBy!['timestamp'] !=
+                                  null)
                                 TextSpan(
-                                  text: ' (${formatIsoDate(widget.order.manifestedBy!['timestamp'])})' ?? '',
+                                  text:
+                                      ' (${formatIsoDate(widget.order.manifestedBy!['timestamp'])})' ??
+                                          '',
                                   style: const TextStyle(
                                     fontWeight: FontWeight.normal,
                                   ),
@@ -948,9 +1236,11 @@ class _OrderComboCardState extends State<OrderComboCard> {
                       text: "Updated on: ",
                       children: [
                         TextSpan(
-                            text: DateFormat('yyyy-MM-dd\',\' hh:mm a').format(
-                              DateTime.parse("${widget.order.updatedAt}"),
-                            ),
+                            text: widget.order.updatedAt != null
+                                ? DateFormat('yyyy-MM-dd, hh:mm a').format(
+                                    DateTime.parse("${widget.order.updatedAt}"),
+                                  )
+                                : '',
                             style: const TextStyle(
                               fontWeight: FontWeight.normal,
                             )),
@@ -971,10 +1261,12 @@ class _OrderComboCardState extends State<OrderComboCard> {
     return Container(
       decoration: BoxDecoration(
         color: AppColors.lightGrey,
-        borderRadius: BorderRadius.circular(10), // Slightly smaller rounded corners
+        borderRadius:
+            BorderRadius.circular(10), // Slightly smaller rounded corners
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.08), // Lighter shadow for smaller card
+            color: Colors.black
+                .withOpacity(0.08), // Lighter shadow for smaller card
             offset: const Offset(0, 1),
             blurRadius: 3,
           ),
@@ -982,20 +1274,24 @@ class _OrderComboCardState extends State<OrderComboCard> {
       ),
       margin: const EdgeInsets.symmetric(vertical: 4.0),
       child: Padding(
-        padding: const EdgeInsets.all(10.0), // Reduced padding inside product card
+        padding:
+            const EdgeInsets.all(10.0), // Reduced padding inside product card
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             _buildProductImage(item),
-            const SizedBox(width: 8.0), // Reduced spacing between image and text
+            const SizedBox(
+                width: 8.0), // Reduced spacing between image and text
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   _buildProductName(item),
-                  const SizedBox(height: 6.0), // Reduced spacing between text elements
+                  const SizedBox(
+                      height: 6.0), // Reduced spacing between text elements
                   Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween, // Space between widgets
+                    mainAxisAlignment:
+                        MainAxisAlignment.spaceBetween, // Space between widgets
                     children: [
                       // SKU at the extreme left
                       RichText(
@@ -1091,7 +1387,8 @@ class _OrderComboCardState extends State<OrderComboCard> {
                     ),
                   ],
                 ),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.0)),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8.0)),
                 content: SizedBox(
                   width: 500, // Set a specific width for the dialog
                   child: Column(
@@ -1103,7 +1400,8 @@ class _OrderComboCardState extends State<OrderComboCard> {
                         itemCount: items.length,
                         itemBuilder: (context, itemIndex) {
                           final item = items[itemIndex];
-                          print('Item $itemIndex: ${item.product?.displayName.toString() ?? ''}, Quantity: ${item.qty ?? 0}');
+                          print(
+                              'Item $itemIndex: ${item.product?.displayName.toString() ?? ''}, Quantity: ${item.qty ?? 0}');
                           return _buildComboProductDetails(item);
                         },
                       ),
@@ -1118,10 +1416,12 @@ class _OrderComboCardState extends State<OrderComboCard> {
           decoration: BoxDecoration(
             // color: Colors.blue,
             color: AppColors.lightGrey,
-            borderRadius: BorderRadius.circular(10), // Slightly smaller rounded corners
+            borderRadius:
+                BorderRadius.circular(10), // Slightly smaller rounded corners
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.08), // Lighter shadow for smaller card
+                color: Colors.black
+                    .withOpacity(0.08), // Lighter shadow for smaller card
                 offset: const Offset(0, 1),
                 blurRadius: 3,
               ),
@@ -1129,7 +1429,8 @@ class _OrderComboCardState extends State<OrderComboCard> {
           ),
           margin: const EdgeInsets.symmetric(vertical: 4.0),
           child: Padding(
-            padding: const EdgeInsets.all(10.0), // Reduced padding inside product card
+            padding: const EdgeInsets.all(
+                10.0), // Reduced padding inside product card
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -1146,7 +1447,8 @@ class _OrderComboCardState extends State<OrderComboCard> {
                     ),
                   ),
                 ),
-                const SizedBox(width: 8.0), // Reduced spacing between image and text
+                const SizedBox(
+                    width: 8.0), // Reduced spacing between image and text
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -1181,9 +1483,11 @@ class _OrderComboCardState extends State<OrderComboCard> {
                           ),
                         ],
                       ),
-                      const SizedBox(height: 6.0), // Reduced spacing between text elements
+                      const SizedBox(
+                          height: 6.0), // Reduced spacing between text elements
                       Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween, // Space between widgets
+                        mainAxisAlignment: MainAxisAlignment
+                            .spaceBetween, // Space between widgets
                         children: [
                           // SKU at the extreme left
                           RichText(
@@ -1270,10 +1574,12 @@ class _OrderComboCardState extends State<OrderComboCard> {
     return Container(
       decoration: BoxDecoration(
         color: AppColors.lightGrey,
-        borderRadius: BorderRadius.circular(10), // Slightly smaller rounded corners
+        borderRadius:
+            BorderRadius.circular(10), // Slightly smaller rounded corners
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.08), // Lighter shadow for smaller card
+            color: Colors.black
+                .withOpacity(0.08), // Lighter shadow for smaller card
             offset: const Offset(0, 1),
             blurRadius: 3,
           ),
@@ -1281,20 +1587,24 @@ class _OrderComboCardState extends State<OrderComboCard> {
       ),
       margin: const EdgeInsets.symmetric(vertical: 4.0),
       child: Padding(
-        padding: const EdgeInsets.all(10.0), // Reduced padding inside product card
+        padding:
+            const EdgeInsets.all(10.0), // Reduced padding inside product card
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             _buildProductImage(item),
-            const SizedBox(width: 8.0), // Reduced spacing between image and text
+            const SizedBox(
+                width: 8.0), // Reduced spacing between image and text
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   _buildProductName(item),
-                  const SizedBox(height: 6.0), // Reduced spacing between text elements
+                  const SizedBox(
+                      height: 6.0), // Reduced spacing between text elements
                   Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween, // Space between widgets
+                    mainAxisAlignment:
+                        MainAxisAlignment.spaceBetween, // Space between widgets
                     children: [
                       // SKU at the extreme left
                       RichText(
@@ -1355,7 +1665,8 @@ class _OrderComboCardState extends State<OrderComboCard> {
                               ),
                             ),
                             TextSpan(
-                              text: 'Rs.${(item.amount! / item.qty!).toStringAsFixed(1)}',
+                              text:
+                                  'Rs.${(item.amount! / item.qty!).toStringAsFixed(1)}',
                               style: const TextStyle(
                                 color: Colors.black87,
                                 fontWeight: FontWeight.w500,
@@ -1437,7 +1748,8 @@ class _OrderComboCardState extends State<OrderComboCard> {
       child: SizedBox(
         width: 60, // Smaller image size
         height: 60,
-        child: item.product?.shopifyImage != null && item.product!.shopifyImage!.isNotEmpty
+        child: item.product?.shopifyImage != null &&
+                item.product!.shopifyImage!.isNotEmpty
             ? Image.network(
                 item.product!.shopifyImage!,
                 fit: BoxFit.cover,

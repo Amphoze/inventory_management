@@ -1,33 +1,37 @@
 import 'package:flutter/material.dart';
+import 'package:inventory_management/Custom-Files/colors.dart';
+import 'package:inventory_management/edit_product.dart';
+import 'package:inventory_management/provider/products-provider.dart';
+import 'package:provider/provider.dart';
 //import 'package:inventory_management/Custom-Files/colors.dart';
 
 class Product {
-  final String sku;
-  final String categoryName;
-  final String brand;
-  final String mrp;
-  final String createdDate;
-  final String lastUpdated;
-  //final String accSku;
-  final String colour;
-  //final String upcEan;
-  final String displayName;
-  final String parentSku;
-  final String netWeight;
-  final String grossWeight;
-  final String ean;
-  final String description;
-  final String technicalName;
-  final String labelSku;
-  final String outerPackage_name;
-  final String outerPackage_quantity;
-  final String length;
-  final String width;
-  final String height;
-  //final String weight;
-  final String cost;
-  final String tax_rule;
-  final String grade;
+  String sku;
+  String categoryName;
+  String brand;
+  String mrp;
+  String createdDate;
+  String lastUpdated;
+  //String accSku;
+  String colour;
+  //String upcEan;
+  String displayName;
+  String parentSku;
+  String netWeight;
+  String grossWeight;
+  String ean;
+  String description;
+  String technicalName;
+  String labelSku;
+  String outerPackage_name;
+  String outerPackage_quantity;
+  String length;
+  String width;
+  String height;
+  //String weight;
+  String cost;
+  String tax_rule;
+  String grade;
   final String shopifyImage;
   final String variantName;
 
@@ -114,7 +118,7 @@ class ProductCard extends StatelessWidget {
 
             return isSmallScreen
                 ? _buildSmallScreenContent() // Column layout for small screens
-                : _buildWideScreenContent(); // Two-column content on the right for wide screens
+                : _buildWideScreenContent(context); // Two-column content on the right for wide screens
           },
         ),
       ),
@@ -182,23 +186,19 @@ class ProductCard extends StatelessWidget {
         //_buildText('Weight', '${product.weight} kg'),
         _buildText('MRP', product.mrp.isNotEmpty ? '₹${product.mrp}' : ''),
         _buildText('Cost', product.cost.isNotEmpty ? '₹${product.cost}' : ''),
-        _buildText('Tax Rule',
-            product.tax_rule.isNotEmpty ? '${product.tax_rule}%' : ''),
+        _buildText('Tax Rule', product.tax_rule.isNotEmpty ? '${product.tax_rule}%' : ''),
         _buildText('Grade', product.grade),
         _buildText('Created Date', formatDate(product.createdDate)),
         _buildText('Last Updated', formatDate(product.lastUpdated)),
-        _buildText(
-            'Length', product.length.isNotEmpty ? '${product.length} cm' : ''),
-        _buildText(
-            'Width', product.width.isNotEmpty ? '${product.width} cm' : ''),
-        _buildText(
-            'Heigth', product.height.isNotEmpty ? '${product.height} cm' : ''),
+        _buildText('Length', product.length.isNotEmpty ? '${product.length} cm' : ''),
+        _buildText('Width', product.width.isNotEmpty ? '${product.width} cm' : ''),
+        _buildText('Heigth', product.height.isNotEmpty ? '${product.height} cm' : ''),
       ],
     );
   }
 
   // For wide screens, keep the image on the left and the content in two columns on the right
-  Widget _buildWideScreenContent() {
+  Widget _buildWideScreenContent(BuildContext context) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -208,7 +208,28 @@ class ProductCard extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _buildTitle(product.displayName),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  _buildTitle(product.displayName),
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.orange, // background color
+                      textStyle: const TextStyle(color: Colors.white), // text color
+                    ),
+                    onPressed: () async {
+                      final res = await Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => EditProductPage(product: product)),
+                      );
+                      if (res == true) {
+                        context.read<ProductsProvider>().loadMoreProducts();
+                      }
+                    },
+                    child: const Text('Edit Product'),
+                  ),
+                ],
+              ),
               const SizedBox(height: 12),
               Row(
                 children: [
@@ -252,17 +273,13 @@ class ProductCard extends StatelessWidget {
         //_buildText('Weight', '${product.weight} kg'),
         _buildText('MRP', product.mrp.isNotEmpty ? '₹${product.mrp}' : ''),
         _buildText('Cost', product.cost.isNotEmpty ? '₹${product.cost}' : ''),
-        _buildText('Tax Rule',
-            product.tax_rule.isNotEmpty ? '${product.tax_rule}%' : ''),
+        _buildText('Tax Rule', product.tax_rule.isNotEmpty ? '${product.tax_rule}%' : ''),
         _buildText('Grade', product.grade),
         _buildText('Created Date', formatDate(product.createdDate)),
         _buildText('Last Updated', formatDate(product.lastUpdated)),
-        _buildText(
-            'Length', product.length.isNotEmpty ? '${product.length} cm' : ''),
-        _buildText(
-            'Width', product.width.isNotEmpty ? '${product.width} cm' : ''),
-        _buildText(
-            'Heigth', product.height.isNotEmpty ? '${product.height} cm' : ''),
+        _buildText('Length', product.length.isNotEmpty ? '${product.length} cm' : ''),
+        _buildText('Width', product.width.isNotEmpty ? '${product.width} cm' : ''),
+        _buildText('Heigth', product.height.isNotEmpty ? '${product.height} cm' : ''),
       ],
     );
   }
@@ -272,6 +289,7 @@ class ProductCard extends StatelessWidget {
       padding: const EdgeInsets.only(bottom: 4),
       child: Text(
         title,
+        overflow: TextOverflow.ellipsis,
         style: const TextStyle(
           fontSize: 20,
           fontWeight: FontWeight.bold,

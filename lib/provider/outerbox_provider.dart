@@ -10,28 +10,16 @@ import 'package:flutter/material.dart';
 class OuterboxProvider with ChangeNotifier {
   List<Map<String, dynamic>> _boxsizes = [];
   int _currentPage = 1;
-  // final int _rowsPerPage = 20;
   int _totalPages = 1;
   bool _isLoading = false;
   String? _errorMessage;
   bool _isFormVisible = false;
-
-  // late final String _baseUrl;
-
-  // OuterboxProvider() {
-  //   _initialize();
-  // }
-
-  // Future<void> _initialize() async {
-  //   _baseUrl = await ApiUrls.getBaseUrl();
-  // }
 
   // Getters
   bool get isFormVisible => _isFormVisible;
   List<Map<String, dynamic>> get boxsizes => _boxsizes;
   int get totalPages => _totalPages;
   int get currentPage => _currentPage;
-  //int get totalPages => (_inventory.length / _rowsPerPage).ceil();
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
 
@@ -70,7 +58,7 @@ class OuterboxProvider with ChangeNotifier {
   List<dynamic> inventoryD = [];
 
   Future<void> fetchBoxsizes({int page = 1}) async {
-    String baseUrl = await ApiUrls.getBaseUrl();
+    String baseUrl = await Constants.getBaseUrl();
     Logger().e('fetchBoxsizes called');
     _isLoading = true;
     _errorMessage = null;
@@ -144,7 +132,7 @@ class OuterboxProvider with ChangeNotifier {
   final List<Map<String, dynamic>> _replicationBoxsize = [];
 
   Future<Map<String, dynamic>> searchBoxsize(String query) async {
-    String baseUrl = await ApiUrls.getBaseUrl();
+    String baseUrl = await Constants.getBaseUrl();
     log(query);
 
     final url = Uri.parse('$baseUrl/boxsize?outerPackage_name=$query');
@@ -201,7 +189,7 @@ class OuterboxProvider with ChangeNotifier {
   }
 
   Future<void> createBoxsize(Map<String, dynamic> boxsizeData) async {
-    String baseUrl = await ApiUrls.getBaseUrl();
+    String baseUrl = await Constants.getBaseUrl();
     _isLoading = true;
     _errorMessage = null;
     notifyListeners();
@@ -283,7 +271,7 @@ class OuterboxProvider with ChangeNotifier {
 
   Future<void> updateBoxsizeQuantity(
       String id, int newQuantity, String reason) async {
-        String baseUrl = await ApiUrls.getBaseUrl();
+        String baseUrl = await Constants.getBaseUrl();
     _isLoading = true;
     _errorMessage = null;
     notifyListeners();

@@ -70,7 +70,7 @@ class ManifestProvider with ChangeNotifier {
 
   Future<String> cancelOrders(
       BuildContext context, List<String> orderIds) async {
-    String baseUrl = await ApiUrls.getBaseUrl();
+    String baseUrl = await Constants.getBaseUrl();
     String cancelOrderUrl = '$baseUrl/orders/cancel';
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('authToken') ?? '';
@@ -127,7 +127,7 @@ class ManifestProvider with ChangeNotifier {
 
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('authToken') ?? '';
-    var url = '${await ApiUrls.getBaseUrl()}/orders?orderStatus=8&page=';
+    var url = '${await Constants.getBaseUrl()}/orders?orderStatus=8&page=';
 
     if (date != null || date == 'Select Date') {
       String formattedDate = DateFormat('yyyy-MM-dd').format(date!);
@@ -180,7 +180,7 @@ class ManifestProvider with ChangeNotifier {
 
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('authToken') ?? '';
-    var url = '${await ApiUrls.getBaseUrl()}/manifest?page=$page';
+    var url = '${await Constants.getBaseUrl()}/manifest?page=$page';
 
     try {
       final response = await http.get(Uri.parse(url), headers: {
@@ -263,7 +263,7 @@ class ManifestProvider with ChangeNotifier {
 
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('authToken') ?? '';
-    String url = '${await ApiUrls.getBaseUrl()}/manifest';
+    String url = '${await Constants.getBaseUrl()}/manifest';
 
     try {
       final response = await http.post(
@@ -337,7 +337,7 @@ class ManifestProvider with ChangeNotifier {
 
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('authToken') ?? '';
-    String baseUrl = await ApiUrls.getBaseUrl();
+    String baseUrl = await Constants.getBaseUrl();
 
     // Build URL with base parameters
     var url =
@@ -417,7 +417,7 @@ class ManifestProvider with ChangeNotifier {
     final token = prefs.getString('authToken') ?? '';
 
     final url =
-        '${await ApiUrls.getBaseUrl()}/orders?orderStatus=8&order_id=$query';
+        '${await Constants.getBaseUrl()}/orders?orderStatus=8&order_id=$query';
 
     print('Searching failed orders with term: $query');
 

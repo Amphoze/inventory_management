@@ -69,7 +69,7 @@ class BinApi with ChangeNotifier {
   }
 
   Future<void> fetchBins(BuildContext context) async {
-    String baseUrl = await ApiUrls.getBaseUrl();
+    String baseUrl = await Constants.getBaseUrl();
     final url = Uri.parse('$baseUrl/inventory/bins');
     setBinsLoadingStatus(true);
 
@@ -115,7 +115,7 @@ class BinApi with ChangeNotifier {
   Future<void> fetchBinProducts(String binName) async {
     setProductsLoadingStatus(true);
     log('called');
-    String baseUrl = await ApiUrls.getBaseUrl();
+    String baseUrl = await Constants.getBaseUrl();
     final url =
         Uri.parse('$baseUrl/inventory/bin?binName=$binName&page=$_currentPage');
 

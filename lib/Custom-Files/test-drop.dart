@@ -61,7 +61,7 @@ class _SearchableDropdownState extends State<SearchableDropdown> {
     String search = '',
   }) async {
     final url = Uri.parse(
-        '${await ApiUrls.getBaseUrl()}/products?page=$page&limit=$itemsPerPage&search=$search');
+        '${await Constants.getBaseUrl()}/products?page=$page&limit=$itemsPerPage&search=$search');
 
     try {
       final prefs = await SharedPreferences.getInstance();

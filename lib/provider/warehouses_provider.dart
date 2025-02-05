@@ -23,7 +23,7 @@ class WarehousesProvider with ChangeNotifier {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('authToken') ?? '';
 
-    String url = '${await ApiUrls.getBaseUrl()}/warehouse';
+    String url = '${await Constants.getBaseUrl()}/warehouse';
 
     try {
       final response = await http.get(
@@ -48,7 +48,6 @@ class WarehousesProvider with ChangeNotifier {
                   'isPrimary': warehouse['isPrimary'],
                 })
             .toList()
-            .reversed
             .toList();
 
         _totalPages = jsonResponse['data']['totalPages'];

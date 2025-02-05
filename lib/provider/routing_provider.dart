@@ -174,7 +174,7 @@ class RoutingProvider with ChangeNotifier {
     notifyListeners();
 
     String readyOrdersUrl =
-        '${await ApiUrls.getBaseUrl()}/orders/getHoldOrders?page=$page';
+        '${await Constants.getBaseUrl()}/orders/getHoldOrders?page=$page';
 
     if (date != null || date == 'Select Date') {
       String formattedDate = DateFormat('yyyy-MM-dd').format(date!);
@@ -231,7 +231,7 @@ class RoutingProvider with ChangeNotifier {
 
   Future<String> routeOrders(
       BuildContext context, List<String> orderIds) async {
-    String baseUrl = await ApiUrls.getBaseUrl();
+    String baseUrl = await Constants.getBaseUrl();
     String url = '$baseUrl/orders/updateHoldOrders';
     final String? token = await _getToken();
     setConfirmStatus(true);
@@ -350,7 +350,7 @@ class RoutingProvider with ChangeNotifier {
 
   Future<void> searchOrders(String orderId) async {
     final url = Uri.parse(
-        '${await ApiUrls.getBaseUrl()}/orders/getHoldOrders?order_id=$orderId');
+        '${await Constants.getBaseUrl()}/orders/getHoldOrders?order_id=$orderId');
     final token = await _getToken();
     if (token == null) return;
 
@@ -385,7 +385,7 @@ class RoutingProvider with ChangeNotifier {
 
   Future<void> fetchOrdersByMarketplace(String marketplace, int page,
       {DateTime? date}) async {
-    String baseUrl = await ApiUrls.getBaseUrl();
+    String baseUrl = await Constants.getBaseUrl();
 
     // Build URL with base parameters
     String url =
@@ -449,7 +449,7 @@ class RoutingProvider with ChangeNotifier {
         throw Exception('Failed to load orders: ${response.statusCode}');
       }
     } catch (e) {
-      print('Error fetching orders: $e');
+      log('Error fetching orders: $e');
     } finally {
       isLoading = false;
       notifyListeners();

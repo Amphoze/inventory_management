@@ -58,7 +58,7 @@ class PackerProvider with ChangeNotifier {
 
   Future<String> cancelOrders(
       BuildContext context, List<String> orderIds) async {
-    String baseUrl = await ApiUrls.getBaseUrl();
+    String baseUrl = await Constants.getBaseUrl();
     String cancelOrderUrl = '$baseUrl/orders/cancel';
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('authToken') ?? '';
@@ -115,7 +115,7 @@ class PackerProvider with ChangeNotifier {
 
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('authToken') ?? '';
-    String url = '${await ApiUrls.getBaseUrl()}/orders?orderStatus=5&page=';
+    String url = '${await Constants.getBaseUrl()}/orders?orderStatus=5&page=';
 
     try {
       final response = await http.get(Uri.parse('$url$_currentPage'), headers: {
@@ -180,7 +180,7 @@ class PackerProvider with ChangeNotifier {
     final token = prefs.getString('authToken') ?? '';
 
     final url =
-        '${await ApiUrls.getBaseUrl()}/orders?orderStatus=5&order_id=$query';
+        '${await Constants.getBaseUrl()}/orders?orderStatus=5&order_id=$query';
 
     print('Searching failed orders with term: $query');
 

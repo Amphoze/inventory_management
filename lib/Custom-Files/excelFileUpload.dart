@@ -100,7 +100,7 @@ class _ExcelFileUploaderState extends State<ExcelFileUploader> {
 
       if (tempDataGroups.isNotEmpty) {
         widget.onUploadSuccess(tempDataGroups);
-        _showMessage(context, 'Excel file uploaded successfully.');
+        _showMessage(context, 'Excel file loaded successfully.');
       } else {
         _showMessage(context, 'No valid data found in the sheet.', isError: true);
       }
