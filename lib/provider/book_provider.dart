@@ -33,6 +33,7 @@ class BookProvider with ChangeNotifier {
 
   // Sort option for orders
   String? _sortOption;
+
   String? get sortOption => _sortOption;
 
   // Lists for storing fetched orders
@@ -174,9 +175,7 @@ class BookProvider with ChangeNotifier {
           'Authorization': 'Bearer $token',
         },
         body: json.encode({
-          "messages": {
-            "bookerMessage": msg
-          }
+          "messages": {"bookerMessage": msg}
         }),
       );
 
@@ -314,7 +313,7 @@ class BookProvider with ChangeNotifier {
         throw Exception('Failed to load orders: ${response.statusCode}');
       }
     } catch (e) {
-      print('Error fetching $type orders: $e');
+      log('Error fetching book page - $type orders: $e');
     } finally {
       // Reset loading states
       if (type == 'B2B') {
@@ -483,9 +482,7 @@ class BookProvider with ChangeNotifier {
 
     // Request body containing the order IDs
     final body = json.encode({
-      'orderIds': [
-        orderId
-      ],
+      'orderIds': [orderId],
       'service': lowerCase,
       'courierId': courierId,
     });
@@ -659,9 +656,7 @@ class BookProvider with ChangeNotifier {
         final data = jsonDecode(response.body);
         print(response.body);
 
-        ordersB2B = [
-          Order.fromJson(data)
-        ];
+        ordersB2B = [Order.fromJson(data)];
         print(response.body);
       } else {
         ordersB2B = [];
@@ -701,9 +696,7 @@ class BookProvider with ChangeNotifier {
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
 
-        ordersB2C = [
-          Order.fromJson(data)
-        ];
+        ordersB2C = [Order.fromJson(data)];
         log('ordersB2C: $ordersB2C');
       } else {
         ordersB2C = [];
@@ -746,9 +739,7 @@ class BookProvider with ChangeNotifier {
         // print(response.body);
 
         // final newData = data['orders'][0]; //////////////////////////////////////////////////////////////
-        ordersBooked = [
-          Order.fromJson(data)
-        ];
+        ordersBooked = [Order.fromJson(data)];
         // ordersBooked = [Order.fromJson(data)];
         log('ordersBooked: $ordersBooked');
       } else {

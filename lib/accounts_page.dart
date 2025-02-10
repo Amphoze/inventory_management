@@ -3,8 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:inventory_management/Custom-Files/utils.dart';
 import 'package:inventory_management/Widgets/big_combo_card.dart';
+import 'package:inventory_management/Widgets/order_info.dart';
 import 'package:inventory_management/Widgets/product_details_card.dart';
-import 'package:inventory_management/edit_order_page.dart';
 import 'package:inventory_management/edit_outbound_page.dart';
 import 'package:inventory_management/model/orders_model.dart';
 import 'package:inventory_management/provider/accounts_provider.dart';
@@ -590,8 +590,8 @@ class _AccountsPageState extends State<AccountsPage> {
 
                           return Card(
                             surfaceTintColor: Colors.white,
-                            color: const Color.fromARGB(255, 231, 230, 230),
-                            elevation: 0.5,
+                            color: accountsProvider.selectedProducts[index] ? Colors.grey[300] : Colors.grey[100],
+                            elevation: 2,
                             margin: const EdgeInsets.all(8.0),
                             child: Padding(
                               padding: const EdgeInsets.all(8.0),
@@ -767,434 +767,435 @@ class _AccountsPageState extends State<AccountsPage> {
                                     thickness: 1,
                                     color: AppColors.grey,
                                   ),
-                                  Padding(
-                                    padding: const EdgeInsets.all(8.0),
-                                    child: Row(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Expanded(
-                                          child: Padding(
-                                            padding: const EdgeInsets.only(
-                                                right: 8.0),
-                                            child: Column(
-                                              crossAxisAlignment:
-                                                  CrossAxisAlignment.start,
-                                              children: [
-                                                buildLabelValueRow(
-                                                    'Payment Mode',
-                                                    order.paymentMode ?? ''),
-                                                buildLabelValueRow(
-                                                    'Currency Code',
-                                                    order.currencyCode ?? ''),
-                                                buildLabelValueRow(
-                                                    'COD Amount',
-                                                    order.codAmount
-                                                            .toString() ??
-                                                        ''),
-                                                buildLabelValueRow(
-                                                    'Prepaid Amount',
-                                                    order.prepaidAmount
-                                                            .toString() ??
-                                                        ''),
-                                                buildLabelValueRow(
-                                                    'Coin',
-                                                    order.coin.toString() ??
-                                                        ''),
-                                                buildLabelValueRow(
-                                                    'Tax Percent',
-                                                    order.taxPercent
-                                                            .toString() ??
-                                                        ''),
-                                                buildLabelValueRow(
-                                                    'Courier Name',
-                                                    order.courierName ?? ''),
-                                                buildLabelValueRow('Order Type',
-                                                    order.orderType ?? ''),
-                                                buildLabelValueRow(
-                                                    'Payment Bank',
-                                                    order.paymentBank ?? ''),
-                                              ],
-                                            ),
-                                          ),
-                                        ),
-                                        // const SizedBox(width: 12.0),
-                                        Expanded(
-                                          child: Padding(
-                                            padding: const EdgeInsets.only(
-                                                right: 8.0),
-                                            child: Column(
-                                              crossAxisAlignment:
-                                                  CrossAxisAlignment.start,
-                                              children: [
-                                                buildLabelValueRow(
-                                                    'Discount Amount',
-                                                    order.discountAmount
-                                                            .toString() ??
-                                                        ''),
-                                                buildLabelValueRow(
-                                                    'Discount Scheme',
-                                                    order.discountScheme ?? ''),
-                                                buildLabelValueRow(
-                                                    'Discount Percent',
-                                                    order.discountPercent
-                                                            .toString() ??
-                                                        ''),
-                                                buildLabelValueRow(
-                                                    'Agent', order.agent ?? ''),
-                                                buildLabelValueRow(
-                                                    'Notes', order.notes ?? ''),
-                                                buildLabelValueRow(
-                                                    'Marketplace',
-                                                    order.marketplace?.name ??
-                                                        ''),
-                                                buildLabelValueRow('Filter',
-                                                    order.filter ?? ''),
-                                                buildLabelValueRow(
-                                                  'Expected Delivery Date',
-                                                  order.expectedDeliveryDate !=
-                                                          null
-                                                      ? accountsProvider
-                                                          .formatDate(order
-                                                              .expectedDeliveryDate!)
-                                                      : '',
-                                                ),
-                                                buildLabelValueRow(
-                                                    'Preferred Courier',
-                                                    order.preferredCourier ??
-                                                        ''),
-                                                buildLabelValueRow(
-                                                  'Payment Date Time',
-                                                  order.paymentDateTime != null
-                                                      ? accountsProvider
-                                                          .formatDateTime(order
-                                                              .paymentDateTime!)
-                                                      : '',
-                                                ),
-                                              ],
-                                            ),
-                                          ),
-                                        ),
-                                        // const SizedBox(width: 12.0),
-                                        Expanded(
-                                          child: Padding(
-                                            padding: const EdgeInsets.only(
-                                                right: 8.0),
-                                            child: Column(
-                                              crossAxisAlignment:
-                                                  CrossAxisAlignment.start,
-                                              children: [
-                                                buildLabelValueRow(
-                                                    'Delivery Term',
-                                                    order.deliveryTerm ?? ''),
-                                                buildLabelValueRow(
-                                                    'Transaction Number',
-                                                    order.transactionNumber ??
-                                                        ''),
-                                                buildLabelValueRow(
-                                                    'Micro Dealer Order',
-                                                    order.microDealerOrder ??
-                                                        ''),
-                                                buildLabelValueRow(
-                                                    'Fulfillment Type',
-                                                    order.fulfillmentType ??
-                                                        ''),
-                                                buildLabelValueRow(
-                                                    'No. of Boxes',
-                                                    order.numberOfBoxes
-                                                            .toString() ??
-                                                        ''),
-                                                buildLabelValueRow(
-                                                    'Total Quantity',
-                                                    order.totalQuantity
-                                                            .toString() ??
-                                                        ''),
-                                                buildLabelValueRow(
-                                                    'SKU Qty',
-                                                    order.skuQty.toString() ??
-                                                        ''),
-                                                buildLabelValueRow(
-                                                    'Calc Entry No.',
-                                                    order.calcEntryNumber ??
-                                                        ''),
-                                                buildLabelValueRow('Currency',
-                                                    order.currency ?? ''),
-                                              ],
-                                            ),
-                                          ),
-                                        ),
-                                        // const SizedBox(width: 12.0),
-                                        Expanded(
-                                          child: Column(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
-                                            children: [
-                                              buildLabelValueRow(
-                                                'Dimensions',
-                                                '${order.length.toString() ?? ''} x ${order.breadth.toString() ?? ''} x ${order.height.toString() ?? ''}',
-                                              ),
-                                              buildLabelValueRow(
-                                                  'Tracking Status',
-                                                  order.trackingStatus ?? ''),
-                                              const SizedBox(
-                                                height: 7,
-                                              ),
-                                              const Text(
-                                                'Customer Details:',
-                                                style: TextStyle(
-                                                    fontWeight: FontWeight.bold,
-                                                    fontSize: 12.0,
-                                                    color:
-                                                        AppColors.primaryBlue),
-                                              ),
-                                              buildLabelValueRow(
-                                                'Customer ID',
-                                                order.customer?.customerId ??
-                                                    '',
-                                              ),
-                                              buildLabelValueRow(
-                                                  'Full Name',
-                                                  order.customer?.firstName !=
-                                                          order.customer
-                                                              ?.lastName
-                                                      ? '${order.customer?.firstName ?? ''} ${order.customer?.lastName ?? ''}'
-                                                          .trim()
-                                                      : order.customer
-                                                              ?.firstName ??
-                                                          ''),
-                                              buildLabelValueRow(
-                                                'Email',
-                                                order.customer?.email ?? '',
-                                              ),
-                                              buildLabelValueRow(
-                                                'Phone',
-                                                maskPhoneNumber(order
-                                                        .customer?.phone
-                                                        ?.toString()) ??
-                                                    '',
-                                              ),
-                                              buildLabelValueRow(
-                                                'GSTIN',
-                                                order.customer?.customerGstin ??
-                                                    '',
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                  Padding(
-                                    padding: const EdgeInsets.all(16.0),
-                                    child: Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.start,
-                                      children: [
-                                        Expanded(
-                                          // flex: 1,
-                                          child: FittedBox(
-                                            fit: BoxFit.scaleDown,
-                                            child: Column(
-                                              crossAxisAlignment:
-                                                  CrossAxisAlignment.start,
-                                              children: [
-                                                const Text(
-                                                  'Shipping Address:',
-                                                  style: TextStyle(
-                                                      fontWeight:
-                                                          FontWeight.bold,
-                                                      fontSize: 12.0,
-                                                      color: AppColors
-                                                          .primaryBlue),
-                                                ),
-                                                Row(
-                                                  crossAxisAlignment:
-                                                      CrossAxisAlignment.start,
-                                                  children: [
-                                                    const Text(
-                                                      'Address: ',
-                                                      style: TextStyle(
-                                                        fontWeight:
-                                                            FontWeight.bold,
-                                                        fontSize: 12.0,
-                                                      ),
-                                                    ),
-                                                    Text(
-                                                      [
-                                                        order.shippingAddress
-                                                            ?.address1,
-                                                        order.shippingAddress
-                                                            ?.address2,
-                                                        order.shippingAddress
-                                                            ?.city,
-                                                        order.shippingAddress
-                                                            ?.state,
-                                                        order.shippingAddress
-                                                            ?.country,
-                                                        order.shippingAddress
-                                                            ?.pincode
-                                                            ?.toString(),
-                                                      ]
-                                                          .where((element) =>
-                                                              element != null &&
-                                                              element
-                                                                  .isNotEmpty)
-                                                          .join(', ')
-                                                          .replaceAllMapped(
-                                                              RegExp('.{1,50}'),
-                                                              (match) =>
-                                                                  '${match.group(0)}\n'),
-                                                      softWrap: true,
-                                                      maxLines: null,
-                                                      style: const TextStyle(
-                                                        fontSize: 12.0,
-                                                      ),
-                                                    ),
-                                                  ],
-                                                ),
-                                                buildLabelValueRow(
-                                                  'Name',
-                                                  order.shippingAddress
-                                                              ?.firstName !=
-                                                          order.shippingAddress
-                                                              ?.lastName
-                                                      ? '${order.shippingAddress?.firstName ?? ''} ${order.shippingAddress?.lastName ?? ''}'
-                                                          .trim()
-                                                      : order.shippingAddress
-                                                              ?.firstName ??
-                                                          '',
-                                                ),
-                                                buildLabelValueRow(
-                                                    'Pincode',
-                                                    order.shippingAddress
-                                                            ?.pincode
-                                                            ?.toString() ??
-                                                        ''),
-                                                buildLabelValueRow(
-                                                    'Country Code',
-                                                    order.shippingAddress
-                                                            ?.countryCode ??
-                                                        ''),
-                                              ],
-                                            ),
-                                          ),
-                                        ),
-                                        Expanded(
-                                          // flex: 1,
-                                          child: FittedBox(
-                                            fit: BoxFit.scaleDown,
-                                            child: Column(
-                                              crossAxisAlignment:
-                                                  CrossAxisAlignment.start,
-                                              children: [
-                                                const Text(
-                                                  'Billing Address:',
-                                                  style: TextStyle(
-                                                      fontWeight:
-                                                          FontWeight.bold,
-                                                      fontSize: 12.0,
-                                                      color: AppColors
-                                                          .primaryBlue),
-                                                ),
-                                                Row(
-                                                  crossAxisAlignment:
-                                                      CrossAxisAlignment.start,
-                                                  children: [
-                                                    const Text(
-                                                      'Address: ',
-                                                      style: TextStyle(
-                                                        fontWeight:
-                                                            FontWeight.bold,
-                                                        fontSize: 12.0,
-                                                      ),
-                                                    ),
-                                                    Text(
-                                                      [
-                                                        order.billingAddress
-                                                            ?.address1,
-                                                        order.billingAddress
-                                                            ?.address2,
-                                                        order.billingAddress
-                                                            ?.city,
-                                                        order.billingAddress
-                                                            ?.state,
-                                                        order.billingAddress
-                                                            ?.country,
-                                                        order.billingAddress
-                                                            ?.pincode
-                                                            ?.toString(),
-                                                      ]
-                                                          .where((element) =>
-                                                              element != null &&
-                                                              element
-                                                                  .isNotEmpty)
-                                                          .join(', ')
-                                                          .replaceAllMapped(
-                                                              RegExp('.{1,50}'),
-                                                              (match) =>
-                                                                  '${match.group(0)}\n'),
-                                                      softWrap: true,
-                                                      maxLines: null,
-                                                      style: const TextStyle(
-                                                        fontSize: 12.0,
-                                                      ),
-                                                    ),
-                                                  ],
-                                                ),
-                                                // buildLabelValueRow(
-                                                //   'Address',
-                                                //   [
-                                                //     order.billingAddress
-                                                //         ?.address1,
-                                                //     order.billingAddress
-                                                //         ?.address2,
-                                                //     order.billingAddress?.city,
-                                                //     order.billingAddress?.state,
-                                                //     order.billingAddress
-                                                //         ?.country,
-                                                //     order
-                                                //         .billingAddress?.pincode
-                                                //         ?.toString(),
-                                                //   ]
-                                                //       .where((element) =>
-                                                //           element != null &&
-                                                //           element.isNotEmpty)
-                                                //       .join(', ')
-                                                //       .replaceAllMapped(
-                                                //           RegExp('.{1,50}'),
-                                                //           (match) =>
-                                                //               '${match.group(0)}\n'),
-                                                // ),
-                                                buildLabelValueRow(
-                                                  'Name',
-                                                  order.billingAddress
-                                                              ?.firstName !=
-                                                          order.billingAddress
-                                                              ?.lastName
-                                                      ? '${order.billingAddress?.firstName ?? ''} ${order.billingAddress?.lastName ?? ''}'
-                                                          .trim()
-                                                      : order.billingAddress
-                                                              ?.firstName ??
-                                                          '',
-                                                ),
-                                                buildLabelValueRow(
-                                                    'Pincode',
-                                                    order.billingAddress
-                                                            ?.pincode
-                                                            ?.toString() ??
-                                                        ''),
-                                                buildLabelValueRow(
-                                                    'Country Code',
-                                                    order.billingAddress
-                                                            ?.countryCode ??
-                                                        ''),
-                                              ],
-                                            ),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
+                                  OrderInfo(order: order, pro: accountsProvider),
+                                  // Padding(
+                                  //   padding: const EdgeInsets.all(8.0),
+                                  //   child: Row(
+                                  //     crossAxisAlignment:
+                                  //         CrossAxisAlignment.start,
+                                  //     children: [
+                                  //       Expanded(
+                                  //         child: Padding(
+                                  //           padding: const EdgeInsets.only(
+                                  //               right: 8.0),
+                                  //           child: Column(
+                                  //             crossAxisAlignment:
+                                  //                 CrossAxisAlignment.start,
+                                  //             children: [
+                                  //               buildLabelValueRow(
+                                  //                   'Payment Mode',
+                                  //                   order.paymentMode ?? ''),
+                                  //               buildLabelValueRow(
+                                  //                   'Currency Code',
+                                  //                   order.currencyCode ?? ''),
+                                  //               buildLabelValueRow(
+                                  //                   'COD Amount',
+                                  //                   order.codAmount
+                                  //                           .toString() ??
+                                  //                       ''),
+                                  //               buildLabelValueRow(
+                                  //                   'Prepaid Amount',
+                                  //                   order.prepaidAmount
+                                  //                           .toString() ??
+                                  //                       ''),
+                                  //               buildLabelValueRow(
+                                  //                   'Coin',
+                                  //                   order.coin.toString() ??
+                                  //                       ''),
+                                  //               buildLabelValueRow(
+                                  //                   'Tax Percent',
+                                  //                   order.taxPercent
+                                  //                           .toString() ??
+                                  //                       ''),
+                                  //               buildLabelValueRow(
+                                  //                   'Courier Name',
+                                  //                   order.courierName ?? ''),
+                                  //               buildLabelValueRow('Order Type',
+                                  //                   order.orderType ?? ''),
+                                  //               buildLabelValueRow(
+                                  //                   'Payment Bank',
+                                  //                   order.paymentBank ?? ''),
+                                  //             ],
+                                  //           ),
+                                  //         ),
+                                  //       ),
+                                  //       // const SizedBox(width: 12.0),
+                                  //       Expanded(
+                                  //         child: Padding(
+                                  //           padding: const EdgeInsets.only(
+                                  //               right: 8.0),
+                                  //           child: Column(
+                                  //             crossAxisAlignment:
+                                  //                 CrossAxisAlignment.start,
+                                  //             children: [
+                                  //               buildLabelValueRow(
+                                  //                   'Discount Amount',
+                                  //                   order.discountAmount
+                                  //                           .toString() ??
+                                  //                       ''),
+                                  //               buildLabelValueRow(
+                                  //                   'Discount Scheme',
+                                  //                   order.discountScheme ?? ''),
+                                  //               buildLabelValueRow(
+                                  //                   'Discount Percent',
+                                  //                   order.discountPercent
+                                  //                           .toString() ??
+                                  //                       ''),
+                                  //               buildLabelValueRow(
+                                  //                   'Agent', order.agent ?? ''),
+                                  //               buildLabelValueRow(
+                                  //                   'Notes', order.notes ?? ''),
+                                  //               buildLabelValueRow(
+                                  //                   'Marketplace',
+                                  //                   order.marketplace?.name ??
+                                  //                       ''),
+                                  //               buildLabelValueRow('Filter',
+                                  //                   order.filter ?? ''),
+                                  //               buildLabelValueRow(
+                                  //                 'Expected Delivery Date',
+                                  //                 order.expectedDeliveryDate !=
+                                  //                         null
+                                  //                     ? accountsProvider
+                                  //                         .formatDate(order
+                                  //                             .expectedDeliveryDate!)
+                                  //                     : '',
+                                  //               ),
+                                  //               buildLabelValueRow(
+                                  //                   'Preferred Courier',
+                                  //                   order.preferredCourier ??
+                                  //                       ''),
+                                  //               buildLabelValueRow(
+                                  //                 'Payment Date Time',
+                                  //                 order.paymentDateTime != null
+                                  //                     ? accountsProvider
+                                  //                         .formatDateTime(order
+                                  //                             .paymentDateTime!)
+                                  //                     : '',
+                                  //               ),
+                                  //             ],
+                                  //           ),
+                                  //         ),
+                                  //       ),
+                                  //       // const SizedBox(width: 12.0),
+                                  //       Expanded(
+                                  //         child: Padding(
+                                  //           padding: const EdgeInsets.only(
+                                  //               right: 8.0),
+                                  //           child: Column(
+                                  //             crossAxisAlignment:
+                                  //                 CrossAxisAlignment.start,
+                                  //             children: [
+                                  //               buildLabelValueRow(
+                                  //                   'Delivery Term',
+                                  //                   order.deliveryTerm ?? ''),
+                                  //               buildLabelValueRow(
+                                  //                   'Transaction Number',
+                                  //                   order.transactionNumber ??
+                                  //                       ''),
+                                  //               buildLabelValueRow(
+                                  //                   'Micro Dealer Order',
+                                  //                   order.microDealerOrder ??
+                                  //                       ''),
+                                  //               buildLabelValueRow(
+                                  //                   'Fulfillment Type',
+                                  //                   order.fulfillmentType ??
+                                  //                       ''),
+                                  //               buildLabelValueRow(
+                                  //                   'No. of Boxes',
+                                  //                   order.numberOfBoxes
+                                  //                           .toString() ??
+                                  //                       ''),
+                                  //               buildLabelValueRow(
+                                  //                   'Total Quantity',
+                                  //                   order.totalQuantity
+                                  //                           .toString() ??
+                                  //                       ''),
+                                  //               buildLabelValueRow(
+                                  //                   'SKU Qty',
+                                  //                   order.skuQty.toString() ??
+                                  //                       ''),
+                                  //               buildLabelValueRow(
+                                  //                   'Calc Entry No.',
+                                  //                   order.calcEntryNumber ??
+                                  //                       ''),
+                                  //               buildLabelValueRow('Currency',
+                                  //                   order.currency ?? ''),
+                                  //             ],
+                                  //           ),
+                                  //         ),
+                                  //       ),
+                                  //       // const SizedBox(width: 12.0),
+                                  //       Expanded(
+                                  //         child: Column(
+                                  //           crossAxisAlignment:
+                                  //               CrossAxisAlignment.start,
+                                  //           children: [
+                                  //             buildLabelValueRow(
+                                  //               'Dimensions',
+                                  //               '${order.length.toString() ?? ''} x ${order.breadth.toString() ?? ''} x ${order.height.toString() ?? ''}',
+                                  //             ),
+                                  //             buildLabelValueRow(
+                                  //                 'Tracking Status',
+                                  //                 order.trackingStatus ?? ''),
+                                  //             const SizedBox(
+                                  //               height: 7,
+                                  //             ),
+                                  //             const Text(
+                                  //               'Customer Details:',
+                                  //               style: TextStyle(
+                                  //                   fontWeight: FontWeight.bold,
+                                  //                   fontSize: 12.0,
+                                  //                   color:
+                                  //                       AppColors.primaryBlue),
+                                  //             ),
+                                  //             buildLabelValueRow(
+                                  //               'Customer ID',
+                                  //               order.customer?.customerId ??
+                                  //                   '',
+                                  //             ),
+                                  //             buildLabelValueRow(
+                                  //                 'Full Name',
+                                  //                 order.customer?.firstName !=
+                                  //                         order.customer
+                                  //                             ?.lastName
+                                  //                     ? '${order.customer?.firstName ?? ''} ${order.customer?.lastName ?? ''}'
+                                  //                         .trim()
+                                  //                     : order.customer
+                                  //                             ?.firstName ??
+                                  //                         ''),
+                                  //             buildLabelValueRow(
+                                  //               'Email',
+                                  //               order.customer?.email ?? '',
+                                  //             ),
+                                  //             buildLabelValueRow(
+                                  //               'Phone',
+                                  //               maskPhoneNumber(order
+                                  //                       .customer?.phone
+                                  //                       ?.toString()) ??
+                                  //                   '',
+                                  //             ),
+                                  //             buildLabelValueRow(
+                                  //               'GSTIN',
+                                  //               order.customer?.customerGstin ??
+                                  //                   '',
+                                  //             ),
+                                  //           ],
+                                  //         ),
+                                  //       ),
+                                  //     ],
+                                  //   ),
+                                  // ),
+                                  // Padding(
+                                  //   padding: const EdgeInsets.all(16.0),
+                                  //   child: Row(
+                                  //     mainAxisAlignment:
+                                  //         MainAxisAlignment.start,
+                                  //     children: [
+                                  //       Expanded(
+                                  //         // flex: 1,
+                                  //         child: FittedBox(
+                                  //           fit: BoxFit.scaleDown,
+                                  //           child: Column(
+                                  //             crossAxisAlignment:
+                                  //                 CrossAxisAlignment.start,
+                                  //             children: [
+                                  //               const Text(
+                                  //                 'Shipping Address:',
+                                  //                 style: TextStyle(
+                                  //                     fontWeight:
+                                  //                         FontWeight.bold,
+                                  //                     fontSize: 12.0,
+                                  //                     color: AppColors
+                                  //                         .primaryBlue),
+                                  //               ),
+                                  //               Row(
+                                  //                 crossAxisAlignment:
+                                  //                     CrossAxisAlignment.start,
+                                  //                 children: [
+                                  //                   const Text(
+                                  //                     'Address: ',
+                                  //                     style: TextStyle(
+                                  //                       fontWeight:
+                                  //                           FontWeight.bold,
+                                  //                       fontSize: 12.0,
+                                  //                     ),
+                                  //                   ),
+                                  //                   Text(
+                                  //                     [
+                                  //                       order.shippingAddress
+                                  //                           ?.address1,
+                                  //                       order.shippingAddress
+                                  //                           ?.address2,
+                                  //                       order.shippingAddress
+                                  //                           ?.city,
+                                  //                       order.shippingAddress
+                                  //                           ?.state,
+                                  //                       order.shippingAddress
+                                  //                           ?.country,
+                                  //                       order.shippingAddress
+                                  //                           ?.pincode
+                                  //                           ?.toString(),
+                                  //                     ]
+                                  //                         .where((element) =>
+                                  //                             element != null &&
+                                  //                             element
+                                  //                                 .isNotEmpty)
+                                  //                         .join(', ')
+                                  //                         .replaceAllMapped(
+                                  //                             RegExp('.{1,50}'),
+                                  //                             (match) =>
+                                  //                                 '${match.group(0)}\n'),
+                                  //                     softWrap: true,
+                                  //                     maxLines: null,
+                                  //                     style: const TextStyle(
+                                  //                       fontSize: 12.0,
+                                  //                     ),
+                                  //                   ),
+                                  //                 ],
+                                  //               ),
+                                  //               buildLabelValueRow(
+                                  //                 'Name',
+                                  //                 order.shippingAddress
+                                  //                             ?.firstName !=
+                                  //                         order.shippingAddress
+                                  //                             ?.lastName
+                                  //                     ? '${order.shippingAddress?.firstName ?? ''} ${order.shippingAddress?.lastName ?? ''}'
+                                  //                         .trim()
+                                  //                     : order.shippingAddress
+                                  //                             ?.firstName ??
+                                  //                         '',
+                                  //               ),
+                                  //               buildLabelValueRow(
+                                  //                   'Pincode',
+                                  //                   order.shippingAddress
+                                  //                           ?.pincode
+                                  //                           ?.toString() ??
+                                  //                       ''),
+                                  //               buildLabelValueRow(
+                                  //                   'Country Code',
+                                  //                   order.shippingAddress
+                                  //                           ?.countryCode ??
+                                  //                       ''),
+                                  //             ],
+                                  //           ),
+                                  //         ),
+                                  //       ),
+                                  //       Expanded(
+                                  //         // flex: 1,
+                                  //         child: FittedBox(
+                                  //           fit: BoxFit.scaleDown,
+                                  //           child: Column(
+                                  //             crossAxisAlignment:
+                                  //                 CrossAxisAlignment.start,
+                                  //             children: [
+                                  //               const Text(
+                                  //                 'Billing Address:',
+                                  //                 style: TextStyle(
+                                  //                     fontWeight:
+                                  //                         FontWeight.bold,
+                                  //                     fontSize: 12.0,
+                                  //                     color: AppColors
+                                  //                         .primaryBlue),
+                                  //               ),
+                                  //               Row(
+                                  //                 crossAxisAlignment:
+                                  //                     CrossAxisAlignment.start,
+                                  //                 children: [
+                                  //                   const Text(
+                                  //                     'Address: ',
+                                  //                     style: TextStyle(
+                                  //                       fontWeight:
+                                  //                           FontWeight.bold,
+                                  //                       fontSize: 12.0,
+                                  //                     ),
+                                  //                   ),
+                                  //                   Text(
+                                  //                     [
+                                  //                       order.billingAddress
+                                  //                           ?.address1,
+                                  //                       order.billingAddress
+                                  //                           ?.address2,
+                                  //                       order.billingAddress
+                                  //                           ?.city,
+                                  //                       order.billingAddress
+                                  //                           ?.state,
+                                  //                       order.billingAddress
+                                  //                           ?.country,
+                                  //                       order.billingAddress
+                                  //                           ?.pincode
+                                  //                           ?.toString(),
+                                  //                     ]
+                                  //                         .where((element) =>
+                                  //                             element != null &&
+                                  //                             element
+                                  //                                 .isNotEmpty)
+                                  //                         .join(', ')
+                                  //                         .replaceAllMapped(
+                                  //                             RegExp('.{1,50}'),
+                                  //                             (match) =>
+                                  //                                 '${match.group(0)}\n'),
+                                  //                     softWrap: true,
+                                  //                     maxLines: null,
+                                  //                     style: const TextStyle(
+                                  //                       fontSize: 12.0,
+                                  //                     ),
+                                  //                   ),
+                                  //                 ],
+                                  //               ),
+                                  //               // buildLabelValueRow(
+                                  //               //   'Address',
+                                  //               //   [
+                                  //               //     order.billingAddress
+                                  //               //         ?.address1,
+                                  //               //     order.billingAddress
+                                  //               //         ?.address2,
+                                  //               //     order.billingAddress?.city,
+                                  //               //     order.billingAddress?.state,
+                                  //               //     order.billingAddress
+                                  //               //         ?.country,
+                                  //               //     order
+                                  //               //         .billingAddress?.pincode
+                                  //               //         ?.toString(),
+                                  //               //   ]
+                                  //               //       .where((element) =>
+                                  //               //           element != null &&
+                                  //               //           element.isNotEmpty)
+                                  //               //       .join(', ')
+                                  //               //       .replaceAllMapped(
+                                  //               //           RegExp('.{1,50}'),
+                                  //               //           (match) =>
+                                  //               //               '${match.group(0)}\n'),
+                                  //               // ),
+                                  //               buildLabelValueRow(
+                                  //                 'Name',
+                                  //                 order.billingAddress
+                                  //                             ?.firstName !=
+                                  //                         order.billingAddress
+                                  //                             ?.lastName
+                                  //                     ? '${order.billingAddress?.firstName ?? ''} ${order.billingAddress?.lastName ?? ''}'
+                                  //                         .trim()
+                                  //                     : order.billingAddress
+                                  //                             ?.firstName ??
+                                  //                         '',
+                                  //               ),
+                                  //               buildLabelValueRow(
+                                  //                   'Pincode',
+                                  //                   order.billingAddress
+                                  //                           ?.pincode
+                                  //                           ?.toString() ??
+                                  //                       ''),
+                                  //               buildLabelValueRow(
+                                  //                   'Country Code',
+                                  //                   order.billingAddress
+                                  //                           ?.countryCode ??
+                                  //                       ''),
+                                  //             ],
+                                  //           ),
+                                  //         ),
+                                  //       ),
+                                  //     ],
+                                  //   ),
+                                  // ),
                                   Padding(
                                     padding: const EdgeInsets.symmetric(
                                         horizontal: 16.0),

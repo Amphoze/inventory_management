@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:inventory_management/constants/constants.dart';
 import 'package:inventory_management/model/orders_model.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class PickerProvider with ChangeNotifier {
   bool _isLoading = false;
@@ -22,21 +23,27 @@ class PickerProvider with ChangeNotifier {
   List<dynamic> get extractedOrders => _extractedOrders;
 
   bool get selectAll => _selectAll;
+
   List<bool> get selectedProducts => _selectedProducts;
+
   List<Order> get orders => _orders;
+
   bool get isLoading => _isLoading;
 
   int get currentPage => _currentPage;
+
   int get totalPages => _totalPages;
+
   PageController get pageController => _pageController;
+
   TextEditingController get textEditingController => _textEditingController;
 
-  int get selectedCount =>
-      _selectedProducts.where((isSelected) => isSelected).length;
+  int get selectedCount => _selectedProducts.where((isSelected) => isSelected).length;
 
   bool isRefreshingOrders = false;
 
   bool isCancel = false;
+
   void setCancelStatus(bool status) {
     isCancel = status;
     notifyListeners();
@@ -49,8 +56,7 @@ class PickerProvider with ChangeNotifier {
 
   void toggleSelectAll(bool value) {
     _selectAll = value;
-    _selectedProducts =
-        List<bool>.generate(_orders.length, (index) => _selectAll);
+    _selectedProducts = List<bool>.generate(_orders.length, (index) => _selectAll);
     notifyListeners();
   }
 
@@ -60,8 +66,7 @@ class PickerProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  Future<String> cancelOrders(
-      BuildContext context, List<String> orderIds) async {
+  Future<String> cancelOrders(BuildContext context, List<String> orderIds) async {
     String baseUrl = await Constants.getBaseUrl();
     String cancelOrderUrl = '$baseUrl/orders/cancel';
     final prefs = await SharedPreferences.getInstance();
@@ -159,7 +164,7 @@ class PickerProvider with ChangeNotifier {
 
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('authToken') ?? '';
-    String url = '${await Constants.getBaseUrl()}/order-picker';
+    String url = '${await Constants.getBaseUrl()}/order-picker?page=$_currentPage&limit=5';
 
     try {
       final response = await http.get(Uri.parse(url), headers: {
@@ -173,6 +178,8 @@ class PickerProvider with ChangeNotifier {
         log(data['data'].runtimeType.toString());
 
         _extractedOrders = data['data'];
+        _totalPages = data['totalPages'] ?? 1;
+        _currentPage = data['currentPage'] ?? 1;
         log("_extractedOrders: $_extractedOrders");
         log("${_extractedOrders.length}");
       } else {
@@ -216,8 +223,7 @@ class PickerProvider with ChangeNotifier {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('authToken') ?? ''; // Fetch the token
 
-    final url =
-        '${await Constants.getBaseUrl()}/orders?orderStatus=4&order_id=$query';
+    final url = '${await Constants.getBaseUrl()}/orders?orderStatus=4&order_id=$query';
 
     print('Searching orders with term: $query');
 
@@ -313,7 +319,7 @@ class PickerProvider with ChangeNotifier {
   void goToPage(int page) {
     if (page < 1 || page > _totalPages) return;
     _currentPage = page;
-    print('Current page set to: $_currentPage');
+    log('Current page set to: $_currentPage');
     fetchOrdersWithStatus4();
     notifyListeners();
   }
@@ -324,5 +330,45 @@ class PickerProvider with ChangeNotifier {
     String month = date.month.toString().padLeft(2, '0');
     String day = date.day.toString().padLeft(2, '0');
     return '$day-$month-$year';
+  }
+
+  Future<void> fetchPicklist(BuildContext context, String date, String picklistId) async {
+    // _isLoading = true;
+    // notifyListeners();
+
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('authToken') ?? '';
+    String url = '${await Constants.getBaseUrl()}/order-picker/picklistCsv?date=$date&picklistId=$picklistId';
+
+    try {
+      final response = await http.post(
+        Uri.parse(url),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        final downloadUrl = data['downloadUrl'];
+
+        if (downloadUrl != null) {
+          final canLaunch = await canLaunchUrl(Uri.parse(downloadUrl));
+          if (canLaunch) {
+            await launchUrl(Uri.parse(downloadUrl));
+          } else {
+            log('Could not launch $downloadUrl');
+          }
+        } else {
+          log('No download URL found');
+          // throw Exception('No download URL found');
+        }
+      } else {
+        // Handle non-success responses
+      }
+    } catch (e) {
+      log('error aaya hai: $e');
+    }
   }
 }

@@ -198,7 +198,7 @@ class _CreateOrdersByCSVState extends State<CreateOrdersByCSV> {
                 hasFailedOrders = true;
               });
               final orderId = result['order_id']?.toString().trim();
-              final errorMessage = result['data']?['error']?.toString().trim();
+              final errorMessage = result['data']?['details']?.toString().trim();
 
               if ((orderId?.isNotEmpty ?? false) || (errorMessage?.isNotEmpty ?? false)) {
                 _failedOrders.add({

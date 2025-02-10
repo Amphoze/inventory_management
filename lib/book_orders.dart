@@ -8,7 +8,6 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:inventory_management/Api/inventory_api.dart';
 import 'package:inventory_management/constants/constants.dart';
-import 'package:logger/logger.dart';
 
 class BookOrders extends StatefulWidget {
   const BookOrders({super.key});

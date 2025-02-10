@@ -1,5 +1,6 @@
 // import 'dart:convert';
 import 'dart:developer';
+
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -10,59 +11,60 @@ import 'package:inventory_management/all_orders_page.dart';
 import 'package:inventory_management/ba_approve_page.dart';
 import 'package:inventory_management/bin_master.dart';
 import 'package:inventory_management/book_orders.dart';
+import 'package:inventory_management/book_page.dart';
 import 'package:inventory_management/booked_page.dart';
 import 'package:inventory_management/cancelled_orders.dart';
+import 'package:inventory_management/category_master.dart';
+import 'package:inventory_management/checker_page.dart';
+import 'package:inventory_management/combo_page.dart';
 import 'package:inventory_management/combo_upload.dart';
 import 'package:inventory_management/confirm_orders.dart';
+import 'package:inventory_management/create-label-page.dart';
 import 'package:inventory_management/create_account.dart';
 import 'package:inventory_management/create_order.dart';
 import 'package:inventory_management/create_orders_by_csv.dart';
+import 'package:inventory_management/dashboard_cards.dart';
+import 'package:inventory_management/dispatch_order.dart';
 import 'package:inventory_management/download_orders.dart';
 import 'package:inventory_management/inner_packaging.dart';
 import 'package:inventory_management/inventory_upload.dart';
 import 'package:inventory_management/invoice_page.dart';
-import 'package:inventory_management/book_page.dart';
-import 'package:inventory_management/combo_page.dart';
-import 'package:inventory_management/create-label-page.dart';
+import 'package:inventory_management/label_upload.dart';
 import 'package:inventory_management/location_master.dart';
 import 'package:inventory_management/login_page.dart';
 import 'package:inventory_management/manage_inventory.dart';
 import 'package:inventory_management/manage_label_page.dart';
 import 'package:inventory_management/manage_outerbox.dart';
+import 'package:inventory_management/manifest_page.dart';
 import 'package:inventory_management/manifest_section.dart';
 import 'package:inventory_management/marketplace_page.dart';
-import 'package:inventory_management/category_master.dart';
-import 'package:inventory_management/dashboard_cards.dart';
-import 'package:inventory_management/checker_page.dart';
-import 'package:inventory_management/label_upload.dart';
-import 'package:inventory_management/manifest_page.dart';
+import 'package:inventory_management/orders_page.dart';
 import 'package:inventory_management/outbound_page.dart';
-import 'package:inventory_management/product_upload.dart';
 import 'package:inventory_management/packer_page.dart';
 import 'package:inventory_management/picker_page.dart';
-import 'package:inventory_management/orders_page.dart';
-import 'package:inventory_management/provider/all_orders_provider.dart';
+import 'package:inventory_management/product_manager.dart';
+import 'package:inventory_management/product_upload.dart';
 import 'package:inventory_management/provider/dashboard_provider.dart';
 import 'package:inventory_management/provider/marketplace_provider.dart';
 import 'package:inventory_management/racked_page.dart';
-import 'package:inventory_management/dispatch_order.dart';
 import 'package:inventory_management/reordering_page.dart';
 import 'package:inventory_management/return_orders.dart';
 import 'package:inventory_management/routing_page.dart';
 import 'package:inventory_management/show-label-page.dart';
+import 'package:inventory_management/stockship_version_control/crm_updated_date_widget.dart';
+import 'package:inventory_management/support_page.dart';
 import 'package:inventory_management/threshold_upload.dart';
 import 'package:inventory_management/upload_inner.dart';
 import 'package:inventory_management/uploadproduct-quantity.dart';
 import 'package:logger/logger.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-// import 'package:url_launcher/url_launcher.dart';
+
 import 'Custom-Files/colors.dart';
-import 'package:inventory_management/product_manager.dart';
-// import 'package:http/http.dart' as http;
 
 class DashboardPage extends StatefulWidget {
   final String warehouseId;
+
   const DashboardPage({super.key, required this.warehouseId});
 
   @override
@@ -73,13 +75,13 @@ class DashboardPage extends StatefulWidget {
 class _DashboardPageState extends State<DashboardPage> {
   String selectedDrawerItem = 'Dashboard';
   DateTime? selectedDate; // State variable to hold the selected date
-  DateTime?
-      lastUpdatedTime; // Make sure this is initialized properly in your actual code
+  DateTime? lastUpdatedTime; // Make sure this is initialized properly in your actual code
   DateTime? previousDate;
   bool isCreateOrderPage = false;
 
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   List<Map<String, String>> statuses = [];
+
   // List<String> dropdownItems = [];
   List<String> temp = [];
 
@@ -113,7 +115,6 @@ class _DashboardPageState extends State<DashboardPage> {
 
   Future<void> _fetchData() async {
     await context.read<MarketplaceProvider>().fetchMarketplaces();
-    setState(() {});
   }
 
   // void fetchStatuses() async {
@@ -177,6 +178,7 @@ class _DashboardPageState extends State<DashboardPage> {
 
   //////////////////////////////////////////////////////////////////////////////////////////
   String? _selectedValue;
+
   // String? _selectedStatus = 'all';
   // String? _marketplace = '';
   // DateTime? _startDate;
@@ -308,8 +310,7 @@ class _DashboardPageState extends State<DashboardPage> {
                           children: <Widget>[
                             if (isSmallScreen)
                               IconButton(
-                                icon: const Icon(Icons.menu,
-                                    color: AppColors.grey),
+                                icon: const Icon(Icons.menu, color: AppColors.grey),
                                 onPressed: () {
                                   _scaffoldKey.currentState?.openDrawer();
                                 },
@@ -318,8 +319,7 @@ class _DashboardPageState extends State<DashboardPage> {
                         ),
                         const SizedBox(height: 20),
                         Expanded(
-                          child: _buildMainContent(
-                              selectedDrawerItem, isSmallScreen),
+                          child: _buildMainContent(selectedDrawerItem, isSmallScreen),
                         ),
                       ],
                     ),
@@ -334,6 +334,10 @@ class _DashboardPageState extends State<DashboardPage> {
   }
 
   Widget _buildDrawerContent(bool isSmallScreen) {
+    // final versionProvider = Provider.of<VersionProvider>(context);
+    // String currentVersion =
+    //     html.window.localStorage['app_version'] ?? "";
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
@@ -343,9 +347,81 @@ class _DashboardPageState extends State<DashboardPage> {
             child: Column(
               children: [
                 const SizedBox(height: 20),
-                const Image(
-                  fit: BoxFit.cover,
-                  image: AssetImage('assets/homeLogo.png'),
+                const Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Image(
+                      fit: BoxFit.cover,
+                      image: AssetImage('assets/homeLogo.png'),
+                    ),
+                    CrmUpdatedDateWidget(),
+                    // Center(
+                    //   child: Container(
+                    //     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    //     decoration: BoxDecoration(
+                    //       color: Colors.grey.shade50,
+                    //       borderRadius: BorderRadius.circular(4),
+                    //       border: Border.all(color: Colors.grey.shade200),
+                    //     ),
+                    //     child: versionProvider.latestVersion == null
+                    //         ? const SizedBox(
+                    //       height: 14,
+                    //       width: 14,
+                    //       child: CircularProgressIndicator(
+                    //         strokeWidth: 2,
+                    //         valueColor: AlwaysStoppedAnimation<Color>(Colors.blue),
+                    //       ),
+                    //     )
+                    //         : Row(
+                    //       mainAxisSize: MainAxisSize.min,
+                    //       children: [
+                    //         const Text(
+                    //           "Current: ",
+                    //           style: TextStyle(
+                    //             fontSize: 12,
+                    //             fontWeight: FontWeight.w400,
+                    //             color: Colors.black87,
+                    //           ),
+                    //         ),
+                    //         Text(
+                    //           currentVersion,
+                    //           style: const TextStyle(
+                    //             fontSize: 12,
+                    //             color: Colors.blue,
+                    //             fontWeight: FontWeight.bold,
+                    //           ),
+                    //         ),
+                    //         Padding(
+                    //           padding: const EdgeInsets.symmetric(horizontal: 4),
+                    //           child: Text(
+                    //             "•",
+                    //             style: TextStyle(
+                    //               fontSize: 12,
+                    //               color: Colors.grey.shade400,
+                    //             ),
+                    //           ),
+                    //         ),
+                    //         const Text(
+                    //           "Latest: ",
+                    //           style: TextStyle(
+                    //             fontSize: 12,
+                    //             fontWeight: FontWeight.w400,
+                    //             color: Colors.black87,
+                    //           ),
+                    //         ),
+                    //         Text(
+                    //           versionProvider.latestVersion ?? 'Loading...',
+                    //           style: const TextStyle(
+                    //             fontSize: 12,
+                    //             color: Colors.green,
+                    //             fontWeight: FontWeight.bold,
+                    //           ),
+                    //         ),
+                    //       ],
+                    //     ),
+                    //   ),
+                    // ),
+                  ],
                 ),
                 const SizedBox(height: 20),
                 _buildDrawerItem(
@@ -374,11 +450,7 @@ class _DashboardPageState extends State<DashboardPage> {
                         text: 'Create Account',
                         isSelected: selectedDrawerItem == 'Create Account',
                         onTap: () {
-                          Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                  builder: (context) =>
-                                      const CreateAccountPage()));
+                          Navigator.push(context, MaterialPageRoute(builder: (context) => const CreateAccountPage()));
                         },
                       )
                     : Container(),
@@ -393,8 +465,7 @@ class _DashboardPageState extends State<DashboardPage> {
                       builder: (BuildContext context) {
                         return AlertDialog(
                           title: const Text('Logout'),
-                          content:
-                              const Text('Are you sure you want to logout?'),
+                          content: const Text('Are you sure you want to logout?'),
                           actions: [
                             TextButton(
                               onPressed: () {
@@ -438,16 +509,13 @@ class _DashboardPageState extends State<DashboardPage> {
                                     if (!context.mounted) return;
                                     Navigator.pushReplacement(
                                       context,
-                                      MaterialPageRoute(
-                                          builder: (context) =>
-                                              const LoginPage()),
+                                      MaterialPageRoute(builder: (context) => const LoginPage()),
                                     );
                                   } else {
                                     if (!context.mounted) return;
                                     ScaffoldMessenger.of(context).showSnackBar(
                                       const SnackBar(
-                                        content: Text(
-                                            'Error: Could not clear session.'),
+                                        content: Text('Error: Could not clear session.'),
                                         backgroundColor: AppColors.cardsred,
                                       ),
                                     );
@@ -456,8 +524,7 @@ class _DashboardPageState extends State<DashboardPage> {
                                   if (!context.mounted) return;
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     const SnackBar(
-                                      content: Text(
-                                          'An error occurred during logout.'),
+                                      content: Text('An error occurred during logout.'),
                                       backgroundColor: AppColors.cardsred,
                                     ),
                                   );
@@ -494,51 +561,38 @@ class _DashboardPageState extends State<DashboardPage> {
       ),
       child: ExpansionTile(
         tilePadding: const EdgeInsets.symmetric(horizontal: 20.0),
-        collapsedBackgroundColor: ["Invoices"].contains(selectedDrawerItem)
-            ? Colors.blue.withOpacity(0.2)
-            : AppColors.white,
+        collapsedBackgroundColor: ["Invoices"].contains(selectedDrawerItem) ? Colors.blue.withOpacity(0.2) : AppColors.white,
         // initiallyExpanded: true,
         initiallyExpanded: ["Invoices"].contains(selectedDrawerItem),
         title: Text(
           'Accounting',
           style: TextStyle(
-            color: selectedDrawerItem == 'Accounting'
-                ? AppColors.white
-                : AppColors.primaryBlue,
+            color: selectedDrawerItem == 'Accounting' ? AppColors.white : AppColors.primaryBlue,
             fontSize: 16,
           ),
         ),
         leading: Icon(
           Icons.analytics,
-          color: selectedDrawerItem == 'Accounting'
-              ? AppColors.white
-              : AppColors.primaryBlue,
+          color: selectedDrawerItem == 'Accounting' ? AppColors.white : AppColors.primaryBlue,
           size: 24,
         ),
-        backgroundColor: selectedDrawerItem == 'Accounting'
-            ? const Color.fromRGBO(6, 90, 216, 0.1)
-            : null,
+        backgroundColor: selectedDrawerItem == 'Accounting' ? const Color.fromRGBO(6, 90, 216, 0.1) : null,
         children: <Widget>[
           Padding(
-            padding:
-                const EdgeInsets.only(left: 10.0), // Ensure consistent padding
+            padding: const EdgeInsets.only(left: 10.0), // Ensure consistent padding
             child: _buildDrawerItem(
               icon: Icons.account_balance_outlined,
               text: 'Invoices',
               isSelected: selectedDrawerItem == 'Invoices',
-              onTap: () => isConfirmer == true ||
-                      isAccounts == true ||
-                      isBooker == true ||
-                      isSuperAdmin == true ||
-                      isAdmin == true
+              onTap: () => isConfirmer == true || isAccounts == true || isBooker == true || isSuperAdmin == true || isAdmin == true
                   ? _onDrawerItemTapped('Invoices', isSmallScreen)
                   : ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                          content: Text(
-                              "You are not authorized to view this page.")),
+                      const SnackBar(content: Text("You are not authorized to view this page.")),
                     ),
-              isIndented: true, // Pass the indentation flag
-              iconSize: 20, // Adjust icon size
+              isIndented: true,
+              // Pass the indentation flag
+              iconSize: 20,
+              // Adjust icon size
               fontSize: 14, // Adjust font size
             ),
           ),
@@ -576,22 +630,16 @@ class _DashboardPageState extends State<DashboardPage> {
         title: Text(
           'Orders',
           style: TextStyle(
-            color: selectedDrawerItem == 'Orders'
-                ? AppColors.white
-                : AppColors.primaryBlue,
+            color: selectedDrawerItem == 'Orders' ? AppColors.white : AppColors.primaryBlue,
             fontSize: 16,
           ),
         ),
         leading: Icon(
           Icons.shopping_cart,
-          color: selectedDrawerItem == 'Orders'
-              ? AppColors.white
-              : AppColors.primaryBlue,
+          color: selectedDrawerItem == 'Orders' ? AppColors.white : AppColors.primaryBlue,
           size: 24,
         ),
-        backgroundColor: selectedDrawerItem == 'Orders'
-            ? const Color.fromRGBO(6, 90, 216, 0.1)
-            : null,
+        backgroundColor: selectedDrawerItem == 'Orders' ? const Color.fromRGBO(6, 90, 216, 0.1) : null,
         children: <Widget>[
           Padding(
             padding: const EdgeInsets.only(left: 10.0),
@@ -599,14 +647,11 @@ class _DashboardPageState extends State<DashboardPage> {
               icon: Icons.outbond,
               text: 'Outbound',
               isSelected: selectedDrawerItem == 'Outbound',
-              onTap: () =>
-                  isOutbound == true || isSuperAdmin == true || isAdmin == true
-                      ? _onDrawerItemTapped('Outbound', isSmallScreen)
-                      : ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                              content: Text(
-                                  "You are not authorized to view this page.")),
-                        ),
+              onTap: () => isOutbound == true || isSuperAdmin == true || isAdmin == true
+                  ? _onDrawerItemTapped('Outbound', isSmallScreen)
+                  : ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text("You are not authorized to view this page.")),
+                    ),
               isIndented: true,
               iconSize: 20,
               fontSize: 14,
@@ -618,14 +663,11 @@ class _DashboardPageState extends State<DashboardPage> {
               icon: Icons.assignment_rounded,
               text: 'Orders',
               isSelected: selectedDrawerItem == 'Orders Page',
-              onTap: () =>
-                  isConfirmer == true || isSuperAdmin == true || isAdmin == true
-                      ? _onDrawerItemTapped('Orders Page', isSmallScreen)
-                      : ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                              content: Text(
-                                  "You are not authorized to view this page.")),
-                        ),
+              onTap: () => isConfirmer == true || isSuperAdmin == true || isAdmin == true
+                  ? _onDrawerItemTapped('Orders Page', isSmallScreen)
+                  : ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text("You are not authorized to view this page.")),
+                    ),
               isIndented: true,
               iconSize: 20,
               fontSize: 14,
@@ -637,14 +679,11 @@ class _DashboardPageState extends State<DashboardPage> {
               icon: Icons.approval,
               text: 'HOD Approval',
               isSelected: selectedDrawerItem == 'HOD Approval',
-              onTap: () =>
-                  isBooker == true || isSuperAdmin == true || isAdmin == true
-                      ? _onDrawerItemTapped('HOD Approval', isSmallScreen)
-                      : ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                              content: Text(
-                                  "You are not authorized to view this page.")),
-                        ),
+              onTap: () => isBooker == true || isSuperAdmin == true || isAdmin == true
+                  ? _onDrawerItemTapped('HOD Approval', isSmallScreen)
+                  : ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text("You are not authorized to view this page.")),
+                    ),
               isIndented: true,
               iconSize: 20,
               fontSize: 14,
@@ -656,14 +695,11 @@ class _DashboardPageState extends State<DashboardPage> {
               icon: Icons.account_box_rounded,
               text: 'Accounts',
               isSelected: selectedDrawerItem == 'Accounts Page',
-              onTap: () =>
-                  isAccounts == true || isSuperAdmin == true || isAdmin == true
-                      ? _onDrawerItemTapped('Accounts Page', isSmallScreen)
-                      : ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                              content: Text(
-                                  "You are not authorized to view this page.")),
-                        ),
+              onTap: () => isAccounts == true || isSuperAdmin == true || isAdmin == true
+                  ? _onDrawerItemTapped('Accounts Page', isSmallScreen)
+                  : ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text("You are not authorized to view this page.")),
+                    ),
               isIndented: true,
               iconSize: 20,
               fontSize: 14,
@@ -675,14 +711,11 @@ class _DashboardPageState extends State<DashboardPage> {
               icon: Icons.subdirectory_arrow_right,
               text: 'Accounts Section',
               isSelected: selectedDrawerItem == 'Accounts Section',
-              onTap: () =>
-                  isAccounts == true || isSuperAdmin == true || isAdmin == true
-                      ? _onDrawerItemTapped('Accounts Section', isSmallScreen)
-                      : ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                              content: Text(
-                                  "You are not authorized to view this page.")),
-                        ),
+              onTap: () => isAccounts == true || isSuperAdmin == true || isAdmin == true
+                  ? _onDrawerItemTapped('Accounts Section', isSmallScreen)
+                  : ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text("You are not authorized to view this page.")),
+                    ),
               isIndented: true,
               iconSize: 20,
               fontSize: 14,
@@ -694,14 +727,11 @@ class _DashboardPageState extends State<DashboardPage> {
               icon: Icons.menu_book,
               text: 'Book',
               isSelected: selectedDrawerItem == 'Book Page',
-              onTap: () =>
-                  isBooker == true || isSuperAdmin == true || isAdmin == true
-                      ? _onDrawerItemTapped('Book Page', isSmallScreen)
-                      : ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                              content: Text(
-                                  "You are not authorized to view this page.")),
-                        ),
+              onTap: () => isBooker == true || isSuperAdmin == true || isAdmin == true
+                  ? _onDrawerItemTapped('Book Page', isSmallScreen)
+                  : ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text("You are not authorized to view this page.")),
+                    ),
               isIndented: true,
               iconSize: 20,
               fontSize: 14,
@@ -713,14 +743,11 @@ class _DashboardPageState extends State<DashboardPage> {
               icon: Icons.subdirectory_arrow_right,
               text: 'Booked Orders',
               isSelected: selectedDrawerItem == 'Booked Orders',
-              onTap: () =>
-                  isBooker == true || isSuperAdmin == true || isAdmin == true
-                      ? _onDrawerItemTapped('Booked Orders', isSmallScreen)
-                      : ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                              content: Text(
-                                  "You are not authorized to view this page.")),
-                        ),
+              onTap: () => isBooker == true || isSuperAdmin == true || isAdmin == true
+                  ? _onDrawerItemTapped('Booked Orders', isSmallScreen)
+                  : ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text("You are not authorized to view this page.")),
+                    ),
               isIndented: true,
               iconSize: 20,
               fontSize: 14,
@@ -732,14 +759,11 @@ class _DashboardPageState extends State<DashboardPage> {
               icon: Icons.local_shipping,
               text: 'Picker',
               isSelected: selectedDrawerItem == 'Picker Page',
-              onTap: () =>
-                  isPicker == true || isSuperAdmin == true || isAdmin == true
-                      ? _onDrawerItemTapped('Picker Page', isSmallScreen)
-                      : ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                              content: Text(
-                                  "You are not authorized to view this page.")),
-                        ),
+              onTap: () => isPicker == true || isSuperAdmin == true || isAdmin == true
+                  ? _onDrawerItemTapped('Picker Page', isSmallScreen)
+                  : ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text("You are not authorized to view this page.")),
+                    ),
               isIndented: true,
               iconSize: 20,
               fontSize: 14,
@@ -751,14 +775,11 @@ class _DashboardPageState extends State<DashboardPage> {
               icon: Icons.backpack_rounded,
               text: 'Packer',
               isSelected: selectedDrawerItem == 'Packer Page',
-              onTap: () =>
-                  isPacker == true || isSuperAdmin == true || isAdmin == true
-                      ? _onDrawerItemTapped('Packer Page', isSmallScreen)
-                      : ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                              content: Text(
-                                  "You are not authorized to view this page.")),
-                        ),
+              onTap: () => isPacker == true || isSuperAdmin == true || isAdmin == true
+                  ? _onDrawerItemTapped('Packer Page', isSmallScreen)
+                  : ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text("You are not authorized to view this page.")),
+                    ),
               isIndented: true,
               iconSize: 20,
               fontSize: 14,
@@ -770,14 +791,11 @@ class _DashboardPageState extends State<DashboardPage> {
               icon: Icons.check_circle,
               text: 'Checker',
               isSelected: selectedDrawerItem == 'Checker Page',
-              onTap: () =>
-                  isChecker == true || isSuperAdmin == true || isAdmin == true
-                      ? _onDrawerItemTapped('Checker Page', isSmallScreen)
-                      : ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                              content: Text(
-                                  "You are not authorized to view this page.")),
-                        ),
+              onTap: () => isChecker == true || isSuperAdmin == true || isAdmin == true
+                  ? _onDrawerItemTapped('Checker Page', isSmallScreen)
+                  : ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text("You are not authorized to view this page.")),
+                    ),
               isIndented: true,
               iconSize: 20,
               fontSize: 14,
@@ -789,14 +807,11 @@ class _DashboardPageState extends State<DashboardPage> {
               icon: Icons.shelves,
               text: 'Racked',
               isSelected: selectedDrawerItem == 'Racked Page',
-              onTap: () =>
-                  isRacker == true || isSuperAdmin == true || isAdmin == true
-                      ? _onDrawerItemTapped('Racked Page', isSmallScreen)
-                      : ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                              content: Text(
-                                  "You are not authorized to view this page.")),
-                        ),
+              onTap: () => isRacker == true || isSuperAdmin == true || isAdmin == true
+                  ? _onDrawerItemTapped('Racked Page', isSmallScreen)
+                  : ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text("You are not authorized to view this page.")),
+                    ),
               isIndented: true,
               iconSize: 20,
               fontSize: 14,
@@ -808,14 +823,11 @@ class _DashboardPageState extends State<DashboardPage> {
               icon: Icons.star,
               text: 'Manifest',
               isSelected: selectedDrawerItem == 'Manifest Page',
-              onTap: () =>
-                  isManifest == true || isSuperAdmin == true || isAdmin == true
-                      ? _onDrawerItemTapped('Manifest Page', isSmallScreen)
-                      : ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                              content: Text(
-                                  "You are not authorized to view this page.")),
-                        ),
+              onTap: () => isManifest == true || isSuperAdmin == true || isAdmin == true
+                  ? _onDrawerItemTapped('Manifest Page', isSmallScreen)
+                  : ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text("You are not authorized to view this page.")),
+                    ),
               isIndented: true,
               iconSize: 20,
               fontSize: 14,
@@ -827,14 +839,11 @@ class _DashboardPageState extends State<DashboardPage> {
               icon: Icons.subdirectory_arrow_right,
               text: 'Manifest section',
               isSelected: selectedDrawerItem == 'Manifest Section',
-              onTap: () =>
-                  isManifest == true || isSuperAdmin == true || isAdmin == true
-                      ? _onDrawerItemTapped('Manifest Section', isSmallScreen)
-                      : ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                              content: Text(
-                                  "You are not authorized to view this page.")),
-                        ),
+              onTap: () => isManifest == true || isSuperAdmin == true || isAdmin == true
+                  ? _onDrawerItemTapped('Manifest Section', isSmallScreen)
+                  : ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text("You are not authorized to view this page.")),
+                    ),
               isIndented: true,
               iconSize: 20,
               fontSize: 14,
@@ -846,16 +855,26 @@ class _DashboardPageState extends State<DashboardPage> {
               icon: Icons.assignment_return,
               text: 'Dispatched',
               isSelected: selectedDrawerItem == 'Dispatched',
-              onTap: () => isConfirmer == true ||
-                      isAccounts == true ||
-                      isBooker == true ||
-                      isSuperAdmin == true ||
-                      isAdmin == true
+              onTap: () => isConfirmer == true || isAccounts == true || isBooker == true || isSuperAdmin == true || isAdmin == true
                   ? _onDrawerItemTapped('Dispatched', isSmallScreen)
                   : ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                          content: Text(
-                              "You are not authorized to view this page.")),
+                      const SnackBar(content: Text("You are not authorized to view this page.")),
+                    ),
+              isIndented: true,
+              iconSize: 20,
+              fontSize: 14,
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.only(left: 10.0),
+            child: _buildDrawerItem(
+              icon: Icons.support_agent,
+              text: 'Support',
+              isSelected: selectedDrawerItem == 'Support',
+              onTap: () => isSuperAdmin == true || isAdmin == true
+                  ? _onDrawerItemTapped('Support', isSmallScreen)
+                  : ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text("You are not authorized to view this page.")),
                     ),
               isIndented: true,
               iconSize: 20,
@@ -868,16 +887,10 @@ class _DashboardPageState extends State<DashboardPage> {
               icon: Icons.cancel,
               text: 'Cancelled',
               isSelected: selectedDrawerItem == 'Cancelled',
-              onTap: () => isConfirmer == true ||
-                      isAccounts == true ||
-                      isBooker == true ||
-                      isSuperAdmin == true ||
-                      isAdmin == true
+              onTap: () => isConfirmer == true || isAccounts == true || isBooker == true || isSuperAdmin == true || isAdmin == true
                   ? _onDrawerItemTapped('Cancelled', isSmallScreen)
                   : ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                          content: Text(
-                              "You are not authorized to view this page.")),
+                      const SnackBar(content: Text("You are not authorized to view this page.")),
                     ),
               isIndented: true,
               iconSize: 20,
@@ -890,16 +903,10 @@ class _DashboardPageState extends State<DashboardPage> {
               icon: Icons.restore_rounded,
               text: 'RTO',
               isSelected: selectedDrawerItem == 'RTO',
-              onTap: () => isConfirmer == true ||
-                      isAccounts == true ||
-                      isBooker == true ||
-                      isSuperAdmin == true ||
-                      isAdmin == true
+              onTap: () => isConfirmer == true || isAccounts == true || isBooker == true || isSuperAdmin == true || isAdmin == true
                   ? _onDrawerItemTapped('RTO', isSmallScreen)
                   : ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                          content: Text(
-                              "You are not authorized to view this page.")),
+                      const SnackBar(content: Text("You are not authorized to view this page.")),
                     ),
               isIndented: true,
               iconSize: 20,
@@ -932,55 +939,39 @@ class _DashboardPageState extends State<DashboardPage> {
       ),
       child: ExpansionTile(
         tilePadding: const EdgeInsets.symmetric(horizontal: 20.0),
-        collapsedBackgroundColor: [
-          "Manage Inventory",
-          "Manage Label",
-          "Manage Outerbox",
-          "Manage Inner Packaging",
-          "Reordering"
-        ].contains(selectedDrawerItem)
-            ? Colors.blue.withOpacity(0.2)
-            : AppColors.white,
+        collapsedBackgroundColor:
+            ["Manage Inventory", "Manage Label", "Manage Outerbox", "Manage Inner Packaging", "Reordering"].contains(selectedDrawerItem)
+                ? Colors.blue.withOpacity(0.2)
+                : AppColors.white,
         title: Text(
           'Inventory',
           style: TextStyle(
-            color: selectedDrawerItem == 'Inventory'
-                ? AppColors.white
-                : AppColors.primaryBlue,
+            color: selectedDrawerItem == 'Inventory' ? AppColors.white : AppColors.primaryBlue,
             fontSize: 16,
           ),
         ),
         leading: Icon(
           Icons.inventory,
-          color: selectedDrawerItem == 'Inventory'
-              ? AppColors.white
-              : AppColors.primaryBlue,
+          color: selectedDrawerItem == 'Inventory' ? AppColors.white : AppColors.primaryBlue,
           size: 24,
         ),
-        backgroundColor: selectedDrawerItem == 'Inventory'
-            ? const Color.fromRGBO(6, 90, 216, 0.1)
-            : null,
+        backgroundColor: selectedDrawerItem == 'Inventory' ? const Color.fromRGBO(6, 90, 216, 0.1) : null,
         children: <Widget>[
           Padding(
-            padding:
-                const EdgeInsets.only(left: 10.0), // Ensure consistent padding
+            padding: const EdgeInsets.only(left: 10.0), // Ensure consistent padding
             child: _buildDrawerItem(
               icon: Icons.production_quantity_limits,
               text: 'Manage Inventory',
               isSelected: selectedDrawerItem == 'Manage Inventory',
-              onTap: () => isConfirmer == true ||
-                      isAccounts == true ||
-                      isBooker == true ||
-                      isSuperAdmin == true ||
-                      isAdmin == true
+              onTap: () => isConfirmer == true || isAccounts == true || isBooker == true || isSuperAdmin == true || isAdmin == true
                   ? _onDrawerItemTapped('Manage Inventory', isSmallScreen)
                   : ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                          content: Text(
-                              "You are not authorized to view this page.")),
+                      const SnackBar(content: Text("You are not authorized to view this page.")),
                     ),
-              isIndented: true, // Pass the indentation flag
-              iconSize: 20, // Adjust icon size
+              isIndented: true,
+              // Pass the indentation flag
+              iconSize: 20,
+              // Adjust icon size
               fontSize: 14, // Adjust font size
             ),
           ),
@@ -990,16 +981,10 @@ class _DashboardPageState extends State<DashboardPage> {
               icon: Icons.label_important,
               text: 'Manage Label',
               isSelected: selectedDrawerItem == 'Manage Label',
-              onTap: () => isConfirmer == true ||
-                      isAccounts == true ||
-                      isBooker == true ||
-                      isSuperAdmin == true ||
-                      isAdmin == true
+              onTap: () => isConfirmer == true || isAccounts == true || isBooker == true || isSuperAdmin == true || isAdmin == true
                   ? _onDrawerItemTapped('Manage Label', isSmallScreen)
                   : ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                          content: Text(
-                              "You are not authorized to view this page.")),
+                      const SnackBar(content: Text("You are not authorized to view this page.")),
                     ),
               isIndented: true,
               iconSize: 20,
@@ -1012,16 +997,10 @@ class _DashboardPageState extends State<DashboardPage> {
               icon: Icons.outbox,
               text: 'Manage Inner Packaging',
               isSelected: selectedDrawerItem == 'Manage Inner Packaging',
-              onTap: () => isConfirmer == true ||
-                      isAccounts == true ||
-                      isBooker == true ||
-                      isSuperAdmin == true ||
-                      isAdmin == true
+              onTap: () => isConfirmer == true || isAccounts == true || isBooker == true || isSuperAdmin == true || isAdmin == true
                   ? _onDrawerItemTapped('Manage Inner Packaging', isSmallScreen)
                   : ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                          content: Text(
-                              "You are not authorized to view this page.")),
+                      const SnackBar(content: Text("You are not authorized to view this page.")),
                     ),
               isIndented: true,
               iconSize: 20,
@@ -1034,16 +1013,10 @@ class _DashboardPageState extends State<DashboardPage> {
               icon: Icons.outbox,
               text: 'Manage Outerbox',
               isSelected: selectedDrawerItem == 'Manage Outerbox',
-              onTap: () => isConfirmer == true ||
-                      isAccounts == true ||
-                      isBooker == true ||
-                      isSuperAdmin == true ||
-                      isAdmin == true
+              onTap: () => isConfirmer == true || isAccounts == true || isBooker == true || isSuperAdmin == true || isAdmin == true
                   ? _onDrawerItemTapped('Manage Outerbox', isSmallScreen)
                   : ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                          content: Text(
-                              "You are not authorized to view this page.")),
+                      const SnackBar(content: Text("You are not authorized to view this page.")),
                     ),
               isIndented: true,
               iconSize: 20,
@@ -1051,25 +1024,20 @@ class _DashboardPageState extends State<DashboardPage> {
             ),
           ),
           Padding(
-            padding:
-                const EdgeInsets.only(left: 10.0), // Ensure consistent padding
+            padding: const EdgeInsets.only(left: 10.0), // Ensure consistent padding
             child: _buildDrawerItem(
               icon: Icons.assessment,
               text: 'Reordering',
               isSelected: selectedDrawerItem == 'Reordering',
-              onTap: () => isConfirmer == true ||
-                      isAccounts == true ||
-                      isBooker == true ||
-                      isSuperAdmin == true ||
-                      isAdmin == true
+              onTap: () => isConfirmer == true || isAccounts == true || isBooker == true || isSuperAdmin == true || isAdmin == true
                   ? _onDrawerItemTapped('Reordering', isSmallScreen)
                   : ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                          content: Text(
-                              "You are not authorized to view this page.")),
+                      const SnackBar(content: Text("You are not authorized to view this page.")),
                     ),
-              isIndented: true, // Pass the indentation flag
-              iconSize: 20, // Adjust icon size
+              isIndented: true,
+              // Pass the indentation flag
+              iconSize: 20,
+              // Adjust icon size
               fontSize: 14, // Adjust font size
             ),
           ),
@@ -1101,22 +1069,16 @@ class _DashboardPageState extends State<DashboardPage> {
         title: Text(
           'Master',
           style: TextStyle(
-            color: selectedDrawerItem == 'Master'
-                ? AppColors.white
-                : AppColors.primaryBlue,
+            color: selectedDrawerItem == 'Master' ? AppColors.white : AppColors.primaryBlue,
             fontSize: 16,
           ),
         ),
         leading: Icon(
           Icons.pages,
-          color: selectedDrawerItem == 'Master'
-              ? AppColors.white
-              : AppColors.primaryBlue,
+          color: selectedDrawerItem == 'Master' ? AppColors.white : AppColors.primaryBlue,
           size: 24,
         ),
-        backgroundColor: selectedDrawerItem == 'Master'
-            ? const Color.fromRGBO(6, 90, 216, 0.1)
-            : null,
+        backgroundColor: selectedDrawerItem == 'Master' ? const Color.fromRGBO(6, 90, 216, 0.1) : null,
         children: <Widget>[
           Padding(
             padding: const EdgeInsets.only(left: 10.0),
@@ -1124,16 +1086,10 @@ class _DashboardPageState extends State<DashboardPage> {
               icon: Icons.production_quantity_limits,
               text: 'Product Master',
               isSelected: selectedDrawerItem == 'Product Master',
-              onTap: () => isConfirmer == true ||
-                      isAccounts == true ||
-                      isBooker == true ||
-                      isSuperAdmin == true ||
-                      isAdmin == true
+              onTap: () => isConfirmer == true || isAccounts == true || isBooker == true || isSuperAdmin == true || isAdmin == true
                   ? _onDrawerItemTapped('Product Master', isSmallScreen)
                   : ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                          content: Text(
-                              "You are not authorized to view this page.")),
+                      const SnackBar(content: Text("You are not authorized to view this page.")),
                     ),
               isIndented: true,
               iconSize: 20,
@@ -1149,16 +1105,10 @@ class _DashboardPageState extends State<DashboardPage> {
               icon: Icons.category,
               text: 'Category Master',
               isSelected: selectedDrawerItem == 'Category Master',
-              onTap: () => isConfirmer == true ||
-                      isAccounts == true ||
-                      isBooker == true ||
-                      isSuperAdmin == true ||
-                      isAdmin == true
+              onTap: () => isConfirmer == true || isAccounts == true || isBooker == true || isSuperAdmin == true || isAdmin == true
                   ? _onDrawerItemTapped('Category Master', isSmallScreen)
                   : ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                          content: Text(
-                              "You are not authorized to view this page.")),
+                      const SnackBar(content: Text("You are not authorized to view this page.")),
                     ),
               isIndented: true,
               iconSize: 20,
@@ -1171,16 +1121,10 @@ class _DashboardPageState extends State<DashboardPage> {
               icon: Icons.list,
               text: 'Combo Master',
               isSelected: selectedDrawerItem == 'Combo Master',
-              onTap: () => isConfirmer == true ||
-                      isAccounts == true ||
-                      isBooker == true ||
-                      isSuperAdmin == true ||
-                      isAdmin == true
+              onTap: () => isConfirmer == true || isAccounts == true || isBooker == true || isSuperAdmin == true || isAdmin == true
                   ? _onDrawerItemTapped('Combo Master', isSmallScreen)
                   : ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                          content: Text(
-                              "You are not authorized to view this page.")),
+                      const SnackBar(content: Text("You are not authorized to view this page.")),
                     ),
               isIndented: true,
               iconSize: 20,
@@ -1193,16 +1137,10 @@ class _DashboardPageState extends State<DashboardPage> {
               icon: Icons.add_business,
               text: 'Marketplace Master',
               isSelected: selectedDrawerItem == 'Marketplace Master',
-              onTap: () => isConfirmer == true ||
-                      isAccounts == true ||
-                      isBooker == true ||
-                      isSuperAdmin == true ||
-                      isAdmin == true
+              onTap: () => isConfirmer == true || isAccounts == true || isBooker == true || isSuperAdmin == true || isAdmin == true
                   ? _onDrawerItemTapped('Marketplace Master', isSmallScreen)
                   : ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                          content: Text(
-                              "You are not authorized to view this page.")),
+                      const SnackBar(content: Text("You are not authorized to view this page.")),
                     ),
               isIndented: true,
               iconSize: 20,
@@ -1215,16 +1153,10 @@ class _DashboardPageState extends State<DashboardPage> {
               icon: Icons.warehouse,
               text: 'Warehouse Master',
               isSelected: selectedDrawerItem == 'Warehouse Master',
-              onTap: () => isConfirmer == true ||
-                      isAccounts == true ||
-                      isBooker == true ||
-                      isSuperAdmin == true ||
-                      isAdmin == true
+              onTap: () => isConfirmer == true || isAccounts == true || isBooker == true || isSuperAdmin == true || isAdmin == true
                   ? _onDrawerItemTapped('Warehouse Master', isSmallScreen)
                   : ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                          content: Text(
-                              "You are not authorized to view this page.")),
+                      const SnackBar(content: Text("You are not authorized to view this page.")),
                     ),
               isIndented: true,
               iconSize: 20,
@@ -1237,16 +1169,10 @@ class _DashboardPageState extends State<DashboardPage> {
               icon: Icons.archive,
               text: 'Bin Master',
               isSelected: selectedDrawerItem == 'Bin Master',
-              onTap: () => isConfirmer == true ||
-                      isAccounts == true ||
-                      isBooker == true ||
-                      isSuperAdmin == true ||
-                      isAdmin == true
+              onTap: () => isConfirmer == true || isAccounts == true || isBooker == true || isSuperAdmin == true || isAdmin == true
                   ? _onDrawerItemTapped('Bin Master', isSmallScreen)
                   : ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                          content: Text(
-                              "You are not authorized to view this page.")),
+                      const SnackBar(content: Text("You are not authorized to view this page.")),
                     ),
               isIndented: true,
               iconSize: 20,
@@ -1284,22 +1210,16 @@ class _DashboardPageState extends State<DashboardPage> {
         title: Text(
           'Uploads',
           style: TextStyle(
-            color: selectedDrawerItem == 'Uploads'
-                ? AppColors.white
-                : AppColors.primaryBlue,
+            color: selectedDrawerItem == 'Uploads' ? AppColors.white : AppColors.primaryBlue,
             fontSize: 16,
           ),
         ),
         leading: Icon(
           Icons.upload_file,
-          color: selectedDrawerItem == 'Uploads'
-              ? AppColors.white
-              : AppColors.primaryBlue,
+          color: selectedDrawerItem == 'Uploads' ? AppColors.white : AppColors.primaryBlue,
           size: 24,
         ),
-        backgroundColor: selectedDrawerItem == 'Uploads'
-            ? const Color.fromRGBO(6, 90, 216, 0.1)
-            : null,
+        backgroundColor: selectedDrawerItem == 'Uploads' ? const Color.fromRGBO(6, 90, 216, 0.1) : null,
         children: <Widget>[
           Padding(
             padding: const EdgeInsets.only(left: 10.0),
@@ -1307,14 +1227,11 @@ class _DashboardPageState extends State<DashboardPage> {
               icon: Icons.note_add,
               text: 'Create Orders',
               isSelected: selectedDrawerItem == 'Create Orders',
-              onTap: () =>
-                  isConfirmer == true || isSuperAdmin == true || isAdmin == true
-                      ? _onDrawerItemTapped('Create Orders', isSmallScreen)
-                      : ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                              content: Text(
-                                  "You are not authorized to view this page.")),
-                        ),
+              onTap: () => isConfirmer == true || isSuperAdmin == true || isAdmin == true
+                  ? _onDrawerItemTapped('Create Orders', isSmallScreen)
+                  : ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text("You are not authorized to view this page.")),
+                    ),
               isIndented: true,
               iconSize: 20,
               fontSize: 14,
@@ -1326,14 +1243,11 @@ class _DashboardPageState extends State<DashboardPage> {
               icon: Icons.insert_drive_file,
               text: 'Confirm Orders',
               isSelected: selectedDrawerItem == 'Confirm Orders',
-              onTap: () =>
-                  isConfirmer == true || isSuperAdmin == true || isAdmin == true
-                      ? _onDrawerItemTapped('Confirm Orders', isSmallScreen)
-                      : ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                              content: Text(
-                                  "You are not authorized to view this page.")),
-                        ),
+              onTap: () => isConfirmer == true || isSuperAdmin == true || isAdmin == true
+                  ? _onDrawerItemTapped('Confirm Orders', isSmallScreen)
+                  : ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text("You are not authorized to view this page.")),
+                    ),
               isIndented: true,
               iconSize: 20,
               fontSize: 14,
@@ -1345,14 +1259,11 @@ class _DashboardPageState extends State<DashboardPage> {
               icon: Icons.menu_book,
               text: 'Book Orders',
               isSelected: selectedDrawerItem == 'Book Orders',
-              onTap: () =>
-                  isBooker == true || isSuperAdmin == true || isAdmin == true
-                      ? _onDrawerItemTapped('Book Orders', isSmallScreen)
-                      : ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                              content: Text(
-                                  "You are not authorized to view this page.")),
-                        ),
+              onTap: () => isBooker == true || isSuperAdmin == true || isAdmin == true
+                  ? _onDrawerItemTapped('Book Orders', isSmallScreen)
+                  : ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text("You are not authorized to view this page.")),
+                    ),
               isIndented: true,
               iconSize: 20,
               fontSize: 14,
@@ -1364,16 +1275,10 @@ class _DashboardPageState extends State<DashboardPage> {
               icon: Icons.upload_file,
               text: 'Upload Products',
               isSelected: selectedDrawerItem == 'Upload Products',
-              onTap: () => isConfirmer == true ||
-                      isAccounts == true ||
-                      isBooker == true ||
-                      isSuperAdmin == true ||
-                      isAdmin == true
+              onTap: () => isConfirmer == true || isAccounts == true || isBooker == true || isSuperAdmin == true || isAdmin == true
                   ? _onDrawerItemTapped('Upload Products', isSmallScreen)
                   : ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                          content: Text(
-                              "You are not authorized to view this page.")),
+                      const SnackBar(content: Text("You are not authorized to view this page.")),
                     ),
               isIndented: true,
               iconSize: 20,
@@ -1386,16 +1291,10 @@ class _DashboardPageState extends State<DashboardPage> {
               icon: Icons.new_label,
               text: 'Upload Labels',
               isSelected: selectedDrawerItem == 'Upload Labels',
-              onTap: () => isConfirmer == true ||
-                      isAccounts == true ||
-                      isBooker == true ||
-                      isSuperAdmin == true ||
-                      isAdmin == true
+              onTap: () => isConfirmer == true || isAccounts == true || isBooker == true || isSuperAdmin == true || isAdmin == true
                   ? _onDrawerItemTapped('Upload Labels', isSmallScreen)
                   : ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                          content: Text(
-                              "You are not authorized to view this page.")),
+                      const SnackBar(content: Text("You are not authorized to view this page.")),
                     ),
               isIndented: true,
               iconSize: 20,
@@ -1408,16 +1307,10 @@ class _DashboardPageState extends State<DashboardPage> {
               icon: Icons.label_important,
               text: 'Manage Labels',
               isSelected: selectedDrawerItem == 'Manage Labels',
-              onTap: () => isConfirmer == true ||
-                      isAccounts == true ||
-                      isBooker == true ||
-                      isSuperAdmin == true ||
-                      isAdmin == true
+              onTap: () => isConfirmer == true || isAccounts == true || isBooker == true || isSuperAdmin == true || isAdmin == true
                   ? _onDrawerItemTapped('Manage Labels', isSmallScreen)
                   : ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                          content: Text(
-                              "You are not authorized to view this page.")),
+                      const SnackBar(content: Text("You are not authorized to view this page.")),
                     ),
               isIndented: true,
               iconSize: 20,
@@ -1430,16 +1323,10 @@ class _DashboardPageState extends State<DashboardPage> {
               icon: Icons.all_inbox,
               text: 'Upload Inner Packing',
               isSelected: selectedDrawerItem == 'Upload Inner Packaging',
-              onTap: () => isConfirmer == true ||
-                      isAccounts == true ||
-                      isBooker == true ||
-                      isSuperAdmin == true ||
-                      isAdmin == true
+              onTap: () => isConfirmer == true || isAccounts == true || isBooker == true || isSuperAdmin == true || isAdmin == true
                   ? _onDrawerItemTapped('Upload Inner Packaging', isSmallScreen)
                   : ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                          content: Text(
-                              "You are not authorized to view this page.")),
+                      const SnackBar(content: Text("You are not authorized to view this page.")),
                     ),
               isIndented: true,
               iconSize: 20,
@@ -1452,16 +1339,10 @@ class _DashboardPageState extends State<DashboardPage> {
               icon: Icons.inventory,
               text: 'Upload Inventory',
               isSelected: selectedDrawerItem == 'Upload Inventory',
-              onTap: () => isConfirmer == true ||
-                      isAccounts == true ||
-                      isBooker == true ||
-                      isSuperAdmin == true ||
-                      isAdmin == true
+              onTap: () => isConfirmer == true || isAccounts == true || isBooker == true || isSuperAdmin == true || isAdmin == true
                   ? _onDrawerItemTapped('Upload Inventory', isSmallScreen)
                   : ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                          content: Text(
-                              "You are not authorized to view this page.")),
+                      const SnackBar(content: Text("You are not authorized to view this page.")),
                     ),
               isIndented: true,
               iconSize: 20,
@@ -1474,16 +1355,10 @@ class _DashboardPageState extends State<DashboardPage> {
               icon: Icons.linear_scale,
               text: 'Upload Threshold',
               isSelected: selectedDrawerItem == 'Upload Threshold',
-              onTap: () => isConfirmer == true ||
-                      isAccounts == true ||
-                      isBooker == true ||
-                      isSuperAdmin == true ||
-                      isAdmin == true
+              onTap: () => isConfirmer == true || isAccounts == true || isBooker == true || isSuperAdmin == true || isAdmin == true
                   ? _onDrawerItemTapped('Upload Threshold', isSmallScreen)
                   : ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                          content: Text(
-                              "You are not authorized to view this page.")),
+                      const SnackBar(content: Text("You are not authorized to view this page.")),
                     ),
               isIndented: true,
               iconSize: 20,
@@ -1496,16 +1371,10 @@ class _DashboardPageState extends State<DashboardPage> {
               icon: Icons.inventory,
               text: 'Upload Combo',
               isSelected: selectedDrawerItem == 'Upload Combo',
-              onTap: () => isConfirmer == true ||
-                      isAccounts == true ||
-                      isBooker == true ||
-                      isSuperAdmin == true ||
-                      isAdmin == true
+              onTap: () => isConfirmer == true || isAccounts == true || isBooker == true || isSuperAdmin == true || isAdmin == true
                   ? _onDrawerItemTapped('Upload Combo', isSmallScreen)
                   : ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                          content: Text(
-                              "You are not authorized to view this page.")),
+                      const SnackBar(content: Text("You are not authorized to view this page.")),
                     ),
               isIndented: true,
               iconSize: 20,
@@ -1625,6 +1494,8 @@ class _DashboardPageState extends State<DashboardPage> {
         return const ManifestSection();
       case 'Dispatched':
         return const DispatchedOrders();
+      case 'Support':
+        return const SupportPage();
       case 'Cancelled':
         return const CancelledOrders();
       case 'RTO':
@@ -1700,8 +1571,7 @@ class _DashboardPageState extends State<DashboardPage> {
                     Padding(
                       padding: const EdgeInsets.all(5.0),
                       child: Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 12, vertical: 8),
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                         decoration: BoxDecoration(
                           color: AppColors.greyText.withOpacity(0.08),
                           borderRadius: BorderRadius.circular(6),
@@ -1746,23 +1616,16 @@ class _DashboardPageState extends State<DashboardPage> {
                         onPressed: () async {
                           DateTime? pickedDate = await _selectDate(context);
                           if (pickedDate != null) {
-                            String formattedDate =
-                                DateFormat('yyyy-MM-dd').format(pickedDate);
-                            Provider.of<DashboardProvider>(context,
-                                    listen: false)
-                                .fetchAllData(formattedDate);
+                            String formattedDate = DateFormat('yyyy-MM-dd').format(pickedDate);
+                            Provider.of<DashboardProvider>(context, listen: false).fetchAllData(formattedDate);
                           }
                         },
                         style: ElevatedButton.styleFrom(
-                          backgroundColor:
-                              AppColors.primaryBlue, // Button background color
+                          backgroundColor: AppColors.primaryBlue, // Button background color
                           shape: RoundedRectangleBorder(
-                            borderRadius:
-                                BorderRadius.circular(10), // Same border radius
+                            borderRadius: BorderRadius.circular(10), // Same border radius
                           ),
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 16.0,
-                              vertical: 12.0), // Button padding
+                          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0), // Button padding
                         ),
                         icon: const Icon(
                           Icons.calendar_month_outlined,
@@ -1803,15 +1666,11 @@ class _DashboardPageState extends State<DashboardPage> {
                           );
                         },
                         style: ElevatedButton.styleFrom(
-                          backgroundColor:
-                              AppColors.primaryBlue, // Button background color
+                          backgroundColor: AppColors.primaryBlue, // Button background color
                           shape: RoundedRectangleBorder(
-                            borderRadius:
-                                BorderRadius.circular(10), // Same border radius
+                            borderRadius: BorderRadius.circular(10), // Same border radius
                           ),
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 16.0,
-                              vertical: 12.0), // Button padding
+                          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0), // Button padding
                         ),
                         icon: const Icon(
                           Icons.download,
@@ -1846,28 +1705,20 @@ class _DashboardPageState extends State<DashboardPage> {
                     child: ElevatedButton.icon(
                       onPressed: () async {
                         setState(() {
-                          Logger()
-                              .e("isCreateOrderPage pehle: $isCreateOrderPage");
+                          Logger().e("isCreateOrderPage pehle: $isCreateOrderPage");
                           isCreateOrderPage = !isCreateOrderPage;
-                          Logger().e(
-                              "isCreateOrderPage baad me: $isCreateOrderPage");
+                          Logger().e("isCreateOrderPage baad me: $isCreateOrderPage");
                         });
                       },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: isCreateOrderPage
-                            ? AppColors.cardsred
-                            : AppColors.primaryBlue, // Button background color
+                        backgroundColor: isCreateOrderPage ? AppColors.cardsred : AppColors.primaryBlue, // Button background color
                         shape: RoundedRectangleBorder(
-                          borderRadius:
-                              BorderRadius.circular(10), // Same border radius
+                          borderRadius: BorderRadius.circular(10), // Same border radius
                         ),
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 16.0, vertical: 12.0), // Button padding
+                        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0), // Button padding
                       ),
                       label: Text(
-                        isCreateOrderPage
-                            ? 'Back'
-                            : 'Create Order', // Button label
+                        isCreateOrderPage ? 'Back' : 'Create Order', // Button label
                         style: const TextStyle(
                           color: Colors.white, // Text color
                           fontSize: 16, // Font size
@@ -1880,63 +1731,62 @@ class _DashboardPageState extends State<DashboardPage> {
             ),
             if (!isCreateOrderPage) ...[
               const SizedBox(height: 10),
-              Row(
+              const Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text(
+                  Text(
                     "Here's what's happening with your store today",
                     style: TextStyle(
                       fontSize: 16,
                       color: AppColors.greyText,
                     ),
                   ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 16, vertical: 10),
-                    decoration: BoxDecoration(
-                      color: Colors.blue[50],
-                      borderRadius: BorderRadius.circular(12),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.blue.withOpacity(0.1),
-                          blurRadius: 8,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          Icons.rocket_launch,
-                          size: 20,
-                          color: Colors.blue[700],
-                        ),
-                        const SizedBox(width: 12),
-                        Text(
-                          'Last Deployed: ',
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.blue[800],
-                          ),
-                        ),
-                        Text(
-                          '05-02-2025, 07:15 PM',
-                          style: TextStyle(
-                            fontSize: 13,
-                            color: Colors.blue[600],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
+                  // Container(
+                  //   padding: const EdgeInsets.symmetric(
+                  //       horizontal: 16, vertical: 10),
+                  //   decoration: BoxDecoration(
+                  //     color: Colors.blue[50],
+                  //     borderRadius: BorderRadius.circular(12),
+                  //     boxShadow: [
+                  //       BoxShadow(
+                  //         color: Colors.blue.withOpacity(0.1),
+                  //         blurRadius: 8,
+                  //         offset: const Offset(0, 4),
+                  //       ),
+                  //     ],
+                  //   ),
+                  //   child: Row(
+                  //     mainAxisSize: MainAxisSize.min,
+                  //     children: [
+                  //       Icon(
+                  //         Icons.rocket_launch,
+                  //         size: 20,
+                  //         color: Colors.blue[700],
+                  //       ),
+                  //       const SizedBox(width: 12),
+                  //       Text(
+                  //         'Last Deployed: ',
+                  //         style: TextStyle(
+                  //           fontSize: 14,
+                  //           fontWeight: FontWeight.bold,
+                  //           color: Colors.blue[800],
+                  //         ),
+                  //       ),
+                  //       Text(
+                  //         '06-02-2025, 11:50 AM',
+                  //         style: TextStyle(
+                  //           fontSize: 13,
+                  //           color: Colors.blue[600],
+                  //         ),
+                  //       ),
+                  //     ],
+                  //   ),
+                  // ),
                 ],
               ),
               const SizedBox(height: 20),
               Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 decoration: BoxDecoration(
                   color: Colors.grey[100],
                   borderRadius: BorderRadius.circular(8),
@@ -2006,15 +1856,15 @@ class _DashboardPageState extends State<DashboardPage> {
                       date: picked ?? DateTime.now(),
                       isSuperAdmin: isSuperAdmin,
                       isAdmin: isAdmin,
-                    isConfirmer: isConfirmer,
-                    isBooker: isBooker,
-                    isAccounts: isAccounts,
-                    isPicker: isPicker,
-                    isPacker: isPacker,
-                    isChecker: isChecker,
-                    isRacker: isRacker,
-                    isManifest: isManifest,
-                    isOutbound: isOutbound,
+                      isConfirmer: isConfirmer,
+                      isBooker: isBooker,
+                      isAccounts: isAccounts,
+                      isPicker: isPicker,
+                      isPacker: isPacker,
+                      isChecker: isChecker,
+                      isRacker: isRacker,
+                      isManifest: isManifest,
+                      isOutbound: isOutbound,
                     ),
                   ),
                 ],
@@ -2041,8 +1891,7 @@ class _DashboardPageState extends State<DashboardPage> {
               content: SingleChildScrollView(
                 child: Column(
                   children: marketplaces.map((marketplace) {
-                    final isSelected =
-                        selectedMarketplaces.contains(marketplace);
+                    final isSelected = selectedMarketplaces.contains(marketplace);
                     return CheckboxListTile(
                       title: Text(marketplace),
                       value: isSelected,
@@ -2082,6 +1931,7 @@ class _DashboardPageState extends State<DashboardPage> {
   }
 
   DateTime? picked;
+
   Future<DateTime?> _selectDate(BuildContext context) async {
     DateTime today = DateTime.now();
     picked = await showDatePicker(
@@ -2097,8 +1947,7 @@ class _DashboardPageState extends State<DashboardPage> {
       setState(() {
         selectedDate = picked;
       });
-      Provider.of<DashboardProvider>(context, listen: false)
-          .fetchAllData(DateFormat('yyyy-MM-dd').format(selectedDate!));
+      Provider.of<DashboardProvider>(context, listen: false).fetchAllData(DateFormat('yyyy-MM-dd').format(selectedDate!));
     }
     return picked;
   }
@@ -2112,7 +1961,6 @@ class _DashboardPageState extends State<DashboardPage> {
       lastUpdatedTime = DateTime.now();
     });
     // Fetch today's data
-    Provider.of<DashboardProvider>(context, listen: false)
-        .fetchAllData(formattedDate);
+    Provider.of<DashboardProvider>(context, listen: false).fetchAllData(formattedDate);
   }
 }

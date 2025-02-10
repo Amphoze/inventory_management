@@ -1,12 +1,13 @@
-import 'dart:developer';
-import 'package:csv/csv.dart';
-import 'package:flutter/material.dart';
-import 'package:inventory_management/Api/auth_provider.dart';
-import 'package:inventory_management/Custom-Files/colors.dart';
-import 'package:file_picker/file_picker.dart';
-import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'dart:developer';
+
+import 'package:csv/csv.dart';
+import 'package:file_picker/file_picker.dart';
+import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'package:inventory_management/Api/auth_provider.dart';
 import 'package:inventory_management/Api/inventory_api.dart';
+import 'package:inventory_management/Custom-Files/colors.dart';
 import 'package:inventory_management/constants/constants.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -20,6 +21,7 @@ class ConfirmOrders extends StatefulWidget {
 class _ConfirmOrdersState extends State<ConfirmOrders> {
   static const int _pageSize = 50;
   List<List<dynamic>> _csvData = [];
+
   // List<Map<String, dynamic>> _failedOrders = [];
   int _rowCount = 0;
   bool _isConfirmEnabled = false;
@@ -77,9 +79,7 @@ class _ConfirmOrdersState extends State<ConfirmOrders> {
     try {
       FilePickerResult? result = await FilePicker.platform.pickFiles(
         type: FileType.custom,
-        allowedExtensions: [
-          'csv'
-        ],
+        allowedExtensions: ['csv'],
       );
 
       if (result != null) {
@@ -189,34 +189,6 @@ class _ConfirmOrdersState extends State<ConfirmOrders> {
       log('Response Body: $responseBody, Status Code: ${response.statusCode}');
 
       if (response.statusCode == 200) {
-        // final results = jsonData['results'] as List;
-        // bool hasFailedOrders = false;
-
-        // log('results: $results');
-
-        // List<Map<String, dynamic>> tempFailedOrders = [];
-
-        // for (var result in results) {
-        //   try {
-        //     final status = result['status']?.toString().trim();
-        //     if (status?.toLowerCase() == 'failed') {
-        //       setState(() {
-        //         hasFailedOrders = true;
-        //       });
-        //       tempFailedOrders.add({
-        //         'order_id': result['order_id']?.toString().trim() ?? 'Unknown Order ID',
-        //         'error': result['errors']?.isNotEmpty == true ? result['errors'].join(', ').toString().trim() : '',
-        //       });
-        //     }
-        //   } catch (e) {
-        //     log('Error processing individual order: $e');
-        //   }
-        // }
-
-        // setState(() {
-        //   _failedOrders = tempFailedOrders;
-        // });
-
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(jsonData['message'])),
         );
@@ -230,9 +202,19 @@ class _ConfirmOrdersState extends State<ConfirmOrders> {
         }
       } else {
         log('Failed to upload CSV: ${response.statusCode}\n$responseBody');
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(jsonData['message'] ?? 'Unknown error from API')),
-        );
+        if (jsonData['downloadUrl'] != null && jsonData['downloadUrl'].toString().isNotEmpty) {
+          try {
+            await launchUrl(Uri.parse(jsonData['downloadUrl'].toString()));
+          } catch (e) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('Error downloading file: $e')),
+            );
+          }
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(jsonData['message'] ?? 'Unknown error from API')),
+          );
+        }
       }
     } catch (e, stackTrace) {
       log('Error during order confirmation: $e', error: e, stackTrace: stackTrace);
@@ -368,74 +350,74 @@ class _ConfirmOrdersState extends State<ConfirmOrders> {
     );
   }
 
-  // Widget _buildFailedOrdersTable() {
-  //   return Expanded(
-  //     flex: 1,
-  //     child: Column(
-  //       children: [
-  //         const SizedBox(height: 16),
-  //         const Text(
-  //           'Failed Orders',
-  //           style: TextStyle(
-  //             fontSize: 18,
-  //             fontWeight: FontWeight.bold,
-  //             color: AppColors.primaryBlue,
-  //           ),
-  //         ),
-  //         const SizedBox(height: 8),
-  //         Expanded(
-  //           child: Scrollbar(
-  //             thumbVisibility: true,
-  //             child: SingleChildScrollView(
-  //               scrollDirection: Axis.vertical,
-  //               child: SingleChildScrollView(
-  //                 scrollDirection: Axis.horizontal,
-  //                 child: DataTable(
-  //                   headingTextStyle: const TextStyle(
-  //                     fontWeight: FontWeight.bold,
-  //                     color: AppColors.primaryBlue,
-  //                   ),
-  //                   border: TableBorder.all(
-  //                     color: Colors.grey.shade300,
-  //                     width: 1,
-  //                   ),
-  //                   columns: const [
-  //                     DataColumn(
-  //                       label: Padding(
-  //                         padding: EdgeInsets.symmetric(horizontal: 8.0),
-  //                         child: Text('Order ID'),
-  //                       ),
-  //                     ),
-  //                     DataColumn(
-  //                       label: Padding(
-  //                         padding: EdgeInsets.symmetric(horizontal: 8.0),
-  //                         child: Text('Error Message'),
-  //                       ),
-  //                     ),
-  //                   ],
-  //                   rows: _failedOrders.where((order) => (order['order_id']?.toString().trim().isNotEmpty ?? false) || (order['error']?.toString().trim().isNotEmpty ?? false)).map((order) {
-  //                     return DataRow(
-  //                       cells: [
-  //                         DataCell(Padding(
-  //                           padding: const EdgeInsets.symmetric(horizontal: 8.0),
-  //                           child: Text(order['order_id'].toString()),
-  //                         )),
-  //                         DataCell(Padding(
-  //                           padding: const EdgeInsets.symmetric(horizontal: 8.0),
-  //                           child: Text(order['error'].toString()),
-  //                         )),
-  //                       ],
-  //                     );
-  //                   }).toList(),
-  //                 ),
-  //               ),
-  //             ),
-  //           ),
-  //         ),
-  //       ],
-  //     ),
-  //   );
-  // }
+// Widget _buildFailedOrdersTable() {
+//   return Expanded(
+//     flex: 1,
+//     child: Column(
+//       children: [
+//         const SizedBox(height: 16),
+//         const Text(
+//           'Failed Orders',
+//           style: TextStyle(
+//             fontSize: 18,
+//             fontWeight: FontWeight.bold,
+//             color: AppColors.primaryBlue,
+//           ),
+//         ),
+//         const SizedBox(height: 8),
+//         Expanded(
+//           child: Scrollbar(
+//             thumbVisibility: true,
+//             child: SingleChildScrollView(
+//               scrollDirection: Axis.vertical,
+//               child: SingleChildScrollView(
+//                 scrollDirection: Axis.horizontal,
+//                 child: DataTable(
+//                   headingTextStyle: const TextStyle(
+//                     fontWeight: FontWeight.bold,
+//                     color: AppColors.primaryBlue,
+//                   ),
+//                   border: TableBorder.all(
+//                     color: Colors.grey.shade300,
+//                     width: 1,
+//                   ),
+//                   columns: const [
+//                     DataColumn(
+//                       label: Padding(
+//                         padding: EdgeInsets.symmetric(horizontal: 8.0),
+//                         child: Text('Order ID'),
+//                       ),
+//                     ),
+//                     DataColumn(
+//                       label: Padding(
+//                         padding: EdgeInsets.symmetric(horizontal: 8.0),
+//                         child: Text('Error Message'),
+//                       ),
+//                     ),
+//                   ],
+//                   rows: _failedOrders.where((order) => (order['order_id']?.toString().trim().isNotEmpty ?? false) || (order['error']?.toString().trim().isNotEmpty ?? false)).map((order) {
+//                     return DataRow(
+//                       cells: [
+//                         DataCell(Padding(
+//                           padding: const EdgeInsets.symmetric(horizontal: 8.0),
+//                           child: Text(order['order_id'].toString()),
+//                         )),
+//                         DataCell(Padding(
+//                           padding: const EdgeInsets.symmetric(horizontal: 8.0),
+//                           child: Text(order['error'].toString()),
+//                         )),
+//                       ],
+//                     );
+//                   }).toList(),
+//                 ),
+//               ),
+//             ),
+//           ),
+//         ),
+//       ],
+//     ),
+//   );
+// }
 }
 
 // import 'dart:developer';

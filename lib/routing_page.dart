@@ -506,7 +506,7 @@ class _RoutingPageState extends State<RoutingPage>
                             return Card(
                               surfaceTintColor: Colors.white,
                               color: const Color.fromARGB(255, 231, 230, 230),
-                              elevation: 0.5,
+                              elevation: 2,
                               margin: const EdgeInsets.all(8.0),
                               child: Padding(
                                 padding: const EdgeInsets.all(8.0),

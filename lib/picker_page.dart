@@ -1,13 +1,22 @@
+import 'dart:convert';
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:inventory_management/Custom-Files/utils.dart';
+import 'package:logger/logger.dart';
+
 // import 'package:inventory_management/Widgets/picker_order_card.dart';
 import 'package:provider/provider.dart';
 import 'package:inventory_management/Custom-Files/colors.dart';
 import 'package:inventory_management/provider/picker_provider.dart';
 import 'package:inventory_management/Custom-Files/custom_pagination.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import 'Custom-Files/loading_indicator.dart';
+import 'constants/constants.dart';
+import 'package:http/http.dart' as http;
 
 class PickerPage extends StatefulWidget {
   const PickerPage({super.key});
@@ -18,6 +27,24 @@ class PickerPage extends StatefulWidget {
 
 class _PickerPageState extends State<PickerPage> {
   final TextEditingController _searchController = TextEditingController();
+  final TextEditingController _dateController = TextEditingController();
+  final DateFormat _dateFormat = DateFormat('yyyy-MM-dd');
+  bool _isDownloading = false;
+
+  Future<void> _selectDate(BuildContext context) async {
+    DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: DateTime.now(),
+      firstDate: DateTime(2000),
+      lastDate: DateTime.now(),
+    );
+
+    if (picked != null) {
+      setState(() {
+        _dateController.text = _dateFormat.format(picked);
+      });
+    }
+  }
 
   @override
   void initState() {
@@ -172,40 +199,28 @@ class _PickerPageState extends State<PickerPage> {
 
                           return AlertDialog(
                             title: const Text('Download Picklist PDF'),
-                            content: SizedBox(
-                              width: double.maxFinite,
-                              child: Column(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  TextField(
-                                    controller: dateController,
-                                    decoration: const InputDecoration(
-                                      labelText: 'Date',
-                                      border: OutlineInputBorder(),
-                                    ),
-                                    readOnly: true,
-                                    onTap: () async {
-                                      final DateTime? picked = await showDatePicker(
-                                        context: context,
-                                        initialDate: DateTime.now(),
-                                        firstDate: DateTime(2020),
-                                        lastDate: DateTime(2025),
-                                      );
-                                      if (picked != null) {
-                                        dateController.text = DateFormat('yyyy-MM-dd').format(picked);
-                                      }
-                                    },
+                            content: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                TextFormField(
+                                  controller: _dateController,
+                                  decoration: const InputDecoration(
+                                    labelText: "Select Date",
+                                    suffixIcon: Icon(Icons.calendar_today),
+                                    border: OutlineInputBorder(),
                                   ),
-                                  const SizedBox(height: 8),
-                                  TextField(
-                                    controller: picklistIdController,
-                                    decoration: const InputDecoration(
-                                      labelText: 'Picklist ID',
-                                      border: OutlineInputBorder(),
-                                    ),
+                                  readOnly: true, // Prevent manual input
+                                  onTap: () => _selectDate(context),
+                                ),
+                                const SizedBox(height: 8),
+                                TextField(
+                                  controller: picklistIdController,
+                                  decoration: const InputDecoration(
+                                    labelText: 'Picklist ID',
+                                    border: OutlineInputBorder(),
                                   ),
-                                ],
-                              ),
+                                ),
+                              ],
                             ),
                             actions: [
                               TextButton(
@@ -216,10 +231,15 @@ class _PickerPageState extends State<PickerPage> {
                                 child: const Text('Cancel'),
                               ),
                               ElevatedButton(
-                                onPressed: () {
+                                onPressed: () async {
                                   // Navigator.pop(context);
+                                  setState(() {
+                                    _isDownloading = true;
+                                  });
+
                                   showDialog(
                                     context: context,
+                                    barrierDismissible: false,
                                     builder: (BuildContext context) {
                                       return const AlertDialog(
                                         content: Row(
@@ -232,6 +252,61 @@ class _PickerPageState extends State<PickerPage> {
                                       );
                                     },
                                   );
+
+                                  final prefs = await SharedPreferences.getInstance();
+                                  final token = prefs.getString('authToken') ?? '';
+                                  final date = _dateController.text;
+                                  final id = picklistIdController.text.trim();
+                                  String url = '${await Constants.getBaseUrl()}/order-picker/picklistCsv?date=$date&picklistId=$id';
+
+                                  Logger().e('picklist url: $url');
+
+                                  Map<String, dynamic>? data;
+
+                                  try {
+                                    final response = await http.get(
+                                      Uri.parse(url),
+                                      headers: {
+                                        'Authorization': 'Bearer $token',
+                                        'Content-Type': 'application/json',
+                                      },
+                                    );
+
+                                    if (response.statusCode == 200) {
+                                      data = json.decode(response.body);
+                                      final downloadUrl = data!['downloadUrl'];
+
+                                      if (downloadUrl != null) {
+                                        final canLaunch = await canLaunchUrl(Uri.parse(downloadUrl));
+                                        if (canLaunch) {
+                                          await launchUrl(Uri.parse(downloadUrl));
+                                        } else {
+                                          log('Could not launch $downloadUrl');
+                                        }
+                                      } else {
+                                        log('No download URL found');
+                                        // throw Exception('No download URL found');
+                                      }
+                                    } else {
+                                      // Handle non-success responses
+                                    }
+                                  } catch (e) {
+                                    log('error aaya hai: $e');
+                                  } finally {
+                                    setState(() {
+                                      _isDownloading = false;
+
+                                      Navigator.pop(context);
+                                      Navigator.pop(context);
+
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        SnackBar(
+                                          content: Text(data!['message'] ?? ''),
+                                          behavior: SnackBarBehavior.floating,
+                                        ),
+                                      );
+                                    });
+                                  }
                                 },
                                 child: const Text('Download'),
                               ),
@@ -485,7 +560,8 @@ class _PickerPageState extends State<PickerPage> {
                                       child: SizedBox(
                                         width: 60, // Smaller image size
                                         height: 60,
-                                        child: order['items'][index]['product_id']['shopifyImage'] != null && order['items'][index]['product_id']['shopifyImage'].isNotEmpty
+                                        child: order['items'][index]['product_id']['shopifyImage'] != null &&
+                                                order['items'][index]['product_id']['shopifyImage'].isNotEmpty
                                             ? Image.network(
                                                 '${order['items'][index]['product_id']['shopifyImage']}',
                                               )
@@ -637,15 +713,21 @@ class _PickerPageState extends State<PickerPage> {
                       )),
                 ),
                 // const Text('skjfbsfiab'),
-                if (order['messages'] != null && order['messages']!['confirmerMessage'] != null && order['messages']!['confirmerMessage'].toString().isNotEmpty) ...[
+                if (order['messages'] != null &&
+                    order['messages']!['confirmerMessage'] != null &&
+                    order['messages']!['confirmerMessage'].toString().isNotEmpty) ...[
                   Utils().showMessage(context, 'Confirmer Remark', order['messages']!['confirmerMessage'].toString())
                 ],
                 ///////////////////////////////////////////////////////////
-                if (order['messages'] != null && order['messages']!['accountMessage'] != null && order['messages']!['accountMessage'].toString().isNotEmpty) ...[
+                if (order['messages'] != null &&
+                    order['messages']!['accountMessage'] != null &&
+                    order['messages']!['accountMessage'].toString().isNotEmpty) ...[
                   Utils().showMessage(context, 'Account Remark', order['messages']!['accountMessage'].toString()),
                 ],
                 /////////////////////////////////////////////////////////
-                if (order['messages'] != null && order['messages']!['bookerMessage'] != null && order['messages']!['bookerMessage'].toString().isNotEmpty) ...[
+                if (order['messages'] != null &&
+                    order['messages']!['bookerMessage'] != null &&
+                    order['messages']!['bookerMessage'].toString().isNotEmpty) ...[
                   Utils().showMessage(context, 'Booker Remark', order['messages']!['bookerMessage'].toString())
                 ],
               ],

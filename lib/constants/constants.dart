@@ -8,6 +8,7 @@ class Constants {
     final String baseUrl = prefs.getString('value') ?? '';
     log('Base URL: $baseUrl');
     // return 'http://192.168.0.134:3001';
+    // return 'https://inventory-management-backend-cwby.onrender.com'; // testing url
     return baseUrl;
   }
 }

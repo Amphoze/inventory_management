@@ -1,19 +1,23 @@
+import 'dart:convert';
 import 'dart:developer';
+
+import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
 import 'package:inventory_management/constants/constants.dart';
-import 'package:logger/logger.dart';
-import 'package:flutter/material.dart';
 import 'package:inventory_management/model/orders_model.dart'; // Ensure you have the Order model defined here
+import 'package:logger/logger.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
 
 class OutboundProvider with ChangeNotifier {
   bool allSelectedReady = false;
+
   // bool allSelectedFailed = false;
   int selectedReadyItemsCount = 0;
+
   // int selectedFailedItemsCount = 0;
   List<bool> _selectedReadyOrders = [];
+
   // List<bool> _selectedFailedOrders = [];
   List<Order> outboundOrders = []; // List to store fetched ready orders
   // List<Order> failedOrders = []; // List to store fetched failed orders
@@ -32,12 +36,14 @@ class OutboundProvider with ChangeNotifier {
   int? dispatchCount;
   int? rtoCount;
   int? allCount;
+
   // List<Order> readyOrders = [];
   // List<Order> failedOrders = [];
 
   int currentPage = 1;
   int totalPages = 1;
   int currentPageReady = 1;
+
   // int currentPageFailed = 1;
 
   // Loading state
@@ -52,14 +58,23 @@ class OutboundProvider with ChangeNotifier {
   // List<Order> get failedOrder => _failedOrder;
 
   String? get selectedCourier => _selectedCourier;
+
   String? get selectedPayment => _selectedPayment;
+
   String? get selectedMarketplace => _selectedMarketplace;
+
   String? get selectedOrderType => _selectedOrderType;
+
   String? get selectedCustomerType => _selectedCustomerType;
+
   String? get selectedFilter => _selectedFilter;
+
   String get expectedDeliveryDate => _expectedDeliveryDate;
+
   String get paymentDateTime => _paymentDateTime;
+
   String get normalDate => _normalDate;
+
   String get sanitizedEmail => _sanitizedEmail;
 
   bool isConfirm = false;
@@ -280,8 +295,8 @@ class OutboundProvider with ChangeNotifier {
 
     var readyOrdersUrl = '${await Constants.getBaseUrl()}/orders?marketplace=Shopify,Woocommerce&isOutBound=false&page=$page';
 
-    if (date != null || date == 'Select Date') {
-      String formattedDate = DateFormat('yyyy-MM-dd').format(date!);
+    if (date != null) {
+      String formattedDate = DateFormat('yyyy-MM-dd').format(date);
       readyOrdersUrl += '&date=$formattedDate';
     }
 
@@ -464,7 +479,8 @@ class OutboundProvider with ChangeNotifier {
 
 // Update status for ready-to-confirm orders
   Future<void> updateOutboundOrders(BuildContext context) async {
-    final List<String> readyOrderIds = outboundOrders.asMap().entries.where((entry) => _selectedReadyOrders[entry.key]).map((entry) => entry.value.orderId).toList();
+    final List<String> readyOrderIds =
+        outboundOrders.asMap().entries.where((entry) => _selectedReadyOrders[entry.key]).map((entry) => entry.value.orderId).toList();
 
     if (readyOrderIds.isEmpty) {
       _showSnackbar(context, 'No orders selected to update.');
@@ -589,9 +605,7 @@ class OutboundProvider with ChangeNotifier {
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        outboundOrders = [
-          Order.fromJson(data)
-        ];
+        outboundOrders = [Order.fromJson(data)];
         // log('readyOrders: $readyOrders');
 
         log('searchOrdersByID: $outboundOrders');
@@ -829,49 +843,39 @@ class OutboundProvider with ChangeNotifier {
     }
   }
 
-  String sanitizeEmail(String email) {
-    return email.replaceAll(RegExp(r'[^a-zA-Z0-9_]'), '_');
-  }
+  // String sanitizeEmail(String email) {
+  //   return email.replaceAll(RegExp(r'[^a-zA-Z0-9_]'), '_');
+  // }
+  //
+  // Future<void> clearQueue(String id) async {
+  //   try {
+  //     var response = await http.post(
+  //       Uri.parse('https://callerapp.onrender.com/clear-topic-queue'),
+  //       headers: {'Content-Type': 'application/json'},
+  //       body: jsonEncode({
+  //         "topic": id,
+  //       }),
+  //     );
+  //     if (response.statusCode != 200) {
+  //       log('Failed to notify server. Status code: ${response.statusCode}');
+  //     } else {
+  //       log('send succusfully ${response.body}');
+  //     }
+  //   } catch (e) {
+  //     log('Error notifying server: $e');
+  //   }
+  // }
 
-  Future<void> clearQueue(String id) async {
-    try {
-      var response = await http.post(
-        Uri.parse('https://callerapp.onrender.com/clear-topic-queue'),
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: jsonEncode({
-          "topic": id,
-        }),
-      );
-      if (response.statusCode != 200) {
-        log('Failed to notify server. Status code: ${response.statusCode}');
-      } else {
-        log('send succusfully ${response.body}');
-      }
-    } catch (e) {
-      log('Error notifying server: $e');
-    }
-  }
+  Future<bool> sendSingleCall(BuildContext context, String orderId) async {
+    String url = '${await Constants.getBaseUrl()}/orders/call';
 
+    final token = await _getToken();
 
-  Future<void> sendSingleCall(BuildContext context, String phoneNumber, String entityId, String entityType) async {
-    const String url = 'https://callerapp.onrender.com/send-single-call';
-
-    final prefs = await SharedPreferences.getInstance();
-
-    String? email = prefs.getString('email');
-    String id = sanitizeEmail(email!);
-
-    phoneNumber = phoneNumber.replaceFirst('+91', '').trim();
-
-    entityId = entityId.split('-')[1];
+    // final prefs = await SharedPreferences.getInstance();
+    // String? email = prefs.getString('email');
 
     final body = {
-      'phone_number': phoneNumber, // "8839782589"
-      'topic': id, // 'sales2'
-      'entity_id': int.parse(entityId), // 12345
-      'entity_type': entityType,
+      'order_id': orderId,
     };
 
     log('body hai: $body');
@@ -880,31 +884,168 @@ class OutboundProvider with ChangeNotifier {
       final response = await http.post(
         Uri.parse(url),
         headers: <String, String>{
-          'Content-Type': 'application/json; charset=UTF-8',
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
         },
         body: jsonEncode(body),
       );
       log('Started Calling:');
 
       final res = jsonDecode(response.body);
+      log('Response body: $res');
 
       if (response.statusCode == 200) {
         _showSnackbar(context, res['message'], color: Colors.green);
-        clearQueue(id);
+        // _showStatusDialog(context, orderId);
         log('Call Proceeded');
-        return;
+        return true;
       } else {
         _showSnackbar(context, res['error'], color: Colors.red);
         log('Failed to send phone number. Status code: ${response.statusCode}');
-        log('Response body: ${response.body}');
-        return;
+        return false;
       }
     } catch (error) {
-      log('Error sending phone number: $error');
-      _showSnackbar(context, 'Error sending phone number: $error');
-      return;
+      log('Error calling: $error');
+      _showSnackbar(context, 'Error calling: $error');
+      return false;
     } finally {
       notifyListeners();
     }
+  }
+
+  Future<bool> updateCallStatus(BuildContext context, String orderId, String callStatus) async {
+    String url = '${await Constants.getBaseUrl()}/orders/callStatus';
+    final token = await _getToken();
+
+    if (token == null) {
+      _showSnackbar(context, 'No token provided', color: Colors.red);
+      return false;
+    }
+
+    final body = {
+      'call_status': callStatus,
+      'order_id': orderId,
+    };
+
+    try {
+      final response = await http.post(
+        Uri.parse(url),
+        headers: <String, String>{
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode(body),
+      );
+
+      final res = jsonDecode(response.body);
+
+      log('status update res: $res');
+
+      if (response.statusCode == 200) {
+        _showSnackbar(context, res['message'], color: Colors.green);
+        return true;
+      } else {
+        _showSnackbar(context, res['error'], color: Colors.red);
+        return false;
+      }
+    } catch (error) {
+      log('Error updating call status: $error');
+      _showSnackbar(context, 'Error updating call status: $error');
+      return false;
+    } finally {
+      notifyListeners();
+    }
+  }
+
+  String _selectedValue = "not answered"; // Default selected value
+
+  void _showStatusDialog(BuildContext context, String orderId) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        String tempValue = _selectedValue; // Temporary value to update inside dialog
+
+        // enum: ["not answered", "answered", "not reach","busy"],
+
+        return AlertDialog(
+          title: const Text("Select Status"),
+          content: StatefulBuilder(
+            builder: (BuildContext context, StateSetter setState) {
+              return Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  RadioListTile(
+                    title: const Text("Not Answered"),
+                    value: "not answered",
+                    groupValue: tempValue,
+                    onChanged: (value) {
+                      setState(() => tempValue = value.toString());
+                    },
+                  ),
+                  RadioListTile(
+                    title: const Text("Answered"),
+                    value: "answered",
+                    groupValue: tempValue,
+                    onChanged: (value) {
+                      setState(() => tempValue = value.toString());
+                    },
+                  ),
+                  RadioListTile(
+                    title: const Text("Unreachable"),
+                    value: "not reach",
+                    groupValue: tempValue,
+                    onChanged: (value) {
+                      setState(() => tempValue = value.toString());
+                    },
+                  ),
+                  RadioListTile(
+                    title: const Text("Busy"),
+                    value: "busy",
+                    groupValue: tempValue,
+                    onChanged: (value) {
+                      setState(() => tempValue = value.toString());
+                    },
+                  ),
+                ],
+              );
+            },
+          ),
+          actions: [
+            // TextButton(
+            //   child: const Text("Cancel"),
+            //   onPressed: () => Navigator.pop(context),
+            // ),
+            TextButton(
+              child: const Text("Ok"),
+              onPressed: () async {
+                _selectedValue = tempValue; // Save selected value
+                notifyListeners();
+                showDialog(
+                  context: context,
+                  builder: (BuildContext context) {
+                    return const AlertDialog(
+                      content: Row(
+                        children: [
+                          CircularProgressIndicator(),
+                          SizedBox(width: 16),
+                          Text('Updating Status'),
+                        ],
+                      ),
+                    );
+                  },
+                );
+                final res = await updateCallStatus(context, orderId, tempValue);
+                if (res) {
+                  Navigator.pop(context);
+                  Navigator.pop(context);
+                  await fetchOrders();
+                }
+              },
+            ),
+          ],
+        );
+      },
+    );
   }
 }

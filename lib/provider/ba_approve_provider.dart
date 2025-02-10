@@ -1,12 +1,13 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:developer';
-import 'package:http/http.dart' as http;
+
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'package:intl/intl.dart';
 import 'package:inventory_management/constants/constants.dart';
 import 'package:inventory_management/model/orders_model.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:intl/intl.dart';
 
 class BaApproveProvider with ChangeNotifier {
   bool _isLoading = false;
@@ -21,13 +22,19 @@ class BaApproveProvider with ChangeNotifier {
   Timer? _debounce;
 
   bool get selectAll => _selectAll;
+
   List<bool> get selectedProducts => _selectedProducts;
+
   List<Order> get orders => _orders;
+
   bool get isLoading => _isLoading;
 
   int get currentPage => _currentPage;
+
   int get totalPages => _totalPages;
+
   PageController get pageController => _pageController;
+
   TextEditingController get textEditingController => _textEditingController;
 
   int get selectedCount =>
@@ -167,21 +174,21 @@ class BaApproveProvider with ChangeNotifier {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('authToken') ?? '';
     var url =
-        '${await Constants.getBaseUrl()}/orders?orderStatus=2&ba_approve=false&page=';
+        '${await Constants.getBaseUrl()}/orders?orderStatus=2&ba_approve=false&page=$_currentPage';
 
-    if (date != null || date == 'Select Date') {
-      String formattedDate = DateFormat('yyyy-MM-dd').format(date!);
+    if (date != null) {
+      String formattedDate = DateFormat('yyyy-MM-dd').format(date);
       url += '&date=$formattedDate';
     }
 
     try {
-      String requestUrl = '$url$_currentPage';
-      if (date != null || date == 'Select Date') {
-        String formattedDate = DateFormat('yyyy-MM-dd').format(date!);
-        requestUrl += '&date=$formattedDate';
-      }
+      // String requestUrl = '$url$_currentPage';
+      // if (date != null || date == 'Select Date') {
+      //   String formattedDate = DateFormat('yyyy-MM-dd').format(date!);
+      //   requestUrl += '&date=$formattedDate';
+      // }
 
-      final response = await http.get(Uri.parse(requestUrl), headers: {
+      final response = await http.get(Uri.parse(url), headers: {
         'Authorization': 'Bearer $token',
         'Content-Type': 'application/json',
       });
@@ -351,8 +358,8 @@ class BaApproveProvider with ChangeNotifier {
     String url =
         '$baseUrl?orderStatus=$orderStatus&ba_approve=false&marketplace=$marketplace&page=$page';
 
-    if (date != null || date == 'Select Date') {
-      String formattedDate = DateFormat('yyyy-MM-dd').format(date!);
+    if (date != null) {
+      String formattedDate = DateFormat('yyyy-MM-dd').format(date);
       url += '&date=$formattedDate';
     }
 

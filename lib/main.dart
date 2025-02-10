@@ -1,5 +1,6 @@
 import 'dart:developer';
 import 'dart:html' as html;
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
@@ -17,36 +18,42 @@ import 'package:inventory_management/provider/all_orders_provider.dart';
 import 'package:inventory_management/provider/ba_approve_provider.dart';
 import 'package:inventory_management/provider/book_provider.dart';
 import 'package:inventory_management/provider/cancelled_provider.dart';
+import 'package:inventory_management/provider/category_provider.dart';
+import 'package:inventory_management/provider/chat_provider.dart';
+import 'package:inventory_management/provider/checker_provider.dart';
 import 'package:inventory_management/provider/combo_provider.dart';
 import 'package:inventory_management/provider/dashboard_provider.dart';
+import 'package:inventory_management/provider/dispatched_provider.dart';
 import 'package:inventory_management/provider/inner_provider.dart';
 import 'package:inventory_management/provider/inventory_provider.dart';
 import 'package:inventory_management/provider/invoice_provider.dart';
-import 'package:inventory_management/provider/marketplace_provider.dart';
-import 'package:inventory_management/provider/category_provider.dart';
 import 'package:inventory_management/provider/label_data_provider.dart';
 import 'package:inventory_management/provider/location_provider.dart';
 import 'package:inventory_management/provider/manage-inventory-provider.dart';
+import 'package:inventory_management/provider/manifest_provider.dart';
+import 'package:inventory_management/provider/marketplace_provider.dart';
+import 'package:inventory_management/provider/orders_provider.dart';
 import 'package:inventory_management/provider/outbound_provider.dart';
 import 'package:inventory_management/provider/outerbox_provider.dart';
+import 'package:inventory_management/provider/packer_provider.dart';
+import 'package:inventory_management/provider/picker_provider.dart';
 import 'package:inventory_management/provider/product_data_provider.dart';
-import 'package:inventory_management/provider/dispatched_provider.dart';
 import 'package:inventory_management/provider/products-provider.dart';
+import 'package:inventory_management/provider/racked_provider.dart';
 import 'package:inventory_management/provider/return_provoider.dart';
 import 'package:inventory_management/provider/show-details-order-provider.dart';
-import 'package:inventory_management/provider/orders_provider.dart';
-import 'package:inventory_management/provider/picker_provider.dart';
-import 'package:inventory_management/provider/packer_provider.dart';
-import 'package:inventory_management/provider/checker_provider.dart';
-import 'package:inventory_management/provider/racked_provider.dart';
-import 'package:inventory_management/provider/manifest_provider.dart';
+import 'package:inventory_management/provider/support_provider.dart';
 import 'package:inventory_management/provider/warehouses_provider.dart';
+import 'package:inventory_management/stockship_version_control/version_controller.dart';
 import 'package:inventory_management/warehouses_page.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 // import 'package:inventory_management/create_account.dart';
 // prarthi2474@gmail.com
+
+final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(
@@ -89,6 +96,9 @@ void main() async {
       ChangeNotifierProvider(create: (context) => WarehousesProvider()),
       ChangeNotifierProvider(create: (context) => OuterboxProvider()),
       ChangeNotifierProvider(create: (context) => InnerPackagingProvider()),
+      ChangeNotifierProvider(create: (context) => VersionController()),
+      ChangeNotifierProvider(create: (context) => SupportProvider()),
+      ChangeNotifierProvider(create: (context) => ChatProvider()),
     ],
     child: const MyApp(),
   ));
@@ -101,6 +111,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
+      navigatorKey: navigatorKey,
       title: 'StockShip',
       theme: ThemeData(
         useMaterial3: true,

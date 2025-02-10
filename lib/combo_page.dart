@@ -581,7 +581,7 @@ class _ComboPageState extends State<ComboPage> {
                                                                       labelText: 'Weight',
                                                                       hintText: 'Enter weight',
                                                                     ),
-                                                                    keyboardType: TextInputType.numberWithOptions(decimal: true),
+                                                                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
                                                                     textInputAction: TextInputAction.done,
                                                                     validator: (value) {
                                                                       if (value?.isEmpty ?? true) return 'Weight is required';

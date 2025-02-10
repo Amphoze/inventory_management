@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 // import 'package:inventory_management/Custom-Files/colors.dart';
 
 class Order {
+  final List<CallStatus>? callStatus;
   final Customer? customer;
   final String source;
   final String id;
@@ -86,9 +87,11 @@ class Order {
   final bool? isHold;
   String? selectedCourier;
   String? selectedCourierId;
+
   // final String? status;
 
   Order({
+    this.callStatus,
     this.merged,
     this.rebookedBy,
     this.isHold,
@@ -233,17 +236,28 @@ class Order {
 
     // Define formats to try for parsing
     List<String> formats = [
-      "EEE MMM dd yyyy HH:mm:ss 'GMT'Z", // e.g., Thu Oct 10 2024 11:18:19 GMT+0000
-      "yyyy-MM-dd HH:mm:ss", // e.g., 2024-09-26 12:00:00
-      "dd-MM-yyyy", // e.g., 26-09-2024
-      "MM/dd/yyyy", // e.g., 09/26/2024
-      "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", // e.g., 2024-09-26T12:00:00.000Z
-      "yyyy-MM-dd'T'HH:mm:ss'Z'", // e.g., 2024-09-26T12:00:00Z
-      "yyyy-MM-dd'T'HH:mm:ss", // e.g., 2024-09-26T12:00:00
-      "yyyy.MM.dd HH:mm:ss", // e.g., 2024.09.26 12:00:00
-      "MMMM dd, yyyy", // e.g., September 26, 2024
-      "dd MMM yyyy", // e.g., 26 Sep 2024
-      "dd MMM yyyy hh:mm a", // e.g., 10 Oct 2024 11:18 AM
+      "EEE MMM dd yyyy HH:mm:ss 'GMT'Z",
+      // e.g., Thu Oct 10 2024 11:18:19 GMT+0000
+      "yyyy-MM-dd HH:mm:ss",
+      // e.g., 2024-09-26 12:00:00
+      "dd-MM-yyyy",
+      // e.g., 26-09-2024
+      "MM/dd/yyyy",
+      // e.g., 09/26/2024
+      "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'",
+      // e.g., 2024-09-26T12:00:00.000Z
+      "yyyy-MM-dd'T'HH:mm:ss'Z'",
+      // e.g., 2024-09-26T12:00:00Z
+      "yyyy-MM-dd'T'HH:mm:ss",
+      // e.g., 2024-09-26T12:00:00
+      "yyyy.MM.dd HH:mm:ss",
+      // e.g., 2024.09.26 12:00:00
+      "MMMM dd, yyyy",
+      // e.g., September 26, 2024
+      "dd MMM yyyy",
+      // e.g., 26 Sep 2024
+      "dd MMM yyyy hh:mm a",
+      // e.g., 10 Oct 2024 11:18 AM
     ];
 
     // Try parsing with each format
@@ -271,8 +285,32 @@ class Order {
     return parsedDate != null ? formatDate(parsedDate) : null;
   }
 
+  Map<String, int> countCallStatuses() {
+    // Initialize counts for all possible statuses
+    Map<String, int> statusCounts = {
+      "not answered": 0,
+      "answered": 0,
+      "not reach": 0,
+      "busy": 0
+    };
+
+    // Count each call status
+    if (callStatus != null) {
+      for (var status in callStatus!) {
+        // Ensure the map contains the key and use null-aware operators to guard against nulls
+        int currentCount =
+            statusCounts[status.status] ?? 0; // Safe-guard against null
+        statusCounts[status.status] = currentCount + 1;
+      }
+    }
+    return statusCounts;
+  }
+
   factory Order.fromJson(Map<String, dynamic> json) {
     return Order(
+      callStatus: (json['callStatus'] as List?)
+          ?.map((e) => CallStatus.fromJson(e))
+          .toList(),
       merged: json['merged'] ?? {},
       availableCouriers: (json['availableCouriers'] as List?)
               ?.map((courier) => {
@@ -287,17 +325,23 @@ class Order {
       warehouseName: json['warehouse']?['warehouse_id']?['name'] ?? '',
       isHold: json['warehouse']?['isHold'] ?? false,
       messages: json['messages'] ?? {},
-      outBoundBy: json['isOutBound'] ?? {}, // status
+      outBoundBy: json['isOutBound'] ?? {},
+      // status
       confirmedBy: json['confirmedBy'] ?? {},
       baApprovedBy: json['baApprovedBy'] ?? {},
       checkInvoiceBy: json['checkInvoice'] ?? {},
       bookedBy: json['isBooked'] ?? {},
       rebookedBy: json['reBooked'] ?? {},
-      pickedBy: json['isPicked'] ?? {}, // status
-      packedBy: json['ispacked'] ?? {}, // status
-      checkedBy: json['checker'] ?? {}, // approved
-      rackedBy: json['racker'] ?? {}, // approved
-      manifestedBy: json['checkManifest'] ?? {}, // approved
+      pickedBy: json['isPicked'] ?? {},
+      // status
+      packedBy: json['ispacked'] ?? {},
+      // status
+      checkedBy: json['checker'] ?? {},
+      // approved
+      rackedBy: json['racker'] ?? {},
+      // approved
+      manifestedBy: json['checkManifest'] ?? {},
+      // approved
       isBooked: json['isBooked']?['status'] ?? false,
       checkInvoice: json['checkInvoice']?['approved'] ?? false,
       customer:
@@ -410,13 +454,12 @@ class Customer {
 
   factory Customer.fromJson(Map<String, dynamic> json) {
     return Customer(
-      customerId: json['customer_id']?.toString() ??
-          '', // Handle null and non-string data
+      customerId: json['customer_id']?.toString() ?? '',
+      // Handle null and non-string data
       firstName: json['first_name']?.toString() ?? '',
       lastName: json['last_name']?.toString() ?? '',
-      phone: json['phone'] is int
-          ? json['phone']
-          : null, // Handle non-integer data
+      phone: json['phone'] is int ? json['phone'] : null,
+      // Handle non-integer data
       billingAddress: json['billing_addr']?.toString() ?? '',
       email: json['email']?.toString() ?? '',
       customerGstin: json['customer_gstin']?.toString() ?? '',
@@ -427,6 +470,7 @@ class Customer {
 
 class Item {
   final int? qty;
+
   //final String? productId;
   final Product? product;
   final double? amount;
@@ -453,7 +497,8 @@ class Item {
 
   factory Item.fromJson(Map<String, dynamic> json) {
     return Item(
-      qty: json['qty']?.toInt() ?? 0, // Handle null and non-integer data
+      qty: json['qty']?.toInt() ?? 0,
+      // Handle null and non-integer data
       // productId: json['product_id']?.toString() ?? '',
       isCombo: json['isCombo'] ?? false,
       comboAmount: json['comboAmount'] ?? 0,
@@ -464,8 +509,8 @@ class Item {
       product: json['product_id'] != null
           ? Product.fromJson(json['product_id'])
           : null,
-      amount: (json['amount'] as num?)?.toDouble() ??
-          0.0, // Handle null and non-numeric data
+      amount: (json['amount'] as num?)?.toDouble() ?? 0.0,
+      // Handle null and non-numeric data
       sku: json['sku']?.toString() ?? '',
       id: json['_id']?.toString() ?? '',
     );
@@ -484,6 +529,7 @@ class Product {
   final Category? category;
   final String? technicalName;
   final Label? label;
+
   // final Colour? color;
   final String? taxRule;
   final BoxSize? boxSize;
@@ -564,7 +610,8 @@ class Product {
       grossWeight: (json['grossWeight'] as num?)?.toDouble() ?? 0.0,
       mrp: (json['mrp'] as num?)?.toDouble() ?? 0.0,
       cost: (json['cost'] as num?)?.toDouble() ?? 0.0,
-      active: json['active'] ?? true, // Default to true if not present
+      active: json['active'] ?? true,
+      // Default to true if not present
       images:
           (json['images'] as List?)?.map((img) => img.toString()).toList() ??
               [],
@@ -911,14 +958,16 @@ class Address {
 
   factory Address.fromJson(Map<String, dynamic> json) {
     return Address(
-      firstName: json['first_name']?.toString() ?? '', // Handle null values
+      firstName: json['first_name']?.toString() ?? '',
+      // Handle null values
       lastName: json['last_name']?.toString() ?? '',
       address1: json['address1']?.toString() ?? '',
       address2: json['address2']?.toString() ?? '',
-      phone: (json['phone'] as num?)?.toInt(), // Handle numeric conversion
+      phone: (json['phone'] as num?)?.toInt(),
+      // Handle numeric conversion
       city: json['city']?.toString() ?? '',
-      pincode:
-          (json['pincode'] as num?)?.toInt() ?? 0, // Handle numeric conversion
+      pincode: (json['pincode'] as num?)?.toInt() ?? 0,
+      // Handle numeric conversion
       state: json['state']?.toString() ?? '',
       country: json['country']?.toString() ?? '',
       countryCode: json['country_code']?.toString() ?? '',
@@ -1055,6 +1104,26 @@ class CheckManifest {
     return CheckManifest(
       approved: json['approved'] ?? false,
       timestamp: DateTime.tryParse(json['timestamp'] ?? ''),
+    );
+  }
+}
+
+class CallStatus {
+  final String status;
+  final DateTime timestamp;
+  final String id;
+
+  CallStatus({
+    required this.status,
+    required this.timestamp,
+    required this.id,
+  });
+
+  factory CallStatus.fromJson(Map<String, dynamic> json) {
+    return CallStatus(
+      status: json['status'],
+      timestamp: DateTime.parse(json['timestamp']),
+      id: json['_id'],
     );
   }
 }

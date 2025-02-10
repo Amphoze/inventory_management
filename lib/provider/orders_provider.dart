@@ -1,12 +1,13 @@
+import 'dart:convert';
 import 'dart:developer';
+
+import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
 import 'package:inventory_management/constants/constants.dart';
-import 'package:logger/logger.dart';
-import 'package:flutter/material.dart';
 import 'package:inventory_management/model/orders_model.dart'; // Ensure you have the Order model defined here
+import 'package:logger/logger.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
 
 class OrdersProvider with ChangeNotifier {
   bool allSelectedReady = false;
@@ -29,6 +30,7 @@ class OrdersProvider with ChangeNotifier {
   String _paymentDateTime = '';
   String _normalDate = '';
   bool confirmOrderByCSV = false;
+
   // List<Order> readyOrders = [];
   // List<Order> failedOrders = [];
 
@@ -42,6 +44,7 @@ class OrdersProvider with ChangeNotifier {
 
   // Public getters for selected orders
   List<bool> get selectedFailedOrders => _selectedFailedOrders;
+
   List<bool> get selectedReadyOrders => _selectedReadyOrders;
 
   final List<Order> _failedOrder = [];
@@ -49,13 +52,21 @@ class OrdersProvider with ChangeNotifier {
   List<Order> get failedOrder => _failedOrder;
 
   String? get selectedCourier => _selectedCourier;
+
   String? get selectedPayment => _selectedPayment;
+
   String? get selectedMarketplace => _selectedMarketplace;
+
   String? get selectedOrderType => _selectedOrderType;
+
   String? get selectedCustomerType => _selectedCustomerType;
+
   String? get selectedFilter => _selectedFilter;
+
   String get expectedDeliveryDate => _expectedDeliveryDate;
+
   String get paymentDateTime => _paymentDateTime;
+
   String get normalDate => _normalDate;
 
   bool isConfirm = false;
@@ -240,9 +251,7 @@ class OrdersProvider with ChangeNotifier {
           'Authorization': 'Bearer $token',
         },
         body: json.encode({
-          "messages": {
-            "confirmerMessage": msg
-          }
+          "messages": {"confirmerMessage": msg}
         }),
       );
 
@@ -327,7 +336,7 @@ class OrdersProvider with ChangeNotifier {
         failedOrders = failedOrders;
         notifyListeners();
       } else {
-        throw Exception('Failed to load failed orders: ${responseFailed.body}');
+        log('Failed to load failed orders: ${responseFailed.body}');
       }
     } catch (e) {
       print('Error fetching failed orders: $e');
@@ -391,7 +400,7 @@ class OrdersProvider with ChangeNotifier {
   //       _selectedFailedOrders = List<bool>.filled(failedOrders.length, false);
   //       failedOrders = failedOrders;
   //     } else {
-  //       throw Exception('Failed to load failed orders: ${responseFailed.body}');
+  //       log('Failed to load failed orders: ${responseFailed.body}');
   //     }
   //   } catch (e) {
   //     print('Error fetching failed orders: $e');
@@ -453,9 +462,11 @@ class OrdersProvider with ChangeNotifier {
         resetSelections();
         _selectedReadyOrders = List<bool>.filled(readyOrders.length, false);
         readyOrders = readyOrders;
+        log('success hua');
+
         notifyListeners();
       } else {
-        throw Exception('Failed to load ready orders: ${responseReady.body}');
+        log('Failed to load ready orders: ${responseReady.body}');
       }
     } catch (e, s) {
       log('\nError fetching ready orders: $e\n\n$s\n\n');
@@ -509,7 +520,7 @@ class OrdersProvider with ChangeNotifier {
 
         return responseData['message'] + "$orderIds" ?? 'Orders Confirmed successfully';
       } else {
-        return responseData['message'] ?? 'Failed to confirm orders';
+        return responseData['errors'][0]['errors'][0] ?? 'Failed to confirm orders';
       }
     } catch (error) {
       setConfirmStatus(false);
@@ -619,7 +630,8 @@ class OrdersProvider with ChangeNotifier {
     notifyListeners();
     Logger().e('failedOrders: $failedOrders');
 
-    final List<String> failedOrderIds = failedOrders.asMap().entries.where((entry) => _selectedFailedOrders[entry.key]).map((entry) => entry.value.orderId).toList();
+    final List<String> failedOrderIds =
+        failedOrders.asMap().entries.where((entry) => _selectedFailedOrders[entry.key]).map((entry) => entry.value.orderId).toList();
     Logger().e('failedOrderIds: $failedOrderIds');
 
     if (failedOrderIds.isEmpty) {
@@ -644,7 +656,8 @@ class OrdersProvider with ChangeNotifier {
 
 // Update status for ready-to-confirm orders
   Future<void> updateReadyToConfirmOrders(BuildContext context) async {
-    final List<String> readyOrderIds = readyOrders.asMap().entries.where((entry) => _selectedReadyOrders[entry.key]).map((entry) => entry.value.orderId).toList();
+    final List<String> readyOrderIds =
+        readyOrders.asMap().entries.where((entry) => _selectedReadyOrders[entry.key]).map((entry) => entry.value.orderId).toList();
 
     if (readyOrderIds.isEmpty) {
       _showSnackbar(context, 'No orders selected to update.');
@@ -700,11 +713,11 @@ class OrdersProvider with ChangeNotifier {
         final errorResponse = json.decode(response.body);
         String errorMessage = errorResponse['message'] ?? 'Failed to update order status';
         _showSnackbar(context, errorMessage);
-        throw Exception('Failed to update order status: ${response.statusCode} ${response.body}');
+        log('Failed to update order status: ${response.statusCode} ${response.body}');
       }
     } catch (error) {
       _showSnackbar(context, 'An error occurred while updating the order status: $error');
-      throw Exception('An error occurred while updating the order status: $error');
+      log('An error occurred while updating the order status: $error');
     }
   }
 
@@ -765,9 +778,7 @@ class OrdersProvider with ChangeNotifier {
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         log('data: $data');
-        readyOrders = [
-          Order.fromJson(data)
-        ];
+        readyOrders = [Order.fromJson(data)];
         log('selectedReadyOrders: $selectedReadyOrders');
       } else {
         readyOrders = [];
@@ -802,9 +813,7 @@ class OrdersProvider with ChangeNotifier {
         final data = jsonDecode(response.body);
         print(response.body);
 
-        failedOrders = [
-          Order.fromJson(data)
-        ];
+        failedOrders = [Order.fromJson(data)];
         print(response.body);
       } else {
         failedOrders = [];
@@ -887,7 +896,7 @@ class OrdersProvider with ChangeNotifier {
         }
         print('Orders not found - Check the filter type.');
       } else {
-        throw Exception('Failed to load orders: ${response.statusCode}');
+        log('Failed to load orders: ${response.statusCode}');
       }
     } catch (e) {
       print('Error fetching orders: $e');
@@ -896,4 +905,72 @@ class OrdersProvider with ChangeNotifier {
       notifyListeners();
     }
   }
+
+  /////////////////////////////////////////////////////////////////////////////////////////  SUPPORT
+  // void _showLoadingDialog(BuildContext context) {
+  //   showDialog(
+  //     context: context,
+  //     barrierDismissible: false,
+  //     builder: (context) {
+  //       return const AlertDialog(
+  //         content: Row(
+  //           children: [
+  //             CircularProgressIndicator(),
+  //             SizedBox(width: 20),
+  //             Text('Processing...'),
+  //           ],
+  //         ),
+  //       );
+  //     },
+  //   );
+  // }
+
+  Future<bool> connectWithSupport(String orderId, String message) async {
+    final token = await _getToken();
+    try {
+      var response = await http.post(
+        Uri.parse('${await Constants.getBaseUrl()}/orders/connectWithSupport'),
+        body: jsonEncode({
+          'orderIds': [orderId],
+          'message': message,
+        }),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+      );
+
+      final responseData = json.decode(response.body);
+
+      log('connect body: $responseData');
+
+      if (response.statusCode == 200) {
+        return true; // Success
+      } else {
+        return false; // API failure
+      }
+    } catch (e) {
+      return false; // Network error
+    }
+  }
+
+// void _showResultDialog(BuildContext context, bool success) {
+//   showDialog(
+//     context: context,
+//     builder: (context) {
+//       return AlertDialog(
+//         title: Text(success ? 'Success' : 'Error'),
+//         content: Text(success
+//             ? 'Your request has been sent.'
+//             : 'Failed to send request. Please try again.'),
+//         actions: [
+//           TextButton(
+//             onPressed: () => Navigator.pop(context),
+//             child: const Text('OK'),
+//           ),
+//         ],
+//       );
+//     },
+//   );
+// }
 }

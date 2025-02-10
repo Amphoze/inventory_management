@@ -1,20 +1,20 @@
 import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:inventory_management/Custom-Files/colors.dart';
 import 'package:inventory_management/Custom-Files/custom_pagination.dart';
 import 'package:inventory_management/Custom-Files/loading_indicator.dart';
 import 'package:inventory_management/Custom-Files/utils.dart';
 import 'package:inventory_management/Widgets/big_combo_card.dart';
+import 'package:inventory_management/Widgets/order_info.dart';
 import 'package:inventory_management/Widgets/product_details_card.dart';
-import 'package:inventory_management/edit_order_confirmer.dart';
-import 'package:inventory_management/edit_order_page.dart';
 import 'package:inventory_management/edit_outbound_page.dart';
 import 'package:inventory_management/model/orders_model.dart';
 import 'package:inventory_management/provider/marketplace_provider.dart';
+import 'package:inventory_management/provider/orders_provider.dart';
 import 'package:logger/logger.dart';
 import 'package:provider/provider.dart';
-import 'package:inventory_management/provider/orders_provider.dart';
-import 'package:inventory_management/Custom-Files/colors.dart';
 
 class OrdersNewPage extends StatefulWidget {
   const OrdersNewPage({super.key});
@@ -23,8 +23,7 @@ class OrdersNewPage extends StatefulWidget {
   _OrdersNewPageState createState() => _OrdersNewPageState();
 }
 
-class _OrdersNewPageState extends State<OrdersNewPage>
-    with TickerProviderStateMixin {
+class _OrdersNewPageState extends State<OrdersNewPage> with TickerProviderStateMixin {
   late TabController _tabController;
   late TextEditingController _searchController;
   late TextEditingController _searchControllerReady;
@@ -35,6 +34,7 @@ class _OrdersNewPageState extends State<OrdersNewPage>
   String _selectedReadyDate = 'Select Date';
   String _selectedFailedDate = 'Select Date';
   String selectedCourier = 'All';
+  late OrdersProvider provider;
 
   @override
   void initState() {
@@ -43,6 +43,7 @@ class _OrdersNewPageState extends State<OrdersNewPage>
     _searchController = TextEditingController();
     _searchControllerReady = TextEditingController();
     _searchControllerFailed = TextEditingController();
+    provider = Provider.of(context, listen: false);
     _tabController.addListener(() {
       if (_tabController.indexIsChanging) {
         setState(() {
@@ -71,11 +72,11 @@ class _OrdersNewPageState extends State<OrdersNewPage>
     remarkController.dispose();
   }
 
-  void _reloadOrders() {
+  void _reloadOrders() async {
     // Access the OrdersProvider and fetch orders again
     final ordersProvider = Provider.of<OrdersProvider>(context, listen: false);
-    ordersProvider.fetchReadyOrders(); // Fetch both orders
-    ordersProvider.fetchFailedOrders();
+    await ordersProvider.fetchReadyOrders(); // Fetch both orders
+    await ordersProvider.fetchFailedOrders();
   }
 
   static String maskPhoneNumber(dynamic phone) {
@@ -192,8 +193,7 @@ class _OrdersNewPageState extends State<OrdersNewPage>
                         ordersProvider.toggleSelectAllReady(value ?? false);
                       },
                     ),
-                    Text(
-                        'Select All (${ordersProvider.selectedReadyItemsCount})'),
+                    Text('Select All (${ordersProvider.selectedReadyItemsCount})'),
                   ],
                 ),
                 Row(
@@ -204,9 +204,7 @@ class _OrdersNewPageState extends State<OrdersNewPage>
                           _selectedReadyDate,
                           style: TextStyle(
                             fontSize: 11,
-                            color: _selectedReadyDate == 'Select Date'
-                                ? Colors.grey
-                                : AppColors.primaryBlue,
+                            color: _selectedReadyDate == 'Select Date' ? Colors.grey : AppColors.primaryBlue,
                           ),
                         ),
                         Tooltip(
@@ -234,8 +232,7 @@ class _OrdersNewPageState extends State<OrdersNewPage>
                               );
 
                               if (picked != null) {
-                                String formattedDate =
-                                    DateFormat('dd-MM-yyyy').format(picked);
+                                String formattedDate = DateFormat('dd-MM-yyyy').format(picked);
                                 setState(() {
                                   _selectedReadyDate = formattedDate;
                                 });
@@ -291,15 +288,12 @@ class _OrdersNewPageState extends State<OrdersNewPage>
                                   log("selectedDate: $_selectedReadyDate");
                                   ordersProvider.fetchReadyOrders(
                                     page: ordersProvider.currentPageReady,
-                                    date: _selectedReadyDate == 'Select Date'
-                                        ? null
-                                        : DateTime.parse(_selectedReadyDate),
+                                    date: _selectedReadyDate == 'Select Date' ? null : DateTime.parse(_selectedReadyDate),
                                   );
                                 } else {
                                   DateTime? selectedDate;
                                   if (_selectedReadyDate != 'Select Date') {
-                                    selectedDate = DateFormat('yyyy-MM-dd')
-                                        .parse(_selectedReadyDate);
+                                    selectedDate = DateFormat('yyyy-MM-dd').parse(_selectedReadyDate);
                                   }
 
                                   log("selectedDate: $selectedDate");
@@ -312,13 +306,11 @@ class _OrdersNewPageState extends State<OrdersNewPage>
                                   );
                                 }
                               },
-                              itemBuilder: (BuildContext context) =>
-                                  <PopupMenuEntry<String>>[
-                                ...provider.marketplaces
-                                    .map((marketplace) => PopupMenuItem<String>(
-                                          value: marketplace.name,
-                                          child: Text(marketplace.name),
-                                        )),
+                              itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
+                                ...provider.marketplaces.map((marketplace) => PopupMenuItem<String>(
+                                      value: marketplace.name,
+                                      child: Text(marketplace.name),
+                                    )),
                                 const PopupMenuItem<String>(
                                   value: 'All',
                                   child: Text('All'),
@@ -344,17 +336,13 @@ class _OrdersNewPageState extends State<OrdersNewPage>
                       onPressed: ordersProvider.isConfirm
                           ? null // Disable button while loading
                           : () async {
-                              final provider = Provider.of<OrdersProvider>(
-                                  context,
-                                  listen: false);
+                              final provider = Provider.of<OrdersProvider>(context, listen: false);
 
                               // Collect selected order IDs
-                              List<String> selectedOrderIds = provider
-                                  .readyOrders
+                              List<String> selectedOrderIds = provider.readyOrders
                                   .asMap()
                                   .entries
-                                  .where((entry) =>
-                                      provider.selectedReadyOrders[entry.key])
+                                  .where((entry) => provider.selectedReadyOrders[entry.key])
                                   .map((entry) => entry.value.orderId)
                                   .toList();
 
@@ -373,8 +361,7 @@ class _OrdersNewPageState extends State<OrdersNewPage>
                                 provider.setConfirmStatus(true);
 
                                 // Call confirmOrders method with selected IDs
-                                String resultMessage = await provider
-                                    .confirmOrders(context, selectedOrderIds);
+                                String resultMessage = await provider.confirmOrders(context, selectedOrderIds);
 
                                 log('resultMessage: $resultMessage');
 
@@ -384,15 +371,11 @@ class _OrdersNewPageState extends State<OrdersNewPage>
                                 // Determine the background color based on the result
                                 Color snackBarColor;
                                 if (resultMessage.contains('success')) {
-                                  snackBarColor =
-                                      AppColors.green; // Success: Green
-                                } else if (resultMessage.contains('error') ||
-                                    resultMessage.contains('failed')) {
-                                  snackBarColor =
-                                      AppColors.cardsred; // Error: Red
+                                  snackBarColor = AppColors.green; // Success: Green
+                                } else if (resultMessage.contains('error') || resultMessage.contains('failed')) {
+                                  snackBarColor = AppColors.cardsred; // Error: Red
                                 } else {
-                                  snackBarColor =
-                                      AppColors.orange; // Other: Orange
+                                  snackBarColor = AppColors.orange; // Other: Orange
                                 }
 
                                 // Show feedback based on the result
@@ -408,8 +391,7 @@ class _OrdersNewPageState extends State<OrdersNewPage>
                           ? const SizedBox(
                               width: 20,
                               height: 20,
-                              child: CircularProgressIndicator(
-                                  color: Colors.white),
+                              child: CircularProgressIndicator(color: Colors.white),
                             )
                           : const Text(
                               'Confirm Orders',
@@ -424,17 +406,13 @@ class _OrdersNewPageState extends State<OrdersNewPage>
                       onPressed: ordersProvider.isCancel
                           ? null // Disable button while loading
                           : () async {
-                              final provider = Provider.of<OrdersProvider>(
-                                  context,
-                                  listen: false);
+                              final provider = Provider.of<OrdersProvider>(context, listen: false);
 
                               // Collect selected order IDs
-                              List<String> selectedOrderIds = provider
-                                  .readyOrders
+                              List<String> selectedOrderIds = provider.readyOrders
                                   .asMap()
                                   .entries
-                                  .where((entry) =>
-                                      provider.selectedReadyOrders[entry.key])
+                                  .where((entry) => provider.selectedReadyOrders[entry.key])
                                   .map((entry) => entry.value.orderId)
                                   .toList();
 
@@ -451,8 +429,7 @@ class _OrdersNewPageState extends State<OrdersNewPage>
                                 provider.setCancelStatus(true);
 
                                 // Call confirmOrders method with selected IDs
-                                String resultMessage = await provider
-                                    .cancelOrders(context, selectedOrderIds);
+                                String resultMessage = await provider.cancelOrders(context, selectedOrderIds);
 
                                 // Set loading status to false after operation completes
                                 provider.setCancelStatus(false);
@@ -460,20 +437,15 @@ class _OrdersNewPageState extends State<OrdersNewPage>
                                 // Determine the background color based on the result
                                 Color snackBarColor;
                                 if (resultMessage.contains('success')) {
-                                  snackBarColor =
-                                      AppColors.green; // Success: Green
-                                } else if (resultMessage.contains('error') ||
-                                    resultMessage.contains('failed')) {
-                                  snackBarColor =
-                                      AppColors.cardsred; // Error: Red
+                                  snackBarColor = AppColors.green; // Success: Green
+                                } else if (resultMessage.contains('error') || resultMessage.contains('failed')) {
+                                  snackBarColor = AppColors.cardsred; // Error: Red
                                 } else {
-                                  snackBarColor =
-                                      AppColors.orange; // Other: Orange
+                                  snackBarColor = AppColors.orange; // Other: Orange
                                 }
 
                                 // Show feedback based on the result
-                                ScaffoldMessenger.of(context)
-                                    .removeCurrentSnackBar();
+                                ScaffoldMessenger.of(context).removeCurrentSnackBar();
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   SnackBar(
                                     content: Text(resultMessage),
@@ -486,8 +458,7 @@ class _OrdersNewPageState extends State<OrdersNewPage>
                           ? const SizedBox(
                               width: 20,
                               height: 20,
-                              child: CircularProgressIndicator(
-                                  color: Colors.white),
+                              child: CircularProgressIndicator(color: Colors.white),
                             )
                           : const Text(
                               'Cancel Orders',
@@ -505,11 +476,8 @@ class _OrdersNewPageState extends State<OrdersNewPage>
                           selectedCourier = 'All';
                           _selectedReadyDate = 'Select Date';
                         });
-                        await Provider.of<OrdersProvider>(context,
-                                listen: false)
-                            .fetchReadyOrders();
-                        Provider.of<OrdersProvider>(context, listen: false)
-                            .resetSelections();
+                        await Provider.of<OrdersProvider>(context, listen: false).fetchReadyOrders();
+                        Provider.of<OrdersProvider>(context, listen: false).resetSelections();
                         ordersProvider.clearSearchResults();
                         print('Ready to Confirm Orders refreshed');
                       },
@@ -538,12 +506,10 @@ class _OrdersNewPageState extends State<OrdersNewPage>
                                     color: Color.fromRGBO(117, 117, 117, 1),
                                   ),
                                   onPressed: () {
-                                    final searchTerm =
-                                        _searchControllerReady.text;
+                                    final searchTerm = _searchControllerReady.text;
 
                                     if (searchTerm.isNotEmpty) {
-                                      ordersProvider.searchReadyToConfirmOrders(
-                                          searchTerm);
+                                      ordersProvider.searchReadyToConfirmOrders(searchTerm);
                                     }
                                   },
                                 ),
@@ -553,13 +519,11 @@ class _OrdersNewPageState extends State<OrdersNewPage>
                                   fontSize: 16,
                                 ),
                                 border: InputBorder.none,
-                                contentPadding:
-                                    const EdgeInsets.symmetric(vertical: 10.0),
+                                contentPadding: const EdgeInsets.symmetric(vertical: 10.0),
                               ),
                               style: const TextStyle(color: AppColors.black),
                               onSubmitted: (value) {
-                                ordersProvider
-                                    .searchReadyToConfirmOrders(value);
+                                ordersProvider.searchReadyToConfirmOrders(value);
                               },
                               onChanged: (value) {
                                 if (value.isEmpty) {
@@ -611,44 +575,32 @@ class _OrdersNewPageState extends State<OrdersNewPage>
                             final order = ordersProvider.readyOrders[index];
                             if (order.messages != null &&
                                 order.messages!['confirmerMessage'] != null &&
-                                order.messages!['confirmerMessage']
-                                    .toString()
-                                    .isNotEmpty) {
-                              remarkController.text = order
-                                  .messages!['confirmerMessage']
-                                  .toString();
+                                order.messages!['confirmerMessage'].toString().isNotEmpty) {
+                              remarkController.text = order.messages!['confirmerMessage'].toString();
                             }
                             //////////////////////////////////////////////////////////////
-                            final Map<String, List<Item>> groupedComboItems =
-                                {};
+                            final Map<String, List<Item>> groupedComboItems = {};
                             for (var item in order.items) {
-                              if (item.isCombo == true &&
-                                  item.comboSku != null) {
-                                if (!groupedComboItems
-                                    .containsKey(item.comboSku)) {
+                              if (item.isCombo == true && item.comboSku != null) {
+                                if (!groupedComboItems.containsKey(item.comboSku)) {
                                   groupedComboItems[item.comboSku!] = [];
                                 }
                                 groupedComboItems[item.comboSku]!.add(item);
                               }
                             }
-                            final List<List<Item>> comboItemGroups =
-                                groupedComboItems.values
-                                    .where((items) => items.length > 1)
-                                    .toList();
+                            final List<List<Item>> comboItemGroups = groupedComboItems.values.where((items) => items.length > 1).toList();
 
                             final List<Item> remainingItems = order.items
-                                .where((item) => !(item.isCombo == true &&
-                                    item.comboSku != null &&
-                                    groupedComboItems[item.comboSku]!.length >
-                                        1))
+                                .where((item) =>
+                                    !(item.isCombo == true && item.comboSku != null && groupedComboItems[item.comboSku]!.length > 1))
                                 .toList();
 
                             Logger().e('selectedReadyOrders: ${ordersProvider.selectedReadyOrders}');
                             //////////////////////////////////////////////////////////
                             return Card(
                               surfaceTintColor: Colors.white,
-                              color: const Color.fromARGB(255, 231, 230, 230),
-                              elevation: 0.5,
+                              color: ordersProvider.selectedReadyOrders[index] ? Colors.grey[300] : Colors.grey[100],
+                              elevation: 2,
                               margin: const EdgeInsets.all(8.0),
                               child: Padding(
                                 padding: const EdgeInsets.all(8.0),
@@ -656,24 +608,18 @@ class _OrdersNewPageState extends State<OrdersNewPage>
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.spaceBetween,
+                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                       children: [
                                         Checkbox(
-                                          value: ordersProvider
-                                              .selectedReadyOrders[index],
-                                          onChanged: (value) => ordersProvider
-                                              .toggleOrderSelectionReady(
-                                                  value ?? false, index),
+                                          value: ordersProvider.selectedReadyOrders[index],
+                                          onChanged: (value) => ordersProvider.toggleOrderSelectionReady(value ?? false, index),
                                         ),
                                         Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
+                                          crossAxisAlignment: CrossAxisAlignment.start,
                                           children: [
                                             const Text(
                                               'Order ID: ',
-                                              style: TextStyle(
-                                                  fontWeight: FontWeight.bold),
+                                              style: TextStyle(fontWeight: FontWeight.bold),
                                             ),
                                             Text(
                                               order.orderId ?? 'N/A',
@@ -685,874 +631,754 @@ class _OrdersNewPageState extends State<OrdersNewPage>
                                           ],
                                         ),
                                         Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
+                                          crossAxisAlignment: CrossAxisAlignment.start,
                                           children: [
                                             const Text(
                                               'Date: ',
-                                              style: TextStyle(
-                                                  fontWeight: FontWeight.bold),
+                                              style: TextStyle(fontWeight: FontWeight.bold),
                                             ),
                                             Text(
-                                              ordersProvider
-                                                  .formatDate(order.date!),
-                                              style: const TextStyle(
-                                                  fontWeight: FontWeight.bold,
-                                                  color: AppColors.primaryBlue),
+                                              ordersProvider.formatDate(order.date!),
+                                              style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.primaryBlue),
                                             ),
                                           ],
                                         ),
                                         Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
+                                          crossAxisAlignment: CrossAxisAlignment.start,
                                           children: [
                                             const Text(
                                               'Total Amount: ',
-                                              style: TextStyle(
-                                                  fontWeight: FontWeight.bold),
+                                              style: TextStyle(fontWeight: FontWeight.bold),
                                             ),
                                             Text(
                                               'Rs. ${order.totalAmount ?? ''}',
-                                              style: const TextStyle(
-                                                  fontWeight: FontWeight.bold,
-                                                  color: AppColors.primaryBlue),
+                                              style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.primaryBlue),
                                             ),
                                           ],
                                         ),
                                         Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
+                                          crossAxisAlignment: CrossAxisAlignment.start,
                                           children: [
                                             const Text(
                                               'Total Items: ',
-                                              style: TextStyle(
-                                                  fontWeight: FontWeight.bold),
+                                              style: TextStyle(fontWeight: FontWeight.bold),
                                             ),
                                             Text(
                                               '${order.items.fold(0, (total, item) => total + item.qty!)}',
-                                              style: const TextStyle(
-                                                  fontWeight: FontWeight.bold,
-                                                  color: AppColors.primaryBlue),
+                                              style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.primaryBlue),
                                             ),
                                           ],
                                         ),
                                         Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
+                                          crossAxisAlignment: CrossAxisAlignment.start,
                                           children: [
                                             const Text(
                                               'Total Weight: ',
-                                              style: TextStyle(
-                                                  fontWeight: FontWeight.bold),
+                                              style: TextStyle(fontWeight: FontWeight.bold),
                                             ),
                                             Text(
                                               '${order.totalWeight ?? ''}',
-                                              style: const TextStyle(
-                                                  fontWeight: FontWeight.bold,
-                                                  color: AppColors.primaryBlue),
+                                              style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.primaryBlue),
                                             ),
                                           ],
                                         ),
-                                        ElevatedButton(
-                                          onPressed: () async {
-                                            final result = await Navigator.push(
-                                              context,
-                                              MaterialPageRoute(
-                                                builder: (context) =>
-                                                    EditOutboundPage(
-                                                  order: order,
-                                                  isBookPage: false,
+                                        Row(
+                                          children: [
+                                            ElevatedButton(
+                                              onPressed: () async {
+                                                final result = await Navigator.push(
+                                                  context,
+                                                  MaterialPageRoute(
+                                                    builder: (context) => EditOutboundPage(
+                                                      order: order,
+                                                      isBookPage: false,
+                                                    ),
+                                                  ),
+                                                );
+                                                if (result == true) {
+                                                  final readySearched = _searchControllerReady.text;
+
+                                                  // Ready
+                                                  if (readySearched.isNotEmpty) {
+                                                    ordersProvider.searchReadyToConfirmOrders(readySearched);
+                                                  } else if (selectedCourier != 'All') {
+                                                    ordersProvider.fetchOrdersByMarketplace(
+                                                        selectedCourier, 1, ordersProvider.currentPageReady);
+                                                  } else if (readySearched.isNotEmpty && selectedCourier != 'All') {
+                                                    ordersProvider.fetchOrdersByMarketplace(
+                                                        selectedCourier, 1, ordersProvider.currentPageReady);
+                                                    ordersProvider.searchReadyToConfirmOrders(readySearched);
+                                                  } else {
+                                                    ordersProvider.fetchReadyOrders();
+                                                  }
+                                                }
+                                              },
+                                              style: ElevatedButton.styleFrom(
+                                                foregroundColor: AppColors.white,
+                                                backgroundColor: AppColors.orange,
+                                                // Set the text color to white
+                                                textStyle: const TextStyle(
+                                                  fontWeight: FontWeight.bold,
                                                 ),
                                               ),
-                                            );
-                                            if (result == true) {
-                                              final readySearched =
-                                                  _searchControllerReady.text;
-
-                                              // Ready
-                                              if (readySearched.isNotEmpty) {
-                                                ordersProvider
-                                                    .searchReadyToConfirmOrders(
-                                                        readySearched);
-                                              } else if (selectedCourier !=
-                                                  'All') {
-                                                ordersProvider
-                                                    .fetchOrdersByMarketplace(
-                                                        selectedCourier,
-                                                        1,
-                                                        ordersProvider
-                                                            .currentPageReady);
-                                              } else if (readySearched
-                                                      .isNotEmpty &&
-                                                  selectedCourier != 'All') {
-                                                ordersProvider
-                                                    .fetchOrdersByMarketplace(
-                                                        selectedCourier,
-                                                        1,
-                                                        ordersProvider
-                                                            .currentPageReady);
-                                                ordersProvider
-                                                    .searchReadyToConfirmOrders(
-                                                        readySearched);
-                                              } else {
-                                                ordersProvider
-                                                    .fetchReadyOrders();
-                                              }
-                                            }
-                                          },
-                                          style: ElevatedButton.styleFrom(
-                                            foregroundColor: AppColors.white,
-                                            backgroundColor: AppColors
-                                                .orange, // Set the text color to white
-                                            textStyle: const TextStyle(
-                                              fontWeight: FontWeight.bold,
+                                              child: const Text(
+                                                'Edit Order',
+                                              ),
                                             ),
-                                          ),
-                                          child: const Text(
-                                            'Edit Order',
-                                          ),
-                                        )
+                                            const SizedBox(width: 8),
+                                            ElevatedButton(
+                                                onPressed: () {
+                                                  TextEditingController messageController = TextEditingController();
+
+                                                  showDialog(
+                                                    context: context,
+                                                    // barrierDismissible: false,
+                                                    builder: (context) {
+                                                      return AlertDialog(
+                                                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                                                        titlePadding: EdgeInsets.zero,
+                                                        title: Container(
+                                                          padding: const EdgeInsets.all(20),
+                                                          decoration: BoxDecoration(
+                                                            color: Theme.of(context).primaryColor,
+                                                            borderRadius: const BorderRadius.only(
+                                                              topLeft: Radius.circular(16),
+                                                              topRight: Radius.circular(16),
+                                                            ),
+                                                          ),
+                                                          child: const Row(
+                                                            children: [
+                                                              Icon(Icons.support_agent, color: Colors.white, size: 24),
+                                                              SizedBox(width: 12),
+                                                              Text(
+                                                                'Connect with Support',
+                                                                style: TextStyle(
+                                                                  color: Colors.white,
+                                                                  fontSize: 20,
+                                                                  fontWeight: FontWeight.w600,
+                                                                ),
+                                                              ),
+                                                            ],
+                                                          ),
+                                                        ),
+                                                        content: Container(
+                                                          width: MediaQuery.of(context).size.width * 0.4,
+                                                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 16),
+                                                          child: Column(
+                                                            mainAxisSize: MainAxisSize.min,
+                                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                                            children: [
+                                                              const Text(
+                                                                'Order Details',
+                                                                style: TextStyle(
+                                                                  fontSize: 16,
+                                                                  fontWeight: FontWeight.w600,
+                                                                  color: Colors.grey,
+                                                                ),
+                                                              ),
+                                                              const SizedBox(height: 12),
+                                                              TextField(
+                                                                controller: TextEditingController(text: order.orderId),
+                                                                readOnly: true,
+                                                                decoration: InputDecoration(
+                                                                  labelText: 'Order ID',
+                                                                  prefixIcon: const Icon(Icons.shopping_cart_outlined),
+                                                                  filled: true,
+                                                                  fillColor: Colors.grey.shade100,
+                                                                  border: OutlineInputBorder(
+                                                                    borderRadius: BorderRadius.circular(12),
+                                                                    borderSide: BorderSide(color: Colors.grey.shade300),
+                                                                  ),
+                                                                  enabledBorder: OutlineInputBorder(
+                                                                    borderRadius: BorderRadius.circular(12),
+                                                                    borderSide: BorderSide(color: Colors.grey.shade300),
+                                                                  ),
+                                                                  focusedBorder: OutlineInputBorder(
+                                                                    borderRadius: BorderRadius.circular(12),
+                                                                    borderSide: BorderSide(color: Theme.of(context).primaryColor),
+                                                                  ),
+                                                                ),
+                                                              ),
+                                                              const SizedBox(height: 24),
+                                                              const Text(
+                                                                'Your Message',
+                                                                style: TextStyle(
+                                                                  fontSize: 16,
+                                                                  fontWeight: FontWeight.w600,
+                                                                  color: Colors.grey,
+                                                                ),
+                                                              ),
+                                                              const SizedBox(height: 12),
+                                                              TextField(
+                                                                controller: messageController,
+                                                                maxLines: 4,
+                                                                decoration: InputDecoration(
+                                                                  hintText: 'Please describe your issue...',
+                                                                  prefixIcon: const Padding(
+                                                                    padding: EdgeInsets.only(bottom: 84),
+                                                                    child: Icon(Icons.message_outlined),
+                                                                  ),
+                                                                  filled: true,
+                                                                  fillColor: Colors.white,
+                                                                  border: OutlineInputBorder(
+                                                                    borderRadius: BorderRadius.circular(12),
+                                                                    borderSide: BorderSide(color: Colors.grey.shade300),
+                                                                  ),
+                                                                  enabledBorder: OutlineInputBorder(
+                                                                    borderRadius: BorderRadius.circular(12),
+                                                                    borderSide: BorderSide(color: Colors.grey.shade300),
+                                                                  ),
+                                                                  focusedBorder: OutlineInputBorder(
+                                                                    borderRadius: BorderRadius.circular(12),
+                                                                    borderSide: BorderSide(color: Theme.of(context).primaryColor),
+                                                                  ),
+                                                                ),
+                                                              ),
+                                                            ],
+                                                          ),
+                                                        ),
+                                                        actions: [
+                                                          TextButton.icon(
+                                                            onPressed: () => Navigator.pop(context),
+                                                            // icon: const Icon(Icons.close),
+                                                            label: const Text('Cancel'),
+                                                            style: TextButton.styleFrom(
+                                                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                                                            ),
+                                                          ),
+                                                          // const SizedBox(width: 12),
+                                                          ElevatedButton.icon(
+                                                            onPressed: () async {
+                                                              showDialog(
+                                                                context: context,
+                                                                barrierDismissible: false,
+                                                                builder: (context) {
+                                                                  return const AlertDialog(
+                                                                    content: Row(
+                                                                      children: [
+                                                                        CircularProgressIndicator(),
+                                                                        SizedBox(width: 20),
+                                                                        Text('Processing...'),
+                                                                      ],
+                                                                    ),
+                                                                  );
+                                                                },
+                                                              );
+                                                              bool result = await context
+                                                                  .read<OrdersProvider>()
+                                                                  .connectWithSupport(order.orderId, messageController.text);
+
+                                                              log('result: $result');
+
+                                                              Navigator.pop(context);
+                                                              Navigator.pop(context);
+
+                                                              if (result) {
+                                                                await provider.fetchReadyOrders();
+                                                              }
+                                                              // _showResultDialog(context, result);
+                                                            },
+                                                            // icon: const Icon(Icons.send),
+                                                            label: const Text('Report'),
+                                                            style: ElevatedButton.styleFrom(
+                                                              backgroundColor: Theme.of(context).primaryColor,
+                                                              foregroundColor: Colors.white,
+                                                              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                                                              shape: RoundedRectangleBorder(
+                                                                borderRadius: BorderRadius.circular(8),
+                                                              ),
+                                                            ),
+                                                          ),
+                                                        ],
+                                                      );
+                                                    },
+                                                  );
+                                                },
+                                                child: const Text('Report Bug')),
+                                          ],
+                                        ),
                                       ],
                                     ),
                                     const Divider(
                                       thickness: 1,
                                       color: AppColors.grey,
                                     ),
-                                    Padding(
-                                      padding: const EdgeInsets.all(8.0),
-                                      child: Row(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          Expanded(
-                                            child: Padding(
-                                              padding: const EdgeInsets.only(
-                                                  right: 8.0),
-                                              child: Column(
-                                                crossAxisAlignment:
-                                                    CrossAxisAlignment.start,
-                                                children: [
-                                                  buildLabelValueRow(
-                                                      'Payment Mode',
-                                                      order.paymentMode ?? ''),
-                                                  buildLabelValueRow(
-                                                      'Currency Code',
-                                                      order.currencyCode ?? ''),
-                                                  buildLabelValueRow(
-                                                      'COD Amount',
-                                                      order.codAmount
-                                                              .toString() ??
-                                                          ''),
-                                                  buildLabelValueRow(
-                                                      'Prepaid Amount',
-                                                      order.prepaidAmount
-                                                              .toString() ??
-                                                          ''),
-                                                  buildLabelValueRow(
-                                                      'Coin',
-                                                      order.coin.toString() ??
-                                                          ''),
-                                                  buildLabelValueRow(
-                                                      'Tax Percent',
-                                                      order.taxPercent
-                                                              .toString() ??
-                                                          ''),
-                                                  buildLabelValueRow(
-                                                      'Courier Name',
-                                                      order.courierName ?? ''),
-                                                  buildLabelValueRow(
-                                                      'Order Type',
-                                                      order.orderType ?? ''),
-                                                  buildLabelValueRow(
-                                                      'Payment Bank',
-                                                      order.paymentBank ?? ''),
-                                                ],
-                                              ),
-                                            ),
-                                          ),
-                                          // const SizedBox(width: 12.0),
-                                          Expanded(
-                                            child: Padding(
-                                              padding: const EdgeInsets.only(
-                                                  right: 8.0),
-                                              child: Column(
-                                                crossAxisAlignment:
-                                                    CrossAxisAlignment.start,
-                                                children: [
-                                                  buildLabelValueRow(
-                                                      'Discount Amount',
-                                                      order.discountAmount
-                                                              .toString() ??
-                                                          ''),
-                                                  buildLabelValueRow(
-                                                      'Discount Scheme',
-                                                      order.discountScheme ??
-                                                          ''),
-                                                  buildLabelValueRow(
-                                                      'Discount Percent',
-                                                      order.discountPercent
-                                                              .toString() ??
-                                                          ''),
-                                                  buildLabelValueRow('Agent',
-                                                      order.agent ?? ''),
-                                                  buildLabelValueRow('Notes',
-                                                      order.notes ?? ''),
-                                                  buildLabelValueRow(
-                                                      'Marketplace',
-                                                      order.marketplace?.name ??
-                                                          ''),
-                                                  buildLabelValueRow('Filter',
-                                                      order.filter ?? ''),
-                                                  buildLabelValueRow(
-                                                    'Expected Delivery Date',
-                                                    order.expectedDeliveryDate !=
-                                                            null
-                                                        ? ordersProvider
-                                                            .formatDate(order
-                                                                .expectedDeliveryDate!)
-                                                        : '',
-                                                  ),
-                                                  buildLabelValueRow(
-                                                      'Preferred Courier',
-                                                      order.preferredCourier ??
-                                                          ''),
-                                                  buildLabelValueRow(
-                                                    'Payment Date Time',
-                                                    order.paymentDateTime !=
-                                                            null
-                                                        ? ordersProvider
-                                                            .formatDateTime(order
-                                                                .paymentDateTime!)
-                                                        : '',
-                                                  ),
-                                                ],
-                                              ),
-                                            ),
-                                          ),
-                                          // const SizedBox(width: 12.0),
-                                          Expanded(
-                                            child: Padding(
-                                              padding: const EdgeInsets.only(
-                                                  right: 8.0),
-                                              child: Column(
-                                                crossAxisAlignment:
-                                                    CrossAxisAlignment.start,
-                                                children: [
-                                                  buildLabelValueRow(
-                                                      'Delivery Term',
-                                                      order.deliveryTerm ?? ''),
-                                                  buildLabelValueRow(
-                                                      'Transaction Number',
-                                                      order.transactionNumber ??
-                                                          ''),
-                                                  buildLabelValueRow(
-                                                      'Micro Dealer Order',
-                                                      order.microDealerOrder ??
-                                                          ''),
-                                                  buildLabelValueRow(
-                                                      'Fulfillment Type',
-                                                      order.fulfillmentType ??
-                                                          ''),
-                                                  // buildLabelValueRow(
-                                                  //     'No. of Boxes',
-                                                  //     order.numberOfBoxes
-                                                  //             .toString() ??
-                                                  //         ''),
-                                                  buildLabelValueRow(
-                                                      'Total Quantity',
-                                                      order.totalQuantity
-                                                              .toString() ??
-                                                          ''),
-                                                  // buildLabelValueRow(
-                                                  //     'SKU Qty',
-                                                  //     order.skuQty.toString() ??
-                                                  //         ''),
-                                                  buildLabelValueRow(
-                                                      'Calculation Entry No.',
-                                                      order.calcEntryNumber ??
-                                                          ''),
-                                                  buildLabelValueRow('Currency',
-                                                      order.currency ?? ''),
-                                                ],
-                                              ),
-                                            ),
-                                          ),
-                                          // const SizedBox(width: 12.0),
-                                          Expanded(
-                                            child: Column(
-                                              crossAxisAlignment:
-                                                  CrossAxisAlignment.start,
-                                              children: [
-                                                buildLabelValueRow(
-                                                  'Dimensions',
-                                                  '${order.length.toString() ?? ''} x ${order.breadth.toString() ?? ''} x ${order.height.toString() ?? ''}',
-                                                ),
-                                                buildLabelValueRow(
-                                                    'Tracking Status',
-                                                    order.trackingStatus ?? ''),
-                                                const SizedBox(
-                                                  height: 7,
-                                                ),
-                                                const Text(
-                                                  'Customer Details:',
-                                                  style: TextStyle(
-                                                      fontWeight:
-                                                          FontWeight.bold,
-                                                      fontSize: 12.0,
-                                                      color: AppColors
-                                                          .primaryBlue),
-                                                ),
-                                                buildLabelValueRow(
-                                                  'Customer ID',
-                                                  order.customer?.customerId ??
-                                                      '',
-                                                ),
-                                                buildLabelValueRow(
-                                                    'Full Name',
-                                                    order.customer?.firstName !=
-                                                            order.customer
-                                                                ?.lastName
-                                                        ? '${order.customer?.firstName ?? ''} ${order.customer?.lastName ?? ''}'
-                                                            .trim()
-                                                        : order.customer
-                                                                ?.firstName ??
-                                                            ''),
-                                                buildLabelValueRow(
-                                                  'Email',
-                                                  order.customer?.email ?? '',
-                                                ),
-                                                buildLabelValueRow(
-                                                  'Phone',
-                                                  maskPhoneNumber(order
-                                                          .customer?.phone
-                                                          ?.toString()) ??
-                                                      '',
-                                                ),
-                                                buildLabelValueRow(
-                                                  'GSTIN',
-                                                  order.customer
-                                                          ?.customerGstin ??
-                                                      '',
-                                                ),
-                                              ],
-                                            ),
-                                          ),
-                                          // const SizedBox(width: 12.0),
-                                        ],
-                                      ),
-                                    ),
+                                    OrderInfo(order: order, pro: ordersProvider),
+                                    // Padding(
+                                    //   padding: const EdgeInsets.all(8.0),
+                                    //   child: Row(
+                                    //     crossAxisAlignment: CrossAxisAlignment.start,
+                                    //     children: [
+                                    //       Expanded(
+                                    //         child: Padding(
+                                    //           padding: const EdgeInsets.only(right: 8.0),
+                                    //           child: Column(
+                                    //             crossAxisAlignment: CrossAxisAlignment.start,
+                                    //             children: [
+                                    //               buildLabelValueRow(
+                                    //                 'Payment Mode',
+                                    //                 order.paymentMode ?? '',
+                                    //               ),
+                                    //               buildLabelValueRow('Currency Code', order.currencyCode ?? ''),
+                                    //               buildLabelValueRow('COD Amount', order.codAmount.toString() ?? ''),
+                                    //               buildLabelValueRow('Prepaid Amount', order.prepaidAmount.toString() ?? ''),
+                                    //               buildLabelValueRow('Coin', order.coin.toString() ?? ''),
+                                    //               buildLabelValueRow('Tax Percent', order.taxPercent.toString() ?? ''),
+                                    //               buildLabelValueRow('Courier Name', order.courierName ?? ''),
+                                    //               buildLabelValueRow('Order Type', order.orderType ?? ''),
+                                    //               buildLabelValueRow('Payment Bank', order.paymentBank ?? ''),
+                                    //             ],
+                                    //           ),
+                                    //         ),
+                                    //       ),
+                                    //       // const SizedBox(width: 12.0),
+                                    //       Expanded(
+                                    //         child: Padding(
+                                    //           padding: const EdgeInsets.only(right: 8.0),
+                                    //           child: Column(
+                                    //             crossAxisAlignment: CrossAxisAlignment.start,
+                                    //             children: [
+                                    //               buildLabelValueRow('Discount Amount', order.discountAmount.toString() ?? ''),
+                                    //               buildLabelValueRow('Discount Scheme', order.discountScheme ?? ''),
+                                    //               buildLabelValueRow('Discount Percent', order.discountPercent.toString() ?? ''),
+                                    //               buildLabelValueRow('Agent', order.agent ?? ''),
+                                    //               buildLabelValueRow('Notes', order.notes ?? ''),
+                                    //               buildLabelValueRow('Marketplace', order.marketplace?.name ?? ''),
+                                    //               buildLabelValueRow('Filter', order.filter ?? ''),
+                                    //               buildLabelValueRow(
+                                    //                 'Expected Delivery Date',
+                                    //                 order.expectedDeliveryDate != null
+                                    //                     ? ordersProvider.formatDate(order.expectedDeliveryDate!)
+                                    //                     : '',
+                                    //               ),
+                                    //               buildLabelValueRow('Preferred Courier', order.preferredCourier ?? ''),
+                                    //               buildLabelValueRow(
+                                    //                 'Payment Date Time',
+                                    //                 order.paymentDateTime != null
+                                    //                     ? ordersProvider.formatDateTime(order.paymentDateTime!)
+                                    //                     : '',
+                                    //               ),
+                                    //             ],
+                                    //           ),
+                                    //         ),
+                                    //       ),
+                                    //       // const SizedBox(width: 12.0),
+                                    //       Expanded(
+                                    //         child: Padding(
+                                    //           padding: const EdgeInsets.only(right: 8.0),
+                                    //           child: Column(
+                                    //             crossAxisAlignment: CrossAxisAlignment.start,
+                                    //             children: [
+                                    //               buildLabelValueRow('Delivery Term', order.deliveryTerm ?? ''),
+                                    //               buildLabelValueRow('Transaction Number', order.transactionNumber ?? ''),
+                                    //               buildLabelValueRow('Micro Dealer Order', order.microDealerOrder ?? ''),
+                                    //               buildLabelValueRow('Fulfillment Type', order.fulfillmentType ?? ''),
+                                    //               // buildLabelValueRow(
+                                    //               //     'No. of Boxes',
+                                    //               //     order.numberOfBoxes
+                                    //               //             .toString() ??
+                                    //               //         ''),
+                                    //               buildLabelValueRow('Total Quantity', order.totalQuantity.toString() ?? ''),
+                                    //               // buildLabelValueRow(
+                                    //               //     'SKU Qty',
+                                    //               //     order.skuQty.toString() ??
+                                    //               //         ''),
+                                    //               buildLabelValueRow('Calculation Entry No.', order.calcEntryNumber ?? ''),
+                                    //               buildLabelValueRow('Currency', order.currency ?? ''),
+                                    //             ],
+                                    //           ),
+                                    //         ),
+                                    //       ),
+                                    //       // const SizedBox(width: 12.0),
+                                    //       Expanded(
+                                    //         child: Column(
+                                    //           crossAxisAlignment: CrossAxisAlignment.start,
+                                    //           children: [
+                                    //             buildLabelValueRow(
+                                    //               'Dimensions',
+                                    //               '${order.length.toString() ?? ''} x ${order.breadth.toString() ?? ''} x ${order.height.toString() ?? ''}',
+                                    //             ),
+                                    //             buildLabelValueRow('Tracking Status', order.trackingStatus ?? ''),
+                                    //             const SizedBox(
+                                    //               height: 7,
+                                    //             ),
+                                    //             const Text(
+                                    //               'Customer Details:',
+                                    //               style:
+                                    //                   TextStyle(fontWeight: FontWeight.bold, fontSize: 12.0, color: AppColors.primaryBlue),
+                                    //             ),
+                                    //             buildLabelValueRow(
+                                    //               'Customer ID',
+                                    //               order.customer?.customerId ?? '',
+                                    //             ),
+                                    //             buildLabelValueRow(
+                                    //                 'Full Name',
+                                    //                 order.customer?.firstName != order.customer?.lastName
+                                    //                     ? '${order.customer?.firstName ?? ''} ${order.customer?.lastName ?? ''}'.trim()
+                                    //                     : order.customer?.firstName ?? ''),
+                                    //             buildLabelValueRow(
+                                    //               'Email',
+                                    //               order.customer?.email ?? '',
+                                    //             ),
+                                    //             buildLabelValueRow(
+                                    //               'Phone',
+                                    //               maskPhoneNumber(order.customer?.phone?.toString()) ?? '',
+                                    //             ),
+                                    //             buildLabelValueRow(
+                                    //               'GSTIN',
+                                    //               order.customer?.customerGstin ?? '',
+                                    //             ),
+                                    //           ],
+                                    //         ),
+                                    //       ),
+                                    //       // const SizedBox(width: 12.0),
+                                    //     ],
+                                    //   ),
+                                    // ),
+                                    // const SizedBox(height: 6),
+                                    // Padding(
+                                    //   padding: const EdgeInsets.all(16.0),
+                                    //   child: Row(
+                                    //     mainAxisAlignment: MainAxisAlignment.start,
+                                    //     children: [
+                                    //       Expanded(
+                                    //         // flex: 1,
+                                    //         child: FittedBox(
+                                    //           fit: BoxFit.scaleDown,
+                                    //           child: Column(
+                                    //             crossAxisAlignment: CrossAxisAlignment.start,
+                                    //             children: [
+                                    //               const Text(
+                                    //                 'Shipping Address:',
+                                    //                 style: TextStyle(
+                                    //                     fontWeight: FontWeight.bold, fontSize: 12.0, color: AppColors.primaryBlue),
+                                    //               ),
+                                    //               Row(
+                                    //                 crossAxisAlignment: CrossAxisAlignment.start,
+                                    //                 children: [
+                                    //                   const Text(
+                                    //                     'Address: ',
+                                    //                     style: TextStyle(
+                                    //                       fontWeight: FontWeight.bold,
+                                    //                       fontSize: 12.0,
+                                    //                     ),
+                                    //                   ),
+                                    //                   Text(
+                                    //                     [
+                                    //                       order.shippingAddress?.address1,
+                                    //                       order.shippingAddress?.address2,
+                                    //                       order.shippingAddress?.city,
+                                    //                       order.shippingAddress?.state,
+                                    //                       order.shippingAddress?.country,
+                                    //                       order.shippingAddress?.pincode?.toString(),
+                                    //                     ]
+                                    //                         .where((element) => element != null && element.isNotEmpty)
+                                    //                         .join(', ')
+                                    //                         .replaceAllMapped(RegExp('.{1,50}'), (match) => '${match.group(0)}\n'),
+                                    //                     softWrap: true,
+                                    //                     maxLines: null,
+                                    //                     style: const TextStyle(
+                                    //                       fontSize: 12.0,
+                                    //                     ),
+                                    //                   ),
+                                    //                 ],
+                                    //               ),
+                                    //               // buildLabelValueRow(
+                                    //               //   'Address',
+                                    //               //   [
+                                    //               //     order.shippingAddress
+                                    //               //         ?.address1,
+                                    //               //     order.shippingAddress
+                                    //               //         ?.address2,
+                                    //               //     order.shippingAddress?.city,
+                                    //               //     order
+                                    //               //         .shippingAddress?.state,
+                                    //               //     order.shippingAddress
+                                    //               //         ?.country,
+                                    //               //     order.shippingAddress
+                                    //               //         ?.pincode
+                                    //               //         ?.toString(),
+                                    //               //   ]
+                                    //               //       .where((element) =>
+                                    //               //           element != null &&
+                                    //               //           element.isNotEmpty)
+                                    //               //       .join(', ')
+                                    //               //       .replaceAllMapped(
+                                    //               //           RegExp('.{1,50}'),
+                                    //               //           (match) =>
+                                    //               //               '${match.group(0)}\n'),
+                                    //               // ),
+                                    //               buildLabelValueRow(
+                                    //                 'Name',
+                                    //                 order.shippingAddress?.firstName != order.shippingAddress?.lastName
+                                    //                     ? '${order.shippingAddress?.firstName ?? ''} ${order.shippingAddress?.lastName ?? ''}'
+                                    //                         .trim()
+                                    //                     : order.shippingAddress?.firstName ?? '',
+                                    //               ),
+                                    //               buildLabelValueRow('Pincode', order.shippingAddress?.pincode?.toString() ?? ''),
+                                    //               buildLabelValueRow('Country Code', order.shippingAddress?.countryCode ?? ''),
+                                    //             ],
+                                    //           ),
+                                    //         ),
+                                    //       ),
+                                    //       Expanded(
+                                    //         // flex: 1,
+                                    //         child: FittedBox(
+                                    //           fit: BoxFit.scaleDown,
+                                    //           child: Column(
+                                    //             crossAxisAlignment: CrossAxisAlignment.start,
+                                    //             children: [
+                                    //               const Text(
+                                    //                 'Billing Address:',
+                                    //                 style: TextStyle(
+                                    //                     fontWeight: FontWeight.bold, fontSize: 12.0, color: AppColors.primaryBlue),
+                                    //               ),
+                                    //               Row(
+                                    //                 crossAxisAlignment: CrossAxisAlignment.start,
+                                    //                 children: [
+                                    //                   const Text(
+                                    //                     'Address: ',
+                                    //                     style: TextStyle(
+                                    //                       fontWeight: FontWeight.bold,
+                                    //                       fontSize: 12.0,
+                                    //                     ),
+                                    //                   ),
+                                    //                   Text(
+                                    //                     [
+                                    //                       order.billingAddress?.address1,
+                                    //                       order.billingAddress?.address2,
+                                    //                       order.billingAddress?.city,
+                                    //                       order.billingAddress?.state,
+                                    //                       order.billingAddress?.country,
+                                    //                       order.billingAddress?.pincode?.toString(),
+                                    //                     ]
+                                    //                         .where((element) => element != null && element.isNotEmpty)
+                                    //                         .join(', ')
+                                    //                         .replaceAllMapped(RegExp('.{1,50}'), (match) => '${match.group(0)}\n'),
+                                    //                     softWrap: true,
+                                    //                     maxLines: null,
+                                    //                     style: const TextStyle(
+                                    //                       fontSize: 12.0,
+                                    //                     ),
+                                    //                   ),
+                                    //                 ],
+                                    //               ),
+                                    //               // buildLabelValueRow(
+                                    //               //   'Address',
+                                    //               //   [
+                                    //               //     order.billingAddress
+                                    //               //         ?.address1,
+                                    //               //     order.billingAddress
+                                    //               //         ?.address2,
+                                    //               //     order.billingAddress?.city,
+                                    //               //     order.billingAddress?.state,
+                                    //               //     order.billingAddress
+                                    //               //         ?.country,
+                                    //               //     order
+                                    //               //         .billingAddress?.pincode
+                                    //               //         ?.toString(),
+                                    //               //   ]
+                                    //               //       .where((element) =>
+                                    //               //           element != null &&
+                                    //               //           element.isNotEmpty)
+                                    //               //       .join(', ')
+                                    //               //       .replaceAllMapped(
+                                    //               //           RegExp('.{1,50}'),
+                                    //               //           (match) =>
+                                    //               //               '${match.group(0)}\n'),
+                                    //               // ),
+                                    //               buildLabelValueRow(
+                                    //                 'Name',
+                                    //                 order.billingAddress?.firstName != order.billingAddress?.lastName
+                                    //                     ? '${order.billingAddress?.firstName ?? ''} ${order.billingAddress?.lastName ?? ''}'
+                                    //                         .trim()
+                                    //                     : order.billingAddress?.firstName ?? '',
+                                    //               ),
+                                    //               buildLabelValueRow('Pincode', order.billingAddress?.pincode?.toString() ?? ''),
+                                    //               buildLabelValueRow('Country Code', order.billingAddress?.countryCode ?? ''),
+                                    //             ],
+                                    //           ),
+                                    //         ),
+                                    //       ),
+                                    //     ],
+                                    //   ),
+                                    // ),
                                     const SizedBox(height: 6),
                                     Padding(
-                                      padding: const EdgeInsets.all(16.0),
+                                      padding: const EdgeInsets.symmetric(horizontal: 16.0),
                                       child: Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.start,
+                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                         children: [
-                                          Expanded(
-                                            // flex: 1,
-                                            child: FittedBox(
-                                              fit: BoxFit.scaleDown,
-                                              child: Column(
-                                                crossAxisAlignment:
-                                                    CrossAxisAlignment.start,
-                                                children: [
-                                                  const Text(
-                                                    'Shipping Address:',
-                                                    style: TextStyle(
-                                                        fontWeight:
-                                                            FontWeight.bold,
-                                                        fontSize: 12.0,
-                                                        color: AppColors
-                                                            .primaryBlue),
-                                                  ),
-                                                  Row(
-                                                    crossAxisAlignment:
-                                                        CrossAxisAlignment
-                                                            .start,
+                                          Column(
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            children: [
+                                              Text.rich(
+                                                TextSpan(
+                                                    text: "Outbound: ",
                                                     children: [
-                                                      const Text(
-                                                        'Address: ',
-                                                        style: TextStyle(
-                                                          fontWeight:
-                                                              FontWeight.bold,
-                                                          fontSize: 12.0,
-                                                        ),
-                                                      ),
-                                                      Text(
-                                                        [
-                                                          order.shippingAddress
-                                                              ?.address1,
-                                                          order.shippingAddress
-                                                              ?.address2,
-                                                          order.shippingAddress
-                                                              ?.city,
-                                                          order.shippingAddress
-                                                              ?.state,
-                                                          order.shippingAddress
-                                                              ?.country,
-                                                          order.shippingAddress
-                                                              ?.pincode
-                                                              ?.toString(),
-                                                        ]
-                                                            .where((element) =>
-                                                                element !=
-                                                                    null &&
-                                                                element
-                                                                    .isNotEmpty)
-                                                            .join(', ')
-                                                            .replaceAllMapped(
-                                                                RegExp(
-                                                                    '.{1,50}'),
-                                                                (match) =>
-                                                                    '${match.group(0)}\n'),
-                                                        softWrap: true,
-                                                        maxLines: null,
-                                                        style: const TextStyle(
-                                                          fontSize: 12.0,
-                                                        ),
-                                                      ),
+                                                      TextSpan(
+                                                          text: "${order.outBoundBy?['status'] ?? false}",
+                                                          style: const TextStyle(
+                                                            fontWeight: FontWeight.normal,
+                                                          )),
                                                     ],
-                                                  ),
-                                                  // buildLabelValueRow(
-                                                  //   'Address',
-                                                  //   [
-                                                  //     order.shippingAddress
-                                                  //         ?.address1,
-                                                  //     order.shippingAddress
-                                                  //         ?.address2,
-                                                  //     order.shippingAddress?.city,
-                                                  //     order
-                                                  //         .shippingAddress?.state,
-                                                  //     order.shippingAddress
-                                                  //         ?.country,
-                                                  //     order.shippingAddress
-                                                  //         ?.pincode
-                                                  //         ?.toString(),
-                                                  //   ]
-                                                  //       .where((element) =>
-                                                  //           element != null &&
-                                                  //           element.isNotEmpty)
-                                                  //       .join(', ')
-                                                  //       .replaceAllMapped(
-                                                  //           RegExp('.{1,50}'),
-                                                  //           (match) =>
-                                                  //               '${match.group(0)}\n'),
-                                                  // ),
-                                                  buildLabelValueRow(
-                                                    'Name',
-                                                    order.shippingAddress?.firstName !=
-                                                            order
-                                                                .shippingAddress
-                                                                ?.lastName
-                                                        ? '${order.shippingAddress?.firstName ?? ''} ${order.shippingAddress?.lastName ?? ''}'
-                                                            .trim()
-                                                        : order.shippingAddress
-                                                                ?.firstName ??
-                                                            '',
-                                                  ),
-                                                  buildLabelValueRow(
-                                                      'Pincode',
-                                                      order.shippingAddress
-                                                              ?.pincode
-                                                              ?.toString() ??
-                                                          ''),
-                                                  buildLabelValueRow(
-                                                      'Country Code',
-                                                      order.shippingAddress
-                                                              ?.countryCode ??
-                                                          ''),
-                                                ],
+                                                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 20)),
                                               ),
-                                            ),
-                                          ),
-                                          Expanded(
-                                            // flex: 1,
-                                            child: FittedBox(
-                                              fit: BoxFit.scaleDown,
-                                              child: Column(
-                                                crossAxisAlignment:
-                                                    CrossAxisAlignment.start,
-                                                children: [
-                                                  const Text(
-                                                    'Billing Address:',
-                                                    style: TextStyle(
-                                                        fontWeight:
-                                                            FontWeight.bold,
-                                                        fontSize: 12.0,
-                                                        color: AppColors
-                                                            .primaryBlue),
-                                                  ),
-                                                  Row(
-                                                    crossAxisAlignment:
-                                                        CrossAxisAlignment
-                                                            .start,
+                                              Text.rich(
+                                                TextSpan(
+                                                    text: "Updated on: ",
                                                     children: [
-                                                      const Text(
-                                                        'Address: ',
-                                                        style: TextStyle(
-                                                          fontWeight:
-                                                              FontWeight.bold,
-                                                          fontSize: 12.0,
-                                                        ),
-                                                      ),
-                                                      Text(
-                                                        [
-                                                          order.billingAddress
-                                                              ?.address1,
-                                                          order.billingAddress
-                                                              ?.address2,
-                                                          order.billingAddress
-                                                              ?.city,
-                                                          order.billingAddress
-                                                              ?.state,
-                                                          order.billingAddress
-                                                              ?.country,
-                                                          order.billingAddress
-                                                              ?.pincode
-                                                              ?.toString(),
-                                                        ]
-                                                            .where((element) =>
-                                                                element !=
-                                                                    null &&
-                                                                element
-                                                                    .isNotEmpty)
-                                                            .join(', ')
-                                                            .replaceAllMapped(
-                                                                RegExp(
-                                                                    '.{1,50}'),
-                                                                (match) =>
-                                                                    '${match.group(0)}\n'),
-                                                        softWrap: true,
-                                                        maxLines: null,
-                                                        style: const TextStyle(
-                                                          fontSize: 12.0,
-                                                        ),
-                                                      ),
+                                                      TextSpan(
+                                                          text: DateFormat('yyyy-MM-dd\',\' hh:mm a').format(
+                                                            DateTime.parse("${order.updatedAt}"),
+                                                          ),
+                                                          style: const TextStyle(
+                                                            fontWeight: FontWeight.normal,
+                                                          )),
                                                     ],
-                                                  ),
-                                                  // buildLabelValueRow(
-                                                  //   'Address',
-                                                  //   [
-                                                  //     order.billingAddress
-                                                  //         ?.address1,
-                                                  //     order.billingAddress
-                                                  //         ?.address2,
-                                                  //     order.billingAddress?.city,
-                                                  //     order.billingAddress?.state,
-                                                  //     order.billingAddress
-                                                  //         ?.country,
-                                                  //     order
-                                                  //         .billingAddress?.pincode
-                                                  //         ?.toString(),
-                                                  //   ]
-                                                  //       .where((element) =>
-                                                  //           element != null &&
-                                                  //           element.isNotEmpty)
-                                                  //       .join(', ')
-                                                  //       .replaceAllMapped(
-                                                  //           RegExp('.{1,50}'),
-                                                  //           (match) =>
-                                                  //               '${match.group(0)}\n'),
-                                                  // ),
-                                                  buildLabelValueRow(
-                                                    'Name',
-                                                    order.billingAddress
-                                                                ?.firstName !=
-                                                            order.billingAddress
-                                                                ?.lastName
-                                                        ? '${order.billingAddress?.firstName ?? ''} ${order.billingAddress?.lastName ?? ''}'
-                                                            .trim()
-                                                        : order.billingAddress
-                                                                ?.firstName ??
-                                                            '',
-                                                  ),
-                                                  buildLabelValueRow(
-                                                      'Pincode',
-                                                      order.billingAddress
-                                                              ?.pincode
-                                                              ?.toString() ??
-                                                          ''),
-                                                  buildLabelValueRow(
-                                                      'Country Code',
-                                                      order.billingAddress
-                                                              ?.countryCode ??
-                                                          ''),
-                                                ],
+                                                    style: const TextStyle(
+                                                      fontWeight: FontWeight.bold,
+                                                    )),
                                               ),
-                                            ),
+                                            ],
                                           ),
-                                        ],
-                                      ),
-                                    ),
-                                    const SizedBox(height: 6),
-                                    Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.spaceBetween,
-                                      children: [
-                                        Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            Text.rich(
-                                              TextSpan(
-                                                  text: "Outbound: ",
-                                                  children: [
-                                                    TextSpan(
-                                                        text:
-                                                            "${order.outBoundBy?['status'] ?? false}",
-                                                        style: const TextStyle(
-                                                          fontWeight:
-                                                              FontWeight.normal,
-                                                        )),
-                                                  ],
-                                                  style: const TextStyle(
-                                                      fontWeight:
-                                                          FontWeight.bold,
-                                                      fontSize: 20)),
-                                            ),
-                                            Text.rich(
-                                              TextSpan(
-                                                  text: "Updated on: ",
-                                                  children: [
-                                                    TextSpan(
-                                                        text: DateFormat(
-                                                                'yyyy-MM-dd\',\' hh:mm a')
-                                                            .format(
-                                                          DateTime.parse(
-                                                              "${order.updatedAt}"),
+                                          Column(
+                                            crossAxisAlignment: CrossAxisAlignment.end,
+                                            children: [
+                                              ElevatedButton(
+                                                onPressed: () {
+                                                  showDialog(
+                                                    context: context,
+                                                    builder: (_) {
+                                                      return Dialog(
+                                                        shape: RoundedRectangleBorder(
+                                                          borderRadius: BorderRadius.circular(16),
                                                         ),
-                                                        style: const TextStyle(
-                                                          fontWeight:
-                                                              FontWeight.normal,
-                                                        )),
-                                                  ],
-                                                  style: const TextStyle(
-                                                    fontWeight: FontWeight.bold,
-                                                  )),
-                                            ),
-                                          ],
-                                        ),
-                                        Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.end,
-                                          children: [
-                                            ElevatedButton(
-                                              onPressed: () {
-                                                showDialog(
-                                                  context: context,
-                                                  builder: (_) {
-                                                    return Dialog(
-                                                      shape:
-                                                          RoundedRectangleBorder(
-                                                        borderRadius:
-                                                            BorderRadius
-                                                                .circular(16),
-                                                      ),
-                                                      // Making dialog wider by using custom insetPadding
-                                                      insetPadding:
-                                                          const EdgeInsets
-                                                              .symmetric(
-                                                              horizontal: 20),
-                                                      child: Container(
-                                                        width: MediaQuery.of(
-                                                                    context)
-                                                                .size
-                                                                .width *
-                                                            0.9, // 90% of screen width
-                                                        constraints:
-                                                            const BoxConstraints(
-                                                                maxWidth:
-                                                                    600), // Maximum width limit
-                                                        padding:
-                                                            const EdgeInsets
-                                                                .all(20),
-                                                        child: Column(
-                                                          mainAxisSize:
-                                                              MainAxisSize.min,
-                                                          crossAxisAlignment:
-                                                              CrossAxisAlignment
-                                                                  .stretch,
-                                                          children: [
-                                                            const Text(
-                                                              'Remark',
-                                                              style: TextStyle(
-                                                                fontSize: 24,
-                                                                fontWeight:
-                                                                    FontWeight
-                                                                        .bold,
-                                                              ),
-                                                            ),
-                                                            const SizedBox(
-                                                                height: 20),
-                                                            TextField(
-                                                              controller:
-                                                                  remarkController,
-                                                              maxLines: 10,
-                                                              decoration:
-                                                                  InputDecoration(
-                                                                border:
-                                                                    OutlineInputBorder(
-                                                                  borderRadius:
-                                                                      BorderRadius
-                                                                          .circular(
-                                                                              8),
+                                                        // Making dialog wider by using custom insetPadding
+                                                        insetPadding: const EdgeInsets.symmetric(horizontal: 20),
+                                                        child: Container(
+                                                          width: MediaQuery.of(context).size.width * 0.9, // 90% of screen width
+                                                          constraints: const BoxConstraints(maxWidth: 600), // Maximum width limit
+                                                          padding: const EdgeInsets.all(20),
+                                                          child: Column(
+                                                            mainAxisSize: MainAxisSize.min,
+                                                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                                                            children: [
+                                                              const Text(
+                                                                'Remark',
+                                                                style: TextStyle(
+                                                                  fontSize: 24,
+                                                                  fontWeight: FontWeight.bold,
                                                                 ),
-                                                                hintText:
-                                                                    'Enter your remark here',
-                                                                filled: true,
-                                                                fillColor:
-                                                                    Colors.grey[
-                                                                        50],
-                                                                contentPadding:
-                                                                    const EdgeInsets
-                                                                        .all(
-                                                                        16),
                                                               ),
-                                                            ),
-                                                            const SizedBox(
-                                                                height: 24),
-                                                            Row(
-                                                              mainAxisAlignment:
-                                                                  MainAxisAlignment
-                                                                      .end,
-                                                              children: [
-                                                                TextButton(
-                                                                  onPressed: () =>
-                                                                      Navigator.of(
-                                                                              context)
-                                                                          .pop(),
-                                                                  child:
-                                                                      const Text(
-                                                                    'Cancel',
-                                                                    style: TextStyle(
-                                                                        fontSize:
-                                                                            16),
+                                                              const SizedBox(height: 20),
+                                                              TextField(
+                                                                controller: remarkController,
+                                                                maxLines: 10,
+                                                                decoration: InputDecoration(
+                                                                  border: OutlineInputBorder(
+                                                                    borderRadius: BorderRadius.circular(8),
                                                                   ),
+                                                                  hintText: 'Enter your remark here',
+                                                                  filled: true,
+                                                                  fillColor: Colors.grey[50],
+                                                                  contentPadding: const EdgeInsets.all(16),
                                                                 ),
-                                                                const SizedBox(
-                                                                    width: 16),
-                                                                ElevatedButton(
-                                                                  onPressed:
-                                                                      () async {
-                                                                    showDialog(
-                                                                      context:
-                                                                          context,
-                                                                      barrierDismissible:
-                                                                          false, // Prevent dismissing the dialog by tapping outside
-                                                                      builder:
-                                                                          (_) {
-                                                                        return AlertDialog(
-                                                                          shape:
-                                                                              RoundedRectangleBorder(
-                                                                            borderRadius:
-                                                                                BorderRadius.circular(16),
-                                                                          ),
-                                                                          insetPadding: const EdgeInsets
-                                                                              .symmetric(
-                                                                              horizontal: 20),
-                                                                          content:
-                                                                              const Row(
-                                                                            mainAxisSize:
-                                                                                MainAxisSize.min,
-                                                                            children: [
-                                                                              CircularProgressIndicator(),
-                                                                              SizedBox(width: 20), // Adjust to create horizontal spacing
-                                                                              Text(
-                                                                                'Submitting Remark',
-                                                                                style: TextStyle(fontSize: 16),
-                                                                              ),
-                                                                            ],
-                                                                          ),
-                                                                        );
-                                                                      },
-                                                                    );
-                                                                    final bool
-                                                                        res =
-                                                                        await ordersProvider.writeRemark(
-                                                                            order.id,
-                                                                            remarkController.text);
-                                                                    Navigator.of(
-                                                                            context)
-                                                                        .pop();
-                                                                    Navigator.of(
-                                                                            context)
-                                                                        .pop();
-
-                                                                    log(remarkController
-                                                                        .text);
-
-                                                                    res
-                                                                        ? await ordersProvider
-                                                                            .fetchReadyOrders()
-                                                                        : null;
-
-                                                                    // if (result == 'Remark added successfully') {
-                                                                    //   showCustomSnackBar(
-                                                                    //     context: context,
-                                                                    //     message: result,
-                                                                    //   );
-                                                                    //   // ordersProvider
-                                                                    //   //     .fetchReadyOrders();
-                                                                    // } else {
-                                                                    //   showCustomSnackBar(context: context, message: result, isError: true);
-                                                                    // }
-                                                                  },
-                                                                  style: ElevatedButton
-                                                                      .styleFrom(
-                                                                    padding:
-                                                                        const EdgeInsets
-                                                                            .symmetric(
-                                                                      horizontal:
-                                                                          24,
-                                                                      vertical:
-                                                                          12,
+                                                              ),
+                                                              const SizedBox(height: 24),
+                                                              Row(
+                                                                mainAxisAlignment: MainAxisAlignment.end,
+                                                                children: [
+                                                                  TextButton(
+                                                                    onPressed: () => Navigator.of(context).pop(),
+                                                                    child: const Text(
+                                                                      'Cancel',
+                                                                      style: TextStyle(fontSize: 16),
                                                                     ),
                                                                   ),
-                                                                  child:
-                                                                      const Text(
-                                                                    'Submit',
-                                                                    style: TextStyle(
-                                                                        fontSize:
-                                                                            16),
+                                                                  const SizedBox(width: 16),
+                                                                  ElevatedButton(
+                                                                    onPressed: () async {
+                                                                      showDialog(
+                                                                        context: context,
+                                                                        barrierDismissible: false,
+                                                                        // Prevent dismissing the dialog by tapping outside
+                                                                        builder: (_) {
+                                                                          return AlertDialog(
+                                                                            shape: RoundedRectangleBorder(
+                                                                              borderRadius: BorderRadius.circular(16),
+                                                                            ),
+                                                                            insetPadding: const EdgeInsets.symmetric(horizontal: 20),
+                                                                            content: const Row(
+                                                                              mainAxisSize: MainAxisSize.min,
+                                                                              children: [
+                                                                                CircularProgressIndicator(),
+                                                                                SizedBox(width: 20),
+                                                                                // Adjust to create horizontal spacing
+                                                                                Text(
+                                                                                  'Submitting Remark',
+                                                                                  style: TextStyle(fontSize: 16),
+                                                                                ),
+                                                                              ],
+                                                                            ),
+                                                                          );
+                                                                        },
+                                                                      );
+                                                                      final bool res =
+                                                                          await ordersProvider.writeRemark(order.id, remarkController.text);
+                                                                      Navigator.of(context).pop();
+                                                                      Navigator.of(context).pop();
+
+                                                                      log(remarkController.text);
+
+                                                                      res ? await ordersProvider.fetchReadyOrders() : null;
+
+                                                                      // if (result == 'Remark added successfully') {
+                                                                      //   showCustomSnackBar(
+                                                                      //     context: context,
+                                                                      //     message: result,
+                                                                      //   );
+                                                                      //   // ordersProvider
+                                                                      //   //     .fetchReadyOrders();
+                                                                      // } else {
+                                                                      //   showCustomSnackBar(context: context, message: result, isError: true);
+                                                                      // }
+                                                                    },
+                                                                    style: ElevatedButton.styleFrom(
+                                                                      padding: const EdgeInsets.symmetric(
+                                                                        horizontal: 24,
+                                                                        vertical: 12,
+                                                                      ),
+                                                                    ),
+                                                                    child: const Text(
+                                                                      'Submit',
+                                                                      style: TextStyle(fontSize: 16),
+                                                                    ),
                                                                   ),
-                                                                ),
-                                                              ],
-                                                            ),
-                                                          ],
+                                                                ],
+                                                              ),
+                                                            ],
+                                                          ),
                                                         ),
-                                                      ),
-                                                    );
-                                                  },
-                                                );
-                                              },
-                                              child: order.messages != null &&
-                                                      order.messages![
-                                                              'confirmerMessage'] !=
-                                                          null &&
-                                                      order.messages![
-                                                              'confirmerMessage']
-                                                          .toString()
-                                                          .isNotEmpty
-                                                  ? const Text('Edit Remark')
-                                                  : const Text('Write Remark'),
-                                            ),
-                                            if (order.messages != null &&
-                                                order.messages![
-                                                        'confirmerMessage'] !=
-                                                    null &&
-                                                order.messages![
-                                                        'confirmerMessage']
-                                                    .toString()
-                                                    .isNotEmpty)
-                                              Utils().showMessage(
-                                                  context,
-                                                  'Confirmer Remark',
-                                                  order.messages![
-                                                          'confirmerMessage']
-                                                      .toString()),
-                                          ],
-                                        ),
-                                      ],
+                                                      );
+                                                    },
+                                                  );
+                                                },
+                                                child: order.messages != null &&
+                                                        order.messages!['confirmerMessage'] != null &&
+                                                        order.messages!['confirmerMessage'].toString().isNotEmpty
+                                                    ? const Text('Edit Remark')
+                                                    : const Text('Write Remark'),
+                                              ),
+                                              if (order.messages != null &&
+                                                  order.messages!['confirmerMessage'] != null &&
+                                                  order.messages!['confirmerMessage'].toString().isNotEmpty)
+                                                Utils().showMessage(
+                                                    context, 'Confirmer Remark', order.messages!['confirmerMessage'].toString()),
+                                            ],
+                                          ),
+                                        ],
+                                      ),
                                     ),
                                     const Divider(
                                       thickness: 1,
@@ -1562,12 +1388,10 @@ class _OrdersNewPageState extends State<OrdersNewPage>
                                     const SizedBox(height: 6),
                                     ListView.builder(
                                       shrinkWrap: true,
-                                      physics:
-                                          const NeverScrollableScrollPhysics(),
+                                      physics: const NeverScrollableScrollPhysics(),
                                       itemCount: comboItemGroups.length,
                                       itemBuilder: (context, comboIndex) {
-                                        final combo =
-                                            comboItemGroups[comboIndex];
+                                        final combo = comboItemGroups[comboIndex];
                                         // print(
                                         //     'Item $itemIndex: ${item.product?.displayName.toString() ?? ''}, Quantity: ${item.qty ?? 0}');
                                         return BigComboCard(
@@ -1581,13 +1405,11 @@ class _OrdersNewPageState extends State<OrdersNewPage>
                                     ),
                                     ListView.builder(
                                       shrinkWrap: true,
-                                      physics:
-                                          const NeverScrollableScrollPhysics(),
+                                      physics: const NeverScrollableScrollPhysics(),
                                       itemCount: remainingItems.length,
                                       itemBuilder: (context, itemIndex) {
                                         final item = remainingItems[itemIndex];
-                                        print(
-                                            'Item $itemIndex: ${item.product?.displayName.toString() ?? ''}, Quantity: ${item.qty ?? 0}');
+                                        print('Item $itemIndex: ${item.product?.displayName.toString() ?? ''}, Quantity: ${item.qty ?? 0}');
                                         return ProductDetailsCard(
                                           item: item,
                                           index: itemIndex,
@@ -1629,20 +1451,16 @@ class _OrdersNewPageState extends State<OrdersNewPage>
                 ordersProvider.fetchReadyOrders(page: 1);
               },
               onLastPage: () {
-                ordersProvider.fetchReadyOrders(
-                    page: ordersProvider.totalReadyPages);
+                ordersProvider.fetchReadyOrders(page: ordersProvider.totalReadyPages);
               },
               onNextPage: () {
-                if (ordersProvider.currentPageReady <
-                    ordersProvider.totalReadyPages) {
-                  ordersProvider.fetchReadyOrders(
-                      page: ordersProvider.currentPageReady + 1);
+                if (ordersProvider.currentPageReady < ordersProvider.totalReadyPages) {
+                  ordersProvider.fetchReadyOrders(page: ordersProvider.currentPageReady + 1);
                 }
               },
               onPreviousPage: () {
                 if (ordersProvider.currentPageReady > 1) {
-                  ordersProvider.fetchReadyOrders(
-                      page: ordersProvider.currentPageReady - 1);
+                  ordersProvider.fetchReadyOrders(page: ordersProvider.currentPageReady - 1);
                 }
               },
               onGoToPage: (page) {
@@ -1653,11 +1471,8 @@ class _OrdersNewPageState extends State<OrdersNewPage>
               onJumpToPage: () {
                 final int? page = int.tryParse(pageController.text);
 
-                if (page == null ||
-                    page < 1 ||
-                    page > ordersProvider.totalReadyPages) {
-                  _showSnackbar(context,
-                      'Please enter a valid page number between 1 and ${ordersProvider.totalReadyPages}.');
+                if (page == null || page < 1 || page > ordersProvider.totalReadyPages) {
+                  _showSnackbar(context, 'Please enter a valid page number between 1 and ${ordersProvider.totalReadyPages}.');
                   return;
                 }
 
@@ -1698,8 +1513,7 @@ class _OrdersNewPageState extends State<OrdersNewPage>
                         ordersProvider.toggleSelectAllFailed(value ?? false);
                       },
                     ),
-                    Text(
-                        'Select All (${ordersProvider.selectedFailedItemsCount})'),
+                    Text('Select All (${ordersProvider.selectedFailedItemsCount})'),
                   ],
                 ),
                 Row(
@@ -1710,9 +1524,7 @@ class _OrdersNewPageState extends State<OrdersNewPage>
                           _selectedFailedDate,
                           style: TextStyle(
                             fontSize: 11,
-                            color: _selectedFailedDate == 'Select Date'
-                                ? Colors.grey
-                                : AppColors.primaryBlue,
+                            color: _selectedFailedDate == 'Select Date' ? Colors.grey : AppColors.primaryBlue,
                           ),
                         ),
                         Tooltip(
@@ -1740,8 +1552,7 @@ class _OrdersNewPageState extends State<OrdersNewPage>
                               );
 
                               if (picked != null) {
-                                String formattedDate =
-                                    DateFormat('dd-MM-yyyy').format(picked);
+                                String formattedDate = DateFormat('dd-MM-yyyy').format(picked);
                                 setState(() {
                                   _selectedFailedDate = formattedDate;
                                 });
@@ -1788,15 +1599,11 @@ class _OrdersNewPageState extends State<OrdersNewPage>
                                 if (value == 'All') {
                                   ordersProvider.fetchFailedOrders(
                                       page: ordersProvider.currentPageFailed,
-                                      date: _selectedFailedDate == 'Select Date'
-                                          ? null
-                                          : DateTime.parse(
-                                              _selectedFailedDate));
+                                      date: _selectedFailedDate == 'Select Date' ? null : DateTime.parse(_selectedFailedDate));
                                 } else {
                                   DateTime? selectedDate;
                                   if (_selectedFailedDate != 'Select Date') {
-                                    selectedDate = DateFormat('yyyy-MM-dd')
-                                        .parse(_selectedFailedDate);
+                                    selectedDate = DateFormat('yyyy-MM-dd').parse(_selectedFailedDate);
                                   }
 
                                   log("romrom: $selectedDate");
@@ -1809,13 +1616,11 @@ class _OrdersNewPageState extends State<OrdersNewPage>
                                   );
                                 }
                               },
-                              itemBuilder: (BuildContext context) =>
-                                  <PopupMenuEntry<String>>[
-                                ...provider.marketplaces
-                                    .map((marketplace) => PopupMenuItem<String>(
-                                          value: marketplace.name,
-                                          child: Text(marketplace.name),
-                                        )),
+                              itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
+                                ...provider.marketplaces.map((marketplace) => PopupMenuItem<String>(
+                                      value: marketplace.name,
+                                      child: Text(marketplace.name),
+                                    )),
                                 const PopupMenuItem<String>(
                                   value: 'All',
                                   child: Text('All'),
@@ -1849,8 +1654,7 @@ class _OrdersNewPageState extends State<OrdersNewPage>
                           ? const SizedBox(
                               width: 20,
                               height: 20,
-                              child: CircularProgressIndicator(
-                                  color: Colors.white),
+                              child: CircularProgressIndicator(color: Colors.white),
                             )
                           : const Text(
                               'Approve Failed Orders',
@@ -1865,17 +1669,13 @@ class _OrdersNewPageState extends State<OrdersNewPage>
                       onPressed: ordersProvider.isCancel
                           ? null // Disable button while loading
                           : () async {
-                              final provider = Provider.of<OrdersProvider>(
-                                  context,
-                                  listen: false);
+                              final provider = Provider.of<OrdersProvider>(context, listen: false);
 
                               // Collect selected order IDs
-                              List<String> selectedOrderIds = provider
-                                  .failedOrders
+                              List<String> selectedOrderIds = provider.failedOrders
                                   .asMap()
                                   .entries
-                                  .where((entry) =>
-                                      provider.selectedFailedOrders[entry.key])
+                                  .where((entry) => provider.selectedFailedOrders[entry.key])
                                   .map((entry) => entry.value.orderId)
                                   .toList();
 
@@ -1892,8 +1692,7 @@ class _OrdersNewPageState extends State<OrdersNewPage>
                                 provider.setCancelStatus(true);
 
                                 // Call confirmOrders method with selected IDs
-                                String resultMessage = await provider
-                                    .cancelOrders(context, selectedOrderIds);
+                                String resultMessage = await provider.cancelOrders(context, selectedOrderIds);
 
                                 // Set loading status to false after operation completes
                                 provider.setCancelStatus(false);
@@ -1901,20 +1700,15 @@ class _OrdersNewPageState extends State<OrdersNewPage>
                                 // Determine the background color based on the result
                                 Color snackBarColor;
                                 if (resultMessage.contains('success')) {
-                                  snackBarColor =
-                                      AppColors.green; // Success: Green
-                                } else if (resultMessage.contains('error') ||
-                                    resultMessage.contains('failed')) {
-                                  snackBarColor =
-                                      AppColors.cardsred; // Error: Red
+                                  snackBarColor = AppColors.green; // Success: Green
+                                } else if (resultMessage.contains('error') || resultMessage.contains('failed')) {
+                                  snackBarColor = AppColors.cardsred; // Error: Red
                                 } else {
-                                  snackBarColor =
-                                      AppColors.orange; // Other: Orange
+                                  snackBarColor = AppColors.orange; // Other: Orange
                                 }
 
                                 // Show feedback based on the result
-                                ScaffoldMessenger.of(context)
-                                    .removeCurrentSnackBar();
+                                ScaffoldMessenger.of(context).removeCurrentSnackBar();
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   SnackBar(
                                     content: Text(resultMessage),
@@ -1927,8 +1721,7 @@ class _OrdersNewPageState extends State<OrdersNewPage>
                           ? const SizedBox(
                               width: 20,
                               height: 20,
-                              child: CircularProgressIndicator(
-                                  color: Colors.white),
+                              child: CircularProgressIndicator(color: Colors.white),
                             )
                           : const Text(
                               'Cancel Orders',
@@ -1946,11 +1739,8 @@ class _OrdersNewPageState extends State<OrdersNewPage>
                           selectedCourier = 'All';
                           _selectedFailedDate = 'Select Date';
                         });
-                        await Provider.of<OrdersProvider>(context,
-                                listen: false)
-                            .fetchFailedOrders();
-                        Provider.of<OrdersProvider>(context, listen: false)
-                            .resetSelections();
+                        await Provider.of<OrdersProvider>(context, listen: false).fetchFailedOrders();
+                        Provider.of<OrdersProvider>(context, listen: false).resetSelections();
                         ordersProvider.clearSearchResults();
 
                         print('Failed Orders refreshed');
@@ -1980,12 +1770,10 @@ class _OrdersNewPageState extends State<OrdersNewPage>
                                     color: Color.fromRGBO(117, 117, 117, 1),
                                   ),
                                   onPressed: () {
-                                    final searchTerm =
-                                        _searchControllerFailed.text;
+                                    final searchTerm = _searchControllerFailed.text;
 
                                     if (searchTerm.isNotEmpty) {
-                                      ordersProvider
-                                          .searchFailedOrders(searchTerm);
+                                      ordersProvider.searchFailedOrders(searchTerm);
                                     }
                                   },
                                 ),
@@ -1995,8 +1783,7 @@ class _OrdersNewPageState extends State<OrdersNewPage>
                                   fontSize: 16,
                                 ),
                                 border: InputBorder.none,
-                                contentPadding:
-                                    const EdgeInsets.symmetric(vertical: 10.0),
+                                contentPadding: const EdgeInsets.symmetric(vertical: 10.0),
                               ),
                               style: const TextStyle(color: Colors.black),
                               onSubmitted: (value) {
@@ -2051,34 +1838,26 @@ class _OrdersNewPageState extends State<OrdersNewPage>
                           itemBuilder: (context, index) {
                             final order = ordersProvider.failedOrders[index];
 
-                            final Map<String, List<Item>> groupedComboItems =
-                                {};
+                            final Map<String, List<Item>> groupedComboItems = {};
                             for (var item in order.items) {
-                              if (item.isCombo == true &&
-                                  item.comboSku != null) {
-                                if (!groupedComboItems
-                                    .containsKey(item.comboSku)) {
+                              if (item.isCombo == true && item.comboSku != null) {
+                                if (!groupedComboItems.containsKey(item.comboSku)) {
                                   groupedComboItems[item.comboSku!] = [];
                                 }
                                 groupedComboItems[item.comboSku]!.add(item);
                               }
                             }
-                            final List<List<Item>> comboItemGroups =
-                                groupedComboItems.values
-                                    .where((items) => items.length > 1)
-                                    .toList();
+                            final List<List<Item>> comboItemGroups = groupedComboItems.values.where((items) => items.length > 1).toList();
 
                             final List<Item> remainingItems = order.items
-                                .where((item) => !(item.isCombo == true &&
-                                    item.comboSku != null &&
-                                    groupedComboItems[item.comboSku]!.length >
-                                        1))
+                                .where((item) =>
+                                    !(item.isCombo == true && item.comboSku != null && groupedComboItems[item.comboSku]!.length > 1))
                                 .toList();
 
                             return Card(
                               surfaceTintColor: Colors.white,
-                              color: const Color.fromARGB(255, 231, 230, 230),
-                              elevation: 0.5,
+                              color: ordersProvider.selectedFailedOrders[index] ? Colors.grey[300] : Colors.grey[100],
+                              elevation: 2,
                               margin: const EdgeInsets.all(8.0),
                               child: Padding(
                                 padding: const EdgeInsets.all(8.0),
@@ -2086,24 +1865,18 @@ class _OrdersNewPageState extends State<OrdersNewPage>
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.spaceBetween,
+                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                       children: [
                                         Checkbox(
-                                          value: ordersProvider
-                                              .selectedFailedOrders[index],
-                                          onChanged: (value) => ordersProvider
-                                              .toggleOrderSelectionFailed(
-                                                  value ?? false, index),
+                                          value: ordersProvider.selectedFailedOrders[index],
+                                          onChanged: (value) => ordersProvider.toggleOrderSelectionFailed(value ?? false, index),
                                         ),
                                         Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
+                                          crossAxisAlignment: CrossAxisAlignment.start,
                                           children: [
                                             const Text(
                                               'Order ID: ',
-                                              style: TextStyle(
-                                                  fontWeight: FontWeight.bold),
+                                              style: TextStyle(fontWeight: FontWeight.bold),
                                             ),
                                             Text(
                                               order.orderId ?? 'N/A',
@@ -2115,71 +1888,54 @@ class _OrdersNewPageState extends State<OrdersNewPage>
                                           ],
                                         ),
                                         Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
+                                          crossAxisAlignment: CrossAxisAlignment.start,
                                           children: [
                                             const Text(
                                               'Date: ',
-                                              style: TextStyle(
-                                                  fontWeight: FontWeight.bold),
+                                              style: TextStyle(fontWeight: FontWeight.bold),
                                             ),
                                             Text(
-                                              ordersProvider
-                                                  .formatDate(order.date!),
-                                              style: const TextStyle(
-                                                  fontWeight: FontWeight.bold,
-                                                  color: AppColors.primaryBlue),
+                                              ordersProvider.formatDate(order.date!),
+                                              style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.primaryBlue),
                                             ),
                                           ],
                                         ),
                                         Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
+                                          crossAxisAlignment: CrossAxisAlignment.start,
                                           children: [
                                             const Text(
                                               'Total Amount: ',
-                                              style: TextStyle(
-                                                  fontWeight: FontWeight.bold),
+                                              style: TextStyle(fontWeight: FontWeight.bold),
                                             ),
                                             Text(
                                               'Rs. ${order.totalAmount ?? ''}',
-                                              style: const TextStyle(
-                                                  fontWeight: FontWeight.bold,
-                                                  color: AppColors.primaryBlue),
+                                              style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.primaryBlue),
                                             ),
                                           ],
                                         ),
                                         Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
+                                          crossAxisAlignment: CrossAxisAlignment.start,
                                           children: [
                                             const Text(
                                               'Total Items: ',
-                                              style: TextStyle(
-                                                  fontWeight: FontWeight.bold),
+                                              style: TextStyle(fontWeight: FontWeight.bold),
                                             ),
                                             Text(
                                               '${order.items.fold(0, (total, item) => total + item.qty!)}',
-                                              style: const TextStyle(
-                                                  fontWeight: FontWeight.bold,
-                                                  color: AppColors.primaryBlue),
+                                              style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.primaryBlue),
                                             ),
                                           ],
                                         ),
                                         Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
+                                          crossAxisAlignment: CrossAxisAlignment.start,
                                           children: [
                                             const Text(
                                               'Total Weight: ',
-                                              style: TextStyle(
-                                                  fontWeight: FontWeight.bold),
+                                              style: TextStyle(fontWeight: FontWeight.bold),
                                             ),
                                             Text(
                                               '${order.totalWeight ?? ''}',
-                                              style: const TextStyle(
-                                                  fontWeight: FontWeight.bold,
-                                                  color: AppColors.primaryBlue),
+                                              style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.primaryBlue),
                                             ),
                                           ],
                                         ),
@@ -2188,53 +1944,36 @@ class _OrdersNewPageState extends State<OrdersNewPage>
                                             final result = await Navigator.push(
                                               context,
                                               MaterialPageRoute(
-                                                builder: (context) =>
-                                                    EditOutboundPage(
+                                                builder: (context) => EditOutboundPage(
                                                   order: order,
                                                   isBookPage: false,
                                                 ),
                                               ),
                                             );
 
-                                            final failedSearched =
-                                                _searchControllerFailed.text;
+                                            final failedSearched = _searchControllerFailed.text;
 
                                             if (result == true) {
                                               if (failedSearched.isNotEmpty) {
-                                                ordersProvider
-                                                    .searchFailedOrders(
-                                                        failedSearched);
-                                              } else if (selectedCourier !=
-                                                  'All') {
-                                                ordersProvider
-                                                    .fetchOrdersByMarketplace(
+                                                ordersProvider.searchFailedOrders(failedSearched);
+                                              } else if (selectedCourier != 'All') {
+                                                ordersProvider.fetchOrdersByMarketplace(
                                                   selectedCourier,
                                                   0,
-                                                  ordersProvider
-                                                      .currentPageFailed,
+                                                  ordersProvider.currentPageFailed,
                                                 );
-                                              } else if (failedSearched
-                                                      .isNotEmpty &&
-                                                  selectedCourier != 'All') {
-                                                ordersProvider
-                                                    .fetchOrdersByMarketplace(
-                                                        selectedCourier,
-                                                        0,
-                                                        ordersProvider
-                                                            .currentPageFailed);
-                                                ordersProvider
-                                                    .searchFailedOrders(
-                                                        failedSearched);
+                                              } else if (failedSearched.isNotEmpty && selectedCourier != 'All') {
+                                                ordersProvider.fetchOrdersByMarketplace(
+                                                    selectedCourier, 0, ordersProvider.currentPageFailed);
+                                                ordersProvider.searchFailedOrders(failedSearched);
                                               } else {
-                                                ordersProvider
-                                                    .fetchFailedOrders();
+                                                ordersProvider.fetchFailedOrders();
                                               }
                                             }
                                           },
                                           style: ElevatedButton.styleFrom(
                                             foregroundColor: AppColors.white,
-                                            backgroundColor: AppColors
-                                                .orange, // Set the text color to white
+                                            backgroundColor: AppColors.orange, // Set the text color to white
                                             textStyle: const TextStyle(
                                               fontWeight: FontWeight.bold,
                                             ),
@@ -2252,51 +1991,23 @@ class _OrdersNewPageState extends State<OrdersNewPage>
                                     Padding(
                                       padding: const EdgeInsets.all(16.0),
                                       child: Row(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
+                                        crossAxisAlignment: CrossAxisAlignment.start,
                                         children: [
                                           Expanded(
                                             child: Padding(
-                                              padding: const EdgeInsets.only(
-                                                  right: 8.0),
+                                              padding: const EdgeInsets.only(right: 8.0),
                                               child: Column(
-                                                crossAxisAlignment:
-                                                    CrossAxisAlignment.start,
+                                                crossAxisAlignment: CrossAxisAlignment.start,
                                                 children: [
-                                                  buildLabelValueRow(
-                                                      'Payment Mode',
-                                                      order.paymentMode ?? ''),
-                                                  buildLabelValueRow(
-                                                      'Currency Code',
-                                                      order.currencyCode ?? ''),
-                                                  buildLabelValueRow(
-                                                      'COD Amount',
-                                                      order.codAmount
-                                                              .toString() ??
-                                                          ''),
-                                                  buildLabelValueRow(
-                                                      'Prepaid Amount',
-                                                      order.prepaidAmount
-                                                              .toString() ??
-                                                          ''),
-                                                  buildLabelValueRow(
-                                                      'Coin',
-                                                      order.coin.toString() ??
-                                                          ''),
-                                                  buildLabelValueRow(
-                                                      'Tax Percent',
-                                                      order.taxPercent
-                                                              .toString() ??
-                                                          ''),
-                                                  buildLabelValueRow(
-                                                      'Courier Name',
-                                                      order.courierName ?? ''),
-                                                  buildLabelValueRow(
-                                                      'Order Type',
-                                                      order.orderType ?? ''),
-                                                  buildLabelValueRow(
-                                                      'Payment Bank',
-                                                      order.paymentBank ?? ''),
+                                                  buildLabelValueRow('Payment Mode', order.paymentMode ?? ''),
+                                                  buildLabelValueRow('Currency Code', order.currencyCode ?? ''),
+                                                  buildLabelValueRow('COD Amount', order.codAmount.toString() ?? ''),
+                                                  buildLabelValueRow('Prepaid Amount', order.prepaidAmount.toString() ?? ''),
+                                                  buildLabelValueRow('Coin', order.coin.toString() ?? ''),
+                                                  buildLabelValueRow('Tax Percent', order.taxPercent.toString() ?? ''),
+                                                  buildLabelValueRow('Courier Name', order.courierName ?? ''),
+                                                  buildLabelValueRow('Order Type', order.orderType ?? ''),
+                                                  buildLabelValueRow('Payment Bank', order.paymentBank ?? ''),
                                                 ],
                                               ),
                                             ),
@@ -2304,51 +2015,27 @@ class _OrdersNewPageState extends State<OrdersNewPage>
                                           // const SizedBox(width: 12.0),
                                           Expanded(
                                             child: Padding(
-                                              padding: const EdgeInsets.only(
-                                                  right: 8.0),
+                                              padding: const EdgeInsets.only(right: 8.0),
                                               child: Column(
-                                                crossAxisAlignment:
-                                                    CrossAxisAlignment.start,
+                                                crossAxisAlignment: CrossAxisAlignment.start,
                                                 children: [
-                                                  buildLabelValueRow(
-                                                      'Discount Amount',
-                                                      order.discountAmount
-                                                              .toString() ??
-                                                          ''),
-                                                  buildLabelValueRow(
-                                                      'Discount Scheme',
-                                                      order.discountScheme ??
-                                                          ''),
-                                                  buildLabelValueRow('Agent',
-                                                      order.agent ?? ''),
-                                                  buildLabelValueRow('Notes',
-                                                      order.notes ?? ''),
-                                                  buildLabelValueRow(
-                                                      'Marketplace',
-                                                      order.marketplace?.name ??
-                                                          ''),
-                                                  buildLabelValueRow('Filter',
-                                                      order.filter ?? ''),
+                                                  buildLabelValueRow('Discount Amount', order.discountAmount.toString() ?? ''),
+                                                  buildLabelValueRow('Discount Scheme', order.discountScheme ?? ''),
+                                                  buildLabelValueRow('Agent', order.agent ?? ''),
+                                                  buildLabelValueRow('Notes', order.notes ?? ''),
+                                                  buildLabelValueRow('Marketplace', order.marketplace?.name ?? ''),
+                                                  buildLabelValueRow('Filter', order.filter ?? ''),
                                                   buildLabelValueRow(
                                                     'Expected Delivery Date',
-                                                    order.expectedDeliveryDate !=
-                                                            null
-                                                        ? ordersProvider
-                                                            .formatDate(order
-                                                                .expectedDeliveryDate!)
+                                                    order.expectedDeliveryDate != null
+                                                        ? ordersProvider.formatDate(order.expectedDeliveryDate!)
                                                         : '',
                                                   ),
-                                                  buildLabelValueRow(
-                                                      'Preferred Courier',
-                                                      order.preferredCourier ??
-                                                          ''),
+                                                  buildLabelValueRow('Preferred Courier', order.preferredCourier ?? ''),
                                                   buildLabelValueRow(
                                                     'Payment Date Time',
-                                                    order.paymentDateTime !=
-                                                            null
-                                                        ? ordersProvider
-                                                            .formatDateTime(order
-                                                                .paymentDateTime!)
+                                                    order.paymentDateTime != null
+                                                        ? ordersProvider.formatDateTime(order.paymentDateTime!)
                                                         : '',
                                                   ),
                                                 ],
@@ -2358,47 +2045,26 @@ class _OrdersNewPageState extends State<OrdersNewPage>
                                           // const SizedBox(width: 12.0),
                                           Expanded(
                                             child: Padding(
-                                              padding: const EdgeInsets.only(
-                                                  right: 8.0),
+                                              padding: const EdgeInsets.only(right: 8.0),
                                               child: Column(
-                                                crossAxisAlignment:
-                                                    CrossAxisAlignment.start,
+                                                crossAxisAlignment: CrossAxisAlignment.start,
                                                 children: [
-                                                  buildLabelValueRow(
-                                                      'Delivery Term',
-                                                      order.deliveryTerm ?? ''),
-                                                  buildLabelValueRow(
-                                                      'Transaction Number',
-                                                      order.transactionNumber ??
-                                                          ''),
-                                                  buildLabelValueRow(
-                                                      'Micro Dealer Order',
-                                                      order.microDealerOrder ??
-                                                          ''),
-                                                  buildLabelValueRow(
-                                                      'Fulfillment Type',
-                                                      order.fulfillmentType ??
-                                                          ''),
+                                                  buildLabelValueRow('Delivery Term', order.deliveryTerm ?? ''),
+                                                  buildLabelValueRow('Transaction Number', order.transactionNumber ?? ''),
+                                                  buildLabelValueRow('Micro Dealer Order', order.microDealerOrder ?? ''),
+                                                  buildLabelValueRow('Fulfillment Type', order.fulfillmentType ?? ''),
                                                   // buildLabelValueRow(
                                                   //     'No. of Boxes',
                                                   //     order.numberOfBoxes
                                                   //             .toString() ??
                                                   //         ''),
-                                                  buildLabelValueRow(
-                                                      'Total Quantity',
-                                                      order.totalQuantity
-                                                              .toString() ??
-                                                          ''),
+                                                  buildLabelValueRow('Total Quantity', order.totalQuantity.toString() ?? ''),
                                                   // buildLabelValueRow(
                                                   //     'SKU Qty',
                                                   //     order.skuQty.toString() ??
                                                   //         ''),
-                                                  buildLabelValueRow(
-                                                      'Calculation Entry No.',
-                                                      order.calcEntryNumber ??
-                                                          ''),
-                                                  buildLabelValueRow('Currency',
-                                                      order.currency ?? ''),
+                                                  buildLabelValueRow('Calculation Entry No.', order.calcEntryNumber ?? ''),
+                                                  buildLabelValueRow('Currency', order.currency ?? ''),
                                                 ],
                                               ),
                                             ),
@@ -2406,64 +2072,43 @@ class _OrdersNewPageState extends State<OrdersNewPage>
                                           // const SizedBox(width: 12.0),
                                           Expanded(
                                             child: Padding(
-                                              padding: const EdgeInsets.only(
-                                                  right: 8.0),
+                                              padding: const EdgeInsets.only(right: 8.0),
                                               child: Column(
-                                                crossAxisAlignment:
-                                                    CrossAxisAlignment.start,
+                                                crossAxisAlignment: CrossAxisAlignment.start,
                                                 children: [
                                                   buildLabelValueRow(
                                                     'Dimensions',
                                                     '${order.length.toString() ?? ''} x ${order.breadth.toString() ?? ''} x ${order.height.toString() ?? ''}',
                                                   ),
-                                                  buildLabelValueRow(
-                                                      'Tracking Status',
-                                                      order.trackingStatus ??
-                                                          ''),
+                                                  buildLabelValueRow('Tracking Status', order.trackingStatus ?? ''),
                                                   const SizedBox(
                                                     height: 7,
                                                   ),
                                                   const Text(
                                                     'Customer Details:',
                                                     style: TextStyle(
-                                                        fontWeight:
-                                                            FontWeight.bold,
-                                                        fontSize: 12.0,
-                                                        color: AppColors
-                                                            .primaryBlue),
+                                                        fontWeight: FontWeight.bold, fontSize: 12.0, color: AppColors.primaryBlue),
                                                   ),
                                                   buildLabelValueRow(
                                                     'Customer ID',
-                                                    order.customer
-                                                            ?.customerId ??
-                                                        '',
+                                                    order.customer?.customerId ?? '',
                                                   ),
                                                   buildLabelValueRow(
                                                       'Full Name',
-                                                      order.customer?.firstName !=
-                                                              order.customer
-                                                                  ?.lastName
-                                                          ? '${order.customer?.firstName ?? ''} ${order.customer?.lastName ?? ''}'
-                                                              .trim()
-                                                          : order.customer
-                                                                  ?.firstName ??
-                                                              ''),
+                                                      order.customer?.firstName != order.customer?.lastName
+                                                          ? '${order.customer?.firstName ?? ''} ${order.customer?.lastName ?? ''}'.trim()
+                                                          : order.customer?.firstName ?? ''),
                                                   buildLabelValueRow(
                                                     'Email',
                                                     order.customer?.email ?? '',
                                                   ),
                                                   buildLabelValueRow(
                                                     'Phone',
-                                                    maskPhoneNumber(order
-                                                            .customer?.phone
-                                                            ?.toString()) ??
-                                                        '',
+                                                    maskPhoneNumber(order.customer?.phone?.toString()) ?? '',
                                                   ),
                                                   buildLabelValueRow(
                                                     'GSTIN',
-                                                    order.customer
-                                                            ?.customerGstin ??
-                                                        '',
+                                                    order.customer?.customerGstin ?? '',
                                                   ),
                                                 ],
                                               ),
@@ -2477,75 +2122,43 @@ class _OrdersNewPageState extends State<OrdersNewPage>
                                     Padding(
                                       padding: const EdgeInsets.all(16.0),
                                       child: Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.start,
+                                        mainAxisAlignment: MainAxisAlignment.start,
                                         children: [
                                           Expanded(
                                             flex: 2,
                                             child: FittedBox(
                                               fit: BoxFit.scaleDown,
                                               child: Column(
-                                                crossAxisAlignment:
-                                                    CrossAxisAlignment.start,
+                                                crossAxisAlignment: CrossAxisAlignment.start,
                                                 children: [
                                                   const Text(
                                                     'Shipping Address:',
                                                     style: TextStyle(
-                                                        fontWeight:
-                                                            FontWeight.bold,
-                                                        fontSize: 12.0,
-                                                        color: AppColors
-                                                            .primaryBlue),
+                                                        fontWeight: FontWeight.bold, fontSize: 12.0, color: AppColors.primaryBlue),
                                                   ),
                                                   buildLabelValueRow(
                                                     'Address',
                                                     [
-                                                      order.shippingAddress
-                                                          ?.address1,
-                                                      order.shippingAddress
-                                                          ?.address2,
-                                                      order.shippingAddress
-                                                          ?.city,
-                                                      order.shippingAddress
-                                                          ?.state,
-                                                      order.shippingAddress
-                                                          ?.country,
-                                                      order.shippingAddress
-                                                          ?.pincode
-                                                          ?.toString(),
+                                                      order.shippingAddress?.address1,
+                                                      order.shippingAddress?.address2,
+                                                      order.shippingAddress?.city,
+                                                      order.shippingAddress?.state,
+                                                      order.shippingAddress?.country,
+                                                      order.shippingAddress?.pincode?.toString(),
                                                     ]
-                                                        .where((element) =>
-                                                            element != null &&
-                                                            element.isNotEmpty)
+                                                        .where((element) => element != null && element.isNotEmpty)
                                                         .join(', ')
-                                                        .replaceAllMapped(
-                                                            RegExp('.{1,70}'),
-                                                            (match) =>
-                                                                '${match.group(0)}\n'),
+                                                        .replaceAllMapped(RegExp('.{1,70}'), (match) => '${match.group(0)}\n'),
                                                   ),
                                                   buildLabelValueRow(
                                                     'Name',
-                                                    order.shippingAddress?.firstName !=
-                                                            order
-                                                                .shippingAddress
-                                                                ?.lastName
+                                                    order.shippingAddress?.firstName != order.shippingAddress?.lastName
                                                         ? '${order.shippingAddress?.firstName ?? ''} ${order.shippingAddress?.lastName ?? ''}'
                                                             .trim()
-                                                        : order.shippingAddress
-                                                                ?.firstName ??
-                                                            '',
+                                                        : order.shippingAddress?.firstName ?? '',
                                                   ),
-                                                  buildLabelValueRow(
-                                                      'Pincode',
-                                                      order.shippingAddress
-                                                              ?.pincode
-                                                              ?.toString() ??
-                                                          ''),
-                                                  buildLabelValueRow(
-                                                      'Country Code',
-                                                      order.shippingAddress
-                                                              ?.countryCode ??
-                                                          ''),
+                                                  buildLabelValueRow('Pincode', order.shippingAddress?.pincode?.toString() ?? ''),
+                                                  buildLabelValueRow('Country Code', order.shippingAddress?.countryCode ?? ''),
                                                 ],
                                               ),
                                             ),
@@ -2555,168 +2168,93 @@ class _OrdersNewPageState extends State<OrdersNewPage>
                                             child: FittedBox(
                                               fit: BoxFit.scaleDown,
                                               child: Column(
-                                                crossAxisAlignment:
-                                                    CrossAxisAlignment.start,
+                                                crossAxisAlignment: CrossAxisAlignment.start,
                                                 children: [
                                                   const Text(
                                                     'Billing Address:',
                                                     style: TextStyle(
-                                                        fontWeight:
-                                                            FontWeight.bold,
-                                                        fontSize: 12.0,
-                                                        color: AppColors
-                                                            .primaryBlue),
+                                                        fontWeight: FontWeight.bold, fontSize: 12.0, color: AppColors.primaryBlue),
                                                   ),
                                                   buildLabelValueRow(
                                                     'Address',
                                                     [
-                                                      order.billingAddress
-                                                          ?.address1,
-                                                      order.billingAddress
-                                                          ?.address2,
-                                                      order
-                                                          .billingAddress?.city,
-                                                      order.billingAddress
-                                                          ?.state,
-                                                      order.billingAddress
-                                                          ?.country,
-                                                      order.billingAddress
-                                                          ?.pincode
-                                                          ?.toString(),
+                                                      order.billingAddress?.address1,
+                                                      order.billingAddress?.address2,
+                                                      order.billingAddress?.city,
+                                                      order.billingAddress?.state,
+                                                      order.billingAddress?.country,
+                                                      order.billingAddress?.pincode?.toString(),
                                                     ]
-                                                        .where((element) =>
-                                                            element != null &&
-                                                            element.isNotEmpty)
+                                                        .where((element) => element != null && element.isNotEmpty)
                                                         .join(', ')
-                                                        .replaceAllMapped(
-                                                            RegExp('.{1,50}'),
-                                                            (match) =>
-                                                                '${match.group(0)}\n'),
+                                                        .replaceAllMapped(RegExp('.{1,50}'), (match) => '${match.group(0)}\n'),
                                                   ),
                                                   buildLabelValueRow(
                                                     'Name',
-                                                    order.billingAddress
-                                                                ?.firstName !=
-                                                            order.billingAddress
-                                                                ?.lastName
+                                                    order.billingAddress?.firstName != order.billingAddress?.lastName
                                                         ? '${order.billingAddress?.firstName ?? ''} ${order.billingAddress?.lastName ?? ''}'
                                                             .trim()
-                                                        : order.billingAddress
-                                                                ?.firstName ??
-                                                            '',
+                                                        : order.billingAddress?.firstName ?? '',
                                                   ),
-                                                  buildLabelValueRow(
-                                                      'Pincode',
-                                                      order.billingAddress
-                                                              ?.pincode
-                                                              ?.toString() ??
-                                                          ''),
-                                                  buildLabelValueRow(
-                                                      'Country Code',
-                                                      order.billingAddress
-                                                              ?.countryCode ??
-                                                          ''),
+                                                  buildLabelValueRow('Pincode', order.billingAddress?.pincode?.toString() ?? ''),
+                                                  buildLabelValueRow('Country Code', order.billingAddress?.countryCode ?? ''),
                                                 ],
                                               ),
                                             ),
                                           ),
                                           order.messages == {}
                                               ? const SizedBox()
-                                              : order.messages!['failureReason']
-                                                      .isEmpty
+                                              : order.messages!['failureReason'].isEmpty
                                                   ? const SizedBox()
                                                   : Expanded(
                                                       flex: 1,
                                                       child: Container(
-                                                        padding:
-                                                            const EdgeInsets
-                                                                .all(16.0),
-                                                        decoration:
-                                                            BoxDecoration(
-                                                          color: Colors.red[
-                                                              50], // Lighter shade for better readability
-                                                          borderRadius:
-                                                              BorderRadius
-                                                                  .circular(
-                                                                      8.0),
-                                                          border: Border.all(
-                                                              color: Colors
-                                                                  .red[300]!),
+                                                        padding: const EdgeInsets.all(16.0),
+                                                        decoration: BoxDecoration(
+                                                          color: Colors.red[50],
+                                                          // Lighter shade for better readability
+                                                          borderRadius: BorderRadius.circular(8.0),
+                                                          border: Border.all(color: Colors.red[300]!),
                                                         ),
                                                         child: Column(
-                                                          crossAxisAlignment:
-                                                              CrossAxisAlignment
-                                                                  .start,
+                                                          crossAxisAlignment: CrossAxisAlignment.start,
                                                           children: [
                                                             Row(
                                                               children: [
-                                                                Icon(
-                                                                    Icons
-                                                                        .error_outline,
-                                                                    color: Colors
-                                                                            .red[
-                                                                        700],
-                                                                    size: 20),
-                                                                const SizedBox(
-                                                                    width: 8),
+                                                                Icon(Icons.error_outline, color: Colors.red[700], size: 20),
+                                                                const SizedBox(width: 8),
                                                                 Text(
                                                                   "Failure Reasons",
-                                                                  style:
-                                                                      TextStyle(
-                                                                    fontSize:
-                                                                        16,
-                                                                    fontWeight:
-                                                                        FontWeight
-                                                                            .bold,
-                                                                    color: Colors
-                                                                            .red[
-                                                                        700],
+                                                                  style: TextStyle(
+                                                                    fontSize: 16,
+                                                                    fontWeight: FontWeight.bold,
+                                                                    color: Colors.red[700],
                                                                   ),
                                                                 ),
                                                               ],
                                                             ),
-                                                            const SizedBox(
-                                                                height: 12),
-                                                            ...order.messages![
-                                                                    'failureReason']
-                                                                .map(
-                                                              (reason) =>
-                                                                  Padding(
-                                                                padding: const EdgeInsets
-                                                                    .symmetric(
-                                                                    vertical:
-                                                                        4.0),
+                                                            const SizedBox(height: 12),
+                                                            ...order.messages!['failureReason'].map(
+                                                              (reason) => Padding(
+                                                                padding: const EdgeInsets.symmetric(vertical: 4.0),
                                                                 child: Row(
-                                                                  crossAxisAlignment:
-                                                                      CrossAxisAlignment
-                                                                          .start,
+                                                                  crossAxisAlignment: CrossAxisAlignment.start,
                                                                   children: [
                                                                     Text(
                                                                       '•',
-                                                                      style:
-                                                                          TextStyle(
-                                                                        color: Colors
-                                                                            .red[700],
-                                                                        fontSize:
-                                                                            16,
-                                                                        fontWeight:
-                                                                            FontWeight.bold,
+                                                                      style: TextStyle(
+                                                                        color: Colors.red[700],
+                                                                        fontSize: 16,
+                                                                        fontWeight: FontWeight.bold,
                                                                       ),
                                                                     ),
-                                                                    const SizedBox(
-                                                                        width:
-                                                                            8),
+                                                                    const SizedBox(width: 8),
                                                                     Expanded(
-                                                                      child:
-                                                                          Text(
-                                                                        reason[
-                                                                            'type'],
-                                                                        style:
-                                                                            TextStyle(
-                                                                          color:
-                                                                              Colors.red[900],
-                                                                          height:
-                                                                              1.3,
+                                                                      child: Text(
+                                                                        reason['type'],
+                                                                        style: TextStyle(
+                                                                          color: Colors.red[900],
+                                                                          height: 1.3,
                                                                         ),
                                                                       ),
                                                                     ),
@@ -2732,47 +2270,41 @@ class _OrdersNewPageState extends State<OrdersNewPage>
                                       ),
                                     ),
                                     const SizedBox(height: 6),
-                                    Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Text.rich(
-                                          TextSpan(
-                                              text: "Outbound: ",
-                                              children: [
-                                                TextSpan(
-                                                    text:
-                                                        "${order.outBoundBy?['status'] ?? false}",
-                                                    style: const TextStyle(
-                                                      fontWeight:
-                                                          FontWeight.normal,
-                                                    )),
-                                              ],
-                                              style: const TextStyle(
+                                    Padding(
+                                      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Text.rich(
+                                            TextSpan(
+                                                text: "Outbound: ",
+                                                children: [
+                                                  TextSpan(
+                                                      text: "${order.outBoundBy?['status'] ?? false}",
+                                                      style: const TextStyle(
+                                                        fontWeight: FontWeight.normal,
+                                                      )),
+                                                ],
+                                                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 20)),
+                                          ),
+                                          Text.rich(
+                                            TextSpan(
+                                                text: "Updated on: ",
+                                                children: [
+                                                  TextSpan(
+                                                      text: DateFormat('yyyy-MM-dd\',\' hh:mm a').format(
+                                                        DateTime.parse("${order.updatedAt}"),
+                                                      ),
+                                                      style: const TextStyle(
+                                                        fontWeight: FontWeight.normal,
+                                                      )),
+                                                ],
+                                                style: const TextStyle(
                                                   fontWeight: FontWeight.bold,
-                                                  fontSize: 20)),
-                                        ),
-                                        Text.rich(
-                                          TextSpan(
-                                              text: "Updated on: ",
-                                              children: [
-                                                TextSpan(
-                                                    text: DateFormat(
-                                                            'yyyy-MM-dd\',\' hh:mm a')
-                                                        .format(
-                                                      DateTime.parse(
-                                                          "${order.updatedAt}"),
-                                                    ),
-                                                    style: const TextStyle(
-                                                      fontWeight:
-                                                          FontWeight.normal,
-                                                    )),
-                                              ],
-                                              style: const TextStyle(
-                                                fontWeight: FontWeight.bold,
-                                              )),
-                                        ),
-                                      ],
+                                                )),
+                                          ),
+                                        ],
+                                      ),
                                     ),
                                     const Divider(
                                       thickness: 1,
@@ -2782,12 +2314,10 @@ class _OrdersNewPageState extends State<OrdersNewPage>
                                     const SizedBox(height: 10),
                                     ListView.builder(
                                       shrinkWrap: true,
-                                      physics:
-                                          const NeverScrollableScrollPhysics(),
+                                      physics: const NeverScrollableScrollPhysics(),
                                       itemCount: comboItemGroups.length,
                                       itemBuilder: (context, comboIndex) {
-                                        final combo =
-                                            comboItemGroups[comboIndex];
+                                        final combo = comboItemGroups[comboIndex];
                                         return BigComboCard(
                                           items: combo,
                                           index: comboIndex,
@@ -2799,13 +2329,11 @@ class _OrdersNewPageState extends State<OrdersNewPage>
                                     ),
                                     ListView.builder(
                                       shrinkWrap: true,
-                                      physics:
-                                          const NeverScrollableScrollPhysics(),
+                                      physics: const NeverScrollableScrollPhysics(),
                                       itemCount: remainingItems.length,
                                       itemBuilder: (context, itemIndex) {
                                         final item = remainingItems[itemIndex];
-                                        print(
-                                            'Item $itemIndex: ${item.product?.displayName.toString() ?? ''}, Quantity: ${item.qty ?? 0}');
+                                        print('Item $itemIndex: ${item.product?.displayName.toString() ?? ''}, Quantity: ${item.qty ?? 0}');
                                         return ProductDetailsCard(
                                           item: item,
                                           index: itemIndex,
@@ -2847,20 +2375,16 @@ class _OrdersNewPageState extends State<OrdersNewPage>
                 ordersProvider.fetchFailedOrders(page: 1);
               },
               onLastPage: () {
-                ordersProvider.fetchFailedOrders(
-                    page: ordersProvider.totalFailedPages);
+                ordersProvider.fetchFailedOrders(page: ordersProvider.totalFailedPages);
               },
               onNextPage: () {
-                if (ordersProvider.currentPageFailed <
-                    ordersProvider.totalFailedPages) {
-                  ordersProvider.fetchFailedOrders(
-                      page: ordersProvider.currentPageFailed + 1);
+                if (ordersProvider.currentPageFailed < ordersProvider.totalFailedPages) {
+                  ordersProvider.fetchFailedOrders(page: ordersProvider.currentPageFailed + 1);
                 }
               },
               onPreviousPage: () {
                 if (ordersProvider.currentPageFailed > 1) {
-                  ordersProvider.fetchFailedOrders(
-                      page: ordersProvider.currentPageFailed - 1);
+                  ordersProvider.fetchFailedOrders(page: ordersProvider.currentPageFailed - 1);
                 }
               },
               onGoToPage: (page) {
@@ -2871,17 +2395,180 @@ class _OrdersNewPageState extends State<OrdersNewPage>
               onJumpToPage: () {
                 final int? page = int.tryParse(_pageController.text);
 
-                if (page == null ||
-                    page < 1 ||
-                    page > ordersProvider.totalFailedPages) {
-                  _showSnackbar(context,
-                      'Please enter a valid page number between 1 and ${ordersProvider.totalFailedPages}.');
+                if (page == null || page < 1 || page > ordersProvider.totalFailedPages) {
+                  _showSnackbar(context, 'Please enter a valid page number between 1 and ${ordersProvider.totalFailedPages}.');
                   return;
                 }
 
                 ordersProvider.fetchFailedOrders(page: page);
                 _pageController.clear();
               },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void showSupportDialog(BuildContext context, String orderId) {
+    TextEditingController messageController = TextEditingController();
+
+    showDialog(
+      context: context,
+      // barrierDismissible: false,
+      builder: (context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          titlePadding: EdgeInsets.zero,
+          title: Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: Theme.of(context).primaryColor,
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(16),
+                topRight: Radius.circular(16),
+              ),
+            ),
+            child: const Row(
+              children: [
+                Icon(Icons.support_agent, color: Colors.white, size: 24),
+                SizedBox(width: 12),
+                Text(
+                  'Connect with Support',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 20,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          content: Container(
+            width: MediaQuery.of(context).size.width * 0.4,
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Order Details',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.grey,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: TextEditingController(text: orderId),
+                  readOnly: true,
+                  decoration: InputDecoration(
+                    labelText: 'Order ID',
+                    prefixIcon: const Icon(Icons.shopping_cart_outlined),
+                    filled: true,
+                    fillColor: Colors.grey.shade100,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(color: Colors.grey.shade300),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(color: Colors.grey.shade300),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(color: Theme.of(context).primaryColor),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 24),
+                const Text(
+                  'Your Message',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.grey,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: messageController,
+                  maxLines: 4,
+                  decoration: InputDecoration(
+                    hintText: 'Please describe your issue...',
+                    prefixIcon: const Padding(
+                      padding: EdgeInsets.only(bottom: 84),
+                      child: Icon(Icons.message_outlined),
+                    ),
+                    filled: true,
+                    fillColor: Colors.white,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(color: Colors.grey.shade300),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(color: Colors.grey.shade300),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(color: Theme.of(context).primaryColor),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton.icon(
+              onPressed: () => Navigator.pop(context),
+              // icon: const Icon(Icons.close),
+              label: const Text('Cancel'),
+              style: TextButton.styleFrom(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              ),
+            ),
+            // const SizedBox(width: 12),
+            ElevatedButton.icon(
+              onPressed: () async {
+                showDialog(
+                  context: context,
+                  barrierDismissible: false,
+                  builder: (context) {
+                    return const AlertDialog(
+                      content: Row(
+                        children: [
+                          CircularProgressIndicator(),
+                          SizedBox(width: 20),
+                          Text('Processing...'),
+                        ],
+                      ),
+                    );
+                  },
+                );
+                bool result = await context.read<OrdersProvider>().connectWithSupport(orderId, messageController.text);
+
+                log('result: $result');
+
+                Navigator.pop(context);
+                Navigator.pop(context);
+
+                if (result) {
+                  await provider.fetchReadyOrders();
+                }
+                // _showResultDialog(context, result);
+              },
+              // icon: const Icon(Icons.send),
+              label: const Text('Report'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Theme.of(context).primaryColor,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
             ),
           ],
         );

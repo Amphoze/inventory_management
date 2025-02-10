@@ -23,20 +23,34 @@ class AuthProvider with ChangeNotifier {
   bool _isOutboundAssigned = false;
 
   bool get isSuperAdminAssigned => _isSuperAdminAssigned;
+
   bool get isAdminAssigned => _isAdminAssigned;
+
   bool get isConfirmerAssigned => _isConfirmerAssigned;
+
   bool get isBookerAssigned => _isBookerAssigned;
+
   bool get isAccountsAssigned => _isAccountsAssigned;
+
   bool get isPickerAssigned => _isPickerAssigned;
+
   bool get isPackerAssigned => _isPackerAssigned;
+
   bool get isCheckerAssigned => _isCheckerAssigned;
+
   bool get isRackerAssigned => _isRackerAssigned;
+
   bool get isManifestAssigned => _isManifestAssigned;
+
   bool get isOutboundAssigned => _isOutboundAssigned;
 
   String? assignedRole;
 
   bool get isAuthenticated => _isAuthenticated;
+
+  final Set<String> importantRoles = {'superAdmin', 'admin', 'confirmer', 'accounts', 'booker', 'support'};
+
+  String? userPrimaryRole;
 
   void resetRoles() {
     _isSuperAdminAssigned = false;
@@ -58,9 +72,7 @@ class AuthProvider with ChangeNotifier {
     try {
       final response = await http.post(
         url,
-        headers: {
-          'Content-Type': 'application/json'
-        },
+        headers: {'Content-Type': 'application/json'},
         body: json.encode({
           'email': email,
           'password': password,
@@ -76,34 +88,19 @@ class AuthProvider with ChangeNotifier {
 
       if (response.statusCode == 200) {
         // await _saveCredentials(email, password, '');
-        return {
-          'success': true,
-          'data': json.decode(response.body)
-        };
+        return {'success': true, 'data': json.decode(response.body)};
       } else if (response.statusCode == 400) {
         final errorResponse = json.decode(response.body);
         if (errorResponse['error'] == 'Email already exists') {
-          return {
-            'success': false,
-            'message': 'This email is already registered. Please use a different email or log in.'
-          };
+          return {'success': false, 'message': 'This email is already registered. Please use a different email or log in.'};
         }
-        return {
-          'success': false,
-          'message': 'Registration failed'
-        };
+        return {'success': false, 'message': 'Registration failed'};
       } else {
-        return {
-          'success': false,
-          'message': 'Registration failed with status code: ${response.statusCode}'
-        };
+        return {'success': false, 'message': 'Registration failed with status code: ${response.statusCode}'};
       }
     } catch (error) {
       print('An error occurred during registration: $error');
-      return {
-        'success': false,
-        'message': 'An error occurred'
-      };
+      return {'success': false, 'message': 'An error occurred'};
     }
   }
 
@@ -115,9 +112,7 @@ class AuthProvider with ChangeNotifier {
     try {
       final response = await http.post(
         url,
-        headers: {
-          'Content-Type': 'application/json'
-        },
+        headers: {'Content-Type': 'application/json'},
         body: json.encode({
           'email': email,
           'otp': otp,
@@ -126,24 +121,15 @@ class AuthProvider with ChangeNotifier {
       );
 
       if (response.statusCode == 200 || response.statusCode == 201) {
-        return {
-          'success': true,
-          'data': json.decode(response.body)
-        };
+        return {'success': true, 'data': json.decode(response.body)};
       } else {
         print('OTP verification failed with status code: ${response.statusCode}');
         print('Response body: ${response.body}');
-        return {
-          'success': false,
-          'message': 'OTP verification failed'
-        };
+        return {'success': false, 'message': 'OTP verification failed'};
       }
     } catch (error) {
       print('An error occurred during OTP verification: $error');
-      return {
-        'success': false,
-        'message': 'An error occurred'
-      };
+      return {'success': false, 'message': 'An error occurred'};
     }
   }
 
@@ -155,9 +141,7 @@ class AuthProvider with ChangeNotifier {
     try {
       final response = await http.post(
         url,
-        headers: {
-          'Content-Type': 'application/json'
-        },
+        headers: {'Content-Type': 'application/json'},
         body: json.encode({
           'email': email,
           'password': password,
@@ -179,6 +163,10 @@ class AuthProvider with ChangeNotifier {
         final List<dynamic> userRoles = responseData['userRoles'];
         for (var role in userRoles) {
           if (role['isAssigned'] == true) {
+            if (userPrimaryRole == null && importantRoles.contains(role['roleName'])) {
+              userPrimaryRole = role['roleName'];
+            }
+
             assignedRole = role['roleName'];
             switch (assignedRole) {
               case 'superAdmin':
@@ -229,6 +217,13 @@ class AuthProvider with ChangeNotifier {
           }
         }
 
+        // for (var role in userRoles) {
+        //   if (role['isAssigned'] == true && importantRoles.contains(role['roleName'])) {
+        //     userPrimaryRole = role['roleName'];
+        //     break; // Stop at the first assigned role found
+        //   }
+        // }
+
         final prefs = await SharedPreferences.getInstance();
         await prefs.setBool('_isSuperAdminAssigned', _isSuperAdminAssigned);
         await prefs.setBool('_isAdminAssigned', _isAdminAssigned);
@@ -241,6 +236,7 @@ class AuthProvider with ChangeNotifier {
         await prefs.setBool('_isRackerAssigned', _isRackerAssigned);
         await prefs.setBool('_isManifestAssigned', _isManifestAssigned);
         await prefs.setBool('_isOutboundAssigned', _isOutboundAssigned);
+        await prefs.setString('userPrimaryRole', userPrimaryRole ?? 'none');
 
         // log('Assigned Role: $assignedRole'); // Debugging line
 
@@ -258,34 +254,19 @@ class AuthProvider with ChangeNotifier {
           };
         } else {
           print('Token not retrieved');
-          return {
-            'success': false,
-            'data': responseData
-          };
+          return {'success': false, 'data': responseData};
         }
       } else if (response.statusCode == 400) {
         final errorResponse = json.decode(response.body);
-        return {
-          'success': false,
-          'message': errorResponse['error']
-        };
+        return {'success': false, 'message': errorResponse['error']};
       } else if (response.statusCode == 404) {
-        return {
-          'success': false,
-          'message': 'User does not exist'
-        };
+        return {'success': false, 'message': 'User does not exist'};
       } else {
-        return {
-          'success': false,
-          'message': 'Login failed with status code: ${response.statusCode}'
-        };
+        return {'success': false, 'message': 'Login failed with status code: ${response.statusCode}'};
       }
     } catch (error) {
       print('An error occurred during login: $error');
-      return {
-        'success': false,
-        'message': 'An error occurred'
-      };
+      return {'success': false, 'message': 'An error occurred'};
     }
   }
 
@@ -303,40 +284,24 @@ class AuthProvider with ChangeNotifier {
     try {
       final response = await http.post(
         url,
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: json.encode({
-          'email': email
-        }),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode({'email': email}),
       );
 
       log('Forgot Password Response: ${response.statusCode}');
       log('Forgot Password Response Body: ${response.body}');
 
       if (response.statusCode == 200) {
-        return {
-          'success': true,
-          'message': 'OTP sent to email'
-        };
+        return {'success': true, 'message': 'OTP sent to email'};
       } else if (response.statusCode == 400) {
         final errorResponse = json.decode(response.body);
-        return {
-          'success': false,
-          'message': errorResponse['error']
-        };
+        return {'success': false, 'message': errorResponse['error']};
       } else {
-        return {
-          'success': false,
-          'message': 'Forgot password request failed with status code: ${response.statusCode}'
-        };
+        return {'success': false, 'message': 'Forgot password request failed with status code: ${response.statusCode}'};
       }
     } catch (error) {
       print('An error occurred during forgot password request: $error');
-      return {
-        'success': false,
-        'message': 'An error occurred'
-      };
+      return {'success': false, 'message': 'An error occurred'};
     }
   }
 
@@ -348,36 +313,22 @@ class AuthProvider with ChangeNotifier {
     try {
       final response = await http.post(
         url,
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: json.encode({
-          'email': email,
-          'otp': otp
-        }),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode({'email': email, 'otp': otp}),
       );
 
       print('Verify OTP Response: ${response.statusCode}');
       print('Verify OTP Response Body: ${response.body}');
 
       if (response.statusCode == 200 || response.statusCode == 201) {
-        return {
-          'success': true,
-          'message': 'OTP verified successfully'
-        };
+        return {'success': true, 'message': 'OTP verified successfully'};
       } else {
         final errorResponse = json.decode(response.body);
-        return {
-          'success': false,
-          'message': errorResponse['error']
-        };
+        return {'success': false, 'message': errorResponse['error']};
       }
     } catch (error) {
       print('An error occurred during OTP verification: $error');
-      return {
-        'success': false,
-        'message': 'An error occurred'
-      };
+      return {'success': false, 'message': 'An error occurred'};
     }
   }
 
@@ -389,9 +340,7 @@ class AuthProvider with ChangeNotifier {
     try {
       final response = await http.post(
         url,
-        headers: {
-          'Content-Type': 'application/json'
-        },
+        headers: {'Content-Type': 'application/json'},
         body: json.encode({
           'email': email,
           'newPassword': newPassword,
@@ -402,28 +351,16 @@ class AuthProvider with ChangeNotifier {
       print('Reset Password Response Body: ${response.body}');
 
       if (response.statusCode == 200) {
-        return {
-          'success': true,
-          'message': 'Password reset successfully'
-        };
+        return {'success': true, 'message': 'Password reset successfully'};
       } else if (response.statusCode == 400) {
         final errorResponse = json.decode(response.body);
-        return {
-          'success': false,
-          'message': errorResponse['error']
-        };
+        return {'success': false, 'message': errorResponse['error']};
       } else {
-        return {
-          'success': false,
-          'message': 'Password reset failed with status code: ${response.statusCode}'
-        };
+        return {'success': false, 'message': 'Password reset failed with status code: ${response.statusCode}'};
       }
     } catch (error) {
       print('An error occurred during password reset: $error');
-      return {
-        'success': false,
-        'message': 'An error occurred'
-      };
+      return {'success': false, 'message': 'An error occurred'};
     }
   }
 
@@ -455,37 +392,22 @@ class AuthProvider with ChangeNotifier {
             categories = categories.where((category) => category['name'].toString().toLowerCase() == name.toLowerCase()).toList();
 
             if (categories.isEmpty) {
-              return {
-                'success': false,
-                'message': 'Category with name "$name" not found'
-              };
+              return {'success': false, 'message': 'Category with name "$name" not found'};
             }
           }
 
-          return {
-            'success': true,
-            'data': categories
-          };
+          return {'success': true, 'data': categories};
         } else {
           print('Unexpected response format: $data');
-          return {
-            'success': false,
-            'message': 'Unexpected response format'
-          };
+          return {'success': false, 'message': 'Unexpected response format'};
         }
       } else {
-        return {
-          'success': false,
-          'message': 'Failed to fetch categories with status code: ${response.statusCode}'
-        };
+        return {'success': false, 'message': 'Failed to fetch categories with status code: ${response.statusCode}'};
       }
     } catch (error, stackTrace) {
       print('An error occurred while fetching categories: $error');
       print('Stack trace: $stackTrace');
-      return {
-        'success': false,
-        'message': 'An error occurred: $error'
-      };
+      return {'success': false, 'message': 'An error occurred: $error'};
     }
   }
 
@@ -505,10 +427,7 @@ class AuthProvider with ChangeNotifier {
       final token = await getToken();
 
       if (token == null) {
-        return {
-          'success': false,
-          'message': 'No token provided'
-        };
+        return {'success': false, 'message': 'No token provided'};
       }
 
       final response = await http.post(
@@ -526,29 +445,17 @@ class AuthProvider with ChangeNotifier {
       // print('Create Category Response Body: ${response.body}');
 
       if (response.statusCode == 200 || response.statusCode == 201) {
-        return {
-          'success': true,
-          'data': json.decode(response.body)
-        };
+        return {'success': true, 'data': json.decode(response.body)};
       } else if (response.statusCode == 400) {
         final errorResponse = json.decode(response.body);
-        return {
-          'success': false,
-          'message': errorResponse['error'] ?? 'Failed to create category'
-        };
+        return {'success': false, 'message': errorResponse['error'] ?? 'Failed to create category'};
       } else {
-        return {
-          'success': false,
-          'message': 'Create category failed with status code: ${response.statusCode}'
-        };
+        return {'success': false, 'message': 'Create category failed with status code: ${response.statusCode}'};
       }
     } catch (error, stackTrace) {
       print('An error occurred while creating the category: $error');
       print('Stack trace: $stackTrace');
-      return {
-        'success': false,
-        'message': 'An error occurred: $error'
-      };
+      return {'success': false, 'message': 'An error occurred: $error'};
     }
   }
 
@@ -560,10 +467,7 @@ class AuthProvider with ChangeNotifier {
     try {
       final token = await getToken();
       if (token == null) {
-        return {
-          'success': false,
-          'message': 'No token found'
-        };
+        return {'success': false, 'message': 'No token found'};
       }
 
       final response = await http.get(
@@ -579,24 +483,15 @@ class AuthProvider with ChangeNotifier {
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
-        return {
-          'success': true,
-          'data': data
-        };
+        return {'success': true, 'data': data};
       } else {
         print('Failed to load category. Status code: ${response.statusCode}');
         print('Response body: ${response.body}');
-        return {
-          'success': false,
-          'message': 'Failed to load category'
-        };
+        return {'success': false, 'message': 'Failed to load category'};
       }
     } catch (error) {
       print('Error fetching category by ID: $error');
-      return {
-        'success': false,
-        'message': 'Error fetching category by ID'
-      };
+      return {'success': false, 'message': 'Error fetching category by ID'};
     }
   }
 
@@ -609,10 +504,7 @@ class AuthProvider with ChangeNotifier {
     try {
       final token = await getToken();
       if (token == null) {
-        return {
-          'success': false,
-          'message': 'No token found'
-        };
+        return {'success': false, 'message': 'No token found'};
       }
 
       final response = await http.get(
@@ -666,11 +558,7 @@ class AuthProvider with ChangeNotifier {
           return extractedProduct;
         }).toList();
 
-        return {
-          'success': true,
-          'data': products,
-          'totalProducts': res['totalProducts']
-        };
+        return {'success': true, 'data': products, 'totalProducts': res['totalProducts']};
       } else {
         return {
           'success': false,
@@ -679,10 +567,7 @@ class AuthProvider with ChangeNotifier {
       }
     } catch (error) {
       print('Error fetching products: $error');
-      return {
-        'success': false,
-        'message': 'Error fetching products'
-      };
+      return {'success': false, 'message': 'Error fetching products'};
     }
   }
 
@@ -693,10 +578,7 @@ class AuthProvider with ChangeNotifier {
     try {
       final token = await getToken();
       if (token == null) {
-        return {
-          'success': false,
-          'message': 'No token found'
-        };
+        return {'success': false, 'message': 'No token found'};
       }
 
       final response = await http.get(
@@ -742,22 +624,14 @@ class AuthProvider with ChangeNotifier {
 
         return {
           'success': true,
-          'data': {
-            'warehouses': warehouses
-          }
+          'data': {'warehouses': warehouses}
         };
       } else {
-        return {
-          'success': false,
-          'message': 'Failed to load warehouses. Status code: ${response.statusCode}'
-        };
+        return {'success': false, 'message': 'Failed to load warehouses. Status code: ${response.statusCode}'};
       }
     } catch (error) {
       log('Error fetching warehouses: $error');
-      return {
-        'success': false,
-        'message': 'Error fetching warehouses'
-      };
+      return {'success': false, 'message': 'Error fetching warehouses'};
     }
   }
 
@@ -925,23 +799,14 @@ class AuthProvider with ChangeNotifier {
           };
         } else {
           print('Unexpected response format: $data'); // Debugging line
-          return {
-            'success': false,
-            'message': 'Unexpected response format'
-          };
+          return {'success': false, 'message': 'Unexpected response format'};
         }
       } else {
-        return {
-          'success': false,
-          'message': 'Failed to search categories with status code: ${response.statusCode}'
-        };
+        return {'success': false, 'message': 'Failed to search categories with status code: ${response.statusCode}'};
       }
     } catch (error) {
       print('Error: $error'); // Debugging line
-      return {
-        'success': false,
-        'message': 'An error occurred'
-      };
+      return {'success': false, 'message': 'An error occurred'};
     }
   }
 
@@ -957,9 +822,7 @@ class AuthProvider with ChangeNotifier {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer $token',
         },
-        body: json.encode({
-          'products': productData
-        }),
+        body: json.encode({'products': productData}),
       );
 
       // Print the full response for debugging purposes
@@ -1076,10 +939,7 @@ class AuthProvider with ChangeNotifier {
     try {
       final token = await getToken();
       if (token == null) {
-        return {
-          'success': false,
-          'message': 'No token found'
-        };
+        return {'success': false, 'message': 'No token found'};
       }
 
       final response = await http.get(
@@ -1174,10 +1034,7 @@ class AuthProvider with ChangeNotifier {
     try {
       final token = await getToken();
       if (token == null) {
-        return {
-          'success': false,
-          'message': 'No token found'
-        };
+        return {'success': false, 'message': 'No token found'};
       }
 
       final response = await http.get(

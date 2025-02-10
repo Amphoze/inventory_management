@@ -253,8 +253,8 @@ class _ProductDashboardPageState extends State<ProductDashboardPage> {
   Widget _buildActionButtons() {
     return Row(
       children: [
-        _buildSearchDropdown(),
-        const SizedBox(width: 16),
+        // _buildSearchDropdown(),
+        // const SizedBox(width: 16),
         if (_selectedSearchOption != null && _selectedSearchOption != 'Show All Products') _buildConditionalSearchBar(),
         const SizedBox(width: 300),
         if (!_showCreateProduct) Text('Total Products: $totalProducts', style: const TextStyle(fontSize: 16)),
@@ -273,7 +273,6 @@ class _ProductDashboardPageState extends State<ProductDashboardPage> {
     );
   }
 
-//
   Widget _buildSearchDropdown() {
     return CustomDropdown<String>(
       items: _searchOptions,
@@ -305,7 +304,7 @@ class _ProductDashboardPageState extends State<ProductDashboardPage> {
 //
   Widget _buildConditionalSearchBar() {
     return SizedBox(
-      width: 300,
+      width: 420,
       height: 40,
       child: Row(
         children: [
@@ -313,7 +312,8 @@ class _ProductDashboardPageState extends State<ProductDashboardPage> {
             child: TextField(
               controller: _searchbarController,
               decoration: InputDecoration(
-                hintText: _getSearchHint(),
+                hintText: 'Search by SkU or Name',
+                // hintText: _getSearchHint(),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12.0),
                   borderSide: const BorderSide(color: Colors.orange, width: 2.0),
@@ -330,7 +330,8 @@ class _ProductDashboardPageState extends State<ProductDashboardPage> {
           ),
           const SizedBox(width: 8),
           ElevatedButton(
-            onPressed: loadMoreProducts,
+            onPressed: _refreshPage,
+            // onPressed: loadMoreProducts,
             // style: ElevatedButton.styleFrom(backgroundColor: AppColors.primaryBlue),
             child: const Icon(
               Icons.refresh,
@@ -356,136 +357,91 @@ class _ProductDashboardPageState extends State<ProductDashboardPage> {
 
 //
   void _performSearch() async {
-    // Check if search option is selected and search term is not empty
-    if (_selectedSearchOption == null || _searchbarController.text.isEmpty) {
+    if (_selectedSearchOption == null || _searchbarController.text.trim().isEmpty) {
       _refreshPage();
       return;
     }
-    // Show loading indicator
+
     setState(() {
       _isLoading = true;
       _hasMore = false;
     });
-//
+
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
-    final searchTerm = _searchbarController.text;
-//
-    Logger().e(
-      "searchTerm: $searchTerm",
-    );
-//
+    final searchTerm = _searchbarController.text.trim();
+
+    Logger().e("Search Term: $searchTerm");
+
     try {
-      Map<String, dynamic> response;
-//
-      // Fetch products based on selected search option
-      if (_selectedSearchOption == 'Display Name') {
-        response = await authProvider.searchProductsByDisplayName(searchTerm);
-        // log("response in UI page - $response");
-      } else if (_selectedSearchOption == 'SKU') {
-        response = await authProvider.searchProductsBySKU(searchTerm);
-        // print("response in UI page - $response");
-      } else {
-        _refreshPage();
-        return;
-      }
-//
-      // Check if the response is successful
+      final response = searchTerm.contains('-')
+          ? await authProvider.searchProductsBySKU(searchTerm)
+          : await authProvider.searchProductsByDisplayName(searchTerm);
+
       if (response['success'] == true) {
-        print("1");
         final List<dynamic>? productData = response['products'] ?? response['data'];
-//
-        Logger().e(
-          "productData: $productData",
-        );
-//
-        if (productData != null) {
-          print("Products retrieved successfully.");
-//
-          // Clear previous products and add new results
-          setState(() {
-            _products.clear();
-            _products.addAll(productData.map((data) {
-              // Log the data to see its structure
-              // Logger().e("Product data: $data");
-//
-              // Check each field to ensure it's a string or primitive
-              return Product(
-                sku: data['sku'] ?? '',
-                parentSku: data['parentSku'] ?? '',
-                ean: data['ean'] ?? '',
-                description: data['description'] ?? '',
-                categoryName: data['categoryName'] ?? '',
-                brand: data['brand'] ?? '',
-                colour: data['colour'] ?? '',
-                netWeight: data['netWeight']?.toString() ?? '',
-                grossWeight: data['grossWeight']?.toString() ?? '',
-                labelSku: data['labelSku'] ?? '',
-                outerPackage_quantity: data['outerPackage_quantity']?.toString() ?? '',
-                outerPackage_name: data['outerPackage_name'] ?? '',
-                grade: data['grade'] ?? '',
-                technicalName: data['technicalName'] ?? '',
-                length: data['length']?.toString() ?? '',
-                width: data['width']?.toString() ?? '',
-                height: data['height']?.toString() ?? '',
-                mrp: data['mrp']?.toString() ?? '',
-                cost: data['cost']?.toString() ?? '',
-                tax_rule: data['tax_rule']?.toString() ?? '',
-                shopifyImage: data['shopifyImage'] ?? '',
-                createdDate: data['createdAt'] ?? '',
-                lastUpdated: data['updatedAt'] ?? '',
-                displayName: data['displayName'] ?? '',
-                variantName: data['variant_name'] ?? '',
-              );
-            }).toList());
-          });
-          log("............................................................................");
-          Logger().e(
-            "new_products: ${_products.runtimeType}",
-          );
-        } else {
-          // Handle case when no product data is found
-          setState(() {
-            _products.clear(); // Clear previous products
-          });
-//
-          // Optionally show a message to the user
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(response['message'])),
-          );
-        }
-      } else {
-        // Handle failure response
+
+        Logger().e("Product Data: $productData");
+
         setState(() {
-          _products.clear(); // Clear previous products
+          _products.clear();
+          if (productData != null) {
+            _products.addAll(productData.map((data) => Product(
+              sku: data['sku'] ?? '',
+              parentSku: data['parentSku'] ?? '',
+              ean: data['ean'] ?? '',
+              description: data['description'] ?? '',
+              categoryName: data['categoryName'] ?? '',
+              brand: data['brand'] ?? '',
+              colour: data['colour'] ?? '',
+              netWeight: data['netWeight']?.toString() ?? '',
+              grossWeight: data['grossWeight']?.toString() ?? '',
+              labelSku: data['labelSku'] ?? '',
+              outerPackage_quantity: data['outerPackage_quantity']?.toString() ?? '',
+              outerPackage_name: data['outerPackage_name'] ?? '',
+              grade: data['grade'] ?? '',
+              technicalName: data['technicalName'] ?? '',
+              length: data['length']?.toString() ?? '',
+              width: data['width']?.toString() ?? '',
+              height: data['height']?.toString() ?? '',
+              mrp: data['mrp']?.toString() ?? '',
+              cost: data['cost']?.toString() ?? '',
+              tax_rule: data['tax_rule']?.toString() ?? '',
+              shopifyImage: data['shopifyImage'] ?? '',
+              createdDate: data['createdAt'] ?? '',
+              lastUpdated: data['updatedAt'] ?? '',
+              displayName: data['displayName'] ?? '',
+              variantName: data['variant_name'] ?? '',
+            )));
+          } else {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text(response['message'] ?? 'No products found.')),
+            );
+          }
         });
-//
-        // Show failure message to the user
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(response['message'])),
-        );
+      } else {
+        _handleError(response['message']);
       }
     } catch (error) {
-      log("error - $error");
-//
-      // Handle exceptions
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('An error occurred: $error')),
-      );
+      log("Error - $error");
+      _handleError('An error occurred: $error');
     } finally {
-      // Hide loading indicator
-      setState(() {
-        _isLoading = false;
-      });
+      setState(() => _isLoading = false);
     }
   }
 
-//
   void _refreshPage() {
     setState(() {
-      _products.clear(); // Clear the displayed products
-      // _selectedSearchOption = null; // Reset the selected option
-      _searchbarController.clear(); // Clear the search input
+      _products.clear();
+      _searchbarController.clear();
+      loadMoreProducts();
     });
+  }
+
+  void _handleError(String? message) {
+    setState(() => _products.clear());
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message ?? 'Something went wrong.')),
+    );
   }
 
 //
@@ -557,9 +513,6 @@ class _ProductDashboardPageState extends State<ProductDashboardPage> {
         '0',
       ];
 }
-
-
-
 
 // import 'package:flutter/material.dart';
 // // import 'package:inventory_management/Custom-Files/custom-button.dart';
@@ -702,9 +655,6 @@ class _ProductDashboardPageState extends State<ProductDashboardPage> {
 //     );
 //   }
 // }
-
-
-
 
 // import 'package:flutter/material.dart';
 // import 'package:inventory_management/Custom-Files/custom-button.dart';

@@ -1,19 +1,23 @@
+import 'dart:convert';
 import 'dart:developer';
+
+import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
 import 'package:inventory_management/constants/constants.dart';
-import 'package:logger/logger.dart';
-import 'package:flutter/material.dart';
 import 'package:inventory_management/model/orders_model.dart'; // Ensure you have the Order model defined here
+import 'package:logger/logger.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
 
 class RoutingProvider with ChangeNotifier {
   bool allSelected = false;
+
   // bool allSelectedFailed = false;
   int selectedItemsCount = 0;
+
   // int selectedFailedItemsCount = 0;
   List<bool> _selectedOrders = [];
+
   // List<bool> _selectedFailedOrders = [];
   List<Order> readyOrders = []; // List to store fetched ready orders
   // List<Order> failedOrders = []; // List to store fetched failed orders
@@ -27,6 +31,7 @@ class RoutingProvider with ChangeNotifier {
   String _expectedDeliveryDate = '';
   String _paymentDateTime = '';
   String _normalDate = '';
+
   // List<Order> readyOrders = [];
   // List<Order> failedOrders = [];
 
@@ -44,13 +49,21 @@ class RoutingProvider with ChangeNotifier {
   // List<Order> get failedOrder => _failedOrder;
 
   String? get selectedCourier => _selectedCourier;
+
   String? get selectedPayment => _selectedPayment;
+
   String? get selectedMarketplace => _selectedMarketplace;
+
   String? get selectedOrderType => _selectedOrderType;
+
   String? get selectedCustomerType => _selectedCustomerType;
+
   String? get selectedFilter => _selectedFilter;
+
   String get expectedDeliveryDate => _expectedDeliveryDate;
+
   String get paymentDateTime => _paymentDateTime;
+
   String get normalDate => _normalDate;
 
   bool isConfirm = false;
@@ -176,12 +189,12 @@ class RoutingProvider with ChangeNotifier {
     String readyOrdersUrl =
         '${await Constants.getBaseUrl()}/orders/getHoldOrders?page=$page';
 
-    if (date != null || date == 'Select Date') {
-      String formattedDate = DateFormat('yyyy-MM-dd').format(date!);
+    if (date != null) {
+      String formattedDate = DateFormat('yyyy-MM-dd').format(date);
       readyOrdersUrl += '&date=$formattedDate';
     }
 
-    log("url: $readyOrdersUrl");
+    log("routing url: $readyOrdersUrl");
 
     // Get the auth token
     final token = await _getToken();
@@ -190,7 +203,7 @@ class RoutingProvider with ChangeNotifier {
     if (token == null || token.isEmpty) {
       isLoading = false;
       notifyListeners();
-      print('Token is missing. Please log in again.');
+      log('Token is missing. Please log in again.');
       return; // Stop execution if there's no token
     }
 
@@ -212,7 +225,7 @@ class RoutingProvider with ChangeNotifier {
         totalReadyPages = jsonData['totalPages'] ?? 1; // Update total pages
         currentPageReady = page; // Update the current page for ready orders
 
-        log("readyOrders: $readyOrders");
+        log("routing orders: $readyOrders");
 
         // Reset selections
         resetSelections();

@@ -22,8 +22,7 @@ class EditOutboundPage extends StatefulWidget {
   final Order order; // Pass the order to edit
   final bool isBookPage;
 
-  const EditOutboundPage(
-      {super.key, required this.order, required this.isBookPage});
+  const EditOutboundPage({super.key, required this.order, required this.isBookPage});
 
   @override
   _EditOutboundPageState createState() => _EditOutboundPageState();
@@ -61,13 +60,10 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
       }
     }
 
-    comboItemGroups =
-        groupedComboItems.values.where((items) => items.length > 1).toList();
+    comboItemGroups = groupedComboItems.values.where((items) => items.length > 1).toList();
 
     remainingItems = widget.order.items
-        .where((item) => !(item.isCombo == true &&
-            item.comboSku != null &&
-            groupedComboItems[item.comboSku]!.length > 1))
+        .where((item) => !(item.isCombo == true && item.comboSku != null && groupedComboItems[item.comboSku]!.length > 1))
         .toList();
   }
 
@@ -174,55 +170,34 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
     // Initialize controllers with the order data
     _orderIdController = TextEditingController(text: widget.order.orderId);
     _idController = TextEditingController(text: widget.order.id);
-    _orderStatusController =
-        TextEditingController(text: widget.order.orderStatus.toString());
-    _dateController = TextEditingController(
-        text: widget.order.date != null
-            ? _ordersProvider.formatDate(widget.order.date!)
-            : '');
-    _paymentModeController =
-        TextEditingController(text: widget.order.paymentMode ?? '');
+    _orderStatusController = TextEditingController(text: widget.order.orderStatus.toString());
+    _dateController = TextEditingController(text: widget.order.date != null ? _ordersProvider.formatDate(widget.order.date!) : '');
+    _paymentModeController = TextEditingController(text: widget.order.paymentMode ?? '');
 
     // Initialize the provider with the initial payment mode
     _ordersProvider.setInitialPaymentMode(_paymentModeController.text);
 
-    _currencyCodeController =
-        TextEditingController(text: widget.order.currencyCode ?? '');
-    _skuTrackingIdController =
-        TextEditingController(text: widget.order.skuTrackingId ?? '');
-    _totalWeightController = TextEditingController(
-        text: widget.order.totalWeight.toStringAsFixed(2) ?? '');
-    _totalAmtController =
-        TextEditingController(text: widget.order.totalAmount?.toString() ?? '');
-    _coinController =
-        TextEditingController(text: widget.order.coin.toString() ?? '');
-    _codAmountController =
-        TextEditingController(text: widget.order.codAmount.toString() ?? '');
-    _prepaidAmountController = TextEditingController(
-        text: widget.order.prepaidAmount.toString() ?? '');
-    _discountCodeController =
-        TextEditingController(text: widget.order.discountCode ?? '');
-    _discountSchemeController =
-        TextEditingController(text: widget.order.discountScheme ?? '');
-    _discountPercentController = TextEditingController(
-        text: widget.order.discountPercent.toStringAsFixed(2) ?? '');
-    _discountAmountController = TextEditingController(
-        text: widget.order.discountAmount.toString() ?? '');
-    _taxPercentController = TextEditingController(
-        text: widget.order.taxPercent.toStringAsFixed(2) ?? '');
-    _courierNameController =
-        TextEditingController(text: widget.order.courierName ?? '');
+    _currencyCodeController = TextEditingController(text: widget.order.currencyCode ?? '');
+    _skuTrackingIdController = TextEditingController(text: widget.order.skuTrackingId ?? '');
+    _totalWeightController = TextEditingController(text: widget.order.totalWeight.toStringAsFixed(2) ?? '');
+    _totalAmtController = TextEditingController(text: widget.order.totalAmount?.toString() ?? '');
+    _coinController = TextEditingController(text: widget.order.coin.toString() ?? '');
+    _codAmountController = TextEditingController(text: widget.order.codAmount.toString() ?? '');
+    _prepaidAmountController = TextEditingController(text: widget.order.prepaidAmount.toString() ?? '');
+    _discountCodeController = TextEditingController(text: widget.order.discountCode ?? '');
+    _discountSchemeController = TextEditingController(text: widget.order.discountScheme ?? '');
+    _discountPercentController = TextEditingController(text: widget.order.discountPercent.toStringAsFixed(2) ?? '');
+    _discountAmountController = TextEditingController(text: widget.order.discountAmount.toString() ?? '');
+    _taxPercentController = TextEditingController(text: widget.order.taxPercent.toStringAsFixed(2) ?? '');
+    _courierNameController = TextEditingController(text: widget.order.courierName ?? '');
 
     // Initialize the provider with the initial courier name
     _ordersProvider.setInitialCourier(_courierNameController.text);
 
-    _orderTypeController =
-        TextEditingController(text: widget.order.orderType ?? '');
-    _customerTypeController =
-        TextEditingController(text: widget.order.customer!.customerType ?? '');
+    _orderTypeController = TextEditingController(text: widget.order.orderType ?? '');
+    _customerTypeController = TextEditingController(text: widget.order.customer!.customerType ?? '');
 
-    _marketplaceController = TextEditingController(
-        text: widget.order.marketplace?.name.toString() ?? '');
+    _marketplaceController = TextEditingController(text: widget.order.marketplace?.name.toString() ?? '');
 
     // Initialize the provider with the initial marketplace
     _ordersProvider.setInitialMarketplace(_marketplaceController.text);
@@ -232,115 +207,66 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
     // Initialize the provider with the initial filter
     _ordersProvider.setInitialFilter(_filterController.text);
 
-    _freightChargeDelhiveryController = TextEditingController(
-        text: widget.order.freightCharge?.delhivery?.toString() ?? '');
-    _freightChargeShiprocketController = TextEditingController(
-        text: widget.order.freightCharge?.shiprocket?.toString() ?? '');
+    _freightChargeDelhiveryController = TextEditingController(text: widget.order.freightCharge?.delhivery?.toString() ?? '');
+    _freightChargeShiprocketController = TextEditingController(text: widget.order.freightCharge?.shiprocket?.toString() ?? '');
 
     _agentController = TextEditingController(text: widget.order.agent ?? '');
     _notesController = TextEditingController(text: widget.order.notes ?? '');
     _expectedDeliveryDateController = TextEditingController(
-        text: widget.order.expectedDeliveryDate != null
-            ? _ordersProvider.formatDate(widget.order.expectedDeliveryDate!)
-            : '');
-    _preferredCourierController =
-        TextEditingController(text: widget.order.preferredCourier ?? '');
-    _deliveryTermController =
-        TextEditingController(text: widget.order.deliveryTerm ?? '');
-    _transactionNumberController =
-        TextEditingController(text: widget.order.transactionNumber ?? '');
-    _microDealerOrderController =
-        TextEditingController(text: widget.order.microDealerOrder ?? '');
-    _fulfillmentTypeController =
-        TextEditingController(text: widget.order.fulfillmentType ?? '');
-    _numberOfBoxesController = TextEditingController(
-        text: widget.order.numberOfBoxes.toString() ?? '');
-    _totalQuantityController = TextEditingController(
-        text: widget.order.totalQuantity.toString() ?? '');
-    _skuQtyController =
-        TextEditingController(text: widget.order.skuQty.toString() ?? '');
-    _calcEntryNumberController =
-        TextEditingController(text: widget.order.calcEntryNumber ?? '');
-    _currencyController =
-        TextEditingController(text: widget.order.currency ?? '');
+        text: widget.order.expectedDeliveryDate != null ? _ordersProvider.formatDate(widget.order.expectedDeliveryDate!) : '');
+    _preferredCourierController = TextEditingController(text: widget.order.preferredCourier ?? '');
+    _deliveryTermController = TextEditingController(text: widget.order.deliveryTerm ?? '');
+    _transactionNumberController = TextEditingController(text: widget.order.transactionNumber ?? '');
+    _microDealerOrderController = TextEditingController(text: widget.order.microDealerOrder ?? '');
+    _fulfillmentTypeController = TextEditingController(text: widget.order.fulfillmentType ?? '');
+    _numberOfBoxesController = TextEditingController(text: widget.order.numberOfBoxes.toString() ?? '');
+    _totalQuantityController = TextEditingController(text: widget.order.totalQuantity.toString() ?? '');
+    _skuQtyController = TextEditingController(text: widget.order.skuQty.toString() ?? '');
+    _calcEntryNumberController = TextEditingController(text: widget.order.calcEntryNumber ?? '');
+    _currencyController = TextEditingController(text: widget.order.currency ?? '');
     _paymentDateTimeController = TextEditingController(
-        text: widget.order.paymentDateTime != null
-            ? _ordersProvider.formatDateTime(widget.order.paymentDateTime!)
-            : '');
-    _paymentBankController =
-        TextEditingController(text: widget.order.paymentBank ?? '');
-    _lengthController =
-        TextEditingController(text: widget.order.length.toString() ?? '');
-    _breadthController =
-        TextEditingController(text: widget.order.breadth.toString() ?? '');
-    _heightController =
-        TextEditingController(text: widget.order.height.toString() ?? '');
+        text: widget.order.paymentDateTime != null ? _ordersProvider.formatDateTime(widget.order.paymentDateTime!) : '');
+    _paymentBankController = TextEditingController(text: widget.order.paymentBank ?? '');
+    _lengthController = TextEditingController(text: widget.order.length.toString() ?? '');
+    _breadthController = TextEditingController(text: widget.order.breadth.toString() ?? '');
+    _heightController = TextEditingController(text: widget.order.height.toString() ?? '');
 
     _awbNumberController = TextEditingController(text: widget.order.awbNumber);
-    _trackingStatusController =
-        TextEditingController(text: widget.order.trackingStatus ?? '');
+    _trackingStatusController = TextEditingController(text: widget.order.trackingStatus ?? '');
 
     // Initalize customer details controllers
-    _customerIdController =
-        TextEditingController(text: widget.order.customer?.customerId ?? '');
-    _customerFirstNameController =
-        TextEditingController(text: widget.order.customer?.firstName ?? '');
-    _customerLastNameController =
-        TextEditingController(text: widget.order.customer?.lastName ?? '');
-    _customerEmailController =
-        TextEditingController(text: widget.order.customer?.email ?? '');
-    _customerPhoneController = TextEditingController(
-        text: widget.order.customer?.phone?.toString() ?? '');
-    _customerGstinController =
-        TextEditingController(text: widget.order.customer?.customerGstin ?? '');
+    _customerIdController = TextEditingController(text: widget.order.customer?.customerId ?? '');
+    _customerFirstNameController = TextEditingController(text: widget.order.customer?.firstName ?? '');
+    _customerLastNameController = TextEditingController(text: widget.order.customer?.lastName ?? '');
+    _customerEmailController = TextEditingController(text: widget.order.customer?.email ?? '');
+    _customerPhoneController = TextEditingController(text: widget.order.customer?.phone?.toString() ?? '');
+    _customerGstinController = TextEditingController(text: widget.order.customer?.customerGstin ?? '');
 
     // Initialize billing address controllers
-    _billingFirstNameController = TextEditingController(
-        text: widget.order.billingAddress?.firstName ?? '');
-    _billingLastNameController = TextEditingController(
-        text: widget.order.billingAddress?.lastName ?? '');
-    _billingEmailController =
-        TextEditingController(text: widget.order.billingAddress?.email ?? '');
-    _billingAddress1Controller = TextEditingController(
-        text: widget.order.billingAddress?.address1 ?? '');
-    _billingAddress2Controller = TextEditingController(
-        text: widget.order.billingAddress?.address2 ?? '');
-    _billingPhoneController = TextEditingController(
-        text: widget.order.billingAddress?.phone?.toString() ?? '');
-    _billingCityController =
-        TextEditingController(text: widget.order.billingAddress?.city ?? '');
-    _billingPincodeController = TextEditingController(
-        text: widget.order.billingAddress?.pincode?.toString() ?? '');
-    _billingStateController =
-        TextEditingController(text: widget.order.billingAddress?.state ?? '');
-    _billingCountryController =
-        TextEditingController(text: widget.order.billingAddress?.country ?? '');
-    _billingCountryCodeController = TextEditingController(
-        text: widget.order.billingAddress?.countryCode ?? '');
+    _billingFirstNameController = TextEditingController(text: widget.order.billingAddress?.firstName ?? '');
+    _billingLastNameController = TextEditingController(text: widget.order.billingAddress?.lastName ?? '');
+    _billingEmailController = TextEditingController(text: widget.order.billingAddress?.email ?? '');
+    _billingAddress1Controller = TextEditingController(text: widget.order.billingAddress?.address1 ?? '');
+    _billingAddress2Controller = TextEditingController(text: widget.order.billingAddress?.address2 ?? '');
+    _billingPhoneController = TextEditingController(text: widget.order.billingAddress?.phone?.toString() ?? '');
+    _billingCityController = TextEditingController(text: widget.order.billingAddress?.city ?? '');
+    _billingPincodeController = TextEditingController(text: widget.order.billingAddress?.pincode?.toString() ?? '');
+    _billingStateController = TextEditingController(text: widget.order.billingAddress?.state ?? '');
+    _billingCountryController = TextEditingController(text: widget.order.billingAddress?.country ?? '');
+    _billingCountryCodeController = TextEditingController(text: widget.order.billingAddress?.countryCode ?? '');
 
     // Initialize shipping address controllers
-    _shippingFirstNameController = TextEditingController(
-        text: widget.order.shippingAddress?.firstName ?? '');
-    _shippingLastNameController = TextEditingController(
-        text: widget.order.shippingAddress?.lastName ?? '');
-    _shippingEmailController =
-        TextEditingController(text: widget.order.shippingAddress?.email ?? '');
-    _shippingAddress1Controller = TextEditingController(
-        text: widget.order.shippingAddress?.address1 ?? '');
-    _shippingAddress2Controller = TextEditingController(
-        text: widget.order.shippingAddress?.address2 ?? '');
-    _shippingPhoneController = TextEditingController(
-        text: widget.order.shippingAddress?.phone?.toString() ?? '');
-    _shippingCityController =
-        TextEditingController(text: widget.order.shippingAddress?.city ?? '');
-    _shippingPincodeController = TextEditingController(
-        text: widget.order.shippingAddress?.pincode?.toString() ?? '');
-    _shippingStateController =
-        TextEditingController(text: widget.order.shippingAddress?.state ?? '');
-    _shippingCountryController = TextEditingController(
-        text: widget.order.shippingAddress?.country ?? '');
-    _shippingCountryCodeController = TextEditingController(
-        text: widget.order.shippingAddress?.countryCode ?? '');
+    _shippingFirstNameController = TextEditingController(text: widget.order.shippingAddress?.firstName ?? '');
+    _shippingLastNameController = TextEditingController(text: widget.order.shippingAddress?.lastName ?? '');
+    _shippingEmailController = TextEditingController(text: widget.order.shippingAddress?.email ?? '');
+    _shippingAddress1Controller = TextEditingController(text: widget.order.shippingAddress?.address1 ?? '');
+    _shippingAddress2Controller = TextEditingController(text: widget.order.shippingAddress?.address2 ?? '');
+    _shippingPhoneController = TextEditingController(text: widget.order.shippingAddress?.phone?.toString() ?? '');
+    _shippingCityController = TextEditingController(text: widget.order.shippingAddress?.city ?? '');
+    _shippingPincodeController = TextEditingController(text: widget.order.shippingAddress?.pincode?.toString() ?? '');
+    _shippingStateController = TextEditingController(text: widget.order.shippingAddress?.state ?? '');
+    _shippingCountryController = TextEditingController(text: widget.order.shippingAddress?.country ?? '');
+    _shippingCountryCodeController = TextEditingController(text: widget.order.shippingAddress?.countryCode ?? '');
 
     // final Map<String, List<Item>> groupedComboItems = {};
 
@@ -522,14 +448,12 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
     super.dispose();
   }
 
-  Future<void> _selectDate(
-      BuildContext context, bool isExpectedDelivery) async {
+  Future<void> _selectDate(BuildContext context, bool isExpectedDelivery) async {
     DateTime initialDate = DateTime.now();
 
     if (isExpectedDelivery && _expectedDeliveryDateController.text.isNotEmpty) {
       try {
-        initialDate =
-            parseDate(_expectedDeliveryDateController.text) ?? DateTime.now();
+        initialDate = parseDate(_expectedDeliveryDateController.text) ?? DateTime.now();
       } catch (e) {
         print('Error parsing expected delivery date: $e');
       }
@@ -552,12 +476,10 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
       final formattedDate = _ordersProvider.formatDate(picked);
 
       if (isExpectedDelivery) {
-        Provider.of<OrdersProvider>(context, listen: false)
-            .updateExpectedDeliveryDate(formattedDate);
+        Provider.of<OrdersProvider>(context, listen: false).updateExpectedDeliveryDate(formattedDate);
         _expectedDeliveryDateController.text = formattedDate;
       } else {
-        Provider.of<OrdersProvider>(context, listen: false)
-            .updateDate(formattedDate);
+        Provider.of<OrdersProvider>(context, listen: false).updateDate(formattedDate);
         _dateController.text = formattedDate;
       }
     }
@@ -593,20 +515,16 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
     // Initialize controllers for products
     for (var item in addedProductList) {
       final rate = item['amount'] / item['qty'];
-      _addedProductQuantityControllers
-          .add(TextEditingController(text: item['qty'].toString()));
-      _addedProductRateControllers
-          .add(TextEditingController(text: rate.toStringAsFixed(2)));
+      _addedProductQuantityControllers.add(TextEditingController(text: item['qty'].toString()));
+      _addedProductRateControllers.add(TextEditingController(text: rate.toStringAsFixed(2)));
       // _addedProductRateControllers.add(TextEditingController(text: item['amount'].toString()));
     }
 
     // Initialize controllers for combos
     for (var item in addedComboList) {
       final rate = double.parse(item['amount']) / item['qty'];
-      _addedComboQuantityControllers
-          .add(TextEditingController(text: item['qty'].toString()));
-      _addedComboRateControllers
-          .add(TextEditingController(text: rate.toStringAsFixed(2)));
+      _addedComboQuantityControllers.add(TextEditingController(text: item['qty'].toString()));
+      _addedComboRateControllers.add(TextEditingController(text: rate.toStringAsFixed(2)));
     }
 
     // final Map<String, List<Item>> groupedComboItems = {};
@@ -630,19 +548,15 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
 
     for (var item in productList) {
       final rate = item['amount'] / item['qty'];
-      _productQuantityControllers
-          .add(TextEditingController(text: item['qty'].toString()));
-      _productRateControllers
-          .add(TextEditingController(text: rate.toStringAsFixed(2)));
+      _productQuantityControllers.add(TextEditingController(text: item['qty'].toString()));
+      _productRateControllers.add(TextEditingController(text: rate.toStringAsFixed(2)));
       // _productRateControllers.add(TextEditingController(text: item['amount'].toString()));
     }
 
     for (var item in comboList) {
       final rate = item['amount'] / item['qty'];
-      _comboQuantityControllers
-          .add(TextEditingController(text: item['qty'].toString()));
-      _comboRateControllers
-          .add(TextEditingController(text: rate.toStringAsFixed(2)));
+      _comboQuantityControllers.add(TextEditingController(text: item['qty'].toString()));
+      _comboRateControllers.add(TextEditingController(text: rate.toStringAsFixed(2)));
       // _comboRateControllers.add(TextEditingController(text: item['amount'].toString()));
     }
   }
@@ -654,8 +568,7 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
 
     if (_paymentDateTimeController.text.isNotEmpty) {
       try {
-        DateTime? parsedDate =
-            parsePaymentDate(_paymentDateTimeController.text);
+        DateTime? parsedDate = parsePaymentDate(_paymentDateTimeController.text);
         if (parsedDate != null) {
           initialDate = parsedDate;
           initialTime = TimeOfDay.fromDateTime(parsedDate);
@@ -690,8 +603,7 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
         );
 
         final formattedDateTime = _ordersProvider.formatDateTime(finalDateTime);
-        Provider.of<OrdersProvider>(context, listen: false)
-            .updatePaymentDateTime(formattedDateTime);
+        Provider.of<OrdersProvider>(context, listen: false).updatePaymentDateTime(formattedDateTime);
         _paymentDateTimeController.text = formattedDateTime;
       }
     }
@@ -740,10 +652,8 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
       ...addedProductList.asMap().entries.map((entry) {
         int index = entry.key;
         var item = entry.value;
-        double rate =
-            double.tryParse(_addedProductRateControllers[index].text) ?? 0.0;
-        int qty =
-            int.tryParse(_addedProductQuantityControllers[index].text) ?? 1;
+        double rate = double.tryParse(_addedProductRateControllers[index].text) ?? 0.0;
+        int qty = int.tryParse(_addedProductQuantityControllers[index].text) ?? 1;
         double amount = rate * qty;
         return {
           'id': item['id'],
@@ -755,8 +665,7 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
       ...addedComboList.asMap().entries.map((entry) {
         int index = entry.key;
         var item = entry.value;
-        double rate =
-            double.tryParse(_addedComboRateControllers[index].text) ?? 0.0;
+        double rate = double.tryParse(_addedComboRateControllers[index].text) ?? 0.0;
         int qty = int.tryParse(_addedComboQuantityControllers[index].text) ?? 1;
         double amount = rate * qty;
         return {
@@ -771,8 +680,7 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
         int index = entry.key;
         var item = entry.value;
         // double amount = double.tryParse(_productRateControllers[index].text) ?? 0.0;
-        double rate =
-            double.tryParse(_productRateControllers[index].text) ?? 0.0;
+        double rate = double.tryParse(_productRateControllers[index].text) ?? 0.0;
         int qty = int.tryParse(_productQuantityControllers[index].text) ?? 1;
         double amount = rate * qty; //
         return {
@@ -822,10 +730,8 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
         'order_type': _orderTypeController.text,
         // 'customer_type': _customerTypeController.text,
         'name': _marketplaceController.text,
-        'filter':
-            _filterController.text.isNotEmpty ? _filterController.text : null,
-        'expected_delivery_date':
-            parseDate(_expectedDeliveryDateController.text)?.toIso8601String(),
+        'filter': _filterController.text.isNotEmpty ? _filterController.text : null,
+        'expected_delivery_date': parseDate(_expectedDeliveryDateController.text)?.toIso8601String(),
         'preferred_courier': _preferredCourierController.text,
         'delivery_term': _deliveryTermController.text,
         'transaction_number': _transactionNumberController.text,
@@ -836,8 +742,7 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
         'sku_qty': _skuQtyController.text,
         'calc_entry_number': _calcEntryNumberController.text,
         'currency': _currencyController.text,
-        'payment_date_time': parsePaymentDate(_paymentDateTimeController.text)
-            ?.toIso8601String(),
+        'payment_date_time': parsePaymentDate(_paymentDateTimeController.text)?.toIso8601String(),
         'payment_bank': _paymentBankController.text,
         'length': _lengthController.text,
         'breadth': _breadthController.text,
@@ -889,15 +794,13 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
       log("ddd: $updatedData");
 
       try {
-        await Provider.of<OrdersProvider>(context, listen: false)
-            .updateOrder(widget.order.id, updatedData);
+        await Provider.of<OrdersProvider>(context, listen: false).updateOrder(widget.order.id, updatedData);
 
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Order updated successfully!')),
         );
 
-        final ordersProvider =
-            Provider.of<OrdersProvider>(context, listen: false);
+        final ordersProvider = Provider.of<OrdersProvider>(context, listen: false);
         ordersProvider.fetchReadyOrders();
         ordersProvider.fetchFailedOrders();
         context.read<AccountsProvider>().fetchOrdersWithStatus2();
@@ -930,8 +833,7 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
     }
 
     bool productExists =
-        addedProductList.any((item) => item['id'] == selected['id']) ||
-            productList.any((item) => item['id'] == selected['id']);
+        addedProductList.any((item) => item['id'] == selected['id']) || productList.any((item) => item['id'] == selected['id']);
     if (productExists) {
       print('Product already added');
       ScaffoldMessenger.of(context).showSnackBar(
@@ -958,9 +860,7 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
       _addedProductQuantityControllers.add(TextEditingController(text: '1'));
       _addedProductRateControllers.add(TextEditingController(text: '0.00'));
 
-      _totalWeightController.text = (double.parse(_totalWeightController.text) +
-              (fetchedProduct.grossWeight ?? 0.0))
-          .toStringAsFixed(2);
+      _totalWeightController.text = (double.parse(_totalWeightController.text) + (fetchedProduct.grossWeight ?? 0.0)).toStringAsFixed(2);
       _productsFuture = fetchAllProducts(addedProductList);
     });
     log("addedProductList: $addedProductList");
@@ -981,14 +881,9 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
         setState(() {
           productList.removeAt(index);
 
-          _totalWeightController.text =
-              (double.parse(_totalWeightController.text) -
-                          fetchedProduct.grossWeight! ??
-                      0.0)
-                  .toStringAsFixed(2);
+          _totalWeightController.text = (double.parse(_totalWeightController.text) - fetchedProduct.grossWeight! ?? 0.0).toStringAsFixed(2);
           _totalAmtController.text = (double.parse(_totalAmtController.text) -
-                  double.parse(_productRateControllers[index].text) *
-                      int.parse(_productQuantityControllers[index].text))
+                  double.parse(_productRateControllers[index].text) * int.parse(_productQuantityControllers[index].text))
               .toStringAsFixed(2);
 
           remainingItems!.removeAt(index);
@@ -1013,14 +908,9 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
         setState(() {
           addedProductList.removeAt(index);
 
-          _totalWeightController.text =
-              (double.parse(_totalWeightController.text) -
-                          fetchedProduct.grossWeight! ??
-                      0.0)
-                  .toStringAsFixed(2);
+          _totalWeightController.text = (double.parse(_totalWeightController.text) - fetchedProduct.grossWeight! ?? 0.0).toStringAsFixed(2);
           _totalAmtController.text = (double.parse(_totalAmtController.text) -
-                  double.parse(_addedProductRateControllers[index].text) *
-                      int.parse(_addedProductQuantityControllers[index].text))
+                  double.parse(_addedProductRateControllers[index].text) * int.parse(_addedProductQuantityControllers[index].text))
               .toStringAsFixed(2);
 
           _addedProductQuantityControllers.removeAt(index);
@@ -1074,8 +964,7 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
     return null;
   }
 
-  Future<List<Product?>> fetchAllProducts(
-      List<dynamic> dynamicItemsList) async {
+  Future<List<Product?>> fetchAllProducts(List<dynamic> dynamicItemsList) async {
     print('Fetching products for list: $dynamicItemsList'); // Debug print
     List<Product?> products = [];
     for (var item in dynamicItemsList) {
@@ -1097,13 +986,10 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
     }
 
     // Add debug logging
-    print(
-        'Adding combo with ID: ${selected['id']} and SKU: ${selected['sku']}');
+    print('Adding combo with ID: ${selected['id']} and SKU: ${selected['sku']}');
 
     // Check if the combo is already in the list
-    bool comboExists =
-        addedComboList.any((item) => item['id'] == selected['id']) ||
-            comboList.any((item) => item['id'] == selected['id']);
+    bool comboExists = addedComboList.any((item) => item['id'] == selected['id']) || comboList.any((item) => item['id'] == selected['id']);
     if (comboExists) {
       print('Combo already added');
       ScaffoldMessenger.of(context).showSnackBar(
@@ -1125,16 +1011,12 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
     setState(() {
       addedComboList.add(newItem);
       _addedComboQuantityControllers.add(TextEditingController(text: '1'));
-      _addedComboRateControllers
-          .add(TextEditingController(text: fetchedCombo.comboAmount ?? ''));
+      _addedComboRateControllers.add(TextEditingController(text: fetchedCombo.comboAmount ?? ''));
 
-      _totalWeightController.text = (double.parse(_totalWeightController.text) +
-              (fetchedCombo.comboWeight ?? 0.0))
-          .toStringAsFixed(2);
+      _totalWeightController.text = (double.parse(_totalWeightController.text) + (fetchedCombo.comboWeight ?? 0.0)).toStringAsFixed(2);
       if (fetchedCombo.comboAmount != 0) {
         _totalAmtController.text = (double.parse(_totalAmtController.text) +
-                (100 - double.parse(_discountPercentController.text)) *
-                    (double.parse(fetchedCombo.comboAmount!) ?? 0))
+                (100 - double.parse(_discountPercentController.text)) * (double.parse(fetchedCombo.comboAmount!) ?? 0))
             .toStringAsFixed(2);
       }
       // Refresh the combos future
@@ -1158,14 +1040,9 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
         setState(() {
           addedComboList.removeAt(index);
 
-          _totalWeightController.text =
-              (double.parse(_totalWeightController.text) -
-                          fetchedCombo.comboWeight! ??
-                      0.0)
-                  .toStringAsFixed(2);
+          _totalWeightController.text = (double.parse(_totalWeightController.text) - fetchedCombo.comboWeight! ?? 0.0).toStringAsFixed(2);
           _totalAmtController.text = (double.parse(_totalAmtController.text) -
-                  double.parse(_addedComboRateControllers[index].text) *
-                      int.parse(_addedComboQuantityControllers[index].text))
+                  double.parse(_addedComboRateControllers[index].text) * int.parse(_addedComboQuantityControllers[index].text))
               .toStringAsFixed(2);
 
           _combosFuture = fetchAllCombos(addedComboList);
@@ -1192,14 +1069,9 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
         setState(() {
           comboList.removeAt(index);
 
-          _totalWeightController.text =
-              (double.parse(_totalWeightController.text) -
-                          fetchedCombo.comboWeight! ??
-                      0.0)
-                  .toStringAsFixed(2);
+          _totalWeightController.text = (double.parse(_totalWeightController.text) - fetchedCombo.comboWeight! ?? 0.0).toStringAsFixed(2);
           _totalAmtController.text = (double.parse(_totalAmtController.text) -
-                  double.parse(_comboRateControllers[index].text) *
-                      int.parse(_comboQuantityControllers[index].text))
+                  double.parse(_comboRateControllers[index].text) * int.parse(_comboQuantityControllers[index].text))
               .toStringAsFixed(2);
 
           _comboQuantityControllers.removeAt(index);
@@ -1216,8 +1088,7 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
   }
 
   Future<Combo?> fetchCombo(String query) async {
-    Uri url =
-        Uri.parse('${await Constants.getBaseUrl()}/combo?comboSku=$query');
+    Uri url = Uri.parse('${await Constants.getBaseUrl()}/combo?comboSku=$query');
 
     log("Fetching combo with URL: $url");
 
@@ -1238,9 +1109,7 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
-        if (data != null &&
-            data['combos'] != null &&
-            data['combos'].isNotEmpty) {
+        if (data != null && data['combos'] != null && data['combos'].isNotEmpty) {
           // Find the combo that matches the query
           final comboData = data['combos'].firstWhere(
             (combo) => combo['comboSku'] == query || combo['id'] == query,
@@ -1360,13 +1229,10 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
                                   ChangeNotifierProvider.value(
                                     value: _ordersProvider,
                                     child: Consumer<OrdersProvider>(
-                                      builder:
-                                          (context, ordersProvider, child) {
-                                        final String? selectedOrderType =
-                                            ordersProvider.selectedOrderType;
+                                      builder: (context, ordersProvider, child) {
+                                        final String? selectedOrderType = ordersProvider.selectedOrderType;
 
-                                        final List<DropdownMenuItem<String>>
-                                            orderTypeItems = [
+                                        final List<DropdownMenuItem<String>> orderTypeItems = [
                                           const DropdownMenuItem<String>(
                                             value: 'New Buyer',
                                             child: Text('New Buyer'),
@@ -1383,39 +1249,32 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
                                             labelText: 'Order Type',
                                             labelStyle: TextStyle(
                                               fontWeight: FontWeight.w500,
-                                              color:
-                                                  Colors.grey.withOpacity(0.7),
+                                              color: Colors.grey.withOpacity(0.7),
                                               fontSize: 14,
                                             ),
-                                            prefixIcon: Icon(
-                                                Icons.shopping_cart,
-                                                color: Colors.grey[700]),
+                                            prefixIcon: Icon(Icons.shopping_cart, color: Colors.grey[700]),
                                             border: OutlineInputBorder(
-                                              borderRadius:
-                                                  BorderRadius.circular(10),
+                                              borderRadius: BorderRadius.circular(10),
                                               borderSide: BorderSide(
                                                 color: Colors.grey[400]!,
                                                 width: 1.2,
                                               ),
                                             ),
                                             enabledBorder: OutlineInputBorder(
-                                              borderRadius:
-                                                  BorderRadius.circular(10),
+                                              borderRadius: BorderRadius.circular(10),
                                               borderSide: BorderSide(
                                                 color: Colors.grey[400]!,
                                                 width: 1.2,
                                               ),
                                             ),
                                             focusedBorder: OutlineInputBorder(
-                                              borderRadius:
-                                                  BorderRadius.circular(10),
+                                              borderRadius: BorderRadius.circular(10),
                                               borderSide: const BorderSide(
                                                 color: AppColors.primaryBlue,
                                                 width: 1.5,
                                               ),
                                             ),
-                                            contentPadding:
-                                                const EdgeInsets.symmetric(
+                                            contentPadding: const EdgeInsets.symmetric(
                                               vertical: 15,
                                               horizontal: 12,
                                             ),
@@ -1425,8 +1284,7 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
                                           items: orderTypeItems,
                                           onChanged: (value) {
                                             if (value != null) {
-                                              ordersProvider
-                                                  .selectOrderType(value);
+                                              ordersProvider.selectOrderType(value);
                                               _orderTypeController.text = value;
                                             }
                                           },
@@ -1438,22 +1296,13 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
                                   ChangeNotifierProvider.value(
                                     value: _ordersProvider,
                                     child: Consumer<OrdersProvider>(
-                                      builder:
-                                          (context, ordersProvider, child) {
-                                        final String? selectedMarketplace =
-                                            ordersProvider.selectedMarketplace;
-                                        final bool isCustomMarketplace =
-                                            selectedMarketplace != null &&
-                                                selectedMarketplace
-                                                    .isNotEmpty &&
-                                                ![
-                                                  'Shopify',
-                                                  'Woocommerce',
-                                                  'Offline'
-                                                ].contains(selectedMarketplace);
+                                      builder: (context, ordersProvider, child) {
+                                        final String? selectedMarketplace = ordersProvider.selectedMarketplace;
+                                        final bool isCustomMarketplace = selectedMarketplace != null &&
+                                            selectedMarketplace.isNotEmpty &&
+                                            !['Shopify', 'Woocommerce', 'Offline'].contains(selectedMarketplace);
 
-                                        final List<DropdownMenuItem<String>>
-                                            items = [
+                                        final List<DropdownMenuItem<String>> items = [
                                           const DropdownMenuItem<String>(
                                             value: 'Shopify',
                                             child: Text('Shopify'),
@@ -1481,15 +1330,12 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
                                             labelText: 'Marketplace',
                                             labelStyle: TextStyle(
                                               fontWeight: FontWeight.w500,
-                                              color:
-                                                  Colors.grey.withOpacity(0.7),
+                                              color: Colors.grey.withOpacity(0.7),
                                               fontSize: 14,
                                             ),
-                                            prefixIcon: Icon(Icons.store,
-                                                color: Colors.grey[700]),
+                                            prefixIcon: Icon(Icons.store, color: Colors.grey[700]),
                                             border: OutlineInputBorder(
-                                              borderRadius:
-                                                  BorderRadius.circular(10),
+                                              borderRadius: BorderRadius.circular(10),
                                               borderSide: BorderSide(
                                                 color: Colors.grey[400]!,
                                                 width: 1.2,
@@ -1497,15 +1343,12 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
                                             ),
                                           ),
                                           dropdownColor: Colors.white,
-                                          hint:
-                                              const Text('Select Marketplace'),
+                                          hint: const Text('Select Marketplace'),
                                           items: items,
                                           onChanged: (value) {
                                             if (value != null) {
-                                              ordersProvider
-                                                  .selectMarketplace(value);
-                                              _marketplaceController.text =
-                                                  value;
+                                              ordersProvider.selectMarketplace(value);
+                                              _marketplaceController.text = value;
                                             }
                                           },
                                         );
@@ -1540,12 +1383,9 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
                                   ChangeNotifierProvider.value(
                                     value: _ordersProvider,
                                     child: Consumer<OrdersProvider>(
-                                      builder:
-                                          (context, ordersProvider, child) {
-                                        final String? selectedFilter =
-                                            ordersProvider.selectedFilter;
-                                        final List<DropdownMenuItem<String>>
-                                            items = [
+                                      builder: (context, ordersProvider, child) {
+                                        final String? selectedFilter = ordersProvider.selectedFilter;
+                                        final List<DropdownMenuItem<String>> items = [
                                           const DropdownMenuItem<String>(
                                             value: 'B2B',
                                             child: Text('B2B'),
@@ -1572,38 +1412,32 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
                                             labelText: 'Filter',
                                             labelStyle: TextStyle(
                                               fontWeight: FontWeight.w500,
-                                              color:
-                                                  Colors.grey.withOpacity(0.7),
+                                              color: Colors.grey.withOpacity(0.7),
                                               fontSize: 14,
                                             ),
-                                            prefixIcon: Icon(Icons.filter_1,
-                                                color: Colors.grey[700]),
+                                            prefixIcon: Icon(Icons.filter_1, color: Colors.grey[700]),
                                             border: OutlineInputBorder(
-                                              borderRadius:
-                                                  BorderRadius.circular(10),
+                                              borderRadius: BorderRadius.circular(10),
                                               borderSide: BorderSide(
                                                 color: Colors.grey[400]!,
                                                 width: 1.2,
                                               ),
                                             ),
                                             enabledBorder: OutlineInputBorder(
-                                              borderRadius:
-                                                  BorderRadius.circular(10),
+                                              borderRadius: BorderRadius.circular(10),
                                               borderSide: BorderSide(
                                                 color: Colors.grey[400]!,
                                                 width: 1.2,
                                               ),
                                             ),
                                             focusedBorder: OutlineInputBorder(
-                                              borderRadius:
-                                                  BorderRadius.circular(10),
+                                              borderRadius: BorderRadius.circular(10),
                                               borderSide: const BorderSide(
                                                 color: AppColors.primaryBlue,
                                                 width: 1.5,
                                               ),
                                             ),
-                                            contentPadding:
-                                                const EdgeInsets.symmetric(
+                                            contentPadding: const EdgeInsets.symmetric(
                                               vertical: 15,
                                               horizontal: 12,
                                             ),
@@ -1613,8 +1447,7 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
                                           items: items,
                                           onChanged: (value) {
                                             ordersProvider.selectFilter(value);
-                                            _filterController.text =
-                                                value ?? '';
+                                            _filterController.text = value ?? '';
                                           },
                                         );
                                       },
@@ -1645,18 +1478,14 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
                                   ChangeNotifierProvider.value(
                                     value: _ordersProvider,
                                     child: Consumer<OrdersProvider>(
-                                      builder:
-                                          (context, ordersProvider, child) {
-                                        final String? selectedPayment =
-                                            ordersProvider.selectedPayment;
-                                        final bool isCustomPayment =
-                                            selectedPayment != null &&
-                                                selectedPayment.isNotEmpty &&
-                                                selectedPayment != 'PrePaid' &&
-                                                selectedPayment != 'COD';
+                                      builder: (context, ordersProvider, child) {
+                                        final String? selectedPayment = ordersProvider.selectedPayment;
+                                        final bool isCustomPayment = selectedPayment != null &&
+                                            selectedPayment.isNotEmpty &&
+                                            selectedPayment != 'PrePaid' &&
+                                            selectedPayment != 'COD';
 
-                                        final List<DropdownMenuItem<String>>
-                                            item = [
+                                        final List<DropdownMenuItem<String>> item = [
                                           const DropdownMenuItem<String>(
                                             value: 'PrePaid',
                                             child: Text('PrePaid'),
@@ -1680,52 +1509,43 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
                                             labelText: 'Payment Mode',
                                             labelStyle: TextStyle(
                                               fontWeight: FontWeight.w500,
-                                              color:
-                                                  Colors.grey.withOpacity(0.7),
+                                              color: Colors.grey.withOpacity(0.7),
                                               fontSize: 14,
                                             ),
-                                            prefixIcon: Icon(Icons.payment,
-                                                color: Colors.grey[700]),
+                                            prefixIcon: Icon(Icons.payment, color: Colors.grey[700]),
                                             border: OutlineInputBorder(
-                                              borderRadius:
-                                                  BorderRadius.circular(10),
+                                              borderRadius: BorderRadius.circular(10),
                                               borderSide: BorderSide(
                                                 color: Colors.grey[400]!,
                                                 width: 1.2,
                                               ),
                                             ),
                                             enabledBorder: OutlineInputBorder(
-                                              borderRadius:
-                                                  BorderRadius.circular(10),
+                                              borderRadius: BorderRadius.circular(10),
                                               borderSide: BorderSide(
                                                 color: Colors.grey[400]!,
                                                 width: 1.2,
                                               ),
                                             ),
                                             focusedBorder: OutlineInputBorder(
-                                              borderRadius:
-                                                  BorderRadius.circular(10),
+                                              borderRadius: BorderRadius.circular(10),
                                               borderSide: const BorderSide(
                                                 color: AppColors.green,
                                                 width: 1.5,
                                               ),
                                             ),
-                                            contentPadding:
-                                                const EdgeInsets.symmetric(
+                                            contentPadding: const EdgeInsets.symmetric(
                                               vertical: 15,
                                               horizontal: 12,
                                             ),
                                           ),
                                           dropdownColor: Colors.white,
-                                          hint:
-                                              const Text('Select Payment Mode'),
+                                          hint: const Text('Select Payment Mode'),
                                           items: item,
                                           onChanged: (value) {
                                             if (value != null) {
-                                              ordersProvider
-                                                  .selectPayment(value);
-                                              _paymentModeController.text =
-                                                  value;
+                                              ordersProvider.selectPayment(value);
+                                              _paymentModeController.text = value;
                                             }
                                           },
                                         );
@@ -1752,8 +1572,7 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
                                   ),
                                   const SizedBox(height: 10),
                                   GestureDetector(
-                                    onTap: () =>
-                                        _selectPaymentDateTime(context),
+                                    onTap: () => _selectPaymentDateTime(context),
                                     child: AbsorbPointer(
                                       child: _buildTextField(
                                         controller: _paymentDateTimeController,
@@ -2220,22 +2039,12 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
                                   child: ChangeNotifierProvider.value(
                                     value: _ordersProvider,
                                     child: Consumer<OrdersProvider>(
-                                      builder:
-                                          (context, ordersProvider, child) {
-                                        final String? selectedCustomerType =
-                                            ordersProvider.selectedCustomerType;
-                                        final List<DropdownMenuItem<String>>
-                                            customerTypeItems = [
-                                          const DropdownMenuItem<String>(
-                                              value: 'New Order',
-                                              child: Text('New Order')),
-                                          const DropdownMenuItem<String>(
-                                              value: 'Replacement Order',
-                                              child: Text('Replacement Order')),
-                                          const DropdownMenuItem<String>(
-                                              value: 'Partial Replacement',
-                                              child:
-                                                  Text('Partial Replacement')),
+                                      builder: (context, ordersProvider, child) {
+                                        final String? selectedCustomerType = ordersProvider.selectedCustomerType;
+                                        final List<DropdownMenuItem<String>> customerTypeItems = [
+                                          const DropdownMenuItem<String>(value: 'New Order', child: Text('New Order')),
+                                          const DropdownMenuItem<String>(value: 'Replacement Order', child: Text('Replacement Order')),
+                                          const DropdownMenuItem<String>(value: 'Partial Replacement', child: Text('Partial Replacement')),
                                         ];
 
                                         return DropdownButtonFormField<String>(
@@ -2244,52 +2053,43 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
                                             labelText: 'Customer Type',
                                             labelStyle: TextStyle(
                                               fontWeight: FontWeight.w500,
-                                              color:
-                                                  Colors.grey.withOpacity(0.7),
+                                              color: Colors.grey.withOpacity(0.7),
                                               fontSize: 14,
                                             ),
-                                            prefixIcon: Icon(Icons.person,
-                                                color: Colors.grey[700]),
+                                            prefixIcon: Icon(Icons.person, color: Colors.grey[700]),
                                             border: OutlineInputBorder(
-                                              borderRadius:
-                                                  BorderRadius.circular(10),
+                                              borderRadius: BorderRadius.circular(10),
                                               borderSide: BorderSide(
                                                 color: Colors.grey[400]!,
                                                 width: 1.2,
                                               ),
                                             ),
                                             enabledBorder: OutlineInputBorder(
-                                              borderRadius:
-                                                  BorderRadius.circular(10),
+                                              borderRadius: BorderRadius.circular(10),
                                               borderSide: BorderSide(
                                                 color: Colors.grey[400]!,
                                                 width: 1.2,
                                               ),
                                             ),
                                             focusedBorder: OutlineInputBorder(
-                                              borderRadius:
-                                                  BorderRadius.circular(10),
+                                              borderRadius: BorderRadius.circular(10),
                                               borderSide: const BorderSide(
                                                 color: AppColors.primaryBlue,
                                                 width: 1.5,
                                               ),
                                             ),
-                                            contentPadding:
-                                                const EdgeInsets.symmetric(
+                                            contentPadding: const EdgeInsets.symmetric(
                                               vertical: 15,
                                               horizontal: 12,
                                             ),
                                           ),
                                           dropdownColor: Colors.white,
-                                          hint: const Text(
-                                              'Select Customer Type'),
+                                          hint: const Text('Select Customer Type'),
                                           items: customerTypeItems,
                                           onChanged: (value) {
                                             if (value != null) {
-                                              ordersProvider
-                                                  .selectCustomerType(value);
-                                              _customerTypeController.text =
-                                                  value;
+                                              ordersProvider.selectCustomerType(value);
+                                              _customerTypeController.text = value;
                                             }
                                           },
                                         );
@@ -2573,14 +2373,11 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
                               value: _selectedItemType,
                               decoration: const InputDecoration(
                                 border: OutlineInputBorder(),
-                                contentPadding: EdgeInsets.symmetric(
-                                    horizontal: 12.0, vertical: 8.0),
+                                contentPadding: EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
                               ),
                               items: const [
-                                DropdownMenuItem(
-                                    value: 'Product', child: Text('Product')),
-                                DropdownMenuItem(
-                                    value: 'Combo', child: Text('Combo')),
+                                DropdownMenuItem(value: 'Product', child: Text('Product')),
+                                DropdownMenuItem(value: 'Combo', child: Text('Combo')),
                               ],
                               onChanged: (value) {
                                 setState(() {
@@ -2646,8 +2443,7 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
                                   SizedBox(
                                     width: 200,
                                     child: _buildQuantityTextField(
-                                      controller:
-                                          _productQuantityControllers[index],
+                                      controller: _productQuantityControllers[index],
                                       label: 'Qty',
                                       icon: Icons.production_quantity_limits,
                                     ),
@@ -2660,31 +2456,49 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
                                       // original: (productList[index]['amount'] / productList[index]['qty']).toStringAsFixed(2),
 
                                       // totalController: _totalAmtController,
-                                      controller:
-                                          _productRateControllers[index],
+                                      controller: _productRateControllers[index],
                                       label: 'Rate',
                                       icon: Icons.currency_rupee,
                                     ),
                                   ),
-                                  const SizedBox(height: 8),
-                                  ElevatedButton(
-                                    onPressed: () => _deleteProduct(index, id!),
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: Colors.red,
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 16,
-                                        vertical: 8,
-                                      ),
-                                    ),
-                                    child: const Row(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        Icon(Icons.delete),
-                                        SizedBox(width: 8),
-                                        Text('Delete Item'),
-                                      ],
-                                    ),
-                                  ),
+                                  // const SizedBox(height: 8),
+                                  // ElevatedButton(
+                                  //   onPressed: () => _deleteProduct(index, id!),
+                                  //   style: ElevatedButton.styleFrom(
+                                  //     backgroundColor: Colors.red,
+                                  //     padding: const EdgeInsets.symmetric(
+                                  //       horizontal: 16,
+                                  //       vertical: 8,
+                                  //     ),
+                                  //   ),
+                                  //   child: const Row(
+                                  //     mainAxisSize: MainAxisSize.min,
+                                  //     children: [
+                                  //       Icon(Icons.delete),
+                                  //       SizedBox(width: 8),
+                                  //       Text('Delete Item'),
+                                  //     ],
+                                  //   ),
+                                  // ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(width: 16),
+                            ElevatedButton(
+                              onPressed: () => _deleteProduct(index, id!),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.red,
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 16,
+                                  vertical: 8,
+                                ),
+                              ),
+                              child: const Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(Icons.delete),
+                                  SizedBox(width: 8),
+                                  Text('Delete'),
                                 ],
                               ),
                             ),
@@ -2696,13 +2510,10 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
                     FutureBuilder<List<Product?>>(
                       future: _productsFuture,
                       builder: (context, snapshot) {
-                        if (snapshot.connectionState ==
-                            ConnectionState.waiting) {
-                          return const Center(
-                              child: CircularProgressIndicator());
+                        if (snapshot.connectionState == ConnectionState.waiting) {
+                          return const Center(child: CircularProgressIndicator());
                         } else if (snapshot.hasError) {
-                          return Center(
-                              child: Text('Error: ${snapshot.error}'));
+                          return Center(child: Text('Error: ${snapshot.error}'));
                         } else {
                           final products = snapshot.data ?? [];
                           // Only show products section if there are standalone products
@@ -2737,12 +2548,9 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
                                             SizedBox(
                                               width: 200,
                                               child: _buildQuantityTextField(
-                                                controller:
-                                                    _addedProductQuantityControllers[
-                                                        index],
+                                                controller: _addedProductQuantityControllers[index],
                                                 label: 'Qty',
-                                                icon: Icons
-                                                    .production_quantity_limits,
+                                                icon: Icons.production_quantity_limits,
                                               ),
                                             ),
                                             const SizedBox(height: 8),
@@ -2751,34 +2559,27 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
                                               child: _buildRateTextField(
                                                 // origianl: (addedProductList[index]['amount'] / addedProductList[index]['qty']).toString(),
                                                 // original: (addedProductList[index]['amount'] / addedProductList[index]['qty']).toStringAsFixed(2),
-                                                controller:
-                                                    _addedProductRateControllers[
-                                                        index],
+                                                controller: _addedProductRateControllers[index],
                                                 label: 'Rate',
                                                 icon: Icons.currency_rupee,
                                               ),
                                             ),
-                                            const SizedBox(height: 8),
-                                            ElevatedButton(
-                                              onPressed: () =>
-                                                  _deleteAddedProduct(
-                                                      index, id!),
-                                              style: ElevatedButton.styleFrom(
-                                                backgroundColor: Colors.red,
-                                                padding:
-                                                    const EdgeInsets.symmetric(
-                                                        horizontal: 16,
-                                                        vertical: 8),
-                                              ),
-                                              child: const Row(
-                                                mainAxisSize: MainAxisSize.min,
-                                                children: [
-                                                  Icon(Icons.delete),
-                                                  SizedBox(width: 8),
-                                                  Text('Delete Item'),
-                                                ],
-                                              ),
-                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      const SizedBox(width: 16),
+                                      ElevatedButton(
+                                        onPressed: () => _deleteAddedProduct(index, id!),
+                                        style: ElevatedButton.styleFrom(
+                                          backgroundColor: Colors.red,
+                                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                                        ),
+                                        child: const Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            Icon(Icons.delete),
+                                            SizedBox(width: 8),
+                                            Text('Delete'),
                                           ],
                                         ),
                                       ),
@@ -2817,8 +2618,7 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
                                   SizedBox(
                                     width: 200,
                                     child: _buildQuantityTextField(
-                                      controller:
-                                          _comboQuantityControllers[index],
+                                      controller: _comboQuantityControllers[index],
                                       label: 'Qty',
                                       icon: Icons.production_quantity_limits,
                                     ),
@@ -2834,25 +2634,25 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
                                       icon: Icons.currency_rupee,
                                     ),
                                   ),
-                                  const SizedBox(height: 8),
-                                  ElevatedButton(
-                                    onPressed: () => _deleteCombo(index, sku!),
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: Colors.red,
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 16,
-                                        vertical: 8,
-                                      ),
-                                    ),
-                                    child: const Row(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        Icon(Icons.delete),
-                                        SizedBox(width: 8),
-                                        Text('Delete Item'),
-                                      ],
-                                    ),
-                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            ElevatedButton(
+                              onPressed: () => _deleteCombo(index, sku!),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.red,
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 16,
+                                  vertical: 8,
+                                ),
+                              ),
+                              child: const Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(Icons.delete),
+                                  SizedBox(width: 8),
+                                  Text('Delete'),
                                 ],
                               ),
                             ),
@@ -2864,13 +2664,10 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
                     FutureBuilder<List<Combo?>>(
                       future: _combosFuture,
                       builder: (context, snapshot) {
-                        if (snapshot.connectionState ==
-                            ConnectionState.waiting) {
-                          return const Center(
-                              child: CircularProgressIndicator());
+                        if (snapshot.connectionState == ConnectionState.waiting) {
+                          return const Center(child: CircularProgressIndicator());
                         } else if (snapshot.hasError) {
-                          return Center(
-                              child: Text('Error: ${snapshot.error}'));
+                          return Center(child: Text('Error: ${snapshot.error}'));
                         } else {
                           final combos = snapshot.data ?? [];
 
@@ -2902,12 +2699,9 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
                                             SizedBox(
                                               width: 200,
                                               child: _buildQuantityTextField(
-                                                controller:
-                                                    _addedComboQuantityControllers[
-                                                        index],
+                                                controller: _addedComboQuantityControllers[index],
                                                 label: 'Qty',
-                                                icon: Icons
-                                                    .production_quantity_limits,
+                                                icon: Icons.production_quantity_limits,
                                               ),
                                             ),
                                             const SizedBox(height: 8),
@@ -2915,34 +2709,30 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
                                               width: 200,
                                               child: _buildRateTextField(
                                                 // original: (addedComboList[index]['amount'] / addedComboList[index]['qty']).toStringAsFixed(2),
-                                                controller:
-                                                    _addedComboRateControllers[
-                                                        index],
+                                                controller: _addedComboRateControllers[index],
                                                 label: 'Rate',
                                                 icon: Icons.currency_rupee,
                                               ),
                                             ),
-                                            const SizedBox(height: 8),
-                                            ElevatedButton(
-                                              onPressed: () =>
-                                                  _deleteAddedCombo(index, sku),
-                                              style: ElevatedButton.styleFrom(
-                                                backgroundColor: Colors.red,
-                                                padding:
-                                                    const EdgeInsets.symmetric(
-                                                  horizontal: 16,
-                                                  vertical: 8,
-                                                ),
-                                              ),
-                                              child: const Row(
-                                                mainAxisSize: MainAxisSize.min,
-                                                children: [
-                                                  Icon(Icons.delete),
-                                                  SizedBox(width: 8),
-                                                  Text('Delete Item'),
-                                                ],
-                                              ),
-                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      const SizedBox(width: 8),
+                                      ElevatedButton(
+                                        onPressed: () => _deleteAddedCombo(index, sku),
+                                        style: ElevatedButton.styleFrom(
+                                          backgroundColor: Colors.red,
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 16,
+                                            vertical: 8,
+                                          ),
+                                        ),
+                                        child: const Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            Icon(Icons.delete),
+                                            SizedBox(width: 8),
+                                            Text('Delete'),
                                           ],
                                         ),
                                       ),
@@ -3001,18 +2791,14 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
                 keyboardType: keyboardType,
                 validator: validator,
                 style: TextStyle(
-                  color: enabled
-                      ? (isFocused ? AppColors.primaryBlue : Colors.black87)
-                      : Colors.grey[600],
+                  color: enabled ? (isFocused ? AppColors.primaryBlue : Colors.black87) : Colors.grey[600],
                   fontWeight: FontWeight.w600,
                 ),
                 decoration: InputDecoration(
                   labelText: label,
                   labelStyle: TextStyle(
                     fontWeight: FontWeight.w500,
-                    color: isFocused || !isEmpty
-                        ? AppColors.primaryBlue
-                        : Colors.grey.withOpacity(0.7),
+                    color: isFocused || !isEmpty ? AppColors.primaryBlue : Colors.grey.withOpacity(0.7),
                     fontSize: 14,
                   ),
                   prefixIcon: Icon(
@@ -3051,8 +2837,7 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
                   ),
                   filled: true,
                   fillColor: enabled ? Colors.white : Colors.grey[200],
-                  contentPadding:
-                      const EdgeInsets.symmetric(vertical: 15, horizontal: 12),
+                  contentPadding: const EdgeInsets.symmetric(vertical: 15, horizontal: 12),
                 ),
                 cursorColor: AppColors.primaryBlue,
               );
@@ -3086,13 +2871,10 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
               labelText: label,
               labelStyle: TextStyle(
                 fontWeight: FontWeight.w500,
-                color: isFocused || !isEmpty
-                    ? AppColors.primaryBlue
-                    : Colors.grey.withOpacity(0.7),
+                color: isFocused || !isEmpty ? AppColors.primaryBlue : Colors.grey.withOpacity(0.7),
                 fontSize: 14,
               ),
-              prefixIcon: Icon(icon,
-                  color: isFocused ? AppColors.primaryBlue : Colors.grey[700]),
+              prefixIcon: Icon(icon, color: isFocused ? AppColors.primaryBlue : Colors.grey[700]),
               suffixIcon: isEmpty
                   ? null
                   : IconButton(
@@ -3139,13 +2921,9 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
                     final double amount = qty * rate;
                     total += amount;
                   }
-                  for (var i = 0;
-                      i < _addedProductQuantityControllers.length;
-                      i++) {
-                    final qty =
-                        int.parse(_addedProductQuantityControllers[i].text);
-                    final rate =
-                        double.parse(_addedProductRateControllers[i].text);
+                  for (var i = 0; i < _addedProductQuantityControllers.length; i++) {
+                    final qty = int.parse(_addedProductQuantityControllers[i].text);
+                    final rate = double.parse(_addedProductRateControllers[i].text);
                     final double amount = qty * rate;
                     total += amount;
                   }
@@ -3155,32 +2933,23 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
                     final double amount = qty * rate;
                     total += amount;
                   }
-                  for (var i = 0;
-                      i < _addedComboQuantityControllers.length;
-                      i++) {
-                    final qty =
-                        int.parse(_addedComboQuantityControllers[i].text);
-                    final rate =
-                        double.parse(_addedComboRateControllers[i].text);
+                  for (var i = 0; i < _addedComboQuantityControllers.length; i++) {
+                    final qty = int.parse(_addedComboQuantityControllers[i].text);
+                    final rate = double.parse(_addedComboRateControllers[i].text);
                     final double amount = qty * rate;
                     total += amount;
                   }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////
-                  final double discountPercent =
-                      double.parse(_discountPercentController.text);
+                  final double discountPercent = double.parse(_discountPercentController.text);
 
                   if (discountPercent != 0) {
                     // Calculate discount and update total amount
-                    final double discountAmount =
-                        total * (discountPercent / 100);
+                    final double discountAmount = total * (discountPercent / 100);
                     final double newTotal = total - discountAmount;
-                    _discountAmountController.text =
-                        discountAmount.toStringAsFixed(2); // Convert to integer
-                    _totalAmtController.text =
-                        newTotal.toStringAsFixed(2); // Convert to integer
-                    _codAmountController.text =
-                        newTotal.toStringAsFixed(2); // Convert to integer
+                    _discountAmountController.text = discountAmount.toStringAsFixed(2); // Convert to integer
+                    _totalAmtController.text = newTotal.toStringAsFixed(2); // Convert to integer
+                    _codAmountController.text = newTotal.toStringAsFixed(2); // Convert to integer
                   }
                 }
               });
@@ -3203,120 +2972,114 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
           final bool isFocused = Focus.of(context).hasFocus;
           final bool isEmpty = controller.text.isEmpty;
 
-          return TextFormField(
-            controller: controller,
-            enabled: enabled,
-            style: TextStyle(
-              color: enabled ? AppColors.primaryBlue : Colors.grey[700],
-              fontWeight: FontWeight.w600,
-            ),
-            decoration: InputDecoration(
-              labelText: label,
-              labelStyle: TextStyle(
+          return SizedBox(
+            height: 40,
+            child: TextFormField(
+              controller: controller,
+              enabled: enabled,
+              style: TextStyle(
+                color: enabled ? AppColors.primaryBlue : Colors.grey[700],
                 fontWeight: FontWeight.w500,
-                color: isFocused || !isEmpty
-                    ? AppColors.primaryBlue
-                    : Colors.grey.withOpacity(0.7),
-                fontSize: 14,
+                fontSize: 13, // Reduced font size
               ),
-              prefixIcon: Icon(icon,
-                  color: isFocused ? AppColors.primaryBlue : Colors.grey[700]),
-              suffixIcon: isEmpty
-                  ? null
-                  : IconButton(
-                      icon: Icon(Icons.clear, color: Colors.grey[600]),
-                      onPressed: () {
-                        controller.clear();
-                      },
-                    ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(10),
-                borderSide: BorderSide(
-                  color: Colors.grey[400]!,
-                  width: 1.2,
+              decoration: InputDecoration(
+                isDense: true, // Makes the field more compact
+                labelText: label,
+                labelStyle: TextStyle(
+                  fontWeight: FontWeight.w500,
+                  color: isFocused || !isEmpty ? AppColors.primaryBlue : Colors.grey.withOpacity(0.7),
+                  fontSize: 12, // Reduced label font size
+                ),
+                prefixIcon: Icon(icon,
+                  color: isFocused ? AppColors.primaryBlue : Colors.grey[700],
+                  size: 18, // Reduced icon size
+                ),
+                suffixIcon: isEmpty ? null : IconButton(
+                  icon: Icon(Icons.clear,
+                    color: Colors.grey[600],
+                    size: 16, // Reduced clear icon size
+                  ),
+                  onPressed: () => controller.clear(),
+                  constraints: const BoxConstraints(
+                    minWidth: 32, // Reduced button width
+                    minHeight: 32, // Reduced button height
+                  ),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8), // Reduced border radius
+                  borderSide: BorderSide(
+                    color: Colors.grey[400]!,
+                    width: 1.0, // Reduced border width
+                  ),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: const BorderSide(
+                    color: AppColors.primaryBlue,
+                    width: 1.2,
+                  ),
+                ),
+                disabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: BorderSide(
+                    color: Colors.grey[300]!,
+                    width: 1.0,
+                  ),
+                ),
+                filled: true,
+                fillColor: enabled ? Colors.white : Colors.grey[200],
+                contentPadding: const EdgeInsets.symmetric(
+                  vertical: 0, // Reduced vertical padding
+                  horizontal: 4, // Reduced horizontal padding
                 ),
               ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(10),
-                borderSide: const BorderSide(
-                  color: AppColors.primaryBlue,
-                  width: 1.5,
-                ),
-              ),
-              disabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(10),
-                borderSide: BorderSide(
-                  color: Colors.grey[300]!,
-                  width: 1,
-                ),
-              ),
-              filled: true,
-              fillColor: enabled ? Colors.white : Colors.grey[200],
-              contentPadding: const EdgeInsets.symmetric(
-                vertical: 15,
-                horizontal: 12,
-              ),
+              onFieldSubmitted: (value) {
+                setState(() {
+                  if (value.isNotEmpty) {
+                    double total = 0;
+                    for (var i = 0; i < _productQuantityControllers.length; i++) {
+                      final qty = int.parse(_productQuantityControllers[i].text);
+                      final rate = double.parse(_productRateControllers[i].text);
+                      final double amount = qty * rate;
+                      total += amount;
+                    }
+                    for (var i = 0; i < _addedProductQuantityControllers.length; i++) {
+                      final qty = int.parse(_addedProductQuantityControllers[i].text);
+                      final rate = double.parse(_addedProductRateControllers[i].text);
+                      final double amount = qty * rate;
+                      total += amount;
+                    }
+                    for (var i = 0; i < _comboQuantityControllers.length; i++) {
+                      final qty = int.parse(_comboQuantityControllers[i].text);
+                      final rate = double.parse(_comboRateControllers[i].text);
+                      final double amount = qty * rate;
+                      total += amount;
+                    }
+                    for (var i = 0; i < _addedComboQuantityControllers.length; i++) {
+                      final qty = int.parse(_addedComboQuantityControllers[i].text);
+                      final rate = double.parse(_addedComboRateControllers[i].text);
+                      final double amount = qty * rate;
+                      total += amount;
+                    }
+                    _totalAmtController.text = total.toStringAsFixed(2);
+                    _codAmountController.text = total.toStringAsFixed(2);
+
+            //////////////////////////////////////////////////////////////////////////////////////////////////////////////
+                    final double discountPercent = double.parse(_discountPercentController.text);
+                    final double totalAmount = double.parse(_totalAmtController.text);
+
+                    if (discountPercent != 0) {
+                      // Calculate discount and update total amount
+                      final double discountAmount = totalAmount * (discountPercent / 100);
+                      final double newTotal = totalAmount - discountAmount;
+                      _discountAmountController.text = discountAmount.toStringAsFixed(2); // Convert to integer
+                      _totalAmtController.text = newTotal.toStringAsFixed(2); // Convert to integer
+                      _codAmountController.text = newTotal.toStringAsFixed(2); // Convert to integer
+                    }
+                  }
+                });
+              },
             ),
-            onFieldSubmitted: (value) {
-              setState(() {
-                if (value.isNotEmpty) {
-                  double total = 0;
-                  for (var i = 0; i < _productQuantityControllers.length; i++) {
-                    final qty = int.parse(_productQuantityControllers[i].text);
-                    final rate = double.parse(_productRateControllers[i].text);
-                    final double amount = qty * rate;
-                    total += amount;
-                  }
-                  for (var i = 0;
-                      i < _addedProductQuantityControllers.length;
-                      i++) {
-                    final qty =
-                        int.parse(_addedProductQuantityControllers[i].text);
-                    final rate =
-                        double.parse(_addedProductRateControllers[i].text);
-                    final double amount = qty * rate;
-                    total += amount;
-                  }
-                  for (var i = 0; i < _comboQuantityControllers.length; i++) {
-                    final qty = int.parse(_comboQuantityControllers[i].text);
-                    final rate = double.parse(_comboRateControllers[i].text);
-                    final double amount = qty * rate;
-                    total += amount;
-                  }
-                  for (var i = 0;
-                      i < _addedComboQuantityControllers.length;
-                      i++) {
-                    final qty =
-                        int.parse(_addedComboQuantityControllers[i].text);
-                    final rate =
-                        double.parse(_addedComboRateControllers[i].text);
-                    final double amount = qty * rate;
-                    total += amount;
-                  }
-                  _totalAmtController.text = total.toStringAsFixed(2);
-                  _codAmountController.text = total.toStringAsFixed(2);
-
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////
-                  final double discountPercent =
-                      double.parse(_discountPercentController.text);
-                  final double totalAmount =
-                      double.parse(_totalAmtController.text);
-
-                  if (discountPercent != 0) {
-                    // Calculate discount and update total amount
-                    final double discountAmount =
-                        totalAmount * (discountPercent / 100);
-                    final double newTotal = totalAmount - discountAmount;
-                    _discountAmountController.text =
-                        discountAmount.toStringAsFixed(2); // Convert to integer
-                    _totalAmtController.text =
-                        newTotal.toStringAsFixed(2); // Convert to integer
-                    _codAmountController.text =
-                        newTotal.toStringAsFixed(2); // Convert to integer
-                  }
-                }
-              });
-            },
           );
         },
       ),
@@ -3335,120 +3098,114 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
           final bool isFocused = Focus.of(context).hasFocus;
           final bool isEmpty = controller.text.isEmpty;
 
-          return TextFormField(
-            controller: controller,
-            enabled: enabled,
-            style: TextStyle(
-              color: enabled ? AppColors.primaryBlue : Colors.grey[700],
-              fontWeight: FontWeight.w600,
-            ),
-            decoration: InputDecoration(
-              labelText: label,
-              labelStyle: TextStyle(
+          return SizedBox(
+            height: 40,
+            child: TextFormField(
+              controller: controller,
+              enabled: enabled,
+              style: TextStyle(
+                color: enabled ? AppColors.primaryBlue : Colors.grey[700],
                 fontWeight: FontWeight.w500,
-                color: isFocused || !isEmpty
-                    ? AppColors.primaryBlue
-                    : Colors.grey.withOpacity(0.7),
-                fontSize: 14,
+                fontSize: 13, // Reduced font size
               ),
-              prefixIcon: Icon(icon,
-                  color: isFocused ? AppColors.primaryBlue : Colors.grey[700]),
-              suffixIcon: isEmpty
-                  ? null
-                  : IconButton(
-                      icon: Icon(Icons.clear, color: Colors.grey[600]),
-                      onPressed: () {
-                        controller.clear();
-                      },
-                    ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(10),
-                borderSide: BorderSide(
-                  color: Colors.grey[400]!,
-                  width: 1.2,
+              decoration: InputDecoration(
+                isDense: true, // Makes the field more compact
+                labelText: label,
+                labelStyle: TextStyle(
+                  fontWeight: FontWeight.w500,
+                  color: isFocused || !isEmpty ? AppColors.primaryBlue : Colors.grey.withOpacity(0.7),
+                  fontSize: 12, // Reduced label font size
+                ),
+                prefixIcon: Icon(icon,
+                  color: isFocused ? AppColors.primaryBlue : Colors.grey[700],
+                  size: 18, // Reduced icon size
+                ),
+                suffixIcon: isEmpty ? null : IconButton(
+                  icon: Icon(Icons.clear,
+                    color: Colors.grey[600],
+                    size: 16, // Reduced clear icon size
+                  ),
+                  onPressed: () => controller.clear(),
+                  constraints: const BoxConstraints(
+                    minWidth: 32, // Reduced button width
+                    minHeight: 32, // Reduced button height
+                  ),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8), // Reduced border radius
+                  borderSide: BorderSide(
+                    color: Colors.grey[400]!,
+                    width: 1.0, // Reduced border width
+                  ),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: const BorderSide(
+                    color: AppColors.primaryBlue,
+                    width: 1.2,
+                  ),
+                ),
+                disabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: BorderSide(
+                    color: Colors.grey[300]!,
+                    width: 1.0,
+                  ),
+                ),
+                filled: true,
+                fillColor: enabled ? Colors.white : Colors.grey[200],
+                contentPadding: const EdgeInsets.symmetric(
+                  vertical: 0, // Reduced vertical padding
+                  horizontal: 4, // Reduced horizontal padding
                 ),
               ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(10),
-                borderSide: const BorderSide(
-                  color: AppColors.primaryBlue,
-                  width: 1.5,
-                ),
-              ),
-              disabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(10),
-                borderSide: BorderSide(
-                  color: Colors.grey[300]!,
-                  width: 1,
-                ),
-              ),
-              filled: true,
-              fillColor: enabled ? Colors.white : Colors.grey[200],
-              contentPadding: const EdgeInsets.symmetric(
-                vertical: 15,
-                horizontal: 12,
-              ),
+              onFieldSubmitted: (value) {
+                setState(() {
+                  if (value.isNotEmpty) {
+                    double total = 0;
+                    for (var i = 0; i < _productQuantityControllers.length; i++) {
+                      final qty = int.parse(_productQuantityControllers[i].text);
+                      final rate = double.parse(_productRateControllers[i].text);
+                      final double amount = qty * rate;
+                      total += amount;
+                    }
+                    for (var i = 0; i < _addedProductQuantityControllers.length; i++) {
+                      final qty = int.parse(_addedProductQuantityControllers[i].text);
+                      final rate = double.parse(_addedProductRateControllers[i].text);
+                      final double amount = qty * rate;
+                      total += amount;
+                    }
+                    for (var i = 0; i < _comboQuantityControllers.length; i++) {
+                      final qty = int.parse(_comboQuantityControllers[i].text);
+                      final rate = double.parse(_comboRateControllers[i].text);
+                      final double amount = qty * rate;
+                      total += amount;
+                    }
+                    for (var i = 0; i < _addedComboQuantityControllers.length; i++) {
+                      final qty = int.parse(_addedComboQuantityControllers[i].text);
+                      final rate = double.parse(_addedComboRateControllers[i].text);
+                      final double amount = qty * rate;
+                      total += amount;
+                    }
+                    _totalAmtController.text = total.toStringAsFixed(2);
+                    _codAmountController.text = total.toStringAsFixed(2);
+            
+                    //////////////////////////////////////////////////////////////////////////////////////////////////////////////
+                    final double discountPercent = double.parse(_discountPercentController.text);
+                    final double totalAmount = double.parse(_totalAmtController.text);
+            
+                    if (discountPercent != 0) {
+                      // Calculate discount and update total amount
+                      final double discountAmount = totalAmount * (discountPercent / 100);
+                      final double newTotal = totalAmount - discountAmount;
+                      _discountAmountController.text = discountAmount.toStringAsFixed(2); // Convert to integer
+                      _totalAmtController.text = newTotal.toStringAsFixed(2); // Convert to integer
+                      _codAmountController.text = newTotal.toStringAsFixed(2); // Convert to integer
+                    }
+                  }
+                });
+              },
             ),
-            onFieldSubmitted: (value) {
-              setState(() {
-                if (value.isNotEmpty) {
-                  double total = 0;
-                  for (var i = 0; i < _productQuantityControllers.length; i++) {
-                    final qty = int.parse(_productQuantityControllers[i].text);
-                    final rate = double.parse(_productRateControllers[i].text);
-                    final double amount = qty * rate;
-                    total += amount;
-                  }
-                  for (var i = 0;
-                      i < _addedProductQuantityControllers.length;
-                      i++) {
-                    final qty =
-                        int.parse(_addedProductQuantityControllers[i].text);
-                    final rate =
-                        double.parse(_addedProductRateControllers[i].text);
-                    final double amount = qty * rate;
-                    total += amount;
-                  }
-                  for (var i = 0; i < _comboQuantityControllers.length; i++) {
-                    final qty = int.parse(_comboQuantityControllers[i].text);
-                    final rate = double.parse(_comboRateControllers[i].text);
-                    final double amount = qty * rate;
-                    total += amount;
-                  }
-                  for (var i = 0;
-                      i < _addedComboQuantityControllers.length;
-                      i++) {
-                    final qty =
-                        int.parse(_addedComboQuantityControllers[i].text);
-                    final rate =
-                        double.parse(_addedComboRateControllers[i].text);
-                    final double amount = qty * rate;
-                    total += amount;
-                  }
-                  _totalAmtController.text = total.toStringAsFixed(2);
-                  _codAmountController.text = total.toStringAsFixed(2);
-
-                  //////////////////////////////////////////////////////////////////////////////////////////////////////////////
-                  final double discountPercent =
-                      double.parse(_discountPercentController.text);
-                  final double totalAmount =
-                      double.parse(_totalAmtController.text);
-
-                  if (discountPercent != 0) {
-                    // Calculate discount and update total amount
-                    final double discountAmount =
-                        totalAmount * (discountPercent / 100);
-                    final double newTotal = totalAmount - discountAmount;
-                    _discountAmountController.text =
-                        discountAmount.toStringAsFixed(2); // Convert to integer
-                    _totalAmtController.text =
-                        newTotal.toStringAsFixed(2); // Convert to integer
-                    _codAmountController.text =
-                        newTotal.toStringAsFixed(2); // Convert to integer
-                  }
-                }
-              });
-            },
           );
         },
       ),
