@@ -12,14 +12,14 @@ import 'package:logger/logger.dart';
 import 'package:socket_io_client/socket_io_client.dart' as IO;
 import 'package:url_launcher/url_launcher.dart';
 
-class CreateOrdersByCSV extends StatefulWidget {
-  const CreateOrdersByCSV({super.key});
+class MergeOrdersByCsv extends StatefulWidget {
+  const MergeOrdersByCsv({super.key});
 
   @override
-  State<CreateOrdersByCSV> createState() => _CreateOrdersByCSVState();
+  State<MergeOrdersByCsv> createState() => _MergeOrdersByCsvState();
 }
 
-class _CreateOrdersByCSVState extends State<CreateOrdersByCSV> {
+class _MergeOrdersByCsvState extends State<MergeOrdersByCsv> {
   static const int _pageSize = 50;
   List<List<dynamic>> _csvData = [];
   int _rowCount = 0;
@@ -63,39 +63,33 @@ class _CreateOrdersByCSVState extends State<CreateOrdersByCSV> {
         _showSnackbar('Connected to server', Colors.green);
       });
 
-      // On error during file upload
-      _socket?.off('csv-file-uploading-err'); // Clear previous listeners
-      _socket?.on('csv-file-uploading-err', (data) {
-        debugPrint('Error Data: $data');
-        setState(() {
-          _progressMessage = data['message'] ?? 'An error occurred';
-        });
-        _showSnackbar(_progressMessage, Colors.red);
-      });
-
-      // On file upload progress
-      _socket?.off('csv-file-uploading');
-      _socket?.on('csv-file-uploading', (data) {
-        Logger().e('Data progress: ${data['progress']}');
+      // On merging progress
+      _socket?.off('csv-merge-progress'); // Clear previous listeners
+      _socket?.on('csv-merge-progress', (data) {
+        debugPrint('Merge Progress Data: $data');
         if (data['progress'] != null) {
           double newProgress = double.tryParse(data['progress'].toString()) ?? 0;
           _progressNotifier.value = newProgress;
         }
+
+        setState(() {
+          _progressMessage = data['message'] ?? 'Merging in progress...';
+        });
       });
 
-      // On successful file upload - Use `.once()` to trigger only once
-      _socket?.off('csv-file-uploaded');
-      _socket?.once('csv-file-uploaded', (data) {
-        log('CSV file uploaded: $data');
+      // On successful merge and CSV generation
+      _socket?.off('merged-csv-orders');
+      _socket?.once('merged-csv-orders', (data) {
+        log('Merge order successful: $data');
         setState(() {
-          _progressMessage = data['message'] ?? 'File uploaded successfully';
+          _progressMessage = data['message'] ?? 'Orders merged successfully';
         });
         _showSnackbar(_progressMessage, Colors.green);
 
         // Launch download URL if available
-        if (data['downloadLink'] != null) {
-          log('Download link: ${data['downloadLink']}');
-          _launchDownloadUrl(data['downloadLink']);
+        if (data['download_csv'] != null) {
+          log('Download link: ${data['download_csv']}');
+          _launchDownloadUrl(data['download_csv']);
         }
       });
 
@@ -109,6 +103,7 @@ class _CreateOrdersByCSVState extends State<CreateOrdersByCSV> {
 // Helper function to show snackbars
   void _showSnackbar(String message, Color color) {
     if (context.mounted) {
+      ScaffoldMessenger.of(context).removeCurrentSnackBar();
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(message),
@@ -234,7 +229,7 @@ class _CreateOrdersByCSVState extends State<CreateOrdersByCSV> {
     }
   }
 
-  Future<void> _createOrders() async {
+  Future<void> _mergeOrders() async {
     if (_selectedFile == null) return;
 
     Logger().e('1');
@@ -255,7 +250,7 @@ class _CreateOrdersByCSVState extends State<CreateOrdersByCSV> {
 
       var request = http.MultipartRequest(
         'POST',
-        Uri.parse('${await Constants.getBaseUrl()}/orders/createOrderByCsv'),
+        Uri.parse('${await Constants.getBaseUrl()}/orders/outboundCsv'),
       );
 
       Logger().e('2');
@@ -293,7 +288,7 @@ class _CreateOrdersByCSVState extends State<CreateOrdersByCSV> {
     } catch (e) {
       log('Error during order creation: $e', error: e, stackTrace: StackTrace.current);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error during order creation: $e')),
+        SnackBar(content: Text('Error: $e')),
       );
     } finally {
       setState(() {
@@ -318,8 +313,8 @@ class _CreateOrdersByCSVState extends State<CreateOrdersByCSV> {
                     child: Text(_isPickingFile
                         ? 'Selecting File...'
                         : _isProcessingFile
-                            ? 'Processing File...'
-                            : 'Select CSV File'),
+                        ? 'Processing File...'
+                        : 'Select CSV File'),
                   ),
                 ),
                 const SizedBox(width: 16),
@@ -331,8 +326,8 @@ class _CreateOrdersByCSVState extends State<CreateOrdersByCSV> {
                 if (_rowCount > 0)
                   Expanded(
                     child: ElevatedButton(
-                      onPressed: _isCreateEnabled && !_isCreating && !_isPickingFile && !_isProcessingFile ? _createOrders : null,
-                      child: const Text('Create Orders'),
+                      onPressed: _isCreateEnabled && !_isCreating && !_isPickingFile && !_isProcessingFile ? _mergeOrders : null,
+                      child: const Text('Confirm Orders'),
                     ),
                   ),
               ],
@@ -403,17 +398,17 @@ class _CreateOrdersByCSVState extends State<CreateOrdersByCSV> {
               ),
               columns: headers
                   .map((header) => DataColumn(
-                        label: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                          child: Text(header.toString()),
-                        ),
-                      ))
+                label: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                  child: Text(header.toString()),
+                ),
+              ))
                   .toList(),
               rows: pagedData.map((row) {
                 return DataRow(
                   cells: List.generate(
                     row.length,
-                    (index) => DataCell(
+                        (index) => DataCell(
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 8.0),
                         child: Text(row[index].toString()),

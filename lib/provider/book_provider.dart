@@ -453,7 +453,7 @@ class BookProvider with ChangeNotifier {
         setLoading(courier, false);
         // Notify listeners after successful booking
         notifyListeners();
-        return responseData['message'] ?? 'Orders booked successfully';
+        return "${responseData['message']} ${responseData['pickup_location']['name']}" ?? 'Orders booked successfully';
       } else {
         // If the API returns an error, return the error message
         setLoading(courier, false);
@@ -511,7 +511,7 @@ class BookProvider with ChangeNotifier {
         setLoading(courier, false);
         // Notify listeners after successful booking
         notifyListeners();
-        return responseData['message'] ?? 'Orders booked successfully';
+        return "${responseData['message']} ${responseData['pickup_location']}" ?? 'Orders booked successfully';
       } else {
         // If the API returns an error, return the error message
         setLoading(courier, false);

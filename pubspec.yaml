@@ -66,6 +66,7 @@ dependencies:
   firebase_messaging: ^15.2.1
   pdf: ^3.11.2
   printing: ^5.14.0
+  socket_io_client: ^3.0.2
 #  fl_chart: ^0.70.2
 
 dev_dependencies:

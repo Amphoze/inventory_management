@@ -157,7 +157,9 @@ class AuthProvider with ChangeNotifier {
         print('Parsed Response Data: $responseData');
 
         // Directly extract the token from the response body
-        final token = responseData['token'];
+        final token = responseData['token'] ?? '';
+
+        Logger().e('token hai: $token');
 
         // Fetch user roles from responseData
         final List<dynamic> userRoles = responseData['userRoles'];
@@ -496,7 +498,6 @@ class AuthProvider with ChangeNotifier {
   }
 
   Future<Map<String, dynamic>> getAllProducts({int page = 1, int itemsPerPage = 10}) async {
-    // Append query parameters for pagination (page number and items per page)
     String baseUrl = await Constants.getBaseUrl();
 
     final url = Uri.parse('$baseUrl/products?page=$page&limit=$itemsPerPage');

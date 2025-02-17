@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:inventory_management/constants/constants.dart';
 import 'package:inventory_management/model/manifest_model.dart';
 import 'package:inventory_management/model/orders_model.dart';
+import 'package:logger/logger.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:intl/intl.dart';
 
@@ -32,8 +33,7 @@ class ManifestProvider with ChangeNotifier {
   PageController get pageController => _pageController;
   TextEditingController get textEditingController => _textEditingController;
 
-  int get selectedCount =>
-      _selectedProducts.where((isSelected) => isSelected).length;
+  int get selectedCount => _selectedProducts.where((isSelected) => isSelected).length;
 
   bool isRefreshingOrders = false;
 
@@ -51,8 +51,7 @@ class ManifestProvider with ChangeNotifier {
 
   void toggleSelectAll(bool value) {
     _selectAll = value;
-    _selectedProducts =
-        List<bool>.generate(_orders.length, (index) => _selectAll);
+    _selectedProducts = List<bool>.generate(_orders.length, (index) => _selectAll);
     notifyListeners();
   }
 
@@ -68,8 +67,7 @@ class ManifestProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  Future<String> cancelOrders(
-      BuildContext context, List<String> orderIds) async {
+  Future<String> cancelOrders(BuildContext context, List<String> orderIds) async {
     String baseUrl = await Constants.getBaseUrl();
     String cancelOrderUrl = '$baseUrl/orders/cancel';
     final prefs = await SharedPreferences.getInstance();
@@ -127,27 +125,30 @@ class ManifestProvider with ChangeNotifier {
 
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('authToken') ?? '';
-    var url = '${await Constants.getBaseUrl()}/orders?orderStatus=8&page=';
+    String url = '${await Constants.getBaseUrl()}/orders?orderStatus=8&page=$_currentPage';
 
     if (date != null || date == 'Select Date') {
       String formattedDate = DateFormat('yyyy-MM-dd').format(date!);
       url += '&date=$formattedDate';
     }
 
+    Uri uri = Uri.parse(url);
+
     try {
-      final response = await http.get(Uri.parse('$url$_currentPage'), headers: {
+      final response = await http.get(uri, headers: {
         'Authorization': 'Bearer $token',
         'Content-Type': 'application/json',
       });
 
       log("Code: ${response.statusCode}");
-      log("Body: ${response.body}");
+      // log("Body: ${response.body}");
+
+      log('Fetching URL for  manifest orders :- $uri');
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
-        List<Order> orders = (data['orders'] as List)
-            .map((order) => Order.fromJson(order))
-            .toList();
+
+        List<Order> orders = (data['orders'] as List).map((order) => Order.fromJson(order)).toList();
 
         _totalPages = data['totalPages']; // Get total pages from response
         _orders = orders; // Set the orders for the current page
@@ -162,8 +163,9 @@ class ManifestProvider with ChangeNotifier {
         _orders = [];
         _totalPages = 1; // Reset total pages if there’s an error
       }
-    } catch (e) {
+    } catch (e, s) {
       // Handle errors
+      log('error aaya hai: $e $s');
       _orders = [];
       _totalPages = 1; // Reset total pages if there’s an error
     } finally {
@@ -174,13 +176,16 @@ class ManifestProvider with ChangeNotifier {
   }
 
   Future<void> fetchCreatedManifests(int page) async {
+    Logger().e('fetchCreatedManifests');
     _isLoading = true;
     setRefreshingOrders(true);
     notifyListeners();
 
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('authToken') ?? '';
-    var url = '${await Constants.getBaseUrl()}/manifest?page=$page';
+    var url = '${await Constants.getBaseUrl()}/manifest';
+
+    Logger().e('url: $url');
 
     try {
       final response = await http.get(Uri.parse(url), headers: {
@@ -193,17 +198,14 @@ class ManifestProvider with ChangeNotifier {
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
-        debugPrint("data: $data");
+        // debugPrint("data: $data");
 
-        List<Manifest> manifests = (data['data']['manifest'] as List)
-            .map((manifest) => Manifest.fromJson(manifest))
-            .toList();
+        List<Manifest> manifests = (data['data']['manifest'] as List).map((manifest) => Manifest.fromJson(manifest)).toList();
 
-        log(manifests.toString());
+        log('manifests hai" $manifests');
 
         _totalPages = data['data']['totalPages'];
-        _currentPage =
-            data['data']['currentPage']; // Get total pages from response
+        _currentPage = data['data']['currentPage']; // Get total pages from response
         _manifests = manifests; // Set the orders for the current page
         // log(_totalPages.toString());
 
@@ -213,8 +215,8 @@ class ManifestProvider with ChangeNotifier {
         _manifests = [];
         _totalPages = 1; // Reset total pages if there’s an error
       }
-    } catch (e) {
-      log("catch data $e");
+    } catch (e, s) {
+      log("catch data $e $s");
       // Handle errors
       _manifests = [];
       _totalPages = 1; // Reset total pages if there’s an error
@@ -225,8 +227,7 @@ class ManifestProvider with ChangeNotifier {
     }
   }
 
-  Future<void> createManifest(
-      BuildContext context, String deliveryPartner) async {
+  Future<void> createManifest(BuildContext context, String deliveryPartner) async {
     setCreatingManifest(true);
     notifyListeners();
 
@@ -242,12 +243,7 @@ class ManifestProvider with ChangeNotifier {
       return;
     }
 
-    final selectedOrderIds = _orders
-        .asMap()
-        .entries
-        .where((entry) => _selectedProducts[entry.key])
-        .map((entry) => entry.value.orderId)
-        .toList();
+    final selectedOrderIds = _orders.asMap().entries.where((entry) => _selectedProducts[entry.key]).map((entry) => entry.value.orderId).toList();
 
     if (selectedOrderIds.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -282,10 +278,14 @@ class ManifestProvider with ChangeNotifier {
 
       log("status code: ${response.statusCode}");
 
+      final res = jsonDecode(response.body);
+
+      log('create manifest body: $res');
+
       if (response.statusCode == 201 || response.statusCode == 200) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Manifest created successfully'),
+          SnackBar(
+            content: Text(res['message']),
             backgroundColor: Colors.green,
           ),
         );
@@ -293,8 +293,8 @@ class ManifestProvider with ChangeNotifier {
         fetchOrdersWithStatus8();
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Failed to create manifest'),
+          SnackBar(
+            content: Text(res['error']),
             backgroundColor: Colors.red,
           ),
         );
@@ -327,8 +327,7 @@ class ManifestProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> fetchOrdersByBookingCourier(String courier, int page,
-      {DateTime? date}) async {
+  Future<void> fetchOrdersByBookingCourier(String courier, int page, {DateTime? date}) async {
     _isLoading = true;
     setRefreshingOrders(true);
     notifyListeners();
@@ -340,14 +339,15 @@ class ManifestProvider with ChangeNotifier {
     String baseUrl = await Constants.getBaseUrl();
 
     // Build URL with base parameters
-    var url =
-        '$baseUrl/orders?orderStatus=8&bookingCourier=$courier&page=$page';
+    String url = '$baseUrl/orders?orderStatus=8&bookingCourier=$courier&page=$page';
 
     // Add date parameter if provided
-    if (date != null || date == 'Select Date') {
+    if (date != null) {
       String formattedDate = DateFormat('yyyy-MM-dd').format(date!);
       url += '&date=$formattedDate';
     }
+
+    log('url :): $url');
 
     try {
       final response = await http.get(Uri.parse(url), headers: {
@@ -360,9 +360,7 @@ class ManifestProvider with ChangeNotifier {
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
-        List<Order> orders = (data['orders'] as List)
-            .map((order) => Order.fromJson(order))
-            .toList();
+        List<Order> orders = (data['orders'] as List).map((order) => Order.fromJson(order)).toList();
 
         log("orders: $orders");
 
@@ -416,8 +414,7 @@ class ManifestProvider with ChangeNotifier {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('authToken') ?? '';
 
-    final url =
-        '${await Constants.getBaseUrl()}/orders?orderStatus=8&order_id=$query';
+    final url = '${await Constants.getBaseUrl()}/orders?orderStatus=8&order_id=$query';
 
     print('Searching failed orders with term: $query');
 

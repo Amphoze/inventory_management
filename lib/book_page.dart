@@ -767,11 +767,12 @@ class _BookPageState extends State<BookPage> with SingleTickerProviderStateMixin
     try {
       String responseMessage =
           await bookProvider.bookOrders(context, selectedOrderIds, courier.toLowerCase(), courier); ////////////////////
-      ScaffoldMessenger.of(context).removeCurrentSnackBar();
+      ScaffoldMessenger.of(context).clearSnackBars();
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(responseMessage),
           backgroundColor: AppColors.green,
+          duration: const Duration(seconds: 5),
         ),
       );
 

@@ -214,14 +214,11 @@ class _HomeState extends State<Home> {
               return const CircularProgressIndicator();
             } else if (snap.hasData) {
               if (authprovider.isAuthenticated) {
-                if (warehouseId != null) {
-                  return DashboardPage(warehouseId: warehouseId!);
-                  // return const UnderMaintainence();
-                } else {
-                  return const WarehousesPage();
-                  // return const UnderMaintainence();
-                }
-                // _sanitizedEmail = sanitizeEmail(_currentUser!.email);
+                // if (warehouseId != null) {
+                  return DashboardPage(warehouseId: warehouseId ?? '');
+                // } else {
+                //   return const WarehousesPage();
+                // }
               } else {
                 return const LoginPage();
                 // return const UnderMaintainence();

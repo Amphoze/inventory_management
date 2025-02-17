@@ -12,14 +12,14 @@ import 'package:logger/logger.dart';
 import 'package:socket_io_client/socket_io_client.dart' as IO;
 import 'package:url_launcher/url_launcher.dart';
 
-class CreateOrdersByCSV extends StatefulWidget {
-  const CreateOrdersByCSV({super.key});
+class ConfirmOutboundByCSV extends StatefulWidget {
+  const ConfirmOutboundByCSV({super.key});
 
   @override
-  State<CreateOrdersByCSV> createState() => _CreateOrdersByCSVState();
+  State<ConfirmOutboundByCSV> createState() => _ConfirmOutboundByCSVState();
 }
 
-class _CreateOrdersByCSVState extends State<CreateOrdersByCSV> {
+class _ConfirmOutboundByCSVState extends State<ConfirmOutboundByCSV> {
   static const int _pageSize = 50;
   List<List<dynamic>> _csvData = [];
   int _rowCount = 0;
@@ -109,6 +109,7 @@ class _CreateOrdersByCSVState extends State<CreateOrdersByCSV> {
 // Helper function to show snackbars
   void _showSnackbar(String message, Color color) {
     if (context.mounted) {
+      ScaffoldMessenger.of(context).removeCurrentSnackBar();
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(message),
@@ -255,7 +256,7 @@ class _CreateOrdersByCSVState extends State<CreateOrdersByCSV> {
 
       var request = http.MultipartRequest(
         'POST',
-        Uri.parse('${await Constants.getBaseUrl()}/orders/createOrderByCsv'),
+        Uri.parse('${await Constants.getBaseUrl()}/orders/outboundCsv'),
       );
 
       Logger().e('2');
@@ -293,7 +294,7 @@ class _CreateOrdersByCSVState extends State<CreateOrdersByCSV> {
     } catch (e) {
       log('Error during order creation: $e', error: e, stackTrace: StackTrace.current);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error during order creation: $e')),
+        SnackBar(content: Text('Error: $e')),
       );
     } finally {
       setState(() {
@@ -318,8 +319,8 @@ class _CreateOrdersByCSVState extends State<CreateOrdersByCSV> {
                     child: Text(_isPickingFile
                         ? 'Selecting File...'
                         : _isProcessingFile
-                            ? 'Processing File...'
-                            : 'Select CSV File'),
+                        ? 'Processing File...'
+                        : 'Select CSV File'),
                   ),
                 ),
                 const SizedBox(width: 16),
@@ -332,7 +333,7 @@ class _CreateOrdersByCSVState extends State<CreateOrdersByCSV> {
                   Expanded(
                     child: ElevatedButton(
                       onPressed: _isCreateEnabled && !_isCreating && !_isPickingFile && !_isProcessingFile ? _createOrders : null,
-                      child: const Text('Create Orders'),
+                      child: const Text('Confirm Orders'),
                     ),
                   ),
               ],
@@ -403,17 +404,17 @@ class _CreateOrdersByCSVState extends State<CreateOrdersByCSV> {
               ),
               columns: headers
                   .map((header) => DataColumn(
-                        label: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                          child: Text(header.toString()),
-                        ),
-                      ))
+                label: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                  child: Text(header.toString()),
+                ),
+              ))
                   .toList(),
               rows: pagedData.map((row) {
                 return DataRow(
                   cells: List.generate(
                     row.length,
-                    (index) => DataCell(
+                        (index) => DataCell(
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 8.0),
                         child: Text(row[index].toString()),

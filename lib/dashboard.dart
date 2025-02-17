@@ -19,6 +19,7 @@ import 'package:inventory_management/checker_page.dart';
 import 'package:inventory_management/combo_page.dart';
 import 'package:inventory_management/combo_upload.dart';
 import 'package:inventory_management/confirm_orders.dart';
+import 'package:inventory_management/confirm_outbound_by_csv.dart';
 import 'package:inventory_management/create-label-page.dart';
 import 'package:inventory_management/create_account.dart';
 import 'package:inventory_management/create_order.dart';
@@ -38,6 +39,7 @@ import 'package:inventory_management/manage_outerbox.dart';
 import 'package:inventory_management/manifest_page.dart';
 import 'package:inventory_management/manifest_section.dart';
 import 'package:inventory_management/marketplace_page.dart';
+import 'package:inventory_management/merge_orders_by_csv.dart';
 import 'package:inventory_management/orders_page.dart';
 import 'package:inventory_management/outbound_page.dart';
 import 'package:inventory_management/packer_page.dart';
@@ -1196,6 +1198,8 @@ class _DashboardPageState extends State<DashboardPage> {
         collapsedBackgroundColor: [
           "Upload Products",
           "Confirm Orders",
+          "Confirm Outbound",
+          "Merge Orders",
           "Book Orders",
           "Create Orders",
           "Upload Labels",
@@ -1253,6 +1257,38 @@ class _DashboardPageState extends State<DashboardPage> {
               fontSize: 14,
             ),
           ),
+          Padding(
+            padding: const EdgeInsets.only(left: 10.0),
+            child: _buildDrawerItem(
+              icon: Icons.outbound,
+              text: 'Confirm Outbound',
+              isSelected: selectedDrawerItem == 'Confirm Outbound',
+              onTap: () => isOutbound == true || isSuperAdmin == true || isAdmin == true
+                  ? _onDrawerItemTapped('Confirm Outbound', isSmallScreen)
+                  : ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text("You are not authorized to view this page.")),
+                    ),
+              isIndented: true,
+              iconSize: 20,
+              fontSize: 14,
+            ),
+          ),
+          // Padding(
+          //   padding: const EdgeInsets.only(left: 10.0),
+          //   child: _buildDrawerItem(
+          //     icon: Icons.outbound,
+          //     text: 'Merge Orders',
+          //     isSelected: selectedDrawerItem == 'Merge Orders',
+          //     onTap: () => isOutbound == true || isSuperAdmin == true || isAdmin == true
+          //         ? _onDrawerItemTapped('Merge Orders', isSmallScreen)
+          //         : ScaffoldMessenger.of(context).showSnackBar(
+          //       const SnackBar(content: Text("You are not authorized to view this page.")),
+          //     ),
+          //     isIndented: true,
+          //     iconSize: 20,
+          //     fontSize: 14,
+          //   ),
+          // ),
           Padding(
             padding: const EdgeInsets.only(left: 10.0),
             child: _buildDrawerItem(
@@ -1524,6 +1560,10 @@ class _DashboardPageState extends State<DashboardPage> {
         return const CreateOrdersByCSV();
       case 'Confirm Orders':
         return const ConfirmOrders();
+      case 'Confirm Outbound':
+        return const ConfirmOutboundByCSV();
+      case 'Merge Orders':
+        return const MergeOrdersByCsv();
       case 'Book Orders':
         return const BookOrders();
       case 'Upload Products':

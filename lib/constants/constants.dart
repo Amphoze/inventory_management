@@ -7,8 +7,9 @@ class Constants {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     final String baseUrl = prefs.getString('value') ?? '';
     log('Base URL: $baseUrl');
-    // return 'http://192.168.0.134:3001';
-    // return 'https://inventory-management-backend-cwby.onrender.com'; // testing url
-    return baseUrl;
+    // return baseUrl;
+    return 'https://inventory-api.ko-tech.in';
+    // return 'http://192.168.29.140:3001';
+    // return 'http://192.168.29.162:3001';
   }
 }
