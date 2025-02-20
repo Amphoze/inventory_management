@@ -51,10 +51,7 @@ class _CreateOrdersByCSVState extends State<CreateOrdersByCSV> {
       // Initialize socket if not already initialized
       _socket ??= IO.io(
         baseUrl,
-        IO.OptionBuilder()
-            .setTransports(['websocket'])
-            .disableAutoConnect()
-            .build(),
+        IO.OptionBuilder().setTransports(['websocket']).disableAutoConnect().build(),
       );
 
       // On successful connection
@@ -310,6 +307,16 @@ class _CreateOrdersByCSVState extends State<CreateOrdersByCSV> {
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
+            const Row(
+              mainAxisAlignment: MainAxisAlignment.start,
+              children: [
+                Text(
+                  'Create Orders',
+                  style: TextStyle(fontSize: 25, fontWeight: FontWeight.bold),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
             Row(
               children: [
                 Expanded(

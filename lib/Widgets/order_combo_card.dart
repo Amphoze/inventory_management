@@ -1,4 +1,5 @@
 import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:inventory_management/Custom-Files/colors.dart';
@@ -62,6 +63,7 @@ class _OrderComboCardState extends State<OrderComboCard> {
   @override
   Widget build(BuildContext context) {
     final provider = Provider.of<OrdersProvider>(context, listen: false);
+    final orderProvider = context.read<OrdersProvider>();
 
     print('Building OrderCard for Order ID: ${widget.order.id}');
 
@@ -111,7 +113,7 @@ class _OrderComboCardState extends State<OrderComboCard> {
                 const Spacer(),
                 Row(
                   children: [
-                    if (widget.isBookPage)
+                    if (widget.isBookPage) ...[
                       ElevatedButton(
                         onPressed: () async {
                           final result = await Navigator.push(
@@ -123,7 +125,7 @@ class _OrderComboCardState extends State<OrderComboCard> {
                               ),
                             ),
                           );
-                          log("resulttt$result");
+                          // log("resulttt$result");
                           if (result != null && result is bool && result) {
                             final pro = Provider.of<BookProvider>(context, listen: false);
                             pro.fetchPaginatedOrdersB2C(pro.currentPageB2C);
@@ -143,6 +145,85 @@ class _OrderComboCardState extends State<OrderComboCard> {
                           style: TextStyle(fontSize: 10),
                         ),
                       ),
+                      const SizedBox(width: 8),
+                      ElevatedButton(
+                        onPressed: () {
+                          showDialog(
+                            context: context,
+                            builder: (context) {
+                              TextEditingController warehouse = TextEditingController(text: widget.order.warehouseName);
+                              return AlertDialog(
+                                title: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const Text('Edit Warehouse', style: TextStyle(fontSize: 20)),
+                                    Text(widget.order.orderId, style: const TextStyle(fontSize: 15)),
+                                  ],
+                                ),
+                                content: TextField(
+                                  controller: warehouse,
+                                  decoration: const InputDecoration(
+                                    hintText: 'Enter Warehouse Name',
+                                  ),
+                                ),
+                                actions: <Widget>[
+                                  TextButton(
+                                    onPressed: () {
+                                      Navigator.of(context).pop();
+                                    },
+                                    child: const Text('Cancel'),
+                                  ),
+                                  TextButton(
+                                    onPressed: () async {
+                                      showDialog(
+                                        context: context,
+                                        builder: (context) => const AlertDialog(
+                                            title: Row(
+                                          children: [
+                                            CircularProgressIndicator(),
+                                            Text(
+                                              'Updating Warehouse',
+                                            ),
+                                          ],
+                                        )),
+                                      );
+                                      final pro = Provider.of<BookProvider>(context, listen: false);
+                                      final res = await pro.editWarehouse(widget.order.id, warehouse.text.trim());
+                                      log('edit warehouse result: $res');
+                                      if (res == true) {
+                                        pro.fetchPaginatedOrdersB2C(pro.currentPageB2C);
+                                      } else {
+                                        if (context.mounted) {
+                                          ScaffoldMessenger.of(context).showSnackBar(
+                                            const SnackBar(content: Text('Failed to edit warehouse')),
+                                          );
+                                        }
+                                      }
+                                      if (context.mounted) {
+                                        Navigator.of(context).pop();
+                                        Navigator.of(context).pop();
+                                      }
+                                    },
+                                    child: const Text('Submit'),
+                                  ),
+                                ],
+                              );
+                            },
+                          );
+                        },
+                        style: ElevatedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(horizontal: 6.0, vertical: 2.0),
+                          textStyle: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 10,
+                          ),
+                        ),
+                        child: const Text(
+                          'Edit Warehouse',
+                          // style: TextStyle(fontSize: 10),
+                        ),
+                      ),
+                    ],
                   ],
                 ),
               ],

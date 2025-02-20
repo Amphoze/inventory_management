@@ -35,8 +35,7 @@ class AllOrdersProvider with ChangeNotifier {
   PageController get pageController => _pageController;
   TextEditingController get textEditingController => _textEditingController;
 
-  int get selectedCount =>
-      _selectedProducts.where((isSelected) => isSelected).length;
+  int get selectedCount => _selectedProducts.where((isSelected) => isSelected).length;
 
   // New variables for booked orders
   List<bool> selectedItems = List.generate(40, (index) => false);
@@ -107,8 +106,7 @@ class AllOrdersProvider with ChangeNotifier {
   //   return '$day-$month-$year $hour:$minute:$second';
   // }
 
-  Future<String> cancelOrders(
-      BuildContext context, List<String> orderIds) async {
+  Future<String> cancelOrders(BuildContext context, List<String> orderIds) async {
     String baseUrl = await Constants.getBaseUrl();
     String cancelOrderUrl = '$baseUrl/orders/cancel';
     // final String? token = await _getToken();
@@ -144,9 +142,7 @@ class AllOrdersProvider with ChangeNotifier {
 
       if (response.statusCode == 200) {
         // After successful confirmation, fetch updated orders and notify listeners
-        await fetchAllOrders(
-            page:
-                _currentPage); // Assuming fetchOrders is a function that reloads the orders
+        await fetchAllOrders(page: _currentPage); // Assuming fetchOrders is a function that reloads the orders
         setRefreshingOrders(false); // Clear selected order IDs
         setCancelStatus(false);
         notifyListeners(); // Notify the UI to rebuild
@@ -190,8 +186,7 @@ class AllOrdersProvider with ChangeNotifier {
   Future<String> fetchDelhiveryTrackingStatus(String awb) async {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('authToken') ?? '';
-    String delhiveryURL =
-        '${await Constants.getBaseUrl()}/orders/track/?waybill=$awb';
+    String delhiveryURL = '${await Constants.getBaseUrl()}/orders/track/?waybill=$awb';
 
     try {
       final response = await http.get(
@@ -209,10 +204,7 @@ class AllOrdersProvider with ChangeNotifier {
       if (response.statusCode == 200) {
         final jsonResponse = jsonDecode(response.body);
         log('body: $jsonResponse');
-        final status = jsonResponse['ShipmentData'][0]['Shipment']['Status']
-                    ['Status']
-                .toString() ??
-            '';
+        final status = jsonResponse['ShipmentData'][0]['Shipment']['Status']['Status'].toString() ?? '';
 
         log('sss: $status');
 
@@ -233,8 +225,7 @@ class AllOrdersProvider with ChangeNotifier {
 
   Future<String> fetchShiprocketToken() async {
     const String url = 'https://apiv2.shiprocket.in/v1/external/auth/login';
-    const String body =
-        '{"email": "Katyayanitech@gmail.com", "password": "Ship@5679"}';
+    const String body = '{"email": "Katyayanitech@gmail.com", "password": "Ship@5679"}';
 
     try {
       final response = await http.post(
@@ -260,8 +251,7 @@ class AllOrdersProvider with ChangeNotifier {
   Future<String> fetchShiprocketTrackingStatus(String awb) async {
     String token = await fetchShiprocketToken();
 
-    String shipURL =
-        'https://apiv2.shiprocket.in/v1/external/courier/track/awb/$awb';
+    String shipURL = 'https://apiv2.shiprocket.in/v1/external/courier/track/awb/$awb';
 
     try {
       final response = await http.get(
@@ -279,10 +269,7 @@ class AllOrdersProvider with ChangeNotifier {
       if (response.statusCode == 200) {
         final jsonResponse = jsonDecode(response.body);
 
-        final status = jsonResponse['tracking_data']['shipment_track'][0]
-                    ['current_status']
-                .toString() ??
-            '';
+        final status = jsonResponse['tracking_data']['shipment_track'][0]['current_status'].toString() ?? '';
 
         log('status: $status');
         return status;
@@ -300,8 +287,7 @@ class AllOrdersProvider with ChangeNotifier {
     return '';
   }
 
-  Future<void> fetchAllOrders(
-      {int page = 1, DateTime? date, String? status}) async {
+  Future<void> fetchAllOrders({int page = 1, DateTime? date, String? status}) async {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('authToken') ?? '';
 
@@ -339,9 +325,7 @@ class AllOrdersProvider with ChangeNotifier {
 
       if (response.statusCode == 200) {
         final jsonResponse = jsonDecode(response.body);
-        List<Order> orders = (jsonResponse['orders'] as List)
-            .map((order) => Order.fromJson(order))
-            .toList();
+        List<Order> orders = (jsonResponse['orders'] as List).map((order) => Order.fromJson(order)).toList();
 
         // Logger().e(jsonResponse['orders'][0]['isBooked']['status']);
 
@@ -366,17 +350,19 @@ class AllOrdersProvider with ChangeNotifier {
     }
   }
 
-  Future<void> fetchOrdersByMarketplace(
-      String marketplace, int page, DateTime? date, String status) async {
-    log("$marketplace, $page");
-    String baseUrl = '${await Constants.getBaseUrl()}/orders';
-    String url =
-        '$baseUrl?marketplace=$marketplace&orderStatus=$status&page=$page';
+  Future<void> fetchOrdersByMarketplace(String marketplace, int page, DateTime? date, String status) async {
+    // log("fetchOrdersByMarketplace: $marketplace, $page");
+    String url = '${await Constants.getBaseUrl()}/orders?marketplace=$marketplace&page=$page';
 
+    if(status != 'all') {
+      url +='&orderStatus=$status';
+    }
     if (date != null) {
       String formattedDate = DateFormat('yyyy-MM-dd').format(date);
       url += '&date=$formattedDate';
     }
+
+    Logger().e('fetchOrdersByMarketplace url: $url');
 
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('authToken') ?? '';
@@ -403,16 +389,13 @@ class AllOrdersProvider with ChangeNotifier {
 
       if (response.statusCode == 200) {
         final jsonResponse = jsonDecode(response.body);
-        List<Order> orders = (jsonResponse['orders'] as List)
-            .map((orderJson) => Order.fromJson(orderJson))
-            .toList();
+        List<Order> orders = (jsonResponse['orders'] as List).map((orderJson) => Order.fromJson(orderJson)).toList();
 
         // Logger().e("length: ${orders.length}");
 
         _orders = orders;
         _currentPage = page; // Track current page for B2B
-        _totalPages =
-            jsonResponse['totalPages']; // Assuming API returns total pages
+        _totalPages = jsonResponse['totalPages']; // Assuming API returns total pages
       } else if (response.statusCode == 401) {
         print('Unauthorized access - Token might be expired or invalid.');
       } else if (response.statusCode == 404) {
@@ -423,8 +406,8 @@ class AllOrdersProvider with ChangeNotifier {
       } else {
         throw Exception('Failed to load orders: ${response.statusCode}');
       }
-    } catch (e) {
-      print('Error fetching orders: $e');
+    } catch (e,s) {
+      log('Error fetching orders by marketplace: $e $s');
     } finally {
       _isLoading = false;
       setRefreshingOrders(false);
@@ -432,8 +415,7 @@ class AllOrdersProvider with ChangeNotifier {
     }
   }
 
-  Future<void> fetchOrdersByStatus(
-      String marketplace, int page, DateTime? date, String status) async {
+  Future<void> fetchOrdersByStatus(String marketplace, int page, DateTime? date, String status) async {
     log("$status, $marketplace, $date, $page");
     String baseUrl = '${await Constants.getBaseUrl()}/orders';
 
@@ -475,16 +457,13 @@ class AllOrdersProvider with ChangeNotifier {
 
       if (response.statusCode == 200) {
         final jsonResponse = jsonDecode(response.body);
-        List<Order> orders = (jsonResponse['orders'] as List)
-            .map((orderJson) => Order.fromJson(orderJson))
-            .toList();
+        List<Order> orders = (jsonResponse['orders'] as List).map((orderJson) => Order.fromJson(orderJson)).toList();
 
         // Logger().e("length: ${orders.length}");
 
         _orders = orders;
         _currentPage = page; // Track current page for B2B
-        _totalPages =
-            jsonResponse['totalPages']; // Assuming API returns total pages
+        _totalPages = jsonResponse['totalPages']; // Assuming API returns total pages
       } else if (response.statusCode == 401) {
         print('Unauthorized access - Token might be expired or invalid.');
       } else if (response.statusCode == 404) {
@@ -523,11 +502,8 @@ class AllOrdersProvider with ChangeNotifier {
         final jsonResponse = jsonDecode(response.body);
         statuses = (jsonResponse as List).map((data) {
           return {
-            data['status']
-                .split('_')
-                .map((w) => '${w[0].toUpperCase()}${w.substring(1)}')
-                .join(' ')
-                .toString(): data['status_id'].toString(),
+            data['status'].split('_').map((w) => '${w[0].toUpperCase()}${w.substring(1)}').join(' ').toString():
+                data['status_id'].toString(),
             // 'statusId': data['status_id'].toString(),
           };
         }).toList();
@@ -555,13 +531,12 @@ class AllOrdersProvider with ChangeNotifier {
   }
 
   Future<void> searchOrders(String orderId) async {
-    log('call hua hai');
-    orderId = orderId[0] == '#' ? orderId.replaceFirst('#', '%23') : orderId;
+    String encodedOrderId = Uri.encodeComponent(orderId);
 
-    final url = '${await Constants.getBaseUrl()}/orders?order_id=$orderId';
-    log('ye hai url: $url');
+    final url = '${await Constants.getBaseUrl()}/orders?order_id=$encodedOrderId';
+    log('search all orders url: $url');
     final mainUrl = Uri.parse(url);
-    log('mainUrl: $mainUrl');
+    log('parsed url: $mainUrl');
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('authToken') ?? '';
 
@@ -661,8 +636,7 @@ class AllOrdersProvider with ChangeNotifier {
           return null;
         }
       } else {
-        print(
-            'Failed to get download URL. Status code: ${response.statusCode}');
+        print('Failed to get download URL. Status code: ${response.statusCode}');
         return null;
       }
     } catch (error) {

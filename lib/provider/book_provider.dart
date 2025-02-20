@@ -1137,6 +1137,59 @@ class BookProvider with ChangeNotifier {
     }
   }
 
+  Future<bool> editWarehouse(String orderId, String warehouse) async {
+    String baseUrl = await Constants.getBaseUrl();
+    String url = '$baseUrl/orders/editwarehouse';
+    final String? token = await _getToken();
+
+    if (token == null) {
+      print('Token is null, unable to fetch orders.');
+      return false;
+    }
+
+    // Headers for the API request
+    final headers = {
+      'Authorization': 'Bearer $token',
+      'Content-Type': 'application/json',
+    };
+
+    // Request body containing the order ID and warehouse
+    final body = json.encode({
+      'order_id': orderId,
+      'warehouse': warehouse,
+    });
+
+    try {
+      // Make the POST request to book the orders
+      final response = await http.put(
+        Uri.parse(url),
+        headers: headers,
+        body: body,
+      );
+
+      // Log response status and body
+      // print('Response status: ${response.statusCode}');
+      // print('Response body: ${response.body}');
+
+      // Parse the response
+      final responseData = json.decode(response.body);
+      Logger().e(responseData);
+
+      // Check if the response is successful
+      if (response.statusCode == 200) {
+        // Notify listeners after successful booking
+        notifyListeners();
+        return true;
+      } else {
+        // If the API returns an error, return the error message
+        return false;
+      }
+    } catch (error) {
+      log('Error during API request: $error');
+      return false;
+    }
+  }
+
   @override
   void dispose() {
     searchController.dispose();

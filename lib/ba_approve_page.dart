@@ -35,9 +35,8 @@ class _BaApprovePageState extends State<BaApprovePage> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       Provider.of<BaApproveProvider>(context, listen: false).fetchOrdersWithStatus2();
+      context.read<MarketplaceProvider>().fetchMarketplaces();
     });
-
-    context.read<MarketplaceProvider>().fetchMarketplaces();
   }
 
   void _onSearchButtonPressed() {
@@ -141,6 +140,7 @@ class _BaApprovePageState extends State<BaApprovePage> {
                     const SizedBox(width: 8),
                     Row(
                       children: [
+                        // date filter
                         Column(
                           children: [
                             Text(
@@ -204,7 +204,7 @@ class _BaApprovePageState extends State<BaApprovePage> {
                           ],
                         ),
                         const SizedBox(width: 8),
-                        // Refresh Button
+                        // marketplace filter
                         StatefulBuilder(builder: (context, setState) {
                           return Column(
                             children: [
@@ -254,6 +254,7 @@ class _BaApprovePageState extends State<BaApprovePage> {
                           );
                         }),
                         const SizedBox(width: 8),
+                        // approve
                         ElevatedButton(
                           style: ElevatedButton.styleFrom(
                             backgroundColor: AppColors.primaryBlue,
@@ -276,6 +277,7 @@ class _BaApprovePageState extends State<BaApprovePage> {
                                 ),
                         ),
                         const SizedBox(width: 8),
+                        // cancel
                         ElevatedButton(
                           style: ElevatedButton.styleFrom(
                             backgroundColor: AppColors.cardsred,
@@ -350,6 +352,7 @@ class _BaApprovePageState extends State<BaApprovePage> {
                                 ),
                         ),
                         const SizedBox(width: 8),
+                        // refresh
                         ElevatedButton(
                           style: ElevatedButton.styleFrom(
                             backgroundColor: AppColors.primaryBlue,
@@ -382,7 +385,6 @@ class _BaApprovePageState extends State<BaApprovePage> {
                   ],
                 ),
               ),
-              const SizedBox(height: 8),
               const SizedBox(height: 8),
               _buildTableHeader(baApproveProvider.orders.length, baApproveProvider),
               const SizedBox(height: 4),

@@ -18,8 +18,7 @@ class RoutingPage extends StatefulWidget {
   _RoutingPageState createState() => _RoutingPageState();
 }
 
-class _RoutingPageState extends State<RoutingPage>
-    with TickerProviderStateMixin {
+class _RoutingPageState extends State<RoutingPage> with TickerProviderStateMixin {
   late TabController _tabController;
   late TextEditingController _searchController;
   late TextEditingController _searchControllerReady;
@@ -48,7 +47,9 @@ class _RoutingPageState extends State<RoutingPage>
       }
     });
 
-    context.read<MarketplaceProvider>().fetchMarketplaces();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<MarketplaceProvider>().fetchMarketplaces();
+    });
   }
 
   @override
@@ -156,9 +157,7 @@ class _RoutingPageState extends State<RoutingPage>
                           _selectedDate,
                           style: TextStyle(
                             fontSize: 11,
-                            color: _selectedDate == 'Select Date'
-                                ? Colors.grey
-                                : AppColors.primaryBlue,
+                            color: _selectedDate == 'Select Date' ? Colors.grey : AppColors.primaryBlue,
                           ),
                         ),
                         Tooltip(
@@ -186,8 +185,7 @@ class _RoutingPageState extends State<RoutingPage>
                               );
 
                               if (picked != null) {
-                                String formattedDate =
-                                    DateFormat('dd-MM-yyyy').format(picked);
+                                String formattedDate = DateFormat('dd-MM-yyyy').format(picked);
                                 setState(() {
                                   _selectedDate = formattedDate;
                                 });
@@ -242,15 +240,12 @@ class _RoutingPageState extends State<RoutingPage>
                                   log("selectedDate: $_selectedDate");
                                   pro.fetchOrders(
                                     page: pro.currentPageReady,
-                                    date: _selectedDate == 'Select Date'
-                                        ? null
-                                        : DateTime.parse(_selectedDate),
+                                    date: _selectedDate == 'Select Date' ? null : DateTime.parse(_selectedDate),
                                   );
                                 } else {
                                   DateTime? selectedDate;
                                   if (_selectedDate != 'Select Date') {
-                                    selectedDate = DateFormat('yyyy-MM-dd')
-                                        .parse(_selectedDate);
+                                    selectedDate = DateFormat('yyyy-MM-dd').parse(_selectedDate);
                                   }
 
                                   log("selectedDate: $selectedDate");
@@ -262,13 +257,11 @@ class _RoutingPageState extends State<RoutingPage>
                                   );
                                 }
                               },
-                              itemBuilder: (BuildContext context) =>
-                                  <PopupMenuEntry<String>>[
-                                ...provider.marketplaces
-                                    .map((marketplace) => PopupMenuItem<String>(
-                                          value: marketplace.name,
-                                          child: Text(marketplace.name),
-                                        )),
+                              itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
+                                ...provider.marketplaces.map((marketplace) => PopupMenuItem<String>(
+                                      value: marketplace.name,
+                                      child: Text(marketplace.name),
+                                    )),
                                 const PopupMenuItem<String>(
                                   value: 'All',
                                   child: Text('All'),
@@ -294,17 +287,13 @@ class _RoutingPageState extends State<RoutingPage>
                       onPressed: pro.isConfirm
                           ? null // Disable button while loading
                           : () async {
-                              final provider = Provider.of<RoutingProvider>(
-                                  context,
-                                  listen: false);
+                              final provider = Provider.of<RoutingProvider>(context, listen: false);
 
                               // Collect selected order IDs
-                              List<String> selectedOrderIds = provider
-                                  .readyOrders
+                              List<String> selectedOrderIds = provider.readyOrders
                                   .asMap()
                                   .entries
-                                  .where((entry) =>
-                                      provider.selectedOrders[entry.key])
+                                  .where((entry) => provider.selectedOrders[entry.key])
                                   .map((entry) => entry.value.orderId)
                                   .toList();
 
@@ -323,8 +312,7 @@ class _RoutingPageState extends State<RoutingPage>
                                 // provider.setConfirmStatus(true);
 
                                 // Call confirmOrders method with selected IDs
-                                String resultMessage = await provider
-                                    .routeOrders(context, selectedOrderIds);
+                                String resultMessage = await provider.routeOrders(context, selectedOrderIds);
 
                                 log('resultMessage: $resultMessage');
 
@@ -334,15 +322,11 @@ class _RoutingPageState extends State<RoutingPage>
                                 // Determine the background color based on the result
                                 Color snackBarColor;
                                 if (resultMessage.contains('success')) {
-                                  snackBarColor =
-                                      AppColors.green; // Success: Green
-                                } else if (resultMessage.contains('error') ||
-                                    resultMessage.contains('failed')) {
-                                  snackBarColor =
-                                      AppColors.cardsred; // Error: Red
+                                  snackBarColor = AppColors.green; // Success: Green
+                                } else if (resultMessage.contains('error') || resultMessage.contains('failed')) {
+                                  snackBarColor = AppColors.cardsred; // Error: Red
                                 } else {
-                                  snackBarColor =
-                                      AppColors.orange; // Other: Orange
+                                  snackBarColor = AppColors.orange; // Other: Orange
                                 }
 
                                 // Show feedback based on the result
@@ -358,8 +342,7 @@ class _RoutingPageState extends State<RoutingPage>
                           ? const SizedBox(
                               width: 20,
                               height: 20,
-                              child: CircularProgressIndicator(
-                                  color: Colors.white),
+                              child: CircularProgressIndicator(color: Colors.white),
                             )
                           : const Text(
                               'Route',
@@ -374,13 +357,11 @@ class _RoutingPageState extends State<RoutingPage>
                       onPressed: () {
                         // Call fetchOrders method on refresh button press
                         setState(() {
-                        selectedCourier = 'All';
-                        _selectedDate = 'Select Date';
-                      });
-                        Provider.of<RoutingProvider>(context, listen: false)
-                            .fetchOrders();
-                        Provider.of<RoutingProvider>(context, listen: false)
-                            .resetSelections();
+                          selectedCourier = 'All';
+                          _selectedDate = 'Select Date';
+                        });
+                        Provider.of<RoutingProvider>(context, listen: false).fetchOrders();
+                        Provider.of<RoutingProvider>(context, listen: false).resetSelections();
                         pro.clearSearchResults();
                         print('Ready to Confirm Orders refreshed');
                       },
@@ -409,8 +390,7 @@ class _RoutingPageState extends State<RoutingPage>
                                     color: Color.fromRGBO(117, 117, 117, 1),
                                   ),
                                   onPressed: () {
-                                    final searchTerm =
-                                        _searchControllerReady.text;
+                                    final searchTerm = _searchControllerReady.text;
 
                                     if (searchTerm.isNotEmpty) {
                                       pro.searchOrders(searchTerm);
@@ -423,8 +403,7 @@ class _RoutingPageState extends State<RoutingPage>
                                   fontSize: 16,
                                 ),
                                 border: InputBorder.none,
-                                contentPadding:
-                                    const EdgeInsets.symmetric(vertical: 10.0),
+                                contentPadding: const EdgeInsets.symmetric(vertical: 10.0),
                               ),
                               style: const TextStyle(color: AppColors.black),
                               onSubmitted: (value) {
@@ -479,28 +458,20 @@ class _RoutingPageState extends State<RoutingPage>
                           itemBuilder: (context, index) {
                             final order = pro.readyOrders[index];
                             //////////////////////////////////////////////////////////////
-                            final Map<String, List<Item>> groupedComboItems =
-                                {};
+                            final Map<String, List<Item>> groupedComboItems = {};
                             for (var item in order.items) {
-                              if (item.isCombo == true &&
-                                  item.comboSku != null) {
-                                if (!groupedComboItems
-                                    .containsKey(item.comboSku)) {
+                              if (item.isCombo == true && item.comboSku != null) {
+                                if (!groupedComboItems.containsKey(item.comboSku)) {
                                   groupedComboItems[item.comboSku!] = [];
                                 }
                                 groupedComboItems[item.comboSku]!.add(item);
                               }
                             }
-                            final List<List<Item>> comboItemGroups =
-                                groupedComboItems.values
-                                    .where((items) => items.length > 1)
-                                    .toList();
+                            final List<List<Item>> comboItemGroups = groupedComboItems.values.where((items) => items.length > 1).toList();
 
                             final List<Item> remainingItems = order.items
-                                .where((item) => !(item.isCombo == true &&
-                                    item.comboSku != null &&
-                                    groupedComboItems[item.comboSku]!.length >
-                                        1))
+                                .where((item) =>
+                                    !(item.isCombo == true && item.comboSku != null && groupedComboItems[item.comboSku]!.length > 1))
                                 .toList();
                             //////////////////////////////////////////////////////////
                             return Card(
@@ -514,23 +485,18 @@ class _RoutingPageState extends State<RoutingPage>
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.spaceBetween,
+                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                       children: [
                                         Checkbox(
                                           value: pro.selectedOrders[index],
-                                          onChanged: (value) =>
-                                              pro.toggleOrderSelectionReady(
-                                                  value ?? false, index),
+                                          onChanged: (value) => pro.toggleOrderSelectionReady(value ?? false, index),
                                         ),
                                         Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
+                                          crossAxisAlignment: CrossAxisAlignment.start,
                                           children: [
                                             const Text(
                                               'Order ID: ',
-                                              style: TextStyle(
-                                                  fontWeight: FontWeight.bold),
+                                              style: TextStyle(fontWeight: FontWeight.bold),
                                             ),
                                             Text(
                                               order.orderId ?? 'N/A',
@@ -542,70 +508,54 @@ class _RoutingPageState extends State<RoutingPage>
                                           ],
                                         ),
                                         Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
+                                          crossAxisAlignment: CrossAxisAlignment.start,
                                           children: [
                                             const Text(
                                               'Date: ',
-                                              style: TextStyle(
-                                                  fontWeight: FontWeight.bold),
+                                              style: TextStyle(fontWeight: FontWeight.bold),
                                             ),
                                             Text(
                                               pro.formatDate(order.date!),
-                                              style: const TextStyle(
-                                                  fontWeight: FontWeight.bold,
-                                                  color: AppColors.primaryBlue),
+                                              style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.primaryBlue),
                                             ),
                                           ],
                                         ),
                                         Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
+                                          crossAxisAlignment: CrossAxisAlignment.start,
                                           children: [
                                             const Text(
                                               'Total Amount: ',
-                                              style: TextStyle(
-                                                  fontWeight: FontWeight.bold),
+                                              style: TextStyle(fontWeight: FontWeight.bold),
                                             ),
                                             Text(
                                               'Rs. ${order.totalAmount ?? ''}',
-                                              style: const TextStyle(
-                                                  fontWeight: FontWeight.bold,
-                                                  color: AppColors.primaryBlue),
+                                              style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.primaryBlue),
                                             ),
                                           ],
                                         ),
                                         Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
+                                          crossAxisAlignment: CrossAxisAlignment.start,
                                           children: [
                                             const Text(
                                               'Total Items: ',
-                                              style: TextStyle(
-                                                  fontWeight: FontWeight.bold),
+                                              style: TextStyle(fontWeight: FontWeight.bold),
                                             ),
                                             Text(
                                               '${order.items.fold(0, (total, item) => total + item.qty!)}',
-                                              style: const TextStyle(
-                                                  fontWeight: FontWeight.bold,
-                                                  color: AppColors.primaryBlue),
+                                              style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.primaryBlue),
                                             ),
                                           ],
                                         ),
                                         Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
+                                          crossAxisAlignment: CrossAxisAlignment.start,
                                           children: [
                                             const Text(
                                               'Total Weight: ',
-                                              style: TextStyle(
-                                                  fontWeight: FontWeight.bold),
+                                              style: TextStyle(fontWeight: FontWeight.bold),
                                             ),
                                             Text(
                                               '${order.totalWeight ?? ''}',
-                                              style: const TextStyle(
-                                                  fontWeight: FontWeight.bold,
-                                                  color: AppColors.primaryBlue),
+                                              style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.primaryBlue),
                                             ),
                                           ],
                                         ),
@@ -618,97 +568,44 @@ class _RoutingPageState extends State<RoutingPage>
                                     Padding(
                                       padding: const EdgeInsets.all(8.0),
                                       child: Row(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
+                                        crossAxisAlignment: CrossAxisAlignment.start,
                                         children: [
                                           Flexible(
                                             child: Column(
-                                              crossAxisAlignment:
-                                                  CrossAxisAlignment.start,
+                                              crossAxisAlignment: CrossAxisAlignment.start,
                                               children: [
-                                                buildLabelValueRow(
-                                                    'Payment Mode',
-                                                    order.paymentMode ?? ''),
-                                                buildLabelValueRow(
-                                                    'Currency Code',
-                                                    order.currencyCode ?? ''),
-                                                buildLabelValueRow(
-                                                    'COD Amount',
-                                                    order.codAmount
-                                                            .toString() ??
-                                                        ''),
-                                                buildLabelValueRow(
-                                                    'Prepaid Amount',
-                                                    order.prepaidAmount
-                                                            .toString() ??
-                                                        ''),
-                                                buildLabelValueRow(
-                                                    'Coin',
-                                                    order.coin.toString() ??
-                                                        ''),
-                                                buildLabelValueRow(
-                                                    'Tax Percent',
-                                                    order.taxPercent
-                                                            .toString() ??
-                                                        ''),
-                                                buildLabelValueRow(
-                                                    'Courier Name',
-                                                    order.courierName ?? ''),
-                                                buildLabelValueRow('Order Type',
-                                                    order.orderType ?? ''),
-                                                buildLabelValueRow(
-                                                    'Payment Bank',
-                                                    order.paymentBank ?? ''),
+                                                buildLabelValueRow('Payment Mode', order.paymentMode ?? ''),
+                                                buildLabelValueRow('Currency Code', order.currencyCode ?? ''),
+                                                buildLabelValueRow('COD Amount', order.codAmount.toString() ?? ''),
+                                                buildLabelValueRow('Prepaid Amount', order.prepaidAmount.toString() ?? ''),
+                                                buildLabelValueRow('Coin', order.coin.toString() ?? ''),
+                                                buildLabelValueRow('Tax Percent', order.taxPercent.toString() ?? ''),
+                                                buildLabelValueRow('Courier Name', order.courierName ?? ''),
+                                                buildLabelValueRow('Order Type', order.orderType ?? ''),
+                                                buildLabelValueRow('Payment Bank', order.paymentBank ?? ''),
                                               ],
                                             ),
                                           ),
                                           const SizedBox(width: 12.0),
                                           Flexible(
                                             child: Column(
-                                              crossAxisAlignment:
-                                                  CrossAxisAlignment.start,
+                                              crossAxisAlignment: CrossAxisAlignment.start,
                                               children: [
-                                                buildLabelValueRow(
-                                                    'Discount Amount',
-                                                    order.discountAmount
-                                                            .toString() ??
-                                                        ''),
-                                                buildLabelValueRow(
-                                                    'Discount Scheme',
-                                                    order.discountScheme ?? ''),
-                                                buildLabelValueRow(
-                                                    'Discount Percent',
-                                                    order.discountPercent
-                                                            .toString() ??
-                                                        ''),
-                                                buildLabelValueRow(
-                                                    'Agent', order.agent ?? ''),
-                                                buildLabelValueRow(
-                                                    'Notes', order.notes ?? ''),
-                                                buildLabelValueRow(
-                                                    'Marketplace',
-                                                    order.marketplace?.name ??
-                                                        ''),
-                                                buildLabelValueRow('Filter',
-                                                    order.filter ?? ''),
+                                                buildLabelValueRow('Discount Amount', order.discountAmount.toString() ?? ''),
+                                                buildLabelValueRow('Discount Scheme', order.discountScheme ?? ''),
+                                                buildLabelValueRow('Discount Percent', order.discountPercent.toString() ?? ''),
+                                                buildLabelValueRow('Agent', order.agent ?? ''),
+                                                buildLabelValueRow('Notes', order.notes ?? ''),
+                                                buildLabelValueRow('Marketplace', order.marketplace?.name ?? ''),
+                                                buildLabelValueRow('Filter', order.filter ?? ''),
                                                 buildLabelValueRow(
                                                   'Expected Delivery Date',
-                                                  order.expectedDeliveryDate !=
-                                                          null
-                                                      ? pro.formatDate(order
-                                                          .expectedDeliveryDate!)
-                                                      : '',
+                                                  order.expectedDeliveryDate != null ? pro.formatDate(order.expectedDeliveryDate!) : '',
                                                 ),
-                                                buildLabelValueRow(
-                                                    'Preferred Courier',
-                                                    order.preferredCourier ??
-                                                        ''),
+                                                buildLabelValueRow('Preferred Courier', order.preferredCourier ?? ''),
                                                 buildLabelValueRow(
                                                   'Payment Date Time',
-                                                  order.paymentDateTime != null
-                                                      ? pro.formatDateTime(order
-                                                          .paymentDateTime!)
-                                                      : '',
+                                                  order.paymentDateTime != null ? pro.formatDateTime(order.paymentDateTime!) : '',
                                                 ),
                                               ],
                                             ),
@@ -716,102 +613,65 @@ class _RoutingPageState extends State<RoutingPage>
                                           const SizedBox(width: 12.0),
                                           Flexible(
                                             child: Column(
-                                              crossAxisAlignment:
-                                                  CrossAxisAlignment.start,
+                                              crossAxisAlignment: CrossAxisAlignment.start,
                                               children: [
-                                                buildLabelValueRow(
-                                                    'Delivery Term',
-                                                    order.deliveryTerm ?? ''),
-                                                buildLabelValueRow(
-                                                    'Transaction Number',
-                                                    order.transactionNumber ??
-                                                        ''),
-                                                buildLabelValueRow(
-                                                    'Micro Dealer Order',
-                                                    order.microDealerOrder ??
-                                                        ''),
-                                                buildLabelValueRow(
-                                                    'Fulfillment Type',
-                                                    order.fulfillmentType ??
-                                                        ''),
+                                                buildLabelValueRow('Delivery Term', order.deliveryTerm ?? ''),
+                                                buildLabelValueRow('Transaction Number', order.transactionNumber ?? ''),
+                                                buildLabelValueRow('Micro Dealer Order', order.microDealerOrder ?? ''),
+                                                buildLabelValueRow('Fulfillment Type', order.fulfillmentType ?? ''),
                                                 // buildLabelValueRow(
                                                 //     'No. of Boxes',
                                                 //     order.numberOfBoxes
                                                 //             .toString() ??
                                                 //         ''),
-                                                buildLabelValueRow(
-                                                    'Total Quantity',
-                                                    order.totalQuantity
-                                                            .toString() ??
-                                                        ''),
+                                                buildLabelValueRow('Total Quantity', order.totalQuantity.toString() ?? ''),
                                                 // buildLabelValueRow(
                                                 //     'SKU Qty',
                                                 //     order.skuQty.toString() ??
                                                 //         ''),
-                                                buildLabelValueRow(
-                                                    'Calculation Entry No.',
-                                                    order.calcEntryNumber ??
-                                                        ''),
-                                                buildLabelValueRow('Currency',
-                                                    order.currency ?? ''),
+                                                buildLabelValueRow('Calculation Entry No.', order.calcEntryNumber ?? ''),
+                                                buildLabelValueRow('Currency', order.currency ?? ''),
                                               ],
                                             ),
                                           ),
                                           const SizedBox(width: 12.0),
                                           Flexible(
                                             child: Column(
-                                              crossAxisAlignment:
-                                                  CrossAxisAlignment.start,
+                                              crossAxisAlignment: CrossAxisAlignment.start,
                                               children: [
                                                 buildLabelValueRow(
                                                   'Dimensions',
                                                   '${order.length.toString() ?? ''} x ${order.breadth.toString() ?? ''} x ${order.height.toString() ?? ''}',
                                                 ),
-                                                buildLabelValueRow(
-                                                    'Tracking Status',
-                                                    order.trackingStatus ?? ''),
+                                                buildLabelValueRow('Tracking Status', order.trackingStatus ?? ''),
                                                 const SizedBox(
                                                   height: 7,
                                                 ),
                                                 const Text(
                                                   'Customer Details:',
-                                                  style: TextStyle(
-                                                      fontWeight:
-                                                          FontWeight.bold,
-                                                      fontSize: 12.0,
-                                                      color: AppColors
-                                                          .primaryBlue),
+                                                  style:
+                                                      TextStyle(fontWeight: FontWeight.bold, fontSize: 12.0, color: AppColors.primaryBlue),
                                                 ),
                                                 buildLabelValueRow(
                                                   'Customer ID',
-                                                  order.customer?.customerId ??
-                                                      '',
+                                                  order.customer?.customerId ?? '',
                                                 ),
                                                 buildLabelValueRow(
                                                     'Full Name',
-                                                    order.customer?.firstName !=
-                                                            order.customer
-                                                                ?.lastName
-                                                        ? '${order.customer?.firstName ?? ''} ${order.customer?.lastName ?? ''}'
-                                                            .trim()
-                                                        : order.customer
-                                                                ?.firstName ??
-                                                            ''),
+                                                    order.customer?.firstName != order.customer?.lastName
+                                                        ? '${order.customer?.firstName ?? ''} ${order.customer?.lastName ?? ''}'.trim()
+                                                        : order.customer?.firstName ?? ''),
                                                 buildLabelValueRow(
                                                   'Email',
                                                   order.customer?.email ?? '',
                                                 ),
                                                 buildLabelValueRow(
                                                   'Phone',
-                                                  order.customer?.phone
-                                                          ?.toString() ??
-                                                      '',
+                                                  order.customer?.phone?.toString() ?? '',
                                                 ),
                                                 buildLabelValueRow(
                                                   'GSTIN',
-                                                  order.customer
-                                                          ?.customerGstin ??
-                                                      '',
+                                                  order.customer?.customerGstin ?? '',
                                                 ),
                                               ],
                                             ),
@@ -822,62 +682,41 @@ class _RoutingPageState extends State<RoutingPage>
                                     ),
                                     const SizedBox(height: 6),
                                     Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.center,
+                                      mainAxisAlignment: MainAxisAlignment.center,
                                       children: [
                                         Expanded(
                                           child: FittedBox(
                                             fit: BoxFit.scaleDown,
                                             child: Column(
-                                              crossAxisAlignment:
-                                                  CrossAxisAlignment.start,
+                                              crossAxisAlignment: CrossAxisAlignment.start,
                                               children: [
                                                 const Text(
                                                   'Shipping Address:',
-                                                  style: TextStyle(
-                                                      fontWeight:
-                                                          FontWeight.bold,
-                                                      fontSize: 12.0,
-                                                      color: AppColors
-                                                          .primaryBlue),
+                                                  style:
+                                                      TextStyle(fontWeight: FontWeight.bold, fontSize: 12.0, color: AppColors.primaryBlue),
                                                 ),
                                                 Row(
-                                                  crossAxisAlignment:
-                                                      CrossAxisAlignment.start,
+                                                  crossAxisAlignment: CrossAxisAlignment.start,
                                                   children: [
                                                     const Text(
                                                       'Address: ',
                                                       style: TextStyle(
-                                                        fontWeight:
-                                                            FontWeight.bold,
+                                                        fontWeight: FontWeight.bold,
                                                         fontSize: 12.0,
                                                       ),
                                                     ),
                                                     Text(
                                                       [
-                                                        order.shippingAddress
-                                                            ?.address1,
-                                                        order.shippingAddress
-                                                            ?.address2,
-                                                        order.shippingAddress
-                                                            ?.city,
-                                                        order.shippingAddress
-                                                            ?.state,
-                                                        order.shippingAddress
-                                                            ?.country,
-                                                        order.shippingAddress
-                                                            ?.pincode
-                                                            ?.toString(),
+                                                        order.shippingAddress?.address1,
+                                                        order.shippingAddress?.address2,
+                                                        order.shippingAddress?.city,
+                                                        order.shippingAddress?.state,
+                                                        order.shippingAddress?.country,
+                                                        order.shippingAddress?.pincode?.toString(),
                                                       ]
-                                                          .where((element) =>
-                                                              element != null &&
-                                                              element
-                                                                  .isNotEmpty)
+                                                          .where((element) => element != null && element.isNotEmpty)
                                                           .join(', ')
-                                                          .replaceAllMapped(
-                                                              RegExp('.{1,50}'),
-                                                              (match) =>
-                                                                  '${match.group(0)}\n'),
+                                                          .replaceAllMapped(RegExp('.{1,50}'), (match) => '${match.group(0)}\n'),
                                                       softWrap: true,
                                                       maxLines: null,
                                                       style: const TextStyle(
@@ -888,27 +727,13 @@ class _RoutingPageState extends State<RoutingPage>
                                                 ),
                                                 buildLabelValueRow(
                                                   'Name',
-                                                  order.shippingAddress
-                                                              ?.firstName !=
-                                                          order.shippingAddress
-                                                              ?.lastName
+                                                  order.shippingAddress?.firstName != order.shippingAddress?.lastName
                                                       ? '${order.shippingAddress?.firstName ?? ''} ${order.shippingAddress?.lastName ?? ''}'
                                                           .trim()
-                                                      : order.shippingAddress
-                                                              ?.firstName ??
-                                                          '',
+                                                      : order.shippingAddress?.firstName ?? '',
                                                 ),
-                                                buildLabelValueRow(
-                                                    'Pincode',
-                                                    order.shippingAddress
-                                                            ?.pincode
-                                                            ?.toString() ??
-                                                        ''),
-                                                buildLabelValueRow(
-                                                    'Country Code',
-                                                    order.shippingAddress
-                                                            ?.countryCode ??
-                                                        ''),
+                                                buildLabelValueRow('Pincode', order.shippingAddress?.pincode?.toString() ?? ''),
+                                                buildLabelValueRow('Country Code', order.shippingAddress?.countryCode ?? ''),
                                               ],
                                             ),
                                           ),
@@ -917,55 +742,35 @@ class _RoutingPageState extends State<RoutingPage>
                                           child: FittedBox(
                                             fit: BoxFit.scaleDown,
                                             child: Column(
-                                              crossAxisAlignment:
-                                                  CrossAxisAlignment.start,
+                                              crossAxisAlignment: CrossAxisAlignment.start,
                                               children: [
                                                 const Text(
                                                   'Billing Address:',
-                                                  style: TextStyle(
-                                                      fontWeight:
-                                                          FontWeight.bold,
-                                                      fontSize: 12.0,
-                                                      color: AppColors
-                                                          .primaryBlue),
+                                                  style:
+                                                      TextStyle(fontWeight: FontWeight.bold, fontSize: 12.0, color: AppColors.primaryBlue),
                                                 ),
                                                 Row(
-                                                  crossAxisAlignment:
-                                                      CrossAxisAlignment.start,
+                                                  crossAxisAlignment: CrossAxisAlignment.start,
                                                   children: [
                                                     const Text(
                                                       'Address: ',
                                                       style: TextStyle(
-                                                        fontWeight:
-                                                            FontWeight.bold,
+                                                        fontWeight: FontWeight.bold,
                                                         fontSize: 12.0,
                                                       ),
                                                     ),
                                                     Text(
                                                       [
-                                                        order.billingAddress
-                                                            ?.address1,
-                                                        order.billingAddress
-                                                            ?.address2,
-                                                        order.billingAddress
-                                                            ?.city,
-                                                        order.billingAddress
-                                                            ?.state,
-                                                        order.billingAddress
-                                                            ?.country,
-                                                        order.billingAddress
-                                                            ?.pincode
-                                                            ?.toString(),
+                                                        order.billingAddress?.address1,
+                                                        order.billingAddress?.address2,
+                                                        order.billingAddress?.city,
+                                                        order.billingAddress?.state,
+                                                        order.billingAddress?.country,
+                                                        order.billingAddress?.pincode?.toString(),
                                                       ]
-                                                          .where((element) =>
-                                                              element != null &&
-                                                              element
-                                                                  .isNotEmpty)
+                                                          .where((element) => element != null && element.isNotEmpty)
                                                           .join(', ')
-                                                          .replaceAllMapped(
-                                                              RegExp('.{1,50}'),
-                                                              (match) =>
-                                                                  '${match.group(0)}\n'),
+                                                          .replaceAllMapped(RegExp('.{1,50}'), (match) => '${match.group(0)}\n'),
                                                       softWrap: true,
                                                       maxLines: null,
                                                       style: const TextStyle(
@@ -976,27 +781,13 @@ class _RoutingPageState extends State<RoutingPage>
                                                 ),
                                                 buildLabelValueRow(
                                                   'Name',
-                                                  order.billingAddress
-                                                              ?.firstName !=
-                                                          order.billingAddress
-                                                              ?.lastName
+                                                  order.billingAddress?.firstName != order.billingAddress?.lastName
                                                       ? '${order.billingAddress?.firstName ?? ''} ${order.billingAddress?.lastName ?? ''}'
                                                           .trim()
-                                                      : order.billingAddress
-                                                              ?.firstName ??
-                                                          '',
+                                                      : order.billingAddress?.firstName ?? '',
                                                 ),
-                                                buildLabelValueRow(
-                                                    'Pincode',
-                                                    order.billingAddress
-                                                            ?.pincode
-                                                            ?.toString() ??
-                                                        ''),
-                                                buildLabelValueRow(
-                                                    'Country Code',
-                                                    order.billingAddress
-                                                            ?.countryCode ??
-                                                        ''),
+                                                buildLabelValueRow('Pincode', order.billingAddress?.pincode?.toString() ?? ''),
+                                                buildLabelValueRow('Country Code', order.billingAddress?.countryCode ?? ''),
                                               ],
                                             ),
                                           ),
@@ -1005,8 +796,7 @@ class _RoutingPageState extends State<RoutingPage>
                                     ),
                                     const SizedBox(height: 10),
                                     Padding(
-                                      padding: const EdgeInsets.symmetric(
-                                          horizontal: 8.0),
+                                      padding: const EdgeInsets.symmetric(horizontal: 8.0),
                                       child: Text.rich(
                                         TextSpan(
                                           text: "Warehouse ID: ",
@@ -1018,15 +808,12 @@ class _RoutingPageState extends State<RoutingPage>
                                               ),
                                             ),
                                           ],
-                                          style: const TextStyle(
-                                              fontWeight: FontWeight.bold,
-                                              fontSize: 20),
+                                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
                                         ),
                                       ),
                                     ),
                                     Padding(
-                                      padding: const EdgeInsets.symmetric(
-                                          horizontal: 8.0),
+                                      padding: const EdgeInsets.symmetric(horizontal: 8.0),
                                       child: Text.rich(
                                         TextSpan(
                                           text: "Warehouse Name: ",
@@ -1038,30 +825,24 @@ class _RoutingPageState extends State<RoutingPage>
                                               ),
                                             ),
                                           ],
-                                          style: const TextStyle(
-                                              fontWeight: FontWeight.bold,
-                                              fontSize: 20),
+                                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
                                         ),
                                       ),
                                     ),
                                     Padding(
-                                      padding: const EdgeInsets.symmetric(
-                                          horizontal: 8.0),
+                                      padding: const EdgeInsets.symmetric(horizontal: 8.0),
                                       child: Text.rich(
                                         TextSpan(
                                           text: "Hold: ",
                                           children: [
                                             TextSpan(
-                                              text:
-                                                  order.isHold.toString() ?? '',
+                                              text: order.isHold.toString() ?? '',
                                               style: const TextStyle(
                                                 fontWeight: FontWeight.normal,
                                               ),
                                             ),
                                           ],
-                                          style: const TextStyle(
-                                              fontWeight: FontWeight.bold,
-                                              fontSize: 20),
+                                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
                                         ),
                                       ),
                                     ),
@@ -1072,15 +853,11 @@ class _RoutingPageState extends State<RoutingPage>
                                             text: "Updated on: ",
                                             children: [
                                               TextSpan(
-                                                  text: DateFormat(
-                                                          'yyyy-MM-dd\',\' hh:mm a')
-                                                      .format(
-                                                    DateTime.parse(
-                                                        "${order.updatedAt}"),
+                                                  text: DateFormat('yyyy-MM-dd\',\' hh:mm a').format(
+                                                    DateTime.parse("${order.updatedAt}"),
                                                   ),
                                                   style: const TextStyle(
-                                                    fontWeight:
-                                                        FontWeight.normal,
+                                                    fontWeight: FontWeight.normal,
                                                   )),
                                             ],
                                             style: const TextStyle(
@@ -1096,12 +873,10 @@ class _RoutingPageState extends State<RoutingPage>
                                     const SizedBox(height: 6),
                                     ListView.builder(
                                       shrinkWrap: true,
-                                      physics:
-                                          const NeverScrollableScrollPhysics(),
+                                      physics: const NeverScrollableScrollPhysics(),
                                       itemCount: comboItemGroups.length,
                                       itemBuilder: (context, comboIndex) {
-                                        final combo =
-                                            comboItemGroups[comboIndex];
+                                        final combo = comboItemGroups[comboIndex];
                                         return BigComboCard(
                                           items: combo,
                                           index: comboIndex,
@@ -1110,13 +885,11 @@ class _RoutingPageState extends State<RoutingPage>
                                     ),
                                     ListView.builder(
                                       shrinkWrap: true,
-                                      physics:
-                                          const NeverScrollableScrollPhysics(),
+                                      physics: const NeverScrollableScrollPhysics(),
                                       itemCount: remainingItems.length,
                                       itemBuilder: (context, itemIndex) {
                                         final item = remainingItems[itemIndex];
-                                        print(
-                                            'Item $itemIndex: ${item.product?.displayName.toString() ?? ''}, Quantity: ${item.qty ?? 0}');
+                                        print('Item $itemIndex: ${item.product?.displayName.toString() ?? ''}, Quantity: ${item.qty ?? 0}');
                                         return ProductDetailsCard(
                                           item: item,
                                           index: itemIndex,
@@ -1160,8 +933,7 @@ class _RoutingPageState extends State<RoutingPage>
                 final int? page = int.tryParse(pageController.text);
 
                 if (page == null || page < 1 || page > pro.totalReadyPages) {
-                  _showSnackbar(context,
-                      'Please enter a valid page number between 1 and ${pro.totalReadyPages}.');
+                  _showSnackbar(context, 'Please enter a valid page number between 1 and ${pro.totalReadyPages}.');
                   return;
                 }
 

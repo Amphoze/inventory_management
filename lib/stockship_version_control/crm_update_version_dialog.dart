@@ -69,14 +69,14 @@ class _CrmUpdateVersionDialogState extends State<CrmUpdateVersionDialog> with Si
   }
 
   Widget _buildUpdateView() {
-    final currentVersion = context.read<VersionController>().currentVersion;
+    final latestVersion = context.read<VersionController>().latestVersion;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _buildHeader("New Update Available", Icons.system_update, AppColors.primaryBlue),
         const SizedBox(height: 24),
         Text(
-          'Version $currentVersion is now available',
+          'Version $latestVersion is now available',
           style: const TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.w500,

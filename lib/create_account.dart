@@ -317,6 +317,9 @@ class CreateAccountFormState extends State<CreateAccountForm> {
     'checker',
     'racker',
     'manifest',
+    'support',
+    'ggv',
+    'createOrder',
   ];
 
   final List<String> selectedRoles = [];
@@ -326,13 +329,16 @@ class CreateAccountFormState extends State<CreateAccountForm> {
     'admin': 'Admin',
     'outbound': 'Outbound',
     'confirmer': 'Confirmer',
-    'booker': 'Booker',
     'account': 'Account',
+    'booker': 'Booker',
     'picker': 'Picker',
     'packer': 'Packer',
     'checker': 'Checker',
     'racker': 'Racker',
     'manifest': 'Manifest',
+    'support': 'Support',
+    'ggv': 'GGV',
+    'createOrder': 'Create Order',
   };
 
   void _showMultiSelectDialog() async {

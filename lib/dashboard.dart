@@ -3,6 +3,7 @@ import 'dart:developer';
 
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:intl/intl.dart';
 import 'package:inventory_management/Api/auth_provider.dart';
 import 'package:inventory_management/accounts_page.dart';
@@ -22,6 +23,7 @@ import 'package:inventory_management/confirm_orders.dart';
 import 'package:inventory_management/confirm_outbound_by_csv.dart';
 import 'package:inventory_management/create-label-page.dart';
 import 'package:inventory_management/create_account.dart';
+import 'package:inventory_management/create_invoice_by_csv.dart';
 import 'package:inventory_management/create_order.dart';
 import 'package:inventory_management/create_orders_by_csv.dart';
 import 'package:inventory_management/dashboard_cards.dart';
@@ -50,6 +52,7 @@ import 'package:inventory_management/provider/dashboard_provider.dart';
 import 'package:inventory_management/provider/marketplace_provider.dart';
 import 'package:inventory_management/racked_page.dart';
 import 'package:inventory_management/reordering_page.dart';
+import 'package:inventory_management/return_entry.dart';
 import 'package:inventory_management/return_orders.dart';
 import 'package:inventory_management/routing_page.dart';
 import 'package:inventory_management/show-label-page.dart';
@@ -154,6 +157,10 @@ class _DashboardPageState extends State<DashboardPage> {
   bool? isRacker;
   bool? isManifest;
   bool? isOutbound;
+  bool? isSupport;
+  bool? isCreateOrder;
+  bool? isGGV;
+  String? userName;
 
   Future<void> _fetchUserRole() async {
     final prefs = await SharedPreferences.getInstance();
@@ -169,6 +176,10 @@ class _DashboardPageState extends State<DashboardPage> {
       isRacker = prefs.getBool('_isRackerAssigned');
       isManifest = prefs.getBool('_isManifestAssigned');
       isOutbound = prefs.getBool('_isOutboundAssigned');
+      isSupport = prefs.getBool('_isSupportAssigned');
+      isCreateOrder = prefs.getBool('_isCreateOrderAssigned');
+      isGGV = prefs.getBool('_isGGVAssigned');
+      userName = prefs.getString('userName');
     });
   }
 
@@ -252,6 +263,10 @@ class _DashboardPageState extends State<DashboardPage> {
       '_isRackerAssigned',
       '_isManifestAssigned',
       '_isOutboundAssigned',
+      '_isSupportAssigned',
+      '_isCreateOrderAssigned',
+      '_isGGVAssigned',
+      'userName',
       'selectedDrawerItem',
       'authToken',
       'date',
@@ -873,7 +888,7 @@ class _DashboardPageState extends State<DashboardPage> {
               icon: Icons.support_agent,
               text: 'Support',
               isSelected: selectedDrawerItem == 'Support',
-              onTap: () => isSuperAdmin == true || isAdmin == true
+              onTap: () => isCreateOrder == true || isSuperAdmin == true || isAdmin == true
                   ? _onDrawerItemTapped('Support', isSmallScreen)
                   : ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(content: Text("You are not authorized to view this page.")),
@@ -922,6 +937,18 @@ class _DashboardPageState extends State<DashboardPage> {
               text: 'All Orders',
               isSelected: selectedDrawerItem == 'All Orders',
               onTap: () => _onDrawerItemTapped('All Orders', isSmallScreen),
+              isIndented: true,
+              iconSize: 20,
+              fontSize: 14,
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.only(left: 10.0),
+            child: _buildDrawerItem(
+              icon: Icons.keyboard_return_outlined,
+              text: 'Return Entry',
+              isSelected: selectedDrawerItem == 'Return Entry',
+              onTap: () => _onDrawerItemTapped('Return Entry', isSmallScreen),
               isIndented: true,
               iconSize: 20,
               fontSize: 14,
@@ -1200,6 +1227,7 @@ class _DashboardPageState extends State<DashboardPage> {
           "Confirm Orders",
           "Confirm Outbound",
           "Merge Orders",
+          "Create Invoice",
           "Book Orders",
           "Create Orders",
           "Upload Labels",
@@ -1231,7 +1259,7 @@ class _DashboardPageState extends State<DashboardPage> {
               icon: Icons.note_add,
               text: 'Create Orders',
               isSelected: selectedDrawerItem == 'Create Orders',
-              onTap: () => isConfirmer == true || isSuperAdmin == true || isAdmin == true
+              onTap: () => isCreateOrder == true || isSuperAdmin == true || isAdmin == true
                   ? _onDrawerItemTapped('Create Orders', isSmallScreen)
                   : ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(content: Text("You are not authorized to view this page.")),
@@ -1273,22 +1301,38 @@ class _DashboardPageState extends State<DashboardPage> {
               fontSize: 14,
             ),
           ),
-          // Padding(
-          //   padding: const EdgeInsets.only(left: 10.0),
-          //   child: _buildDrawerItem(
-          //     icon: Icons.outbound,
-          //     text: 'Merge Orders',
-          //     isSelected: selectedDrawerItem == 'Merge Orders',
-          //     onTap: () => isOutbound == true || isSuperAdmin == true || isAdmin == true
-          //         ? _onDrawerItemTapped('Merge Orders', isSmallScreen)
-          //         : ScaffoldMessenger.of(context).showSnackBar(
-          //       const SnackBar(content: Text("You are not authorized to view this page.")),
-          //     ),
-          //     isIndented: true,
-          //     iconSize: 20,
-          //     fontSize: 14,
-          //   ),
-          // ),
+          Padding(
+            padding: const EdgeInsets.only(left: 10.0),
+            child: _buildDrawerItem(
+              icon: Icons.merge,
+              text: 'Merge Orders',
+              isSelected: selectedDrawerItem == 'Merge Orders',
+              onTap: () => isOutbound == true || isSuperAdmin == true || isAdmin == true
+                  ? _onDrawerItemTapped('Merge Orders', isSmallScreen)
+                  : ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text("You are not authorized to view this page.")),
+                    ),
+              isIndented: true,
+              iconSize: 20,
+              fontSize: 14,
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.only(left: 10.0),
+            child: _buildDrawerItem(
+              icon: FontAwesomeIcons.fileInvoice,
+              text: 'Create Invoice',
+              isSelected: selectedDrawerItem == 'Create Invoice',
+              onTap: () => isAccounts == true || isSuperAdmin == true || isAdmin == true
+                  ? _onDrawerItemTapped('Create Invoice', isSmallScreen)
+                  : ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text("You are not authorized to view this page.")),
+                    ),
+              isIndented: true,
+              iconSize: 20,
+              fontSize: 14,
+            ),
+          ),
           Padding(
             padding: const EdgeInsets.only(left: 10.0),
             child: _buildDrawerItem(
@@ -1538,6 +1582,8 @@ class _DashboardPageState extends State<DashboardPage> {
         return const RTOOrders();
       case 'All Orders':
         return const AllOrdersPage();
+      case 'Return Entry':
+        return const ReturnEntry();
       case 'Product Master':
         return const ProductDashboardPage();
       case 'Create Label Page':
@@ -1564,8 +1610,10 @@ class _DashboardPageState extends State<DashboardPage> {
         return const ConfirmOutboundByCSV();
       case 'Merge Orders':
         return const MergeOrdersByCsv();
+      case 'Create Invoice':
+        return const CreateInvoiceByCSV();
       case 'Book Orders':
-        return const BookOrders();
+        return const BookOrdersByCsv();
       case 'Upload Products':
         return const ProductDataDisplay();
       case 'Upload Labels':
@@ -1597,13 +1645,26 @@ class _DashboardPageState extends State<DashboardPage> {
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
                 if (!isCreateOrderPage) ...[
-                  const Expanded(
-                    child: Text(
-                      'Hello, Katyayani Organics',
-                      style: TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.primaryBlue,
+                  Expanded(
+                    child: Text.rich(
+                      TextSpan(
+                        text: 'Hello, ',
+                        children: [
+                          TextSpan(
+                            text: userName,
+                            // text: 'Katyayani Organics',
+                            style: const TextStyle(
+                              fontSize: 24,
+                              fontWeight: FontWeight.normal,
+                              color: AppColors.primaryBlue,
+                            ),
+                          )
+                        ],
+                        style: const TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.primaryBlue,
+                        ),
                       ),
                     ),
                   ),
@@ -1744,11 +1805,17 @@ class _DashboardPageState extends State<DashboardPage> {
                     ),
                     child: ElevatedButton.icon(
                       onPressed: () async {
-                        setState(() {
-                          Logger().e("isCreateOrderPage pehle: $isCreateOrderPage");
-                          isCreateOrderPage = !isCreateOrderPage;
-                          Logger().e("isCreateOrderPage baad me: $isCreateOrderPage");
-                        });
+                        if (isCreateOrder == true || isSuperAdmin == true || isAdmin == true) {
+                          setState(() {
+                            Logger().e("isCreateOrderPage pehle: $isCreateOrderPage");
+                            isCreateOrderPage = !isCreateOrderPage;
+                            Logger().e("isCreateOrderPage baad me: $isCreateOrderPage");
+                          });
+                        } else {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text("You are not authorized to view this page.")),
+                          );
+                        }
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: isCreateOrderPage ? AppColors.cardsred : AppColors.primaryBlue, // Button background color

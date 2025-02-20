@@ -56,8 +56,9 @@ class _OrdersNewPageState extends State<OrdersNewPage> with TickerProviderStateM
         _searchControllerFailed.clear();
       }
     });
-
-    context.read<MarketplaceProvider>().fetchMarketplaces();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<MarketplaceProvider>().fetchMarketplaces();
+    });
   }
 
   @override
@@ -75,8 +76,7 @@ class _OrdersNewPageState extends State<OrdersNewPage> with TickerProviderStateM
   void _reloadOrders() async {
     // Access the OrdersProvider and fetch orders again
     final ordersProvider = Provider.of<OrdersProvider>(context, listen: false);
-    await ordersProvider.fetchReadyOrders(); // Fetch both orders
-    await ordersProvider.fetchFailedOrders();
+    await Future.wait([ordersProvider.fetchReadyOrders(), ordersProvider.fetchFailedOrders()]);
   }
 
   static String maskPhoneNumber(dynamic phone) {
@@ -895,6 +895,125 @@ class _OrdersNewPageState extends State<OrdersNewPage> with TickerProviderStateM
                                                   );
                                                 },
                                                 child: const Text('Report Bug')),
+                                            const SizedBox(width: 8),
+                                            IconButton(
+                                              tooltip: 'Split Order',
+                                              onPressed: () {
+                                                final List<String> selectedItems = [];
+                                                final weightController = TextEditingController();
+                                                showDialog(
+                                                  context: context,
+                                                  builder: (BuildContext dialogContext) {
+                                                    return StatefulBuilder(
+                                                      builder: (BuildContext context, StateSetter setDialogState) {
+                                                        return AlertDialog(
+                                                          title: Text(order.orderId),
+                                                          content: Column(
+                                                            mainAxisSize: MainAxisSize.min,
+                                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                                            children: [
+                                                              ...remainingItems.map(
+                                                                (item) => Row(
+                                                                  children: [
+                                                                    Checkbox(
+                                                                      value: selectedItems.contains(item.sku),
+                                                                      onChanged: (value) {
+                                                                        setDialogState(() {
+                                                                          if (selectedItems.contains(item.sku)) {
+                                                                            selectedItems.remove(item.sku);
+                                                                          } else {
+                                                                            selectedItems.add(item.sku ?? '');
+                                                                          }
+                                                                        });
+                                                                      },
+                                                                    ),
+                                                                    Text(item.sku ?? ''),
+                                                                  ],
+                                                                ),
+                                                              ),
+                                                              ...comboItemGroups.map(
+                                                                (item) => Row(
+                                                                  children: [
+                                                                    Checkbox(
+                                                                      value: selectedItems.contains(item[0].sku),
+                                                                      onChanged: (value) {
+                                                                        setDialogState(() {
+                                                                          if (selectedItems.contains(item[0].sku)) {
+                                                                            selectedItems.remove(item[0].sku);
+                                                                          } else {
+                                                                            selectedItems.add(item[0].sku ?? '');
+                                                                          }
+                                                                        });
+                                                                      },
+                                                                    ),
+                                                                    Text(item[0].comboSku ?? ''),
+                                                                  ],
+                                                                ),
+                                                              ),
+                                                              const SizedBox(height: 10),
+                                                              TextField(
+                                                                controller: weightController,
+                                                                decoration: const InputDecoration(
+                                                                  labelText: 'Weight Limit (Optional)',
+                                                                  // border: OutlineInputBorder(),
+                                                                ),
+                                                              ),
+                                                            ],
+                                                          ),
+                                                          actions: [
+                                                            TextButton(
+                                                              child: const Text('Cancel'),
+                                                              onPressed: () => Navigator.pop(context),
+                                                            ),
+                                                            TextButton(
+                                                              child: const Text('Submit'),
+                                                              onPressed: () async {
+                                                                showDialog(
+                                                                  context: context,
+                                                                  builder: (_) {
+                                                                    return const AlertDialog(
+                                                                      content: Row(
+                                                                        children: [
+                                                                          CircularProgressIndicator(),
+                                                                          SizedBox(
+                                                                            width: 8,
+                                                                          ),
+                                                                          Text('Splitting')
+                                                                        ],
+                                                                      ),
+                                                                    );
+                                                                  },
+                                                                );
+
+                                                                List<String>? productSkus;
+
+                                                                setDialogState(() {
+                                                                  productSkus = selectedItems;
+                                                                });
+
+                                                                final res = await ordersProvider.splitOrder(
+                                                                    order.orderId, productSkus ?? [],
+                                                                    weightLimit: weightController.text.trim());
+                                                                Navigator.pop(context);
+                                                                Navigator.pop(context);
+                                                                if (res['success'] == true) {
+                                                                  ordersProvider.showSnackBar(
+                                                                      context, res['message'].toString(), Colors.green);
+                                                                } else {
+                                                                  ordersProvider.showSnackBar(
+                                                                      context, res['message'].toString(), Colors.red);
+                                                                }
+                                                              },
+                                                            ),
+                                                          ],
+                                                        );
+                                                      },
+                                                    );
+                                                  },
+                                                );
+                                              },
+                                              icon: const Icon(Icons.call_split),
+                                            )
                                           ],
                                         ),
                                       ],
@@ -904,305 +1023,6 @@ class _OrdersNewPageState extends State<OrdersNewPage> with TickerProviderStateM
                                       color: AppColors.grey,
                                     ),
                                     OrderInfo(order: order, pro: ordersProvider),
-                                    // Padding(
-                                    //   padding: const EdgeInsets.all(8.0),
-                                    //   child: Row(
-                                    //     crossAxisAlignment: CrossAxisAlignment.start,
-                                    //     children: [
-                                    //       Expanded(
-                                    //         child: Padding(
-                                    //           padding: const EdgeInsets.only(right: 8.0),
-                                    //           child: Column(
-                                    //             crossAxisAlignment: CrossAxisAlignment.start,
-                                    //             children: [
-                                    //               buildLabelValueRow(
-                                    //                 'Payment Mode',
-                                    //                 order.paymentMode ?? '',
-                                    //               ),
-                                    //               buildLabelValueRow('Currency Code', order.currencyCode ?? ''),
-                                    //               buildLabelValueRow('COD Amount', order.codAmount.toString() ?? ''),
-                                    //               buildLabelValueRow('Prepaid Amount', order.prepaidAmount.toString() ?? ''),
-                                    //               buildLabelValueRow('Coin', order.coin.toString() ?? ''),
-                                    //               buildLabelValueRow('Tax Percent', order.taxPercent.toString() ?? ''),
-                                    //               buildLabelValueRow('Courier Name', order.courierName ?? ''),
-                                    //               buildLabelValueRow('Order Type', order.orderType ?? ''),
-                                    //               buildLabelValueRow('Payment Bank', order.paymentBank ?? ''),
-                                    //             ],
-                                    //           ),
-                                    //         ),
-                                    //       ),
-                                    //       // const SizedBox(width: 12.0),
-                                    //       Expanded(
-                                    //         child: Padding(
-                                    //           padding: const EdgeInsets.only(right: 8.0),
-                                    //           child: Column(
-                                    //             crossAxisAlignment: CrossAxisAlignment.start,
-                                    //             children: [
-                                    //               buildLabelValueRow('Discount Amount', order.discountAmount.toString() ?? ''),
-                                    //               buildLabelValueRow('Discount Scheme', order.discountScheme ?? ''),
-                                    //               buildLabelValueRow('Discount Percent', order.discountPercent.toString() ?? ''),
-                                    //               buildLabelValueRow('Agent', order.agent ?? ''),
-                                    //               buildLabelValueRow('Notes', order.notes ?? ''),
-                                    //               buildLabelValueRow('Marketplace', order.marketplace?.name ?? ''),
-                                    //               buildLabelValueRow('Filter', order.filter ?? ''),
-                                    //               buildLabelValueRow(
-                                    //                 'Expected Delivery Date',
-                                    //                 order.expectedDeliveryDate != null
-                                    //                     ? ordersProvider.formatDate(order.expectedDeliveryDate!)
-                                    //                     : '',
-                                    //               ),
-                                    //               buildLabelValueRow('Preferred Courier', order.preferredCourier ?? ''),
-                                    //               buildLabelValueRow(
-                                    //                 'Payment Date Time',
-                                    //                 order.paymentDateTime != null
-                                    //                     ? ordersProvider.formatDateTime(order.paymentDateTime!)
-                                    //                     : '',
-                                    //               ),
-                                    //             ],
-                                    //           ),
-                                    //         ),
-                                    //       ),
-                                    //       // const SizedBox(width: 12.0),
-                                    //       Expanded(
-                                    //         child: Padding(
-                                    //           padding: const EdgeInsets.only(right: 8.0),
-                                    //           child: Column(
-                                    //             crossAxisAlignment: CrossAxisAlignment.start,
-                                    //             children: [
-                                    //               buildLabelValueRow('Delivery Term', order.deliveryTerm ?? ''),
-                                    //               buildLabelValueRow('Transaction Number', order.transactionNumber ?? ''),
-                                    //               buildLabelValueRow('Micro Dealer Order', order.microDealerOrder ?? ''),
-                                    //               buildLabelValueRow('Fulfillment Type', order.fulfillmentType ?? ''),
-                                    //               // buildLabelValueRow(
-                                    //               //     'No. of Boxes',
-                                    //               //     order.numberOfBoxes
-                                    //               //             .toString() ??
-                                    //               //         ''),
-                                    //               buildLabelValueRow('Total Quantity', order.totalQuantity.toString() ?? ''),
-                                    //               // buildLabelValueRow(
-                                    //               //     'SKU Qty',
-                                    //               //     order.skuQty.toString() ??
-                                    //               //         ''),
-                                    //               buildLabelValueRow('Calculation Entry No.', order.calcEntryNumber ?? ''),
-                                    //               buildLabelValueRow('Currency', order.currency ?? ''),
-                                    //             ],
-                                    //           ),
-                                    //         ),
-                                    //       ),
-                                    //       // const SizedBox(width: 12.0),
-                                    //       Expanded(
-                                    //         child: Column(
-                                    //           crossAxisAlignment: CrossAxisAlignment.start,
-                                    //           children: [
-                                    //             buildLabelValueRow(
-                                    //               'Dimensions',
-                                    //               '${order.length.toString() ?? ''} x ${order.breadth.toString() ?? ''} x ${order.height.toString() ?? ''}',
-                                    //             ),
-                                    //             buildLabelValueRow('Tracking Status', order.trackingStatus ?? ''),
-                                    //             const SizedBox(
-                                    //               height: 7,
-                                    //             ),
-                                    //             const Text(
-                                    //               'Customer Details:',
-                                    //               style:
-                                    //                   TextStyle(fontWeight: FontWeight.bold, fontSize: 12.0, color: AppColors.primaryBlue),
-                                    //             ),
-                                    //             buildLabelValueRow(
-                                    //               'Customer ID',
-                                    //               order.customer?.customerId ?? '',
-                                    //             ),
-                                    //             buildLabelValueRow(
-                                    //                 'Full Name',
-                                    //                 order.customer?.firstName != order.customer?.lastName
-                                    //                     ? '${order.customer?.firstName ?? ''} ${order.customer?.lastName ?? ''}'.trim()
-                                    //                     : order.customer?.firstName ?? ''),
-                                    //             buildLabelValueRow(
-                                    //               'Email',
-                                    //               order.customer?.email ?? '',
-                                    //             ),
-                                    //             buildLabelValueRow(
-                                    //               'Phone',
-                                    //               maskPhoneNumber(order.customer?.phone?.toString()) ?? '',
-                                    //             ),
-                                    //             buildLabelValueRow(
-                                    //               'GSTIN',
-                                    //               order.customer?.customerGstin ?? '',
-                                    //             ),
-                                    //           ],
-                                    //         ),
-                                    //       ),
-                                    //       // const SizedBox(width: 12.0),
-                                    //     ],
-                                    //   ),
-                                    // ),
-                                    // const SizedBox(height: 6),
-                                    // Padding(
-                                    //   padding: const EdgeInsets.all(16.0),
-                                    //   child: Row(
-                                    //     mainAxisAlignment: MainAxisAlignment.start,
-                                    //     children: [
-                                    //       Expanded(
-                                    //         // flex: 1,
-                                    //         child: FittedBox(
-                                    //           fit: BoxFit.scaleDown,
-                                    //           child: Column(
-                                    //             crossAxisAlignment: CrossAxisAlignment.start,
-                                    //             children: [
-                                    //               const Text(
-                                    //                 'Shipping Address:',
-                                    //                 style: TextStyle(
-                                    //                     fontWeight: FontWeight.bold, fontSize: 12.0, color: AppColors.primaryBlue),
-                                    //               ),
-                                    //               Row(
-                                    //                 crossAxisAlignment: CrossAxisAlignment.start,
-                                    //                 children: [
-                                    //                   const Text(
-                                    //                     'Address: ',
-                                    //                     style: TextStyle(
-                                    //                       fontWeight: FontWeight.bold,
-                                    //                       fontSize: 12.0,
-                                    //                     ),
-                                    //                   ),
-                                    //                   Text(
-                                    //                     [
-                                    //                       order.shippingAddress?.address1,
-                                    //                       order.shippingAddress?.address2,
-                                    //                       order.shippingAddress?.city,
-                                    //                       order.shippingAddress?.state,
-                                    //                       order.shippingAddress?.country,
-                                    //                       order.shippingAddress?.pincode?.toString(),
-                                    //                     ]
-                                    //                         .where((element) => element != null && element.isNotEmpty)
-                                    //                         .join(', ')
-                                    //                         .replaceAllMapped(RegExp('.{1,50}'), (match) => '${match.group(0)}\n'),
-                                    //                     softWrap: true,
-                                    //                     maxLines: null,
-                                    //                     style: const TextStyle(
-                                    //                       fontSize: 12.0,
-                                    //                     ),
-                                    //                   ),
-                                    //                 ],
-                                    //               ),
-                                    //               // buildLabelValueRow(
-                                    //               //   'Address',
-                                    //               //   [
-                                    //               //     order.shippingAddress
-                                    //               //         ?.address1,
-                                    //               //     order.shippingAddress
-                                    //               //         ?.address2,
-                                    //               //     order.shippingAddress?.city,
-                                    //               //     order
-                                    //               //         .shippingAddress?.state,
-                                    //               //     order.shippingAddress
-                                    //               //         ?.country,
-                                    //               //     order.shippingAddress
-                                    //               //         ?.pincode
-                                    //               //         ?.toString(),
-                                    //               //   ]
-                                    //               //       .where((element) =>
-                                    //               //           element != null &&
-                                    //               //           element.isNotEmpty)
-                                    //               //       .join(', ')
-                                    //               //       .replaceAllMapped(
-                                    //               //           RegExp('.{1,50}'),
-                                    //               //           (match) =>
-                                    //               //               '${match.group(0)}\n'),
-                                    //               // ),
-                                    //               buildLabelValueRow(
-                                    //                 'Name',
-                                    //                 order.shippingAddress?.firstName != order.shippingAddress?.lastName
-                                    //                     ? '${order.shippingAddress?.firstName ?? ''} ${order.shippingAddress?.lastName ?? ''}'
-                                    //                         .trim()
-                                    //                     : order.shippingAddress?.firstName ?? '',
-                                    //               ),
-                                    //               buildLabelValueRow('Pincode', order.shippingAddress?.pincode?.toString() ?? ''),
-                                    //               buildLabelValueRow('Country Code', order.shippingAddress?.countryCode ?? ''),
-                                    //             ],
-                                    //           ),
-                                    //         ),
-                                    //       ),
-                                    //       Expanded(
-                                    //         // flex: 1,
-                                    //         child: FittedBox(
-                                    //           fit: BoxFit.scaleDown,
-                                    //           child: Column(
-                                    //             crossAxisAlignment: CrossAxisAlignment.start,
-                                    //             children: [
-                                    //               const Text(
-                                    //                 'Billing Address:',
-                                    //                 style: TextStyle(
-                                    //                     fontWeight: FontWeight.bold, fontSize: 12.0, color: AppColors.primaryBlue),
-                                    //               ),
-                                    //               Row(
-                                    //                 crossAxisAlignment: CrossAxisAlignment.start,
-                                    //                 children: [
-                                    //                   const Text(
-                                    //                     'Address: ',
-                                    //                     style: TextStyle(
-                                    //                       fontWeight: FontWeight.bold,
-                                    //                       fontSize: 12.0,
-                                    //                     ),
-                                    //                   ),
-                                    //                   Text(
-                                    //                     [
-                                    //                       order.billingAddress?.address1,
-                                    //                       order.billingAddress?.address2,
-                                    //                       order.billingAddress?.city,
-                                    //                       order.billingAddress?.state,
-                                    //                       order.billingAddress?.country,
-                                    //                       order.billingAddress?.pincode?.toString(),
-                                    //                     ]
-                                    //                         .where((element) => element != null && element.isNotEmpty)
-                                    //                         .join(', ')
-                                    //                         .replaceAllMapped(RegExp('.{1,50}'), (match) => '${match.group(0)}\n'),
-                                    //                     softWrap: true,
-                                    //                     maxLines: null,
-                                    //                     style: const TextStyle(
-                                    //                       fontSize: 12.0,
-                                    //                     ),
-                                    //                   ),
-                                    //                 ],
-                                    //               ),
-                                    //               // buildLabelValueRow(
-                                    //               //   'Address',
-                                    //               //   [
-                                    //               //     order.billingAddress
-                                    //               //         ?.address1,
-                                    //               //     order.billingAddress
-                                    //               //         ?.address2,
-                                    //               //     order.billingAddress?.city,
-                                    //               //     order.billingAddress?.state,
-                                    //               //     order.billingAddress
-                                    //               //         ?.country,
-                                    //               //     order
-                                    //               //         .billingAddress?.pincode
-                                    //               //         ?.toString(),
-                                    //               //   ]
-                                    //               //       .where((element) =>
-                                    //               //           element != null &&
-                                    //               //           element.isNotEmpty)
-                                    //               //       .join(', ')
-                                    //               //       .replaceAllMapped(
-                                    //               //           RegExp('.{1,50}'),
-                                    //               //           (match) =>
-                                    //               //               '${match.group(0)}\n'),
-                                    //               // ),
-                                    //               buildLabelValueRow(
-                                    //                 'Name',
-                                    //                 order.billingAddress?.firstName != order.billingAddress?.lastName
-                                    //                     ? '${order.billingAddress?.firstName ?? ''} ${order.billingAddress?.lastName ?? ''}'
-                                    //                         .trim()
-                                    //                     : order.billingAddress?.firstName ?? '',
-                                    //               ),
-                                    //               buildLabelValueRow('Pincode', order.billingAddress?.pincode?.toString() ?? ''),
-                                    //               buildLabelValueRow('Country Code', order.billingAddress?.countryCode ?? ''),
-                                    //             ],
-                                    //           ),
-                                    //         ),
-                                    //       ),
-                                    //     ],
-                                    //   ),
-                                    // ),
                                     const SizedBox(height: 6),
                                     Padding(
                                       padding: const EdgeInsets.symmetric(horizontal: 16.0),
@@ -1419,22 +1239,6 @@ class _OrdersNewPageState extends State<OrdersNewPage> with TickerProviderStateM
                                         );
                                       },
                                     ),
-                                    // ListView.builder(
-                                    //   shrinkWrap: true,
-                                    //   physics:
-                                    //       const NeverScrollableScrollPhysics(),
-                                    //   itemCount: order.items.length,
-                                    //   itemBuilder: (context, itemIndex) {
-                                    //     final item = order.items[itemIndex];
-                                    // return ProductDetailsCard(
-                                    //   item: item,
-                                    //   index: itemIndex,
-                                    //   courierName: order.courierName,
-                                    //   orderStatus:
-                                    //       order.orderStatus.toString(),
-                                    // );
-                                    //   },
-                                    // ),
                                   ],
                                 ),
                               ),

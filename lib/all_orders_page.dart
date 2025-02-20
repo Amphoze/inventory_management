@@ -7,6 +7,7 @@ import 'package:inventory_management/Custom-Files/loading_indicator.dart';
 import 'package:inventory_management/Widgets/order_combo_card.dart';
 import 'package:inventory_management/provider/all_orders_provider.dart';
 import 'package:inventory_management/provider/marketplace_provider.dart';
+import 'package:logger/logger.dart';
 import 'package:provider/provider.dart';
 import 'package:inventory_management/model/orders_model.dart';
 
@@ -17,8 +18,7 @@ class AllOrdersPage extends StatefulWidget {
   _AllOrdersPageState createState() => _AllOrdersPageState();
 }
 
-class _AllOrdersPageState extends State<AllOrdersPage>
-    with SingleTickerProviderStateMixin {
+class _AllOrdersPageState extends State<AllOrdersPage> with SingleTickerProviderStateMixin {
   final TextEditingController _searchController = TextEditingController();
   final TextEditingController _pageController = TextEditingController();
   bool areOrdersFetched = false;
@@ -36,20 +36,25 @@ class _AllOrdersPageState extends State<AllOrdersPage>
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final allOrdersProvider =
-          Provider.of<AllOrdersProvider>(context, listen: false);
+      final allOrdersProvider = Provider.of<AllOrdersProvider>(context, listen: false);
       allOrdersProvider.fetchAllOrders(page: allOrdersProvider.currentPage);
+      context.read<MarketplaceProvider>().fetchMarketplaces();
+      fetchStatuses();
     });
-
-    context.read<MarketplaceProvider>().fetchMarketplaces();
-
-    fetchStatuses();
   }
 
   void fetchStatuses() async {
-    final allOrdersProvider =
-        Provider.of<AllOrdersProvider>(context, listen: false);
-    statuses = await allOrdersProvider.getTrackingStatuses();
+    final allOrdersProvider = Provider.of<AllOrdersProvider>(context, listen: false);
+    List<Map<String, String>> fetchedStatuses = await allOrdersProvider.getTrackingStatuses();
+    fetchedStatuses.insert(0, {'All': 'all'});
+
+    log('fetchedStatuses: $fetchedStatuses');
+
+    setState(() {
+      statuses = fetchedStatuses;
+      // Ensure a default value is set only after statuses are loaded
+      // _selectedStatus = fetchedStatuses.isNotEmpty ? fetchedStatuses.first.keys.first : 'all';
+    });
   }
 
   @override
@@ -67,21 +72,17 @@ class _AllOrdersPageState extends State<AllOrdersPage>
   }
 
   // Helper method to get or create ValueNotifier for tracking status
-  ValueNotifier<String?> _getTrackingNotifier(
-      String awbNumber, bool isDelhivery) {
+  ValueNotifier<String?> _getTrackingNotifier(String awbNumber, bool isDelhivery) {
     if (isDelhivery) {
-      return delhiveryTrackingStatuses.putIfAbsent(
-          awbNumber, () => ValueNotifier<String?>(null));
+      return delhiveryTrackingStatuses.putIfAbsent(awbNumber, () => ValueNotifier<String?>(null));
     } else {
-      return shiprocketTrackingStatuses.putIfAbsent(
-          awbNumber, () => ValueNotifier<String?>(null));
+      return shiprocketTrackingStatuses.putIfAbsent(awbNumber, () => ValueNotifier<String?>(null));
     }
   }
 
   // Method to fetch and update tracking status
   void _updateTrackingStatus(String awbNumber, bool isDelhivery) async {
-    final allOrdersProvider =
-        Provider.of<AllOrdersProvider>(context, listen: false);
+    final allOrdersProvider = Provider.of<AllOrdersProvider>(context, listen: false);
     final notifier = _getTrackingNotifier(awbNumber, isDelhivery);
 
     try {
@@ -96,21 +97,21 @@ class _AllOrdersPageState extends State<AllOrdersPage>
 
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider(
-      create: (_) => AllOrdersProvider(),
-      child: Scaffold(
-        backgroundColor: Colors.white,
-        body: Padding(
-          padding: const EdgeInsets.only(top: 3.0),
-          child: _buildOrderList(),
-        ),
-      ),
+    return Consumer<AllOrdersProvider>(
+      builder: (context, pro, child) {
+        return Scaffold(
+          backgroundColor: Colors.white,
+          body: Padding(
+            padding: const EdgeInsets.only(top: 3.0),
+            child: _buildOrderList(),
+          ),
+        );
+      }
     );
   }
 
   void _refreshBookedOrders() {
-    final allOrdersProvider =
-        Provider.of<AllOrdersProvider>(context, listen: false);
+    final allOrdersProvider = Provider.of<AllOrdersProvider>(context, listen: false);
     allOrdersProvider.fetchAllOrders(page: allOrdersProvider.currentPage);
     setState(() {
       selectedCourier = 'All';
@@ -161,8 +162,7 @@ class _AllOrdersPageState extends State<AllOrdersPage>
                   }
                 },
                 onSubmitted: (text) {
-                  Provider.of<AllOrdersProvider>(context, listen: false)
-                      .searchOrders(text);
+                  Provider.of<AllOrdersProvider>(context, listen: false).searchOrders(text);
                 },
               ),
             ),
@@ -175,10 +175,8 @@ class _AllOrdersPageState extends State<AllOrdersPage>
                 onPressed: () {
                   controller.clear();
 
-                  Provider.of<AllOrdersProvider>(context, listen: false)
-                      .clearSearchResults();
-                  Provider.of<AllOrdersProvider>(context, listen: false)
-                      .fetchAllOrders();
+                  Provider.of<AllOrdersProvider>(context, listen: false).clearSearchResults();
+                  Provider.of<AllOrdersProvider>(context, listen: false).fetchAllOrders();
                 },
               ),
           ],
@@ -270,8 +268,7 @@ class _AllOrdersPageState extends State<AllOrdersPage>
               if (page > 0 && page <= totalPages) {
                 allOrdersProvider.goToPage(page);
               } else {
-                _showSnackbar(context,
-                    'Please enter a valid page number between 1 and $totalPages.');
+                _showSnackbar(context, 'Please enter a valid page number between 1 and $totalPages.');
               }
             },
             onJumpToPage: () {
@@ -280,8 +277,7 @@ class _AllOrdersPageState extends State<AllOrdersPage>
               int totalPages = allOrdersProvider.totalPages;
 
               if (page == null || page < 1 || page > totalPages) {
-                _showSnackbar(context,
-                    'Please enter a valid page number between 1 and $totalPages.');
+                _showSnackbar(context, 'Please enter a valid page number between 1 and $totalPages.');
                 return;
               }
 
@@ -301,8 +297,7 @@ class _AllOrdersPageState extends State<AllOrdersPage>
   }
 
   Widget _buildConfirmButtons() {
-    final allOrdersProvider =
-        Provider.of<AllOrdersProvider>(context, listen: false);
+    final allOrdersProvider = Provider.of<AllOrdersProvider>(context, listen: false);
 
     return Align(
       alignment: Alignment.topRight,
@@ -317,9 +312,7 @@ class _AllOrdersPageState extends State<AllOrdersPage>
                   _selectedDate,
                   style: TextStyle(
                     fontSize: 11,
-                    color: _selectedDate == 'Select Date'
-                        ? Colors.grey
-                        : AppColors.primaryBlue,
+                    color: _selectedDate == 'Select Date' ? Colors.grey : AppColors.primaryBlue,
                   ),
                 ),
                 ElevatedButton(
@@ -345,8 +338,7 @@ class _AllOrdersPageState extends State<AllOrdersPage>
                     );
 
                     if (picked != null) {
-                      String formattedDate =
-                          DateFormat('yyyy-MM-dd').format(picked!);
+                      String formattedDate = DateFormat('yyyy-MM-dd').format(picked!);
                       setState(() {
                         _selectedDate = formattedDate;
                       });
@@ -356,16 +348,12 @@ class _AllOrdersPageState extends State<AllOrdersPage>
                           selectedCourier,
                           allOrdersProvider.currentPage,
                           picked,
-                          statuses.firstWhere(
-                              (map) => map.containsKey(selectedStatus),
-                              orElse: () => {})[selectedStatus]!,
+                          statuses.firstWhere((map) => map.containsKey(selectedStatus), orElse: () => {})[selectedStatus]!,
                         );
                       } else {
                         allOrdersProvider.fetchAllOrders(
                           date: picked,
-                          status: statuses.firstWhere(
-                              (map) => map.containsKey(selectedStatus),
-                              orElse: () => {})[selectedStatus]!,
+                          status: statuses.firstWhere((map) => map.containsKey(selectedStatus), orElse: () => {})[selectedStatus]!,
                         );
                       }
                     }
@@ -397,43 +385,35 @@ class _AllOrdersPageState extends State<AllOrdersPage>
                           allOrdersProvider.fetchAllOrders(
                               page: allOrdersProvider.currentPage,
                               date: picked,
-                              status: statuses.firstWhere(
-                                  (map) => map.containsKey(selectedStatus),
-                                  orElse: () => {})[selectedStatus]!);
+                              status: statuses.firstWhere((map) => map.containsKey(selectedStatus), orElse: () => {})[selectedStatus]!);
                         } else {
                           allOrdersProvider.fetchOrdersByStatus(
                             selectedCourier,
                             allOrdersProvider.currentPage,
                             picked,
-                            statuses.firstWhere(
-                                (map) => map.containsKey(selectedStatus),
-                                orElse: () => {})[value]!,
+                            statuses.firstWhere((map) => map.containsKey(selectedStatus), orElse: () => {})[value]!,
                           );
                         }
                       },
                       itemBuilder: (BuildContext context) {
-                        List<String> temp =
-                            statuses.map((item) => item.keys.first).toList();
+                        List<String> temp = statuses.map((item) => item.keys.first).toList();
                         return <PopupMenuEntry<String>>[
                           ...temp.map((status) => PopupMenuItem<String>(
                                 value: status.toString(),
                                 child: Text(status.toString()),
                               )),
-                          const PopupMenuItem<String>(
-                            value: 'All',
-                            child: Text('All'),
-                          ),
+                          // const PopupMenuItem<String>(
+                          //   value: 'All',
+                          //   child: Text('All'),
+                          // ),
                         ];
                       },
-                      child: ElevatedButton(
+                      child: IconButton(
                         onPressed: null,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.primaryBlue,
                         ),
-                        child: const Text(
-                          'Filter by Tracking Status',
-                          style: TextStyle(color: Colors.white),
-                        ),
+                        icon: const Icon(Icons.hourglass_empty, size: 30),
                       ),
                     );
                   },
@@ -443,53 +423,47 @@ class _AllOrdersPageState extends State<AllOrdersPage>
             const SizedBox(width: 16),
             Column(
               children: [
-                Text(selectedCourier),
+                Text(
+                  selectedCourier,
+                ),
                 Consumer<MarketplaceProvider>(
-                  builder: (context, provider, child) {
+                  builder: (context, marketPro, child) {
                     return PopupMenuButton<String>(
                       tooltip: 'Filter by Marketplace',
-                      initialValue: selectedCourier,
                       onSelected: (String value) {
-                        setState(() {
-                          selectedCourier = value;
-                        });
+                        Logger().e('ye hai value: $value');
                         if (value == 'All') {
+                          setState(() {
+                            selectedCourier = value;
+                          });
                           allOrdersProvider.fetchAllOrders(
-                              page: allOrdersProvider.currentPage,
-                              date: picked,
-                              status: statuses.firstWhere(
-                                  (map) => map.containsKey(selectedStatus),
-                                  orElse: () => {})[selectedStatus]!);
+                            date: picked,
+                          );
                         } else {
-                          allOrdersProvider.fetchOrdersByMarketplace(
-                              value,
-                              allOrdersProvider.currentPage,
-                              picked,
-                              statuses.firstWhere(
-                                  (map) => map.containsKey(selectedStatus),
-                                  orElse: () => {})[selectedStatus]!);
+                          Logger().e('ye hai else value: $value');
+                          setState(() {
+                            selectedCourier = value;
+                          });
+                          allOrdersProvider.fetchOrdersByMarketplace(selectedCourier, allOrdersProvider.currentPage, picked,
+                              statuses.firstWhere((map) => map.containsKey(selectedStatus), orElse: () => {})[selectedStatus] !);
                         }
+                        log('Selected: $value');
                       },
-                      itemBuilder: (BuildContext context) =>
-                          <PopupMenuEntry<String>>[
-                        ...provider.marketplaces
-                            .map((marketplace) => PopupMenuItem<String>(
-                                  value: marketplace.name,
-                                  child: Text(marketplace.name),
-                                )),
+                      itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
+                        ...marketPro.marketplaces.map((marketplace) => PopupMenuItem<String>(
+                              value: marketplace.name,
+                              child: Text(marketplace.name),
+                            )), // Fetched marketplaces
                         const PopupMenuItem<String>(
-                          value: 'All',
+                          value: 'All', // Hardcoded marketplace
                           child: Text('All'),
                         ),
                       ],
-                      child: ElevatedButton(
+                      child: const IconButton(
                         onPressed: null,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.primaryBlue,
-                        ),
-                        child: const Text(
-                          'Filter by Marketplace',
-                          style: TextStyle(color: Colors.white),
+                        icon: Icon(
+                          Icons.filter_alt_outlined,
+                          size: 30,
                         ),
                       ),
                     );
@@ -506,14 +480,12 @@ class _AllOrdersPageState extends State<AllOrdersPage>
                   ? null
                   : () async {
                       log("B2C");
-                      final provider = Provider.of<AllOrdersProvider>(context,
-                          listen: false);
+                      final provider = Provider.of<AllOrdersProvider>(context, listen: false);
 
                       List<String> selectedOrderIds = provider.ordersBooked
                           .asMap()
                           .entries
-                          .where(
-                              (entry) => provider.selectedProducts[entry.key])
+                          .where((entry) => provider.selectedProducts[entry.key])
                           .map((entry) => entry.value.orderId)
                           .toList();
 
@@ -528,16 +500,14 @@ class _AllOrdersPageState extends State<AllOrdersPage>
                       } else {
                         provider.setCancelStatus(true);
 
-                        String resultMessage = await provider.cancelOrders(
-                            context, selectedOrderIds);
+                        String resultMessage = await provider.cancelOrders(context, selectedOrderIds);
 
                         provider.setCancelStatus(false);
 
                         Color snackBarColor;
                         if (resultMessage.contains('success')) {
                           snackBarColor = AppColors.green;
-                        } else if (resultMessage.contains('error') ||
-                            resultMessage.contains('failed')) {
+                        } else if (resultMessage.contains('error') || resultMessage.contains('failed')) {
                           snackBarColor = AppColors.cardsred;
                         } else {
                           snackBarColor = AppColors.orange;
@@ -633,8 +603,7 @@ class _AllOrdersPageState extends State<AllOrdersPage>
       child: Center(
         child: Text(
           title,
-          style: const TextStyle(
-              fontWeight: FontWeight.bold, fontSize: 16, color: Colors.black87),
+          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.black87),
         ),
       ),
     );
@@ -676,10 +645,8 @@ class _AllOrdersPageState extends State<AllOrdersPage>
           ),
         ),
         buildCell(
-        order.orderStatusMap != null && order.orderStatusMap?.isNotEmpty == true
-                ? order.orderStatusMap!.last.status?.split('_')
-                .map((w) => '${w[0].toUpperCase()}${w.substring(1)}')
-                .join(' ')
+            order.orderStatusMap != null && order.orderStatusMap?.isNotEmpty == true
+                ? order.orderStatusMap!.last.status?.split('_').map((w) => '${w[0].toUpperCase()}${w.substring(1)}').join(' ')
                 : 'Unknown Status',
             flex: 1),
         if (order.awbNumber == '')
@@ -701,8 +668,7 @@ class _AllOrdersPageState extends State<AllOrdersPage>
                         _updateTrackingStatus(order.awbNumber, true);
 
                         return ValueListenableBuilder<String?>(
-                          valueListenable:
-                              _getTrackingNotifier(order.awbNumber, true),
+                          valueListenable: _getTrackingNotifier(order.awbNumber, true),
                           builder: (context, status, child) {
                             if (status == null) {
                               return const SizedBox(
@@ -743,8 +709,7 @@ class _AllOrdersPageState extends State<AllOrdersPage>
                         _updateTrackingStatus(order.awbNumber, false);
 
                         return ValueListenableBuilder<String?>(
-                          valueListenable:
-                              _getTrackingNotifier(order.awbNumber, false),
+                          valueListenable: _getTrackingNotifier(order.awbNumber, false),
                           builder: (context, status, child) {
                             if (status == null) {
                               return const SizedBox(

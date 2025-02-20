@@ -22,7 +22,7 @@ class DownloadOrders extends StatefulWidget {
 class _DownloadOrdersState extends State<DownloadOrders> {
   String? _selectedValue;
   String _selectedStatus = 'all';
-  final String _marketplace = '';
+  // final String _marketplace = '';
   DateTime? _startDate;
   DateTime _endDate = DateTime.now();
   bool _isDownloading = false;
@@ -50,10 +50,6 @@ class _DownloadOrdersState extends State<DownloadOrders> {
     }
     setState(() {});
   }
-
-  // Future<void> _generateReport() async {
-
-  // }
 
   bool get _canGenerate {
     if (_selectedValue == null) return false;
@@ -652,7 +648,7 @@ class _DownloadOrdersState extends State<DownloadOrders> {
 
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
-                                  content: Text(jsonBody!['message'] ?? ''),
+                                  content: Text(jsonBody!['message'] ?? jsonBody['error']),
                                   behavior: SnackBarBehavior.floating,
                                 ),
                               );

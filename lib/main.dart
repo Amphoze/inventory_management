@@ -40,10 +40,10 @@ import 'package:inventory_management/provider/picker_provider.dart';
 import 'package:inventory_management/provider/product_data_provider.dart';
 import 'package:inventory_management/provider/products-provider.dart';
 import 'package:inventory_management/provider/racked_provider.dart';
+import 'package:inventory_management/provider/return_entry_provider.dart';
 import 'package:inventory_management/provider/return_provoider.dart';
 import 'package:inventory_management/provider/show-details-order-provider.dart';
 import 'package:inventory_management/provider/support_provider.dart';
-import 'package:inventory_management/provider/warehouses_provider.dart';
 import 'package:inventory_management/stockship_version_control/version_controller.dart';
 import 'package:inventory_management/warehouses_page.dart';
 import 'package:provider/provider.dart';
@@ -93,12 +93,13 @@ void main() async {
       ChangeNotifierProvider(create: (context) => InvoiceProvider()),
       ChangeNotifierProvider(create: (context) => AccountsProvider()),
       ChangeNotifierProvider(create: (context) => BaApproveProvider()),
-      ChangeNotifierProvider(create: (context) => WarehousesProvider()),
+      // ChangeNotifierProvider(create: (context) => WarehousesProvider()),
       ChangeNotifierProvider(create: (context) => OuterboxProvider()),
       ChangeNotifierProvider(create: (context) => InnerPackagingProvider()),
       ChangeNotifierProvider(create: (context) => VersionController()),
       ChangeNotifierProvider(create: (context) => SupportProvider()),
       ChangeNotifierProvider(create: (context) => ChatProvider()),
+      ChangeNotifierProvider(create: (context) => ReturnEntryProvider()),
     ],
     child: const MyApp(),
   ));
@@ -128,6 +129,7 @@ class MyApp extends StatelessWidget {
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(8.0),
             ),
+            textStyle: const TextStyle(fontFamily: 'Poppins')
           ),
         ),
       ),
@@ -214,11 +216,11 @@ class _HomeState extends State<Home> {
               return const CircularProgressIndicator();
             } else if (snap.hasData) {
               if (authprovider.isAuthenticated) {
-                // if (warehouseId != null) {
+                if (warehouseId != null) {
                   return DashboardPage(warehouseId: warehouseId ?? '');
-                // } else {
-                //   return const WarehousesPage();
-                // }
+                } else {
+                  return const WarehousesPage();
+                }
               } else {
                 return const LoginPage();
                 // return const UnderMaintainence();

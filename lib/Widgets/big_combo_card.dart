@@ -19,8 +19,7 @@ class BigComboCard extends StatelessWidget {
       return const SizedBox.shrink();
     }
 
-    return SizedBox(
-      width: double.infinity,
+    return Expanded(
       child: Card(
         elevation: 2,
         color: Colors.white,

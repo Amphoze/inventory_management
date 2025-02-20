@@ -311,6 +311,16 @@ class _ConfirmOutboundByCSVState extends State<ConfirmOutboundByCSV> {
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
+            const Row(
+              mainAxisAlignment: MainAxisAlignment.start,
+              children: [
+                Text(
+                  'Confirm Outbound Orders',
+                  style: TextStyle(fontSize: 25, fontWeight: FontWeight.bold),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
             Row(
               children: [
                 Expanded(
@@ -325,7 +335,7 @@ class _ConfirmOutboundByCSVState extends State<ConfirmOutboundByCSV> {
                 ),
                 const SizedBox(width: 16),
                 ElevatedButton(
-                  onPressed: _isPickingFile || _isProcessingFile ? null : () => AuthProvider().downloadTemplate(context, 'create'),
+                  onPressed: _isPickingFile || _isProcessingFile ? null : () => AuthProvider().downloadTemplate(context, 'outboundCsv'),
                   child: const Text('Download Template'),
                 ),
                 const SizedBox(width: 16),

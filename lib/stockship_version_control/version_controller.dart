@@ -10,11 +10,18 @@ import 'model/development_notes_model.dart';
 class VersionController extends ChangeNotifier {
   FirebaseFirestore firebaseFirestore = FirebaseFirestore.instance;
 
-  /////////////////////////////////////
-  // Important thingy Don't Mess with it
-  int currentVersion = 5;
+  ////////////////////////////////////////////////////////////
+  // 1. Change this currentVersion first.                  ///
+  // 2. flutter build web --release                        ///
+  // 3. firebase deploy                                    ///
+  // 4. Change version in firebase to this currentVersion. ///
+  ////////////////////////////////////////////////////////////
+  String currentVersion = '6.4.2';
+  String? latestVersion = '';
 
-  /////////////////////////////////////
+  void setLatest(String value) {
+    latestVersion = value;
+  }
 
   Future<void> addDeveloperReleaseTime({
     required String datetime,

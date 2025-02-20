@@ -21,28 +21,24 @@ class AuthProvider with ChangeNotifier {
   bool _isRackerAssigned = false;
   bool _isManifestAssigned = false;
   bool _isOutboundAssigned = false;
+  bool _isSupportAssigned = false;
+  bool _isCreateOrderAssigned = false;
+  bool _isGGVAssigned = false;
 
   bool get isSuperAdminAssigned => _isSuperAdminAssigned;
-
   bool get isAdminAssigned => _isAdminAssigned;
-
   bool get isConfirmerAssigned => _isConfirmerAssigned;
-
   bool get isBookerAssigned => _isBookerAssigned;
-
   bool get isAccountsAssigned => _isAccountsAssigned;
-
   bool get isPickerAssigned => _isPickerAssigned;
-
   bool get isPackerAssigned => _isPackerAssigned;
-
   bool get isCheckerAssigned => _isCheckerAssigned;
-
   bool get isRackerAssigned => _isRackerAssigned;
-
   bool get isManifestAssigned => _isManifestAssigned;
-
   bool get isOutboundAssigned => _isOutboundAssigned;
+  bool get isSupportAssigned => _isSupportAssigned;
+  bool get isCreateOrderAssigned => _isCreateOrderAssigned;
+  bool get isGGVAssigned => _isGGVAssigned;
 
   String? assignedRole;
 
@@ -215,6 +211,18 @@ class AuthProvider with ChangeNotifier {
                 _isOutboundAssigned = true;
                 log('isOutbound: $_isOutboundAssigned');
                 break;
+              case 'support':
+                _isSupportAssigned = true;
+                log('isSupport: $_isSupportAssigned');
+                break;
+              case 'createOrder':
+                _isCreateOrderAssigned = true;
+                log('isCreateOrder: $_isCreateOrderAssigned');
+                break;
+              case 'ggv':
+                _isGGVAssigned = true;
+                log('isGGV: $_isGGVAssigned');
+                break;
             }
           }
         }
@@ -225,6 +233,8 @@ class AuthProvider with ChangeNotifier {
         //     break; // Stop at the first assigned role found
         //   }
         // }
+
+        Logger().d('userName: ${responseData['userName']}');
 
         final prefs = await SharedPreferences.getInstance();
         await prefs.setBool('_isSuperAdminAssigned', _isSuperAdminAssigned);
@@ -239,6 +249,7 @@ class AuthProvider with ChangeNotifier {
         await prefs.setBool('_isManifestAssigned', _isManifestAssigned);
         await prefs.setBool('_isOutboundAssigned', _isOutboundAssigned);
         await prefs.setString('userPrimaryRole', userPrimaryRole ?? 'none');
+        await prefs.setString('userName', responseData['userName'] ?? '');
 
         // log('Assigned Role: $assignedRole'); // Debugging line
 
@@ -572,9 +583,11 @@ class AuthProvider with ChangeNotifier {
     }
   }
 
-  Future<Map<String, dynamic>> getAllWarehouses() async {
+  Future<Map<String, dynamic>> getAllWarehouses({int page = 1}) async {
     String baseUrl = await Constants.getBaseUrl();
-    final url = Uri.parse('$baseUrl/warehouse');
+    final url = Uri.parse('$baseUrl/warehouse?page=$page');
+
+    // Logger().e('getAllWarehouses url: $url');
 
     try {
       final token = await getToken();
@@ -590,11 +603,12 @@ class AuthProvider with ChangeNotifier {
         },
       );
 
-      print('Get All Warehouses Response: ${response.statusCode}');
-      print('Get All Warehouses Response Body: ${response.body}');
+      // print('Get All Warehouses Response: ${response.statusCode}');
+      // print('Get All Warehouses Response Body: ${response.body}');
 
       if (response.statusCode == 200) {
-        final data = json.decode(response.body)['data']['warehouses'] as List<dynamic>;
+        final res = json.decode(response.body);
+        final data = res['data']['warehouses'] as List<dynamic>;
 
         // Extract the required fields for each warehouse
         final warehouses = data.map((warehouse) {
@@ -611,21 +625,22 @@ class AuthProvider with ChangeNotifier {
         }).toList();
 
         // Print the data for debugging
-        for (var warehouse in warehouses) {
-          print('--- Warehouse ---');
-          print('Name: ${warehouse['name']}');
-          print('ID: ${warehouse['_id']}');
-          print('Location: ${warehouse['location']}');
-          print('Warehouse Pincode: ${warehouse['warehousePincode']}');
-          print('Pincode List: ${warehouse['pincode']}');
-          print('Created At: ${warehouse['createdAt']}');
-          print('Updated on: ${warehouse['updatedAt']}');
-          print('------------------');
-        }
+        // for (var warehouse in warehouses) {
+        //   print('--- Warehouse ---');
+        //   print('Name: ${warehouse['name']}');
+        //   print('ID: ${warehouse['_id']}');
+        //   print('Location: ${warehouse['location']}');
+        //   print('Warehouse Pincode: ${warehouse['warehousePincode']}');
+        //   print('Pincode List: ${warehouse['pincode']}');
+        //   print('Created At: ${warehouse['createdAt']}');
+        //   print('Updated on: ${warehouse['updatedAt']}');
+        //   print('------------------');
+        // }
 
         return {
           'success': true,
-          'data': {'warehouses': warehouses}
+          'data': {'warehouses': warehouses},
+          'totalPages': res['data']['totalPages'],
         };
       } else {
         return {'success': false, 'message': 'Failed to load warehouses. Status code: ${response.statusCode}'};

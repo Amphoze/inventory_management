@@ -53,6 +53,7 @@ class OrderInfo extends StatelessWidget {
                       buildLabelValueRow('Agent', order.agent ?? ''),
                       buildLabelValueRow('Notes', order.notes ?? ''),
                       buildLabelValueRow('Marketplace', order.marketplace?.name ?? ''),
+                      buildLabelValueRow('Source', order.source ?? ''),
                       buildLabelValueRow('Filter', order.filter ?? ''),
                       buildLabelValueRow(
                         'Expected Delivery Date',

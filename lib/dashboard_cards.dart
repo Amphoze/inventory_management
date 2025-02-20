@@ -49,7 +49,9 @@ class _DashboardCardsState extends State<DashboardCards> {
     super.initState();
 
     log('date: ${widget.date}');
-    fetch();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      fetch();
+    });
 
     // Provider.of<DashboardProvider>(context, listen: false)
     //     .fetchDoneData(currentDate);

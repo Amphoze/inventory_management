@@ -123,6 +123,11 @@ class _LabelUploadState extends State<LabelUpload> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            const Text(
+              'Upload Labels',
+              style: TextStyle(fontSize: 25, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 8),
             Row(
               children: [
                 ExcelFileUploader(

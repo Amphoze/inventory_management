@@ -16,8 +16,7 @@ class ProductDetailsCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      width: double.infinity,
+    return Expanded(
       child: Card(
         color: cardColor,
         elevation: 2,
@@ -68,7 +67,7 @@ class ProductDetailsCard extends StatelessWidget {
   Widget _buildProductImage() {
     return ClipRRect(
       borderRadius: BorderRadius.circular(8),
-      child: item.product?.shopifyImage != null && item.product!.shopifyImage!.isNotEmpty
+      child: item.product?.shopifyImage != null && (item.product?.shopifyImage?.isNotEmpty ?? false)
           ? Image.network(
               item.product!.shopifyImage!,
               width: 80,

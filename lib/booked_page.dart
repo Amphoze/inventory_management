@@ -37,9 +37,8 @@ class _BookedPageState extends State<BookedPage> with SingleTickerProviderStateM
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final bookProvider = Provider.of<BookProvider>(context, listen: false);
       bookProvider.fetchBookedOrders(bookProvider.currentPageBooked);
+      context.read<MarketplaceProvider>().fetchMarketplaces();
     });
-
-    context.read<MarketplaceProvider>().fetchMarketplaces();
   }
 
   @override
@@ -379,9 +378,11 @@ class _BookedPageState extends State<BookedPage> with SingleTickerProviderStateM
                           selectedCourier = value;
                         });
                         if (value == 'All') {
-                          bookProvider.fetchBookedOrders(bookProvider.currentPageBooked, date: _selectedDate == 'Select Date' ? null : DateTime.parse(_selectedDate));
+                          bookProvider.fetchBookedOrders(bookProvider.currentPageBooked,
+                              date: _selectedDate == 'Select Date' ? null : DateTime.parse(_selectedDate));
                         } else {
-                          bookProvider.fetchBookedOrdersByMarketplace(value, bookProvider.currentPageBooked, date: _selectedDate == 'Select Date' ? null : DateTime.parse(_selectedDate));
+                          bookProvider.fetchBookedOrdersByMarketplace(value, bookProvider.currentPageBooked,
+                              date: _selectedDate == 'Select Date' ? null : DateTime.parse(_selectedDate));
                         }
                         log('Selected: $value');
                       },
@@ -421,7 +422,8 @@ class _BookedPageState extends State<BookedPage> with SingleTickerProviderStateM
                   : () async {
                       log("B2C");
                       final provider = Provider.of<BookProvider>(context, listen: false);
-                      List<String> selectedOrderIds = provider.ordersBooked.where((order) => order.isSelected).map((order) => order.orderId).toList();
+                      List<String> selectedOrderIds =
+                          provider.ordersBooked.where((order) => order.isSelected).map((order) => order.orderId).toList();
 
                       log("Selected Order IDs: $selectedOrderIds");
 
@@ -618,7 +620,8 @@ class _BookedPageState extends State<BookedPage> with SingleTickerProviderStateM
                       final provider = Provider.of<BookProvider>(context, listen: false);
 
                       // Collect selected order IDs
-                      List<String> selectedOrderIds = provider.ordersBooked.where((order) => order.isSelected).map((order) => order.orderId).toList();
+                      List<String> selectedOrderIds =
+                          provider.ordersBooked.where((order) => order.isSelected).map((order) => order.orderId).toList();
 
                       log("Selected Order IDs: $selectedOrderIds");
                       if (selectedOrderIds.isEmpty) {
@@ -878,7 +881,7 @@ class _BookedPageState extends State<BookedPage> with SingleTickerProviderStateM
               child: const Text('Cancel'),
             ),
             TextButton(
-              onPressed: () async{
+              onPressed: () async {
                 if (selectedMarketplace != null) {
                   log('Selected Marketplace: $selectedMarketplace');
 

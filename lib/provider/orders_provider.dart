@@ -954,6 +954,55 @@ class OrdersProvider with ChangeNotifier {
     }
   }
 
+  void showSnackBar(BuildContext context, String message, Color color) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        duration: const Duration(seconds: 3),
+        behavior: SnackBarBehavior.floating,
+        backgroundColor: color,
+      ),
+    );
+  }
+
+  Future<Map<String,dynamic>> splitOrder(String orderId, List<String> productSkus, {String weightLimit = ""}) async {
+    final token = await _getToken();
+    if(token == null || token.isEmpty){
+      return {'success':false};
+    }
+
+    if(productSkus.isEmpty) {
+      return {'success':false};
+    }
+
+    try {
+      var response = await http.post(
+        Uri.parse('${await Constants.getBaseUrl()}/orders/splitOrder?order_id=$orderId'),
+        body: jsonEncode({
+          'product_sku': productSkus,
+          'weightLimit': weightLimit,
+        }),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+      );
+
+      final responseData = json.decode(response.body);
+
+      log('split code: ${response.statusCode}');
+      log('split order body: $responseData');
+
+      if (response.statusCode == 200) {
+        return {'success':true, 'message': responseData['orders']}; // Success
+      } else {
+        return {'success':false, 'message': responseData['message']}; // Success
+      }
+    } catch (e) {
+      return {'success':false};
+    }
+  }
+
 // void _showResultDialog(BuildContext context, bool success) {
 //   showDialog(
 //     context: context,
