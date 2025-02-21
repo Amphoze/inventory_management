@@ -21,6 +21,7 @@ class OrderComboCard extends StatefulWidget {
   final bool toShowAll;
   final bool isBookedPage;
   final bool isAccountSection;
+  final bool isPacked;
 
   const OrderComboCard({
     super.key,
@@ -30,6 +31,7 @@ class OrderComboCard extends StatefulWidget {
     this.checkboxWidget,
     required this.toShowOrderDetails,
     this.isBookPage = false,
+    this.isPacked = false,
     this.isBookedPage = false,
     this.isAccountSection = false,
   });
@@ -580,7 +582,7 @@ class _OrderComboCardState extends State<OrderComboCard> {
                             onPressed: () {
                               final pro = context.read<BookProvider>();
                               setState(() {
-                                bookRemark.text = widget.order.messages!['bookerMessage'].toString() ?? '';
+                                bookRemark.text = widget.order.messages?['bookerMessage']?.toString() ?? '';
                               });
                               showDialog(
                                 context: context,
@@ -687,9 +689,7 @@ class _OrderComboCardState extends State<OrderComboCard> {
                                 },
                               );
                             },
-                            child: widget.order.messages != null &&
-                                    widget.order.messages!['bookerMessage'] != null &&
-                                    widget.order.messages!['bookerMessage'].toString().isNotEmpty
+                            child: (widget.order.messages?['bookerMessage']?.toString().isNotEmpty ?? false)
                                 ? const Text('Edit Remark')
                                 : const Text('Write Remark'),
                           )
@@ -806,30 +806,21 @@ class _OrderComboCardState extends State<OrderComboCard> {
                                 },
                               );
                             },
-                            child: widget.order.messages != null &&
-                                    widget.order.messages!['Message'] != null &&
-                                    widget.order.messages!['accountMessage'].toString().isNotEmpty
+                            child: (widget.order.messages?['accountMessage']?.toString().isNotEmpty ?? false)
                                 ? const Text('Edit Remark')
                                 : const Text('Write Remark'),
                           )
                         : const SizedBox(),
                     ///////////////////////////////////////////////////////////////
-                    if (widget.order.messages != null &&
-                        widget.order.messages!['confirmerMessage'] != null &&
-                        widget.order.messages!['confirmerMessage'].toString().isNotEmpty) ...[
+                    if (widget.order.messages?['confirmerMessage']?.toString().isNotEmpty ?? false) ...[
                       Utils().showMessage(context, 'Confirmer Remark', widget.order.messages!['confirmerMessage'].toString())
                     ],
                     ///////////////////////////////////////////////////////////
-                    if (widget.order.messages != null &&
-                        widget.order.messages!['accountMessage'] != null &&
-                        widget.order.messages!['accountMessage'].toString().isNotEmpty) ...[
+                    if (widget.order.messages?['accountMessage']?.toString().isNotEmpty ?? false) ...[
                       Utils().showMessage(context, 'Account Remark', widget.order.messages!['accountMessage'].toString()),
                     ],
                     /////////////////////////////////////////////////////////
-                    if (widget.order.messages != null &&
-                        widget.order.messages!['bookerMessage'] != null &&
-                        widget.order.messages!['bookerMessage'].toString().isNotEmpty &&
-                        widget.isBookedPage) ...[
+                    if ((widget.order.messages?['bookerMessage']?.toString().isNotEmpty ?? false) && widget.isBookedPage && widget.isPacked) ...[
                       Utils().showMessage(context, 'Booker Remark', widget.order.messages!['bookerMessage'].toString())
                     ],
                   ],

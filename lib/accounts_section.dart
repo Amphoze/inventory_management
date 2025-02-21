@@ -109,7 +109,7 @@ class _AccountsSectionPageState extends State<AccountsSectionPage> with SingleTi
             height: 34,
             decoration: BoxDecoration(
               border: Border.all(
-                color: AppColors.green,
+                color: AppColors.primaryBlue,
                 width: 1.5,
               ),
               borderRadius: BorderRadius.circular(8),

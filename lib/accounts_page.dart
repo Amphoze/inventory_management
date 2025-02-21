@@ -105,53 +105,46 @@ class _AccountsPageState extends State<AccountsPage> {
                       ),
                     ),
 
-                    SizedBox(
+                    Container(
+                      height: 35,
                       width: 200,
-                      child: Container(
-                        height: 40,
-                        decoration: BoxDecoration(
-                          border: Border.all(
-                            color: const Color.fromARGB(183, 6, 90, 216),
-                          ),
-                          borderRadius: BorderRadius.circular(8),
+                      decoration: BoxDecoration(
+                        border: Border.all(
+                          color: const Color.fromARGB(183, 6, 90, 216),
                         ),
-                        child: TextField(
-                          controller: _searchController,
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(color: Colors.black),
-                          decoration: const InputDecoration(
-                            hintText: 'Search by Order ID',
-                            hintStyle: TextStyle(color: Colors.black),
-                            border: InputBorder.none,
-                            contentPadding: EdgeInsets.symmetric(vertical: 8.0),
-                            prefixIcon: Icon(
-                              Icons.search,
-                              color: Color.fromARGB(183, 6, 90, 216),
-                            ),
-                          ),
-                          onChanged: (query) {
-                            setState(() {});
-                            if (query.isEmpty) {
-                              setState(() {
-                                selectedCourier = 'All';
-                                picked = null;
-                                selectedPaymentMode = '';
-                              });
-                              accountsProvider.fetchOrdersWithStatus2();
-                            }
-                          },
-                          onTap: () {
-                            setState(() {});
-                          },
-                          onSubmitted: (query) {
-                            if (query.isNotEmpty) {
-                              accountsProvider.searchOrders(query, selectedSearchType);
-                            }
-                          },
-                          onEditingComplete: () {
-                            FocusScope.of(context).unfocus();
-                          },
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: TextField(
+                        controller: _searchController,
+                        style: const TextStyle(color: Colors.black),
+                        decoration: const InputDecoration(
+                          hintText: 'Search by Order ID',
+                          hintStyle: TextStyle(color: Colors.black),
+                          border: InputBorder.none,
+                          contentPadding: EdgeInsets.symmetric(vertical: 8.0),
                         ),
+                        onChanged: (query) {
+                          setState(() {});
+                          if (query.isEmpty) {
+                            setState(() {
+                              selectedCourier = 'All';
+                              picked = null;
+                              selectedPaymentMode = '';
+                            });
+                            accountsProvider.fetchOrdersWithStatus2();
+                          }
+                        },
+                        onTap: () {
+                          setState(() {});
+                        },
+                        onSubmitted: (query) {
+                          if (query.isNotEmpty) {
+                            accountsProvider.searchOrders(query, selectedSearchType);
+                          }
+                        },
+                        onEditingComplete: () {
+                          FocusScope.of(context).unfocus();
+                        },
                       ),
                     ),
                     const SizedBox(width: 8),
@@ -272,8 +265,6 @@ class _AccountsPageState extends State<AccountsPage> {
                           ],
                         ),
                         const SizedBox(width: 8),
-
-                        // Refresh Button
                         Column(
                           children: [
                             Text(

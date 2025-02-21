@@ -19,24 +19,22 @@ class BigComboCard extends StatelessWidget {
       return const SizedBox.shrink();
     }
 
-    return Expanded(
-      child: Card(
-        elevation: 2,
-        color: Colors.white,
-        margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
-        child: InkWell(
-          borderRadius: BorderRadius.circular(4),
-          onTap: () => _showDetailsDialog(context),
-          child: Padding(
-            padding: const EdgeInsets.all(8),
-            child: Row(
-              children: [
-                _buildComboIcon(),
-                const SizedBox(width: 8),
-                Expanded(child: _buildComboDetails()),
-                _buildAmountChip(),
-              ],
-            ),
+    return Card(
+      elevation: 2,
+      color: Colors.white,
+      margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(4),
+        onTap: () => _showDetailsDialog(context),
+        child: Padding(
+          padding: const EdgeInsets.all(8),
+          child: Row(
+            children: [
+              _buildComboIcon(),
+              const SizedBox(width: 8),
+              Expanded(child: _buildComboDetails()),
+              _buildAmountChip(),
+            ],
           ),
         ),
       ),

@@ -16,15 +16,13 @@ class ProductDetailsCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Expanded(
-      child: Card(
-        color: cardColor,
-        elevation: 2,
-        margin: const EdgeInsets.symmetric(vertical: 4.0, horizontal: 8.0),
-        child: ExpansionTile(
-          title: _buildHeader(),
-          children: [_buildExpandedDetails()],
-        ),
+    return Card(
+      color: cardColor,
+      elevation: 2,
+      margin: const EdgeInsets.symmetric(vertical: 4.0, horizontal: 8.0),
+      child: ExpansionTile(
+        title: _buildHeader(),
+        children: [_buildExpandedDetails()],
       ),
     );
   }

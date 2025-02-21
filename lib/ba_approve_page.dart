@@ -29,6 +29,7 @@ class _BaApprovePageState extends State<BaApprovePage> {
   final TextEditingController _searchController = TextEditingController();
   String _selectedDate = 'Select Date';
   final remarkController = TextEditingController();
+  DateTime? picked;
 
   @override
   void initState() {
@@ -81,48 +82,41 @@ class _BaApprovePageState extends State<BaApprovePage> {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
-                    SizedBox(
+                    Container(
+                      height: 35,
                       width: 200,
-                      child: Container(
-                        height: 40,
-                        decoration: BoxDecoration(
-                          border: Border.all(
-                            color: const Color.fromARGB(183, 6, 90, 216),
-                          ),
-                          borderRadius: BorderRadius.circular(8),
+                      decoration: BoxDecoration(
+                        border: Border.all(
+                          color: const Color.fromARGB(183, 6, 90, 216),
                         ),
-                        child: TextField(
-                          controller: _searchController,
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(color: Colors.black),
-                          decoration: const InputDecoration(
-                            hintText: 'Search by Order ID',
-                            hintStyle: TextStyle(color: Colors.black),
-                            border: InputBorder.none,
-                            contentPadding: EdgeInsets.symmetric(vertical: 8.0),
-                            prefixIcon: Icon(
-                              Icons.search,
-                              color: Color.fromARGB(183, 6, 90, 216),
-                            ),
-                          ),
-                          onChanged: (query) {
-                            setState(() {});
-                            if (query.isEmpty) {
-                              baApproveProvider.fetchOrdersWithStatus2();
-                            }
-                          },
-                          onTap: () {
-                            setState(() {});
-                          },
-                          onSubmitted: (query) {
-                            if (query.isNotEmpty) {
-                              baApproveProvider.searchOrders(query);
-                            }
-                          },
-                          onEditingComplete: () {
-                            FocusScope.of(context).unfocus();
-                          },
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: TextField(
+                        controller: _searchController,
+                        style: const TextStyle(color: Colors.black),
+                        decoration: const InputDecoration(
+                          hintText: 'Search by Order ID',
+                          hintStyle: TextStyle(color: Colors.black),
+                          border: InputBorder.none,
+                          contentPadding: EdgeInsets.symmetric(vertical: 12, horizontal: 8),
                         ),
+                        onChanged: (query) {
+                          setState(() {});
+                          if (query.isEmpty) {
+                            baApproveProvider.fetchOrdersWithStatus2();
+                          }
+                        },
+                        onTap: () {
+                          setState(() {});
+                        },
+                        onSubmitted: (query) {
+                          if (query.isNotEmpty) {
+                            baApproveProvider.searchOrders(query);
+                          }
+                        },
+                        onEditingComplete: () {
+                          FocusScope.of(context).unfocus();
+                        },
                       ),
                     ),
                     const SizedBox(width: 8),
@@ -154,7 +148,7 @@ class _BaApprovePageState extends State<BaApprovePage> {
                               message: 'Filter by Date',
                               child: IconButton(
                                 onPressed: () async {
-                                  final DateTime? picked = await showDatePicker(
+                                  picked = await showDatePicker(
                                     context: context,
                                     initialDate: DateTime.now(),
                                     firstDate: DateTime(2020),
@@ -175,23 +169,12 @@ class _BaApprovePageState extends State<BaApprovePage> {
                                   );
 
                                   if (picked != null) {
-                                    String formattedDate = DateFormat('dd-MM-yyyy').format(picked);
+                                    String formattedDate = DateFormat('dd-MM-yyyy').format(picked!);
                                     setState(() {
                                       _selectedDate = formattedDate;
                                     });
 
-                                    if (selectedCourier != 'All') {
-                                      baApproveProvider.fetchOrdersByMarketplace(
-                                        selectedCourier,
-                                        2,
-                                        baApproveProvider.currentPage,
-                                        date: picked,
-                                      );
-                                    } else {
-                                      baApproveProvider.fetchOrdersWithStatus2(
-                                        date: picked,
-                                      );
-                                    }
+                                    baApproveProvider.fetchOrdersWithStatus2(date: picked, market: selectedCourier);
                                   }
                                 },
                                 icon: const Icon(
@@ -220,14 +203,7 @@ class _BaApprovePageState extends State<BaApprovePage> {
                                       setState(() {
                                         selectedCourier = value;
                                       });
-                                      if (value == 'All') {
-                                        baApproveProvider.fetchOrdersWithStatus2(
-                                            date: _selectedDate == 'Select Date' ? null : DateTime.parse(_selectedDate));
-                                      } else {
-                                        selectedCourier = value;
-                                        baApproveProvider.fetchOrdersByMarketplace(value, 2, baApproveProvider.currentPage,
-                                            date: _selectedDate == 'Select Date' ? null : DateTime.parse(_selectedDate));
-                                      }
+                                      baApproveProvider.fetchOrdersWithStatus2(date: picked, market: selectedCourier);
                                       log('Selected: $value');
                                     },
                                     itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
@@ -544,13 +520,8 @@ class _BaApprovePageState extends State<BaApprovePage> {
                                             // Ready
                                             if (searched.isNotEmpty) {
                                               baApproveProvider.searchOrders(searched);
-                                            } else if (selectedCourier != 'All') {
-                                              baApproveProvider.fetchOrdersByMarketplace(selectedCourier, 2, baApproveProvider.currentPage);
-                                            } else if (searched.isNotEmpty && selectedCourier != 'All') {
-                                              baApproveProvider.fetchOrdersByMarketplace(selectedCourier, 2, baApproveProvider.currentPage);
-                                              baApproveProvider.searchOrders(searched);
                                             } else {
-                                              baApproveProvider.fetchOrdersWithStatus2();
+                                              baApproveProvider.fetchOrdersWithStatus2(date: picked, market: selectedCourier);
                                             }
                                           }
                                         },
@@ -1088,9 +1059,7 @@ class _BaApprovePageState extends State<BaApprovePage> {
                                         Column(
                                           crossAxisAlignment: CrossAxisAlignment.end,
                                           children: [
-                                            if (order.messages != null &&
-                                                order.messages!['confirmerMessage'] != null &&
-                                                order.messages!['confirmerMessage'].toString().isNotEmpty)
+                                            if (order.messages?['confirmerMessage']?.toString().isNotEmpty ?? false)
                                               Utils()
                                                   .showMessage(context, 'Confirmer Remark', order.messages!['confirmerMessage'].toString()),
                                           ],

@@ -158,9 +158,9 @@ class CrmUpdatedDateWidget extends StatelessWidget {
         child: Text(
           version,
           style: TextStyle(
-            fontSize: 13,
-            fontWeight: FontWeight.w500,
-            color: label == 'Latest' ? Colors.blue.shade700 : Colors.black12,
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            color: label == 'Latest' ? Colors.blue.shade700 : Colors.black54,
           ),
         ),
       ),

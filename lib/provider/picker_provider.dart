@@ -221,9 +221,11 @@ class PickerProvider with ChangeNotifier {
     notifyListeners();
 
     final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString('authToken') ?? ''; // Fetch the token
+    final token = prefs.getString('authToken') ?? '';
 
-    final url = '${await Constants.getBaseUrl()}/orders?orderStatus=4&order_id=$query';
+    String encodedOrderId = Uri.encodeComponent(query);
+
+    final url = '${await Constants.getBaseUrl()}/orders?orderStatus=4&order_id=$encodedOrderId';
 
     print('Searching orders with term: $query');
 

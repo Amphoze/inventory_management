@@ -114,6 +114,27 @@ class _ReturnEntryState extends State<ReturnEntry> {
                                   !(item.isCombo == true && item.comboSku != null && groupedComboItems[item.comboSku]!.length > 1))
                               .toList();
 
+                          // create a list of map of string nd dynamic which contains the sku and quantity of each of the items in remainingItems and comboItemGroups list
+                          List<Map<String, dynamic>> itemsList = [];
+                          for (var items in remainingItems) {
+                            itemsList.add({
+                              "sku": items.sku,
+                              "total": items.qty,
+                              'goodQty': TextEditingController(),
+                              'badQty': TextEditingController()
+                            });
+                          }
+                          for (var group in comboItemGroups) {
+                            itemsList.addAll(group
+                                .map((item) => {
+                                      "sku": item.sku,
+                                      "total": item.qty,
+                                      'goodQty': TextEditingController(),
+                                      'badQty': TextEditingController()
+                                    })
+                                .toList());
+                          }
+
                           return Card(
                             surfaceTintColor: Colors.white,
                             color: Colors.grey[100],
@@ -195,6 +216,7 @@ class _ReturnEntryState extends State<ReturnEntry> {
                                           ),
                                         ],
                                       ),
+                                      editQuantityWidget(order.orderId, itemsList, pro),
                                     ],
                                   ),
                                   const Divider(
@@ -207,8 +229,8 @@ class _ReturnEntryState extends State<ReturnEntry> {
                                         child: Text(
                                       'No Products/Combos found in this order',
                                       style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
-                                    ))
-                                  else if (comboItemGroups.isNotEmpty)
+                                    )),
+                                  if (comboItemGroups.isNotEmpty)
                                     ListView.builder(
                                       shrinkWrap: true,
                                       physics: const NeverScrollableScrollPhysics(),
@@ -217,32 +239,31 @@ class _ReturnEntryState extends State<ReturnEntry> {
                                         final combo = comboItemGroups[comboIndex];
                                         return Row(
                                           children: [
-                                            BigComboCard(
-                                              items: combo,
-                                              index: comboIndex,
+                                            Expanded(
+                                              child: BigComboCard(
+                                                items: combo,
+                                                index: comboIndex,
+                                              ),
                                             ),
-                                            const SizedBox(width: 16),
-                                            editQuantityWidget(order.orderId, combo[index].comboSku ?? '', combo[index].qty ?? 0, pro)
                                           ],
                                         );
                                       },
-                                    )
-                                  else
+                                    ),
+                                  if (remainingItems.isNotEmpty)
                                     ListView.builder(
                                       shrinkWrap: true,
                                       physics: const NeverScrollableScrollPhysics(),
                                       itemCount: remainingItems.length,
                                       itemBuilder: (context, itemIndex) {
                                         final item = remainingItems[itemIndex];
-                                        print('Item $itemIndex: ${item.product?.displayName.toString() ?? ''}, Quantity: ${item.qty ?? 0}');
                                         return Row(
                                           children: [
-                                            ProductDetailsCard(
-                                              item: item,
-                                              index: itemIndex,
+                                            Expanded(
+                                              child: ProductDetailsCard(
+                                                item: item,
+                                                index: itemIndex,
+                                              ),
                                             ),
-                                            const SizedBox(width: 16),
-                                            editQuantityWidget(order.orderId, item.sku ?? '', item.qty ?? 0, pro)
                                           ],
                                         );
                                       },
@@ -263,75 +284,105 @@ class _ReturnEntryState extends State<ReturnEntry> {
     );
   }
 
-  Widget editQuantityWidget(String orderId, String sku, int qty, ReturnEntryProvider pro) {
-    final TextEditingController _goodQuantityController = TextEditingController();
-    final TextEditingController _badQuantityController = TextEditingController();
-
+  Widget editQuantityWidget(String orderId, List<Map<String, dynamic>> itemsList, ReturnEntryProvider pro) {
     return IconButton(
-      icon: Icon(Icons.fact_check_outlined, color: Colors.grey.shade500),
+      icon: const Icon(
+        Icons.fact_check_outlined,
+        color: Colors.grey,
+        size: 30,
+      ),
       onPressed: () {
         showDialog(
             context: context,
-            builder: (_) {
+            builder: (context) {
               return AlertDialog(
-                title: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(sku),
-                    Text(
-                      'Total Quantity: $qty',
-                      style: TextStyle(fontSize: 12),
-                    )
-                  ],
-                ),
-                content: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    TextField(
-                      controller: _goodQuantityController,
-                      decoration: const InputDecoration(
-                        labelText: 'Good Quantity',
-                      ),
-                      keyboardType: TextInputType.number,
+                title: Text(orderId),
+                content: SizedBox(
+                  width: 500,
+                  child: SingleChildScrollView(
+                    child: Column(
+                      children: [
+                        ...itemsList.map(
+                          (item) => Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 8.0),
+                            child: Row(
+                              children: [
+                                Text(
+                                  "${item['sku']} (Total = ${item['total']}):",
+                                  style: const TextStyle(fontSize: 16),
+                                ),
+                                const SizedBox(width: 16),
+                                Flexible(
+                                  child: TextFormField(
+                                    controller: item['goodQty'],
+                                    decoration: const InputDecoration(
+                                      hintText: 'Good Quantity',
+                                    ),
+                                    validator: (value) {
+                                      if (value == null || value.isEmpty) {
+                                        return 'Please enter a value';
+                                      } else if (int.tryParse(value) == null) {
+                                        return 'Please enter a valid number';
+                                      }
+                                      return null;
+                                    },
+                                    keyboardType: TextInputType.number,
+                                  ),
+                                ),
+                                const SizedBox(width: 16),
+                                Flexible(
+                                  child: TextFormField(
+                                    controller: item['badQty'],
+                                    decoration: const InputDecoration(
+                                      hintText: 'Bad Quantity',
+                                    ),
+                                    validator: (value) {
+                                      if (value == null || value.isEmpty) {
+                                        return 'Please enter a value';
+                                      } else if (int.tryParse(value) == null) {
+                                        return 'Please enter a valid number';
+                                      }
+                                      return null;
+                                    },
+                                    keyboardType: TextInputType.number,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
-                    const SizedBox(height: 16),
-                    TextField(
-                      controller: _badQuantityController,
-                      decoration: const InputDecoration(
-                        labelText: 'Bad Quantity',
-                      ),
-                      keyboardType: TextInputType.number,
-                    ),
-                  ],
+                  ),
                 ),
-                actions: <Widget>[
+                actions: [
                   TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
                   TextButton(
                     child: const Text('Submit'),
-                    onPressed: () async {
-                      final goodQuantity = int.tryParse(_goodQuantityController.text) ?? 0;
-                      final badQuantity = int.tryParse(_badQuantityController.text) ?? 0;
-
-                      if ((goodQuantity + badQuantity) > qty) {
-                        showDialog(
-                            context: context,
-                            builder: (_) {
-                              return AlertDialog(
-                                content: const Text('Total quantity exceeded!!'),
-                                actions: [TextButton(onPressed: () => Navigator.pop(context), child: const Text('Ok'))],
-                              );
-                            });
-                        return;
+                    onPressed: () {
+                      bool isValid = true;
+                      for (var item in itemsList) {
+                        final goodQty = int.tryParse(item['goodQty'].text) ?? 0;
+                        final badQty = int.tryParse(item['badQty'].text) ?? 0;
+                        final total = item['total'];
+                        if (goodQty + badQty > total) {
+                          isValid = false;
+                          pro.showMessageDialog(context, 'Good + Bad quantity cannot exceed total quantity for ${item['sku']}', Colors.red);
+                          break;
+                        }
                       }
 
+                      if (!isValid) return;
+
+                      // show progress dialog
                       showDialog(
                         context: context,
-                        builder: (_) {
+                        builder: (context) {
                           return const AlertDialog(
                             content: Row(
                               children: [
-                                const CircularProgressIndicator(),
-                                const SizedBox(
+                                CircularProgressIndicator(),
+                                SizedBox(
                                   width: 8,
                                 ),
                                 Text('Updating')
@@ -340,32 +391,26 @@ class _ReturnEntryState extends State<ReturnEntry> {
                           );
                         },
                       );
+                      List<Map<String, dynamic>> qualityCheckResults = itemsList
+                          .map((item) => {
+                                "productSku": item['sku'],
+                                "bad": int.tryParse(item['badQty'].text) ?? 0,
+                                "good": int.tryParse(item['goodQty'].text) ?? 0,
+                              })
+                          .toList();
 
-                      List<Map<String, dynamic>> qualityCheckResults = [];
-
-                      // Create a map to group quantities by SKU and condition
-                      Map<String, Map<String, int>> skuConditionMap = {};
-
-                      if (skuConditionMap.containsKey(sku)) {
-                        skuConditionMap[sku]!['good'] = goodQuantity;
-                        skuConditionMap[sku]!['bad'] = badQuantity;
-                      } else {
-                        skuConditionMap[sku] = {'good': goodQuantity, 'bad': badQuantity};
-                      }
-
-                      skuConditionMap.forEach((sku, conditions) {
-                        qualityCheckResults.add({"productSku": sku, "condition": "good", "goodQty": conditions['good']});
-                        qualityCheckResults.add({"productSku": sku, "condition": "bad", "goodQty": conditions['bad']});
+                      final res = pro.qualityCheck(orderId, qualityCheckResults);
+                      res.then((value) {
+                        if (context.mounted) {
+                          Navigator.pop(context);
+                          Navigator.pop(context);
+                        }
+                        if (value['success'] == true) {
+                          pro.showSnackBar(context, value['message'], Colors.green);
+                        } else {
+                          pro.showSnackBar(context, value['message'], Colors.red);
+                        }
                       });
-
-                      final res = await pro.qualityCheck(orderId, qualityCheckResults);
-                      Navigator.pop(context);
-                      if (res) {
-                        Navigator.pop(context);
-                        pro.showSnackBar(context, 'Success', Colors.green);
-                      } else {
-                        pro.showSnackBar(context, 'Failed', Colors.red);
-                      }
                     },
                   ),
                 ],

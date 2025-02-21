@@ -253,9 +253,10 @@ class AccountsProvider with ChangeNotifier {
     notifyListeners();
 
     final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString('authToken') ?? ''; // Fetch the token
+    final token = prefs.getString('authToken') ?? '';
+    String encodedOrderId = Uri.encodeComponent(query);
 
-    String url = '${await Constants.getBaseUrl()}/orders?orderStatus=2&ba_approve=true&order_id=$query';
+    String url = '${await Constants.getBaseUrl()}/orders?orderStatus=2&ba_approve=true&order_id=$encodedOrderId';
 
     if (searchType == "Order ID") {
       url += '&order_id=$query';
@@ -311,7 +312,8 @@ class AccountsProvider with ChangeNotifier {
   ) async {
     setUpdatingOrder(true);
     notifyListeners();
-    final selectedOrderIds = _orders.asMap().entries.where((entry) => _selectedProducts[entry.key]).map((entry) => entry.value.orderId).toList();
+    final selectedOrderIds =
+        _orders.asMap().entries.where((entry) => _selectedProducts[entry.key]).map((entry) => entry.value.orderId).toList();
 
     if (selectedOrderIds.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -333,9 +335,7 @@ class AccountsProvider with ChangeNotifier {
           'Authorization': 'Bearer $token',
           'Content-Type': 'application/json',
         },
-        body: jsonEncode({
-          'orderIds': selectedOrderIds
-        }),
+        body: jsonEncode({'orderIds': selectedOrderIds}),
       );
 
       if (response.statusCode == 200) {
@@ -459,9 +459,7 @@ class AccountsProvider with ChangeNotifier {
           'Authorization': 'Bearer $token',
         },
         body: json.encode({
-          "messages": {
-            "accountMessage": msg
-          }
+          "messages": {"accountMessage": msg}
         }),
       );
 
@@ -613,7 +611,8 @@ class AccountsProvider with ChangeNotifier {
     final token = prefs.getString('authToken') ?? '';
 
     if (searchType == "Order ID") {
-      url += '&order_id=$query';
+      String encodedOrderId = Uri.encodeComponent(query);
+      url += '&order_id=$encodedOrderId';
     } else {
       url += '&transaction_number=$query';
     }
@@ -636,9 +635,7 @@ class AccountsProvider with ChangeNotifier {
         final data = jsonDecode(response.body);
         // log(response.body);
         // final newData = data['orders'][0]; //////////////////////////////////////////////////////////////
-        _ordersBooked = [
-          Order.fromJson(data)
-        ]; ////////////////////////////////////////////
+        _ordersBooked = [Order.fromJson(data)]; ////////////////////////////////////////////
         log('Orders found: $_ordersBooked');
       } else {
         _ordersBooked = [];

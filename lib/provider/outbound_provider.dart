@@ -19,10 +19,9 @@ class OutboundProvider with ChangeNotifier {
   List<bool> _selectedReadyOrders = [];
 
   // List<bool> _selectedFailedOrders = [];
-  List<Order> outboundOrders = []; // List to store fetched ready orders
-  // List<Order> failedOrders = []; // List to store fetched failed orders
-  // int totalFailedPages = 1; // Default value 1
-  int totalReadyPages = 1;
+  List<Order> _outboundOrders = [];
+  int _totalReadyPages = 1;
+  int _currentPageReady = 1;
   String? _selectedCourier;
   String? _selectedPayment;
   String? _selectedFilter;
@@ -40,11 +39,7 @@ class OutboundProvider with ChangeNotifier {
   // List<Order> readyOrders = [];
   // List<Order> failedOrders = [];
 
-  int currentPage = 1;
-  int totalPages = 1;
-  int currentPageReady = 1;
 
-  // int currentPageFailed = 1;
 
   // Loading state
   bool isLoading = false;
@@ -76,6 +71,10 @@ class OutboundProvider with ChangeNotifier {
   String get normalDate => _normalDate;
 
   String get sanitizedEmail => _sanitizedEmail;
+
+  int get currentPageReady => _currentPageReady;
+  List<Order> get outboundOrders => _outboundOrders;
+  int get totalReadyPages => _totalReadyPages;
 
   bool isConfirm = false;
   bool isCancel = false;
@@ -281,7 +280,7 @@ class OutboundProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> fetchOrders({int page = 1, DateTime? date}) async {
+  Future<void> fetchOrders({int page = 1, DateTime? date, String market = 'All'}) async {
     dispatchCount = rtoCount = allCount = null;
     log(date.toString());
     // Ensure the requested page number is valid
@@ -293,11 +292,17 @@ class OutboundProvider with ChangeNotifier {
     isLoading = true;
     notifyListeners();
 
-    var readyOrdersUrl = '${await Constants.getBaseUrl()}/orders?marketplace=Shopify,Woocommerce&isOutBound=false&page=$page';
+    var readyOrdersUrl = '${await Constants.getBaseUrl()}/orders?isOutBound=false&page=$page';
 
     if (date != null) {
       String formattedDate = DateFormat('yyyy-MM-dd').format(date);
       readyOrdersUrl += '&date=$formattedDate';
+    }
+
+    if(market != 'All'){
+      readyOrdersUrl += '&marketplace=$market';
+    } else {
+      readyOrdersUrl += '&marketplace=Shopify,Woocommerce';
     }
 
     log("readyOrdersUrl: $readyOrdersUrl");
@@ -324,9 +329,9 @@ class OutboundProvider with ChangeNotifier {
         final jsonData = json.decode(responseReady.body);
         final orders = (jsonData['orders'] as List).map((order) => Order.fromJson(order)).toList();
         // outboundOrders = orders;
-        outboundOrders = orders;
-        totalReadyPages = jsonData['totalPages'] ?? 1; // Update total pages
-        currentPageReady = page; // Update the current page for ready orders
+        _outboundOrders = orders;
+        _totalReadyPages = jsonData['totalPages'] ?? 1; // Update total pages
+        _currentPageReady = page; // Update the current page for ready orders
 
         // log("readyOrders: $readyOrders");
 
@@ -335,9 +340,16 @@ class OutboundProvider with ChangeNotifier {
         _selectedReadyOrders = List<bool>.filled(outboundOrders.length, false);
         // outboundOrders = outboundOrders;
       } else {
+        _outboundOrders = [];
+        _currentPageReady = 1;
+        _totalReadyPages = 1;
+        log('Failed to load ready orders: ${responseReady.body}');
         throw Exception('Failed to load ready orders: ${responseReady.body}');
       }
     } catch (e) {
+      _outboundOrders = [];
+      _currentPageReady = 1;
+      _totalReadyPages = 1;
       log('Error fetching ready orders: $e');
     } finally {
       isLoading = false;
@@ -578,13 +590,15 @@ class OutboundProvider with ChangeNotifier {
   }
 
   void clearSearchResults() {
-    outboundOrders = outboundOrders;
+    _outboundOrders = [];
     notifyListeners();
   }
 
   Future<void> searchOrdersByID(String orderId) async {
+    String encodedOrderId = Uri.encodeComponent(orderId);
+
     // log('searchOrdersByID');
-    String url = '${await Constants.getBaseUrl()}/orders?marketplace=Shopify,Woocommerce&isOutBound=false&order_id=$orderId';
+    String url = '${await Constants.getBaseUrl()}/orders?marketplace=Shopify,Woocommerce&isOutBound=false&order_id=$encodedOrderId';
     // final url = Uri.parse('${await ApiUrls.getBaseUrl()}/orders?marketplace=Shopify,Woocommerce&isOutBound=false&order_id=$orderId');
     final token = await _getToken();
     if (token == null) return;
@@ -605,7 +619,7 @@ class OutboundProvider with ChangeNotifier {
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        outboundOrders = [Order.fromJson(data)];
+        _outboundOrders = [Order.fromJson(data)];
         // log('readyOrders: $readyOrders');
 
         log('searchOrdersByID: $outboundOrders');
@@ -613,11 +627,11 @@ class OutboundProvider with ChangeNotifier {
 
         // notifyListeners();
       } else {
-        outboundOrders = [];
+        _outboundOrders = [];
       }
     } catch (e) {
       log('Search orders error: $e');
-      outboundOrders = [];
+      _outboundOrders = [];
     } finally {
       isLoading = false;
       notifyListeners();
@@ -698,17 +712,17 @@ class OutboundProvider with ChangeNotifier {
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         log('data: $data');
-        outboundOrders = (data['orders'] as List).map((order) => Order.fromJson(order)).toList();
+        _outboundOrders = (data['orders'] as List).map((order) => Order.fromJson(order)).toList();
         await getOrdersByPhone(phone);
         // dispatchCount = await getDispatchOrders(phone);
         // rtoCount = await getRtoOrders(phone);
         log('readyOrders: $outboundOrders');
       } else {
-        outboundOrders = [];
+        _outboundOrders = [];
       }
     } catch (e) {
       log('Search orders error: $e');
-      outboundOrders = [];
+      _outboundOrders = [];
     } finally {
       isLoading = false;
       notifyListeners();
@@ -776,72 +790,72 @@ class OutboundProvider with ChangeNotifier {
   //   }
   // }
 
-  Future<void> fetchOrdersByMarketplace(String marketplace, int page, {DateTime? date}) async {
-    String baseUrl = '${await Constants.getBaseUrl()}/orders';
-
-    // Build URL with base parameters
-    String url = '$baseUrl?isOutBound=false&marketplace=$marketplace&page=$page';
-
-    // Add date parameter if provided
-    if (date != null || date == 'Select Date') {
-      String formattedDate = DateFormat('yyyy-MM-dd').format(date!);
-      url += '&date=$formattedDate';
-    }
-
-    log("url: $url");
-
-    String? token = await _getToken(); // Assuming you have a method to get the token
-    if (token == null) {
-      print('Token is null, unable to fetch orders.');
-      return;
-    }
-
-    try {
-      isLoading = true;
-      notifyListeners();
-
-      // Clear checkboxes when a new page is fetched
-      // clearSearchResults();
-
-      final response = await http.get(
-        Uri.parse(url),
-        headers: {
-          'Authorization': 'Bearer $token',
-          'Content-Type': 'application/json',
-        },
-      );
-
-      // Log response for debugging
-      print('Response status: ${response.statusCode}');
-      print('Response body: ${response.body}');
-
-      if (response.statusCode == 200) {
-        final jsonResponse = jsonDecode(response.body);
-        List<Order> orders = (jsonResponse['orders'] as List).map((orderJson) => Order.fromJson(orderJson)).toList();
-
-        Logger().e("length: ${orders.length}");
-
-        outboundOrders = orders;
-        currentPageReady = page; // Track current page for B2B
-        totalReadyPages = jsonResponse['totalPages']; // Assuming API returns total pages
-        notifyListeners();
-      } else if (response.statusCode == 401) {
-        print('Unauthorized access - Token might be expired or invalid.');
-      } else if (response.statusCode == 404) {
-        outboundOrders = [];
-        notifyListeners();
-
-        print('Orders not found - Check the filter type.');
-      } else {
-        throw Exception('Failed to load orders: ${response.statusCode}');
-      }
-    } catch (e) {
-      print('Error fetching orders: $e');
-    } finally {
-      isLoading = false;
-      notifyListeners();
-    }
-  }
+  // Future<void> fetchOrdersByMarketplace(String marketplace, int page, {DateTime? date}) async {
+  //   String baseUrl = '${await Constants.getBaseUrl()}/orders';
+  //
+  //   // Build URL with base parameters
+  //   String url = '$baseUrl?isOutBound=false&marketplace=$marketplace&page=$page';
+  //
+  //   // Add date parameter if provided
+  //   if (date != null || date == 'Select Date') {
+  //     String formattedDate = DateFormat('yyyy-MM-dd').format(date!);
+  //     url += '&date=$formattedDate';
+  //   }
+  //
+  //   log("url: $url");
+  //
+  //   String? token = await _getToken(); // Assuming you have a method to get the token
+  //   if (token == null) {
+  //     print('Token is null, unable to fetch orders.');
+  //     return;
+  //   }
+  //
+  //   try {
+  //     isLoading = true;
+  //     notifyListeners();
+  //
+  //     // Clear checkboxes when a new page is fetched
+  //     // clearSearchResults();
+  //
+  //     final response = await http.get(
+  //       Uri.parse(url),
+  //       headers: {
+  //         'Authorization': 'Bearer $token',
+  //         'Content-Type': 'application/json',
+  //       },
+  //     );
+  //
+  //     // Log response for debugging
+  //     print('Response status: ${response.statusCode}');
+  //     print('Response body: ${response.body}');
+  //
+  //     if (response.statusCode == 200) {
+  //       final jsonResponse = jsonDecode(response.body);
+  //       List<Order> orders = (jsonResponse['orders'] as List).map((orderJson) => Order.fromJson(orderJson)).toList();
+  //
+  //       Logger().e("length: ${orders.length}");
+  //
+  //       outboundOrders = orders;
+  //       currentPageReady = page; // Track current page for B2B
+  //       totalReadyPages = jsonResponse['totalPages']; // Assuming API returns total pages
+  //       notifyListeners();
+  //     } else if (response.statusCode == 401) {
+  //       print('Unauthorized access - Token might be expired or invalid.');
+  //     } else if (response.statusCode == 404) {
+  //       outboundOrders = [];
+  //       notifyListeners();
+  //
+  //       print('Orders not found - Check the filter type.');
+  //     } else {
+  //       throw Exception('Failed to load orders: ${response.statusCode}');
+  //     }
+  //   } catch (e) {
+  //     print('Error fetching orders: $e');
+  //   } finally {
+  //     isLoading = false;
+  //     notifyListeners();
+  //   }
+  // }
 
   // String sanitizeEmail(String email) {
   //   return email.replaceAll(RegExp(r'[^a-zA-Z0-9_]'), '_');

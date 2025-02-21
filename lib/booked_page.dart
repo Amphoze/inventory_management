@@ -74,7 +74,7 @@ class _BookedPageState extends State<BookedPage> with SingleTickerProviderStateM
       child: Row(
         children: [
           Container(
-            width: 200,
+            width: 120,
             height: 34,
             margin: const EdgeInsets.only(right: 16),
             child: DropdownButtonFormField<String>(
@@ -100,7 +100,7 @@ class _BookedPageState extends State<BookedPage> with SingleTickerProviderStateM
             height: 34,
             decoration: BoxDecoration(
               border: Border.all(
-                color: AppColors.green,
+                color: AppColors.primaryBlue,
                 width: 1.5,
               ),
               borderRadius: BorderRadius.circular(8),
@@ -110,21 +110,14 @@ class _BookedPageState extends State<BookedPage> with SingleTickerProviderStateM
                 Expanded(
                   child: TextField(
                     controller: controller,
-                    decoration: InputDecoration(
-                      prefixIcon: IconButton(
-                        icon: const Icon(
-                          Icons.search,
-                          color: Color.fromRGBO(117, 117, 117, 1),
-                        ),
-                        onPressed: () {},
-                      ),
+                    decoration: const InputDecoration(
                       hintText: 'Search Orders',
                       hintStyle: const TextStyle(
                         color: Color.fromRGBO(117, 117, 117, 1),
                         fontSize: 16,
                       ),
                       border: InputBorder.none,
-                      contentPadding: const EdgeInsets.symmetric(vertical: 10.0),
+                      contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 12.0),
                     ),
                     style: const TextStyle(color: AppColors.black),
                     onChanged: (text) {
@@ -279,6 +272,8 @@ class _BookedPageState extends State<BookedPage> with SingleTickerProviderStateM
     );
   }
 
+  DateTime? picked;
+
   Widget _buildConfirmButtons() {
     final bookProvider = Provider.of<BookProvider>(context, listen: false);
     return Align(
@@ -288,20 +283,6 @@ class _BookedPageState extends State<BookedPage> with SingleTickerProviderStateM
         child: Row(
           mainAxisAlignment: MainAxisAlignment.end,
           children: [
-            // Add date filter button
-            // ElevatedButton.icon(
-            //   style: ElevatedButton.styleFrom(
-            //     backgroundColor: AppColors.primaryBlue,
-            //   ),
-            //   onPressed: () => _selectDate(context),
-            //   icon: const Icon(Icons.calendar_today, color: Colors.white),
-            //   label: Text(
-            //     _selectedDate == null
-            //         ? 'Select Date'
-            //         : DateFormat('yyyy-MM-dd').format(_selectedDate!),
-            //     style: const TextStyle(color: Colors.white),
-            //   ),
-            // ),
             Column(
               children: [
                 Text(
@@ -315,7 +296,7 @@ class _BookedPageState extends State<BookedPage> with SingleTickerProviderStateM
                   message: 'Filter by Date',
                   child: IconButton(
                     onPressed: () async {
-                      final DateTime? picked = await showDatePicker(
+                      picked = await showDatePicker(
                         context: context,
                         initialDate: DateTime.now(),
                         firstDate: DateTime(2020),
@@ -336,23 +317,16 @@ class _BookedPageState extends State<BookedPage> with SingleTickerProviderStateM
                       );
 
                       if (picked != null) {
-                        String formattedDate = DateFormat('dd-MM-yyyy').format(picked);
+                        String formattedDate = DateFormat('dd-MM-yyyy').format(picked!);
                         setState(() {
                           _selectedDate = formattedDate;
                         });
 
-                        if (selectedCourier != 'All') {
-                          bookProvider.fetchBookedOrdersByMarketplace(
-                            selectedCourier,
+                        bookProvider.fetchBookedOrders(
                             bookProvider.currentPageBooked,
                             date: picked,
-                          );
-                        } else {
-                          bookProvider.fetchBookedOrders(
-                            bookProvider.currentPageBooked,
-                            date: picked,
-                          );
-                        }
+                            market: selectedCourier
+                        );
                       }
                     },
                     icon: const Icon(
@@ -367,30 +341,28 @@ class _BookedPageState extends State<BookedPage> with SingleTickerProviderStateM
             const SizedBox(width: 8),
             Column(
               children: [
-                Text(selectedCourier),
+                Text(
+                  selectedCourier,
+                ),
                 Consumer<MarketplaceProvider>(
                   builder: (context, provider, child) {
                     return PopupMenuButton<String>(
                       tooltip: 'Filter by Marketplace',
-                      initialValue: 'All',
                       onSelected: (String value) {
                         setState(() {
                           selectedCourier = value;
                         });
-                        if (value == 'All') {
-                          bookProvider.fetchBookedOrders(bookProvider.currentPageBooked,
-                              date: _selectedDate == 'Select Date' ? null : DateTime.parse(_selectedDate));
-                        } else {
-                          bookProvider.fetchBookedOrdersByMarketplace(value, bookProvider.currentPageBooked,
-                              date: _selectedDate == 'Select Date' ? null : DateTime.parse(_selectedDate));
-                        }
-                        log('Selected: $value');
+                        bookProvider.fetchBookedOrders(
+                            bookProvider.currentPageBooked,
+                            date: picked,
+                            market: selectedCourier
+                        );
                       },
                       itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
                         ...provider.marketplaces.map((marketplace) => PopupMenuItem<String>(
-                              value: marketplace.name,
-                              child: Text(marketplace.name),
-                            )), // Fetched marketplaces
+                          value: marketplace.name,
+                          child: Text(marketplace.name),
+                        )), // Fetched marketplaces
                         const PopupMenuItem<String>(
                           value: 'All', // Hardcoded marketplace
                           child: Text('All'),
@@ -409,8 +381,6 @@ class _BookedPageState extends State<BookedPage> with SingleTickerProviderStateM
               ],
             ),
             const SizedBox(width: 8),
-            // _buildBookButton('Cancel', orderType, AppColors.cardsred),
-            // const SizedBox(width: 8),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primaryBlue,

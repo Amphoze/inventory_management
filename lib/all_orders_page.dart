@@ -97,16 +97,12 @@ class _AllOrdersPageState extends State<AllOrdersPage> with SingleTickerProvider
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<AllOrdersProvider>(
-      builder: (context, pro, child) {
-        return Scaffold(
-          backgroundColor: Colors.white,
-          body: Padding(
-            padding: const EdgeInsets.only(top: 3.0),
-            child: _buildOrderList(),
-          ),
-        );
-      }
+    return Scaffold(
+      backgroundColor: Colors.white,
+      body: Padding(
+        padding: const EdgeInsets.only(top: 3.0),
+        child: _buildOrderList(),
+      ),
     );
   }
 
@@ -129,7 +125,7 @@ class _AllOrdersPageState extends State<AllOrdersPage> with SingleTickerProvider
         height: 34,
         decoration: BoxDecoration(
           border: Border.all(
-            color: AppColors.green,
+            color: AppColors.primaryBlue,
             width: 1.5,
           ),
           borderRadius: BorderRadius.circular(8),
@@ -315,7 +311,8 @@ class _AllOrdersPageState extends State<AllOrdersPage> with SingleTickerProvider
                     color: _selectedDate == 'Select Date' ? Colors.grey : AppColors.primaryBlue,
                   ),
                 ),
-                ElevatedButton(
+                IconButton(
+                  tooltip: 'Filter by date',
                   onPressed: () async {
                     picked = await showDatePicker(
                       context: context,
@@ -343,28 +340,14 @@ class _AllOrdersPageState extends State<AllOrdersPage> with SingleTickerProvider
                         _selectedDate = formattedDate;
                       });
 
-                      if (selectedCourier != 'All') {
-                        allOrdersProvider.fetchOrdersByMarketplace(
-                          selectedCourier,
-                          allOrdersProvider.currentPage,
-                          picked,
-                          statuses.firstWhere((map) => map.containsKey(selectedStatus), orElse: () => {})[selectedStatus]!,
-                        );
-                      } else {
-                        allOrdersProvider.fetchAllOrders(
+                      allOrdersProvider.fetchAllOrders(
+                          page: allOrdersProvider.currentPage,
                           date: picked,
                           status: statuses.firstWhere((map) => map.containsKey(selectedStatus), orElse: () => {})[selectedStatus]!,
-                        );
-                      }
+                          marketplace: selectedCourier);
                     }
                   },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primaryBlue,
-                  ),
-                  child: const Text(
-                    'Filter by Date',
-                    style: TextStyle(color: Colors.white),
-                  ),
+                  icon: const Icon(Icons.date_range),
                 ),
               ],
             ),
@@ -381,19 +364,11 @@ class _AllOrdersPageState extends State<AllOrdersPage> with SingleTickerProvider
                         setState(() {
                           selectedStatus = value;
                         });
-                        if (value == 'All') {
-                          allOrdersProvider.fetchAllOrders(
-                              page: allOrdersProvider.currentPage,
-                              date: picked,
-                              status: statuses.firstWhere((map) => map.containsKey(selectedStatus), orElse: () => {})[selectedStatus]!);
-                        } else {
-                          allOrdersProvider.fetchOrdersByStatus(
-                            selectedCourier,
-                            allOrdersProvider.currentPage,
-                            picked,
-                            statuses.firstWhere((map) => map.containsKey(selectedStatus), orElse: () => {})[value]!,
-                          );
-                        }
+                        allOrdersProvider.fetchAllOrders(
+                            page: allOrdersProvider.currentPage,
+                            date: picked,
+                            status: statuses.firstWhere((map) => map.containsKey(selectedStatus), orElse: () => {})[value]!,
+                            marketplace: selectedCourier);
                       },
                       itemBuilder: (BuildContext context) {
                         List<String> temp = statuses.map((item) => item.keys.first).toList();
@@ -431,23 +406,11 @@ class _AllOrdersPageState extends State<AllOrdersPage> with SingleTickerProvider
                     return PopupMenuButton<String>(
                       tooltip: 'Filter by Marketplace',
                       onSelected: (String value) {
-                        Logger().e('ye hai value: $value');
-                        if (value == 'All') {
-                          setState(() {
-                            selectedCourier = value;
-                          });
-                          allOrdersProvider.fetchAllOrders(
+                        allOrdersProvider.fetchAllOrders(
+                            page: allOrdersProvider.currentPage,
                             date: picked,
-                          );
-                        } else {
-                          Logger().e('ye hai else value: $value');
-                          setState(() {
-                            selectedCourier = value;
-                          });
-                          allOrdersProvider.fetchOrdersByMarketplace(selectedCourier, allOrdersProvider.currentPage, picked,
-                              statuses.firstWhere((map) => map.containsKey(selectedStatus), orElse: () => {})[selectedStatus] !);
-                        }
-                        log('Selected: $value');
+                            status: statuses.firstWhere((map) => map.containsKey(selectedStatus), orElse: () => {})[selectedStatus]!,
+                            marketplace: selectedCourier);
                       },
                       itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
                         ...marketPro.marketplaces.map((marketplace) => PopupMenuItem<String>(

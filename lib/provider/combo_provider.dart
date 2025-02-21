@@ -255,14 +255,14 @@ class ComboProvider with ChangeNotifier {
         print("Raw productList in provider: $productList");
 
         _products = productList.map<Product>((json) => Product.fromJson(json)).toList();
-        log("Mapped products in provider: $_products");
+        // log("Mapped products in provider: $_products");
       } else {
         print("Error: 'products' key not found or not a list in response.");
       }
     } catch (e, stacktrace) {
       // Log error details
-      print('Error fetching products: $e');
-      print('Stacktrace: $stacktrace');
+      log('Error fetching products: $e');
+      log('Stacktrace: $stacktrace');
     } finally {
       _loading = false;
       notifyListeners();
@@ -282,11 +282,11 @@ class ComboProvider with ChangeNotifier {
 
       if (response['success'] == true) {
         final warehouseList = response['data']['warehouses'];
-        print("Raw warehouseList in provider: $warehouseList");
+        // print("Raw warehouseList in provider: $warehouseList");
 
         _warehouses = warehouseList;
 
-        print("Mapped warehouses in provider: $_warehouses");
+        // print("Mapped warehouses in provider: $_warehouses");
       } else {
         print("Error: ${response['message']}");
       }
@@ -323,7 +323,7 @@ class ComboProvider with ChangeNotifier {
       // Check the response status code
       if (response.statusCode == 200) {
         print("Response Status: ${response.statusCode}");
-        log("Response Body: ${response.body}");
+        // log("Response Body: ${response.body}");
 
         final productList = json.decode(response.body)['products'];
         final newProducts = productList.map<Product>((json) => Product.fromJson(json)).toList();
@@ -331,12 +331,11 @@ class ComboProvider with ChangeNotifier {
 
         notifyListeners();
 
-        log(_products.toString());
+        // log(_products.toString());
       }
     } catch (error) {
       log("catched: $error");
     }
-
     notifyListeners();
   }
 }

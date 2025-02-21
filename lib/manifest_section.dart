@@ -47,55 +47,49 @@ class _ManifestSectionState extends State<ManifestSection> {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.start,
                   children: [
-                    SizedBox(
+                    Container(
+                      height: 35,
                       width: 200,
-                      child: Container(
-                        height: 40,
-                        decoration: BoxDecoration(
-                          border: Border.all(
-                            color: const Color.fromARGB(183, 6, 90, 216),
-                          ),
-                          borderRadius: BorderRadius.circular(8),
+                      decoration: BoxDecoration(
+                        border: Border.all(
+                          color: const Color.fromARGB(183, 6, 90, 216),
                         ),
-                        child: TextField(
-                          controller: _searchController,
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(color: Colors.black),
-                          decoration: const InputDecoration(
-                            hintText: 'Search by Order ID',
-                            hintStyle: TextStyle(color: Colors.black),
-                            border: InputBorder.none,
-                            contentPadding: EdgeInsets.symmetric(vertical: 8.0),
-                            prefixIcon: Icon(
-                              Icons.search,
-                              color: Color.fromARGB(183, 6, 90, 216),
-                            ),
-                          ),
-                          onChanged: (query) {
-                            // Trigger a rebuild to show/hide the search button
-                            setState(() {
-                              // Update search focus
-                            });
-                            if (query.isEmpty) {
-                              // Reset to all orders if search is cleared
-                              manifestProvider.fetchCreatedManifests(manifestProvider.currentPage);
-                            }
-                          },
-                          onTap: () {
-                            setState(() {
-                              // Mark the search field as focused
-                            });
-                          },
-                          onSubmitted: (query) {
-                            if (query.isNotEmpty) {
-                              manifestProvider.searchOrders(query);
-                            }
-                          },
-                          onEditingComplete: () {
-                            // Mark it as not focused when done
-                            FocusScope.of(context).unfocus(); // Dismiss the keyboard
-                          },
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: TextField(
+                        controller: _searchController,
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(color: Colors.black),
+                        decoration: const InputDecoration(
+                          hintText: 'Search by Order ID',
+                          hintStyle: TextStyle(color: Colors.black),
+                          border: InputBorder.none,
+                          contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 12.0),
                         ),
+                        onChanged: (query) {
+                          // Trigger a rebuild to show/hide the search button
+                          setState(() {
+                            // Update search focus
+                          });
+                          if (query.isEmpty) {
+                            // Reset to all orders if search is cleared
+                            manifestProvider.fetchCreatedManifests(manifestProvider.currentPage);
+                          }
+                        },
+                        onTap: () {
+                          setState(() {
+                            // Mark the search field as focused
+                          });
+                        },
+                        onSubmitted: (query) {
+                          if (query.isNotEmpty) {
+                            manifestProvider.searchOrders(query);
+                          }
+                        },
+                        onEditingComplete: () {
+                          // Mark it as not focused when done
+                          FocusScope.of(context).unfocus(); // Dismiss the keyboard
+                        },
                       ),
                     ),
                     const SizedBox(width: 8),

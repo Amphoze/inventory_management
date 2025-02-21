@@ -58,6 +58,18 @@ class ReturnEntryProvider with ChangeNotifier {
     );
   }
 
+  void showMessageDialog(BuildContext context, String message, Color color) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        content: Text(message, style: TextStyle(color: color)),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Ok')),
+        ],
+      ),
+    );
+  }
+
   Future<void> searchOrders(String orderId) async {
     String encodedOrderId = Uri.encodeComponent(orderId);
 
@@ -98,15 +110,17 @@ class ReturnEntryProvider with ChangeNotifier {
     }
   }
 
-  Future<bool> qualityCheck(String orderId, List<Map<String, dynamic>> qualityCheckResults) async {
+  Future<Map<String, dynamic>> qualityCheck(String orderId, List<Map<String, dynamic>> qualityCheckResults) async {
     final url = '${await Constants.getBaseUrl()}/orders/qualityCheck/$orderId';
     log('quality check post api: $url');
     final mainUrl = Uri.parse(url);
     final token = await _getToken();
 
     if (token == null || token.isEmpty) {
-      return false;
+      return {'success': false};
     }
+
+    Logger().e('body: $qualityCheckResults');
 
     try {
       _isLoading = true;
@@ -120,19 +134,20 @@ class ReturnEntryProvider with ChangeNotifier {
         },
         body: jsonEncode({"qualityCheckResults": qualityCheckResults}),
       );
+      final data = jsonDecode(response.body);
 
+      Logger().e('return orders body: $data');
       if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
         Logger().e('return orders: $data');
         notifyListeners();
-        return true;
+        return {'success': true, 'message': data['message']};
       } else {
         Logger().e('return orders error: ${response.statusCode}');
-        return false;
+        return {'success': false, 'message': data['message']};
       }
     } catch (e, s) {
       log('catched error: $e $s');
-      return false;
+      return {'success': false};
     } finally {
       _isLoading = false;
       notifyListeners();

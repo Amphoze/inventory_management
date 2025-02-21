@@ -75,12 +75,7 @@ class _OutboundPageState extends State<OutboundPage> with TickerProviderStateMix
     // ordersProvider.fetchFailedOrders();
   }
 
-  static String maskPhoneNumber(dynamic phone) {
-    if (phone == null) return '';
-    String phoneStr = phone.toString();
-    if (phoneStr.length < 4) return phoneStr;
-    return '${'*' * (phoneStr.length - 4)}${phoneStr.substring(phoneStr.length - 4)}';
-  }
+  DateTime? picked;
 
   @override
   Widget build(BuildContext context) {
@@ -194,7 +189,7 @@ class _OutboundPageState extends State<OutboundPage> with TickerProviderStateMix
                           message: 'Filter by Date',
                           child: IconButton(
                             onPressed: () async {
-                              final DateTime? picked = await showDatePicker(
+                              picked = await showDatePicker(
                                 context: context,
                                 initialDate: DateTime.now(),
                                 firstDate: DateTime(2020),
@@ -215,23 +210,16 @@ class _OutboundPageState extends State<OutboundPage> with TickerProviderStateMix
                               );
 
                               if (picked != null) {
-                                String formattedDate = DateFormat('dd-MM-yyyy').format(picked);
+                                String formattedDate = DateFormat('dd-MM-yyyy').format(picked!);
                                 setState(() {
                                   _selectedDate = formattedDate;
                                 });
 
-                                if (selectedCourier != 'All') {
-                                  pro.fetchOrdersByMarketplace(
-                                    selectedCourier,
-                                    pro.currentPageReady,
-                                    date: picked,
-                                  );
-                                } else {
-                                  pro.fetchOrders(
-                                    page: pro.currentPageReady,
-                                    date: picked,
-                                  );
-                                }
+                                pro.fetchOrders(
+                                  page: pro.currentPageReady,
+                                  date: picked,
+                                  market: selectedCourier,
+                                );
                               }
                             },
                             icon: const Icon(
@@ -253,55 +241,27 @@ class _OutboundPageState extends State<OutboundPage> with TickerProviderStateMix
                           builder: (context, provider, child) {
                             return PopupMenuButton<String>(
                               tooltip: 'Filter by Marketplace',
-                              onSelected: (String value) async {
+                              onSelected: (String value) {
                                 setState(() {
                                   selectedCourier = value;
                                 });
-
-                                // String formattedDate =
-                                //     DateFormat('dd-MM-yyyy').format(picked);
-                                // setState(() {
-                                //   _selectedReadyDate = formattedDate;
-                                // });
-
-                                if (value == 'All') {
-                                  log("value: $value");
-                                  log("selectedCourier: $selectedCourier");
-                                  log("selectedDate: $_selectedDate");
-                                  pro.fetchOrders(
-                                    page: pro.currentPageReady,
-                                    date: _selectedDate == 'Select Date' ? null : DateTime.parse(_selectedDate),
-                                  );
-                                } else {
-                                  DateTime? selectedDate;
-                                  if (_selectedDate != 'Select Date') {
-                                    selectedDate = DateFormat('yyyy-MM-dd').parse(_selectedDate);
-                                  }
-
-                                  log("selectedDate: $selectedDate");
-
-                                  pro.fetchOrdersByMarketplace(
-                                    value,
-                                    pro.currentPageReady,
-                                    date: selectedDate,
-                                  );
-                                }
+                                pro.fetchOrders(
+                                  page: pro.currentPageReady,
+                                  date: picked,
+                                  market: selectedCourier,
+                                );
                               },
                               itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
-                                // ...provider.marketplaces.map((marketplace) => PopupMenuItem<String>(
-                                //       value: marketplace.name,
-                                //       child: Text(marketplace.name),
-                                //     )),
                                 const PopupMenuItem<String>(
-                                  value: 'All',
+                                  value: 'All', // Hardcoded marketplace
                                   child: Text('All'),
                                 ),
                                 const PopupMenuItem<String>(
-                                  value: 'Shopify',
+                                  value: 'Shopify', // Hardcoded marketplace
                                   child: Text('Shopify'),
                                 ),
                                 const PopupMenuItem<String>(
-                                  value: 'Woocommerce',
+                                  value: 'Woocommerce', // Hardcoded marketplace
                                   child: Text('Woocommerce'),
                                 ),
                               ],
@@ -488,27 +448,14 @@ class _OutboundPageState extends State<OutboundPage> with TickerProviderStateMix
                           Expanded(
                             child: TextField(
                               controller: _searchControllerReady,
-                              decoration: InputDecoration(
-                                prefixIcon: IconButton(
-                                  icon: const Icon(
-                                    Icons.search,
-                                    color: Color.fromRGBO(117, 117, 117, 1),
-                                  ),
-                                  onPressed: () {
-                                    final searchTerm = _searchControllerReady.text;
-
-                                    if (searchTerm.isNotEmpty) {
-                                      pro.searchOrdersByID(searchTerm);
-                                    }
-                                  },
-                                ),
+                              decoration: const InputDecoration(
                                 hintText: 'Search Orders By ID/Phone',
-                                hintStyle: const TextStyle(
+                                hintStyle: TextStyle(
                                   color: Color.fromRGBO(117, 117, 117, 1),
                                   fontSize: 16,
                                 ),
                                 border: InputBorder.none,
-                                contentPadding: const EdgeInsets.symmetric(vertical: 10.0),
+                                contentPadding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
                               ),
                               style: const TextStyle(color: AppColors.black),
                               onSubmitted: (value) async {
@@ -709,13 +656,8 @@ class _OutboundPageState extends State<OutboundPage> with TickerProviderStateMix
                                                     // Ready
                                                     if (readySearched.isNotEmpty) {
                                                       pro.searchOrdersByID(readySearched);
-                                                    } else if (selectedCourier != 'All') {
-                                                      pro.fetchOrdersByMarketplace(selectedCourier, pro.currentPageReady);
-                                                    } else if (readySearched.isNotEmpty && selectedCourier != 'All') {
-                                                      pro.fetchOrdersByMarketplace(selectedCourier, pro.currentPageReady);
-                                                      pro.searchOrdersByID(readySearched);
                                                     } else {
-                                                      pro.fetchOrders();
+                                                      pro.fetchOrders(page: pro.currentPageReady, date: picked, market: selectedCourier);
                                                     }
                                                   }
                                                 },

@@ -33,17 +33,15 @@ class BookProvider with ChangeNotifier {
 
   // Sort option for orders
   String? _sortOption;
-
   String? get sortOption => _sortOption;
 
-  // Lists for storing fetched orders
-  List<Order> ordersB2B = [];
-  List<Order> ordersB2C = [];
-  List<Order> ordersBooked = [];
+  List<Order> _ordersB2B = [];
+  List<Order> _ordersB2C = [];
+  List<Order> _ordersBooked = [];
 
-  List<Order> B2BOrders = []; // List to store fetched ready orders
-  List<Order> B2COrders = [];
-  List<Order> BookedOrders = [];
+  List<Order> get ordersB2B => _ordersB2B;
+  List<Order> get ordersB2C => _ordersB2C;
+  List<Order> get ordersBooked => _ordersBooked;
 
   // Pagination
   int currentPageB2B = 1;
@@ -250,8 +248,7 @@ class BookProvider with ChangeNotifier {
   }
 
   // Fetch orders based on type (B2B or B2C)
-  Future<void> fetchOrders(String type, int page, {DateTime? date}) async {
-    log("akkakakakkaa+$type");
+  Future<void> fetchOrders(String type, int page, {DateTime? date, String market = 'All'}) async {
     String? token = await _getToken();
     if (token == null) {
       print('Token is null, unable to fetch orders.');
@@ -260,10 +257,16 @@ class BookProvider with ChangeNotifier {
 
     String url = '${await Constants.getBaseUrl()}/orders?filter=$type&orderStatus=3&page=$page';
 
-    if (date != null || date == 'Select Date') {
-      String formattedDate = DateFormat('yyyy-MM-dd').format(date!);
+    if (date != null) {
+      String formattedDate = DateFormat('yyyy-MM-dd').format(date);
       url += '&date=$formattedDate';
     }
+
+    if (market != 'All') {
+      url += '&marketplace=$market';
+    }
+
+    Logger().e('fetchOrders url: $url');
 
     try {
       // Set loading state based on order type
@@ -287,32 +290,41 @@ class BookProvider with ChangeNotifier {
         },
       );
 
-      // Log response for debugging
-      print('Response status: ${response.statusCode}');
-      print('Response body: ${response.body}');
-
       if (response.statusCode == 200) {
         final jsonResponse = jsonDecode(response.body);
         List<Order> orders = (jsonResponse['orders'] as List).map((orderJson) => Order.fromJson(orderJson)).toList();
 
-        // Store fetched orders and update pagination state
+        log('fetch book orders: ${orders.length}');
         if (type == 'B2B') {
-          ordersB2B = orders;
+          _ordersB2B = orders;
           currentPageB2B = page; // Track current page for B2B
           totalPagesB2B = jsonResponse['totalPages']; // Assuming API returns total pages
         } else {
-          ordersB2C = orders;
+          _ordersB2C = orders;
           currentPageB2C = page; // Track current page for B2C
           totalPagesB2C = jsonResponse['totalPages']; // Assuming API returns total pages
         }
-      } else if (response.statusCode == 401) {
-        print('Unauthorized access - Token might be expired or invalid.');
-      } else if (response.statusCode == 404) {
-        print('Orders not found - Check the filter type.');
       } else {
-        throw Exception('Failed to load orders: ${response.statusCode}');
+        if (type == 'B2B') {
+          _ordersB2B = [];
+          currentPageB2B = 1;
+          totalPagesB2B = 0;
+        } else {
+          _ordersB2C = [];
+          currentPageB2C = 1;
+          totalPagesB2C = 0;
+        }
       }
     } catch (e) {
+      if (type == 'B2B') {
+        _ordersB2B = [];
+        currentPageB2B = 1;
+        totalPagesB2B = 0;
+      } else {
+        _ordersB2C = [];
+        currentPageB2C = 1;
+        totalPagesB2C = 0;
+      }
       log('Error fetching book page - $type orders: $e');
     } finally {
       // Reset loading states
@@ -327,7 +339,7 @@ class BookProvider with ChangeNotifier {
     }
   }
 
-  Future<void> fetchBookedOrders(int page, {DateTime? date}) async {
+  Future<void> fetchBookedOrders(int page, {DateTime? date, String? market = 'All'}) async {
     String? token = await _getToken();
     if (token == null) {
       print('Token is null, unable to fetch orders.');
@@ -341,6 +353,10 @@ class BookProvider with ChangeNotifier {
     if (date != null) {
       String formattedDate = DateFormat('yyyy-MM-dd').format(date);
       url += '&date=$formattedDate';
+    }
+
+    if (market != 'All') {
+      url += '&marketplace=$market';
     }
 
     try {
@@ -358,29 +374,24 @@ class BookProvider with ChangeNotifier {
         },
       );
 
-      // Log response for debugging
-      // log('Response status: ${response.statusCode}');
-      // log('Response body: ${response.body}');
-
-      Logger().e('book provider');
-
       if (response.statusCode == 200) {
         final jsonResponse = jsonDecode(response.body);
         List<Order> orders = (jsonResponse['orders'] as List).map((orderJson) => Order.fromJson(orderJson)).toList();
 
         Logger().e(jsonResponse['orders'][0]['isBooked']['status']);
 
-        ordersBooked = orders;
+        _ordersBooked = orders;
         currentPageBooked = page;
         totalPagesBooked = jsonResponse['totalPages'];
-      } else if (response.statusCode == 401) {
-        print('Unauthorized access - Token might be expired or invalid.');
-      } else if (response.statusCode == 404) {
-        print('Orders not found');
       } else {
-        throw Exception('Failed to load orders: ${response.statusCode}');
+        _ordersBooked = [];
+        currentPageBooked = 1;
+        totalPagesBooked = 0;
       }
     } catch (e) {
+      _ordersBooked = [];
+      currentPageBooked = 1;
+      totalPagesBooked = 0;
       log('Error fetching orders: $e');
     } finally {
       isLoadingBooked = false;
@@ -543,16 +554,16 @@ class BookProvider with ChangeNotifier {
   void handleRowCheckboxChange(String? orderId, bool isSelected, bool isB2B) {
     int index;
     if (isB2B) {
-      index = ordersB2B.indexWhere((order) => order.orderId == orderId);
+      index = _ordersB2B.indexWhere((order) => order.orderId == orderId);
       if (index != -1) {
         selectedB2BItems[index] = isSelected;
-        ordersB2B[index].isSelected = isSelected;
+        _ordersB2B[index].isSelected = isSelected;
       }
     } else {
-      index = ordersB2C.indexWhere((order) => order.orderId == orderId);
+      index = _ordersB2C.indexWhere((order) => order.orderId == orderId);
       if (index != -1) {
         selectedB2CItems[index] = isSelected;
-        ordersB2C[index].isSelected = isSelected;
+        _ordersB2C[index].isSelected = isSelected;
       }
     }
     _updateSelectAllState(isB2B);
@@ -561,10 +572,10 @@ class BookProvider with ChangeNotifier {
 
   void handleRowCheckboxChangeBooked(String? orderId, bool isSelected) {
     int index;
-    index = ordersBooked.indexWhere((order) => order.orderId == orderId);
+    index = _ordersBooked.indexWhere((order) => order.orderId == orderId);
     if (index != -1) {
       selectedBookedItems[index] = isSelected;
-      ordersBooked[index].isSelected = isSelected;
+      _ordersBooked[index].isSelected = isSelected;
     }
 
     selectAllBooked = selectedBookedItems.every((item) => item);
@@ -588,15 +599,15 @@ class BookProvider with ChangeNotifier {
       selectAllB2B = value!;
       selectedB2BItems.fillRange(0, selectedB2BItems.length, selectAllB2B);
       // Update the selection state for B2B orders
-      for (int i = 0; i < ordersB2B.length; i++) {
-        ordersB2B[i].isSelected = selectAllB2B;
+      for (int i = 0; i < _ordersB2B.length; i++) {
+        _ordersB2B[i].isSelected = selectAllB2B;
       }
     } else {
       selectAllB2C = value!;
       selectedB2CItems.fillRange(0, selectedB2CItems.length, selectAllB2C);
       // Update the selection state for B2C orders
-      for (int i = 0; i < ordersB2C.length; i++) {
-        ordersB2C[i].isSelected = selectAllB2C;
+      for (int i = 0; i < _ordersB2C.length; i++) {
+        _ordersB2C[i].isSelected = selectAllB2C;
       }
     }
     notifyListeners();
@@ -606,8 +617,8 @@ class BookProvider with ChangeNotifier {
     selectAllBooked = value!;
     selectedBookedItems.fillRange(0, selectedBookedItems.length, selectAllBooked);
     // Update the selection state for B2B orders
-    for (int i = 0; i < ordersBooked.length; i++) {
-      ordersBooked[i].isSelected = selectAllBooked;
+    for (int i = 0; i < _ordersBooked.length; i++) {
+      _ordersBooked[i].isSelected = selectAllBooked;
     }
 
     notifyListeners();
@@ -623,14 +634,16 @@ class BookProvider with ChangeNotifier {
   }
 
   void clearSearchResults() {
-    ordersB2B = B2BOrders;
-    ordersB2C = B2COrders;
-    ordersBooked = BookedOrders;
+    _ordersB2B = [];
+    _ordersB2C = [];
+    _ordersBooked = [];
     notifyListeners();
   }
 
   Future<void> searchB2BOrders(String query, String searchType) async {
-    String url = '${await Constants.getBaseUrl()}/orders?orderStatus=3&filter=B2B&order_id=$query';
+    String encodedOrderId = Uri.encodeComponent(query);
+
+    String url = '${await Constants.getBaseUrl()}/orders?orderStatus=3&filter=B2B&order_id=$encodedOrderId';
     final token = await _getToken();
     if (token == null) return;
 
@@ -656,13 +669,13 @@ class BookProvider with ChangeNotifier {
         final data = jsonDecode(response.body);
         print(response.body);
 
-        ordersB2B = [Order.fromJson(data)];
+        _ordersB2B = [Order.fromJson(data)];
         print(response.body);
       } else {
-        ordersB2B = [];
+        _ordersB2B = [];
       }
     } catch (e) {
-      ordersB2B = [];
+      _ordersB2B = [];
     } finally {
       isLoadingB2B = false;
       notifyListeners();
@@ -670,7 +683,9 @@ class BookProvider with ChangeNotifier {
   }
 
   Future<void> searchB2COrders(String query, String searchType) async {
-    String url = '${await Constants.getBaseUrl()}/orders?orderStatus=3&filter=B2C&order_id=$query';
+    String encodedOrderId = Uri.encodeComponent(query);
+
+    String url = '${await Constants.getBaseUrl()}/orders?orderStatus=3&filter=B2C&order_id=$encodedOrderId';
     final token = await _getToken();
     if (token == null) return;
 
@@ -696,13 +711,13 @@ class BookProvider with ChangeNotifier {
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
 
-        ordersB2C = [Order.fromJson(data)];
-        log('ordersB2C: $ordersB2C');
+        _ordersB2C = [Order.fromJson(data)];
+        log('_ordersB2C: $ordersB2C');
       } else {
-        ordersB2C = [];
+        _ordersB2C = [];
       }
     } catch (e) {
-      ordersB2C = [];
+      _ordersB2C = [];
     } finally {
       isLoadingB2C = false;
       notifyListeners();
@@ -715,7 +730,8 @@ class BookProvider with ChangeNotifier {
     if (token == null) return;
 
     if (searchType == 'Order ID') {
-      url += '&order_id=$query';
+      String encodedOrderId = Uri.encodeComponent(query);
+      url += '&order_id=$encodedOrderId';
     } else {
       url += '&awb_number=$query';
     }
@@ -739,15 +755,15 @@ class BookProvider with ChangeNotifier {
         // print(response.body);
 
         // final newData = data['orders'][0]; //////////////////////////////////////////////////////////////
-        ordersBooked = [Order.fromJson(data)];
-        // ordersBooked = [Order.fromJson(data)];
-        log('ordersBooked: $ordersBooked');
+        _ordersBooked = [Order.fromJson(data)];
+        // _ordersBooked = [Order.fromJson(data)];
+        log('_ordersBooked: $ordersBooked');
       } else {
-        ordersBooked = [];
+        _ordersBooked = [];
       }
     } catch (e) {
       log('error: $e');
-      ordersBooked = [];
+      _ordersBooked = [];
     } finally {
       isLoadingBooked = false;
       notifyListeners();
@@ -994,80 +1010,80 @@ class BookProvider with ChangeNotifier {
     html.Url.revokeObjectUrl(url);
   }
 
-  Future<void> fetchOrdersByMarketplace(String marketplace, String orderType, int page, {DateTime? date}) async {
-    String baseUrl = '${await Constants.getBaseUrl()}/orders';
-
-    // Build URL with base parameters
-    String url = '$baseUrl?orderStatus=3&customerType=$orderType&marketplace=$marketplace&page=$page';
-
-    // Add date parameter if provided
-    if (date != null || date == 'Select Date') {
-      String formattedDate = DateFormat('yyyy-MM-dd').format(date!);
-      url += '&date=$formattedDate';
-    }
-
-    String? token = await _getToken();
-    if (token == null) {
-      print('Token is null, unable to fetch orders.');
-      return;
-    }
-
-    try {
-      if (orderType == 'B2B') {
-        isLoadingB2B = true;
-      } else {
-        isLoadingB2C = true;
-      }
-      notifyListeners();
-
-      final response = await http.get(
-        Uri.parse(url),
-        headers: {
-          'Authorization': 'Bearer $token',
-          'Content-Type': 'application/json',
-        },
-      );
-
-      if (response.statusCode == 200) {
-        final jsonResponse = jsonDecode(response.body);
-        List<Order> orders = (jsonResponse['orders'] as List).map((orderJson) => Order.fromJson(orderJson)).toList();
-
-        // Store fetched orders and update pagination state
-        if (orderType == 'B2B') {
-          ordersB2B = orders;
-          currentPageB2B = page;
-          totalPagesB2B = jsonResponse['totalPages'];
-          selectedB2BItems = List<bool>.filled(orders.length, false);
-        } else {
-          ordersB2C = orders;
-          currentPageB2C = page;
-          totalPagesB2C = jsonResponse['totalPages'];
-          selectedB2CItems = List<bool>.filled(orders.length, false);
-        }
-        notifyListeners();
-      } else if (response.statusCode == 401) {
-        print('Unauthorized access - Token might be expired or invalid.');
-      } else if (response.statusCode == 404) {
-        if (orderType == 'B2B') {
-          ordersB2B = [];
-        } else {
-          ordersB2C = [];
-        }
-        notifyListeners();
-      } else {
-        throw Exception('Failed to load orders: ${response.statusCode}');
-      }
-    } catch (e) {
-      print('Error fetching orders: $e');
-    } finally {
-      if (orderType == 'B2B') {
-        isLoadingB2B = false;
-      } else {
-        isLoadingB2C = false;
-      }
-      notifyListeners();
-    }
-  }
+  // Future<void> fetchOrdersByMarketplace(String marketplace, String orderType, int page, {DateTime? date}) async {
+  //   String baseUrl = '${await Constants.getBaseUrl()}/orders';
+  //
+  //   // Build URL with base parameters
+  //   String url = '$baseUrl?orderStatus=3&customerType=$orderType&marketplace=$marketplace&page=$page';
+  //
+  //   // Add date parameter if provided
+  //   if (date != null || date == 'Select Date') {
+  //     String formattedDate = DateFormat('yyyy-MM-dd').format(date!);
+  //     url += '&date=$formattedDate';
+  //   }
+  //
+  //   String? token = await _getToken();
+  //   if (token == null) {
+  //     print('Token is null, unable to fetch orders.');
+  //     return;
+  //   }
+  //
+  //   try {
+  //     if (orderType == 'B2B') {
+  //       isLoadingB2B = true;
+  //     } else {
+  //       isLoadingB2C = true;
+  //     }
+  //     notifyListeners();
+  //
+  //     final response = await http.get(
+  //       Uri.parse(url),
+  //       headers: {
+  //         'Authorization': 'Bearer $token',
+  //         'Content-Type': 'application/json',
+  //       },
+  //     );
+  //
+  //     if (response.statusCode == 200) {
+  //       final jsonResponse = jsonDecode(response.body);
+  //       List<Order> orders = (jsonResponse['orders'] as List).map((orderJson) => Order.fromJson(orderJson)).toList();
+  //
+  //       // Store fetched orders and update pagination state
+  //       if (orderType == 'B2B') {
+  //         _ordersB2B = orders;
+  //         currentPageB2B = page;
+  //         totalPagesB2B = jsonResponse['totalPages'];
+  //         selectedB2BItems = List<bool>.filled(orders.length, false);
+  //       } else {
+  //         _ordersB2C = orders;
+  //         currentPageB2C = page;
+  //         totalPagesB2C = jsonResponse['totalPages'];
+  //         selectedB2CItems = List<bool>.filled(orders.length, false);
+  //       }
+  //       notifyListeners();
+  //     } else if (response.statusCode == 401) {
+  //       print('Unauthorized access - Token might be expired or invalid.');
+  //     } else if (response.statusCode == 404) {
+  //       if (orderType == 'B2B') {
+  //         _ordersB2B = [];
+  //       } else {
+  //         _ordersB2C = [];
+  //       }
+  //       notifyListeners();
+  //     } else {
+  //       throw Exception('Failed to load orders: ${response.statusCode}');
+  //     }
+  //   } catch (e) {
+  //     print('Error fetching orders: $e');
+  //   } finally {
+  //     if (orderType == 'B2B') {
+  //       isLoadingB2B = false;
+  //     } else {
+  //       isLoadingB2C = false;
+  //     }
+  //     notifyListeners();
+  //   }
+  // }
 
   Future<void> fetchBookedOrdersByMarketplace(String marketplace, int page, {DateTime? date}) async {
     log("$marketplace, $page");
@@ -1114,13 +1130,13 @@ class BookProvider with ChangeNotifier {
 
         Logger().e("length: ${orders.length}");
 
-        ordersBooked = orders;
+        _ordersBooked = orders;
         currentPageBooked = page; // Track current page for B2B
         totalPagesBooked = jsonResponse['totalPages']; // Assuming API returns total pages
       } else if (response.statusCode == 401) {
         print('Unauthorized access - Token might be expired or invalid.');
       } else if (response.statusCode == 404) {
-        ordersBooked = [];
+        _ordersBooked = [];
         notifyListeners();
 
         log('Orders not found');

@@ -20,6 +20,7 @@ class ManifestPage extends StatefulWidget {
 class _ManifestPageState extends State<ManifestPage> {
   final TextEditingController _searchController = TextEditingController();
   String _selectedDate = 'Select Date';
+  DateTime? picked;
 
   @override
   void initState() {
@@ -51,55 +52,48 @@ class _ManifestPageState extends State<ManifestPage> {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.start,
                   children: [
-                    SizedBox(
+                    Container(
+                      height: 35,
                       width: 200,
-                      child: Container(
-                        height: 40,
-                        decoration: BoxDecoration(
-                          border: Border.all(
-                            color: const Color.fromARGB(183, 6, 90, 216),
-                          ),
-                          borderRadius: BorderRadius.circular(8),
+                      decoration: BoxDecoration(
+                        border: Border.all(
+                          color: const Color.fromARGB(183, 6, 90, 216),
                         ),
-                        child: TextField(
-                          controller: _searchController,
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(color: Colors.black),
-                          decoration: const InputDecoration(
-                            hintText: 'Search by Order ID',
-                            hintStyle: TextStyle(color: Colors.black),
-                            border: InputBorder.none,
-                            contentPadding: EdgeInsets.symmetric(vertical: 8.0),
-                            prefixIcon: Icon(
-                              Icons.search,
-                              color: Color.fromARGB(183, 6, 90, 216),
-                            ),
-                          ),
-                          onChanged: (query) {
-                            // Trigger a rebuild to show/hide the search button
-                            setState(() {
-                              // Update search focus
-                            });
-                            if (query.isEmpty) {
-                              // Reset to all orders if search is cleared
-                              manifestProvider.fetchOrdersWithStatus8();
-                            }
-                          },
-                          onTap: () {
-                            setState(() {
-                              // Mark the search field as focused
-                            });
-                          },
-                          onSubmitted: (query) {
-                            if (query.isNotEmpty) {
-                              manifestProvider.searchOrders(query);
-                            }
-                          },
-                          onEditingComplete: () {
-                            // Mark it as not focused when done
-                            FocusScope.of(context).unfocus(); // Dismiss the keyboard
-                          },
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: TextField(
+                        controller: _searchController,
+                        style: const TextStyle(color: Colors.black),
+                        decoration: const InputDecoration(
+                          hintText: 'Search by Order ID',
+                          hintStyle: TextStyle(color: Colors.black),
+                          border: InputBorder.none,
+                          contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 12.0),
                         ),
+                        onChanged: (query) {
+                          // Trigger a rebuild to show/hide the search button
+                          setState(() {
+                            // Update search focus
+                          });
+                          if (query.isEmpty) {
+                            // Reset to all orders if search is cleared
+                            manifestProvider.fetchOrdersWithStatus8();
+                          }
+                        },
+                        onTap: () {
+                          setState(() {
+                            // Mark the search field as focused
+                          });
+                        },
+                        onSubmitted: (query) {
+                          if (query.isNotEmpty) {
+                            manifestProvider.searchOrders(query);
+                          }
+                        },
+                        onEditingComplete: () {
+                          // Mark it as not focused when done
+                          FocusScope.of(context).unfocus(); // Dismiss the keyboard
+                        },
                       ),
                     ),
                     const SizedBox(width: 8),
@@ -115,74 +109,6 @@ class _ManifestPageState extends State<ManifestPage> {
                       ),
                     ),
                     const Spacer(),
-                    // ElevatedButton(
-                    //   style: ElevatedButton.styleFrom(
-                    //     backgroundColor: AppColors.cardsred,
-                    //   ),
-                    //   onPressed: manifestProvider.isCancel
-                    //       ? null // Disable button while loading
-                    //       : () async {
-                    //           final provider = Provider.of<ManifestProvider>(
-                    //               context,
-                    //               listen: false);
-                    //           // Collect selected order IDs
-                    //           List<String> selectedOrderIds = provider.orders
-                    //               .asMap()
-                    //               .entries
-                    //               .where((entry) =>
-                    //                   provider.selectedProducts[entry.key])
-                    //               .map((entry) => entry.value.orderId)
-                    //               .toList();
-                    //           if (selectedOrderIds.isEmpty) {
-                    //             // Show an error message if no orders are selected
-                    //             ScaffoldMessenger.of(context).showSnackBar(
-                    //               const SnackBar(
-                    //                 content: Text('No orders selected'),
-                    //                 backgroundColor: AppColors.cardsred,
-                    //               ),
-                    //             );
-                    //           } else {
-                    //             // Set loading status to true before starting the operation
-                    //             provider.setCancelStatus(true);
-                    //             // Call confirmOrders method with selected IDs
-                    //             String resultMessage = await provider
-                    //                 .cancelOrders(context, selectedOrderIds)
-                    //             // Set loading status to false after operation completes
-                    //             provider.setCancelStatus(false);
-                    //             // Determine the background color based on the result
-                    //             Color snackBarColor;
-                    //             if (resultMessage.contains('success')) {
-                    //               snackBarColor =
-                    //                   AppColors.green; // Success: Green
-                    //             } else if (resultMessage.contains('error') ||
-                    //                 resultMessage.contains('failed')) {
-                    //               snackBarColor =
-                    //                   AppColors.cardsred; // Error: Red
-                    //             } else {
-                    //               snackBarColor =
-                    //                   AppColors.orange; // Other: Orange
-                    //             }
-                    //             // Show feedback based on the result
-                    //             ScaffoldMessenger.of(context).showSnackBar(
-                    //               SnackBar(
-                    //                 content: Text(resultMessage),
-                    //                 backgroundColor: snackBarColor,
-                    //               ),
-                    //             );
-                    //           }
-                    //         },
-                    //   child: manifestProvider.isCancel
-                    //       ? const SizedBox(
-                    //           width: 20,
-                    //           height: 20,
-                    //           child: CircularProgressIndicator(
-                    //               color: Colors.white),
-                    //         )
-                    //       : const Text(
-                    //           'Cancel Orders',
-                    //           style: TextStyle(color: Colors.white),
-                    //         ),
-                    // ),
                     Column(
                       children: [
                         Text(
@@ -196,7 +122,7 @@ class _ManifestPageState extends State<ManifestPage> {
                           message: 'Filter by Date',
                           child: IconButton(
                             onPressed: () async {
-                              final DateTime? picked = await showDatePicker(
+                              picked = await showDatePicker(
                                 context: context,
                                 initialDate: DateTime.now(),
                                 firstDate: DateTime(2020),
@@ -217,22 +143,15 @@ class _ManifestPageState extends State<ManifestPage> {
                               );
 
                               if (picked != null) {
-                                String formattedDate = DateFormat('yyyy-MM-dd').format(picked);
+                                String formattedDate = DateFormat('yyyy-MM-dd').format(picked!);
                                 setState(() {
                                   _selectedDate = formattedDate;
                                 });
 
-                                if (selectedCourier != 'All') {
-                                  manifestProvider.fetchOrdersByBookingCourier(
-                                    selectedCourier,
-                                    manifestProvider.currentPage,
-                                    date: picked,
-                                  );
-                                } else {
-                                  manifestProvider.fetchOrdersWithStatus8(
-                                    date: picked,
-                                  );
-                                }
+                                manifestProvider.fetchOrdersWithStatus8(
+                                  date: picked,
+                                  courier: selectedCourier,
+                                );
                               }
                             },
                             icon: const Icon(
@@ -258,14 +177,10 @@ class _ManifestPageState extends State<ManifestPage> {
                               setState(() {
                                 selectedCourier = value;
                               });
-                              if (value == 'All') {
-                                manifestProvider.fetchOrdersWithStatus8(
-                                  date: _selectedDate == 'Select Date' ? null : DateTime.parse(_selectedDate),
-                                );
-                              } else {
-                                selectedCourier = value;
-                                manifestProvider.fetchOrdersByBookingCourier(value, manifestProvider.currentPage, date: _selectedDate == 'Select Date' ? null : DateTime.parse(_selectedDate));
-                              }
+                              manifestProvider.fetchOrdersWithStatus8(
+                                date: picked,
+                                courier: selectedCourier,
+                              );
                               log('Selected: $value');
                             },
                             itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[

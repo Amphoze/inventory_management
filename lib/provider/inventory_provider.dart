@@ -86,7 +86,7 @@ class InventoryProvider with ChangeNotifier {
   //         'Authorization': 'Bearer $token',
   //       },
   //     );
-  //     // Print the raw response for debugging purposes
+  //     // // print the raw response for debugging purposes
   //     // log('Response Status Code: ${response.statusCode}');
   //     // log('Response Body: ${response.body}');
   //     if (response.statusCode == 200) {
@@ -157,7 +157,7 @@ class InventoryProvider with ChangeNotifier {
             final brand = product['brand'] ?? {};
             final boxsize = product['boxSize'] ?? {};
             final subInventories = item['subInventory'];
-            log('subInventories: $subInventories');
+            // log('subInventories: $subInventories');
             List<dynamic> subData = subInventories.map((subInventory) {
               return {
                 'warehouseId': subInventory['warehouseId']['_id'],
@@ -166,7 +166,7 @@ class InventoryProvider with ChangeNotifier {
                 'quantity': subInventory['quantity']
               };
             }).toList();
-            log('subData: $subData');
+            // log('subData: $subData');
 
             final thresholdQuantity = subData.firstWhere((element) =>
                 element['warehouseId'] == warehouseId)['thresholdQuantity'];
@@ -196,7 +196,7 @@ class InventoryProvider with ChangeNotifier {
             };
           }).toList();
 
-          log('bhaai: $inventory');
+          // log('bhaai: $inventory');
           // log('fetchedInventory: $fetchedInventory');
 
           inventory = fetchedInventory.reversed.toList();
@@ -399,7 +399,7 @@ class InventoryProvider with ChangeNotifier {
           notifyListeners();
         }
       } else {
-        // Print error details for better debugging
+        // // print error details for better debugging
         errorMessage =
             'Failed to update inventory. Status code: ${response.statusCode}. Response: ${response.body}';
         log(errorMessage.toString());
@@ -463,7 +463,7 @@ class InventoryProvider with ChangeNotifier {
           notifyListeners();
         }
       } else {
-        // Print error details for better debugging
+        // // print error details for better debugging
         errorMessage =
             'Failed to update inventory. Status code: ${response.statusCode}. Response: ${response.body}';
         log(errorMessage.toString());

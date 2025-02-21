@@ -105,17 +105,12 @@ class _SupportPageState extends State<SupportPage> {
                         ),
                         child: TextField(
                           controller: _searchController,
-                          textAlign: TextAlign.center,
                           style: const TextStyle(color: Colors.black),
                           decoration: const InputDecoration(
                             hintText: 'Search by Order ID',
                             hintStyle: TextStyle(color: Colors.black),
                             border: InputBorder.none,
-                            contentPadding: EdgeInsets.symmetric(vertical: 8.0),
-                            prefixIcon: Icon(
-                              Icons.search,
-                              color: Color.fromARGB(183, 6, 90, 216),
-                            ),
+                            contentPadding: EdgeInsets.symmetric(vertical: 12, horizontal: 8),
                           ),
                           onChanged: (query) {
                             setState(() {});

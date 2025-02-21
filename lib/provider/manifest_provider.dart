@@ -118,7 +118,7 @@ class ManifestProvider with ChangeNotifier {
     }
   }
 
-  Future<void> fetchOrdersWithStatus8({DateTime? date}) async {
+  Future<void> fetchOrdersWithStatus8({DateTime? date, String? courier = 'All'}) async {
     _isLoading = true;
     setRefreshingOrders(true);
     notifyListeners();
@@ -127,9 +127,13 @@ class ManifestProvider with ChangeNotifier {
     final token = prefs.getString('authToken') ?? '';
     String url = '${await Constants.getBaseUrl()}/orders?orderStatus=8&page=$_currentPage';
 
-    if (date != null || date == 'Select Date') {
+    if (date != null) {
       String formattedDate = DateFormat('yyyy-MM-dd').format(date!);
       url += '&date=$formattedDate';
+    }
+
+    if(courier != 'All'){
+      url += '&bookingCourier=$courier';
     }
 
     Uri uri = Uri.parse(url);

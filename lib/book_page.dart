@@ -175,21 +175,14 @@ class _BookPageState extends State<BookPage> with SingleTickerProviderStateMixin
                 Expanded(
                   child: TextField(
                     controller: controller,
-                    decoration: InputDecoration(
-                      prefixIcon: IconButton(
-                        icon: const Icon(
-                          Icons.search,
-                          color: Color.fromRGBO(117, 117, 117, 1),
-                        ),
-                        onPressed: () {},
-                      ),
+                    decoration: const InputDecoration(
                       hintText: 'Search Orders',
-                      hintStyle: const TextStyle(
+                      hintStyle: TextStyle(
                         color: Color.fromRGBO(117, 117, 117, 1),
                         fontSize: 16,
                       ),
                       border: InputBorder.none,
-                      contentPadding: const EdgeInsets.symmetric(vertical: 10.0),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12.0),
                     ),
                     style: const TextStyle(color: AppColors.black),
                     onChanged: (text) {
@@ -387,6 +380,8 @@ class _BookPageState extends State<BookPage> with SingleTickerProviderStateMixin
     );
   }
 
+  DateTime? picked;
+
   Widget _buildConfirmButtons(String orderType) {
     final bookProvider = Provider.of<BookProvider>(context, listen: false);
     return Align(
@@ -409,7 +404,7 @@ class _BookPageState extends State<BookPage> with SingleTickerProviderStateMixin
                   message: 'Filter by Date',
                   child: IconButton(
                     onPressed: () async {
-                      final DateTime? picked = await showDatePicker(
+                      picked = await showDatePicker(
                         context: context,
                         initialDate: DateTime.now(),
                         firstDate: DateTime(2020),
@@ -429,26 +424,20 @@ class _BookPageState extends State<BookPage> with SingleTickerProviderStateMixin
                         },
                       );
 
+                      Logger().e('picked: $picked');
+
                       if (picked != null) {
-                        String formattedDate = DateFormat('dd-MM-yyyy').format(picked);
+                        String formattedDate = DateFormat('dd-MM-yyyy').format(picked!);
                         setState(() {
                           _selectedDate = formattedDate;
                         });
 
-                        if (selectedCourier != 'All') {
-                          bookProvider.fetchOrdersByMarketplace(
-                            selectedCourier,
-                            orderType,
-                            bookProvider.currentPageB2B,
-                            date: picked,
-                          );
-                        } else {
-                          bookProvider.fetchOrders(
-                            orderType,
-                            bookProvider.currentPageB2B,
-                            date: picked,
-                          );
-                        }
+                        bookProvider.fetchOrders(
+                          orderType,
+                          bookProvider.currentPageB2B,
+                          date: picked,
+                          market: selectedCourier
+                        );
                       }
                     },
                     icon: const Icon(
@@ -470,20 +459,16 @@ class _BookPageState extends State<BookPage> with SingleTickerProviderStateMixin
                   builder: (context, provider, child) {
                     return PopupMenuButton<String>(
                       tooltip: 'Filter by Marketplace',
-                      initialValue: 'All',
                       onSelected: (String value) {
-                        setState(() {
-                          selectedCourier = value;
-                        });
-                        if (value == 'All') {
-                          bookProvider.fetchOrders(orderType, bookProvider.currentPageB2B,
-                              date: _selectedDate == 'Select Date' ? null : DateTime.parse(_selectedDate));
-                        } else {
-                          bookProvider.fetchOrdersByMarketplace(
-                              value, orderType, orderType == 'B2B' ? bookProvider.currentPageB2B : bookProvider.currentPageB2C,
-                              date: _selectedDate == 'Select Date' ? null : DateTime.parse(_selectedDate));
-                        }
-                        log('Selected: $value');
+                          setState(() {
+                            selectedCourier = value;
+                          });
+                          bookProvider.fetchOrders(
+                            orderType,
+                            bookProvider.currentPageB2B,
+                            date: picked,
+                            market: selectedCourier
+                          );
                       },
                       itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
                         ...provider.marketplaces.map((marketplace) => PopupMenuItem<String>(

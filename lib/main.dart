@@ -65,7 +65,7 @@ void main() async {
       ChangeNotifierProvider(create: (context) => BinApi()),
       ChangeNotifierProvider(create: (context) => AuthProvider()),
       ChangeNotifierProvider(create: (context) => CheckBoxProvider()),
-      ChangeNotifierProvider(create: (context) => ManagementProvider()),
+      // ChangeNotifierProvider(create: (context) => ManagementProvider()),
       ChangeNotifierProvider(create: (context) => DashboardProvider()),
       ChangeNotifierProvider(create: (context) => LabelPageApi()),
       ChangeNotifierProvider(create: (context) => MarketplaceProvider()),

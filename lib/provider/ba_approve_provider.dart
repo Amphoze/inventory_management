@@ -166,7 +166,7 @@ class BaApproveProvider with ChangeNotifier {
     }
   }
 
-  Future<void> fetchOrdersWithStatus2({DateTime? date}) async {
+  Future<void> fetchOrdersWithStatus2({DateTime? date, String? market = 'All'}) async {
     _isLoading = true;
     setRefreshingOrders(true);
     notifyListeners();
@@ -180,14 +180,11 @@ class BaApproveProvider with ChangeNotifier {
       String formattedDate = DateFormat('yyyy-MM-dd').format(date);
       url += '&date=$formattedDate';
     }
+    if(market != 'All'){
+      url += '&marketplace=$market';
+    }
 
     try {
-      // String requestUrl = '$url$_currentPage';
-      // if (date != null || date == 'Select Date') {
-      //   String formattedDate = DateFormat('yyyy-MM-dd').format(date!);
-      //   requestUrl += '&date=$formattedDate';
-      // }
-
       final response = await http.get(Uri.parse(url), headers: {
         'Authorization': 'Bearer $token',
         'Content-Type': 'application/json',
@@ -248,10 +245,12 @@ class BaApproveProvider with ChangeNotifier {
     notifyListeners();
 
     final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString('authToken') ?? ''; // Fetch the token
+    final token = prefs.getString('authToken') ?? '';
+    String encodedOrderId = Uri.encodeComponent(query);
+
 
     final url =
-        '${await Constants.getBaseUrl()}/orders?orderStatus=2&ba_approve=false&order_id=$query';
+        '${await Constants.getBaseUrl()}/orders?orderStatus=2&ba_approve=false&order_id=$encodedOrderId';
 
     print('Searching orders with term: $query');
 
