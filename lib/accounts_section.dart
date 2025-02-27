@@ -85,7 +85,7 @@ class _AccountsSectionPageState extends State<AccountsSectionPage> with SingleTi
         children: [
           Container(
             width: 200,
-            height: 34,
+            height: 40,
             margin: const EdgeInsets.only(right: 16),
             child: DropdownButtonFormField<String>(
               value: selectedSearchType,
@@ -105,8 +105,8 @@ class _AccountsSectionPageState extends State<AccountsSectionPage> with SingleTi
             ),
           ),
           Container(
-            width: 200,
-            height: 34,
+            width: 220,
+            height: 40,
             decoration: BoxDecoration(
               border: Border.all(
                 color: AppColors.primaryBlue,
@@ -121,21 +121,14 @@ class _AccountsSectionPageState extends State<AccountsSectionPage> with SingleTi
                 Expanded(
                   child: TextField(
                     controller: controller,
-                    decoration: InputDecoration(
-                      prefixIcon: IconButton(
-                        icon: const Icon(
-                          Icons.search,
-                          color: Color.fromRGBO(117, 117, 117, 1),
-                        ),
-                        onPressed: () {},
-                      ),
+                    decoration: const InputDecoration(
                       hintText: 'Search Orders',
-                      hintStyle: const TextStyle(
+                      hintStyle: TextStyle(
                         color: Color.fromRGBO(117, 117, 117, 1),
                         fontSize: 16,
                       ),
                       border: InputBorder.none,
-                      contentPadding: const EdgeInsets.symmetric(vertical: 10.0),
+                      contentPadding: EdgeInsets.symmetric(vertical: 13, horizontal: 8),
                     ),
                     style: const TextStyle(color: AppColors.black),
                     onChanged: (text) {
@@ -146,7 +139,11 @@ class _AccountsSectionPageState extends State<AccountsSectionPage> with SingleTi
                     },
                     onSubmitted: (text) {
                       Logger().e(selectedSearchType);
-                      Provider.of<AccountsProvider>(context, listen: false).searchBookedOrders(text, selectedSearchType);
+                      if (text.isEmpty) {
+                        _refreshBookedOrders();
+                      } else {
+                        Provider.of<AccountsProvider>(context, listen: false).searchBookedOrders(text, selectedSearchType);
+                      }
                     },
                   ),
                 ),
@@ -157,9 +154,11 @@ class _AccountsSectionPageState extends State<AccountsSectionPage> with SingleTi
                       color: Colors.grey.shade600,
                     ),
                     onPressed: () {
-                      controller.clear();
-                      Provider.of<AccountsProvider>(context, listen: false).clearSearchResults();
+                      setState(() {
+                        controller.clear();
+                      });
                       _refreshBookedOrders();
+                      Provider.of<AccountsProvider>(context, listen: false).clearSearchResults();
                     },
                   ),
               ],

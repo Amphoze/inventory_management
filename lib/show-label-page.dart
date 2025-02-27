@@ -112,7 +112,7 @@ class _ManageLabelState extends State<ManageLabel> {
               color: Colors.white,
               boxShadow: [
                 BoxShadow(
-                  color: Colors.grey.withOpacity(0.2),
+                  color: Colors.grey.withValues(alpha: 0.2),
                   blurRadius: 15,
                   spreadRadius: 5,
                 ),
@@ -186,7 +186,7 @@ class _ManageLabelState extends State<ManageLabel> {
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(16),
                                 side: BorderSide(
-                                  color: Colors.grey.withOpacity(0.2),
+                                  color: Colors.grey.withValues(alpha: 0.2),
                                   width: 1,
                                 ),
                               ),
@@ -197,7 +197,7 @@ class _ManageLabelState extends State<ManageLabel> {
                                   borderRadius: BorderRadius.circular(16),
                                   gradient: LinearGradient(
                                     colors: [
-                                      iconColor.withOpacity(0.05),
+                                      iconColor.withValues(alpha: 0.05),
                                       Colors.white,
                                     ],
                                     begin: Alignment.topLeft,
@@ -211,10 +211,10 @@ class _ManageLabelState extends State<ManageLabel> {
                                     Container(
                                       decoration: BoxDecoration(
                                         shape: BoxShape.circle,
-                                        color: iconColor.withOpacity(0.15),
+                                        color: iconColor.withValues(alpha: 0.15),
                                         boxShadow: [
                                           BoxShadow(
-                                            color: iconColor.withOpacity(0.2),
+                                            color: iconColor.withValues(alpha: 0.2),
                                             blurRadius: 8,
                                             spreadRadius: 2,
                                           ),
@@ -550,7 +550,7 @@ class _ManageLabelState extends State<ManageLabel> {
                                   enabledBorder: OutlineInputBorder(
                                     borderRadius: BorderRadius.circular(30.0),
                                     borderSide: BorderSide(
-                                      color: Colors.grey.withOpacity(0.5), // Border color when enabled
+                                      color: Colors.grey.withValues(alpha: 0.5), // Border color when enabled
                                       width: 1.0,
                                     ),
                                   ),
@@ -651,7 +651,7 @@ class _ManageLabelState extends State<ManageLabel> {
                           scrollDirection: Axis.vertical,
                           child: DataTable(
                             headingRowColor: WidgetStateProperty.resolveWith(
-                              (states) => Colors.blue.withOpacity(0.2),
+                              (states) => Colors.blue.withValues(alpha: 0.2),
                             ),
                             columns: columns.map((name) {
                               return DataColumn(
@@ -1064,7 +1064,7 @@ class _LabelFormFieldsState extends State<LabelFormFields> {
           //                 borderRadius: BorderRadius.circular(8),
           //                 boxShadow: [
           //                   BoxShadow(
-          //                     color: Colors.grey.withOpacity(0.2),
+          //                     color: Colors.grey.withValues(alpha: 0.2),
           //                     spreadRadius: 2,
           //                     blurRadius: 5,
           //                   ),

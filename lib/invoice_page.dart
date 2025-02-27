@@ -87,7 +87,7 @@ class _InvoicePageState extends State<InvoicePage> {
                           enabledBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(30.0),
                             borderSide: BorderSide(
-                              color: Colors.grey.withOpacity(
+                              color: Colors.grey.withValues(alpha: 
                                   0.5), // Border color when enabled
                               width: 1.0,
                             ),

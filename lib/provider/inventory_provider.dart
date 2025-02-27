@@ -15,6 +15,12 @@ class InventoryProvider with ChangeNotifier {
   int totalPages = 1;
   bool isLoading = false;
   String? errorMessage;
+  String selectedSearchBy = 'productSku'; // Default selection
+
+  void setSelectedSearchBy(String value) {
+    selectedSearchBy = value;
+    notifyListeners();
+  }
 
   // late final String baseUrl;
 
@@ -124,8 +130,7 @@ class InventoryProvider with ChangeNotifier {
 
     log('ye hai id: $warehouseId');
 
-    final url = Uri.parse(
-        '$baseUrl/inventory/warehouse?warehouse=$warehouseId&page=$page&limit=20'); // Adjust limit as needed
+    final url = Uri.parse('$baseUrl/inventory/warehouse?warehouse=$warehouseId&page=$page&limit=20'); // Adjust limit as needed
 
     try {
       final token = await AuthProvider().getToken();
@@ -148,31 +153,27 @@ class InventoryProvider with ChangeNotifier {
         final data = json.decode(response.body);
         if (data.containsKey('data')) {
           // Process inventory data with default values
-          List<Map<String, dynamic>> fetchedInventory =
-              List<Map<String, dynamic>>.from(data['data']['inventories'])
-                  .map((item) {
+          List<Map<String, dynamic>> fetchedInventory = List<Map<String, dynamic>>.from(data['data']['inventories']).map((item) {
             final inventoryId = item['_id'].toString() ?? '';
             final product = item['product_id'] ?? {};
             final category = product['category'] ?? {};
             final brand = product['brand'] ?? {};
             final boxsize = product['boxSize'] ?? {};
-            final subInventories = item['subInventory'];
+            final subInventories = item['subInventory'] ?? [];
             // log('subInventories: $subInventories');
             List<dynamic> subData = subInventories.map((subInventory) {
               return {
-                'warehouseId': subInventory['warehouseId']['_id'],
-                'warehouseName': subInventory['warehouseId']['name'],
-                'thresholdQuantity': subInventory['thresholdQuantity'],
-                'quantity': subInventory['quantity']
+                'warehouseId': subInventory['warehouseId']?['_id'] ?? '',
+                'warehouseName': subInventory['warehouseId']?['name'] ?? '',
+                'thresholdQuantity': subInventory['thresholdQuantity'] ?? 0,
+                'quantity': subInventory['quantity'] ?? 0
               };
             }).toList();
             // log('subData: $subData');
 
-            final thresholdQuantity = subData.firstWhere((element) =>
-                element['warehouseId'] == warehouseId)['thresholdQuantity'];
+            final thresholdQuantity = subData.firstWhere((element) => element['warehouseId'] == warehouseId)['thresholdQuantity'];
 
-            final quantity = subData.firstWhere(
-                (element) => element['warehouseId'] == warehouseId)['quantity'];
+            final quantity = subData.firstWhere((element) => element['warehouseId'] == warehouseId)['quantity'];
 
             return {
               'COMPANY NAME': 'KATYAYANI ORGANICS',
@@ -180,10 +181,8 @@ class InventoryProvider with ChangeNotifier {
               'IMAGE': product['shopifyImage']?.toString() ?? '-',
               'BRAND': brand['name']?.toString() ?? '-',
               'SKU': product['sku']?.toString() ?? '-',
-              'LABEL SKU': product['label'] != null &&
-                      product['label']['labelSku'] != null
-                  ? product['label']['labelSku']?.toString()
-                  : '-',
+              'LABEL SKU':
+                  product['label'] != null && product['label']['labelSku'] != null ? product['label']['labelSku']?.toString() : '-',
               'PRODUCT NAME': product['displayName']?.toString() ?? '-',
               'MRP': product['mrp']?.toString() ?? '-',
               'BOXSIZE': boxsize['box_name']?.toString() ?? '_',
@@ -208,13 +207,12 @@ class InventoryProvider with ChangeNotifier {
           log('Unexpected response format: $data');
         }
       } else {
-        errorMessage =
-            'Failed to fetch inventory. Status code: ${response.statusCode}';
+        errorMessage = 'Failed to fetch inventory. Status code: ${response.statusCode}';
         log('Failed to fetch inventory: ${response.statusCode}');
       }
-    } catch (error) {
+    } catch (error, s) {
       errorMessage = 'An error occurred: $error';
-      log('An error occurred: $error');
+      log('fetchInventory error: $error $s');
     } finally {
       isLoading = false;
       notifyListeners();
@@ -223,22 +221,21 @@ class InventoryProvider with ChangeNotifier {
 
   final List<Map<String, dynamic>> replicationInventory = [];
 
-  Future<Map<String, dynamic>> searchByInventory(String query) async {
+  Future<Map<String, dynamic>> searchByInventory(String query, String searchBy) async {
     String baseUrl = await Constants.getBaseUrl();
     log(query);
 
     final pref = await SharedPreferences.getInstance();
     final warehouseId = pref.getString('warehouseId');
 
-    final url = Uri.parse(
-        '$baseUrl/inventory/warehouse?warehouse=$warehouseId&productSku=$query');
+    String url = '$baseUrl/inventory/warehouse?warehouse=$warehouseId&$searchBy=$query';
 
-    log('url: $url');
+    log('searchByInventory url: $url');
 
     try {
       final token = await AuthProvider().getToken();
       final response = await http.post(
-        url,
+        Uri.parse(url),
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer $token',
@@ -249,9 +246,7 @@ class InventoryProvider with ChangeNotifier {
         final data = json.decode(response.body);
         if (data.containsKey('data')) {
           // Process fetched inventory data
-          final fetchedInventory =
-              List<Map<String, dynamic>>.from(data["data"]['inventories'])
-                  .map((item) {
+          final fetchedInventory = List<Map<String, dynamic>>.from(data["data"]['inventories']).map((item) {
             final product = item['product_id'] ?? {};
             final category = product['category'] ?? {};
             final brand = product['brand'] ?? {};
@@ -260,20 +255,18 @@ class InventoryProvider with ChangeNotifier {
             final subInventories = item['subInventory'] ?? [];
             List<dynamic> subData = subInventories.map((subInventory) {
               return {
-                'warehouseId': subInventory['warehouseId']['_id'],
-                'warehouseName': subInventory['warehouseId']['name'],
-                'thresholdQuantity': subInventory['thresholdQuantity'],
-                'quantity': subInventory['quantity'],
+                'warehouseId': subInventory['warehouseId']?['_id'] ?? '',
+                'warehouseName': subInventory['warehouseId']?['name'] ?? '',
+                'thresholdQuantity': subInventory['thresholdQuantity'] ?? 0,
+                'quantity': subInventory['quantity'] ?? 0
               };
             }).toList();
 
             log('inventoryId: $inventoryId');
 
-            final thresholdQuantity = subData.firstWhere((element) =>
-                element['warehouseId'] == warehouseId)['thresholdQuantity'];
+            final thresholdQuantity = subData.firstWhere((element) => element['warehouseId'] == warehouseId)['thresholdQuantity'];
 
-            final quantity = subData.firstWhere(
-                (element) => element['warehouseId'] == warehouseId)['quantity'];
+            final quantity = subData.firstWhere((element) => element['warehouseId'] == warehouseId)['quantity'];
 
             return {
               'COMPANY NAME': 'KATYAYANI ORGANICS',
@@ -281,10 +274,8 @@ class InventoryProvider with ChangeNotifier {
               'IMAGE': product['shopifyImage']?.toString() ?? '-',
               'BRAND': brand['name']?.toString() ?? '-',
               'SKU': product['sku']?.toString() ?? '-',
-              'LABEL SKU': product['label'] != null &&
-                      product['label']['labelSku'] != null
-                  ? product['label']['labelSku']?.toString()
-                  : '-',
+              'LABEL SKU':
+                  product['label'] != null && product['label']['labelSku'] != null ? product['label']['labelSku']?.toString() : '-',
               'PRODUCT NAME': product['displayName']?.toString() ?? '-',
               'MRP': product['mrp']?.toString() ?? '-',
               'BOXSIZE': boxsize['box_name']?.toString() ?? '-',
@@ -305,14 +296,10 @@ class InventoryProvider with ChangeNotifier {
           return {'success': false, 'message': 'Unexpected response format'};
         }
       } else {
-        return {
-          'success': false,
-          'message':
-              'Failed to fetch inventory with status code: ${response.statusCode}'
-        };
+        return {'success': false, 'message': 'Failed to fetch inventory with status code: ${response.statusCode}'};
       }
-    } catch (error) {
-      log('An error occurred: $error');
+    } catch (error, s) {
+      log('searchByInventory error: $error $s');
       return {'success': false, 'message': 'An error occurred: $error'};
     }
   }
@@ -326,21 +313,18 @@ class InventoryProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> filterInventory(String query) async {
+  Future<void> filterInventory(String query, String searchBy) async {
     setLoading(true);
     try {
-      if (query.isEmpty) {
-        inventory = List<Map<String, dynamic>>.from(
-            replicationInventory); // Load all inventory
+      final result = await searchByInventory(query, searchBy);
+      if (result['success']) {
+        inventory = result["data"];
+        // log(result['data']['inventoryId']);
       } else {
-        final result = await searchByInventory(query);
-        if (result['success']) {
-          inventory = result["data"];
-          // log(result['data']['inventoryId']);
-        } else {
-          log(result['message']);
-        }
+        log(result['message']);
       }
+    } catch (e, s) {
+      log('filterInventory error: $e $s');
     } finally {
       setLoading(false);
     }
@@ -353,8 +337,7 @@ class InventoryProvider with ChangeNotifier {
     notifyListeners(); // Notify listeners about the change
   }
 
-  Future<void> updateInventoryQuantity(String inventoryId, int newQuantity,
-      String warehousId, String reason) async {
+  Future<void> updateInventoryQuantity(String inventoryId, int newQuantity, String warehousId, String reason) async {
     String baseUrl = await Constants.getBaseUrl();
     isLoading = true;
     errorMessage = null;
@@ -392,16 +375,14 @@ class InventoryProvider with ChangeNotifier {
         final data = json.decode(response.body);
         log('Inventory updated: $data');
 
-        final index =
-            inventory.indexWhere((item) => item['_id'] == inventoryId);
+        final index = inventory.indexWhere((item) => item['_id'] == inventoryId);
         if (index != -1) {
           inventory[index]['QUANTITY'] = newQuantity.toString();
           notifyListeners();
         }
       } else {
         // // print error details for better debugging
-        errorMessage =
-            'Failed to update inventory. Status code: ${response.statusCode}. Response: ${response.body}';
+        errorMessage = 'Failed to update inventory. Status code: ${response.statusCode}. Response: ${response.body}';
         log(errorMessage.toString());
       }
     } catch (error) {
@@ -456,16 +437,14 @@ class InventoryProvider with ChangeNotifier {
         final data = json.decode(response.body);
         log('Inventory updated: $data');
 
-        final index =
-            inventory.indexWhere((item) => item['_id'] == warehouseId);
+        final index = inventory.indexWhere((item) => item['_id'] == warehouseId);
         if (index != -1) {
           inventory[index]['QUANTITY'] = newQuantity.toString();
           notifyListeners();
         }
       } else {
         // // print error details for better debugging
-        errorMessage =
-            'Failed to update inventory. Status code: ${response.statusCode}. Response: ${response.body}';
+        errorMessage = 'Failed to update inventory. Status code: ${response.statusCode}. Response: ${response.body}';
         log(errorMessage.toString());
       }
     } catch (error) {
@@ -512,8 +491,7 @@ class InventoryProvider with ChangeNotifier {
           return null;
         }
       } else {
-        errorMessage =
-            'Failed to get download URL. Status code: ${response.statusCode}';
+        errorMessage = 'Failed to get download URL. Status code: ${response.statusCode}';
         log('Failed to get download URL: ${response.statusCode}');
         return null;
       }

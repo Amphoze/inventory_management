@@ -52,7 +52,7 @@ class CustomDataTable extends StatelessWidget {
         scrollDirection: Axis.vertical,
         child: DataTable(
           headingRowColor: WidgetStateColor.resolveWith(
-            (states) => AppColors.green.withOpacity(0.2),
+            (states) => AppColors.green.withValues(alpha: 0.2),
           ),
           columns: columns,
           rows: rows,
@@ -90,7 +90,7 @@ class _InventoryDataTableState extends State<InventoryDataTable> {
         scrollDirection: Axis.vertical,
         child: DataTable(
           headingRowColor: WidgetStateColor.resolveWith(
-            (states) => AppColors.blueAccent.withOpacity(0.2),
+            (states) => AppColors.blueAccent.withValues(alpha: 0.2),
           ),
           columns: widget.columnNames.map((name) {
             return DataColumn(
@@ -174,57 +174,57 @@ class _InventoryDataTableState extends State<InventoryDataTable> {
                     Container(
                       constraints: const BoxConstraints(
                           maxWidth: 300), // Prevent excessive width
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisSize: MainAxisSize
-                            .min, // Take minimum required vertical space
-                        children: thresholds.map<Widget>((threshold) {
-                          return Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 2.0),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Expanded(
-                                  child: Row(
-                                    children: [
-                                      const Icon(
-                                        Icons.warehouse,
-                                        size: 14,
-                                        color: Colors.grey,
-                                      ),
-                                      const SizedBox(width: 4),
-                                      Flexible(
-                                        child: Text(
-                                          threshold['warehouseName'] ?? 'N/A',
-                                          style: const TextStyle(fontSize: 13),
-                                          overflow: TextOverflow.ellipsis,
+                      child: SingleChildScrollView(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: thresholds.map<Widget>((threshold) {
+                            return Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 2.0),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Expanded(
+                                    child: Row(
+                                      children: [
+                                        const Icon(
+                                          Icons.warehouse,
+                                          size: 14,
+                                          color: Colors.grey,
                                         ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                Container(
-                                  margin: const EdgeInsets.only(left: 8),
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 6,
-                                    vertical: 2,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: Colors.grey.shade100,
-                                    borderRadius: BorderRadius.circular(4),
-                                  ),
-                                  child: Text(
-                                    threshold['quantity']?.toString() ?? 'N/A',
-                                    style: TextStyle(
-                                      fontSize: 13,
-                                      color: Colors.grey.shade700,
+                                        const SizedBox(width: 4),
+                                        Flexible(
+                                          child: Text(
+                                            threshold['warehouseName'] ?? 'N/A',
+                                            style: const TextStyle(fontSize: 13),
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                        ),
+                                      ],
                                     ),
                                   ),
-                                ),
-                              ],
-                            ),
-                          );
-                        }).toList(),
+                                  Container(
+                                    margin: const EdgeInsets.only(left: 8),
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 6,
+                                      vertical: 2,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: Colors.grey.shade100,
+                                      borderRadius: BorderRadius.circular(4),
+                                    ),
+                                    child: Text(
+                                      threshold['quantity']?.toString() ?? 'N/A',
+                                      style: TextStyle(
+                                        fontSize: 13,
+                                        color: Colors.grey.shade700,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            );
+                          }).toList(),
+                        ),
                       ),
                     ),
                   );
@@ -255,7 +255,7 @@ class _InventoryDataTableState extends State<InventoryDataTable> {
                 } else if (cellData is Widget) {
                   return DataCell(cellData);
                 } else if (columnName == 'THRESHOLD') {
-                  Logger().e('data: ${data['THRESHOLD']}');
+                  // Logger().e('data: ${data['THRESHOLD']}');
 
                   List<dynamic> thresholds =
                       data['THRESHOLD'] ?? []; // Get the list of thresholds
@@ -264,59 +264,59 @@ class _InventoryDataTableState extends State<InventoryDataTable> {
                     Container(
                       constraints: const BoxConstraints(
                           maxWidth: 300), // Prevent excessive width
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisSize: MainAxisSize
-                            .min, // Take minimum required vertical space
-                        children: thresholds.map<Widget>((threshold) {
-                          return Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 2.0),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Expanded(
-                                  child: Row(
-                                    children: [
-                                      const Icon(
-                                        Icons.warehouse,
-                                        size: 14,
-                                        color: Colors.grey,
-                                      ),
-                                      const SizedBox(width: 4),
-                                      Flexible(
-                                        child: Text(
-                                          threshold['warehouseName'] ?? 'N/A',
-                                          style: const TextStyle(fontSize: 13),
-                                          overflow: TextOverflow.ellipsis,
+                      child: SingleChildScrollView(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: thresholds.map<Widget>((threshold) {
+                            return Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 2.0),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Expanded(
+                                    child: Row(
+                                      children: [
+                                        const Icon(
+                                          Icons.warehouse,
+                                          size: 14,
+                                          color: Colors.grey,
                                         ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                Container(
-                                  margin: const EdgeInsets.only(left: 8),
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 6,
-                                    vertical: 2,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: Colors.grey.shade100,
-                                    borderRadius: BorderRadius.circular(4),
-                                  ),
-                                  child: Text(
-                                    threshold['thresholdQuantity']
-                                            ?.toString() ??
-                                        'N/A',
-                                    style: TextStyle(
-                                      fontSize: 13,
-                                      color: Colors.grey.shade700,
+                                        const SizedBox(width: 4),
+                                        Flexible(
+                                          child: Text(
+                                            threshold['warehouseName'] ?? 'N/A',
+                                            style: const TextStyle(fontSize: 13),
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                        ),
+                                      ],
                                     ),
                                   ),
-                                ),
-                              ],
-                            ),
-                          );
-                        }).toList(),
+                                  Container(
+                                    margin: const EdgeInsets.only(left: 8),
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 6,
+                                      vertical: 2,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: Colors.grey.shade100,
+                                      borderRadius: BorderRadius.circular(4),
+                                    ),
+                                    child: Text(
+                                      threshold['thresholdQuantity']
+                                              ?.toString() ??
+                                          'N/A',
+                                      style: TextStyle(
+                                        fontSize: 13,
+                                        color: Colors.grey.shade700,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            );
+                          }).toList(),
+                        ),
                       ),
                     ),
                   );
@@ -514,7 +514,7 @@ class _InventoryDataTableState extends State<InventoryDataTable> {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Icon(icon, color: color, size: 24),
@@ -559,7 +559,7 @@ class _InventoryDataTableState extends State<InventoryDataTable> {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Column(
@@ -696,7 +696,7 @@ class _InventoryDataTableState extends State<InventoryDataTable> {
               borderRadius: BorderRadius.circular(20),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
+                  color: Colors.black.withValues(alpha: 0.1),
                   spreadRadius: 5,
                   blurRadius: 15,
                   offset: const Offset(0, 3),
@@ -712,7 +712,7 @@ class _InventoryDataTableState extends State<InventoryDataTable> {
                     gradient: LinearGradient(
                       colors: [
                         AppColors.primaryBlue,
-                        AppColors.primaryBlue.withOpacity(0.8),
+                        AppColors.primaryBlue.withValues(alpha: 0.8),
                       ],
                     ),
                     borderRadius: const BorderRadius.only(
@@ -1080,7 +1080,7 @@ class _OuterboxDataTableState extends State<OuterboxDataTable> {
         scrollDirection: Axis.vertical,
         child: DataTable(
           headingRowColor: WidgetStateColor.resolveWith(
-            (states) => AppColors.blueAccent.withOpacity(0.2),
+            (states) => AppColors.blueAccent.withValues(alpha: 0.2),
           ),
           columns: widget.columnNames.map((name) {
             return DataColumn(
@@ -1256,7 +1256,7 @@ class _OuterboxDataTableState extends State<OuterboxDataTable> {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Icon(icon, color: color, size: 24),
@@ -1301,7 +1301,7 @@ class _OuterboxDataTableState extends State<OuterboxDataTable> {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Column(
@@ -1438,7 +1438,7 @@ class _OuterboxDataTableState extends State<OuterboxDataTable> {
               borderRadius: BorderRadius.circular(20),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
+                  color: Colors.black.withValues(alpha: 0.1),
                   spreadRadius: 5,
                   blurRadius: 15,
                   offset: const Offset(0, 3),
@@ -1454,7 +1454,7 @@ class _OuterboxDataTableState extends State<OuterboxDataTable> {
                     gradient: LinearGradient(
                       colors: [
                         AppColors.primaryBlue,
-                        AppColors.primaryBlue.withOpacity(0.8),
+                        AppColors.primaryBlue.withValues(alpha: 0.8),
                       ],
                     ),
                     borderRadius: const BorderRadius.only(

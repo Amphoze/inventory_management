@@ -269,7 +269,7 @@ class CrmUpdatedDateWidget extends StatelessWidget {
 //         ),
 //         borderRadius: BorderRadius.circular(24),
 //         border: Border.all(color: needsUpdate ? Colors.blue.shade200 : Colors.blue.shade100),
-//         boxShadow: needsUpdate ? [BoxShadow(color: Colors.blue.withOpacity(0.2), blurRadius: 2, offset: const Offset(0, 1))] : null,
+//         boxShadow: needsUpdate ? [BoxShadow(color: Colors.blue.withValues(alpha: 0.2), blurRadius: 2, offset: const Offset(0, 1))] : null,
 //       ),
 //       child: loading
 //           ? _buildLoadingChip()

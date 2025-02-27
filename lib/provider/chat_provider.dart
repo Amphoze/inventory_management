@@ -46,10 +46,10 @@ class ChatProvider extends ChangeNotifier {
       if (snapshot.docs.isNotEmpty) {
         var data = snapshot.docs.first.data();
         if (data['sender'] != _currentUserEmail) {
-          NotificationService.showBrowserNotification(
-            data['sender'],
-            data['text'],
-          );
+          // NotificationService.showBrowserNotification(
+          //   data['sender'],
+          //   data['text'],
+          // );
         }
       }
     });

@@ -41,7 +41,7 @@ class CategoryCard extends StatelessWidget {
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: [
-                  AppColors.primaryBlue.withOpacity(0.8),
+                  AppColors.primaryBlue.withValues(alpha: 0.8),
                   AppColors.lightBlue,
                 ],
                 begin: Alignment.topLeft,

@@ -38,10 +38,11 @@ import 'package:inventory_management/provider/outerbox_provider.dart';
 import 'package:inventory_management/provider/packer_provider.dart';
 import 'package:inventory_management/provider/picker_provider.dart';
 import 'package:inventory_management/provider/product_data_provider.dart';
-import 'package:inventory_management/provider/products-provider.dart';
+import 'package:inventory_management/provider/product_master_provider.dart';
 import 'package:inventory_management/provider/racked_provider.dart';
 import 'package:inventory_management/provider/return_entry_provider.dart';
 import 'package:inventory_management/provider/return_provoider.dart';
+import 'package:inventory_management/provider/routing_provider.dart';
 import 'package:inventory_management/provider/show-details-order-provider.dart';
 import 'package:inventory_management/provider/support_provider.dart';
 import 'package:inventory_management/stockship_version_control/version_controller.dart';
@@ -71,7 +72,7 @@ void main() async {
       ChangeNotifierProvider(create: (context) => MarketplaceProvider()),
       ChangeNotifierProvider(create: (context) => BookProvider()),
       ChangeNotifierProvider(create: (context) => ProductProvider()),
-      ChangeNotifierProvider(create: (context) => ProductsProvider(AuthProvider())),
+      ChangeNotifierProvider(create: (context) => ProductMasterProvider()),
       ChangeNotifierProvider(create: (context) => ComboProvider()),
       ChangeNotifierProvider(create: (context) => PickerProvider()),
       ChangeNotifierProvider(create: (context) => PackerProvider()),
@@ -100,6 +101,7 @@ void main() async {
       ChangeNotifierProvider(create: (context) => SupportProvider()),
       ChangeNotifierProvider(create: (context) => ChatProvider()),
       ChangeNotifierProvider(create: (context) => ReturnEntryProvider()),
+      ChangeNotifierProvider(create: (context) => RoutingProvider()),
     ],
     child: const MyApp(),
   ));

@@ -1,6 +1,4 @@
-// import 'dart:convert';
 import 'dart:developer';
-
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
@@ -46,7 +44,7 @@ import 'package:inventory_management/orders_page.dart';
 import 'package:inventory_management/outbound_page.dart';
 import 'package:inventory_management/packer_page.dart';
 import 'package:inventory_management/picker_page.dart';
-import 'package:inventory_management/product_manager.dart';
+import 'package:inventory_management/product_master.dart';
 import 'package:inventory_management/product_upload.dart';
 import 'package:inventory_management/provider/dashboard_provider.dart';
 import 'package:inventory_management/provider/marketplace_provider.dart';
@@ -122,16 +120,6 @@ class _DashboardPageState extends State<DashboardPage> {
     await context.read<MarketplaceProvider>().fetchMarketplaces();
   }
 
-  // void fetchStatuses() async {
-  //   final allOrdersProvider = Provider.of<AllOrdersProvider>(context, listen: false);
-  //   statuses = await allOrdersProvider.getTrackingStatuses();
-  //   setState(() {
-  //     // Set default to first status or a valid placeholder
-  //     _selectedStatus = statuses.isNotEmpty ? statuses.first.keys.first : 'all';
-  //     temp = statuses.map((item) => item.keys.first).toList();
-  //   });
-  // }
-
   void _loadSelectedDrawerItem() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     setState(() {
@@ -143,8 +131,6 @@ class _DashboardPageState extends State<DashboardPage> {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     await prefs.setString('selectedDrawerItem', item);
   }
-
-  // bool? isPrimary;
 
   bool? isSuperAdmin;
   bool? isAdmin;
@@ -188,61 +174,6 @@ class _DashboardPageState extends State<DashboardPage> {
       lastUpdatedTime = DateTime.now();
     });
   }
-
-  //////////////////////////////////////////////////////////////////////////////////////////
-  String? _selectedValue;
-
-  // String? _selectedStatus = 'all';
-  // String? _marketplace = '';
-  // DateTime? _startDate;
-  // DateTime _endDate = DateTime.now();
-  // bool _isDownloading = false;
-  // String? _error;
-
-  // final List<String> _options = [
-  //   'Today',
-  //   'Last 5 days',
-  //   'Last 15 days',
-  //   'Last 30 days',
-  //   'Custom range'
-  // ];
-
-  // void _updateDatesBasedOnSelection(String? value) {
-  //   if (value == null) return;
-
-  //   final now = DateTime.now();
-  //   _endDate = now;
-
-  //   if (value == 'Today') {
-  //     _startDate = now;
-  //   } else if (value == 'Last 5 days') {
-  //     _startDate = now.subtract(const Duration(days: 5));
-  //   } else if (value == 'Last 15 days') {
-  //     _startDate = now.subtract(const Duration(days: 15));
-  //   } else if (value == 'Last 30 days') {
-  //     _startDate = now.subtract(const Duration(days: 30));
-  //   } else {
-  //     _startDate ??= now.subtract(const Duration(days: 7));
-  //   }
-  //   setState(() {});
-  // }
-
-  // // Future<void> _generateReport() async {
-
-  // // }
-
-  // bool get _canGenerate {
-  //   if (_selectedValue == null) return false;
-  //   if (_selectedValue == 'Custom range') {
-  //     return _startDate != null;
-  //   }
-  //   return true;
-  // }
-
-  // String _formatDate(DateTime? date) {
-  //   if (date == null) return 'Not selected';
-  //   return DateFormat('dd/MM/yyyy').format(date);
-  // }
 
   Future<bool> clearLocalStorage() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -372,72 +303,6 @@ class _DashboardPageState extends State<DashboardPage> {
                       image: AssetImage('assets/homeLogo.png'),
                     ),
                     CrmUpdatedDateWidget(),
-                    // Center(
-                    //   child: Container(
-                    //     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    //     decoration: BoxDecoration(
-                    //       color: Colors.grey.shade50,
-                    //       borderRadius: BorderRadius.circular(4),
-                    //       border: Border.all(color: Colors.grey.shade200),
-                    //     ),
-                    //     child: versionProvider.latestVersion == null
-                    //         ? const SizedBox(
-                    //       height: 14,
-                    //       width: 14,
-                    //       child: CircularProgressIndicator(
-                    //         strokeWidth: 2,
-                    //         valueColor: AlwaysStoppedAnimation<Color>(Colors.blue),
-                    //       ),
-                    //     )
-                    //         : Row(
-                    //       mainAxisSize: MainAxisSize.min,
-                    //       children: [
-                    //         const Text(
-                    //           "Current: ",
-                    //           style: TextStyle(
-                    //             fontSize: 12,
-                    //             fontWeight: FontWeight.w400,
-                    //             color: Colors.black87,
-                    //           ),
-                    //         ),
-                    //         Text(
-                    //           currentVersion,
-                    //           style: const TextStyle(
-                    //             fontSize: 12,
-                    //             color: Colors.blue,
-                    //             fontWeight: FontWeight.bold,
-                    //           ),
-                    //         ),
-                    //         Padding(
-                    //           padding: const EdgeInsets.symmetric(horizontal: 4),
-                    //           child: Text(
-                    //             "•",
-                    //             style: TextStyle(
-                    //               fontSize: 12,
-                    //               color: Colors.grey.shade400,
-                    //             ),
-                    //           ),
-                    //         ),
-                    //         const Text(
-                    //           "Latest: ",
-                    //           style: TextStyle(
-                    //             fontSize: 12,
-                    //             fontWeight: FontWeight.w400,
-                    //             color: Colors.black87,
-                    //           ),
-                    //         ),
-                    //         Text(
-                    //           versionProvider.latestVersion ?? 'Loading...',
-                    //           style: const TextStyle(
-                    //             fontSize: 12,
-                    //             color: Colors.green,
-                    //             fontWeight: FontWeight.bold,
-                    //           ),
-                    //         ),
-                    //       ],
-                    //     ),
-                    //   ),
-                    // ),
                   ],
                 ),
                 const SizedBox(height: 20),
@@ -578,7 +443,7 @@ class _DashboardPageState extends State<DashboardPage> {
       ),
       child: ExpansionTile(
         tilePadding: const EdgeInsets.symmetric(horizontal: 20.0),
-        collapsedBackgroundColor: ["Invoices"].contains(selectedDrawerItem) ? Colors.blue.withOpacity(0.2) : AppColors.white,
+        collapsedBackgroundColor: ["Invoices"].contains(selectedDrawerItem) ? Colors.blue.withValues(alpha: 0.2) : AppColors.white,
         // initiallyExpanded: true,
         initiallyExpanded: ["Invoices"].contains(selectedDrawerItem),
         title: Text(
@@ -632,7 +497,7 @@ class _DashboardPageState extends State<DashboardPage> {
           "Orders Page",
           "HOD Approval",
           "Accounts Page",
-          "Accounts Section",
+          "Invoiced Orders",
           "Book Page",
           "Booked Orders",
           "Picker Page",
@@ -640,10 +505,37 @@ class _DashboardPageState extends State<DashboardPage> {
           "Checker Page",
           "Racked Page",
           "Manifest Page",
-          "Manifest Section",
+          "Manifested Orders",
+          "Dispatched",
+          "Support",
+          "Cancelled",
+          "RTO",
+          "All Orders",
+          "Return Entry"
         ].contains(selectedDrawerItem)
-            ? Colors.blue.withOpacity(0.2)
+            ? Colors.blue.withValues(alpha: 0.2)
             : AppColors.white,
+        initiallyExpanded: [
+          "Outbound",
+          "Orders Page",
+          "HOD Approval",
+          "Accounts Page",
+          "Invoiced Orders",
+          "Book Page",
+          "Booked Orders",
+          "Picker Page",
+          "Packer Page",
+          "Checker Page",
+          "Racked Page",
+          "Manifest Page",
+          "Manifested Orders",
+          "Dispatched",
+          "Support",
+          "Cancelled",
+          "RTO",
+          "All Orders",
+          "Return Entry"
+        ].contains(selectedDrawerItem),
         title: Text(
           'Orders',
           style: TextStyle(
@@ -726,10 +618,10 @@ class _DashboardPageState extends State<DashboardPage> {
             padding: const EdgeInsets.only(left: 30.0),
             child: _buildDrawerItem(
               icon: Icons.subdirectory_arrow_right,
-              text: 'Accounts Section',
-              isSelected: selectedDrawerItem == 'Accounts Section',
+              text: 'Invoiced Orders',
+              isSelected: selectedDrawerItem == 'Invoiced Orders',
               onTap: () => isAccounts == true || isSuperAdmin == true || isAdmin == true
-                  ? _onDrawerItemTapped('Accounts Section', isSmallScreen)
+                  ? _onDrawerItemTapped('Invoiced Orders', isSmallScreen)
                   : ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(content: Text("You are not authorized to view this page.")),
                     ),
@@ -854,10 +746,10 @@ class _DashboardPageState extends State<DashboardPage> {
             padding: const EdgeInsets.only(left: 30.0),
             child: _buildDrawerItem(
               icon: Icons.subdirectory_arrow_right,
-              text: 'Manifest section',
-              isSelected: selectedDrawerItem == 'Manifest Section',
+              text: 'Manifested Orders',
+              isSelected: selectedDrawerItem == 'Manifested Orders',
               onTap: () => isManifest == true || isSuperAdmin == true || isAdmin == true
-                  ? _onDrawerItemTapped('Manifest Section', isSmallScreen)
+                  ? _onDrawerItemTapped('Manifested Orders', isSmallScreen)
                   : ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(content: Text("You are not authorized to view this page.")),
                     ),
@@ -970,8 +862,10 @@ class _DashboardPageState extends State<DashboardPage> {
         tilePadding: const EdgeInsets.symmetric(horizontal: 20.0),
         collapsedBackgroundColor:
             ["Manage Inventory", "Manage Label", "Manage Outerbox", "Manage Inner Packaging", "Reordering"].contains(selectedDrawerItem)
-                ? Colors.blue.withOpacity(0.2)
+                ? Colors.blue.withValues(alpha: 0.2)
                 : AppColors.white,
+        initiallyExpanded:
+            ["Manage Inventory", "Manage Label", "Manage Outerbox", "Manage Inner Packaging", "Reordering"].contains(selectedDrawerItem),
         title: Text(
           'Inventory',
           style: TextStyle(
@@ -1085,7 +979,6 @@ class _DashboardPageState extends State<DashboardPage> {
       child: ExpansionTile(
         tilePadding: const EdgeInsets.symmetric(horizontal: 20.0),
         collapsedBackgroundColor: [
-          "Create Label Page",
           "Product Master",
           "Category Master",
           "Combo Master",
@@ -1093,7 +986,7 @@ class _DashboardPageState extends State<DashboardPage> {
           "Warehouse Master",
           "Bin Master",
         ].contains(selectedDrawerItem)
-            ? Colors.blue.withOpacity(0.2)
+            ? Colors.blue.withValues(alpha: 0.2)
             : AppColors.white,
         title: Text(
           'Master',
@@ -1124,9 +1017,6 @@ class _DashboardPageState extends State<DashboardPage> {
               iconSize: 20,
               fontSize: 14,
             ),
-          ),
-          const SizedBox(
-            height: 4,
           ),
           Padding(
             padding: const EdgeInsets.only(left: 10.0),
@@ -1223,13 +1113,13 @@ class _DashboardPageState extends State<DashboardPage> {
       child: ExpansionTile(
         tilePadding: const EdgeInsets.symmetric(horizontal: 20.0),
         collapsedBackgroundColor: [
-          "Upload Products",
+          "Create Orders",
           "Confirm Orders",
           "Confirm Outbound",
           "Merge Orders",
           "Create Invoice",
           "Book Orders",
-          "Create Orders",
+          "Upload Products",
           "Upload Labels",
           "Manage Labels",
           "Upload Inner Packaging",
@@ -1237,7 +1127,7 @@ class _DashboardPageState extends State<DashboardPage> {
           "Upload Threshold",
           "Upload Combo"
         ].contains(selectedDrawerItem)
-            ? Colors.blue.withOpacity(0.2)
+            ? Colors.blue.withValues(alpha: 0.2)
             : AppColors.white,
         title: Text(
           'Uploads',
@@ -1525,10 +1415,8 @@ class _DashboardPageState extends State<DashboardPage> {
   Widget _buildMainContent(String selectedDrawerItem, bool isSmallScreen) {
     switch (selectedDrawerItem) {
       case 'Dashboard':
-        // return const ReorderingPage();
         return _buildDashboardContent(isSmallScreen);
       case 'Routing':
-        // return const ReorderingPage();
         return const RoutingPage();
       case 'Sales Orders':
         return const Center(child: Text("Sales Orders content goes here"));
@@ -1554,7 +1442,7 @@ class _DashboardPageState extends State<DashboardPage> {
         return const BaApprovePage();
       case 'Accounts Page':
         return const AccountsPage();
-      case 'Accounts Section':
+      case 'Invoiced Orders':
         return const AccountsSectionPage();
       case 'Book Page':
         return const BookPage();
@@ -1570,7 +1458,7 @@ class _DashboardPageState extends State<DashboardPage> {
         return const RackedPage();
       case 'Manifest Page':
         return const ManifestPage();
-      case 'Manifest Section':
+      case 'Manifested Orders':
         return const ManifestSection();
       case 'Dispatched':
         return const DispatchedOrders();
@@ -1585,7 +1473,7 @@ class _DashboardPageState extends State<DashboardPage> {
       case 'Return Entry':
         return const ReturnEntry();
       case 'Product Master':
-        return const ProductDashboardPage();
+        return const ProductMasterPage();
       case 'Create Label Page':
         return const CreateLabelPage();
       case 'Category Master':
@@ -1652,7 +1540,6 @@ class _DashboardPageState extends State<DashboardPage> {
                         children: [
                           TextSpan(
                             text: userName,
-                            // text: 'Katyayani Organics',
                             style: const TextStyle(
                               fontSize: 24,
                               fontWeight: FontWeight.normal,
@@ -1668,36 +1555,80 @@ class _DashboardPageState extends State<DashboardPage> {
                       ),
                     ),
                   ),
-                  if (selectedDate != null) // Display selected date if not null
-                    Padding(
-                      padding: const EdgeInsets.all(5.0),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                        decoration: BoxDecoration(
-                          color: AppColors.greyText.withOpacity(0.08),
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const Icon(
-                              Icons.calendar_today_outlined,
-                              size: 16,
-                              color: AppColors.greyText,
-                            ),
-                            const SizedBox(width: 8),
-                            Text(
-                              DateFormat('dd MMM yyyy').format(selectedDate!),
-                              style: const TextStyle(
-                                fontSize: 14,
-                                color: AppColors.greyText,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
+                  // if (selectedDate != null) // Display selected date if not null
+                  //   Padding(
+                  //     padding: const EdgeInsets.all(5.0),
+                  //     child: Container(
+                  //       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  //       decoration: BoxDecoration(
+                  //         color: AppColors.greyText.withValues(alpha: 0.08),
+                  //         borderRadius: BorderRadius.circular(6),
+                  //       ),
+                  //       child: Row(
+                  //         mainAxisSize: MainAxisSize.min,
+                  //         children: [
+                  //           const Icon(
+                  //             Icons.calendar_today_outlined,
+                  //             size: 16,
+                  //             color: AppColors.greyText,
+                  //           ),
+                  //           const SizedBox(width: 8),
+                  //           Text(
+                  //             DateFormat('dd MMM yyyy').format(selectedDate!),
+                  //             style: const TextStyle(
+                  //               fontSize: 14,
+                  //               color: AppColors.greyText,
+                  //               fontWeight: FontWeight.w500,
+                  //             ),
+                  //           ),
+                  //         ],
+                  //       ),
+                  //     ),
+                  //   ),
+                  // Padding(
+                  //   padding: const EdgeInsets.all(8.0),
+                  //   child: Container(
+                  //     decoration: BoxDecoration(
+                  //       color: Colors.white,
+                  //       borderRadius: BorderRadius.circular(10),
+                  //       boxShadow: [
+                  //         BoxShadow(
+                  //           color: Colors.grey.withValues(alpha: 0.3), // Shadow color
+                  //           spreadRadius: 2,
+                  //           blurRadius: 5,
+                  //           offset: const Offset(0, 3),
+                  //         ),
+                  //       ],
+                  //     ),
+                  //     child: ElevatedButton.icon(
+                  //       onPressed: () async {
+                  //         DateTime? pickedDate = await _selectDate(context);
+                  //         if (pickedDate != null) {
+                  //           String formattedDate = DateFormat('yyyy-MM-dd').format(pickedDate);
+                  //           Provider.of<DashboardProvider>(context, listen: false).fetchAllData(formattedDate);
+                  //         }
+                  //       },
+                  //       style: ElevatedButton.styleFrom(
+                  //         backgroundColor: AppColors.primaryBlue, // Button background color
+                  //         shape: RoundedRectangleBorder(
+                  //           borderRadius: BorderRadius.circular(10), // Same border radius
+                  //         ),
+                  //         padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0), // Button padding
+                  //       ),
+                  //       icon: const Icon(
+                  //         Icons.calendar_month_outlined,
+                  //         color: Colors.white,
+                  //       ), // Button icon
+                  //       label: const Text(
+                  //         'Select Date', // Button label
+                  //         style: TextStyle(
+                  //           color: Colors.white, // Text color
+                  //           fontSize: 16, // Font size
+                  //         ),
+                  //       ),
+                  //     ),
+                  //   ),
+                  // ),
                   Padding(
                     padding: const EdgeInsets.all(8.0),
                     child: Container(
@@ -1706,51 +1637,7 @@ class _DashboardPageState extends State<DashboardPage> {
                         borderRadius: BorderRadius.circular(10),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.grey.withOpacity(0.3), // Shadow color
-                            spreadRadius: 2,
-                            blurRadius: 5,
-                            offset: const Offset(0, 3),
-                          ),
-                        ],
-                      ),
-                      child: ElevatedButton.icon(
-                        onPressed: () async {
-                          DateTime? pickedDate = await _selectDate(context);
-                          if (pickedDate != null) {
-                            String formattedDate = DateFormat('yyyy-MM-dd').format(pickedDate);
-                            Provider.of<DashboardProvider>(context, listen: false).fetchAllData(formattedDate);
-                          }
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.primaryBlue, // Button background color
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10), // Same border radius
-                          ),
-                          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0), // Button padding
-                        ),
-                        icon: const Icon(
-                          Icons.calendar_month_outlined,
-                          color: Colors.white,
-                        ), // Button icon
-                        label: const Text(
-                          'Select Date', // Button label
-                          style: TextStyle(
-                            color: Colors.white, // Text color
-                            fontSize: 16, // Font size
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(10),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.grey.withOpacity(0.3), // Shadow color
+                            color: Colors.grey.withValues(alpha: 0.3), // Shadow color
                             spreadRadius: 2,
                             blurRadius: 5,
                             offset: const Offset(0, 3),
@@ -1796,7 +1683,7 @@ class _DashboardPageState extends State<DashboardPage> {
                       borderRadius: BorderRadius.circular(10),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.grey.withOpacity(0.3), // Shadow color
+                          color: Colors.grey.withValues(alpha: 0.3), // Shadow color
                           spreadRadius: 2,
                           blurRadius: 5,
                           offset: const Offset(0, 3),
@@ -1848,47 +1735,6 @@ class _DashboardPageState extends State<DashboardPage> {
                       color: AppColors.greyText,
                     ),
                   ),
-                  // Container(
-                  //   padding: const EdgeInsets.symmetric(
-                  //       horizontal: 16, vertical: 10),
-                  //   decoration: BoxDecoration(
-                  //     color: Colors.blue[50],
-                  //     borderRadius: BorderRadius.circular(12),
-                  //     boxShadow: [
-                  //       BoxShadow(
-                  //         color: Colors.blue.withOpacity(0.1),
-                  //         blurRadius: 8,
-                  //         offset: const Offset(0, 4),
-                  //       ),
-                  //     ],
-                  //   ),
-                  //   child: Row(
-                  //     mainAxisSize: MainAxisSize.min,
-                  //     children: [
-                  //       Icon(
-                  //         Icons.rocket_launch,
-                  //         size: 20,
-                  //         color: Colors.blue[700],
-                  //       ),
-                  //       const SizedBox(width: 12),
-                  //       Text(
-                  //         'Last Deployed: ',
-                  //         style: TextStyle(
-                  //           fontSize: 14,
-                  //           fontWeight: FontWeight.bold,
-                  //           color: Colors.blue[800],
-                  //         ),
-                  //       ),
-                  //       Text(
-                  //         '06-02-2025, 11:50 AM',
-                  //         style: TextStyle(
-                  //           fontSize: 13,
-                  //           color: Colors.blue[600],
-                  //         ),
-                  //       ),
-                  //     ],
-                  //   ),
-                  // ),
                 ],
               ),
               const SizedBox(height: 20),
@@ -1899,7 +1745,7 @@ class _DashboardPageState extends State<DashboardPage> {
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  // mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     // Last Updated Section
                     Row(
@@ -1920,10 +1766,84 @@ class _DashboardPageState extends State<DashboardPage> {
                         ),
                       ],
                     ),
-
+                    const Spacer(),
+                    if (selectedDate != null) // Display selected date if not null
+                      Padding(
+                        padding: const EdgeInsets.all(5.0),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                          decoration: BoxDecoration(
+                            color: AppColors.greyText.withValues(alpha: 0.08),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(
+                                Icons.calendar_today_outlined,
+                                size: 16,
+                                color: AppColors.greyText,
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                DateFormat('dd MMM yyyy').format(selectedDate!),
+                                style: const TextStyle(
+                                  fontSize: 14,
+                                  color: AppColors.greyText,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(10),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.grey.withValues(alpha: 0.3), // Shadow color
+                              spreadRadius: 2,
+                              blurRadius: 5,
+                              offset: const Offset(0, 3),
+                            ),
+                          ],
+                        ),
+                        child: ElevatedButton.icon(
+                          onPressed: () async {
+                            DateTime? pickedDate = await _selectDate(context);
+                            if (pickedDate != null) {
+                              String formattedDate = DateFormat('yyyy-MM-dd').format(pickedDate);
+                              Provider.of<DashboardProvider>(context, listen: false).fetchAllData(formattedDate);
+                            }
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.primaryBlue, // Button background color
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10), // Same border radius
+                            ),
+                            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0), // Button padding
+                          ),
+                          icon: const Icon(
+                            Icons.calendar_month_outlined,
+                            color: Colors.white,
+                          ), // Button icon
+                          label: const Text(
+                            'Select Date', // Button label
+                            style: TextStyle(
+                              color: Colors.white, // Text color
+                              fontSize: 16, // Font size
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
                     // Refresh Button
                     Tooltip(
-                      message: 'Updates the below shown data',
+                      message: 'Update the below shown data',
                       child: ElevatedButton.icon(
                         onPressed: () {
                           // selectedDate = DateTime.now();
@@ -1934,7 +1854,7 @@ class _DashboardPageState extends State<DashboardPage> {
                           'Update Data',
                           style: TextStyle(
                             fontSize: 16,
-                            fontWeight: FontWeight.w600,
+                            // fontWeight: FontWeight.w600,
                           ),
                         ),
                         style: ElevatedButton.styleFrom(

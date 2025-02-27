@@ -166,7 +166,7 @@ class BaApproveProvider with ChangeNotifier {
     }
   }
 
-  Future<void> fetchOrdersWithStatus2({DateTime? date, String? market = 'All'}) async {
+  Future<void> fetchOrdersWithStatus2({DateTime? date, String? market}) async {
     _isLoading = true;
     setRefreshingOrders(true);
     notifyListeners();
@@ -180,7 +180,7 @@ class BaApproveProvider with ChangeNotifier {
       String formattedDate = DateFormat('yyyy-MM-dd').format(date);
       url += '&date=$formattedDate';
     }
-    if(market != 'All'){
+    if(market != 'All' && market != null){
       url += '&marketplace=$market';
     }
 

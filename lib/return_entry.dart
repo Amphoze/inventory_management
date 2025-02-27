@@ -11,6 +11,7 @@ import 'package:inventory_management/edit_outbound_page.dart';
 import 'package:inventory_management/provider/ba_approve_provider.dart';
 import 'package:inventory_management/provider/marketplace_provider.dart';
 import 'package:inventory_management/provider/return_entry_provider.dart';
+import 'package:inventory_management/quality_check.dart';
 import 'package:logger/logger.dart';
 import 'package:provider/provider.dart';
 
@@ -120,8 +121,8 @@ class _ReturnEntryState extends State<ReturnEntry> {
                             itemsList.add({
                               "sku": items.sku,
                               "total": items.qty,
-                              'goodQty': TextEditingController(),
-                              'badQty': TextEditingController()
+                              'goodQty': TextEditingController(text: '0'),
+                              'badQty': TextEditingController(text: '0')
                             });
                           }
                           for (var group in comboItemGroups) {
@@ -129,8 +130,8 @@ class _ReturnEntryState extends State<ReturnEntry> {
                                 .map((item) => {
                                       "sku": item.sku,
                                       "total": item.qty,
-                                      'goodQty': TextEditingController(),
-                                      'badQty': TextEditingController()
+                                      'goodQty': TextEditingController(text: '0'),
+                                      'badQty': TextEditingController(text: '0')
                                     })
                                 .toList());
                           }
@@ -216,7 +217,7 @@ class _ReturnEntryState extends State<ReturnEntry> {
                                           ),
                                         ],
                                       ),
-                                      editQuantityWidget(order.orderId, itemsList, pro),
+                                      editQuantityWidget(order.orderId, itemsList),
                                     ],
                                   ),
                                   const Divider(
@@ -284,138 +285,18 @@ class _ReturnEntryState extends State<ReturnEntry> {
     );
   }
 
-  Widget editQuantityWidget(String orderId, List<Map<String, dynamic>> itemsList, ReturnEntryProvider pro) {
+  Widget editQuantityWidget(String orderId, List<Map<String, dynamic>> itemsList) {
     return IconButton(
+      tooltip: 'Quality Check',
       icon: const Icon(
         Icons.fact_check_outlined,
-        color: Colors.grey,
+        // color: Colors.grey,
         size: 30,
       ),
       onPressed: () {
-        showDialog(
-            context: context,
-            builder: (context) {
-              return AlertDialog(
-                title: Text(orderId),
-                content: SizedBox(
-                  width: 500,
-                  child: SingleChildScrollView(
-                    child: Column(
-                      children: [
-                        ...itemsList.map(
-                          (item) => Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 8.0),
-                            child: Row(
-                              children: [
-                                Text(
-                                  "${item['sku']} (Total = ${item['total']}):",
-                                  style: const TextStyle(fontSize: 16),
-                                ),
-                                const SizedBox(width: 16),
-                                Flexible(
-                                  child: TextFormField(
-                                    controller: item['goodQty'],
-                                    decoration: const InputDecoration(
-                                      hintText: 'Good Quantity',
-                                    ),
-                                    validator: (value) {
-                                      if (value == null || value.isEmpty) {
-                                        return 'Please enter a value';
-                                      } else if (int.tryParse(value) == null) {
-                                        return 'Please enter a valid number';
-                                      }
-                                      return null;
-                                    },
-                                    keyboardType: TextInputType.number,
-                                  ),
-                                ),
-                                const SizedBox(width: 16),
-                                Flexible(
-                                  child: TextFormField(
-                                    controller: item['badQty'],
-                                    decoration: const InputDecoration(
-                                      hintText: 'Bad Quantity',
-                                    ),
-                                    validator: (value) {
-                                      if (value == null || value.isEmpty) {
-                                        return 'Please enter a value';
-                                      } else if (int.tryParse(value) == null) {
-                                        return 'Please enter a valid number';
-                                      }
-                                      return null;
-                                    },
-                                    keyboardType: TextInputType.number,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                actions: [
-                  TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
-                  TextButton(
-                    child: const Text('Submit'),
-                    onPressed: () {
-                      bool isValid = true;
-                      for (var item in itemsList) {
-                        final goodQty = int.tryParse(item['goodQty'].text) ?? 0;
-                        final badQty = int.tryParse(item['badQty'].text) ?? 0;
-                        final total = item['total'];
-                        if (goodQty + badQty > total) {
-                          isValid = false;
-                          pro.showMessageDialog(context, 'Good + Bad quantity cannot exceed total quantity for ${item['sku']}', Colors.red);
-                          break;
-                        }
-                      }
-
-                      if (!isValid) return;
-
-                      // show progress dialog
-                      showDialog(
-                        context: context,
-                        builder: (context) {
-                          return const AlertDialog(
-                            content: Row(
-                              children: [
-                                CircularProgressIndicator(),
-                                SizedBox(
-                                  width: 8,
-                                ),
-                                Text('Updating')
-                              ],
-                            ),
-                          );
-                        },
-                      );
-                      List<Map<String, dynamic>> qualityCheckResults = itemsList
-                          .map((item) => {
-                                "productSku": item['sku'],
-                                "bad": int.tryParse(item['badQty'].text) ?? 0,
-                                "good": int.tryParse(item['goodQty'].text) ?? 0,
-                              })
-                          .toList();
-
-                      final res = pro.qualityCheck(orderId, qualityCheckResults);
-                      res.then((value) {
-                        if (context.mounted) {
-                          Navigator.pop(context);
-                          Navigator.pop(context);
-                        }
-                        if (value['success'] == true) {
-                          pro.showSnackBar(context, value['message'], Colors.green);
-                        } else {
-                          pro.showSnackBar(context, value['message'], Colors.red);
-                        }
-                      });
-                    },
-                  ),
-                ],
-              );
-            });
+        Navigator.of(context).push(
+          MaterialPageRoute(builder: (context) => QualityCheck(orderId: orderId, itemsList: itemsList,))
+        );
       },
     );
   }
@@ -429,7 +310,7 @@ class _ReturnEntryState extends State<ReturnEntry> {
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.08),
+            color: Colors.black.withValues(alpha: 0.08),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),

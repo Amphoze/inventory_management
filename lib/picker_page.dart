@@ -534,7 +534,7 @@ class _PickerPageState extends State<PickerPage> {
                             borderRadius: BorderRadius.circular(10), // Slightly smaller rounded corners
                             boxShadow: [
                               BoxShadow(
-                                color: Colors.black.withOpacity(0.08), // Lighter shadow for smaller card
+                                color: Colors.black.withValues(alpha: 0.08), // Lighter shadow for smaller card
                                 offset: const Offset(0, 1),
                                 blurRadius: 3,
                               ),
@@ -860,7 +860,7 @@ class _PickerPageState extends State<PickerPage> {
   //               boxShadow: [
   //                 BoxShadow(
   //                   color: Colors.black
-  //                       .withOpacity(0.08), // Lighter shadow for smaller card
+  //                       .withValues(alpha: 0.08), // Lighter shadow for smaller card
   //                   offset: const Offset(0, 1),
   //                   blurRadius: 3,
   //                 ),

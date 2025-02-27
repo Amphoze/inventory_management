@@ -14,14 +14,14 @@ import 'package:inventory_management/Custom-Files/textfield-in-alert-box.dart';
 import 'package:logger/logger.dart';
 import 'package:provider/provider.dart';
 
-class Products extends StatefulWidget {
-  const Products({super.key});
+class CreateProduct extends StatefulWidget {
+  const CreateProduct({super.key});
 
   @override
-  State<Products> createState() => _ProductsState();
+  State<CreateProduct> createState() => _CreateProductState();
 }
 
-class _ProductsState extends State<Products> {
+class _CreateProductState extends State<CreateProduct> {
   // String productProvider!.selectedProductCategory = "Create Simple Product";
   List<String>? webImages;
   // int variationCount = 1;
@@ -233,7 +233,7 @@ class _ProductsState extends State<Products> {
             Container(
               padding: const EdgeInsets.all(24),
               decoration: BoxDecoration(
-                color: AppColors.primaryBlue.withOpacity(0.05),
+                color: AppColors.primaryBlue.withValues(alpha: 0.05),
                 borderRadius: const BorderRadius.only(
                   topLeft: Radius.circular(12),
                   topRight: Radius.circular(12),
@@ -366,7 +366,7 @@ class _ProductsState extends State<Products> {
                 overlayColor: WidgetStateProperty.resolveWith<Color?>(
                   (Set<WidgetState> states) {
                     if (states.contains(WidgetState.hovered)) {
-                      return Colors.white.withOpacity(0.1);
+                      return Colors.white.withValues(alpha: 0.1);
                     }
                     return null;
                   },
@@ -822,7 +822,7 @@ class _ProductsState extends State<Products> {
               //     width: 550,
               //     height: 250,
               //     decoration: BoxDecoration(
-              //       border: Border.all(color: Colors.black.withOpacity(0.2)),
+              //       border: Border.all(color: Colors.black.withValues(alpha: 0.2)),
               //       borderRadius: BorderRadius.circular(10),
               //       color: Colors.white30,
               //     ),

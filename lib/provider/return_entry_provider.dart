@@ -1,27 +1,53 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:developer';
-
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:http_parser/http_parser.dart';
 import 'package:inventory_management/constants/constants.dart';
 import 'package:inventory_management/model/orders_model.dart';
 import 'package:logger/logger.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:file_picker/file_picker.dart';
 
 class ReturnEntryProvider with ChangeNotifier {
   bool _isLoading = false;
   int selectedItemsCount = 0;
   List<Order> _orders = [];
+  List<PlatformFile> _uploadedImages = [];
   Timer? _debounce;
 
   List<Order> get orders => _orders;
   bool get isLoading => _isLoading;
+  List<PlatformFile> get uploadedImages => _uploadedImages;
 
   bool isRefreshingOrders = false;
 
   void setRefreshingOrders(bool value) {
     isRefreshingOrders = value;
+    notifyListeners();
+  }
+
+  Future<void> pickImages() async {
+    FilePickerResult? result = await FilePicker.platform.pickFiles(
+      type: FileType.image,
+      allowMultiple: true,
+      withData: true,
+    );
+    if (result != null) {
+      // Append new files to the existing list instead of overwriting
+      _uploadedImages.addAll(result.files);
+      notifyListeners();
+    }
+  }
+
+  void removeImage(int index) {
+    _uploadedImages.removeAt(index);
+    notifyListeners();
+  }
+
+  void clearImages() {
+    _uploadedImages.clear();
     notifyListeners();
   }
 
@@ -41,6 +67,8 @@ class ReturnEntryProvider with ChangeNotifier {
     if (_debounce?.isActive ?? false) _debounce!.cancel();
     _debounce = Timer(const Duration(milliseconds: 500), () {
       if (query.isEmpty) {
+        _orders = [];
+        notifyListeners();
       } else {
         searchOrders(query);
       }
@@ -72,13 +100,10 @@ class ReturnEntryProvider with ChangeNotifier {
 
   Future<void> searchOrders(String orderId) async {
     String encodedOrderId = Uri.encodeComponent(orderId);
-
     final url = '${await Constants.getBaseUrl()}/orders?order_id=$encodedOrderId';
     log('search all orders url: $url');
     final mainUrl = Uri.parse(url);
-    log('parsed url: $mainUrl');
-    final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString('authToken') ?? '';
+    final token = await _getToken();
 
     try {
       _isLoading = true;
@@ -94,10 +119,8 @@ class ReturnEntryProvider with ChangeNotifier {
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-
         _orders = [Order.fromJson(data)];
         Logger().e('return orders: $_orders');
-        notifyListeners();
       } else {
         _orders = [];
       }
@@ -110,44 +133,85 @@ class ReturnEntryProvider with ChangeNotifier {
     }
   }
 
-  Future<Map<String, dynamic>> qualityCheck(String orderId, List<Map<String, dynamic>> qualityCheckResults) async {
+  Future<Map<String, dynamic>> submitQualityCheck(
+    BuildContext context,
+    String orderId,
+    List<Map<String, dynamic>> itemsList,
+  ) async {
+    for (var item in itemsList) {
+      final goodQty = int.tryParse(item['goodQty'].text) ?? 0;
+      final badQty = int.tryParse(item['badQty'].text) ?? 0;
+      if (goodQty + badQty > item['total']) {
+        return {'success': false, 'message': 'Good + Bad quantity cannot exceed total for ${item['sku']}'};
+      }
+    }
+
+    List<Map<String, dynamic>> qualityCheckResults = itemsList
+        .map((item) => {
+              "productSku": item['sku'],
+              "bad": int.tryParse(item['badQty'].text) ?? 0,
+              "good": int.tryParse(item['goodQty'].text) ?? 0,
+            })
+        .toList();
+
+    log('qualityCheckResults: $qualityCheckResults');
+
+    Map<String, dynamic> requestBody = {
+      "qualityCheckResults": qualityCheckResults,
+      "files": _uploadedImages,
+    };
+
+    return await qualityCheck(orderId, requestBody);
+  }
+
+  Future<Map<String, dynamic>> qualityCheck(String orderId, Map<String, dynamic> body) async {
     final url = '${await Constants.getBaseUrl()}/orders/qualityCheck/$orderId';
     log('quality check post api: $url');
     final mainUrl = Uri.parse(url);
     final token = await _getToken();
 
     if (token == null || token.isEmpty) {
-      return {'success': false};
+      return {'success': false, 'message': 'Authentication failed'};
     }
-
-    Logger().e('body: $qualityCheckResults');
 
     try {
       _isLoading = true;
       notifyListeners();
 
-      final response = await http.post(
-        mainUrl,
-        headers: {
-          'Authorization': 'Bearer $token',
-          'Content-Type': 'application/json',
-        },
-        body: jsonEncode({"qualityCheckResults": qualityCheckResults}),
-      );
+      var request = http.MultipartRequest('POST', mainUrl)..headers['Authorization'] = 'Bearer $token';
+
+      request.fields['qualityCheckResults'] = jsonEncode(body['qualityCheckResults']);
+
+      if (body['files'] is List && (body['files'] as List).isNotEmpty) {
+        for (PlatformFile file in body['files']) {
+          if (file.bytes != null) {
+            var multipartFile = http.MultipartFile.fromBytes(
+              'files',
+              file.bytes!,
+              filename: file.name,
+              contentType: MediaType('image', file.extension ?? 'jpg'),
+            );
+            request.files.add(multipartFile);
+          }
+        }
+      }
+
+      var streamedResponse = await request.send();
+      var response = await http.Response.fromStream(streamedResponse);
       final data = jsonDecode(response.body);
 
       Logger().e('return orders body: $data');
       if (response.statusCode == 200) {
         Logger().e('return orders: $data');
-        notifyListeners();
+        clearImages();
         return {'success': true, 'message': data['message']};
       } else {
         Logger().e('return orders error: ${response.statusCode}');
-        return {'success': false, 'message': data['message']};
+        return {'success': false, 'message': data['message'] ?? 'Failed to submit quality check'};
       }
     } catch (e, s) {
       log('catched error: $e $s');
-      return {'success': false};
+      return {'success': false, 'message': 'Error: $e'};
     } finally {
       _isLoading = false;
       notifyListeners();

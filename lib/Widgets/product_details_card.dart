@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_html/flutter_html.dart';
 import 'package:inventory_management/model/orders_model.dart';
 import 'package:inventory_management/Custom-Files/colors.dart';
 
@@ -22,7 +23,7 @@ class ProductDetailsCard extends StatelessWidget {
       margin: const EdgeInsets.symmetric(vertical: 4.0, horizontal: 8.0),
       child: ExpansionTile(
         title: _buildHeader(),
-        children: [_buildExpandedDetails()],
+        children: [_buildExpandedDetails(context)],
       ),
     );
   }
@@ -125,12 +126,15 @@ class ProductDetailsCard extends StatelessWidget {
     );
   }
 
-  Widget _buildExpandedDetails() {
+  Widget _buildExpandedDetails(
+    BuildContext context,
+  ) {
     return Padding(
       padding: const EdgeInsets.all(8.0),
       child: Column(
         children: [
           _buildDetailSection(
+            context,
             'Product Details',
             {
               'Brand': item.product?.brand?.name ?? '',
@@ -141,6 +145,7 @@ class ProductDetailsCard extends StatelessWidget {
           ),
           const Divider(height: 24),
           _buildDetailSection(
+            context,
             'Specifications',
             {
               'Dimensions':
@@ -152,6 +157,7 @@ class ProductDetailsCard extends StatelessWidget {
           ),
           const Divider(height: 24),
           _buildDetailSection(
+            context,
             'Pricing',
             {
               'MRP': 'Rs.${item.product?.mrp ?? ''}',
@@ -164,7 +170,7 @@ class ProductDetailsCard extends StatelessWidget {
     );
   }
 
-  Widget _buildDetailSection(String title, Map<String, String> details) {
+  Widget _buildDetailSection(BuildContext context, String title, Map<String, String> details) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -177,12 +183,12 @@ class ProductDetailsCard extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 8),
-        ...details.entries.map((entry) => _buildDetailRow(entry.key, entry.value)),
+        ...details.entries.map((entry) => _buildDetailRow(context, entry.key, entry.value)),
       ],
     );
   }
 
-  Widget _buildDetailRow(String label, String value) {
+  Widget _buildDetailRow(BuildContext context, String label, String value) {
     if (value.isEmpty) return const SizedBox.shrink();
     return Padding(
       padding: const EdgeInsets.only(bottom: 4),
@@ -199,16 +205,81 @@ class ProductDetailsCard extends StatelessWidget {
               ),
             ),
           ),
-          Expanded(
-            child: Text(
-              value,
-              style: const TextStyle(fontSize: 13),
-              maxLines: 3,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
+          // Expanded(
+          //   child: Text(
+          //     value,
+          //     style: const TextStyle(fontSize: 13),
+          //     maxLines: 3,
+          //     overflow: TextOverflow.ellipsis,
+          //   ),
+          // ),
+          label == 'Description'
+              ? Flexible(
+                  child: InkWell(
+                    onTap: () => _showDescriptionDialog(context),
+                    child: Tooltip(
+                      message: value,
+                      child: Text(
+                        value,
+                        maxLines: 1,
+                        style: const TextStyle(
+                          fontSize: 13,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ),
+                  ),
+                )
+              : Flexible(
+                  child: Tooltip(
+                    message: value,
+                    child: Text(
+                      value,
+                      maxLines: 1,
+                      style: const TextStyle(
+                        fontSize: 13,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ),
+                ),
         ],
       ),
+    );
+  }
+
+  void _showDescriptionDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(item.product?.sku ?? ''),
+              IconButton(
+                onPressed: () => Navigator.of(context).pop(),
+                icon: const Icon(Icons.close),
+              ),
+            ],
+          ),
+          content: SizedBox(
+            width: MediaQuery.of(context).size.width * 0.5, // Adjust width
+            child: SingleChildScrollView(
+              child: Html(
+                data: item.product?.description ?? '',
+                style: {
+                  "body": Style(
+                    margin: Margins.zero,
+                    padding: HtmlPaddings.zero,
+                    fontSize: FontSize(14),
+                  ),
+                },
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 }

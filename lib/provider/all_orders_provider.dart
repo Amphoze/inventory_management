@@ -41,70 +41,10 @@ class AllOrdersProvider with ChangeNotifier {
   List<bool> selectedItems = List.generate(40, (index) => false);
   List<Order> get ordersBooked => _orders;
 
-  List<Order> BookedOrders = [];
-
   void setCancelStatus(bool status) {
     isCancel = status;
     notifyListeners();
   }
-
-  // void setUpdatingOrder(bool value) {
-  //   isUpdatingOrder = value;
-  //   notifyListeners();
-  // }
-
-  // void setRefreshingOrders(bool value) {
-  //   isRefreshingOrders = value;
-  //   notifyListeners();
-  // }
-
-  // void handleRowCheckboxChange(int index, bool isSelected) {
-  //   _selectedProducts[index] = isSelected;
-
-  //   // If any individual checkbox is unchecked, deselect "Select All"
-  //   if (!isSelected) {
-  //     _selectAll = false;
-  //   } else {
-  //     // If all boxes are checked, select "Select All"
-  //     _selectAll = _selectedProducts.every((element) => element);
-  //   }
-
-  //   notifyListeners();
-  // }
-
-  // void toggleSelectAll(bool value) {
-  //   _selectAll = value;
-  //   _selectedProducts =
-  //       List<bool>.generate(_orders.length, (index) => _selectAll);
-  //   notifyListeners();
-  // }
-
-  // void goToPage(int page) {
-  //   if (page < 1 || page > _totalPages) return;
-  //   _currentPage = page;
-  //   print('Current page set to: $_currentPage'); // Debugging line
-  //   fetchAllOrders();
-  //   notifyListeners();
-  // }
-
-  // Format date
-  // String formatDate(DateTime date) {
-  //   String year = date.year.toString();
-  //   String month = date.month.toString().padLeft(2, '0');
-  //   String day = date.day.toString().padLeft(2, '0');
-  //   return '$day-$month-$year';
-  // }
-
-  // String formatDateTime(DateTime date) {
-  //   String year = date.year.toString();
-  //   String month = date.month.toString().padLeft(2, '0');
-  //   String day = date.day.toString().padLeft(2, '0');
-  //   String hour = date.hour.toString().padLeft(2, '0');
-  //   String minute = date.minute.toString().padLeft(2, '0');
-  //   String second = date.second.toString().padLeft(2, '0');
-
-  //   return '$day-$month-$year $hour:$minute:$second';
-  // }
 
   Future<String> cancelOrders(BuildContext context, List<String> orderIds) async {
     String baseUrl = await Constants.getBaseUrl();
@@ -179,7 +119,7 @@ class AllOrdersProvider with ChangeNotifier {
   }
 
   void clearSearchResults() {
-    _orders = BookedOrders;
+    _orders = [];
     notifyListeners();
   }
 
@@ -287,26 +227,26 @@ class AllOrdersProvider with ChangeNotifier {
     return '';
   }
 
-  Future<void> fetchAllOrders({int page = 1, DateTime? date, String? status = 'All', String? marketplace = 'All'}) async {
+  Future<void> fetchAllOrders({int page = 1, DateTime? date, String? status, String? marketplace}) async {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('authToken') ?? '';
 
-    String url = '${await Constants.getBaseUrl()}/orders?page=$page';
+    String url = '${await Constants.getBaseUrl()}/orders?page=$page&isSalesApproved=true';
 
     if (date != null) {
       String formattedDate = DateFormat('yyyy-MM-dd').format(date);
       url += '&date=$formattedDate';
     }
 
-    if (status != 'All') {
-      url += '&orderStatus==$status';
+    if (status != 'all' && status != null) {
+      url += '&orderStatus=$status';
     }
 
-    if (marketplace != 'All') {
+    if (marketplace != 'All' && marketplace != null) {
       url += '&marketplace=$marketplace';
     }
 
-    log('final url: $url');
+    log('fetchAllOrders url: $url');
     try {
       // Set loading state based on order type
       _isLoading = true;
@@ -338,14 +278,17 @@ class AllOrdersProvider with ChangeNotifier {
         _totalPages = jsonResponse['totalPages'];
 
         log('orders: $_orders');
-      } else if (response.statusCode == 401) {
-        print('Unauthorized access - Token might be expired or invalid.');
-      } else if (response.statusCode == 404) {
-        print('Orders not found');
-      } else {
+      }  else {
+        _orders = [];
+        _totalPages = 1;
+        _currentPage = 1;
+        log('Orders not found');
         throw Exception('Failed to load orders: ${response.statusCode}');
       }
     } catch (e) {
+      _orders = [];
+      _totalPages = 1;
+      _currentPage = 1;
       log('Error fetching orders: $e');
     } finally {
       _isLoading = false;
@@ -353,139 +296,6 @@ class AllOrdersProvider with ChangeNotifier {
       notifyListeners();
     }
   }
-
-  // Future<void> fetchOrdersByMarketplace(String marketplace, int page, DateTime? date, String status) async {
-  //   // log("fetchOrdersByMarketplace: $marketplace, $page");
-  //   String url = '${await Constants.getBaseUrl()}/orders?marketplace=$marketplace&page=$page';
-  //
-  //   if (status != 'all') {
-  //     url += '&orderStatus=$status';
-  //   }
-  //   if (date != null) {
-  //     String formattedDate = DateFormat('yyyy-MM-dd').format(date);
-  //     url += '&date=$formattedDate';
-  //   }
-  //
-  //   Logger().e('fetchOrdersByMarketplace url: $url');
-  //
-  //   final prefs = await SharedPreferences.getInstance();
-  //   final token = prefs.getString('authToken') ?? '';
-  //
-  //   try {
-  //     _isLoading = true;
-  //     setRefreshingOrders(true);
-  //     notifyListeners();
-  //
-  //     // Clear checkboxes when a new page is fetched
-  //     clearAllSelections();
-  //
-  //     final response = await http.get(
-  //       Uri.parse(Uri.encodeFull(url)),
-  //       headers: {
-  //         'Authorization': 'Bearer $token',
-  //         'Content-Type': 'application/json',
-  //       },
-  //     );
-  //
-  //     // Log response for debugging
-  //     log('Response status: ${response.statusCode}');
-  //     log('Response body: ${response.body}');
-  //
-  //     if (response.statusCode == 200) {
-  //       final jsonResponse = jsonDecode(response.body);
-  //       List<Order> orders = (jsonResponse['orders'] as List).map((orderJson) => Order.fromJson(orderJson)).toList();
-  //
-  //       // Logger().e("length: ${orders.length}");
-  //
-  //       _orders = orders;
-  //       _currentPage = page; // Track current page for B2B
-  //       _totalPages = jsonResponse['totalPages']; // Assuming API returns total pages
-  //     } else if (response.statusCode == 401) {
-  //       print('Unauthorized access - Token might be expired or invalid.');
-  //     } else if (response.statusCode == 404) {
-  //       _orders = [];
-  //       notifyListeners();
-  //
-  //       log('Orders not found');
-  //     } else {
-  //       throw Exception('Failed to load orders: ${response.statusCode}');
-  //     }
-  //   } catch (e, s) {
-  //     log('Error fetching orders by marketplace: $e $s');
-  //   } finally {
-  //     _isLoading = false;
-  //     setRefreshingOrders(false);
-  //     notifyListeners();
-  //   }
-  // }
-  //
-  // Future<void> fetchOrdersByStatus(String marketplace, int page, DateTime? date, String status) async {
-  //   log("$status, $marketplace, $date, $page");
-  //   String baseUrl = '${await Constants.getBaseUrl()}/orders';
-  //
-  //   String url = '$baseUrl?orderStatus=$status&page=$page';
-  //
-  //   if (marketplace != 'All') {
-  //     url += '&marketplace=$marketplace';
-  //   }
-  //
-  //   if (date != null) {
-  //     String formattedDate = DateFormat('yyyy-MM-dd').format(date);
-  //     url += '&date=$formattedDate';
-  //   }
-  //
-  //   // Logger().e(url);
-  //
-  //   final prefs = await SharedPreferences.getInstance();
-  //   final token = prefs.getString('authToken') ?? '';
-  //
-  //   try {
-  //     _isLoading = true;
-  //     setRefreshingOrders(true);
-  //     notifyListeners();
-  //
-  //     // Clear checkboxes when a new page is fetched
-  //     clearAllSelections();
-  //
-  //     final response = await http.get(
-  //       Uri.parse(Uri.encodeFull(url)),
-  //       headers: {
-  //         'Authorization': 'Bearer $token',
-  //         'Content-Type': 'application/json',
-  //       },
-  //     );
-  //
-  //     // Log response for debugging
-  //     log('Response status: ${response.statusCode}');
-  //     log('Response body: ${response.body}');
-  //
-  //     if (response.statusCode == 200) {
-  //       final jsonResponse = jsonDecode(response.body);
-  //       List<Order> orders = (jsonResponse['orders'] as List).map((orderJson) => Order.fromJson(orderJson)).toList();
-  //
-  //       // Logger().e("length: ${orders.length}");
-  //
-  //       _orders = orders;
-  //       _currentPage = page; // Track current page for B2B
-  //       _totalPages = jsonResponse['totalPages']; // Assuming API returns total pages
-  //     } else if (response.statusCode == 401) {
-  //       print('Unauthorized access - Token might be expired or invalid.');
-  //     } else if (response.statusCode == 404) {
-  //       _orders = [];
-  //       notifyListeners();
-  //
-  //       log('Orders not found');
-  //     } else {
-  //       throw Exception('Failed to load orders: ${response.statusCode}');
-  //     }
-  //   } catch (e) {
-  //     print('Error fetching orders: $e');
-  //   } finally {
-  //     _isLoading = false;
-  //     setRefreshingOrders(false);
-  //     notifyListeners();
-  //   }
-  // }
 
   Future<List<Map<String, String>>> getTrackingStatuses() async {
     String baseUrl = '${await Constants.getBaseUrl()}/status';
@@ -537,7 +347,7 @@ class AllOrdersProvider with ChangeNotifier {
   Future<void> searchOrders(String orderId) async {
     String encodedOrderId = Uri.encodeComponent(orderId);
 
-    final url = '${await Constants.getBaseUrl()}/orders?order_id=$encodedOrderId';
+    final url = '${await Constants.getBaseUrl()}/orders?order_id=$encodedOrderId&isSalesApproved=true';
     log('search all orders url: $url');
     final mainUrl = Uri.parse(url);
     log('parsed url: $mainUrl');

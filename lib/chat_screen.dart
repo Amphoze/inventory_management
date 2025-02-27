@@ -62,7 +62,9 @@ class ChatScreenState extends State<ChatScreen> {
     super.initState();
     userName = widget.currentUserEmail.split('@')[0];
     pro = Provider.of<ChatProvider>(context, listen: false);
-    initializeChat(widget.orderId, widget.currentUserEmail, widget.currentUserRole);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      initializeChat(widget.orderId, widget.currentUserEmail, widget.currentUserRole);
+    });
 
     _scrollController.addListener(() {
       setState(() {
@@ -395,7 +397,7 @@ class ChatScreenState extends State<ChatScreen> {
                               BoxShadow(
                                 offset: const Offset(0, 2),
                                 blurRadius: 4,
-                                color: Colors.black.withOpacity(0.1),
+                                color: Colors.black.withValues(alpha: 0.1),
                               ),
                             ],
                           ),
@@ -457,7 +459,7 @@ class ChatScreenState extends State<ChatScreen> {
           BoxShadow(
             offset: const Offset(0, -1),
             blurRadius: 8,
-            color: Colors.black.withOpacity(0.06),
+            color: Colors.black.withValues(alpha: 0.06),
           ),
         ],
       ),
@@ -506,7 +508,7 @@ class ChatScreenState extends State<ChatScreen> {
                   BoxShadow(
                     offset: const Offset(0, 2),
                     blurRadius: 6,
-                    color: AppColors.primaryBlue.withOpacity(0.3),
+                    color: AppColors.primaryBlue.withValues(alpha: 0.3),
                   ),
                 ],
               ),
@@ -546,7 +548,7 @@ class ChatScreenState extends State<ChatScreen> {
         border: Border.all(color: Colors.blue.shade200, width: 1),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 5,
             offset: const Offset(0, 2),
           ),

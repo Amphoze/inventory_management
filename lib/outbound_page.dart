@@ -455,7 +455,7 @@ class _OutboundPageState extends State<OutboundPage> with TickerProviderStateMix
                                   fontSize: 16,
                                 ),
                                 border: InputBorder.none,
-                                contentPadding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+                                contentPadding: EdgeInsets.symmetric(vertical: 12, horizontal: 8),
                               ),
                               style: const TextStyle(color: AppColors.black),
                               onSubmitted: (value) async {

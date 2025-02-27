@@ -38,74 +38,66 @@ class _MergeOrdersByCsvState extends State<MergeOrdersByCsv> {
   IO.Socket? _socket;
 
   void _initializeSocket() async {
-    // Check if socket is already initialized
     if (_socket != null && _socket!.connected) {
-      // log('Socket already connected. Skipping initialization.');
+      log('Socket already connected. Skipping initialization.');
       return;
     }
 
     try {
       final baseUrl = await Constants.getBaseUrl();
-      // log('Base URL in _initializeSocket: $baseUrl');
+      log('Base URL in _initializeSocket: $baseUrl');
 
-      // Initialize socket if not already initialized
       _socket ??= IO.io(
         baseUrl,
         IO.OptionBuilder().setTransports(['websocket']).disableAutoConnect().build(),
       );
 
-      // On successful connection
       _socket?.onConnect((_) {
-        // log('Connected to Socket.IO: ${_socket?.id}');
+        debugPrint('Connected to Socket.IO');
         _showSnackbar('Connected to server', Colors.green);
       });
 
-      // On merging progress
-      // _socket?.off('csv-merge-progress'); // Clear previous listeners
+      _socket?.off('csv-merge-progress');
       _socket?.on('csv-merge-progress', (data) {
+        Logger().e('Data progress: ${data['progress']}');
         if (data['progress'] != null) {
           double newProgress = double.tryParse(data['progress'].toString()) ?? 0;
-        // log('newProgress: ${newProgress}');
-
-          setState(() {  // Force widget rebuild
-            _progressNotifier.value = newProgress;
-            _progressMessage = data['message'] ?? 'Merging in progress...';
-          });
+          _progressNotifier.value = newProgress;
         }
-
       });
 
-      _socket?.on('merged-csv-orders', (data) {
-        // log('Merge order successful: $data');
+      _socket?.off('merged-csv-orders');
+      _socket?.once('merged-csv-orders', (data) {
+        log('CSV file uploaded: $data');
         setState(() {
-          _progressMessage = data['message'] ?? 'Orders merged successfully';
+          _progressMessage = data['message'] ?? 'File uploaded successfully';
         });
         _showSnackbar(_progressMessage, Colors.green);
 
-        // Launch download URL if available
         if (data['download_csv'] != null) {
-          // log('Download link: ${data['download_csv']}');
+          log('Download link: ${data['download_csv']}');
           _launchDownloadUrl(data['download_csv']);
         }
       });
 
       _socket?.connect();
     } catch (e) {
-      // log('Error in _initializeSocket: $e');
+      log('Error in _initializeSocket: $e');
       _showSnackbar('Failed to connect to server', Colors.red);
     }
   }
 
-// Helper function to show snackbars
   void _showSnackbar(String message, Color color) {
-    ScaffoldMessenger.of(context).removeCurrentSnackBar();
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: color,
-        duration: const Duration(seconds: 3),
-      ),
-    );
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).removeCurrentSnackBar();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(message),
+          backgroundColor: color,
+          duration: const Duration(seconds: 3),
+        ),
+      );
+    }
   }
 
   @override
@@ -126,9 +118,9 @@ class _MergeOrdersByCsvState extends State<MergeOrdersByCsv> {
   Future<void> _launchDownloadUrl(String url) async {
     if (await canLaunchUrl(Uri.parse(url))) {
       await launchUrl(Uri.parse(url));
-      // log('Download URL launched: $url');
+      log('Download URL launched: $url');
     } else {
-      // log('Could not launch $url');
+      debugPrint('Could not launch $url');
     }
   }
 
@@ -149,7 +141,7 @@ class _MergeOrdersByCsvState extends State<MergeOrdersByCsv> {
   List<List<dynamic>> _getPagedData() {
     if (_csvData.isEmpty) return [];
 
-    const startIndex = 1; // Skip header row
+    const startIndex = 1;
     final endIndex = startIndex + (_currentPage + 1) * _pageSize;
     return _csvData.sublist(
       startIndex,
@@ -185,7 +177,7 @@ class _MergeOrdersByCsvState extends State<MergeOrdersByCsv> {
         });
       }
     } catch (e) {
-      // log('pick error: $e');
+      log('pick error: $e');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error reading CSV file: $e')),
       );
@@ -209,11 +201,11 @@ class _MergeOrdersByCsvState extends State<MergeOrdersByCsv> {
         _csvData = filteredData;
         _rowCount = _csvData.isNotEmpty ? _csvData.length - 1 : 0;
         _isCreateEnabled = _rowCount > 0;
-        // _failedOrders = [];
+
         _isProcessingFile = false;
       });
     } catch (e) {
-      // log('Error processing CSV: $e');
+      log('Error processing CSV: $e');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error processing CSV file: $e')),
       );
@@ -230,7 +222,6 @@ class _MergeOrdersByCsvState extends State<MergeOrdersByCsv> {
 
     setState(() {
       _isCreating = true;
-      // _failedOrders = [];
     });
 
     try {
@@ -267,20 +258,17 @@ class _MergeOrdersByCsvState extends State<MergeOrdersByCsv> {
       final responseBody = await response.stream.bytesToString();
       final jsonData = jsonDecode(responseBody);
 
-      Logger().e('Merge Body: $responseBody, Status Code: ${response.statusCode}');
+      Logger().e('Create Csv Body: $responseBody, Status Code: ${response.statusCode}');
 
       if (response.statusCode == 200 || response.statusCode == 201) {
-        // ScaffoldMessenger.of(context).showSnackBar(
-        //   SnackBar(content: Text("${jsonData['message']}")),
-        // );
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text("${jsonData['message']}")),
         );
-        // log('Failed to upload CSV: ${response.statusCode}\n$responseBody');
+        log('Failed to upload CSV: ${response.statusCode}\n$responseBody');
       }
     } catch (e) {
-      // log('Error during order creation: $e', error: e, stackTrace: StackTrace.current);
+      log('Error during order creation: $e', error: e, stackTrace: StackTrace.current);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error: $e')),
       );
@@ -323,7 +311,7 @@ class _MergeOrdersByCsvState extends State<MergeOrdersByCsv> {
                 ),
                 const SizedBox(width: 16),
                 ElevatedButton(
-                  onPressed: _isPickingFile || _isProcessingFile ? null : () => AuthProvider().downloadTemplate(context, 'create'),
+                  onPressed: _isPickingFile || _isProcessingFile ? null : () => AuthProvider().downloadTemplate(context, 'mergeOrder'),
                   child: const Text('Download Template'),
                 ),
                 const SizedBox(width: 16),
@@ -346,24 +334,22 @@ class _MergeOrdersByCsvState extends State<MergeOrdersByCsv> {
             if (_rowCount > 0) ...[
               Text('Number of items: $_rowCount'),
               const SizedBox(height: 16),
-              // Text('Progress: ${_progressPercentage.toStringAsFixed(1)}%'),
               ValueListenableBuilder<double>(
                 valueListenable: _progressNotifier,
                 builder: (context, value, child) {
-                  return Column(
+                  return Row(
                     children: [
                       Text('Progress: ${value.toStringAsFixed(2)}%'),
-                      const SizedBox(height: 8),
-                      LinearProgressIndicator(
-                        value: value / 100,
-                      )
+                      Text(
+                        '${value.toStringAsFixed(2)}%',
+                        style: const TextStyle(fontWeight: FontWeight.bold),
+                      ),
                     ],
                   );
                 },
               ),
               const SizedBox(height: 50),
               Expanded(
-                // flex: 2,
                 child: _buildDataTable(),
               ),
             ],

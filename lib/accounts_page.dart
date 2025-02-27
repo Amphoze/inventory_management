@@ -84,11 +84,12 @@ class _AccountsPageState extends State<AccountsPage> {
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
                     Container(
-                      width: 200,
-                      height: 34,
+                      width: 180,
+                      height: 40,
                       margin: const EdgeInsets.only(right: 16),
                       child: DropdownButtonFormField<String>(
                         value: selectedSearchType,
+                        isExpanded: true,
                         decoration: const InputDecoration(
                           border: OutlineInputBorder(),
                           contentPadding: EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
@@ -106,59 +107,81 @@ class _AccountsPageState extends State<AccountsPage> {
                     ),
 
                     Container(
-                      height: 35,
-                      width: 200,
+                      height: 40,
+                      width: 220,
                       decoration: BoxDecoration(
                         border: Border.all(
                           color: const Color.fromARGB(183, 6, 90, 216),
                         ),
                         borderRadius: BorderRadius.circular(8),
                       ),
-                      child: TextField(
-                        controller: _searchController,
-                        style: const TextStyle(color: Colors.black),
-                        decoration: const InputDecoration(
-                          hintText: 'Search by Order ID',
-                          hintStyle: TextStyle(color: Colors.black),
-                          border: InputBorder.none,
-                          contentPadding: EdgeInsets.symmetric(vertical: 8.0),
-                        ),
-                        onChanged: (query) {
-                          setState(() {});
-                          if (query.isEmpty) {
-                            setState(() {
-                              selectedCourier = 'All';
-                              picked = null;
-                              selectedPaymentMode = '';
-                            });
-                            accountsProvider.fetchOrdersWithStatus2();
-                          }
-                        },
-                        onTap: () {
-                          setState(() {});
-                        },
-                        onSubmitted: (query) {
-                          if (query.isNotEmpty) {
-                            accountsProvider.searchOrders(query, selectedSearchType);
-                          }
-                        },
-                        onEditingComplete: () {
-                          FocusScope.of(context).unfocus();
-                        },
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: TextField(
+                              controller: _searchController,
+                              style: const TextStyle(color: Colors.black),
+                              decoration: const InputDecoration(
+                                hintText: 'Search by Order ID',
+                                hintStyle: TextStyle(color: Colors.black),
+                                border: InputBorder.none,
+                                contentPadding: EdgeInsets.symmetric(vertical: 14, horizontal: 8),
+                              ),
+                              onChanged: (query) {
+                                setState(() {});
+                                if (query.isEmpty) {
+                                  setState(() {
+                                    selectedCourier = 'All';
+                                    picked = null;
+                                    selectedPaymentMode = '';
+                                  });
+                                  accountsProvider.fetchOrdersWithStatus2();
+                                }
+                              },
+                              onTap: () {
+                                setState(() {});
+                              },
+                              onSubmitted: (query) {
+                                if (query.isNotEmpty) {
+                                  accountsProvider.searchOrders(query, selectedSearchType);
+                                } else {
+                                  accountsProvider.fetchOrdersWithStatus2();
+                                }
+                              },
+                              onEditingComplete: () {
+                                FocusScope.of(context).unfocus();
+                              },
+                            ),
+                          ),
+                          if (_searchController.text.isNotEmpty)
+                            IconButton(
+                              icon: Icon(
+                                Icons.close,
+                                color: Colors.grey.shade600,
+                              ),
+                              onPressed: () {
+                                setState(() {
+                                  _searchController.clear();
+                                });
+                                accountsProvider.fetchOrdersWithStatus2();
+                                accountsProvider.clearAllSelections();
+                              },
+                            ),
+                        ],
                       ),
                     ),
-                    const SizedBox(width: 8),
-
-                    ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primaryBlue,
-                      ),
-                      onPressed: _searchController.text.isNotEmpty ? _onSearchButtonPressed : null,
-                      child: const Text(
-                        'Search',
-                        style: TextStyle(color: Colors.white),
-                      ),
-                    ),
+                    // const SizedBox(width: 8),
+                    //
+                    // ElevatedButton(
+                    //   style: ElevatedButton.styleFrom(
+                    //     backgroundColor: AppColors.primaryBlue,
+                    //   ),
+                    //   onPressed: _searchController.text.isNotEmpty ? _onSearchButtonPressed : null,
+                    //   child: const Text(
+                    //     'Search',
+                    //     style: TextStyle(color: Colors.white),
+                    //   ),
+                    // ),
                     const Spacer(),
                     // const SizedBox(width: 8),
                     // Refresh Button
@@ -550,10 +573,13 @@ class _AccountsPageState extends State<AccountsPage> {
                                             'Date: ',
                                             style: TextStyle(fontWeight: FontWeight.bold),
                                           ),
-                                          Text(
-                                            accountsProvider.formatDate(order.date!),
-                                            style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.primaryBlue),
-                                          ),
+                                          if (order.date != null)
+                                            Text(
+                                              accountsProvider.formatDate(order.date!),
+                                              style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.primaryBlue),
+                                            )
+                                          else
+                                            const SizedBox()
                                         ],
                                       ),
                                       Column(
@@ -1157,9 +1183,7 @@ class _AccountsPageState extends State<AccountsPage> {
                                         Column(
                                           crossAxisAlignment: CrossAxisAlignment.end,
                                           children: [
-                                            if (order.messages != null &&
-                                                order.messages!['confirmerMessage'] != null &&
-                                                order.messages!['confirmerMessage'].toString().isNotEmpty) ...[
+                                            if (order.messages?['confirmerMessage']?.toString().isNotEmpty ?? false) ...[
                                               Utils()
                                                   .showMessage(context, 'Confirmer Remark', order.messages!['confirmerMessage'].toString())
                                             ],

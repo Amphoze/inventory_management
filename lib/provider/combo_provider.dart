@@ -84,7 +84,7 @@ class ComboProvider with ChangeNotifier {
   }
 
   void addCombo(Combo combo) {
-    print(combo.products);
+    // print(combo.products);
     _comboList.add(combo);
     // _saveCombos();
     notifyListeners();
@@ -252,12 +252,12 @@ class ComboProvider with ChangeNotifier {
 
       if (response.containsKey('products') && response['products'] is List) {
         final productList = response['products'];
-        print("Raw productList in provider: $productList");
+        // print("Raw productList in provider: $productList");
 
         _products = productList.map<Product>((json) => Product.fromJson(json)).toList();
         // log("Mapped products in provider: $_products");
       } else {
-        print("Error: 'products' key not found or not a list in response.");
+        // print("Error: 'products' key not found or not a list in response.");
       }
     } catch (e, stacktrace) {
       // Log error details

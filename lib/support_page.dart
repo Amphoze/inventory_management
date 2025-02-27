@@ -96,7 +96,7 @@ class _SupportPageState extends State<SupportPage> {
                     SizedBox(
                       width: 250,
                       child: Container(
-                        height: 40,
+                        height: 35,
                         decoration: BoxDecoration(
                           border: Border.all(
                             color: const Color.fromARGB(183, 6, 90, 216),
@@ -515,6 +515,7 @@ class _SupportPageState extends State<SupportPage> {
                                           ),
                                           const SizedBox(width: 8),
                                           IconButton(
+                                            tooltip: 'Support Chat',
                                             icon: const Icon(Icons.message),
                                             onPressed: () => Navigator.push(
                                                 context,
@@ -533,7 +534,10 @@ class _SupportPageState extends State<SupportPage> {
                                     thickness: 1,
                                     color: AppColors.grey,
                                   ),
-                                  OrderInfo(order: order, pro: pro,),
+                                  OrderInfo(
+                                    order: order,
+                                    pro: pro,
+                                  ),
                                   const SizedBox(height: 6),
                                   // Footer Information
                                   Padding(
@@ -569,19 +573,17 @@ class _SupportPageState extends State<SupportPage> {
                                                 text: "Updated on: ",
                                                 children: [
                                                   TextSpan(
-                                                    text: DateFormat('yyyy-MM-dd\',\' hh:mm a')
-                                                        .format(DateTime.parse("${order.updatedAt}")),
+                                                    text:
+                                                        DateFormat('yyyy-MM-dd\',\' hh:mm a').format(DateTime.parse("${order.updatedAt}")),
                                                     style: const TextStyle(fontWeight: FontWeight.normal),
                                                   ),
                                                 ],
                                                 style: const TextStyle(fontWeight: FontWeight.bold),
                                               ),
                                             ),
-                                            if (order.messages != null &&
-                                                order.messages!['confirmerMessage'] != null &&
-                                                order.messages!['confirmerMessage'].toString().isNotEmpty)
-                                              Utils().showMessage(
-                                                  context, 'Confirmer Remark', order.messages!['confirmerMessage'].toString()),
+                                            if (order.messages?['confirmerMessage']?.toString().isNotEmpty ?? false)
+                                              Utils()
+                                                  .showMessage(context, 'Confirmer Remark', order.messages!['confirmerMessage'].toString()),
                                           ],
                                         ),
                                       ],

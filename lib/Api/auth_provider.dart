@@ -134,6 +134,8 @@ class AuthProvider with ChangeNotifier {
 
     final url = Uri.parse('$baseUrl/login');
 
+    Logger().e('login url: $url');
+
     try {
       final response = await http.post(
         url,

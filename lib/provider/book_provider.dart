@@ -248,7 +248,7 @@ class BookProvider with ChangeNotifier {
   }
 
   // Fetch orders based on type (B2B or B2C)
-  Future<void> fetchOrders(String type, int page, {DateTime? date, String market = 'All'}) async {
+  Future<void> fetchOrders(String type, int page, {DateTime? date, String? market}) async {
     String? token = await _getToken();
     if (token == null) {
       print('Token is null, unable to fetch orders.');
@@ -262,7 +262,7 @@ class BookProvider with ChangeNotifier {
       url += '&date=$formattedDate';
     }
 
-    if (market != 'All') {
+    if (market != 'All' && market != null) {
       url += '&marketplace=$market';
     }
 
@@ -339,7 +339,7 @@ class BookProvider with ChangeNotifier {
     }
   }
 
-  Future<void> fetchBookedOrders(int page, {DateTime? date, String? market = 'All'}) async {
+  Future<void> fetchBookedOrders(int page, {DateTime? date, String? market}) async {
     String? token = await _getToken();
     if (token == null) {
       print('Token is null, unable to fetch orders.');
@@ -355,7 +355,7 @@ class BookProvider with ChangeNotifier {
       url += '&date=$formattedDate';
     }
 
-    if (market != 'All') {
+    if (market != 'All' && market != null) {
       url += '&marketplace=$market';
     }
 
@@ -755,7 +755,11 @@ class BookProvider with ChangeNotifier {
         // print(response.body);
 
         // final newData = data['orders'][0]; //////////////////////////////////////////////////////////////
-        _ordersBooked = [Order.fromJson(data)];
+        if (searchType == 'Order ID') {
+          _ordersBooked = [Order.fromJson(data)];
+        } else {
+          _ordersBooked = [Order.fromJson(data['orders'][0])];
+        }
         // _ordersBooked = [Order.fromJson(data)];
         log('_ordersBooked: $ordersBooked');
       } else {

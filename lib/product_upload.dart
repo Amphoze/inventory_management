@@ -259,7 +259,7 @@ class _ProductDataDisplayState extends State<ProductDataDisplay> {
                               border: Border.all(color: AppColors.blueAccent, width: 1),
                               boxShadow: [
                                 BoxShadow(
-                                  color: AppColors.grey.withOpacity(0.5),
+                                  color: AppColors.grey.withValues(alpha: 0.5),
                                   spreadRadius: 2,
                                   blurRadius: 5,
                                   offset: const Offset(0, 3),

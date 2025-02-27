@@ -447,7 +447,7 @@ class OrderComboCard extends StatelessWidget {
         boxShadow: [
           BoxShadow(
             color: Colors.black
-                .withOpacity(0.08), // Lighter shadow for smaller card
+                .withValues(alpha: 0.08), // Lighter shadow for smaller card
             offset: const Offset(0, 1),
             blurRadius: 3,
           ),
@@ -602,7 +602,7 @@ class OrderComboCard extends StatelessWidget {
             boxShadow: [
               BoxShadow(
                 color: Colors.black
-                    .withOpacity(0.08), // Lighter shadow for smaller card
+                    .withValues(alpha: 0.08), // Lighter shadow for smaller card
                 offset: const Offset(0, 1),
                 blurRadius: 3,
               ),
@@ -760,7 +760,7 @@ class OrderComboCard extends StatelessWidget {
         boxShadow: [
           BoxShadow(
             color: Colors.black
-                .withOpacity(0.08), // Lighter shadow for smaller card
+                .withValues(alpha: 0.08), // Lighter shadow for smaller card
             offset: const Offset(0, 1),
             blurRadius: 3,
           ),

@@ -169,7 +169,7 @@ class _UploadInnerState extends State<UploadInner> {
                     scrollDirection: Axis.horizontal,
                     child: DataTable(
                       // headingRowColor: WidgetStateProperty.all(
-                      //     AppColors.primaryBlue.withOpacity(0.1)),
+                      //     AppColors.primaryBlue.withValues(alpha: 0.1)),
                       headingTextStyle: const TextStyle(
                         fontWeight: FontWeight.bold,
                         color: AppColors.primaryBlue,

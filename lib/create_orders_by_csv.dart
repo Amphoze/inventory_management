@@ -360,7 +360,15 @@ class _CreateOrdersByCSVState extends State<CreateOrdersByCSV> {
                 builder: (context, value, child) {
                   return Column(
                     children: [
-                      Text('Progress: ${value.toStringAsFixed(2)}%'),
+                      Row(
+                        children: [
+                          Text('Progress: ${value.toStringAsFixed(2)}%'),
+                          Text(
+                            '${value.toStringAsFixed(2)}%',
+                            style: const TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                        ],
+                      ),
                       const SizedBox(height: 8),
                       LinearProgressIndicator(
                         value: value / 100,

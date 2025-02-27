@@ -140,7 +140,7 @@ class _BookPageState extends State<BookPage> with SingleTickerProviderStateMixin
         children: [
           Container(
             width: 120,
-            height: 34,
+            height: 40,
             margin: const EdgeInsets.only(right: 16),
             child: DropdownButtonFormField<String>(
               value: selectedSearchType,
@@ -161,8 +161,8 @@ class _BookPageState extends State<BookPage> with SingleTickerProviderStateMixin
             ),
           ),
           Container(
-            width: 150,
-            height: 34,
+            width: 200,
+            height: 40,
             decoration: BoxDecoration(
               border: Border.all(
                 color: AppColors.primaryBlue,
@@ -182,7 +182,7 @@ class _BookPageState extends State<BookPage> with SingleTickerProviderStateMixin
                         fontSize: 16,
                       ),
                       border: InputBorder.none,
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12.0),
+                      contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 13),
                     ),
                     style: const TextStyle(color: AppColors.black),
                     onChanged: (text) {
@@ -907,7 +907,7 @@ class _BookPageState extends State<BookPage> with SingleTickerProviderStateMixin
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(8.0),
                           ),
-                          backgroundColor: AppColors.cardsred.withOpacity(0.1),
+                          backgroundColor: AppColors.cardsred.withValues(alpha: 0.1),
                         ),
                         onPressed: () {
                           setState(() {

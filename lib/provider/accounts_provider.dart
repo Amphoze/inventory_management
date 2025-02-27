@@ -48,8 +48,6 @@ class AccountsProvider with ChangeNotifier {
   int totalPagesBooked = 1;
   final PageController _pageControllerBooked = PageController();
 
-  List<Order> BookedOrders = [];
-
   void setCancelStatus(bool status) {
     isCancel = status;
     notifyListeners();
@@ -256,15 +254,15 @@ class AccountsProvider with ChangeNotifier {
     final token = prefs.getString('authToken') ?? '';
     String encodedOrderId = Uri.encodeComponent(query);
 
-    String url = '${await Constants.getBaseUrl()}/orders?orderStatus=2&ba_approve=true&order_id=$encodedOrderId';
+    String url = '${await Constants.getBaseUrl()}/orders?orderStatus=2&ba_approve=true';
 
     if (searchType == "Order ID") {
-      url += '&order_id=$query';
+      url += '&order_id=$encodedOrderId';
     } else {
       url += '&transaction_number=$query';
     }
 
-    print('Searching orders with term: $query');
+    Logger().e('searchOrders url: $url');
 
     try {
       final response = await http.get(
@@ -280,13 +278,15 @@ class AccountsProvider with ChangeNotifier {
       if (response.statusCode == 200) {
         final jsonData = json.decode(response.body);
 
-        List<Order> orders = [];
         // print('Response data: $jsonData');
         if (jsonData != null) {
-          orders.add(Order.fromJson(jsonData));
-          print('Response data: $jsonData');
+          if (searchType == "Order ID") {
+            _orders = [Order.fromJson(jsonData)];
+          } else {
+            _orders = (jsonData['orders'] as List).map((orderJson) => Order.fromJson(orderJson)).toList();
+          }
         } else {
-          print('No data found in response.');
+          log('No data found in response.');
         }
 
         _orders = orders;
@@ -296,7 +296,7 @@ class AccountsProvider with ChangeNotifier {
         _orders = [];
       }
     } catch (error) {
-      print('Error searching failed orders: $error');
+      log('Error searching failed orders: $error');
       _orders = [];
     } finally {
       _isLoading = false;
@@ -434,7 +434,7 @@ class AccountsProvider with ChangeNotifier {
   }
 
   void clearSearchResults() {
-    _ordersBooked = BookedOrders;
+    _ordersBooked = [];
     notifyListeners();
   }
 
@@ -617,7 +617,7 @@ class AccountsProvider with ChangeNotifier {
       url += '&transaction_number=$query';
     }
 
-    log(url);
+    log('searchBookedOrders url: $url');
 
     try {
       isLoadingBooked = true;
@@ -635,7 +635,12 @@ class AccountsProvider with ChangeNotifier {
         final data = jsonDecode(response.body);
         // log(response.body);
         // final newData = data['orders'][0]; //////////////////////////////////////////////////////////////
-        _ordersBooked = [Order.fromJson(data)]; ////////////////////////////////////////////
+        if (searchType == "Order ID") {
+          _ordersBooked = [Order.fromJson(data)];
+        } else {
+          _ordersBooked = (data['orders'] as List).map((orderJson) => Order.fromJson(orderJson)).toList();
+        }
+        // _ordersBooked = [Order.fromJson(data)]; ////////////////////////////////////////////
         log('Orders found: $_ordersBooked');
       } else {
         _ordersBooked = [];

@@ -298,7 +298,7 @@ class _CustomDropdownMultipleState extends State<CustomDropdownMultiple> {
         // padding: const EdgeInsets.symmetric(horizontal: 16),
         decoration: BoxDecoration(
           // errorStyle:'',
-          border: Border.all(color: Colors.blue.withOpacity(0.2)),
+          border: Border.all(color: Colors.blue.withValues(alpha: 0.2)),
           borderRadius: BorderRadius.circular(8),
           color: Colors.blue.shade100,
         ),

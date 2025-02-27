@@ -454,7 +454,7 @@ class _OrderComboCardState extends State<OrderComboCard> {
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    if (widget.isBookedPage && widget.order.rebookedBy!['status']) ...[
+                    if (widget.isBookedPage && (widget.order.rebookedBy?['status'] ?? false)) ...[
                       Container(
                         margin: const EdgeInsets.symmetric(vertical: 8),
                         padding: const EdgeInsets.all(12),
@@ -468,7 +468,7 @@ class _OrderComboCardState extends State<OrderComboCard> {
                           borderRadius: BorderRadius.circular(12),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.blue.withOpacity(0.15),
+                              color: Colors.blue.withValues(alpha: 0.15),
                               spreadRadius: 2,
                               blurRadius: 6,
                               offset: const Offset(0, 3),
@@ -699,7 +699,7 @@ class _OrderComboCardState extends State<OrderComboCard> {
                             onPressed: () {
                               final pro = context.read<AccountsProvider>();
                               setState(() {
-                                accountsRemark.text = widget.order.messages!['accountMessage'].toString() ?? '';
+                                accountsRemark.text = widget.order.messages?['accountMessage']?.toString() ?? '';
                               });
                               showDialog(
                                 context: context,
@@ -820,7 +820,7 @@ class _OrderComboCardState extends State<OrderComboCard> {
                       Utils().showMessage(context, 'Account Remark', widget.order.messages!['accountMessage'].toString()),
                     ],
                     /////////////////////////////////////////////////////////
-                    if ((widget.order.messages?['bookerMessage']?.toString().isNotEmpty ?? false) && widget.isBookedPage && widget.isPacked) ...[
+                    if (widget.order.messages?['bookerMessage']?.toString().isNotEmpty ?? false) ...[
                       Utils().showMessage(context, 'Booker Remark', widget.order.messages!['bookerMessage'].toString())
                     ],
                   ],
@@ -863,23 +863,24 @@ class _OrderComboCardState extends State<OrderComboCard> {
                     // Text(widget.order.outBoundBy.toString()),
                     Text.rich(
                       TextSpan(
-                          text: "Outbound: ",
-                          children: [
-                            TextSpan(
-                                text: "${widget.order.outBoundBy?['status'] ?? false}",
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.normal,
-                                )),
-                          ],
-                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                        text: "Outbound: ",
+                        children: [
+                          TextSpan(
+                              text: "${widget.order.outBoundBy?['status'] ?? false}",
+                              style: const TextStyle(
+                                fontWeight: FontWeight.normal,
+                              )),
+                        ],
+                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                      ),
                     ),
-                    if (showBy(widget.order.outBoundBy != null && widget.order.outBoundBy!['status']))
+                    if (showBy(widget.order.outBoundBy?['status'] ?? false))
                       Text.rich(
                         TextSpan(
                           text: "Outbound By: ",
                           children: [
                             TextSpan(
-                              text: widget.order.outBoundBy!['outBoundBy'].toString().split('@')[0] ?? '',
+                              text: widget.order.outBoundBy!['outBoundBy']?.toString().split('@')[0] ?? '',
                               style: const TextStyle(
                                 fontWeight: FontWeight.normal,
                               ),
@@ -897,13 +898,13 @@ class _OrderComboCardState extends State<OrderComboCard> {
                           ),
                         ),
                       ),
-                    if (showBy(widget.order.confirmedBy != null && widget.order.confirmedBy!['status']))
+                    if (showBy(widget.order.confirmedBy?['status'] ?? false))
                       Text.rich(
                         TextSpan(
                             text: "Confirmed By: ",
                             children: [
                               TextSpan(
-                                  text: widget.order.confirmedBy!['confirmedBy'].toString().split('@')[0] ?? '',
+                                  text: widget.order.confirmedBy!['confirmedBy']?.toString().split('@')[0] ?? '',
                                   style: const TextStyle(
                                     fontWeight: FontWeight.normal,
                                   )),
@@ -918,13 +919,13 @@ class _OrderComboCardState extends State<OrderComboCard> {
                               fontWeight: FontWeight.bold,
                             )),
                       ),
-                    if (showBy(widget.order.baApprovedBy != null && widget.order.baApprovedBy!['status']))
+                    if (showBy(widget.order.baApprovedBy?['status'] ?? false))
                       Text.rich(
                         TextSpan(
                             text: "BA Approved By: ",
                             children: [
                               TextSpan(
-                                  text: widget.order.baApprovedBy!['baApprovedBy'].toString().split('@')[0] ?? '',
+                                  text: widget.order.baApprovedBy!['baApprovedBy']?.toString().split('@')[0] ?? '',
                                   style: const TextStyle(
                                     fontWeight: FontWeight.normal,
                                   )),
@@ -939,13 +940,13 @@ class _OrderComboCardState extends State<OrderComboCard> {
                               fontWeight: FontWeight.bold,
                             )),
                       ),
-                    if (showBy(widget.order.checkInvoiceBy != null && widget.order.checkInvoiceBy!['approved'] != null))
+                    if (showBy(widget.order.checkInvoiceBy?['approved'] ?? false))
                       Text.rich(
                         TextSpan(
-                            text: "Accounted By: ",
+                            text: "Invoiced By: ",
                             children: [
                               TextSpan(
-                                  text: widget.order.checkInvoiceBy!['invoiceBy'].toString().split('@')[0] ?? '',
+                                  text: widget.order.checkInvoiceBy!['invoiceBy']?.toString().split('@')[0] ?? '',
                                   style: const TextStyle(
                                     fontWeight: FontWeight.normal,
                                   )),
@@ -960,13 +961,13 @@ class _OrderComboCardState extends State<OrderComboCard> {
                               fontWeight: FontWeight.bold,
                             )),
                       ),
-                    if (widget.order.bookedBy != null && showBy(widget.order.bookedBy!['status']))
+                    if (showBy(widget.order.bookedBy?['status'] ?? false))
                       Text.rich(
                         TextSpan(
                             text: "Booked By: ",
                             children: [
                               TextSpan(
-                                  text: widget.order.bookedBy!['bookedBy'].toString().split('@')[0] ?? '',
+                                  text: widget.order.bookedBy!['bookedBy']?.toString().split('@')[0] ?? '',
                                   style: const TextStyle(
                                     fontWeight: FontWeight.normal,
                                   )),
@@ -981,13 +982,13 @@ class _OrderComboCardState extends State<OrderComboCard> {
                               fontWeight: FontWeight.bold,
                             )),
                       ),
-                    if (showBy(widget.order.pickedBy != null && widget.order.pickedBy!['status']))
+                    if (showBy(widget.order.pickedBy?['status'] ?? false))
                       Text.rich(
                         TextSpan(
                             text: "Picked By: ",
                             children: [
                               TextSpan(
-                                  text: widget.order.pickedBy!['pickedBy'].toString().split('@')[0] ?? '',
+                                  text: widget.order.pickedBy!['pickedBy']?.toString().split('@')[0] ?? '',
                                   style: const TextStyle(
                                     fontWeight: FontWeight.normal,
                                   )),
@@ -1002,13 +1003,13 @@ class _OrderComboCardState extends State<OrderComboCard> {
                               fontWeight: FontWeight.bold,
                             )),
                       ),
-                    if (showBy(widget.order.packedBy != null && widget.order.packedBy!['status']))
+                    if (showBy(widget.order.packedBy?['status'] ?? false))
                       Text.rich(
                         TextSpan(
                             text: "Packed By: ",
                             children: [
                               TextSpan(
-                                  text: widget.order.packedBy!['packedBy'].toString().split('@')[0] ?? '',
+                                  text: widget.order.packedBy!['packedBy']?.toString().split('@')[0] ?? '',
                                   style: const TextStyle(
                                     fontWeight: FontWeight.normal,
                                   )),
@@ -1023,13 +1024,13 @@ class _OrderComboCardState extends State<OrderComboCard> {
                               fontWeight: FontWeight.bold,
                             )),
                       ),
-                    if (showBy(widget.order.checkedBy != null && widget.order.checkedBy!['approved'] != null))
+                    if (showBy(widget.order.checkedBy?['approved'] ?? false))
                       Text.rich(
                         TextSpan(
                             text: "Checked By: ",
                             children: [
                               TextSpan(
-                                  text: widget.order.checkedBy!['checkedBy'].toString().split('@')[0] ?? '',
+                                  text: widget.order.checkedBy!['checkedBy']?.toString().split('@')[0] ?? '',
                                   style: const TextStyle(
                                     fontWeight: FontWeight.normal,
                                   )),
@@ -1044,36 +1045,37 @@ class _OrderComboCardState extends State<OrderComboCard> {
                               fontWeight: FontWeight.bold,
                             )),
                       ),
-                    if (showBy(widget.order.rackedBy != null && (widget.order.rackedBy?['approved'] ?? false)))
+                    if (showBy((widget.order.rackedBy?['approved'] ?? false)))
                       Text.rich(
                         TextSpan(
-                            text: "Racked By: ",
-                            children: [
+                          text: "Racked By: ",
+                          children: [
+                            TextSpan(
+                              text: widget.order.rackedBy!['rackedBy']?.toString().split('@')[0] ?? '',
+                              style: const TextStyle(
+                                fontWeight: FontWeight.normal,
+                              ),
+                            ),
+                            if (widget.order.rackedBy!['timestamp'] != null)
                               TextSpan(
-                                text: widget.order.rackedBy!['rackedBy'].toString().split('@')[0] ?? '',
+                                text: ' (${formatIsoDate(widget.order.rackedBy!['timestamp'])})' ?? '',
                                 style: const TextStyle(
                                   fontWeight: FontWeight.normal,
                                 ),
                               ),
-                              if (widget.order.rackedBy!['timestamp'] != null)
-                                TextSpan(
-                                  text: ' (${formatIsoDate(widget.order.rackedBy!['timestamp'])})' ?? '',
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.normal,
-                                  ),
-                                ),
-                            ],
-                            style: const TextStyle(
-                              fontWeight: FontWeight.bold,
-                            )),
+                          ],
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                       ),
-                    if (showBy(widget.order.manifestedBy != null && widget.order.manifestedBy!['approved'] != null))
+                    if (showBy(widget.order.manifestedBy?['approved'] ?? false))
                       Text.rich(
                         TextSpan(
                             text: "Manifested By: ",
                             children: [
                               TextSpan(
-                                text: widget.order.manifestedBy!['manifestBy'].toString().split('@')[0] ?? '',
+                                text: widget.order.manifestedBy!['manifestBy']?.toString().split('@')[0] ?? '',
                                 style: const TextStyle(
                                   fontWeight: FontWeight.normal,
                                 ),
@@ -1125,7 +1127,7 @@ class _OrderComboCardState extends State<OrderComboCard> {
         borderRadius: BorderRadius.circular(10), // Slightly smaller rounded corners
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.08), // Lighter shadow for smaller card
+            color: Colors.black.withValues(alpha: 0.08), // Lighter shadow for smaller card
             offset: const Offset(0, 1),
             blurRadius: 3,
           ),
@@ -1272,7 +1274,7 @@ class _OrderComboCardState extends State<OrderComboCard> {
             borderRadius: BorderRadius.circular(10), // Slightly smaller rounded corners
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.08), // Lighter shadow for smaller card
+                color: Colors.black.withValues(alpha: 0.08), // Lighter shadow for smaller card
                 offset: const Offset(0, 1),
                 blurRadius: 3,
               ),
@@ -1424,7 +1426,7 @@ class _OrderComboCardState extends State<OrderComboCard> {
         borderRadius: BorderRadius.circular(10), // Slightly smaller rounded corners
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.08), // Lighter shadow for smaller card
+            color: Colors.black.withValues(alpha: 0.08), // Lighter shadow for smaller card
             offset: const Offset(0, 1),
             blurRadius: 3,
           ),

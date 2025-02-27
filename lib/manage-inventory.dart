@@ -188,7 +188,7 @@
 //                       height: 80,
 //                       decoration: BoxDecoration(
 //                           border: Border.all(
-//                               color: AppColors.black.withOpacity(0.2)),
+//                               color: AppColors.black.withValues(alpha: 0.2)),
 //                           borderRadius: BorderRadius.circular(10)),
 //                       child: Align(
 //                         alignment: Alignment.topLeft,

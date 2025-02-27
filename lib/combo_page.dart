@@ -766,7 +766,7 @@ class _ComboPageState extends State<ComboPage> {
                                                           borderRadius: BorderRadius.circular(12),
                                                           boxShadow: [
                                                             BoxShadow(
-                                                              color: Colors.grey.withOpacity(0.1),
+                                                              color: Colors.grey.withValues(alpha: 0.1),
                                                               spreadRadius: 1,
                                                               blurRadius: 4,
                                                               offset: const Offset(0, 2),
@@ -922,7 +922,7 @@ Widget _buildCompactInfo({required String label, required String value}) {
     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
     margin: const EdgeInsets.only(left: 8),
     decoration: BoxDecoration(
-      color: Colors.white.withOpacity(0.7),
+      color: Colors.white.withValues(alpha: 0.7),
       borderRadius: BorderRadius.circular(8),
     ),
     child: Row(

@@ -1249,7 +1249,7 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
                                             labelText: 'Order Type',
                                             labelStyle: TextStyle(
                                               fontWeight: FontWeight.w500,
-                                              color: Colors.grey.withOpacity(0.7),
+                                              color: Colors.grey.withValues(alpha: 0.7),
                                               fontSize: 14,
                                             ),
                                             prefixIcon: Icon(Icons.shopping_cart, color: Colors.grey[700]),
@@ -1330,7 +1330,7 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
                                             labelText: 'Marketplace',
                                             labelStyle: TextStyle(
                                               fontWeight: FontWeight.w500,
-                                              color: Colors.grey.withOpacity(0.7),
+                                              color: Colors.grey.withValues(alpha: 0.7),
                                               fontSize: 14,
                                             ),
                                             prefixIcon: Icon(Icons.store, color: Colors.grey[700]),
@@ -1412,7 +1412,7 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
                                             labelText: 'Filter',
                                             labelStyle: TextStyle(
                                               fontWeight: FontWeight.w500,
-                                              color: Colors.grey.withOpacity(0.7),
+                                              color: Colors.grey.withValues(alpha: 0.7),
                                               fontSize: 14,
                                             ),
                                             prefixIcon: Icon(Icons.filter_1, color: Colors.grey[700]),
@@ -1509,7 +1509,7 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
                                             labelText: 'Payment Mode',
                                             labelStyle: TextStyle(
                                               fontWeight: FontWeight.w500,
-                                              color: Colors.grey.withOpacity(0.7),
+                                              color: Colors.grey.withValues(alpha: 0.7),
                                               fontSize: 14,
                                             ),
                                             prefixIcon: Icon(Icons.payment, color: Colors.grey[700]),
@@ -2053,7 +2053,7 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
                                             labelText: 'Customer Type',
                                             labelStyle: TextStyle(
                                               fontWeight: FontWeight.w500,
-                                              color: Colors.grey.withOpacity(0.7),
+                                              color: Colors.grey.withValues(alpha: 0.7),
                                               fontSize: 14,
                                             ),
                                             prefixIcon: Icon(Icons.person, color: Colors.grey[700]),
@@ -2798,7 +2798,7 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
                   labelText: label,
                   labelStyle: TextStyle(
                     fontWeight: FontWeight.w500,
-                    color: isFocused || !isEmpty ? AppColors.primaryBlue : Colors.grey.withOpacity(0.7),
+                    color: isFocused || !isEmpty ? AppColors.primaryBlue : Colors.grey.withValues(alpha: 0.7),
                     fontSize: 14,
                   ),
                   prefixIcon: Icon(
@@ -2871,7 +2871,7 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
               labelText: label,
               labelStyle: TextStyle(
                 fontWeight: FontWeight.w500,
-                color: isFocused || !isEmpty ? AppColors.primaryBlue : Colors.grey.withOpacity(0.7),
+                color: isFocused || !isEmpty ? AppColors.primaryBlue : Colors.grey.withValues(alpha: 0.7),
                 fontSize: 14,
               ),
               prefixIcon: Icon(icon, color: isFocused ? AppColors.primaryBlue : Colors.grey[700]),
@@ -2987,7 +2987,7 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
                 labelText: label,
                 labelStyle: TextStyle(
                   fontWeight: FontWeight.w500,
-                  color: isFocused || !isEmpty ? AppColors.primaryBlue : Colors.grey.withOpacity(0.7),
+                  color: isFocused || !isEmpty ? AppColors.primaryBlue : Colors.grey.withValues(alpha: 0.7),
                   fontSize: 12, // Reduced label font size
                 ),
                 prefixIcon: Icon(icon,
@@ -3113,7 +3113,7 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
                 labelText: label,
                 labelStyle: TextStyle(
                   fontWeight: FontWeight.w500,
-                  color: isFocused || !isEmpty ? AppColors.primaryBlue : Colors.grey.withOpacity(0.7),
+                  color: isFocused || !isEmpty ? AppColors.primaryBlue : Colors.grey.withValues(alpha: 0.7),
                   fontSize: 12, // Reduced label font size
                 ),
                 prefixIcon: Icon(icon,

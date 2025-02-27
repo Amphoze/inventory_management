@@ -38,7 +38,6 @@ class _ConfirmOutboundByCSVState extends State<ConfirmOutboundByCSV> {
   IO.Socket? _socket;
 
   void _initializeSocket() async {
-    // Check if socket is already initialized
     if (_socket != null && _socket!.connected) {
       log('Socket already connected. Skipping initialization.');
       return;
@@ -48,23 +47,17 @@ class _ConfirmOutboundByCSVState extends State<ConfirmOutboundByCSV> {
       final baseUrl = await Constants.getBaseUrl();
       log('Base URL in _initializeSocket: $baseUrl');
 
-      // Initialize socket if not already initialized
       _socket ??= IO.io(
         baseUrl,
-        IO.OptionBuilder()
-            .setTransports(['websocket'])
-            .disableAutoConnect()
-            .build(),
+        IO.OptionBuilder().setTransports(['websocket']).disableAutoConnect().build(),
       );
 
-      // On successful connection
       _socket?.onConnect((_) {
         debugPrint('Connected to Socket.IO');
         _showSnackbar('Connected to server', Colors.green);
       });
 
-      // On error during file upload
-      _socket?.off('csv-file-uploading-err'); // Clear previous listeners
+      _socket?.off('csv-file-uploading-err');
       _socket?.on('csv-file-uploading-err', (data) {
         debugPrint('Error Data: $data');
         setState(() {
@@ -73,7 +66,6 @@ class _ConfirmOutboundByCSVState extends State<ConfirmOutboundByCSV> {
         _showSnackbar(_progressMessage, Colors.red);
       });
 
-      // On file upload progress
       _socket?.off('csv-file-uploading');
       _socket?.on('csv-file-uploading', (data) {
         Logger().e('Data progress: ${data['progress']}');
@@ -83,7 +75,6 @@ class _ConfirmOutboundByCSVState extends State<ConfirmOutboundByCSV> {
         }
       });
 
-      // On successful file upload - Use `.once()` to trigger only once
       _socket?.off('csv-file-uploaded');
       _socket?.once('csv-file-uploaded', (data) {
         log('CSV file uploaded: $data');
@@ -92,10 +83,9 @@ class _ConfirmOutboundByCSVState extends State<ConfirmOutboundByCSV> {
         });
         _showSnackbar(_progressMessage, Colors.green);
 
-        // Launch download URL if available
-        if (data['downloadLink'] != null) {
-          log('Download link: ${data['downloadLink']}');
-          _launchDownloadUrl(data['downloadLink']);
+        if (data['download_csv'] != null) {
+          log('Download link: ${data['download_csv']}');
+          _launchDownloadUrl(data['download_csv']);
         }
       });
 
@@ -106,7 +96,6 @@ class _ConfirmOutboundByCSVState extends State<ConfirmOutboundByCSV> {
     }
   }
 
-// Helper function to show snackbars
   void _showSnackbar(String message, Color color) {
     if (context.mounted) {
       ScaffoldMessenger.of(context).removeCurrentSnackBar();
@@ -161,7 +150,7 @@ class _ConfirmOutboundByCSVState extends State<ConfirmOutboundByCSV> {
   List<List<dynamic>> _getPagedData() {
     if (_csvData.isEmpty) return [];
 
-    const startIndex = 1; // Skip header row
+    const startIndex = 1;
     final endIndex = startIndex + (_currentPage + 1) * _pageSize;
     return _csvData.sublist(
       startIndex,
@@ -221,7 +210,7 @@ class _ConfirmOutboundByCSVState extends State<ConfirmOutboundByCSV> {
         _csvData = filteredData;
         _rowCount = _csvData.isNotEmpty ? _csvData.length - 1 : 0;
         _isCreateEnabled = _rowCount > 0;
-        // _failedOrders = [];
+
         _isProcessingFile = false;
       });
     } catch (e) {
@@ -235,14 +224,13 @@ class _ConfirmOutboundByCSVState extends State<ConfirmOutboundByCSV> {
     }
   }
 
-  Future<void> _createOrders() async {
+  Future<void> _confirmOrders() async {
     if (_selectedFile == null) return;
 
     Logger().e('1');
 
     setState(() {
       _isCreating = true;
-      // _failedOrders = [];
     });
 
     try {
@@ -282,9 +270,6 @@ class _ConfirmOutboundByCSVState extends State<ConfirmOutboundByCSV> {
       Logger().e('Create Csv Body: $responseBody, Status Code: ${response.statusCode}');
 
       if (response.statusCode == 200 || response.statusCode == 201) {
-        // ScaffoldMessenger.of(context).showSnackBar(
-        //   SnackBar(content: Text("${jsonData['message']}")),
-        // );
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text("${jsonData['message']}")),
@@ -329,8 +314,8 @@ class _ConfirmOutboundByCSVState extends State<ConfirmOutboundByCSV> {
                     child: Text(_isPickingFile
                         ? 'Selecting File...'
                         : _isProcessingFile
-                        ? 'Processing File...'
-                        : 'Select CSV File'),
+                            ? 'Processing File...'
+                            : 'Select CSV File'),
                   ),
                 ),
                 const SizedBox(width: 16),
@@ -342,7 +327,7 @@ class _ConfirmOutboundByCSVState extends State<ConfirmOutboundByCSV> {
                 if (_rowCount > 0)
                   Expanded(
                     child: ElevatedButton(
-                      onPressed: _isCreateEnabled && !_isCreating && !_isPickingFile && !_isProcessingFile ? _createOrders : null,
+                      onPressed: _isCreateEnabled && !_isCreating && !_isPickingFile && !_isProcessingFile ? _confirmOrders : null,
                       child: const Text('Confirm Orders'),
                     ),
                   ),
@@ -358,24 +343,19 @@ class _ConfirmOutboundByCSVState extends State<ConfirmOutboundByCSV> {
             if (_rowCount > 0) ...[
               Text('Number of items: $_rowCount'),
               const SizedBox(height: 16),
-              // Text('Progress: ${_progressPercentage.toStringAsFixed(1)}%'),
               ValueListenableBuilder<double>(
                 valueListenable: _progressNotifier,
                 builder: (context, value, child) {
-                  return Column(
+                  return Row(
                     children: [
                       Text('Progress: ${value.toStringAsFixed(2)}%'),
-                      const SizedBox(height: 8),
-                      LinearProgressIndicator(
-                        value: value / 100,
-                      )
+                      Text('${value.toStringAsFixed(2)}%', style: const TextStyle(fontWeight: FontWeight.bold),),
                     ],
                   );
                 },
               ),
               const SizedBox(height: 50),
               Expanded(
-                // flex: 2,
                 child: _buildDataTable(),
               ),
             ],
@@ -414,17 +394,17 @@ class _ConfirmOutboundByCSVState extends State<ConfirmOutboundByCSV> {
               ),
               columns: headers
                   .map((header) => DataColumn(
-                label: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                  child: Text(header.toString()),
-                ),
-              ))
+                        label: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                          child: Text(header.toString()),
+                        ),
+                      ))
                   .toList(),
               rows: pagedData.map((row) {
                 return DataRow(
                   cells: List.generate(
                     row.length,
-                        (index) => DataCell(
+                    (index) => DataCell(
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 8.0),
                         child: Text(row[index].toString()),

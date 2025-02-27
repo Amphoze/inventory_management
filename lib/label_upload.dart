@@ -204,7 +204,7 @@ class _LabelUploadState extends State<LabelUpload> {
           border: Border.all(color: AppColors.blueAccent, width: 1.5),
           boxShadow: [
             BoxShadow(
-              color: AppColors.grey.withOpacity(0.1),
+              color: AppColors.grey.withValues(alpha: 0.1),
               spreadRadius: 2,
               blurRadius: 10,
               offset: const Offset(0, 4),

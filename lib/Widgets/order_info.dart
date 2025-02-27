@@ -16,124 +16,122 @@ class OrderInfo extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(8.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Order Information Grid
-          Card(
-            elevation: 2,
-            color: Colors.white,
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildInfoColumn(
-                    'Payment Details',
-                    [
-                      buildLabelValueRow('Payment Mode', order.paymentMode ?? ''),
-                      buildLabelValueRow('Currency Code', order.currencyCode ?? ''),
-                      buildLabelValueRow('COD Amount', order.codAmount.toString() ?? ''),
-                      buildLabelValueRow('Prepaid Amount', order.prepaidAmount.toString() ?? ''),
-                      buildLabelValueRow('Coin', order.coin.toString() ?? ''),
-                      buildLabelValueRow('Tax Percent', order.taxPercent.toString() ?? ''),
-                      buildLabelValueRow('Courier Name', order.courierName ?? ''),
-                      buildLabelValueRow('Order Type', order.orderType ?? ''),
-                      buildLabelValueRow('Payment Bank', order.paymentBank ?? ''),
-                    ],
-                  ),
-                  const SizedBox(width: 16),
-                  _buildInfoColumn(
-                    'Order Details',
-                    [
-                      buildLabelValueRow('Discount Amount', order.discountAmount.toString() ?? ''),
-                      buildLabelValueRow('Discount Scheme', order.discountScheme ?? ''),
-                      buildLabelValueRow('Agent', order.agent ?? ''),
-                      buildLabelValueRow('Notes', order.notes ?? ''),
-                      buildLabelValueRow('Marketplace', order.marketplace?.name ?? ''),
-                      buildLabelValueRow('Source', order.source ?? ''),
-                      buildLabelValueRow('Filter', order.filter ?? ''),
-                      buildLabelValueRow(
-                        'Expected Delivery Date',
-                        order.expectedDeliveryDate != null ? pro.formatDate(order.expectedDeliveryDate!) : '',
-                      ),
-                      buildLabelValueRow('Preferred Courier', order.preferredCourier ?? ''),
-                      buildLabelValueRow(
-                        'Payment Date Time',
-                        order.paymentDateTime != null ? pro.formatDateTime(order.paymentDateTime!) : '',
-                      ),
-                    ],
-                  ),
-                  const SizedBox(width: 16),
-                  _buildInfoColumn(
-                    'Shipment Details',
-                    [
-                      buildLabelValueRow('Delivery Term', order.deliveryTerm ?? ''),
-                      buildLabelValueRow('Transaction Number', order.transactionNumber ?? ''),
-                      buildLabelValueRow('Micro Dealer Order', order.microDealerOrder ?? ''),
-                      buildLabelValueRow('Fulfillment Type', order.fulfillmentType ?? ''),
-                      buildLabelValueRow('No. of Boxes', order.numberOfBoxes.toString() ?? ''),
-                      buildLabelValueRow('Total Quantity', order.totalQuantity.toString() ?? ''),
-                      buildLabelValueRow('SKU Qty', order.skuQty.toString() ?? ''),
-                      buildLabelValueRow('Calc Entry No.', order.calcEntryNumber ?? ''),
-                      buildLabelValueRow('Currency', order.currency ?? ''),
-                    ],
-                  ),
-                  const SizedBox(width: 16),
-                  _buildInfoColumn(
-                    'Customer Information',
-                    [
-                      buildLabelValueRow(
-                        'Dimensions',
-                        '${order.length.toString() ?? ''} x ${order.breadth.toString() ?? ''} x ${order.height.toString() ?? ''}',
-                      ),
-                      buildLabelValueRow('Tracking Status', order.trackingStatus ?? ''),
-                      buildLabelValueRow('Customer ID', order.customer?.customerId ?? ''),
-                      buildLabelValueRow(
-                          'Full Name',
-                          order.customer?.firstName != order.customer?.lastName
-                              ? '${order.customer?.firstName ?? ''} ${order.customer?.lastName ?? ''}'.trim()
-                              : order.customer?.firstName ?? ''),
-                      buildLabelValueRow('Email', order.customer?.email ?? ''),
-                      buildLabelValueRow('Phone', maskPhoneNumber(order.customer?.phone?.toString()) ?? ''),
-                      buildLabelValueRow('GSTIN', order.customer?.customerGstin ?? ''),
-                    ],
-                  ),
-                ],
-              ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Order Information Grid
+        Card(
+          elevation: 2,
+          color: Colors.white,
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildInfoColumn(
+                  'Payment Details',
+                  [
+                    buildLabelValueRow('Payment Mode', order.paymentMode ?? ''),
+                    buildLabelValueRow('Currency Code', order.currencyCode ?? ''),
+                    buildLabelValueRow('COD Amount', order.codAmount.toString() ?? ''),
+                    buildLabelValueRow('Prepaid Amount', order.prepaidAmount.toString() ?? ''),
+                    buildLabelValueRow('Coin', order.coin.toString() ?? ''),
+                    buildLabelValueRow('Tax Percent', order.taxPercent.toString() ?? ''),
+                    buildLabelValueRow('Courier Name', order.courierName ?? ''),
+                    buildLabelValueRow('Order Type', order.orderType ?? ''),
+                    buildLabelValueRow('Payment Bank', order.paymentBank ?? ''),
+                  ],
+                ),
+                const SizedBox(width: 16),
+                _buildInfoColumn(
+                  'Order Details',
+                  [
+                    buildLabelValueRow('Discount Amount', order.discountAmount.toString() ?? ''),
+                    buildLabelValueRow('Discount Scheme', order.discountScheme ?? ''),
+                    buildLabelValueRow('Agent', order.agent ?? ''),
+                    buildLabelValueRow('Notes', order.notes ?? ''),
+                    buildLabelValueRow('Marketplace', order.marketplace?.name ?? ''),
+                    buildLabelValueRow('Source', order.source ?? ''),
+                    buildLabelValueRow('Filter', order.filter ?? ''),
+                    buildLabelValueRow(
+                      'Expected Delivery Date',
+                      order.expectedDeliveryDate != null ? pro.formatDate(order.expectedDeliveryDate!) : '',
+                    ),
+                    buildLabelValueRow('Preferred Courier', order.preferredCourier ?? ''),
+                    buildLabelValueRow(
+                      'Payment Date Time',
+                      order.paymentDateTime != null ? pro.formatDateTime(order.paymentDateTime!) : '',
+                    ),
+                  ],
+                ),
+                const SizedBox(width: 16),
+                _buildInfoColumn(
+                  'Shipment Details',
+                  [
+                    buildLabelValueRow('Delivery Term', order.deliveryTerm ?? ''),
+                    buildLabelValueRow('Transaction Number', order.transactionNumber ?? ''),
+                    buildLabelValueRow('Micro Dealer Order', order.microDealerOrder ?? ''),
+                    buildLabelValueRow('Fulfillment Type', order.fulfillmentType ?? ''),
+                    buildLabelValueRow('No. of Boxes', order.numberOfBoxes.toString() ?? ''),
+                    buildLabelValueRow('Total Quantity', order.totalQuantity.toString() ?? ''),
+                    buildLabelValueRow('SKU Qty', order.skuQty.toString() ?? ''),
+                    buildLabelValueRow('Calc Entry No.', order.calcEntryNumber ?? ''),
+                    buildLabelValueRow('Currency', order.currency ?? ''),
+                  ],
+                ),
+                const SizedBox(width: 16),
+                _buildInfoColumn(
+                  'Customer Information',
+                  [
+                    buildLabelValueRow(
+                      'Dimensions',
+                      '${order.length.toString() ?? ''} x ${order.breadth.toString() ?? ''} x ${order.height.toString() ?? ''}',
+                    ),
+                    buildLabelValueRow('Tracking Status', order.trackingStatus ?? ''),
+                    buildLabelValueRow('Customer ID', order.customer?.customerId ?? ''),
+                    buildLabelValueRow(
+                        'Full Name',
+                        order.customer?.firstName != order.customer?.lastName
+                            ? '${order.customer?.firstName ?? ''} ${order.customer?.lastName ?? ''}'.trim()
+                            : order.customer?.firstName ?? ''),
+                    buildLabelValueRow('Email', order.customer?.email ?? ''),
+                    buildLabelValueRow('Phone', maskPhoneNumber(order.customer?.phone?.toString()) ?? ''),
+                    buildLabelValueRow('GSTIN', order.customer?.customerGstin ?? ''),
+                  ],
+                ),
+              ],
             ),
           ),
-          const SizedBox(height: 8),
-          // Address Section
-          Row(
-            children: [
-              Expanded(
-                child: _buildAddressCard(
-                  'Shipping Address',
-                  order.shippingAddress,
-                  order.shippingAddress?.firstName,
-                  order.shippingAddress?.lastName,
-                  order.shippingAddress?.pincode,
-                  order.shippingAddress?.countryCode,
-                ),
+        ),
+        const SizedBox(height: 8),
+        // Address Section
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: _buildAddressCard(
+                'Shipping Address',
+                order.shippingAddress,
+                order.shippingAddress?.firstName,
+                order.shippingAddress?.lastName,
+                order.shippingAddress?.pincode,
+                order.shippingAddress?.countryCode,
               ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: _buildAddressCard(
-                  'Billing Address',
-                  order.billingAddress,
-                  order.billingAddress?.firstName,
-                  order.billingAddress?.lastName,
-                  order.billingAddress?.pincode,
-                  order.billingAddress?.countryCode,
-                ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: _buildAddressCard(
+                'Billing Address',
+                order.billingAddress,
+                order.billingAddress?.firstName,
+                order.billingAddress?.lastName,
+                order.billingAddress?.pincode,
+                order.billingAddress?.countryCode,
               ),
-            ],
-          ),
-        ],
-      ),
+            ),
+          ],
+        ),
+      ],
     );
   }
 

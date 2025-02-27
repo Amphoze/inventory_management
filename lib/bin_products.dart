@@ -48,7 +48,7 @@ class _BinProductsPageState extends State<BinProductsPage> {
                   color: Colors.white,
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.grey.withOpacity(0.15),
+                      color: Colors.grey.withValues(alpha: 0.15),
                       spreadRadius: 2,
                       blurRadius: 8,
                       offset: const Offset(0, 2),
@@ -110,7 +110,7 @@ class _BinProductsPageState extends State<BinProductsPage> {
                       // padding: const EdgeInsets.symmetric(
                       //     horizontal: 16, vertical: 8),
                       decoration: BoxDecoration(
-                        color: AppColors.primaryBlue.withOpacity(0.1),
+                        color: AppColors.primaryBlue.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Row(
@@ -181,7 +181,7 @@ class _BinProductsPageState extends State<BinProductsPage> {
                             ),
                             boxShadow: [
                               BoxShadow(
-                                color: Colors.black.withOpacity(0.04),
+                                color: Colors.black.withValues(alpha: 0.04),
                                 offset: const Offset(0, 2),
                                 blurRadius: 4,
                                 spreadRadius: 0,
@@ -232,7 +232,7 @@ class _BinProductsPageState extends State<BinProductsPage> {
                                           ),
                                           decoration: BoxDecoration(
                                             color: AppColors.lightGrey
-                                                .withOpacity(0.3),
+                                                .withValues(alpha: 0.3),
                                             borderRadius:
                                                 BorderRadius.circular(6),
                                           ),
@@ -268,7 +268,7 @@ class _BinProductsPageState extends State<BinProductsPage> {
                                           ),
                                           decoration: BoxDecoration(
                                             color: Colors.blueAccent
-                                                .withOpacity(0.1),
+                                                .withValues(alpha: 0.1),
                                             borderRadius:
                                                 BorderRadius.circular(6),
                                           ),

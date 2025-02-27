@@ -75,7 +75,7 @@ class _BookedPageState extends State<BookedPage> with SingleTickerProviderStateM
         children: [
           Container(
             width: 120,
-            height: 34,
+            height: 40,
             margin: const EdgeInsets.only(right: 16),
             child: DropdownButtonFormField<String>(
               value: selectedSearchType,
@@ -97,7 +97,7 @@ class _BookedPageState extends State<BookedPage> with SingleTickerProviderStateM
           ),
           Container(
             width: 200,
-            height: 34,
+            height: 40,
             decoration: BoxDecoration(
               border: Border.all(
                 color: AppColors.primaryBlue,
@@ -112,25 +112,28 @@ class _BookedPageState extends State<BookedPage> with SingleTickerProviderStateM
                     controller: controller,
                     decoration: const InputDecoration(
                       hintText: 'Search Orders',
-                      hintStyle: const TextStyle(
+                      hintStyle: TextStyle(
                         color: Color.fromRGBO(117, 117, 117, 1),
                         fontSize: 16,
                       ),
                       border: InputBorder.none,
-                      contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 12.0),
+                      contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 13),
                     ),
                     style: const TextStyle(color: AppColors.black),
                     onChanged: (text) {
                       if (text.isEmpty) {
                         Provider.of<BookProvider>(context, listen: false).clearSearchResults();
                         _refreshOrders();
-                        // context.read<BookProvider>().fetchBookedOrders(page);
                       } else {
                         Provider.of<BookProvider>(context, listen: false).searchBookedOrders(text, selectedSearchType);
                       }
                     },
                     onSubmitted: (text) {
-                      Provider.of<BookProvider>(context, listen: false).searchBookedOrders(text, selectedSearchType);
+                      if (text.isEmpty) {
+                        _refreshOrders();
+                      } else {
+                        Provider.of<BookProvider>(context, listen: false).searchBookedOrders(text, selectedSearchType);
+                      }
                     },
                   ),
                 ),
@@ -142,7 +145,7 @@ class _BookedPageState extends State<BookedPage> with SingleTickerProviderStateM
                     ),
                     onPressed: () {
                       controller.clear();
-                      // _refreshOrders(orderType);
+                      _refreshOrders();
                       Provider.of<BookProvider>(context, listen: false).clearSearchResults();
                     },
                   ),
@@ -322,11 +325,7 @@ class _BookedPageState extends State<BookedPage> with SingleTickerProviderStateM
                           _selectedDate = formattedDate;
                         });
 
-                        bookProvider.fetchBookedOrders(
-                            bookProvider.currentPageBooked,
-                            date: picked,
-                            market: selectedCourier
-                        );
+                        bookProvider.fetchBookedOrders(bookProvider.currentPageBooked, date: picked, market: selectedCourier);
                       }
                     },
                     icon: const Icon(
@@ -352,17 +351,13 @@ class _BookedPageState extends State<BookedPage> with SingleTickerProviderStateM
                         setState(() {
                           selectedCourier = value;
                         });
-                        bookProvider.fetchBookedOrders(
-                            bookProvider.currentPageBooked,
-                            date: picked,
-                            market: selectedCourier
-                        );
+                        bookProvider.fetchBookedOrders(bookProvider.currentPageBooked, date: picked, market: selectedCourier);
                       },
                       itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
                         ...provider.marketplaces.map((marketplace) => PopupMenuItem<String>(
-                          value: marketplace.name,
-                          child: Text(marketplace.name),
-                        )), // Fetched marketplaces
+                              value: marketplace.name,
+                              child: Text(marketplace.name),
+                            )), // Fetched marketplaces
                         const PopupMenuItem<String>(
                           value: 'All', // Hardcoded marketplace
                           child: Text('All'),
@@ -433,7 +428,7 @@ class _BookedPageState extends State<BookedPage> with SingleTickerProviderStateM
                               title: Container(
                                 padding: const EdgeInsets.all(16),
                                 decoration: BoxDecoration(
-                                  color: isSuccess ? AppColors.green.withOpacity(0.1) : AppColors.cardsred.withOpacity(0.1),
+                                  color: isSuccess ? AppColors.green.withValues(alpha: 0.1) : AppColors.cardsred.withValues(alpha: 0.1),
                                   borderRadius: const BorderRadius.only(
                                     topLeft: Radius.circular(12),
                                     topRight: Radius.circular(12),
@@ -477,7 +472,7 @@ class _BookedPageState extends State<BookedPage> with SingleTickerProviderStateM
                                         Container(
                                           padding: const EdgeInsets.all(12),
                                           decoration: BoxDecoration(
-                                            color: Colors.grey.withOpacity(0.1),
+                                            color: Colors.grey.withValues(alpha: 0.1),
                                             borderRadius: BorderRadius.circular(8),
                                           ),
                                           child: Column(

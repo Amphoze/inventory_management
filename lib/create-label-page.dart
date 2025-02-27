@@ -174,7 +174,7 @@ class _CreateLabelPageState extends State<CreateLabelPage> {
           style: GoogleFonts.daiBannaSil(
             fontSize: 20,
             fontWeight: FontWeight.w700,
-            color: Colors.purple.withOpacity(0.9),
+            color: Colors.purple.withValues(alpha: 0.9),
           ),
         ),
       ),
@@ -246,12 +246,12 @@ class _CreateLabelPageState extends State<CreateLabelPage> {
   //         popupProps: PopupProps.menu(
   //           menuProps: MenuProps(
   //               elevation: 10,
-  //               barrierColor: Colors.transparent.withOpacity(0.5),
+  //               barrierColor: Colors.transparent.withValues(alpha: 0.5),
   //               shape: RoundedRectangleBorder(
   //                   borderRadius: BorderRadius.circular(12),
   //                   side: BorderSide(
   //                       strokeAlign: BorderSide.strokeAlignInside,
-  //                       color: Colors.amber.withOpacity(0.2)))),
+  //                       color: Colors.amber.withValues(alpha: 0.2)))),
   //           itemBuilder: (con, val, tr) {
   //             return Padding(
   //               padding: const EdgeInsets.only(left: 30),
@@ -360,12 +360,12 @@ class _CreateLabelPageState extends State<CreateLabelPage> {
 //           popupProps: PopupPropsMultiSelection.menu(
 //             menuProps: MenuProps(
 //               elevation: 10,
-//               barrierColor: Colors.transparent.withOpacity(0.5),
+//               barrierColor: Colors.transparent.withValues(alpha: 0.5),
 //               shape: RoundedRectangleBorder(
 //                 borderRadius: BorderRadius.circular(12),
 //                 side: BorderSide(
 //                   strokeAlign: BorderSide.strokeAlignInside,
-//                   color: Colors.amber.withOpacity(0.2),
+//                   color: Colors.amber.withValues(alpha: 0.2),
 //                 ),
 //               ),
 //             ),

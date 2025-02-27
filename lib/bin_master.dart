@@ -38,7 +38,7 @@ class _BinMasterPageState extends State<BinMasterPage> {
           //     color: Colors.white,
           //     boxShadow: [
           //       BoxShadow(
-          //         color: Colors.grey.withOpacity(0.1),
+          //         color: Colors.grey.withValues(alpha: 0.1),
           //         spreadRadius: 1,
           //         blurRadius: 4,
           //       ),
@@ -126,7 +126,7 @@ class BinCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Card(
       elevation: 4.0,
-      shadowColor: Colors.black.withOpacity(0.2),
+      shadowColor: Colors.black.withValues(alpha: 0.2),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(20.0),
       ),
@@ -154,11 +154,11 @@ class BinCard extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: AppColors.primaryBlue.withOpacity(0.12),
+                  color: AppColors.primaryBlue.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(16),
                   boxShadow: [
                     BoxShadow(
-                      color: AppColors.primaryBlue.withOpacity(0.1),
+                      color: AppColors.primaryBlue.withValues(alpha: 0.1),
                       blurRadius: 8,
                       offset: const Offset(0, 4),
                     ),

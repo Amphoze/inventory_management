@@ -364,10 +364,12 @@ class _AllOrdersPageState extends State<AllOrdersPage> with SingleTickerProvider
                         setState(() {
                           selectedStatus = value;
                         });
+                        final status = statuses.firstWhere((map) => map.containsKey(value), orElse: () => {})[value]!;
+                        Logger().e('status is: $status');
                         allOrdersProvider.fetchAllOrders(
                             page: allOrdersProvider.currentPage,
                             date: picked,
-                            status: statuses.firstWhere((map) => map.containsKey(selectedStatus), orElse: () => {})[value]!,
+                            status: status,
                             marketplace: selectedCourier);
                       },
                       itemBuilder: (BuildContext context) {
@@ -406,11 +408,15 @@ class _AllOrdersPageState extends State<AllOrdersPage> with SingleTickerProvider
                     return PopupMenuButton<String>(
                       tooltip: 'Filter by Marketplace',
                       onSelected: (String value) {
+                        final status = statuses.firstWhere((map) => map.containsKey(selectedStatus), orElse: () => {})[selectedStatus]!;
+                        log('marketplace value: $value');
+                        log('date value: $picked');
+                        log('status value: $status');
+                        setState(() {
+                          selectedCourier = value;
+                        });
                         allOrdersProvider.fetchAllOrders(
-                            page: allOrdersProvider.currentPage,
-                            date: picked,
-                            status: statuses.firstWhere((map) => map.containsKey(selectedStatus), orElse: () => {})[selectedStatus]!,
-                            marketplace: selectedCourier);
+                            page: allOrdersProvider.currentPage, date: picked, status: status, marketplace: value);
                       },
                       itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
                         ...marketPro.marketplaces.map((marketplace) => PopupMenuItem<String>(
@@ -507,6 +513,7 @@ class _AllOrdersPageState extends State<AllOrdersPage> with SingleTickerProvider
                       setState(() {
                         selectedCourier = 'All';
                         _selectedDate = 'Select Date';
+                        picked = null;
                       });
                       _refreshBookedOrders();
                     },

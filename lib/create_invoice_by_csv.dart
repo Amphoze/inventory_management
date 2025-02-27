@@ -362,13 +362,10 @@ class _CreateInvoiceByCSVState extends State<CreateInvoiceByCSV> {
               ValueListenableBuilder<double>(
                 valueListenable: _progressNotifier,
                 builder: (context, value, child) {
-                  return Column(
+                  return Row(
                     children: [
                       Text('Progress: ${value.toStringAsFixed(2)}%'),
-                      const SizedBox(height: 8),
-                      LinearProgressIndicator(
-                        value: value / 100,
-                      )
+                      Text('${value.toStringAsFixed(2)}%', style: const TextStyle(fontWeight: FontWeight.bold),),
                     ],
                   );
                 },

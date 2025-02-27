@@ -290,7 +290,7 @@ class OrdersProvider with ChangeNotifier {
     }
   }
 
-  Future<void> fetchFailedOrders({int page = 1, DateTime? date, String? market = 'All'}) async {
+  Future<void> fetchFailedOrders({int page = 1, DateTime? date, String? market}) async {
     log("called");
     // Ensure the requested page number is valid
     if (page < 1 || page > totalFailedPages) {
@@ -306,7 +306,7 @@ class OrdersProvider with ChangeNotifier {
       failedOrdersUrl += '&date=$formattedDate';
     }
 
-    if (market != 'All') {
+    if (market != 'All' && market != null) {
       failedOrdersUrl += '&marketplace=$market';
     }
     // Get the auth token
@@ -360,7 +360,7 @@ class OrdersProvider with ChangeNotifier {
     }
   }
 
-  Future<void> fetchReadyOrders({int page = 1, DateTime? date, String? market = "All"}) async {
+  Future<void> fetchReadyOrders({int page = 1, DateTime? date, String? market}) async {
     log('fetchReadyOrders');
     // Ensure the requested page number is valid
     if (page < 1 || page > totalReadyPages) {
@@ -374,6 +374,10 @@ class OrdersProvider with ChangeNotifier {
     if (date != null) {
       String formattedDate = DateFormat('yyyy-MM-dd').format(date);
       readyOrdersUrl += '&date=$formattedDate';
+    }
+
+    if (market != 'All' && market != null) {
+      readyOrdersUrl += '&marketplace=$market';
     }
 
     log("readyOrdersUrl: $readyOrdersUrl");
@@ -741,8 +745,10 @@ class OrdersProvider with ChangeNotifier {
     final token = await _getToken();
     if (token == null) return;
 
+    Logger().e('searchFailedOrders url: $url');
+
     try {
-      setFailedLoading(false);
+      setFailedLoading(true);
 
       final response = await http.get(
         url,

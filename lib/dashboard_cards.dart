@@ -422,14 +422,14 @@ class DashboardCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(12.0),
           boxShadow: [
             BoxShadow(
-              color: AppColors.grey.withOpacity(0.2),
+              color: AppColors.grey.withValues(alpha: 0.2),
               offset: const Offset(0, 4),
               spreadRadius: 0,
               blurRadius: 10,
             ),
           ],
           border: Border.all(
-            color: AppColors.grey.withOpacity(0.1),
+            color: AppColors.grey.withValues(alpha: 0.1),
             width: 1,
           ),
         ),
@@ -448,7 +448,7 @@ class DashboardCard extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
-                        color: AppColors.primaryBlue.withOpacity(0.9),
+                        color: AppColors.primaryBlue.withValues(alpha: 0.9),
                         letterSpacing: -0.5,
                       ),
                       maxLines: 2,
@@ -484,7 +484,7 @@ class DashboardCard extends StatelessWidget {
               decoration: BoxDecoration(
                 border: Border(
                   top: BorderSide(
-                    color: AppColors.grey.withOpacity(0.1),
+                    color: AppColors.grey.withValues(alpha: 0.1),
                     width: 1,
                   ),
                 ),
@@ -498,7 +498,7 @@ class DashboardCard extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w500,
-                        color: AppColors.grey.withOpacity(0.8),
+                        color: AppColors.grey.withValues(alpha: 0.8),
                       ),
                     ),
                   ),
@@ -508,7 +508,7 @@ class DashboardCard extends StatelessWidget {
                       vertical: 4,
                     ),
                     decoration: BoxDecoration(
-                      color: changeColor.withOpacity(0.1),
+                      color: changeColor.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(6),
                     ),
                     child: Row(

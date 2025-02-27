@@ -280,7 +280,7 @@ class OutboundProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> fetchOrders({int page = 1, DateTime? date, String market = 'All'}) async {
+  Future<void> fetchOrders({int page = 1, DateTime? date, String? market}) async {
     dispatchCount = rtoCount = allCount = null;
     log(date.toString());
     // Ensure the requested page number is valid
@@ -299,7 +299,7 @@ class OutboundProvider with ChangeNotifier {
       readyOrdersUrl += '&date=$formattedDate';
     }
 
-    if(market != 'All'){
+    if(market != 'All' && market != null){
       readyOrdersUrl += '&marketplace=$market';
     } else {
       readyOrdersUrl += '&marketplace=Shopify,Woocommerce';

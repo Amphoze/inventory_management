@@ -53,7 +53,7 @@ class _ManageInnerState extends State<ManageInner> {
   //             color: Colors.white,
   //             boxShadow: [
   //               BoxShadow(
-  //                 color: Colors.grey.withOpacity(0.2),
+  //                 color: Colors.grey.withValues(alpha: 0.2),
   //                 blurRadius: 15,
   //                 spreadRadius: 5,
   //               ),
@@ -228,7 +228,7 @@ class _ManageInnerState extends State<ManageInner> {
                         //           enabledBorder: OutlineInputBorder(
                         //             borderRadius: BorderRadius.circular(30.0),
                         //             borderSide: BorderSide(
-                        //               color: Colors.grey.withOpacity(0.5),
+                        //               color: Colors.grey.withValues(alpha: 0.5),
                         //               width: 1.0,
                         //             ),
                         //           ),
@@ -303,7 +303,7 @@ class _ManageInnerState extends State<ManageInner> {
                                   ),
                                   child: DataTable(
                                     headingRowColor: WidgetStateProperty.resolveWith(
-                                      (states) => Colors.blue.withOpacity(0.1),
+                                      (states) => Colors.blue.withValues(alpha: 0.1),
                                     ),
                                     decoration: BoxDecoration(
                                       border: Border(
@@ -336,7 +336,7 @@ class _ManageInnerState extends State<ManageInner> {
                                     rows: provider.innerPackings.map((inner) {
                                       return DataRow(
                                         color: WidgetStateProperty.resolveWith(
-                                          (states) => states.contains(WidgetState.hovered) ? Colors.blue.withOpacity(0.05) : null,
+                                          (states) => states.contains(WidgetState.hovered) ? Colors.blue.withValues(alpha: 0.05) : null,
                                         ),
                                         cells: [
                                           DataCell(
@@ -385,7 +385,7 @@ class _ManageInnerState extends State<ManageInner> {
                                                       shape: RoundedRectangleBorder(
                                                         borderRadius: BorderRadius.circular(20),
                                                       ),
-                                                      backgroundColor: Colors.blue.withOpacity(0.1),
+                                                      backgroundColor: Colors.blue.withValues(alpha: 0.1),
                                                     ),
                                                     child: const Text(
                                                       'View Details',
@@ -503,7 +503,7 @@ class _ManageInnerState extends State<ManageInner> {
               color: Colors.white,
               boxShadow: [
                 BoxShadow(
-                  color: Colors.grey.withOpacity(0.2),
+                  color: Colors.grey.withValues(alpha: 0.2),
                   blurRadius: 15,
                   spreadRadius: 5,
                 ),
@@ -577,7 +577,7 @@ class _ManageInnerState extends State<ManageInner> {
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(16),
                                 side: BorderSide(
-                                  color: Colors.grey.withOpacity(0.2),
+                                  color: Colors.grey.withValues(alpha: 0.2),
                                   width: 1,
                                 ),
                               ),
@@ -588,7 +588,7 @@ class _ManageInnerState extends State<ManageInner> {
                                   borderRadius: BorderRadius.circular(16),
                                   gradient: LinearGradient(
                                     colors: [
-                                      iconColor.withOpacity(0.05),
+                                      iconColor.withValues(alpha: 0.05),
                                       Colors.white,
                                     ],
                                     begin: Alignment.topLeft,
@@ -602,10 +602,10 @@ class _ManageInnerState extends State<ManageInner> {
                                     Container(
                                       decoration: BoxDecoration(
                                         shape: BoxShape.circle,
-                                        color: iconColor.withOpacity(0.15),
+                                        color: iconColor.withValues(alpha: 0.15),
                                         boxShadow: [
                                           BoxShadow(
-                                            color: iconColor.withOpacity(0.2),
+                                            color: iconColor.withValues(alpha: 0.2),
                                             blurRadius: 8,
                                             spreadRadius: 2,
                                           ),

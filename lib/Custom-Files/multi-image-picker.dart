@@ -156,7 +156,7 @@ class _CustomPickerState extends State<CustomPicker> {
                             border: Border.all(color: Colors.grey.shade200),
                             boxShadow: [
                               BoxShadow(
-                                color: Colors.black.withOpacity(0.08),
+                                color: Colors.black.withValues(alpha: 0.08),
                                 blurRadius: 8,
                                 offset: const Offset(0, 2),
                               ),
@@ -236,7 +236,7 @@ class _CustomPickerState extends State<CustomPicker> {
                               child: Container(
                                 padding: const EdgeInsets.all(8),
                                 decoration: BoxDecoration(
-                                  color: Colors.black.withOpacity(0.7),
+                                  color: Colors.black.withValues(alpha: 0.7),
                                   shape: BoxShape.circle,
                                 ),
                                 child: const Icon(
@@ -257,7 +257,7 @@ class _CustomPickerState extends State<CustomPicker> {
                               vertical: 4,
                             ),
                             decoration: BoxDecoration(
-                              color: Colors.black.withOpacity(0.7),
+                              color: Colors.black.withValues(alpha: 0.7),
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: Text(
