@@ -432,12 +432,7 @@ class _BookPageState extends State<BookPage> with SingleTickerProviderStateMixin
                           _selectedDate = formattedDate;
                         });
 
-                        bookProvider.fetchOrders(
-                          orderType,
-                          bookProvider.currentPageB2B,
-                          date: picked,
-                          market: selectedCourier
-                        );
+                        bookProvider.fetchOrders(orderType, bookProvider.currentPageB2B, date: picked, market: selectedCourier);
                       }
                     },
                     icon: const Icon(
@@ -460,15 +455,10 @@ class _BookPageState extends State<BookPage> with SingleTickerProviderStateMixin
                     return PopupMenuButton<String>(
                       tooltip: 'Filter by Marketplace',
                       onSelected: (String value) {
-                          setState(() {
-                            selectedCourier = value;
-                          });
-                          bookProvider.fetchOrders(
-                            orderType,
-                            bookProvider.currentPageB2B,
-                            date: picked,
-                            market: selectedCourier
-                          );
+                        setState(() {
+                          selectedCourier = value;
+                        });
+                        bookProvider.fetchOrders(orderType, bookProvider.currentPageB2B, date: picked, market: selectedCourier);
                       },
                       itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
                         ...provider.marketplaces.map((marketplace) => PopupMenuItem<String>(
@@ -491,6 +481,58 @@ class _BookPageState extends State<BookPage> with SingleTickerProviderStateMixin
                   },
                 ),
               ],
+            ),
+            const SizedBox(width: 8),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primaryBlue,
+              ),
+              onPressed: bookProvider.isCloning
+                  ? null
+                  : () async {
+                      List<Order> orders = orderType == 'B2B' ? bookProvider.ordersB2B : bookProvider.ordersB2C;
+                      List<bool> selectedOrders = orderType == 'B2B' ? bookProvider.selectedB2BItems : bookProvider.selectedB2CItems;
+                      int page = orderType == 'B2B' ? bookProvider.currentPageB2B : bookProvider.currentPageB2C;
+
+                      List<String> selectedOrderIds =
+                          orders.asMap().entries.where((entry) => selectedOrders[entry.key]).map((entry) => entry.value.orderId).toList();
+
+                      if (selectedOrderIds.isEmpty) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('No orders selected'),
+                            backgroundColor: AppColors.cardsred,
+                          ),
+                        );
+                      } else {
+                        String resultMessage = await bookProvider.cloneOrders(context, orderType, page, selectedOrderIds);
+                        Color snackBarColor;
+                        if (resultMessage.contains('success')) {
+                          snackBarColor = AppColors.green; // Success: Green
+                        } else if (resultMessage.contains('error') || resultMessage.contains('failed')) {
+                          snackBarColor = AppColors.cardsred; // Error: Red
+                        } else {
+                          snackBarColor = AppColors.orange; // Other: Orange
+                        }
+
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(resultMessage),
+                            backgroundColor: snackBarColor,
+                          ),
+                        );
+                      }
+                    },
+              child: bookProvider.isCloning
+                  ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(color: Colors.white),
+                    )
+                  : const Text(
+                      'Clone',
+                      style: TextStyle(color: Colors.white),
+                    ),
             ),
             const SizedBox(width: 8),
             _buildBookButton('Delhivery', orderType, AppColors.primaryBlue),

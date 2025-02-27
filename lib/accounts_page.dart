@@ -341,6 +341,59 @@ class _AccountsPageState extends State<AccountsPage> {
                           style: ElevatedButton.styleFrom(
                             backgroundColor: AppColors.primaryBlue,
                           ),
+                          onPressed: accountsProvider.isCloning
+                              ? null // Disable button while loading
+                              : () async {
+                                  List<String> selectedOrderIds = accountsProvider.orders
+                                      .asMap()
+                                      .entries
+                                      .where((entry) => accountsProvider.selectedProducts[entry.key])
+                                      .map((entry) => entry.value.orderId)
+                                      .toList();
+
+                                  if (selectedOrderIds.isEmpty) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text('No orders selected'),
+                                        backgroundColor: AppColors.cardsred,
+                                      ),
+                                    );
+                                  } else {
+                                    String resultMessage = await accountsProvider.cloneOrders(context, selectedOrderIds);
+                                    Color snackBarColor;
+                                    if (resultMessage.contains('success')) {
+                                      snackBarColor = AppColors.green; // Success: Green
+                                    } else if (resultMessage.contains('error') || resultMessage.contains('failed')) {
+                                      snackBarColor = AppColors.cardsred; // Error: Red
+                                    } else {
+                                      snackBarColor = AppColors.orange; // Other: Orange
+                                    }
+
+                                    // Show feedback based on the result
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text(resultMessage),
+                                        backgroundColor: snackBarColor,
+                                      ),
+                                    );
+                                  }
+                                },
+                          child: accountsProvider.isCloning
+                              ? const SizedBox(
+                                  width: 20,
+                                  height: 20,
+                                  child: CircularProgressIndicator(color: Colors.white),
+                                )
+                              : const Text(
+                                  'Clone',
+                                  style: TextStyle(color: Colors.white),
+                                ),
+                        ),
+                        const SizedBox(width: 8),
+                        ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.primaryBlue,
+                          ),
                           onPressed: () async {
                             final res = await accountsProvider.statusUpdate(context);
                             if (res == true) {
@@ -621,45 +674,81 @@ class _AccountsPageState extends State<AccountsPage> {
                                           ),
                                         ],
                                       ),
-                                      ElevatedButton(
-                                        onPressed: () async {
-                                          final result = await Navigator.push(
-                                            context,
-                                            MaterialPageRoute(
-                                              builder: (context) => EditOutboundPage(
-                                                order: order,
-                                                isBookPage: false,
+                                      Row(
+                                        children: [
+                                          ElevatedButton(
+                                            onPressed: () async {
+                                              final result = await Navigator.push(
+                                                context,
+                                                MaterialPageRoute(
+                                                  builder: (context) => EditOutboundPage(
+                                                    order: order,
+                                                    isBookPage: false,
+                                                  ),
+                                                ),
+                                              );
+                                              if (result == true) {
+                                                final searched = _searchController.text;
+
+                                                // Ready
+                                                if (searched.isNotEmpty) {
+                                                  accountsProvider.searchOrders(searched, selectedSearchType);
+                                                } else if (selectedCourier != 'All') {
+                                                  accountsProvider.fetchOrdersByMarketplace(
+                                                      selectedCourier, 2, accountsProvider.currentPage,
+                                                      date: picked, mode: selectedPaymentMode);
+                                                } else if (searched.isNotEmpty && selectedCourier != 'All') {
+                                                  accountsProvider.fetchOrdersByMarketplace(
+                                                      selectedCourier, 2, accountsProvider.currentPage,
+                                                      mode: selectedPaymentMode);
+                                                  accountsProvider.searchOrders(searched, selectedSearchType);
+                                                } else {
+                                                  accountsProvider.fetchOrdersWithStatus2(date: picked, mode: selectedPaymentMode);
+                                                }
+                                              }
+                                            },
+                                            style: ElevatedButton.styleFrom(
+                                              foregroundColor: AppColors.white,
+                                              backgroundColor: AppColors.orange,
+                                              textStyle: const TextStyle(
+                                                fontWeight: FontWeight.bold,
                                               ),
                                             ),
-                                          );
-                                          if (result == true) {
-                                            final searched = _searchController.text;
-
-                                            // Ready
-                                            if (searched.isNotEmpty) {
-                                              accountsProvider.searchOrders(searched, selectedSearchType);
-                                            } else if (selectedCourier != 'All') {
-                                              accountsProvider.fetchOrdersByMarketplace(selectedCourier, 2, accountsProvider.currentPage,
-                                                  date: picked, mode: selectedPaymentMode);
-                                            } else if (searched.isNotEmpty && selectedCourier != 'All') {
-                                              accountsProvider.fetchOrdersByMarketplace(selectedCourier, 2, accountsProvider.currentPage,
-                                                  mode: selectedPaymentMode);
-                                              accountsProvider.searchOrders(searched, selectedSearchType);
-                                            } else {
-                                              accountsProvider.fetchOrdersWithStatus2(date: picked, mode: selectedPaymentMode);
-                                            }
-                                          }
-                                        },
-                                        style: ElevatedButton.styleFrom(
-                                          foregroundColor: AppColors.white,
-                                          backgroundColor: AppColors.orange,
-                                          textStyle: const TextStyle(
-                                            fontWeight: FontWeight.bold,
+                                            child: const Text(
+                                              'Edit Order',
+                                            ),
                                           ),
-                                        ),
-                                        child: const Text(
-                                          'Edit Order',
-                                        ),
+                                          const SizedBox(width: 8),
+                                          IconButton(
+                                            tooltip: 'Revert to Status 1',
+                                            icon: const Icon(Icons.undo),
+                                            onPressed: () async {
+                                              showDialog(
+                                                  context: context,
+                                                  builder: (context) {
+                                                    return const AlertDialog(
+                                                      content: Row(
+                                                        children: [
+                                                          CircularProgressIndicator(),
+                                                          SizedBox(width: 8),
+                                                          Text('Reversing')
+                                                        ],
+                                                      ),
+                                                    );
+                                                  });
+
+                                              final res = await accountsProvider.reverseOrder(order.orderId);
+                                              Navigator.pop(context);
+
+                                              if (res['success'] == true) {
+                                                Utils.showSnackBar(context, res['message'], AppColors.green);
+                                                accountsProvider.fetchOrdersWithStatus2();
+                                              } else {
+                                                Utils.showSnackBar(context, res['message'], AppColors.cardsred);
+                                              }
+                                            },
+                                          ),
+                                        ],
                                       ),
                                     ],
                                   ),

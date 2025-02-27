@@ -51,31 +51,27 @@ class OrdersProvider with ChangeNotifier {
 
   List<bool> get selectedReadyOrders => _selectedReadyOrders;
 
-  // final List<Order> _failedOrder = [];
-
-  // List<Order> get failedOrder => _failedOrder;
-
   String? get selectedCourier => _selectedCourier;
-
   String? get selectedPayment => _selectedPayment;
-
   String? get selectedMarketplace => _selectedMarketplace;
-
   String? get selectedOrderType => _selectedOrderType;
-
   String? get selectedCustomerType => _selectedCustomerType;
-
   String? get selectedFilter => _selectedFilter;
-
   String get expectedDeliveryDate => _expectedDeliveryDate;
-
   String get paymentDateTime => _paymentDateTime;
-
   String get normalDate => _normalDate;
 
   bool isConfirm = false;
   bool isCancel = false;
   bool isUpdating = false;
+
+  bool _isCloning = false;
+  bool get isCloning => _isCloning;
+
+  void setCloning(bool value) {
+    _isCloning = value;
+    notifyListeners();
+  }
 
   void setReadyLoading(bool value) {
     _isReadyLoading = value;
@@ -362,7 +358,6 @@ class OrdersProvider with ChangeNotifier {
 
   Future<void> fetchReadyOrders({int page = 1, DateTime? date, String? market}) async {
     log('fetchReadyOrders');
-    // Ensure the requested page number is valid
     if (page < 1 || page > totalReadyPages) {
       print('Invalid page number for ready orders: $page');
       return; // Exit if the page number is invalid
@@ -422,14 +417,14 @@ class OrdersProvider with ChangeNotifier {
     }
   }
 
-  Future<String> confirmOrders(BuildContext context, List<String> orderIds) async {
+  Future<String> cloneOrders(BuildContext context, List<String> orderIds) async {
     String baseUrl = await Constants.getBaseUrl();
-    String confirmOrderUrl = '$baseUrl/orders/confirm';
+    String cloneOrderUrl = '$baseUrl/orders/clone';
     final String? token = await _getToken();
-    setConfirmStatus(true);
-    notifyListeners();
+    setCloning(true);
 
     if (token == null) {
+      setCloning(false);
       return 'No auth token found';
     }
 
@@ -447,6 +442,55 @@ class OrdersProvider with ChangeNotifier {
     try {
       // Make the POST request to confirm the orders
       final response = await http.post(
+        Uri.parse(cloneOrderUrl),
+        headers: headers,
+        body: body,
+      );
+
+      print('Response status: ${response.statusCode}');
+      print('Response body: ${response.body}');
+
+      final responseData = json.decode(response.body);
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        await fetchReadyOrders();
+        resetSelections();
+        return responseData['message'] + ": ${responseData['newOrders'][0]['order_id']}" ?? 'Orders clone successfully';
+      } else {
+        return responseData['message'] ?? 'Failed to clone orders';
+      }
+    } catch (error) {
+      log('catched error: $error');
+      return 'An error occurred: $error';
+    } finally {
+      setCloning(false);
+      notifyListeners();
+    }
+  }
+
+  Future<String> confirmOrders(BuildContext context, List<String> orderIds) async {
+    String baseUrl = await Constants.getBaseUrl();
+    String confirmOrderUrl = '$baseUrl/orders/confirm';
+    final String? token = await _getToken();
+    setConfirmStatus(true);
+
+    if (token == null) {
+      return 'No auth token found';
+    }
+
+    // Headers for the API request
+    final headers = {
+      'Authorization': 'Bearer $token',
+      'Content-Type': 'application/json',
+    };
+
+    // Request body containing the order IDs
+    final body = json.encode({
+      'orderIds': orderIds,
+    });
+
+    try {
+      final response = await http.post(
         Uri.parse(confirmOrderUrl),
         headers: headers,
         body: body,
@@ -458,21 +502,18 @@ class OrdersProvider with ChangeNotifier {
       final responseData = json.decode(response.body);
 
       if (response.statusCode == 200) {
-        // After successful confirmation, fetch updated orders and notify listeners
-        await fetchReadyOrders(); // Assuming fetchOrders is a function that reloads the orders
-        resetSelections(); // Clear selected order IDs
-        setConfirmStatus(false);
-        notifyListeners(); // Notify the UI to rebuild
-
+        await fetchReadyOrders();
+        resetSelections();
         return responseData['message'] + "$orderIds" ?? 'Orders Confirmed successfully';
       } else {
         return responseData['errors'][0]['errors'][0] ?? 'Failed to confirm orders';
       }
     } catch (error) {
-      setConfirmStatus(false);
-      notifyListeners();
       Logger().e('Error during API request: $error');
       return 'An error occurred: $error';
+    } finally {
+      setConfirmStatus(false);
+      notifyListeners();
     }
   }
 

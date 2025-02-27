@@ -275,20 +275,68 @@ class _OrdersNewPageState extends State<OrdersNewPage> with TickerProviderStateM
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.primaryBlue,
                       ),
+                      onPressed: ordersProvider.isCloning
+                          ? null // Disable button while loading
+                          : () async {
+                        List<String> selectedOrderIds = ordersProvider.readyOrders
+                            .asMap()
+                            .entries
+                            .where((entry) => ordersProvider.selectedReadyOrders[entry.key])
+                            .map((entry) => entry.value.orderId)
+                            .toList();
+
+                        if (selectedOrderIds.isEmpty) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('No orders selected'),
+                              backgroundColor: AppColors.cardsred,
+                            ),
+                          );
+                        } else {
+                          String resultMessage = await ordersProvider.cloneOrders(context, selectedOrderIds);
+                          Color snackBarColor;
+                          if (resultMessage.contains('success')) {
+                            snackBarColor = AppColors.green; // Success: Green
+                          } else if (resultMessage.contains('error') || resultMessage.contains('failed')) {
+                            snackBarColor = AppColors.cardsred; // Error: Red
+                          } else {
+                            snackBarColor = AppColors.orange; // Other: Orange
+                          }
+
+                          // Show feedback based on the result
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(resultMessage),
+                              backgroundColor: snackBarColor,
+                            ),
+                          );
+                        }
+                      },
+                      child: ordersProvider.isCloning
+                          ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(color: Colors.white),
+                      )
+                          : const Text(
+                        'Clone',
+                        style: TextStyle(color: Colors.white),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primaryBlue,
+                      ),
                       onPressed: ordersProvider.isConfirm
                           ? null // Disable button while loading
                           : () async {
-                              final provider = Provider.of<OrdersProvider>(context, listen: false);
-
-                              // Collect selected order IDs
                               List<String> selectedOrderIds = provider.readyOrders
                                   .asMap()
                                   .entries
                                   .where((entry) => provider.selectedReadyOrders[entry.key])
                                   .map((entry) => entry.value.orderId)
                                   .toList();
-
-                              log('selectedOrderIds: $selectedOrderIds');
 
                               if (selectedOrderIds.isEmpty) {
                                 // Show an error message if no orders are selected
@@ -299,18 +347,7 @@ class _OrdersNewPageState extends State<OrdersNewPage> with TickerProviderStateM
                                   ),
                                 );
                               } else {
-                                // Set loading status to true before starting the operation
-                                provider.setConfirmStatus(true);
-
-                                // Call confirmOrders method with selected IDs
                                 String resultMessage = await provider.confirmOrders(context, selectedOrderIds);
-
-                                log('resultMessage: $resultMessage');
-
-                                // Set loading status to false after operation completes
-                                provider.setConfirmStatus(false);
-
-                                // Determine the background color based on the result
                                 Color snackBarColor;
                                 if (resultMessage.contains('success')) {
                                   snackBarColor = AppColors.green; // Success: Green
@@ -320,7 +357,6 @@ class _OrdersNewPageState extends State<OrdersNewPage> with TickerProviderStateM
                                   snackBarColor = AppColors.orange; // Other: Orange
                                 }
 
-                                // Show feedback based on the result
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   SnackBar(
                                     content: Text(resultMessage),
@@ -649,13 +685,12 @@ class _OrdersNewPageState extends State<OrdersNewPage> with TickerProviderStateM
                                               ),
                                             ),
                                             const SizedBox(width: 8),
-                                            ElevatedButton(
+                                            IconButton(
+                                              tooltip: 'Report Bug',
                                                 onPressed: () {
                                                   TextEditingController messageController = TextEditingController();
-
                                                   showDialog(
                                                     context: context,
-                                                    // barrierDismissible: false,
                                                     builder: (context) {
                                                       return AlertDialog(
                                                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
@@ -817,7 +852,7 @@ class _OrdersNewPageState extends State<OrdersNewPage> with TickerProviderStateM
                                                     },
                                                   );
                                                 },
-                                                child: const Text('Report Bug')),
+                                                icon: const Icon(Icons.bug_report_outlined)),
                                             const SizedBox(width: 8),
                                             IconButton(
                                               tooltip: 'Split Order',

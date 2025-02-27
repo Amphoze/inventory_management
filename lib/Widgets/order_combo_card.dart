@@ -62,10 +62,11 @@ class _OrderComboCardState extends State<OrderComboCard> {
     return "$date, $time";
   }
 
+  String status = '1';
+
   @override
   Widget build(BuildContext context) {
     final provider = Provider.of<OrdersProvider>(context, listen: false);
-    final orderProvider = context.read<OrdersProvider>();
 
     print('Building OrderCard for Order ID: ${widget.order.id}');
 
@@ -224,6 +225,93 @@ class _OrderComboCardState extends State<OrderComboCard> {
                           'Edit Warehouse',
                           // style: TextStyle(fontSize: 10),
                         ),
+                      ),
+                      const SizedBox(width: 8),
+                      IconButton(
+                        tooltip: 'Revert Order',
+                        icon: const Icon(Icons.undo),
+                        onPressed: () async {
+                          showDialog(
+                            context: context,
+                            builder: (context) {
+                              String localStatus = status; // Use a local variable initialized with the parent’s status
+                              return StatefulBuilder(
+                                builder: (context, setDialogState) {
+                                  return AlertDialog(
+                                    title: const Text('Select Status'),
+                                    content: Column(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        RadioListTile<String>(
+                                          value: '1',
+                                          groupValue: localStatus, // Use localStatus as groupValue
+                                          title: const Text('Ready to Confirm (1)'),
+                                          onChanged: (value) {
+                                            setDialogState(() {
+                                              localStatus = value!; // Update localStatus and rebuild dialog
+                                            });
+                                          },
+                                        ),
+                                        RadioListTile<String>(
+                                          value: '2',
+                                          groupValue: localStatus, // Use localStatus as groupValue
+                                          title: const Text('Ready to Account (2)'),
+                                          onChanged: (value) {
+                                            setDialogState(() {
+                                              localStatus = value!; // Update localStatus and rebuild dialog
+                                            });
+                                          },
+                                        ),
+                                      ],
+                                    ),
+                                    actions: [
+                                      TextButton(
+                                        onPressed: () {
+                                          Navigator.of(context).pop();
+                                        },
+                                        child: const Text('Cancel'),
+                                      ),
+                                      TextButton(
+                                        onPressed: () async {
+                                          setState(() {
+                                            status = localStatus; // Update parent state before submission
+                                          });
+                                          Navigator.pop(context);
+                                          showDialog(
+                                            context: context,
+                                            builder: (context) {
+                                              return const AlertDialog(
+                                                content: Row(
+                                                  children: [
+                                                    CircularProgressIndicator(),
+                                                    SizedBox(width: 8),
+                                                    Text('Reversing'),
+                                                  ],
+                                                ),
+                                              );
+                                            },
+                                          );
+                                          final bookProvider = context.read<BookProvider>();
+                                          final res = await bookProvider.reverseOrder(widget.order.orderId, status);
+                                          Navigator.pop(context);
+
+                                          if (res['success'] == true) {
+                                            Utils.showSnackBar(context, res['message'], AppColors.green);
+                                            bookProvider.fetchPaginatedOrdersB2B(bookProvider.currentPageB2B);
+                                            bookProvider.fetchPaginatedOrdersB2C(bookProvider.currentPageB2C);
+                                          } else {
+                                            Utils.showSnackBar(context, res['message'], AppColors.cardsred);
+                                          }
+                                        },
+                                        child: const Text('Submit'),
+                                      ),
+                                    ],
+                                  );
+                                },
+                              );
+                            },
+                          );
+                        },
                       ),
                     ],
                   ],

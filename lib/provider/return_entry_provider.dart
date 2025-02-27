@@ -14,12 +14,14 @@ class ReturnEntryProvider with ChangeNotifier {
   bool _isLoading = false;
   int selectedItemsCount = 0;
   List<Order> _orders = [];
-  List<PlatformFile> _uploadedImages = [];
+  List<PlatformFile> _goodImages = [];
+  List<PlatformFile> _badImages = [];
   Timer? _debounce;
 
   List<Order> get orders => _orders;
   bool get isLoading => _isLoading;
-  List<PlatformFile> get uploadedImages => _uploadedImages;
+  List<PlatformFile> get goodImages => _goodImages;
+  List<PlatformFile> get badImages => _badImages;
 
   bool isRefreshingOrders = false;
 
@@ -28,26 +30,37 @@ class ReturnEntryProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> pickImages() async {
+  Future<void> pickImages({required bool isGood}) async {
     FilePickerResult? result = await FilePicker.platform.pickFiles(
       type: FileType.image,
       allowMultiple: true,
       withData: true,
     );
     if (result != null) {
-      // Append new files to the existing list instead of overwriting
-      _uploadedImages.addAll(result.files);
+      if (isGood) {
+        _goodImages.addAll(result.files);
+      } else {
+        _badImages.addAll(result.files);
+      }
       notifyListeners();
     }
   }
 
-  void removeImage(int index) {
-    _uploadedImages.removeAt(index);
+  void removeImage(int index, {required bool isGood}) {
+    if (isGood) {
+      _goodImages.removeAt(index);
+    } else {
+      _badImages.removeAt(index);
+    }
     notifyListeners();
   }
 
-  void clearImages() {
-    _uploadedImages.clear();
+  void clearImages({required bool isGood}) {
+    if (isGood) {
+      _goodImages.clear();
+    } else {
+      _badImages.clear();
+    }
     notifyListeners();
   }
 
@@ -134,31 +147,31 @@ class ReturnEntryProvider with ChangeNotifier {
   }
 
   Future<Map<String, dynamic>> submitQualityCheck(
-    BuildContext context,
-    String orderId,
-    List<Map<String, dynamic>> itemsList,
-  ) async {
+      BuildContext context,
+      String orderId,
+      List<Map<String, dynamic>> itemsList,
+      ) async {
     for (var item in itemsList) {
       final goodQty = int.tryParse(item['goodQty'].text) ?? 0;
       final badQty = int.tryParse(item['badQty'].text) ?? 0;
       if (goodQty + badQty > item['total']) {
-        return {'success': false, 'message': 'Good + Bad quantity cannot exceed total for ${item['sku']}'};
+        showMessageDialog(context, 'Good + Bad quantity cannot exceed total for ${item['sku']}', Colors.red);
+        return {'success': false, 'message': 'Validation failed'};
       }
     }
 
     List<Map<String, dynamic>> qualityCheckResults = itemsList
         .map((item) => {
-              "productSku": item['sku'],
-              "bad": int.tryParse(item['badQty'].text) ?? 0,
-              "good": int.tryParse(item['goodQty'].text) ?? 0,
-            })
+      "productSku": item['sku'],
+      "bad": int.tryParse(item['badQty'].text) ?? 0,
+      "good": int.tryParse(item['goodQty'].text) ?? 0,
+    })
         .toList();
-
-    log('qualityCheckResults: $qualityCheckResults');
 
     Map<String, dynamic> requestBody = {
       "qualityCheckResults": qualityCheckResults,
-      "files": _uploadedImages,
+      "goodImages": _goodImages,
+      "badImages": _badImages,
     };
 
     return await qualityCheck(orderId, requestBody);
@@ -178,15 +191,32 @@ class ReturnEntryProvider with ChangeNotifier {
       _isLoading = true;
       notifyListeners();
 
-      var request = http.MultipartRequest('POST', mainUrl)..headers['Authorization'] = 'Bearer $token';
+      var request = http.MultipartRequest('POST', mainUrl)
+        ..headers['Authorization'] = 'Bearer $token';
 
       request.fields['qualityCheckResults'] = jsonEncode(body['qualityCheckResults']);
 
-      if (body['files'] is List && (body['files'] as List).isNotEmpty) {
-        for (PlatformFile file in body['files']) {
+      // Add good images
+      if (body['goodImages'] is List && (body['goodImages'] as List).isNotEmpty) {
+        for (PlatformFile file in body['goodImages']) {
           if (file.bytes != null) {
             var multipartFile = http.MultipartFile.fromBytes(
-              'files',
+              'goodImages',
+              file.bytes!,
+              filename: file.name,
+              contentType: MediaType('image', file.extension ?? 'jpg'),
+            );
+            request.files.add(multipartFile);
+          }
+        }
+      }
+
+      // Add bad images
+      if (body['badImages'] is List && (body['badImages'] as List).isNotEmpty) {
+        for (PlatformFile file in body['badImages']) {
+          if (file.bytes != null) {
+            var multipartFile = http.MultipartFile.fromBytes(
+              'badImages',
               file.bytes!,
               filename: file.name,
               contentType: MediaType('image', file.extension ?? 'jpg'),
@@ -203,7 +233,8 @@ class ReturnEntryProvider with ChangeNotifier {
       Logger().e('return orders body: $data');
       if (response.statusCode == 200) {
         Logger().e('return orders: $data');
-        clearImages();
+        clearImages(isGood: true);
+        clearImages(isGood: false);
         return {'success': true, 'message': data['message']};
       } else {
         Logger().e('return orders error: ${response.statusCode}');
@@ -211,7 +242,7 @@ class ReturnEntryProvider with ChangeNotifier {
       }
     } catch (e, s) {
       log('catched error: $e $s');
-      return {'success': false, 'message': 'Error: $e'};
+      return {'success': false, 'message': 'An error occurred while uploading: $e'};
     } finally {
       _isLoading = false;
       notifyListeners();

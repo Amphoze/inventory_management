@@ -122,7 +122,7 @@ class _AllOrdersPageState extends State<AllOrdersPage> with SingleTickerProvider
       padding: const EdgeInsets.all(8.0),
       child: Container(
         width: 200,
-        height: 34,
+        height: 35,
         decoration: BoxDecoration(
           border: Border.all(
             color: AppColors.primaryBlue,
@@ -135,21 +135,14 @@ class _AllOrdersPageState extends State<AllOrdersPage> with SingleTickerProvider
             Expanded(
               child: TextField(
                 controller: controller,
-                decoration: InputDecoration(
-                  prefixIcon: IconButton(
-                    icon: const Icon(
-                      Icons.search,
-                      color: Color.fromRGBO(117, 117, 117, 1),
-                    ),
-                    onPressed: () {},
-                  ),
+                decoration: const InputDecoration(
                   hintText: 'Search Orders',
-                  hintStyle: const TextStyle(
+                  hintStyle: TextStyle(
                     color: Color.fromRGBO(117, 117, 117, 1),
                     fontSize: 16,
                   ),
                   border: InputBorder.none,
-                  contentPadding: const EdgeInsets.symmetric(vertical: 10.0),
+                  contentPadding: EdgeInsets.symmetric(vertical: 12, horizontal: 8),
                 ),
                 style: const TextStyle(color: AppColors.black),
                 onChanged: (text) {

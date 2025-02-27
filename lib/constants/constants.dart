@@ -8,10 +8,6 @@ class Constants {
     final String baseUrl = prefs.getString('value') ?? '';
     log('Base URL: $baseUrl');
 
-    // return 'https://stockship-2.onrender.com';
-
-    // return 'http://192.168.209.246:3001';
-
     return baseUrl;
   }
 }

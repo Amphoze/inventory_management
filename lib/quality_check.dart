@@ -1,3 +1,4 @@
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:inventory_management/provider/return_entry_provider.dart';
 import 'package:provider/provider.dart';
@@ -23,7 +24,7 @@ class _QualityCheckState extends State<QualityCheck> {
             title: Text(widget.orderId),
             centerTitle: true,
             elevation: 2,
-            // backgroundColor: Colors.blueGrey[900],
+            // backgroundColor: Theme.of(context).primaryColor,
           ),
           body: Stack(
             children: [
@@ -50,7 +51,7 @@ class _QualityCheckState extends State<QualityCheck> {
                                 ),
                                 const SizedBox(height: 12),
                                 ...widget.itemsList.map(
-                                  (item) => Padding(
+                                      (item) => Padding(
                                     padding: const EdgeInsets.only(bottom: 12.0),
                                     child: Column(
                                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -109,7 +110,7 @@ class _QualityCheckState extends State<QualityCheck> {
                         ),
                         const SizedBox(height: 16),
 
-                        // Image Upload Section
+                        // Good Images Upload Section
                         Card(
                           elevation: 4,
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -118,79 +119,93 @@ class _QualityCheckState extends State<QualityCheck> {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Row( mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                   children: [
                                     const Text(
-                                      'Upload Evidence',
+                                      'Good Images',
                                       style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                                     ),
-                                    TextButton(onPressed: pro.clearImages, child: const Text('Clear', style: TextStyle(color: Colors.red),))
+                                    TextButton(
+                                      onPressed: () => pro.clearImages(isGood: true),
+                                      child: const Text('Clear', style: TextStyle(color: Colors.red)),
+                                    ),
                                   ],
                                 ),
                                 const SizedBox(height: 12),
                                 ElevatedButton.icon(
-                                  onPressed: pro.pickImages,
+                                  onPressed: () => pro.pickImages(isGood: true),
                                   icon: const Icon(Icons.upload_file, color: Colors.white),
-                                  label: const Text('Select Images'),
+                                  label: const Text('Select Good Images'),
                                   style: ElevatedButton.styleFrom(
                                     padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                    backgroundColor: Colors.green,
                                   ),
                                 ),
-                                if (pro.uploadedImages.isNotEmpty) ...[
+                                if (pro.goodImages.isNotEmpty) ...[
                                   const SizedBox(height: 12),
                                   SizedBox(
                                     height: 120,
                                     child: ListView.builder(
                                       scrollDirection: Axis.horizontal,
-                                      itemCount: pro.uploadedImages.length,
+                                      itemCount: pro.goodImages.length,
                                       itemBuilder: (context, index) {
-                                        final file = pro.uploadedImages[index];
-                                        return Padding(
-                                          padding: const EdgeInsets.only(right: 8.0),
-                                          child: Stack(
-                                            children: [
-                                              Container(
-                                                decoration: BoxDecoration(
-                                                  border: Border.all(color: Colors.grey),
-                                                  borderRadius: BorderRadius.circular(8),
-                                                ),
-                                                child: ClipRRect(
-                                                  borderRadius: BorderRadius.circular(8),
-                                                  child: file.bytes != null
-                                                      ? Image.memory(
-                                                          file.bytes!,
-                                                          width: 100,
-                                                          height: 100,
-                                                          fit: BoxFit.cover,
-                                                          errorBuilder: (context, error, stackTrace) {
-                                                            return Container(
-                                                              width: 100,
-                                                              height: 100,
-                                                              color: Colors.grey[300],
-                                                              child: const Center(child: Icon(Icons.error, color: Colors.red)),
-                                                            );
-                                                          },
-                                                        )
-                                                      : Container(
-                                                          width: 100,
-                                                          height: 100,
-                                                          color: Colors.grey[300],
-                                                          child: const Center(child: Text('No Image Data')),
-                                                        ),
-                                                ),
-                                              ),
-                                              Positioned(
-                                                top: 0,
-                                                right: 0,
-                                                child: IconButton(
-                                                  icon: const Icon(Icons.cancel, color: Colors.red),
-                                                  onPressed: () => pro.removeImage(index),
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        );
+                                        final file = pro.goodImages[index];
+                                        return _buildImagePreview(file, index, true, pro);
+                                      },
+                                    ),
+                                  ),
+                                ],
+                              ],
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+
+                        // Bad Images Upload Section
+                        Card(
+                          elevation: 4,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          child: Padding(
+                            padding: const EdgeInsets.all(16.0),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    const Text(
+                                      'Bad Images',
+                                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                                    ),
+                                    TextButton(
+                                      onPressed: () => pro.clearImages(isGood: false),
+                                      child: const Text('Clear', style: TextStyle(color: Colors.red)),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 12),
+                                ElevatedButton.icon(
+                                  onPressed: () => pro.pickImages(isGood: false),
+                                  icon: const Icon(Icons.upload_file, color: Colors.white),
+                                  label: const Text('Select Bad Images'),
+                                  style: ElevatedButton.styleFrom(
+                                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                    backgroundColor: Colors.red,
+                                  ),
+                                ),
+                                if (pro.badImages.isNotEmpty) ...[
+                                  const SizedBox(height: 12),
+                                  SizedBox(
+                                    height: 120,
+                                    child: ListView.builder(
+                                      scrollDirection: Axis.horizontal,
+                                      itemCount: pro.badImages.length,
+                                      itemBuilder: (context, index) {
+                                        final file = pro.badImages[index];
+                                        return _buildImagePreview(file, index, false, pro);
                                       },
                                     ),
                                   ),
@@ -209,11 +224,11 @@ class _QualityCheckState extends State<QualityCheck> {
                             style: ElevatedButton.styleFrom(
                               padding: const EdgeInsets.symmetric(vertical: 16),
                               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                              // backgroundColor: Colors.blueGrey[900],
+                              backgroundColor: Theme.of(context).primaryColor,
                             ),
                             child: const Text(
                               'Submit Quality Check',
-                              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
                             ),
                           ),
                         ),
@@ -225,9 +240,7 @@ class _QualityCheckState extends State<QualityCheck> {
               if (pro.isLoading)
                 Container(
                   color: Colors.black.withOpacity(0.5),
-                  child: const Center(
-                    child: CircularProgressIndicator(),
-                  ),
+                  child: const Center(child: CircularProgressIndicator()),
                 ),
             ],
           ),
@@ -248,12 +261,60 @@ class _QualityCheckState extends State<QualityCheck> {
 
     final result = await pro.submitQualityCheck(context, widget.orderId, widget.itemsList);
     if (context.mounted) {
-      // Navigator.pop(context);
       if (result['success'] == true) {
+        Navigator.pop(context); // Return to previous screen on success
         pro.showSnackBar(context, result['message'], Colors.green);
       } else {
         pro.showSnackBar(context, result['message'], Colors.red);
       }
     }
+  }
+
+  Widget _buildImagePreview(PlatformFile file, int index, bool isGood, ReturnEntryProvider pro) {
+    return Padding(
+      padding: const EdgeInsets.only(right: 8.0),
+      child: Stack(
+        children: [
+          Container(
+            decoration: BoxDecoration(
+              border: Border.all(color: Colors.grey),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: file.bytes != null
+                  ? Image.memory(
+                file.bytes!,
+                width: 100,
+                height: 100,
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) {
+                  return Container(
+                    width: 100,
+                    height: 100,
+                    color: Colors.grey[300],
+                    child: const Center(child: Icon(Icons.error, color: Colors.red)),
+                  );
+                },
+              )
+                  : Container(
+                width: 100,
+                height: 100,
+                color: Colors.grey[300],
+                child: const Center(child: Text('No Image Data')),
+              ),
+            ),
+          ),
+          Positioned(
+            top: 0,
+            right: 0,
+            child: IconButton(
+              icon: const Icon(Icons.cancel, color: Colors.red),
+              onPressed: () => pro.removeImage(index, isGood: isGood),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }

@@ -115,6 +115,65 @@ class AccountsProvider with ChangeNotifier {
     return '$day-$month-$year $hour:$minute:$second';
   }
 
+  bool _isCloning = false;
+  bool get isCloning => _isCloning;
+
+  void setCloning(bool value) {
+    _isCloning = value;
+    notifyListeners();
+  }
+
+  Future<String> cloneOrders(BuildContext context, List<String> orderIds) async {
+    String baseUrl = await Constants.getBaseUrl();
+    String cloneOrderUrl = '$baseUrl/orders/clone';
+    final String? token = await _getToken();
+    setCloning(true);
+
+    if (token == null) {
+      setCloning(false);
+      return 'No auth token found';
+    }
+
+    // Headers for the API request
+    final headers = {
+      'Authorization': 'Bearer $token',
+      'Content-Type': 'application/json',
+    };
+
+    // Request body containing the order IDs
+    final body = json.encode({
+      'orderIds': orderIds,
+    });
+
+    try {
+      // Make the POST request to confirm the orders
+      final response = await http.post(
+        Uri.parse(cloneOrderUrl),
+        headers: headers,
+        body: body,
+      );
+
+      print('Response status: ${response.statusCode}');
+      print('Response body: ${response.body}');
+
+      final responseData = json.decode(response.body);
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        await fetchOrdersWithStatus2();
+        clearAllSelections();
+        return responseData['message'] + ": ${responseData['newOrders'][0]['order_id']}" ?? 'Orders clone successfully';
+      } else {
+        return responseData['message'] ?? 'Failed to clone orders';
+      }
+    } catch (error) {
+      log('catched error: $error');
+      return 'An error occurred: $error';
+    } finally {
+      setCloning(false);
+      notifyListeners();
+    }
+  }
+
   Future<String> cancelOrders(BuildContext context, List<String> orderIds) async {
     String baseUrl = await Constants.getBaseUrl();
     String cancelOrderUrl = '$baseUrl/orders/cancel';
@@ -692,5 +751,55 @@ class AccountsProvider with ChangeNotifier {
     print('Current booked page set to: $currentPageBooked');
     fetchAccountedOrders(currentPageBooked);
     notifyListeners();
+  }
+
+  bool _isReversing = false;
+  bool get isReversing => _isReversing;
+
+  void setReversing(bool value) {
+    _isReversing = value;
+    notifyListeners();
+  }
+
+  Future<Map<String, dynamic>> reverseOrder(String orderId) async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('authToken');
+    String url = '${await Constants.getBaseUrl()}/orders/reverse';
+
+    if (token == null) {
+      print('Token is missing. Please log in again.');
+      return {'success': false, 'message': 'Token is missing. Please log in again.'};
+    }
+
+    try {
+      setReversing(true);
+
+      final response = await http.post(
+        Uri.parse(url),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode({
+          'order_id': orderId,
+          'order_status': 1
+        })
+      );
+
+      final data = jsonDecode(response.body);
+
+      log('reverse status: ${response.statusCode}');
+      log('reverse body: ${response.body}');
+      if (response.statusCode == 200) {
+        return {'success': true, 'message': data['message']};
+      } else {
+        return {'success': false, 'message': data['message']};
+      }
+    } catch (e) {
+      log('caught error: $e');
+      return {'success': false, 'message': 'Error: $e'};
+    } finally {
+      setReversing(false);
+    }
   }
 }
