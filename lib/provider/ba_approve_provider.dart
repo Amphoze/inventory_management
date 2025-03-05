@@ -37,8 +37,7 @@ class BaApproveProvider with ChangeNotifier {
 
   TextEditingController get textEditingController => _textEditingController;
 
-  int get selectedCount =>
-      _selectedProducts.where((isSelected) => isSelected).length;
+  int get selectedCount => _selectedProducts.where((isSelected) => isSelected).length;
 
   bool isUpdatingOrder = false;
   bool isRefreshingOrders = false;
@@ -75,8 +74,7 @@ class BaApproveProvider with ChangeNotifier {
 
   void toggleSelectAll(bool value) {
     _selectAll = value;
-    _selectedProducts =
-        List<bool>.generate(_orders.length, (index) => _selectAll);
+    _selectedProducts = List<bool>.generate(_orders.length, (index) => _selectAll);
     notifyListeners();
   }
 
@@ -112,8 +110,7 @@ class BaApproveProvider with ChangeNotifier {
     return prefs.getString('authToken') ?? '';
   }
 
-  Future<String> cancelOrders(
-      BuildContext context, List<String> orderIds) async {
+  Future<String> cancelOrders(BuildContext context, List<String> orderIds) async {
     String baseUrl = await Constants.getBaseUrl();
     String cancelOrderUrl = '$baseUrl/orders/cancel';
     // final String? token = await _getToken();
@@ -173,14 +170,15 @@ class BaApproveProvider with ChangeNotifier {
 
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('authToken') ?? '';
-    var url =
-        '${await Constants.getBaseUrl()}/orders?orderStatus=2&ba_approve=false&page=$_currentPage';
+    final warehouseId = prefs.getString('warehouseId') ?? '';
+
+    var url = '${await Constants.getBaseUrl()}/orders?warehouse=$warehouseId&orderStatus=2&ba_approve=false&page=$_currentPage';
 
     if (date != null) {
       String formattedDate = DateFormat('yyyy-MM-dd').format(date);
       url += '&date=$formattedDate';
     }
-    if(market != 'All' && market != null){
+    if (market != 'All' && market != null) {
       url += '&marketplace=$market';
     }
 
@@ -192,9 +190,7 @@ class BaApproveProvider with ChangeNotifier {
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
-        List<Order> orders = (data['orders'] as List)
-            .map((order) => Order.fromJson(order))
-            .toList();
+        List<Order> orders = (data['orders'] as List).map((order) => Order.fromJson(order)).toList();
 
         log('orders: $orders');
 
@@ -246,11 +242,11 @@ class BaApproveProvider with ChangeNotifier {
 
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('authToken') ?? '';
+    final warehouseId = prefs.getString('warehouseId') ?? '';
+
     String encodedOrderId = Uri.encodeComponent(query);
 
-
-    final url =
-        '${await Constants.getBaseUrl()}/orders?orderStatus=2&ba_approve=false&order_id=$encodedOrderId';
+    final url = '${await Constants.getBaseUrl()}/orders?warehouse=$warehouseId&orderStatus=2&ba_approve=false&order_id=$encodedOrderId';
 
     print('Searching orders with term: $query');
 
@@ -298,12 +294,7 @@ class BaApproveProvider with ChangeNotifier {
   Future<void> statusUpdate(BuildContext context) async {
     setUpdatingOrder(true);
     notifyListeners();
-    final selectedOrderIds = _orders
-        .asMap()
-        .entries
-        .where((entry) => _selectedProducts[entry.key])
-        .map((entry) => entry.value.orderId)
-        .toList();
+    final selectedOrderIds = _orders.asMap().entries.where((entry) => _selectedProducts[entry.key]).map((entry) => entry.value.orderId).toList();
 
     if (selectedOrderIds.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -324,7 +315,9 @@ class BaApproveProvider with ChangeNotifier {
           'Authorization': 'Bearer $token',
           'Content-Type': 'application/json',
         },
-        body: jsonEncode({'orderIds': selectedOrderIds}),
+        body: jsonEncode({
+          'orderIds': selectedOrderIds
+        }),
       );
 
       if (response.statusCode == 200) {
@@ -350,20 +343,18 @@ class BaApproveProvider with ChangeNotifier {
     }
   }
 
-  Future<void> fetchOrdersByMarketplace(
-      String marketplace, int orderStatus, int page,
-      {DateTime? date}) async {
+  Future<void> fetchOrdersByMarketplace(String marketplace, int orderStatus, int page, {DateTime? date}) async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('authToken') ?? '';
+    final warehouseId = prefs.getString('warehouseId') ?? '';
+
     String baseUrl = '${await Constants.getBaseUrl()}/orders';
-    String url =
-        '$baseUrl?orderStatus=$orderStatus&ba_approve=false&marketplace=$marketplace&page=$page';
+    String url = '$baseUrl?warehouse=$warehouseId&orderStatus=$orderStatus&ba_approve=false&marketplace=$marketplace&page=$page';
 
     if (date != null) {
       String formattedDate = DateFormat('yyyy-MM-dd').format(date);
       url += '&date=$formattedDate';
     }
-
-    final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString('authToken') ?? '';
 
     try {
       _isLoading = true;
@@ -386,16 +377,13 @@ class BaApproveProvider with ChangeNotifier {
 
       if (response.statusCode == 200) {
         final jsonResponse = jsonDecode(response.body);
-        List<Order> orders = (jsonResponse['orders'] as List)
-            .map((orderJson) => Order.fromJson(orderJson))
-            .toList();
+        List<Order> orders = (jsonResponse['orders'] as List).map((orderJson) => Order.fromJson(orderJson)).toList();
 
         log("orders: $orders");
 
         _orders = orders;
         _currentPage = page; // Track current page for B2B
-        _totalPages =
-            jsonResponse['totalPages']; // Assuming API returns total pages
+        _totalPages = jsonResponse['totalPages']; // Assuming API returns total pages
       } else if (response.statusCode == 401) {
         print('Unauthorized access - Token might be expired or invalid.');
       } else if (response.statusCode == 404) {

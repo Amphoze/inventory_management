@@ -433,6 +433,27 @@ class AuthProvider with ChangeNotifier {
     return prefs.getString('authToken');
   }
 
+  Future<String?> getWarehouseId() async {
+    final prefs = await SharedPreferences.getInstance();
+    _isAuthenticated = prefs.getString('authToken') != null && prefs.getString('date') == DateFormat('dd-MMMM-yyyy').format(DateTime.now());
+    // notifyListeners();
+    return prefs.getString('warehouseId');
+  }
+
+  Future<String?> getWarehouseName() async {
+    final prefs = await SharedPreferences.getInstance();
+    _isAuthenticated = prefs.getString('authToken') != null && prefs.getString('date') == DateFormat('dd-MMMM-yyyy').format(DateTime.now());
+    // notifyListeners();
+    return prefs.getString('warehouseName');
+  }
+
+  Future<String?> getEmail() async {
+    final prefs = await SharedPreferences.getInstance();
+    _isAuthenticated = prefs.getString('authToken') != null && prefs.getString('date') == DateFormat('dd-MMMM-yyyy').format(DateTime.now());
+    // notifyListeners();
+    return prefs.getString('email');
+  }
+
   Future<Map<String, dynamic>> createCategory(String name) async {
     String baseUrl = await Constants.getBaseUrl();
 
@@ -581,6 +602,47 @@ class AuthProvider with ChangeNotifier {
       }
     } catch (error) {
       print('Error fetching products: $error');
+      return {'success': false, 'message': 'Error fetching products'};
+    }
+  }
+
+  Future<Map<String, dynamic>> fetchCategoryProducts(String categoryName, {int page = 1}) async {
+    String baseUrl = await Constants.getBaseUrl();
+    final String url = '$baseUrl/category/products/$categoryName?page=$page';
+
+    try {
+      final token = await getToken();
+      final response = await http.get(
+        Uri.parse(url),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      print('Response status: ${response.statusCode}'); // Debugging line
+      // print('Response body: ${response.body}'); // Debugging line
+
+      if (response.statusCode == 200) {
+        final res = json.decode(response.body);
+        final data = res['products'] as List;
+
+        return {
+          'success': true,
+          'products': data,
+          'totalProducts': res['totalProducts'],
+          'currentPage': res['currentPage'],
+          'totalPages': res['totalPages'],
+        };
+      } else {
+        return {
+          'success': false,
+          'message': 'Failed to fetch products, status code: ${response.statusCode}',
+        };
+      }
+    } catch (error) {
+      print('Error fetching products for category: $categoryName, Error: $error');
+
       return {'success': false, 'message': 'Error fetching products'};
     }
   }
@@ -1334,61 +1396,56 @@ class AuthProvider with ChangeNotifier {
     }
   }
 
-//get all brand name
-//  Future<Map<String, dynamic>> getAllBrandName(
-//       {int page = 1, int limit = 20, String? name}) async {
-//     final url = Uri.parse('$_baseUrl/brand/');
+  bool _isReversing = false;
+  bool get isReversing => _isReversing;
 
-//     try {
-//       final token = await getToken();
-//       final response = await http.get(
-//         url,
-//         headers: {
-//           'Content-Type': 'application/json',
-//           'Authorization': 'Bearer $token',
-//         },
-//       );
+  void setReversing(bool value) {
+    _isReversing = value;
+    notifyListeners();
+  }
 
-//       print('Get All brand Response: ${response.statusCode}');
-//       print('Get All brand  Response Body: ${response.body}');
+  Future<Map<String, dynamic>> reverseOrder(String orderId, String status) async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('authToken');
+    String url = '${await Constants.getBaseUrl()}/orders/reverse';
 
-//       if (response.statusCode == 200) {
-//         final data = json.decode(response.body);
-//         if (data.containsKey('brands') && data['brands'] is List) {
+    if (token == null) {
+      print('Token is missing. Please log in again.');
+      return {'success': false, 'message': 'Token is missing. Please log in again.'};
+    }
 
-//           print("i am dipu");
-//           List brand;
+    Logger().e('reverseOrder url: $url');
 
-//               brand=parseJsonToList(response.body.toString(),'brands');
-//           // }
-//           // print("i am dipu us here wiht success");
-//           return {'success': true, 'data': brand};
-//         } else {
-//           print('Unexpected response format: $data');
-//           return {'success': false, 'message': 'Unexpected response format'};
-//         }
-//       } else {
-//         return {
-//           'success': false,
-//           'message':
-//               'Failed to fetch categories with status code: ${response.statusCode}'
-//         };
-//       }
-//     } catch (error, stackTrace) {
-//       print('An error occurred while fetching categories: $error');
-//       print('Stack trace: $stackTrace');
-//       return {'success': false, 'message': 'An error occurred: $error'};
-//     }
-//   }
+    try {
+      setReversing(true);
 
-// List<Map<String, dynamic>> parseJsonToList(String jsonString,String key) {
-//   // Decode the JSON string
-//   final Map<String, dynamic> jsonData = json.decode(jsonString);
+      final response = await http.post(
+        Uri.parse(url),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode(
+          {'order_id': orderId, 'order_status': status},
+        ),
+      );
 
-//   // Access the array of objects
-//   final List<dynamic> categories = jsonData[key];
+      final data = jsonDecode(response.body);
 
-//   // Convert the List<dynamic> to List<Map<String, dynamic>>
-//   return categories.map((item) => item as Map<String, dynamic>).toList();
-// }
+      log('reverse status: ${response.statusCode}');
+      // Logger().e('reverseOrder body: $data');
+
+      if (response.statusCode == 200) {
+        Logger().e('reverseOrder body: ${{'success': true, 'message': data['message'], 'newOrderId': data['order']?['order_id'] ?? ''}}');
+        return {'success': true, 'message': data['message'], 'newOrderId': data['order']?['order_id'] ?? ''};
+      } else {
+        return {'success': false, 'message': data['message']};
+      }
+    } catch (e) {
+      log('caught error: $e');
+      return {'success': false, 'message': 'Error: $e'};
+    } finally {
+      setReversing(false);
+    }
+  }
 }

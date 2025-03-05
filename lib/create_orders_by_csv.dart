@@ -47,11 +47,12 @@ class _CreateOrdersByCSVState extends State<CreateOrdersByCSV> {
     try {
       final baseUrl = await Constants.getBaseUrl();
       log('Base URL in _initializeSocket: $baseUrl');
+      final email = await AuthProvider().getEmail();
 
       // Initialize socket if not already initialized
       _socket ??= IO.io(
         baseUrl,
-        IO.OptionBuilder().setTransports(['websocket']).disableAutoConnect().build(),
+        IO.OptionBuilder().setTransports(['websocket']).disableAutoConnect().setQuery({'email': email}).build(),
       );
 
       // On successful connection
@@ -86,6 +87,11 @@ class _CreateOrdersByCSVState extends State<CreateOrdersByCSV> {
         log('CSV file uploaded: $data');
         setState(() {
           _progressMessage = data['message'] ?? 'File uploaded successfully';
+          _isCreating = false;
+          _csvData = [];
+          _rowCount = 0;
+          _isCreateEnabled = false;
+          _selectedFile = null;
         });
         _showSnackbar(_progressMessage, Colors.green);
 
@@ -106,6 +112,7 @@ class _CreateOrdersByCSVState extends State<CreateOrdersByCSV> {
 // Helper function to show snackbars
   void _showSnackbar(String message, Color color) {
     if (context.mounted) {
+      ScaffoldMessenger.of(context).removeCurrentSnackBar();
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(message),
@@ -354,20 +361,22 @@ class _CreateOrdersByCSVState extends State<CreateOrdersByCSV> {
             if (_rowCount > 0) ...[
               Text('Number of items: $_rowCount'),
               const SizedBox(height: 16),
-              // Text('Progress: ${_progressPercentage.toStringAsFixed(1)}%'),
               ValueListenableBuilder<double>(
                 valueListenable: _progressNotifier,
                 builder: (context, value, child) {
                   return Column(
                     children: [
-                      Row(
-                        children: [
-                          Text('Progress: ${value.toStringAsFixed(2)}%'),
-                          Text(
-                            '${value.toStringAsFixed(2)}%',
-                            style: const TextStyle(fontWeight: FontWeight.bold),
-                          ),
-                        ],
+                      Text.rich(
+                        TextSpan(
+                          text: 'Progress: ',
+                          children: [
+                            TextSpan(
+                              text: '${value.toStringAsFixed(2)}%',
+                              style: const TextStyle(fontWeight: FontWeight.normal),
+                            ),
+                          ],
+                          style: const TextStyle(fontWeight: FontWeight.bold),
+                        ),
                       ),
                       const SizedBox(height: 8),
                       LinearProgressIndicator(

@@ -9,7 +9,7 @@ import 'package:inventory_management/accounts_section.dart';
 import 'package:inventory_management/all_orders_page.dart';
 import 'package:inventory_management/ba_approve_page.dart';
 import 'package:inventory_management/bin_master.dart';
-import 'package:inventory_management/book_orders.dart';
+import 'package:inventory_management/book_orders_by_csv.dart';
 import 'package:inventory_management/book_page.dart';
 import 'package:inventory_management/booked_page.dart';
 import 'package:inventory_management/cancelled_orders.dart';
@@ -47,6 +47,7 @@ import 'package:inventory_management/picker_page.dart';
 import 'package:inventory_management/product_master.dart';
 import 'package:inventory_management/product_upload.dart';
 import 'package:inventory_management/provider/dashboard_provider.dart';
+import 'package:inventory_management/provider/location_provider.dart';
 import 'package:inventory_management/provider/marketplace_provider.dart';
 import 'package:inventory_management/racked_page.dart';
 import 'package:inventory_management/reordering_page.dart';
@@ -58,6 +59,7 @@ import 'package:inventory_management/stockship_version_control/crm_updated_date_
 import 'package:inventory_management/support_page.dart';
 import 'package:inventory_management/threshold_upload.dart';
 import 'package:inventory_management/upload_inner.dart';
+import 'package:inventory_management/upload_warehouse.dart';
 import 'package:inventory_management/uploadproduct-quantity.dart';
 import 'package:logger/logger.dart';
 import 'package:provider/provider.dart';
@@ -81,26 +83,29 @@ class _DashboardPageState extends State<DashboardPage> {
   DateTime? lastUpdatedTime; // Make sure this is initialized properly in your actual code
   DateTime? previousDate;
   bool isCreateOrderPage = false;
+  String? selectedWarehouse;
 
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   List<Map<String, String>> statuses = [];
-
-  // List<String> dropdownItems = [];
   List<String> temp = [];
-
-  // String? userRole;
 
   @override
   void initState() {
     super.initState();
     lastUpdatedTime = DateTime.now();
-
+    getWarehouse();
     _fetchUserRole();
-    // fetchStatuses();
     _loadSelectedDrawerItem();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _fetchData();
+      context.read<LocationProvider>().fetchWarehouses();
+      context.read<MarketplaceProvider>().fetchMarketplaces();
     });
+  }
+
+  void getWarehouse() async {
+    selectedWarehouse = await context.read<AuthProvider>().getWarehouseName();
+    log('Warehouse ID: $selectedWarehouse');
   }
 
   String sanitizeEmail(String email) {
@@ -1124,6 +1129,7 @@ class _DashboardPageState extends State<DashboardPage> {
           "Manage Labels",
           "Upload Inner Packaging",
           "Upload Inventory",
+          "Upload Warehouse",
           "Upload Threshold",
           "Upload Combo"
         ].contains(selectedDrawerItem)
@@ -1311,6 +1317,22 @@ class _DashboardPageState extends State<DashboardPage> {
               isSelected: selectedDrawerItem == 'Upload Inventory',
               onTap: () => isConfirmer == true || isAccounts == true || isBooker == true || isSuperAdmin == true || isAdmin == true
                   ? _onDrawerItemTapped('Upload Inventory', isSmallScreen)
+                  : ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text("You are not authorized to view this page.")),
+                    ),
+              isIndented: true,
+              iconSize: 20,
+              fontSize: 14,
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.only(left: 10.0),
+            child: _buildDrawerItem(
+              icon: Icons.warehouse,
+              text: 'Upload Warehouse',
+              isSelected: selectedDrawerItem == 'Upload Warehouse',
+              onTap: () => isConfirmer == true || isAccounts == true || isBooker == true || isSuperAdmin == true || isAdmin == true
+                  ? _onDrawerItemTapped('Upload Warehouse', isSmallScreen)
                   : ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(content: Text("You are not authorized to view this page.")),
                     ),
@@ -1512,6 +1534,8 @@ class _DashboardPageState extends State<DashboardPage> {
         return const UploadInner();
       case 'Upload Inventory':
         return const InventoryUpload();
+      case 'Upload Warehouse':
+        return const UploadWarehouse();
       case 'Upload Threshold':
         return const ThresholdUpload();
       case 'Upload Combo':
@@ -1555,80 +1579,53 @@ class _DashboardPageState extends State<DashboardPage> {
                       ),
                     ),
                   ),
-                  // if (selectedDate != null) // Display selected date if not null
-                  //   Padding(
-                  //     padding: const EdgeInsets.all(5.0),
-                  //     child: Container(
-                  //       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                  //       decoration: BoxDecoration(
-                  //         color: AppColors.greyText.withValues(alpha: 0.08),
-                  //         borderRadius: BorderRadius.circular(6),
-                  //       ),
-                  //       child: Row(
-                  //         mainAxisSize: MainAxisSize.min,
-                  //         children: [
-                  //           const Icon(
-                  //             Icons.calendar_today_outlined,
-                  //             size: 16,
-                  //             color: AppColors.greyText,
-                  //           ),
-                  //           const SizedBox(width: 8),
-                  //           Text(
-                  //             DateFormat('dd MMM yyyy').format(selectedDate!),
-                  //             style: const TextStyle(
-                  //               fontSize: 14,
-                  //               color: AppColors.greyText,
-                  //               fontWeight: FontWeight.w500,
-                  //             ),
-                  //           ),
-                  //         ],
-                  //       ),
-                  //     ),
-                  //   ),
-                  // Padding(
-                  //   padding: const EdgeInsets.all(8.0),
-                  //   child: Container(
-                  //     decoration: BoxDecoration(
-                  //       color: Colors.white,
-                  //       borderRadius: BorderRadius.circular(10),
-                  //       boxShadow: [
-                  //         BoxShadow(
-                  //           color: Colors.grey.withValues(alpha: 0.3), // Shadow color
-                  //           spreadRadius: 2,
-                  //           blurRadius: 5,
-                  //           offset: const Offset(0, 3),
-                  //         ),
-                  //       ],
-                  //     ),
-                  //     child: ElevatedButton.icon(
-                  //       onPressed: () async {
-                  //         DateTime? pickedDate = await _selectDate(context);
-                  //         if (pickedDate != null) {
-                  //           String formattedDate = DateFormat('yyyy-MM-dd').format(pickedDate);
-                  //           Provider.of<DashboardProvider>(context, listen: false).fetchAllData(formattedDate);
-                  //         }
-                  //       },
-                  //       style: ElevatedButton.styleFrom(
-                  //         backgroundColor: AppColors.primaryBlue, // Button background color
-                  //         shape: RoundedRectangleBorder(
-                  //           borderRadius: BorderRadius.circular(10), // Same border radius
-                  //         ),
-                  //         padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0), // Button padding
-                  //       ),
-                  //       icon: const Icon(
-                  //         Icons.calendar_month_outlined,
-                  //         color: Colors.white,
-                  //       ), // Button icon
-                  //       label: const Text(
-                  //         'Select Date', // Button label
-                  //         style: TextStyle(
-                  //           color: Colors.white, // Text color
-                  //           fontSize: 16, // Font size
-                  //         ),
-                  //       ),
-                  //     ),
-                  //   ),
-                  // ),
+                  SizedBox(
+                    width: 200,
+                    child: Consumer<LocationProvider>(
+                      builder: (context, provider, _) {
+                        return Tooltip(
+                          message: 'Switch Warehouse',
+                          child: InkWell(
+                            onTap: () => _showWarehouseSelector(context, provider),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(8),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withValues(alpha: 0.05),
+                                    blurRadius: 4,
+                                    offset: const Offset(0, 2),
+                                  ),
+                                ],
+                                border: Border.all(color: Colors.grey.shade200),
+                              ),
+                              child: Row(
+                                children: [
+                                  Expanded(
+                                    child: Text(
+                                      selectedWarehouse ?? 'Select Warehouse',
+                                      style: TextStyle(
+                                        color: selectedWarehouse != null ? Colors.black87 : Colors.black54,
+                                        fontWeight: selectedWarehouse != null ? FontWeight.w500 : FontWeight.normal,
+                                      ),
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                  const Icon(
+                                    Icons.business,
+                                    size: 18,
+                                    color: Colors.black54,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
                   Padding(
                     padding: const EdgeInsets.all(8.0),
                     child: Container(
@@ -1989,5 +1986,117 @@ class _DashboardPageState extends State<DashboardPage> {
     });
     // Fetch today's data
     Provider.of<DashboardProvider>(context, listen: false).fetchAllData(formattedDate);
+  }
+
+  void _showWarehouseSelector(BuildContext context, LocationProvider provider) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (context) {
+        return Container(
+          padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
+          constraints: BoxConstraints(
+            maxHeight: MediaQuery.of(context).size.height * 0.7,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  const Text(
+                    'Select Warehouse',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const Spacer(),
+                  IconButton(
+                    icon: const Icon(Icons.close),
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Flexible(
+                child: ListView.builder(
+                  shrinkWrap: true,
+                  itemCount: provider.warehouses.length,
+                  itemBuilder: (context, index) {
+                    final warehouse = provider.warehouses[index];
+                    final isSelected = warehouse['name'] == selectedWarehouse;
+
+                    return InkWell(
+                      onTap: () async {
+                        Navigator.pop(context);
+                        setState(() {
+                          selectedWarehouse = warehouse['name'];
+                        });
+                        await provider.saveWarehouseData(
+                          context,
+                          warehouse['_id'] ?? '',
+                          warehouse['name'] ?? '',
+                          warehouse['isPrimary'] ?? false,
+                        );
+                        log('warehouse id: ${warehouse['_id']}');
+                      },
+                      child: Container(
+                        margin: const EdgeInsets.only(bottom: 8),
+                        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                        decoration: BoxDecoration(
+                          color: isSelected ? Colors.blue.withValues(alpha: 0.1) : Colors.white,
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(
+                            color: isSelected ? Colors.blue : Colors.grey.shade200,
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    warehouse['name'] ?? '',
+                                    style: TextStyle(
+                                      fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                                    ),
+                                  ),
+                                  if (warehouse['isPrimary'] ?? false)
+                                    const Padding(
+                                      padding: EdgeInsets.only(top: 4),
+                                      child: Text(
+                                        'Primary',
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          color: Colors.blue,
+                                        ),
+                                      ),
+                                    ),
+                                ],
+                              ),
+                            ),
+                            if (isSelected)
+                              const Icon(
+                                Icons.check_circle,
+                                color: Colors.blue,
+                                size: 20,
+                              ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
   }
 }

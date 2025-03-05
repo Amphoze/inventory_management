@@ -47,14 +47,13 @@ class _CreateInvoiceByCSVState extends State<CreateInvoiceByCSV> {
     try {
       final baseUrl = await Constants.getBaseUrl();
       log('Base URL in _initializeSocket: $baseUrl');
+      final email = await AuthProvider().getEmail();
+
 
       // Initialize socket if not already initialized
       _socket ??= IO.io(
         baseUrl,
-        IO.OptionBuilder()
-            .setTransports(['websocket'])
-            .disableAutoConnect()
-            .build(),
+        IO.OptionBuilder().setTransports(['websocket']).disableAutoConnect().setQuery({'email': email}).build(),
       );
 
       // On successful connection
@@ -89,6 +88,11 @@ class _CreateInvoiceByCSVState extends State<CreateInvoiceByCSV> {
         log('CSV file uploaded: $data');
         setState(() {
           _progressMessage = data['message'] ?? 'File uploaded successfully';
+          _isCreating = false;
+          _csvData = [];
+          _rowCount = 0;
+          _isCreateEnabled = false;
+          _selectedFile = null;
         });
         _showSnackbar(_progressMessage, Colors.green);
 
@@ -329,8 +333,8 @@ class _CreateInvoiceByCSVState extends State<CreateInvoiceByCSV> {
                     child: Text(_isPickingFile
                         ? 'Selecting File...'
                         : _isProcessingFile
-                        ? 'Processing File...'
-                        : 'Select CSV File'),
+                            ? 'Processing File...'
+                            : 'Select CSV File'),
                   ),
                 ),
                 const SizedBox(width: 16),
@@ -358,15 +362,20 @@ class _CreateInvoiceByCSVState extends State<CreateInvoiceByCSV> {
             if (_rowCount > 0) ...[
               Text('Number of items: $_rowCount'),
               const SizedBox(height: 16),
-              // Text('Progress: ${_progressPercentage.toStringAsFixed(1)}%'),
               ValueListenableBuilder<double>(
                 valueListenable: _progressNotifier,
                 builder: (context, value, child) {
-                  return Row(
-                    children: [
-                      Text('Progress: ${value.toStringAsFixed(2)}%'),
-                      Text('${value.toStringAsFixed(2)}%', style: const TextStyle(fontWeight: FontWeight.bold),),
-                    ],
+                  return Text.rich(
+                    TextSpan(
+                      text: 'Progress: ',
+                      children: [
+                        TextSpan(
+                          text: '${value.toStringAsFixed(2)}%',
+                          style: const TextStyle(fontWeight: FontWeight.normal),
+                        ),
+                      ],
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    ),
                   );
                 },
               ),
@@ -411,17 +420,17 @@ class _CreateInvoiceByCSVState extends State<CreateInvoiceByCSV> {
               ),
               columns: headers
                   .map((header) => DataColumn(
-                label: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                  child: Text(header.toString()),
-                ),
-              ))
+                        label: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                          child: Text(header.toString()),
+                        ),
+                      ))
                   .toList(),
               rows: pagedData.map((row) {
                 return DataRow(
                   cells: List.generate(
                     row.length,
-                        (index) => DataCell(
+                    (index) => DataCell(
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 8.0),
                         child: Text(row[index].toString()),

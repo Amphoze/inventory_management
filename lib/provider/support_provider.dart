@@ -117,7 +117,9 @@ class SupportProvider with ChangeNotifier {
 
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('authToken') ?? '';
-    String url = '${await Constants.getBaseUrl()}/orders?isMistake=true';
+    final warehouseId = prefs.getString('warehouseId') ?? '';
+
+    String url = '${await Constants.getBaseUrl()}/orders?warehouse=$warehouseId&isMistake=true';
 
     Logger().e('support url: $url');
 
@@ -134,8 +136,7 @@ class SupportProvider with ChangeNotifier {
         _orders.clear();
 
         final data = json.decode(response.body);
-        List<Order> orders =
-            (data['orders'] as List).map((order) => Order.fromJson(order)).toList();
+        List<Order> orders = (data['orders'] as List).map((order) => Order.fromJson(order)).toList();
 
         log('support orders: ${orders.length}');
 
@@ -186,9 +187,10 @@ class SupportProvider with ChangeNotifier {
     notifyListeners();
 
     final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString('authToken') ?? ''; // Fetch the token
+    final token = prefs.getString('authToken') ?? '';
+    final warehouseId = prefs.getString('warehouseId') ?? '';
 
-    final url = '${await Constants.getBaseUrl()}/orders?isMistake=true&order_id=$query';
+    final url = '${await Constants.getBaseUrl()}/orders?warehouse=$warehouseId&isMistake=true&order_id=$query';
 
     print('Searching orders with term: $query');
 
@@ -240,7 +242,9 @@ class SupportProvider with ChangeNotifier {
       var response = await http.post(
         Uri.parse('${await Constants.getBaseUrl()}/orders/support'),
         body: jsonEncode({
-          'orderIds': [orderId],
+          'orderIds': [
+            orderId
+          ],
           'message': message,
         }),
         headers: {

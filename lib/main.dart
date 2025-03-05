@@ -29,7 +29,6 @@ import 'package:inventory_management/provider/inventory_provider.dart';
 import 'package:inventory_management/provider/invoice_provider.dart';
 import 'package:inventory_management/provider/label_data_provider.dart';
 import 'package:inventory_management/provider/location_provider.dart';
-import 'package:inventory_management/provider/manage-inventory-provider.dart';
 import 'package:inventory_management/provider/manifest_provider.dart';
 import 'package:inventory_management/provider/marketplace_provider.dart';
 import 'package:inventory_management/provider/orders_provider.dart';
@@ -50,6 +49,8 @@ import 'package:inventory_management/warehouses_page.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'provider/create_order_provider.dart';
+
 // import 'package:inventory_management/create_account.dart';
 // prarthi2474@gmail.com
 
@@ -66,7 +67,6 @@ void main() async {
       ChangeNotifierProvider(create: (context) => BinApi()),
       ChangeNotifierProvider(create: (context) => AuthProvider()),
       ChangeNotifierProvider(create: (context) => CheckBoxProvider()),
-      // ChangeNotifierProvider(create: (context) => ManagementProvider()),
       ChangeNotifierProvider(create: (context) => DashboardProvider()),
       ChangeNotifierProvider(create: (context) => LabelPageApi()),
       ChangeNotifierProvider(create: (context) => MarketplaceProvider()),
@@ -94,7 +94,7 @@ void main() async {
       ChangeNotifierProvider(create: (context) => InvoiceProvider()),
       ChangeNotifierProvider(create: (context) => AccountsProvider()),
       ChangeNotifierProvider(create: (context) => BaApproveProvider()),
-      // ChangeNotifierProvider(create: (context) => WarehousesProvider()),
+      ChangeNotifierProvider(create: (context) => CreateOrderProvider()),
       ChangeNotifierProvider(create: (context) => OuterboxProvider()),
       ChangeNotifierProvider(create: (context) => InnerPackagingProvider()),
       ChangeNotifierProvider(create: (context) => VersionController()),
@@ -126,12 +126,18 @@ class MyApp extends StatelessWidget {
         ),
         elevatedButtonTheme: ElevatedButtonThemeData(
           style: ElevatedButton.styleFrom(
-            foregroundColor: Colors.white,
-            backgroundColor: const Color.fromRGBO(6, 90, 216, 1),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(8.0),
+              foregroundColor: Colors.white,
+              backgroundColor: const Color.fromRGBO(6, 90, 216, 1),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8.0),
+              ),
+              textStyle: const TextStyle(fontFamily: 'Poppins')),
+        ),
+        expansionTileTheme: const ExpansionTileThemeData(
+          shape: OutlineInputBorder(
+            borderSide: BorderSide(
+              color: Colors.transparent,
             ),
-            textStyle: const TextStyle(fontFamily: 'Poppins')
           ),
         ),
       ),

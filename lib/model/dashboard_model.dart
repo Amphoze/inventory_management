@@ -56,19 +56,6 @@ class DashboardData {
     required this.hodApprovalYesterday,
   });
 
-  //   {
-//     "ConfirmedOrderToday": 59,
-//     "ConfirmedOrderYesterday": 42,
-//     "bookedOrderToday": 53,
-//     "bookedOrderYesterday": 32,
-//     "accountOrderToday": 173,
-//     "accountOrderYesterday": 164,
-//     "outBoundToday": 132,
-//     "outBoundYesterday": 167,
-//     "HODApprovalToday": 0,
-//     "HODApprovalYesterday": 0
-// }
-
   // Factory constructor to create a DashboardData instance from JSON
   factory DashboardData.fromJson(Map<String, dynamic> json) {
     return DashboardData(
@@ -80,11 +67,9 @@ class DashboardData {
       failedOrdersToday: json['FailedOrdersToday'] ?? 0,
       failedOrdersYesterday: json['FailedOrdersYesterday'] ?? 0,
       readyToConfirmedOrdersToday: json['readyToConfirmedOrdersToday'] ?? 0,
-      readyToConfirmedOrdersYesterday:
-          json['readyToConfirmedOrdersYesterday'] ?? 0,
+      readyToConfirmedOrdersYesterday: json['readyToConfirmedOrdersYesterday'] ?? 0,
       readyToOutBoundToday: json['readyToOutBoundToday'] ?? 0,
-      readyToOutBoundYesterday:
-          json['readyToOutBoundYesterday'] ?? 0,
+      readyToOutBoundYesterday: json['readyToOutBoundYesterday'] ?? 0,
       readyToAccountOrdersToday: json['readyToAccountOrdersToday'] ?? 0,
       readyToAccountOrdersYesterday: json['readyToAccountOrdersYesterday'] ?? 0,
       readyToBookedOrdersToday: json['readyToBookedOrdersToday'] ?? 0,
@@ -105,3 +90,33 @@ class DashboardData {
     );
   }
 }
+
+// class PercentageData {
+//   final String message;
+//   final num totalOrders;
+//   final num totalDelivered;
+//   final String deliveredPercentage;
+//   final num totalRto;
+//   final String rtoPercentage;
+//   final String source;
+//
+//   PercentageData({
+//     required this.message,
+//     required this.totalOrders,
+//     required this.totalDelivered,
+//     required this.deliveredPercentage,
+//     required this.totalRto,
+//     required this.rtoPercentage,
+//     required this.source,
+//   });
+//
+//   factory PercentageData.fromJson(Map<String, dynamic> json) => PercentageData(
+//         message: json["message"] ?? "",
+//         totalOrders: json["total_orders"] ?? 0,
+//         totalDelivered: json["total_delivered"] ?? 0,
+//         deliveredPercentage: json["delivered_percentage"] ?? "",
+//         totalRto: json["total_rto"] ?? 0,
+//         rtoPercentage: json["rto_percentage"] ?? "",
+//         source: json["source"] ?? "",
+//       );
+// }

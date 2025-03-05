@@ -1,8 +1,14 @@
-import 'dart:convert';
-import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
-import 'package:inventory_management/constants/constants.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:inventory_management/Custom-Files/colors.dart';
+import 'package:inventory_management/Widgets/combo_card.dart';
+import 'package:inventory_management/Widgets/product_card.dart';
+import 'package:inventory_management/Widgets/searchable_dropdown.dart';
+import 'package:inventory_management/provider/create_order_provider.dart'; // Import your updated provider
+import 'package:inventory_management/provider/marketplace_provider.dart';
+import 'package:provider/provider.dart';
+import 'Custom-Files/utils.dart';
+import 'model/combo_model.dart' hide Product;
+import 'model/orders_model.dart';
 
 class CreateOrderPage extends StatefulWidget {
   const CreateOrderPage({super.key});
@@ -12,577 +18,1015 @@ class CreateOrderPage extends StatefulWidget {
 }
 
 class _CreateOrderPageState extends State<CreateOrderPage> {
-  final _formKey = GlobalKey<FormState>();
+  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+  final ScrollController _scrollController = ScrollController();
 
-  // Controllers for text fields
-  final TextEditingController _orderIdController = TextEditingController();
-  final TextEditingController _customerFirstNameController = TextEditingController();
-  final TextEditingController _customerLastNameController = TextEditingController();
-  final TextEditingController _customerEmailController = TextEditingController();
-  final TextEditingController _customerGstinController = TextEditingController();
-  final TextEditingController _customerPhoneController = TextEditingController();
+  @override
+  void initState() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<MarketplaceProvider>().fetchMarketplaces();
+    });
+    super.initState();
+  }
 
-  final TextEditingController _billingFirstNameController = TextEditingController();
-  final TextEditingController _billingLastNameController = TextEditingController();
-  final TextEditingController _billingEmailController = TextEditingController();
-  final TextEditingController _billingAddress1Controller = TextEditingController();
-  final TextEditingController _billingAddress2Controller = TextEditingController();
-  final TextEditingController _billingPhoneController = TextEditingController();
-  final TextEditingController _billingCityController = TextEditingController();
-  final TextEditingController _billingPincodeController = TextEditingController();
-  final TextEditingController _billingStateController = TextEditingController();
-  final TextEditingController _billingStateCodeController = TextEditingController();
-  final TextEditingController _billingCountryController = TextEditingController();
-  final TextEditingController _billingCountryCodeController = TextEditingController();
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    Provider.of<CreateOrderProvider>(context, listen: false).disposeControllers();
+    super.dispose();
+  }
 
-  final TextEditingController _shippingFirstNameController = TextEditingController();
-  final TextEditingController _shippingLastNameController = TextEditingController();
-  final TextEditingController _shippingEmailController = TextEditingController();
-  final TextEditingController _shippingAddress1Controller = TextEditingController();
-  final TextEditingController _shippingAddress2Controller = TextEditingController();
-  final TextEditingController _shippingPhoneController = TextEditingController();
-  final TextEditingController _shippingCityController = TextEditingController();
-  final TextEditingController _shippingPincodeController = TextEditingController();
-  final TextEditingController _shippingStateController = TextEditingController();
-  final TextEditingController _shippingStateCodeController = TextEditingController();
-  final TextEditingController _shippingCountryController = TextEditingController();
-  final TextEditingController _shippingCountryCodeController = TextEditingController();
+  void _saveOrder(CreateOrderProvider provider) async {
+    if (provider.addedProductList.isEmpty && provider.addedComboList.isEmpty) {
+      Utils.showSnackBar(context, 'Please add items to the order.');
+      return;
+    }
 
-  final TextEditingController _paymentModeController = TextEditingController();
-  final TextEditingController _currencyCodeController = TextEditingController();
-  final TextEditingController _itemQtyController = TextEditingController();
-  final TextEditingController _itemSkuController = TextEditingController();
-  final TextEditingController _itemAmountController = TextEditingController();
-  final TextEditingController _totalAmtController = TextEditingController();
-  final TextEditingController _codAmountController = TextEditingController();
-  final TextEditingController _coinController = TextEditingController();
-  final TextEditingController _prepaidAmountController = TextEditingController();
-
-  final TextEditingController _marketplaceController = TextEditingController();
-  final TextEditingController _discountCodeController = TextEditingController();
-  final TextEditingController _discountSchemeController = TextEditingController();
-  final TextEditingController _discountAmountController = TextEditingController();
-  final TextEditingController _sourceController = TextEditingController();
-  final TextEditingController _agentController = TextEditingController();
-
-  Future<void> submitOrder({
-    required String orderId,
-    required Map<String, dynamic> customer,
-    required Map<String, dynamic> billingAddr,
-    required Map<String, dynamic> shippingAddr,
-    required String paymentMode,
-    required String currencyCode,
-    required List<Map<String, dynamic>> items,
-    required double totalAmt,
-    required double codAmount,
-    required double taxPercent,
-    required String source,
-    required String agent,
-    required int totalQuantity,
-    required String marketplace,
-    required String notes,
-    required BuildContext context, // Added BuildContext
-  }) async {
-    String baseUrl = await Constants.getBaseUrl();
-    final apiUrl = Uri.parse('$baseUrl/orders');
-
-    final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString('token') ?? '';
-
-    final Map<String, dynamic> requestBody = {
-      "order_id": orderId,
-      "customer": customer,
-      "billing_addr": billingAddr,
-      "shipping_addr": shippingAddr,
-      "payment_mode": paymentMode,
-      "currency_code": currencyCode,
-      "items": items,
-      "total_amt": totalAmt,
-      "cod_amount": codAmount,
-      "tax_percent": taxPercent,
-      "source": source,
-      "agent": agent,
-      "total_quantity": totalQuantity,
-      "marketplace": marketplace,
-      "notes": notes,
-    };
-
-    try {
-      // Show loading snackbar
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Submitting order...'), duration: Duration(seconds: 1)));
-
-      final response = await http.post(
-        apiUrl,
-        headers: {
-          "Content-Type": "application/json",
-          'Authorization': 'Bearer $token',
-        },
-        body: jsonEncode(requestBody),
-      );
-
-      // Clear any existing snackbars
-      ScaffoldMessenger.of(context).clearSnackBars();
-
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        // Show success snackbar
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Order submitted successfully'),
-            backgroundColor: Colors.green,
-          ),
-        );
-      } else {
-        throw Exception('Failed to submit order');
+    if (_formKey.currentState!.validate()) {
+      try {
+        await provider.saveOrder();
+        Utils.showSnackBar(context, 'Order Created successfully!', color: Colors.green);
+        _formKey.currentState!.reset();
+      } catch (e) {
+        Utils.showSnackBar(context, 'Error creating order: $e', color: Colors.red);
       }
-    } catch (e) {
-      // Clear existing snackbars and show error
-      ScaffoldMessenger.of(context).clearSnackBars();
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error: ${e.toString()}'),
-          backgroundColor: Colors.red,
-        ),
-      );
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      child: Padding(
-        padding: const EdgeInsets.all(8.0),
-        child: Center(
-          child: Container(
-            constraints: const BoxConstraints(maxWidth: 1200),
-            child: Form(
-              key: _formKey,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildOrderSection(),
-                  const SizedBox(height: 32),
-                  _buildExpandableSection(
-                    'Customer Information',
-                    _buildCustomerSection(),
-                  ),
-                  const SizedBox(height: 24),
-                  _buildAddressSection(),
-                  const SizedBox(height: 24),
-                  _buildPaymentSection(),
-                  const SizedBox(height: 24),
-                  _buildOtherDetailsSection(),
-                  const SizedBox(height: 32),
-                  _buildSubmitButton(),
-                ],
-              ),
+    return Consumer<CreateOrderProvider>(
+      builder: (context, provider, child) {
+        return Form(
+          key: _formKey,
+          child: SingleChildScrollView(
+            controller: _scrollController,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildOrderDetailsSection(context, provider),
+                const SizedBox(height: 30),
+                _buildCustomerDetailsSection(provider),
+                const SizedBox(height: 30),
+                _buildPaymentDetailsSection(context, provider),
+                const SizedBox(height: 30),
+                _buildDiscountAndAdditionalSection(context, provider),
+                const SizedBox(height: 30),
+                _buildShippingAddressSection(provider),
+                const SizedBox(height: 30),
+                if (provider.isBillingSameAsShipping == false) _buildBillingAddressSection(provider),
+                if (provider.isBillingSameAsShipping == false) const SizedBox(height: 30),
+                _buildItemsSection(context, provider),
+                const SizedBox(height: 20),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    ElevatedButton(
+                      onPressed: provider.isSavingOrder ? null : () => _saveOrder(provider),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primaryBlue,
+                        padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+                      ),
+                      child: provider.isSavingOrder
+                          ? const CircularProgressIndicator(color: Colors.white)
+                          : const Text('Create ', style: TextStyle(color: Colors.white)),
+                    ),
+                  ],
+                ),
+              ],
             ),
           ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildSectionTitle(String title) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8.0),
-      child: Text(
-        title,
-        style: TextStyle(
-          fontSize: 20,
-          fontWeight: FontWeight.bold,
-          color: Theme.of(context).primaryColor,
-        ),
-      ),
-    );
-  }
-
-  Widget _buildOrderSection() {
-    return Card(
-      elevation: 2,
-      child: Padding(
-        padding: const EdgeInsets.all(8.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildSectionTitle('Order Information'),
-            const SizedBox(height: 16),
-            _buildTextField(_orderIdController, 'Order ID', prefixIcon: Icons.shopping_cart),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildCustomerSection() {
-    return Column(
-      children: [
-        Row(
-          children: [
-            Expanded(
-              child: _buildTextField(_customerFirstNameController, 'First Name', prefixIcon: Icons.person),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: _buildTextField(_customerLastNameController, 'Last Name', prefixIcon: Icons.person_outline),
-            ),
-          ],
-        ),
-        const SizedBox(height: 16),
-        Row(
-          children: [
-            Expanded(
-              child: _buildTextField(_customerEmailController, 'Email', prefixIcon: Icons.email),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: _buildTextField(_customerPhoneController, 'Phone', prefixIcon: Icons.phone),
-            ),
-          ],
-        ),
-        const SizedBox(height: 16),
-        _buildTextField(_customerGstinController, 'GSTIN', prefixIcon: Icons.receipt_long),
-      ],
-    );
-  }
-
-  Widget _buildAddressSection() {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Expanded(
-          child: _buildExpandableSection(
-            'Billing Address',
-            _buildAddressFields(
-              firstNameController: _billingFirstNameController,
-              lastNameController: _billingLastNameController,
-              emailController: _billingEmailController,
-              phoneController: _billingPhoneController,
-              address1Controller: _billingAddress1Controller,
-              address2Controller: _billingAddress2Controller,
-              cityController: _billingCityController,
-              pincodeController: _billingPincodeController,
-              stateController: _billingStateController,
-              countryController: _billingCountryController,
-            ),
-          ),
-        ),
-        const SizedBox(width: 24),
-        Expanded(
-          child: _buildExpandableSection(
-            'Shipping Address',
-            _buildAddressFields(
-              firstNameController: _shippingFirstNameController,
-              lastNameController: _shippingLastNameController,
-              emailController: _shippingEmailController,
-              phoneController: _shippingPhoneController,
-              address1Controller: _shippingAddress1Controller,
-              address2Controller: _shippingAddress2Controller,
-              cityController: _shippingCityController,
-              pincodeController: _shippingPincodeController,
-              stateController: _shippingStateController,
-              countryController: _shippingCountryController,
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildAddressFields({
-    required TextEditingController firstNameController,
-    required TextEditingController lastNameController,
-    required TextEditingController emailController,
-    required TextEditingController phoneController,
-    required TextEditingController address1Controller,
-    required TextEditingController address2Controller,
-    required TextEditingController cityController,
-    required TextEditingController pincodeController,
-    required TextEditingController stateController,
-    required TextEditingController countryController,
-  }) {
-    return Column(
-      children: [
-        Row(
-          children: [
-            Expanded(
-              child: _buildTextField(firstNameController, 'First Name', prefixIcon: Icons.person),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: _buildTextField(lastNameController, 'Last Name', prefixIcon: Icons.person_outline),
-            ),
-          ],
-        ),
-        const SizedBox(height: 16),
-        _buildTextField(address1Controller, 'Address Line 1', prefixIcon: Icons.home),
-        const SizedBox(height: 16),
-        _buildTextField(address2Controller, 'Address Line 2', prefixIcon: Icons.home_outlined),
-        const SizedBox(height: 16),
-        Row(
-          children: [
-            Expanded(
-              child: _buildTextField(cityController, 'City', prefixIcon: Icons.location_city),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: _buildTextField(pincodeController, 'Pincode', prefixIcon: Icons.pin_drop),
-            ),
-          ],
-        ),
-        const SizedBox(height: 16),
-        Row(
-          children: [
-            Expanded(
-              child: _buildTextField(stateController, 'State', prefixIcon: Icons.map),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: _buildTextField(countryController, 'Country', prefixIcon: Icons.public),
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-
-  Widget _buildPaymentSection() {
-    return _buildExpandableSection(
-      'Payment Details',
-      Column(
-        children: [
-          Row(
-            children: [
-              Expanded(
-                child: _buildTextField(_paymentModeController, 'Payment Mode', prefixIcon: Icons.payment),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: _buildTextField(_currencyCodeController, 'Currency Code', prefixIcon: Icons.currency_exchange),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          Row(
-            children: [
-              Expanded(
-                child: _buildTextField(_itemQtyController, 'Quantity', prefixIcon: Icons.shopping_basket),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: _buildTextField(_itemAmountController, 'Amount', prefixIcon: Icons.attach_money),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildOtherDetailsSection() {
-    return _buildExpandableSection(
-      'Additional Details',
-      Column(
-        children: [
-          Row(
-            children: [
-              Expanded(
-                child: _buildTextField(_marketplaceController, 'Marketplace', prefixIcon: Icons.store),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: _buildTextField(_sourceController, 'Source', prefixIcon: Icons.source),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          Row(
-            children: [
-              Expanded(
-                child: _buildTextField(_discountCodeController, 'Discount Code', prefixIcon: Icons.discount),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: _buildTextField(_discountAmountController, 'Discount Amount', prefixIcon: Icons.money_off),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildExpandableSection(String title, Widget content) {
-    return Card(
-      elevation: 2,
-      child: ExpansionTile(
-        title: Text(
-          title,
-          style: const TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        initiallyExpanded: true,
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: content,
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildTextField(TextEditingController controller, String label, {IconData? prefixIcon}) {
-    return TextFormField(
-      controller: controller,
-      decoration: InputDecoration(
-        labelText: label,
-        border: const OutlineInputBorder(),
-        prefixIcon: prefixIcon != null ? Icon(prefixIcon) : null,
-        filled: true,
-        fillColor: Colors.white,
-      ),
-      validator: (value) {
-        if (value == null || value.isEmpty) {
-          return 'Please enter $label';
-        }
-        return null;
+        );
       },
     );
   }
 
-  Widget _buildSubmitButton() {
-    return Center(
-      child: ElevatedButton(
-        onPressed: _submitForm,
-        style: ElevatedButton.styleFrom(
-          padding: const EdgeInsets.symmetric(horizontal: 48, vertical: 16),
-          textStyle: const TextStyle(fontSize: 18),
-        ),
-        child: const Text('Create Order'),
+  Widget _buildOrderDetailsSection(BuildContext context, CreateOrderProvider provider) {
+    return Card(
+      elevation: 2,
+      color: Colors.white,
+      child: ExpansionTile(
+        initiallyExpanded: true,
+        title: _buildHeading("Order Details"),
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Flexible(
+                  child: _buildTextField(
+                    controller: provider.orderIdController,
+                    label: 'Order ID',
+                    icon: Icons.confirmation_number,
+                    validator: (value) => (value?.isEmpty ?? false) ? 'Required' : null,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Consumer<MarketplaceProvider>(
+                  builder: (context, pro, child) {
+                    return Flexible(
+                      child: _buildDropdown(
+                        value: provider.selectedMarketplace,
+                        label: 'Marketplace',
+                        items: pro.marketplaces.map((e) => e.name).toList(),
+                        onChanged: provider.selectMarketplace,
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Required';
+                          }
+                          return null;
+                        },
+                      ),
+                    );
+                  },
+                ),
+                const SizedBox(width: 8),
+                Flexible(
+                  child: _buildTextField(
+                    controller: provider.totalQuantityController,
+                    label: 'Total Items',
+                    icon: Icons.format_list_numbered,
+                    enabled: false,
+                    // onSubmitted: (value) => provider.setTotalQuantity(),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
 
-  _submitForm() {
-    if (_formKey.currentState!.validate()) {
-      final customer = {
-        "first_name": _customerFirstNameController.text,
-        "last_name": _customerLastNameController.text,
-        "email": _customerEmailController.text,
-        "phone": int.parse(_customerPhoneController.text),
-      };
-
-      final billingAddr = {
-        "first_name": _billingFirstNameController.text,
-        "last_name": _billingLastNameController.text,
-        "email": _billingEmailController.text,
-        "address1": _billingAddress1Controller.text,
-        "address2": _billingAddress2Controller.text,
-        "phone": int.parse(_billingPhoneController.text),
-        "city": _billingCityController.text,
-        "pincode": int.parse(_billingPincodeController.text),
-        "state": _billingStateController.text,
-        "country": _billingCountryController.text,
-        "country_code": _billingCountryCodeController.text,
-      };
-
-      final shippingAddr = {
-        "first_name": _shippingFirstNameController.text,
-        "last_name": _shippingLastNameController.text,
-        "email": _shippingEmailController.text,
-        "address1": _shippingAddress1Controller.text,
-        "address2": _shippingAddress2Controller.text,
-        "phone": int.parse(_shippingPhoneController.text),
-        "city": _shippingCityController.text,
-        "pincode": int.parse(_shippingPincodeController.text),
-        "state": _shippingStateController.text,
-        "country": _shippingCountryController.text,
-        "country_code": _shippingCountryCodeController.text,
-      };
-
-      final items = [
-        {
-          "qty": int.parse(_itemQtyController.text),
-          "sku": _itemSkuController.text,
-          "amount": double.parse(_itemAmountController.text),
-        }
-      ];
-
-      submitOrder(
-        context: context,
-        orderId: _orderIdController.text,
-        customer: customer,
-        billingAddr: billingAddr,
-        shippingAddr: shippingAddr,
-        paymentMode: _paymentModeController.text,
-        currencyCode: _currencyCodeController.text,
-        items: items,
-        totalAmt: double.parse(_totalAmtController.text),
-        codAmount: double.parse(_codAmountController.text),
-        taxPercent: 0.0,
-        source: _sourceController.text,
-        agent: _agentController.text,
-        totalQuantity: int.parse(_itemQtyController.text),
-        marketplace: _marketplaceController.text,
-        notes: "Handle with care.",
-      );
-    }
+  Widget _buildPaymentDetailsSection(BuildContext context, CreateOrderProvider provider) {
+    return Card(
+      elevation: 2,
+      color: Colors.white,
+      child: ExpansionTile(
+        initiallyExpanded: true,
+        title: _buildHeading("Payment Details"),
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildDropdown(
+                  value: provider.selectedPayment,
+                  label: 'Payment Mode',
+                  items: const ['Partial Payment', 'Prepaid', 'COD'],
+                  onChanged: provider.selectPayment,
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Required';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 10),
+                _buildTextField(
+                  controller: provider.currencyCodeController,
+                  label: "Currency Code",
+                  icon: Icons.currency_bitcoin,
+                  validator: (value) => (value?.isEmpty ?? false) ? 'Required' : null,
+                ),
+                const SizedBox(height: 10),
+                _buildTextField(
+                  controller: provider.codAmountController,
+                  label: 'COD Amount',
+                  icon: Icons.money,
+                  enabled: false,
+                  validator: (value) => (value?.isEmpty ?? false) ? 'Required' : null,
+                ),
+                const SizedBox(height: 10),
+                provider.selectedPayment != 'COD'
+                    ? _buildTextField(
+                        controller: provider.prepaidAmountController,
+                        label: 'Prepaid Amount',
+                        icon: Icons.credit_card,
+                        validator: (value) => (value?.isEmpty ?? false) ? 'Required' : null,
+                      )
+                    : const SizedBox(),
+                const SizedBox(height: 10),
+                _buildTextField(
+                  controller: provider.totalAmtController,
+                  label: 'Total Amount',
+                  enabled: false,
+                  icon: Icons.currency_rupee,
+                  validator: (value) => (value?.isEmpty ?? false) ? 'Required' : null,
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
-  @override
-  void dispose() {
-    _orderIdController.dispose();
-    _customerFirstNameController.dispose();
-    _customerLastNameController.dispose();
-    _customerEmailController.dispose();
-    _customerGstinController.dispose();
-    _customerPhoneController.dispose();
+  Widget _buildDiscountAndAdditionalSection(BuildContext context, CreateOrderProvider provider) {
+    return Column(
+      children: [
+        Card(
+          elevation: 2,
+          color: Colors.white,
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildHeading("Discount Information"),
+                const SizedBox(height: 10),
+                Row(
+                  children: [
+                    Expanded(
+                      child: _buildTextField(
+                        controller: provider.discountCodeController,
+                        label: 'Discount Code',
+                        icon: Icons.discount,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                Row(
+                  children: [
+                    Expanded(
+                      child: _buildTextField(
+                        controller: provider.discountPercentController,
+                        label: 'Discount Percent',
+                        icon: Icons.percent,
+                        onSubmitted: (_) => provider.updateTotalAmount(),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: _buildTextField(
+                        controller: provider.discountAmountController,
+                        label: 'Discount Amount',
+                        icon: Icons.money_off,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(height: 16),
+        Card(
+          elevation: 2,
+          color: Colors.white,
+          child: ExpansionTile(
+            initiallyExpanded: true,
+            title: _buildHeading("Additional Information"),
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _buildTextField(
+                            controller: provider.coinController,
+                            label: 'Coin',
+                            icon: Icons.monetization_on,
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: _buildTextField(
+                            controller: provider.taxPercentController,
+                            label: 'Tax Percent',
+                            icon: Icons.account_balance_wallet,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _buildTextField(
+                            controller: provider.agentController,
+                            label: 'Agent',
+                            icon: Icons.person,
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: _buildTextField(
+                            controller: provider.notesController,
+                            label: 'Notes',
+                            icon: Icons.note,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
 
-    _billingFirstNameController.dispose();
-    _billingLastNameController.dispose();
-    _billingEmailController.dispose();
-    _billingAddress1Controller.dispose();
-    _billingAddress2Controller.dispose();
-    _billingPhoneController.dispose();
-    _billingCityController.dispose();
-    _billingPincodeController.dispose();
-    _billingStateController.dispose();
-    _billingStateCodeController.dispose();
-    _billingCountryController.dispose();
-    _billingCountryCodeController.dispose();
+  Widget _buildCustomerDetailsSection(CreateOrderProvider provider) {
+    return Card(
+      elevation: 2,
+      color: Colors.white,
+      child: ExpansionTile(
+        initiallyExpanded: true,
+        title: _buildHeading("Customer Details"),
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: _buildTextField(
+                        controller: provider.customerFirstNameController,
+                        label: 'First Name',
+                        icon: Icons.person,
+                        validator: (value) => (value?.isEmpty ?? false) ? 'Required' : null,
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: _buildTextField(
+                        controller: provider.customerLastNameController,
+                        label: 'Last Name',
+                        icon: Icons.person,
+                        validator: (value) => (value?.isEmpty ?? false) ? 'Required' : null,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                _buildTextField(
+                  controller: provider.customerEmailController,
+                  label: 'Email',
+                  icon: Icons.email,
+                ),
+                const SizedBox(height: 10),
+                _buildPhoneField(
+                  phoneController: provider.customerPhoneController,
+                  // countryCodeController: provider.customerCountryCodeController,
+                  label: 'Phone',
+                  enabled: true,
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
-    _shippingFirstNameController.dispose();
-    _shippingLastNameController.dispose();
-    _shippingEmailController.dispose();
-    _shippingAddress1Controller.dispose();
-    _shippingAddress2Controller.dispose();
-    _shippingPhoneController.dispose();
-    _shippingCityController.dispose();
-    _shippingPincodeController.dispose();
-    _shippingStateController.dispose();
-    _shippingStateCodeController.dispose();
-    _shippingCountryController.dispose();
-    _shippingCountryCodeController.dispose();
+  Widget _buildBillingAddressSection(CreateOrderProvider provider) {
+    return Card(
+      elevation: 2,
+      color: Colors.white,
+      child: ExpansionTile(
+        initiallyExpanded: true,
+        title: _buildHeading("Billing Address"),
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: _buildTextField(
+                        controller: provider.billingFirstNameController,
+                        label: 'First Name',
+                        icon: Icons.person,
+                        validator: (value) => (value?.isEmpty ?? false) ? 'Required' : null,
+                        enabled: !provider.isBillingSameAsShipping,
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: _buildTextField(
+                        controller: provider.billingLastNameController,
+                        label: 'Last Name',
+                        icon: Icons.person,
+                        validator: (value) => (value?.isEmpty ?? false) ? 'Required' : null,
+                        enabled: !provider.isBillingSameAsShipping,
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: _buildTextField(
+                        controller: provider.billingEmailController,
+                        label: 'Email',
+                        icon: Icons.email,
+                        enabled: !provider.isBillingSameAsShipping,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                Row(
+                  children: [
+                    Expanded(
+                      child: _buildTextField(
+                        controller: provider.billingAddress1Controller,
+                        label: 'Address 1',
+                        icon: Icons.location_on,
+                        enabled: !provider.isBillingSameAsShipping,
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: _buildTextField(
+                        controller: provider.billingAddress2Controller,
+                        label: 'Address 2',
+                        icon: Icons.location_on,
+                        enabled: !provider.isBillingSameAsShipping,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: _buildTextField(
+                        controller: provider.billingCityController,
+                        label: 'City',
+                        icon: Icons.location_city,
+                        validator: (value) => (value?.isEmpty ?? false) ? 'Required' : null,
+                        enabled: !provider.isBillingSameAsShipping,
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: _buildTextField(
+                        controller: provider.billingStateController,
+                        label: 'State',
+                        icon: Icons.map,
+                        validator: (value) => (value?.isEmpty ?? false) ? 'Required' : null,
+                        enabled: !provider.isBillingSameAsShipping,
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: _buildTextField(
+                        controller: provider.billingCountryController,
+                        label: 'Country',
+                        icon: Icons.public,
+                        validator: (value) => (value?.isEmpty ?? false) ? 'Required' : null,
+                        enabled: !provider.isBillingSameAsShipping,
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: _buildTextField(
+                        controller: provider.billingPincodeController,
+                        label: 'Pincode',
+                        icon: Icons.code,
+                        validator: (value) => (value?.isEmpty ?? false) ? 'Required' : null,
+                        onChanged: (value) {
+                          if (value.isEmpty) {
+                            context.read<CreateOrderProvider>().clearLocationDetails(isBilling: true);
+                          }
+                          if (value.length == 6) {
+                            context.read<CreateOrderProvider>().getLocationDetails(context: context, pincode: value, isBilling: true);
+                          }
+                        },
+                        maxLength: 6,
+                        isNumber: true,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                Row(
+                  children: [
+                    SizedBox(
+                      width: 120,
+                      child: _buildTextField(
+                        controller: provider.billingCountryCodeController,
+                        label: 'Country Code',
+                        icon: Icons.flag,
+                        maxLength: 3,
+                        enabled: !provider.isBillingSameAsShipping,
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Flexible(
+                      child: _buildPhoneField(
+                        phoneController: provider.billingPhoneController,
+                        label: 'Phone',
+                        enabled: !provider.isBillingSameAsShipping,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
-    _paymentModeController.dispose();
-    _currencyCodeController.dispose();
-    _itemQtyController.dispose();
-    _itemSkuController.dispose();
-    _itemAmountController.dispose();
-    _totalAmtController.dispose();
-    _codAmountController.dispose();
-    _coinController.dispose();
-    _prepaidAmountController.dispose();
+  Widget _buildShippingAddressSection(CreateOrderProvider provider) {
+    return Card(
+      elevation: 2,
+      color: Colors.white,
+      child: ExpansionTile(
+        initiallyExpanded: true,
+        title: _buildHeading("Shipping Address"),
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                CheckboxListTile(
+                  title: const Text('Billing address same as shipping'),
+                  value: provider.isBillingSameAsShipping,
+                  onChanged: (bool? value) => provider.setBillingSameAsShipping(value),
+                  controlAffinity: ListTileControlAffinity.leading,
+                ),
+                Row(
+                  children: [
+                    Expanded(
+                      child: _buildTextField(
+                        controller: provider.shippingFirstNameController,
+                        label: 'First Name',
+                        icon: Icons.person,
+                        validator: (value) => (value?.isEmpty ?? false) ? 'Required' : null,
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: _buildTextField(
+                        controller: provider.shippingLastNameController,
+                        label: 'Last Name',
+                        icon: Icons.person,
+                        validator: (value) => (value?.isEmpty ?? false) ? 'Required' : null,
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: _buildTextField(
+                        controller: provider.shippingEmailController,
+                        label: 'Email',
+                        icon: Icons.email,
+                        validator: (value) => (value?.isEmpty ?? false) ? 'Required' : null,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                Row(
+                  children: [
+                    Expanded(
+                      child: _buildTextField(
+                        controller: provider.shippingAddress1Controller,
+                        label: 'Address 1',
+                        icon: Icons.location_on,
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: _buildTextField(
+                        controller: provider.shippingAddress2Controller,
+                        label: 'Address 2',
+                        icon: Icons.location_on,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: _buildTextField(
+                        controller: provider.shippingCityController,
+                        label: 'City',
+                        icon: Icons.location_city,
+                        validator: (value) => (value?.isEmpty ?? false) ? 'Required' : null,
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: _buildTextField(
+                        controller: provider.shippingStateController,
+                        label: 'State',
+                        icon: Icons.map,
+                        validator: (value) => (value?.isEmpty ?? false) ? 'Required' : null,
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: _buildTextField(
+                        controller: provider.shippingCountryController,
+                        label: 'Country',
+                        icon: Icons.public,
+                        validator: (value) => (value?.isEmpty ?? false) ? 'Required' : null,
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: _buildTextField(
+                        controller: provider.shippingPincodeController,
+                        label: 'Pincode',
+                        icon: Icons.code,
+                        validator: (value) => (value?.isEmpty ?? false) ? 'Required' : null,
+                        onChanged: (value) {
+                          if (value.isEmpty) {
+                            context.read<CreateOrderProvider>().clearLocationDetails(isBilling: false);
+                          }
+                          if (value.length == 6) {
+                            context.read<CreateOrderProvider>().getLocationDetails(context: context, pincode: value, isBilling: false);
+                          }
+                        },
+                        maxLength: 6,
+                        isNumber: true,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                Row(
+                  children: [
+                    SizedBox(
+                      width: 120,
+                      child: _buildTextField(
+                        controller: provider.shippingCountryCodeController,
+                        label: 'Country Code',
+                        icon: Icons.flag,
+                        maxLength: 3,
+                        validator: (value) {
+                          if (value == null || value.isEmpty) return 'Required';
+                          return null;
+                        },
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: _buildPhoneField(phoneController: provider.shippingPhoneController, label: 'Phone'),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
-    _marketplaceController.dispose();
-    _discountCodeController.dispose();
-    _discountSchemeController.dispose();
-    _discountAmountController.dispose();
-    _sourceController.dispose();
-    _agentController.dispose();
+  Widget _buildItemsSection(BuildContext context, CreateOrderProvider provider) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildHeading('Items (Product Details)'),
+        const SizedBox(height: 10),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              width: 150,
+              margin: const EdgeInsets.only(right: 16),
+              child: DropdownButtonFormField<String>(
+                value: provider.selectedItemType,
+                decoration: const InputDecoration(
+                  border: OutlineInputBorder(),
+                  contentPadding: EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
+                ),
+                items: const [
+                  DropdownMenuItem(value: 'Product', child: Text('Product')),
+                  DropdownMenuItem(value: 'Combo', child: Text('Combo')),
+                ],
+                onChanged: (value) {
+                  setState(() {
+                    provider.selectedItemType = value!;
+                  });
+                },
+              ),
+            ),
+            Expanded(
+              child: SearchableDropdown(
+                key: ValueKey(provider.selectedItemType),
+                label: 'Select ${provider.selectedItemType}',
+                isCombo: provider.selectedItemType == 'Combo',
+                onChanged: (selected) {
+                  if (selected != null) {
+                    if (provider.selectedItemType == 'Product') {
+                      provider.addProduct(selected);
+                    } else {
+                      provider.addCombo(selected);
+                    }
+                  }
+                },
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 10),
+        if (provider.isLoading)
+          const Center(child: CircularProgressIndicator())
+        else
+          Column(
+            children: [
+              FutureBuilder<List<Product?>>(
+                future: provider.productsFuture,
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Center(child: CircularProgressIndicator());
+                  } else if (snapshot.hasError) {
+                    return Center(child: Text('Error: ${snapshot.error}'));
+                  } else {
+                    final products = snapshot.data ?? [];
+                    if (products.isEmpty) return const SizedBox.shrink();
 
-    super.dispose();
+                    return ListView.builder(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      itemCount: products.length,
+                      itemBuilder: (context, index) {
+                        final product = products[index];
+                        if (product == null) return const SizedBox.shrink();
+
+                        return Row(
+                          children: [
+                            Expanded(
+                              flex: 5,
+                              child: ProductCard(product: product, index: index),
+                            ),
+                            const SizedBox(width: 16),
+                            Expanded(
+                              flex: 1,
+                              child: Column(
+                                children: [
+                                  SizedBox(
+                                    width: 200,
+                                    child: _buildTextField(
+                                      controller: provider.addedProductQuantityControllers[index],
+                                      label: 'Qty',
+                                      icon: Icons.production_quantity_limits,
+                                      onSubmitted: (_) => provider.updateTotalAmount(),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  SizedBox(
+                                    width: 200,
+                                    child: _buildTextField(
+                                      controller: provider.addedProductRateControllers[index],
+                                      label: 'Rate',
+                                      icon: Icons.currency_rupee,
+                                      onSubmitted: (_) => provider.updateTotalAmount(),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(width: 16),
+                            ElevatedButton(
+                              onPressed: () => provider.deleteProduct(index, product.id!),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.red,
+                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                              ),
+                              child: const Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(Icons.delete),
+                                  SizedBox(width: 8),
+                                  Text('Delete'),
+                                ],
+                              ),
+                            ),
+                          ],
+                        );
+                      },
+                    );
+                  }
+                },
+              ),
+              FutureBuilder<List<Combo?>>(
+                future: provider.combosFuture,
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Center(child: CircularProgressIndicator());
+                  } else if (snapshot.hasError) {
+                    return Center(child: Text('Error: ${snapshot.error}'));
+                  } else {
+                    final combos = snapshot.data ?? [];
+                    if (combos.isEmpty) return const SizedBox.shrink();
+
+                    return ListView.builder(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      itemCount: combos.length,
+                      itemBuilder: (context, index) {
+                        final combo = combos[index];
+                        if (combo == null) return const SizedBox.shrink();
+
+                        return Row(
+                          children: [
+                            Expanded(
+                              flex: 5,
+                              child: ComboCard(combo: combo, index: index),
+                            ),
+                            const SizedBox(width: 16),
+                            Expanded(
+                              flex: 1,
+                              child: Column(
+                                children: [
+                                  SizedBox(
+                                    width: 200,
+                                    child: _buildTextField(
+                                      controller: provider.addedComboQuantityControllers[index],
+                                      label: 'Qty',
+                                      icon: Icons.production_quantity_limits,
+                                      onSubmitted: (_) => provider.updateTotalAmount(),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  SizedBox(
+                                    width: 200,
+                                    child: _buildTextField(
+                                      controller: provider.addedComboRateControllers[index],
+                                      label: 'Rate',
+                                      icon: Icons.currency_rupee,
+                                      onSubmitted: (_) => provider.updateTotalAmount(),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(width: 16),
+                            ElevatedButton(
+                              onPressed: () => provider.deleteCombo(index, combo.comboSku),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.red,
+                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                              ),
+                              child: const Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(Icons.delete),
+                                  SizedBox(width: 8),
+                                  Text('Delete'),
+                                ],
+                              ),
+                            ),
+                          ],
+                        );
+                      },
+                    );
+                  }
+                },
+              ),
+            ],
+          ),
+      ],
+    );
+  }
+
+  Widget _buildHeading(String title) {
+    return Text(
+      title,
+      style: const TextStyle(
+        fontWeight: FontWeight.bold,
+        fontSize: 18,
+        color: AppColors.primaryBlue,
+      ),
+    );
+  }
+
+  Widget _buildTextField({
+    required TextEditingController controller,
+    required String label,
+    required IconData icon,
+    bool enabled = true,
+    String? Function(String?)? validator,
+    void Function(String)? onSubmitted,
+    void Function(String)? onChanged,
+    int? maxLength,
+    bool? isNumber = false,
+  }) {
+    return TextFormField(
+      controller: controller,
+      enabled: enabled,
+      validator: validator,
+      onChanged: onChanged,
+      maxLength: maxLength,
+      keyboardType: isNumber! ? TextInputType.number : TextInputType.text,
+      onFieldSubmitted: onSubmitted,
+      decoration: InputDecoration(
+        labelText: label,
+        prefixIcon: Icon(icon, color: Colors.grey[700]),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: BorderSide(color: Colors.grey[400]!, width: 1.2),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: BorderSide(color: Colors.grey[400]!, width: 1.2),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: const BorderSide(color: AppColors.primaryBlue, width: 1.5),
+        ),
+        filled: true,
+        fillColor: enabled ? Colors.white : Colors.grey[200],
+        contentPadding: const EdgeInsets.symmetric(vertical: 15, horizontal: 12),
+      ),
+    );
+  }
+
+  Widget _buildDropdown({
+    required String? value,
+    required String label,
+    required List<String> items,
+    required void Function(String?) onChanged,
+    String? Function(String?)? validator,
+  }) {
+    return DropdownButtonFormField<String>(
+      value: value,
+      decoration: InputDecoration(
+        labelText: label,
+        prefixIcon: Icon(Icons.list, color: Colors.grey[700]),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: BorderSide(color: Colors.grey[400]!, width: 1.2),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: BorderSide(color: Colors.grey[400]!, width: 1.2),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: const BorderSide(color: AppColors.primaryBlue, width: 1.5),
+        ),
+      ),
+      items: items.map((item) => DropdownMenuItem(value: item, child: Text(item))).toList(),
+      onChanged: onChanged,
+      validator: validator,
+      hint: Text('Select $label'),
+    );
+  }
+
+  Widget _buildPhoneField({
+    required TextEditingController phoneController,
+    // required TextEditingController countryCodeController,
+    required String label,
+    bool enabled = true,
+    String? Function(String?)? validator,
+  }) {
+    return TextFormField(
+      controller: phoneController,
+      enabled: enabled,
+      keyboardType: TextInputType.phone,
+      maxLength: 10,
+      validator: validator ??
+          (value) {
+            if (value != null) {
+              if (value.isEmpty) {
+                return 'Required';
+              } else if (value.length != 10) {
+                return 'Invalid phone number';
+              }
+            }
+            return null;
+          },
+      decoration: InputDecoration(
+        labelText: label,
+        prefixIcon: Icon(Icons.phone, color: Colors.grey[700]),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: BorderSide(color: Colors.grey[400]!, width: 1.2),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: BorderSide(color: Colors.grey[400]!, width: 1.2),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: const BorderSide(color: AppColors.primaryBlue, width: 1.5),
+        ),
+        filled: true,
+        fillColor: enabled ? Colors.white : Colors.grey[200],
+        contentPadding: const EdgeInsets.symmetric(vertical: 15, horizontal: 12),
+      ),
+    );
   }
 }

@@ -9,7 +9,7 @@ import 'package:logger/logger.dart';
 import 'package:pdf/pdf.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:intl/intl.dart';
-import 'dart:html' as html; // Required for downloading in Flutter web.
+import 'dart:html' as html;
 import 'dart:typed_data';
 import 'package:pdf/widgets.dart' as pw;
 
@@ -173,7 +173,9 @@ class BookProvider with ChangeNotifier {
           'Authorization': 'Bearer $token',
         },
         body: json.encode({
-          "messages": {"bookerMessage": msg}
+          "messages": {
+            "bookerMessage": msg
+          }
         }),
       );
 
@@ -250,12 +252,15 @@ class BookProvider with ChangeNotifier {
   // Fetch orders based on type (B2B or B2C)
   Future<void> fetchOrders(String type, int page, {DateTime? date, String? market}) async {
     String? token = await _getToken();
+    final prefs = await SharedPreferences.getInstance();
+    final warehouseId = prefs.getString('warehouseId') ?? '';
+
     if (token == null) {
       print('Token is null, unable to fetch orders.');
       return;
     }
 
-    String url = '${await Constants.getBaseUrl()}/orders?filter=$type&orderStatus=3&page=$page';
+    String url = '${await Constants.getBaseUrl()}/orders?warehouse=$warehouseId&filter=$type&orderStatus=3&page=$page';
 
     if (date != null) {
       String formattedDate = DateFormat('yyyy-MM-dd').format(date);
@@ -341,13 +346,16 @@ class BookProvider with ChangeNotifier {
 
   Future<void> fetchBookedOrders(int page, {DateTime? date, String? market}) async {
     String? token = await _getToken();
+    final prefs = await SharedPreferences.getInstance();
+    final warehouseId = prefs.getString('warehouseId') ?? '';
+
     if (token == null) {
       print('Token is null, unable to fetch orders.');
       return;
     }
 
     // Base URL
-    String url = '${await Constants.getBaseUrl()}/orders?isBooked=true&page=$page';
+    String url = '${await Constants.getBaseUrl()}/orders?warehouse=$warehouseId&isBooked=true&page=$page';
 
     // Add date parameter if provided
     if (date != null) {
@@ -493,7 +501,9 @@ class BookProvider with ChangeNotifier {
 
     // Request body containing the order IDs
     final body = json.encode({
-      'orderIds': [orderId],
+      'orderIds': [
+        orderId
+      ],
       'service': lowerCase,
       'courierId': courierId,
     });
@@ -702,15 +712,19 @@ class BookProvider with ChangeNotifier {
   Future<void> searchB2BOrders(String query, String searchType) async {
     String encodedOrderId = Uri.encodeComponent(query);
 
-    String url = '${await Constants.getBaseUrl()}/orders?orderStatus=3&filter=B2B&order_id=$encodedOrderId';
+    final prefs = await SharedPreferences.getInstance();
+    final warehouseId = prefs.getString('warehouseId') ?? '';
+
+    String url = '${await Constants.getBaseUrl()}/orders?warehouse=$warehouseId&orderStatus=3&filter=B2B';
     final token = await _getToken();
     if (token == null) return;
 
     if (searchType == 'Order ID') {
-      url += '&order_id=$query';
+      url += '&order_id=$encodedOrderId';
     } else {
       url += '&awb_number=$query';
     }
+    log('searchB2BOrders url: $url');
 
     try {
       isLoadingB2B = true;
@@ -728,7 +742,9 @@ class BookProvider with ChangeNotifier {
         final data = jsonDecode(response.body);
         print(response.body);
 
-        _ordersB2B = [Order.fromJson(data)];
+        _ordersB2B = [
+          Order.fromJson(data)
+        ];
         print(response.body);
       } else {
         _ordersB2B = [];
@@ -744,15 +760,20 @@ class BookProvider with ChangeNotifier {
   Future<void> searchB2COrders(String query, String searchType) async {
     String encodedOrderId = Uri.encodeComponent(query);
 
-    String url = '${await Constants.getBaseUrl()}/orders?orderStatus=3&filter=B2C&order_id=$encodedOrderId';
+    final prefs = await SharedPreferences.getInstance();
+    final warehouseId = prefs.getString('warehouseId') ?? '';
+
+    String url = '${await Constants.getBaseUrl()}/orders?warehouse=$warehouseId&orderStatus=3&filter=B2C';
     final token = await _getToken();
     if (token == null) return;
 
     if (searchType == 'Order ID') {
-      url += '&order_id=$query';
+      url += '&order_id=$encodedOrderId';
     } else {
       url += '&awb_number=$query';
     }
+
+    log('searchB2COrders url: $url');
 
     try {
       isLoadingB2C = true;
@@ -770,7 +791,9 @@ class BookProvider with ChangeNotifier {
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
 
-        _ordersB2C = [Order.fromJson(data)];
+        _ordersB2C = [
+          Order.fromJson(data)
+        ];
         log('_ordersB2C: $ordersB2C');
       } else {
         _ordersB2C = [];
@@ -784,7 +807,10 @@ class BookProvider with ChangeNotifier {
   }
 
   Future<void> searchBookedOrders(String query, String searchType) async {
-    var url = '${await Constants.getBaseUrl()}/orders?isBooked=true';
+    final prefs = await SharedPreferences.getInstance();
+    final warehouseId = prefs.getString('warehouseId') ?? '';
+
+    var url = '${await Constants.getBaseUrl()}/orders?warehouse=$warehouseId&isBooked=true';
     final token = await _getToken();
     if (token == null) return;
 
@@ -795,7 +821,7 @@ class BookProvider with ChangeNotifier {
       url += '&awb_number=$query';
     }
 
-    log('url: $url');
+    log('searchBookedOrders url: $url');
 
     try {
       isLoadingBooked = true;
@@ -815,9 +841,13 @@ class BookProvider with ChangeNotifier {
 
         // final newData = data['orders'][0]; //////////////////////////////////////////////////////////////
         if (searchType == 'Order ID') {
-          _ordersBooked = [Order.fromJson(data)];
+          _ordersBooked = [
+            Order.fromJson(data)
+          ];
         } else {
-          _ordersBooked = [Order.fromJson(data['orders'][0])];
+          _ordersBooked = [
+            Order.fromJson(data['orders'][0])
+          ];
         }
         // _ordersBooked = [Order.fromJson(data)];
         log('_ordersBooked: $ordersBooked');
@@ -902,6 +932,8 @@ class BookProvider with ChangeNotifier {
     String baseUrl = await Constants.getBaseUrl();
     String url = '$baseUrl/order-picker?currentTime=$currentTime&marketplace=$marketplace';
 
+    log('generatePicklist url: $url');
+
     String? token = await _getToken();
     if (token == null) {
       print('Token is null, unable to fetch order picker data.');
@@ -920,7 +952,7 @@ class BookProvider with ChangeNotifier {
 
       // Log response for debugging
       log('Picklist Status: ${response.statusCode}');
-      debugPrint('Picklist Body: ${response.body}');
+      log('Picklist Body: ${response.body}');
 
       final data = jsonDecode(response.body);
 
@@ -1065,7 +1097,9 @@ class BookProvider with ChangeNotifier {
 
   void downloadPdf(List<Map<String, dynamic>> data) async {
     final pdfBytes = await generatePdf(data);
-    final blob = html.Blob([pdfBytes], 'application/pdf');
+    final blob = html.Blob([
+      pdfBytes
+    ], 'application/pdf');
     final url = html.Url.createObjectUrlFromBlob(blob);
     final anchor = html.AnchorElement(href: url)
       ..setAttribute("download", "picklist.pdf")
@@ -1073,150 +1107,8 @@ class BookProvider with ChangeNotifier {
     html.Url.revokeObjectUrl(url);
   }
 
-  // Future<void> fetchOrdersByMarketplace(String marketplace, String orderType, int page, {DateTime? date}) async {
-  //   String baseUrl = '${await Constants.getBaseUrl()}/orders';
-  //
-  //   // Build URL with base parameters
-  //   String url = '$baseUrl?orderStatus=3&customerType=$orderType&marketplace=$marketplace&page=$page';
-  //
-  //   // Add date parameter if provided
-  //   if (date != null || date == 'Select Date') {
-  //     String formattedDate = DateFormat('yyyy-MM-dd').format(date!);
-  //     url += '&date=$formattedDate';
-  //   }
-  //
-  //   String? token = await _getToken();
-  //   if (token == null) {
-  //     print('Token is null, unable to fetch orders.');
-  //     return;
-  //   }
-  //
-  //   try {
-  //     if (orderType == 'B2B') {
-  //       isLoadingB2B = true;
-  //     } else {
-  //       isLoadingB2C = true;
-  //     }
-  //     notifyListeners();
-  //
-  //     final response = await http.get(
-  //       Uri.parse(url),
-  //       headers: {
-  //         'Authorization': 'Bearer $token',
-  //         'Content-Type': 'application/json',
-  //       },
-  //     );
-  //
-  //     if (response.statusCode == 200) {
-  //       final jsonResponse = jsonDecode(response.body);
-  //       List<Order> orders = (jsonResponse['orders'] as List).map((orderJson) => Order.fromJson(orderJson)).toList();
-  //
-  //       // Store fetched orders and update pagination state
-  //       if (orderType == 'B2B') {
-  //         _ordersB2B = orders;
-  //         currentPageB2B = page;
-  //         totalPagesB2B = jsonResponse['totalPages'];
-  //         selectedB2BItems = List<bool>.filled(orders.length, false);
-  //       } else {
-  //         _ordersB2C = orders;
-  //         currentPageB2C = page;
-  //         totalPagesB2C = jsonResponse['totalPages'];
-  //         selectedB2CItems = List<bool>.filled(orders.length, false);
-  //       }
-  //       notifyListeners();
-  //     } else if (response.statusCode == 401) {
-  //       print('Unauthorized access - Token might be expired or invalid.');
-  //     } else if (response.statusCode == 404) {
-  //       if (orderType == 'B2B') {
-  //         _ordersB2B = [];
-  //       } else {
-  //         _ordersB2C = [];
-  //       }
-  //       notifyListeners();
-  //     } else {
-  //       throw Exception('Failed to load orders: ${response.statusCode}');
-  //     }
-  //   } catch (e) {
-  //     print('Error fetching orders: $e');
-  //   } finally {
-  //     if (orderType == 'B2B') {
-  //       isLoadingB2B = false;
-  //     } else {
-  //       isLoadingB2C = false;
-  //     }
-  //     notifyListeners();
-  //   }
-  // }
-
-  Future<void> fetchBookedOrdersByMarketplace(String marketplace, int page, {DateTime? date}) async {
-    log("$marketplace, $page");
-    String baseUrl = '${await Constants.getBaseUrl()}/orders';
-
-    // Base URL with marketplace filter
-    String url = '$baseUrl?isBooked=true&marketplace=$marketplace&page=$page';
-
-    // Add date parameter if provided
-    if (date != null || date == 'Select Date') {
-      String formattedDate = DateFormat('yyyy-MM-dd').format(date!);
-      url += '&date=$formattedDate';
-    }
-
-    String? token = await _getToken(); // Assuming you have a method to get the token
-    if (token == null) {
-      print('Token is null, unable to fetch orders.');
-      return;
-    }
-
-    try {
-      isLoadingBooked = true;
-      setRefreshingBookedOrders(true);
-      notifyListeners();
-
-      // Clear checkboxes when a new page is fetched
-      clearAllSelections();
-
-      final response = await http.get(
-        Uri.parse(url),
-        headers: {
-          'Authorization': 'Bearer $token',
-          'Content-Type': 'application/json',
-        },
-      );
-
-      // Log response for debugging
-      log('Response status: ${response.statusCode}');
-      log('Response body: ${response.body}');
-
-      if (response.statusCode == 200) {
-        final jsonResponse = jsonDecode(response.body);
-        List<Order> orders = (jsonResponse['orders'] as List).map((orderJson) => Order.fromJson(orderJson)).toList();
-
-        Logger().e("length: ${orders.length}");
-
-        _ordersBooked = orders;
-        currentPageBooked = page; // Track current page for B2B
-        totalPagesBooked = jsonResponse['totalPages']; // Assuming API returns total pages
-      } else if (response.statusCode == 401) {
-        print('Unauthorized access - Token might be expired or invalid.');
-      } else if (response.statusCode == 404) {
-        _ordersBooked = [];
-        notifyListeners();
-
-        log('Orders not found');
-      } else {
-        throw Exception('Failed to load orders: ${response.statusCode}');
-      }
-    } catch (e) {
-      print('Error fetching orders: $e');
-    } finally {
-      isLoadingBooked = false;
-      setRefreshingBookedOrders(false);
-
-      notifyListeners();
-    }
-  }
-
   Future<bool> editWarehouse(String orderId, String warehouse) async {
+    log('editWarehouse called');
     String baseUrl = await Constants.getBaseUrl();
     String url = '$baseUrl/orders/editwarehouse';
     final String? token = await _getToken();
@@ -1226,31 +1118,26 @@ class BookProvider with ChangeNotifier {
       return false;
     }
 
-    // Headers for the API request
+    log('editWarehouse url: $url');
+
     final headers = {
       'Authorization': 'Bearer $token',
       'Content-Type': 'application/json',
     };
 
-    // Request body containing the order ID and warehouse
     final body = json.encode({
       'order_id': orderId,
       'warehouse': warehouse,
     });
 
+    log('edit warehouse body: $body');
+
     try {
-      // Make the POST request to book the orders
       final response = await http.put(
         Uri.parse(url),
         headers: headers,
         body: body,
       );
-
-      // Log response status and body
-      // print('Response status: ${response.statusCode}');
-      // print('Response body: ${response.body}');
-
-      // Parse the response
       final responseData = json.decode(response.body);
       Logger().e(responseData);
 
@@ -1269,53 +1156,193 @@ class BookProvider with ChangeNotifier {
     }
   }
 
-  bool _isReversing = false;
-  bool get isReversing => _isReversing;
-
-  void setReversing(bool value) {
-    _isReversing = value;
-    notifyListeners();
-  }
-
-  Future<Map<String, dynamic>> reverseOrder(String orderId, String status) async {
+  Future<Map<String, dynamic>> generatePacklist(BuildContext context, String date, String selectedPicklist) async {
     final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString('authToken');
-    String url = '${await Constants.getBaseUrl()}/orders/reverse';
+    final token = prefs.getString('authToken') ?? '';
+    String url = '${await Constants.getBaseUrl()}/order-picker/packerCsv?date=$date&picklistId=$selectedPicklist';
 
-    if (token == null) {
-      print('Token is missing. Please log in again.');
-      return {'success': false, 'message': 'Token is missing. Please log in again.'};
-    }
+    log('picklist url: $url'); // Use developer.log instead of Logger()
 
     try {
-      setReversing(true);
-
-      final response = await http.post(
+      final response = await http.get(
         Uri.parse(url),
         headers: {
           'Authorization': 'Bearer $token',
           'Content-Type': 'application/json',
         },
-        body: jsonEncode(
-          {'order_id': orderId, 'order_status': status},
-        ),
       );
 
-      final data = jsonDecode(response.body);
-
-      log('reverse status: ${response.statusCode}');
-      log('reverse body: ${response.body}');
+      final data = json.decode(response.body);
       if (response.statusCode == 200) {
-        return {'success': true, 'message': data['message']};
+        await generateAndDownloadPdf(data, selectedPicklist, date); // Call the PDF generation function
+        return {
+          'status': 'success',
+          'message': 'PDF downloaded successfully'
+        };
       } else {
-        return {'success': false, 'message': data['message']};
+        log('Error: Status code ${response.statusCode}');
+        return {
+          'status': 'error',
+          'message': 'Failed to fetch data: ${response.statusCode}'
+        };
       }
-    } catch (e) {
-      log('caught error: $e');
-      return {'success': false, 'message': 'Error: $e'};
-    } finally {
-      setReversing(false);
+    } catch (e, s) {
+      log('Error occurred: $e, Stacktrace: $s');
+      return {
+        'status': 'error',
+        'message': 'Error: $e'
+      };
     }
+  }
+
+  Future<void> generateAndDownloadPdf(dynamic jsonData, String selectedPicklist, String date) async {
+    // Create a new PDF document
+    final pdf = pw.Document();
+
+    // Define table headers
+    final headers = [
+      'Order ID',
+      'SKU',
+      'Name',
+      'Qty',
+      'Total Wt.',
+      'AWB',
+      'Courier',
+      'Conformer Remark',
+      'Packed By',
+      'Checked By',
+    ];
+
+    // Parse JSON data
+    Map<String, dynamic> data;
+    if (jsonData is String) {
+      data = jsonDecode(jsonData);
+    } else if (jsonData is Map<String, dynamic>) {
+      data = jsonData;
+    } else {
+      throw Exception('Invalid JSON data format');
+    }
+
+    // Extract orders
+    List<dynamic> orders = data['orders'] ?? [];
+
+    // Prepare table rows
+    List<List<String>> rows = [];
+    for (var order in orders) {
+      String orderId = order['OrderId']?.toString() ?? '';
+      String totalWeight = order['Total_Weight']?.toString() ?? '';
+      String awbNumber = order['AWB_number']?.toString() ?? '';
+      String courierName = order['Courier_Name']?.toString() ?? '';
+      String confirmerRemark = order['Confirmer_Remark']?.toString() ?? '';
+
+      List<dynamic> items = order['items'] ?? [];
+      for (var item in items) {
+        rows.add([
+          orderId,
+          item['ProductSku']?.toString() ?? '',
+          item['ProductName']?.toString() ?? '',
+          item['Quantity']?.toString() ?? '',
+          totalWeight,
+          awbNumber,
+          courierName,
+          confirmerRemark,
+          '', // Packed_By (empty)
+          '', // Checked_By (empty)
+        ]);
+      }
+    }
+
+    // Add table to PDF with landscape orientation, improved styling, and colors
+    pdf.addPage(
+      pw.MultiPage(
+        pageFormat: PdfPageFormat.a4.landscape, // Keep landscape
+        margin: const pw.EdgeInsets.all(20), // Add margins for better spacing
+        build: (pw.Context context) {
+          return [
+            pw.Container(
+              padding: const pw.EdgeInsets.symmetric(vertical: 8),
+              child: pw.Row(
+                mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                children: [
+                  pw.Text(
+                    'Packlist - (${DateFormat('dd-MM-yyyy').format(DateTime.parse(date))})',
+                    style: pw.TextStyle(
+                      fontSize: 18,
+                      fontWeight: pw.FontWeight.bold,
+                      color: PdfColors.blue900,
+                    ),
+                  ),
+                  pw.Text(
+                    'Picklist ID: $selectedPicklist',
+                    style: pw.TextStyle(
+                      fontSize: 14,
+                      fontWeight: pw.FontWeight.normal,
+                      color: PdfColors.blueGrey800,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            pw.SizedBox(height: 20), // Space between title and table
+            // Table with improved styling and colors
+            pw.TableHelper.fromTextArray(
+              headers: headers,
+              data: rows,
+              border: pw.TableBorder.all(
+                width: 0.5, // Thinner borders for cleaner look
+                color: PdfColors.grey800, // Darker grey for borders
+              ),
+              headerDecoration: const pw.BoxDecoration(
+                color: PdfColors.blueGrey100,
+              ),
+              headerStyle: pw.TextStyle(
+                fontSize: 10, // Reduced font size for headers to prevent wrapping
+                fontWeight: pw.FontWeight.bold,
+                color: PdfColors.black,
+              ),
+              cellStyle: const pw.TextStyle(
+                fontSize: 10, // Keep data font size consistent
+                color: PdfColors.black, // Black text for data
+              ),
+              cellAlignments: {
+                // Use column indices for alignments
+                3: pw.Alignment.centerRight, // Qty (column 3)
+                4: pw.Alignment.centerRight, // Total Wt. (column 4)
+                // Default to centerLeft for other columns
+                for (int i = 0; i < headers.length; i++)
+                  if (i != 3 && i != 4) i: pw.Alignment.centerLeft,
+              },
+              columnWidths: const {
+                0: pw.FlexColumnWidth(0.8), // OrderId
+                1: pw.FlexColumnWidth(0.8), // SKU
+                2: pw.FlexColumnWidth(2.0), // Name (wider for long names)
+                3: pw.FlexColumnWidth(0.3), // Qty
+                4: pw.FlexColumnWidth(0.8), // Total Wt.
+                5: pw.FlexColumnWidth(1.0), // AWB
+                6: pw.FlexColumnWidth(1.2), // Courier
+                7: pw.FlexColumnWidth(1.2), // Conformer Remark
+                8: pw.FlexColumnWidth(0.8), // Pack By
+                9: pw.FlexColumnWidth(0.8), // Check By
+              },
+              cellPadding: const pw.EdgeInsets.all(2), // Reduced padding for better fit
+            ),
+          ];
+        },
+      ),
+    );
+
+    // Generate PDF as bytes
+    final Uint8List pdfBytes = await pdf.save();
+
+    // Download the PDF in the browser (Flutter web)
+    final blob = html.Blob([
+      pdfBytes
+    ]);
+    final url = html.Url.createObjectUrlFromBlob(blob);
+    final anchor = html.AnchorElement(href: url)
+      ..setAttribute('download', 'packlist_$selectedPicklist.pdf') // Use picklist ID in filename
+      ..click();
+    html.Url.revokeObjectUrl(url);
   }
 
   @override

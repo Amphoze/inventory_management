@@ -46,10 +46,12 @@ class _MergeOrdersByCsvState extends State<MergeOrdersByCsv> {
     try {
       final baseUrl = await Constants.getBaseUrl();
       log('Base URL in _initializeSocket: $baseUrl');
+      final email = await AuthProvider().getEmail();
+
 
       _socket ??= IO.io(
         baseUrl,
-        IO.OptionBuilder().setTransports(['websocket']).disableAutoConnect().build(),
+        IO.OptionBuilder().setTransports(['websocket']).disableAutoConnect().setQuery({'email': email}).build(),
       );
 
       _socket?.onConnect((_) {
@@ -71,6 +73,11 @@ class _MergeOrdersByCsvState extends State<MergeOrdersByCsv> {
         log('CSV file uploaded: $data');
         setState(() {
           _progressMessage = data['message'] ?? 'File uploaded successfully';
+          _isCreating = false;
+          _csvData = [];
+          _rowCount = 0;
+          _isCreateEnabled = false;
+          _selectedFile = null;
         });
         _showSnackbar(_progressMessage, Colors.green);
 
@@ -337,14 +344,17 @@ class _MergeOrdersByCsvState extends State<MergeOrdersByCsv> {
               ValueListenableBuilder<double>(
                 valueListenable: _progressNotifier,
                 builder: (context, value, child) {
-                  return Row(
-                    children: [
-                      Text('Progress: ${value.toStringAsFixed(2)}%'),
-                      Text(
-                        '${value.toStringAsFixed(2)}%',
-                        style: const TextStyle(fontWeight: FontWeight.bold),
-                      ),
-                    ],
+                  return Text.rich(
+                    TextSpan(
+                      text: 'Progress: ',
+                      children: [
+                        TextSpan(
+                          text: '${value.toStringAsFixed(2)}%',
+                          style: const TextStyle(fontWeight: FontWeight.normal),
+                        ),
+                      ],
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    ),
                   );
                 },
               ),

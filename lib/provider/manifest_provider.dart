@@ -125,14 +125,16 @@ class ManifestProvider with ChangeNotifier {
 
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('authToken') ?? '';
-    String url = '${await Constants.getBaseUrl()}/orders?orderStatus=8&page=$_currentPage';
+    final warehouseId = prefs.getString('warehouseId') ?? '';
+
+    String url = '${await Constants.getBaseUrl()}/orders?warehouse=$warehouseId&orderStatus=8&page=$_currentPage';
 
     if (date != null) {
       String formattedDate = DateFormat('yyyy-MM-dd').format(date!);
       url += '&date=$formattedDate';
     }
 
-    if(courier != 'All'){
+    if (courier != 'All') {
       url += '&bookingCourier=$courier';
     }
 
@@ -417,8 +419,9 @@ class ManifestProvider with ChangeNotifier {
 
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('authToken') ?? '';
+    final warehouseId = prefs.getString('warehouseId') ?? '';
 
-    final url = '${await Constants.getBaseUrl()}/orders?orderStatus=8&order_id=$query';
+    final url = '${await Constants.getBaseUrl()}/orders?warehouse=$warehouseId&orderStatus=8&order_id=$query';
 
     print('Searching failed orders with term: $query');
 

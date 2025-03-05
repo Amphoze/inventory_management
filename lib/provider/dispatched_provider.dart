@@ -31,8 +31,7 @@ class DispatchedProvider with ChangeNotifier {
   // PageController get pageController => pageController;
   // TextEditingController get textEditingController => textEditingController;
 
-  int get selectedCount =>
-      selectedProducts.where((isSelected) => isSelected).length;
+  int get selectedCount => selectedProducts.where((isSelected) => isSelected).length;
 
   bool isRefreshingOrders = false;
 
@@ -43,8 +42,7 @@ class DispatchedProvider with ChangeNotifier {
 
   void toggleSelectAll(bool value) {
     selectAll = value;
-    selectedProducts =
-        List<bool>.generate(orders0.length, (index) => selectAll);
+    selectedProducts = List<bool>.generate(orders0.length, (index) => selectAll);
     notifyListeners();
   }
 
@@ -54,8 +52,7 @@ class DispatchedProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  Future<String> cancelOrders(
-      BuildContext context, List<String> orderIds) async {
+  Future<String> cancelOrders(BuildContext context, List<String> orderIds) async {
     String baseUrl = await Constants.getBaseUrl();
     String cancelOrderUrl = '$baseUrl/orders/cancel';
     final prefs = await SharedPreferences.getInstance();
@@ -113,7 +110,9 @@ class DispatchedProvider with ChangeNotifier {
 
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('authToken') ?? '';
-    String url = '${await Constants.getBaseUrl()}/orders?orderStatus=9&page=';
+    final warehouseId = prefs.getString('warehouseId') ?? '';
+
+    String url = '${await Constants.getBaseUrl()}/orders?warehouse=$warehouseId&orderStatus=9&page=';
 
     try {
       final response = await http.get(Uri.parse('$url$currentPage'), headers: {
@@ -124,9 +123,7 @@ class DispatchedProvider with ChangeNotifier {
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         log("dispatch data: $data");
-        List<Order> orders = (data['orders'] as List)
-            .map((order) => Order.fromJson(order))
-            .toList();
+        List<Order> orders = (data['orders'] as List).map((order) => Order.fromJson(order)).toList();
         // initializeSelection();
 
         totalPages = data['totalPages']; // Get total pages from response
@@ -175,8 +172,7 @@ class DispatchedProvider with ChangeNotifier {
   }
 
   List<Order> ordersDispatched = []; // List of returned orders
-  List<bool> selectedDispatchedItems =
-      []; // Selection state for returned orders
+  List<bool> selectedDispatchedItems = []; // Selection state for returned orders
   bool selectAllDispatched = false;
 
   void initializeSelection() {
@@ -192,8 +188,7 @@ class DispatchedProvider with ChangeNotifier {
 
   // Handle individual row checkbox change for returned orders
   void handleRowCheckboxChangeForDispatched(String? orderId, bool isSelected) {
-    int index =
-        ordersDispatched.indexWhere((order) => order.orderId == orderId);
+    int index = ordersDispatched.indexWhere((order) => order.orderId == orderId);
     if (index != -1) {
       selectedDispatchedItems[index] = isSelected;
       ordersDispatched[index].isSelected = isSelected;
@@ -253,8 +248,7 @@ class DispatchedProvider with ChangeNotifier {
           print('Orders returned successfully!');
           // Update local order tracking status
           for (int i = 0; i < orders0.length; i++) {
-            if (selectedProducts[i] &&
-                (orders0[i].trackingStatus?.isEmpty ?? true)) {
+            if (selectedProducts[i] && (orders0[i].trackingStatus?.isEmpty ?? true)) {
               orders0[i].trackingStatus = 'return'; // Update locally
             }
           }
@@ -297,9 +291,9 @@ class DispatchedProvider with ChangeNotifier {
 
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('authToken') ?? '';
+    final warehouseId = prefs.getString('warehouseId') ?? '';
 
-    final url =
-        '${await Constants.getBaseUrl()}/orders?orderStatus=9&order_id=$query';
+    final url = '${await Constants.getBaseUrl()}/orders?warehouse=$warehouseId&orderStatus=9&order_id=$query';
 
     print('Searching failed orders with term: $query');
 
@@ -342,8 +336,7 @@ class DispatchedProvider with ChangeNotifier {
     return orders0;
   }
 
-  Future<String> updateOrderTrackingStatus(
-      BuildContext context, String id, String trackingStatus) async {
+  Future<String> updateOrderTrackingStatus(BuildContext context, String id, String trackingStatus) async {
     String baseUrl = await Constants.getBaseUrl();
     String updateOrderUrl = '$baseUrl/orders/$id';
     final prefs = await SharedPreferences.getInstance();
@@ -384,9 +377,7 @@ class DispatchedProvider with ChangeNotifier {
         final responseData = json.decode(response.body);
         // Show failure snackbar
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-              content: Text(responseData['message'] ??
-                  'Failed to update tracking status')),
+          SnackBar(content: Text(responseData['message'] ?? 'Failed to update tracking status')),
         );
         return responseData['message'] ?? 'Failed to update tracking status';
       }

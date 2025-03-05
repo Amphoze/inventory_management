@@ -36,8 +36,8 @@ class _SearchableDropdownState extends State<SearchableDropdown> {
 
   @override
   void initState() {
-    super.initState();
     fetchProducts();
+    super.initState();
   }
 
   Future<void> fetchProducts({String query = ''}) async {

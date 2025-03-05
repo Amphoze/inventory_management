@@ -1,8 +1,14 @@
 // ignore_for_file: avoid_print
 
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:inventory_management/Api/auth_provider.dart';
 import 'package:logger/logger.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+import '../Custom-Files/colors.dart';
+import '../dashboard.dart';
 
 class LocationProvider with ChangeNotifier {
   final AuthProvider authProvider;
@@ -208,6 +214,27 @@ class LocationProvider with ChangeNotifier {
     notifyListeners();
   }
 
+  Future<void> saveWarehouseData(BuildContext context, String warehouseId, String warehouseName, bool isPrimary) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('warehouseId', warehouseId);
+    await prefs.setString('warehouseName', warehouseName);
+    await prefs.setBool('isPrimary', isPrimary);
+
+    log('warehouseId: $warehouseId');
+    log('warehouseName: $warehouseName');
+
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Successfully signed in to $warehouseName'),
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          backgroundColor: AppColors.primaryBlue,
+        ),
+      );
+    }
+  }
+
   Future<void> fetchWarehouses({int page = 1}) async {
     _isLoading = true;
     notifyListeners();
@@ -215,13 +242,11 @@ class LocationProvider with ChangeNotifier {
     final result = await getAllWarehouses(page: page);
 
     if (result['success']) {
-      final warehousesData = result['data']['warehouses'];
+      final warehousesData = result['data']?['warehouses'] ?? [];
       _totalPages = result['totalPages'];
 
-      if (warehousesData is List) {
+      if (warehousesData is List && warehousesData.isNotEmpty) {
         _warehouses = List<Map<String, dynamic>>.from(warehousesData);
-        // Logger().e('_warehouses: $_warehouses');
-        // Logger().e('_totalPages: $_totalPages');
       } else {
         _setError('Unexpected data format');
       }

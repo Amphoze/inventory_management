@@ -7,10 +7,10 @@ import 'package:flutter_html/flutter_html.dart';
 import '../model/product_master_model.dart';
 import '../provider/product_master_provider.dart';
 
-class ProductCard extends StatelessWidget {
+class ProductMasterCard extends StatelessWidget {
   final Product product;
 
-  const ProductCard({super.key, required this.product});
+  const ProductMasterCard({super.key, required this.product});
 
   @override
   Widget build(BuildContext context) {
@@ -117,7 +117,7 @@ class ProductCard extends StatelessWidget {
                   _buildTitle(product.displayName),
                   ElevatedButton(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.orange,
+                      backgroundColor: AppColors.primaryBlue,
                       textStyle: const TextStyle(color: Colors.white),
                     ),
                     onPressed: () async {
@@ -196,7 +196,7 @@ class ProductCard extends StatelessWidget {
         style: const TextStyle(
           fontSize: 20,
           fontWeight: FontWeight.bold,
-          color: Colors.orange,
+          color: AppColors.primaryBlue,
         ),
       ),
     );

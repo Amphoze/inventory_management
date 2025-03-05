@@ -1,14 +1,15 @@
-import 'dart:convert';
 import 'dart:developer';
-
 import 'package:csv/csv.dart';
-import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
 import 'package:inventory_management/Api/auth_provider.dart';
-import 'package:inventory_management/Api/inventory_api.dart';
 import 'package:inventory_management/Custom-Files/colors.dart';
+import 'package:file_picker/file_picker.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import 'package:inventory_management/Api/inventory_api.dart';
 import 'package:inventory_management/constants/constants.dart';
+import 'package:logger/logger.dart';
+import 'package:socket_io_client/socket_io_client.dart' as IO;
 import 'package:url_launcher/url_launcher.dart';
 
 class ConfirmOrders extends StatefulWidget {
@@ -21,11 +22,9 @@ class ConfirmOrders extends StatefulWidget {
 class _ConfirmOrdersState extends State<ConfirmOrders> {
   static const int _pageSize = 50;
   List<List<dynamic>> _csvData = [];
-
-  // List<Map<String, dynamic>> _failedOrders = [];
   int _rowCount = 0;
-  bool _isConfirmEnabled = false;
-  bool _isConfirming = false;
+  bool _isCreateEnabled = false;
+  bool _isCreating = false;
   bool _isPickingFile = false;
   bool _isProcessingFile = false;
   PlatformFile? _selectedFile;
@@ -33,17 +32,117 @@ class _ConfirmOrdersState extends State<ConfirmOrders> {
   final ScrollController _verticalScrollController = ScrollController();
   int _currentPage = 0;
 
+  String _progressMessage = '';
+
+  final ValueNotifier<double> _progressNotifier = ValueNotifier<double>(0);
+  IO.Socket? _socket;
+
+  void _initializeSocket() async {
+    if (_socket != null && _socket!.connected) {
+      log('Socket already connected. Skipping initialization.');
+      return;
+    }
+
+    try {
+      final baseUrl = await Constants.getBaseUrl();
+      log('Base URL in _initializeSocket: $baseUrl');
+      final email = await AuthProvider().getEmail();
+      log('email: $email');
+
+      _socket ??= IO.io(
+        baseUrl,
+        IO.OptionBuilder()
+            .setTransports(['websocket'])
+            .disableAutoConnect()
+            .setQuery({'email': email})
+            .build()
+      );
+
+      _socket?.onConnect((_) {
+        debugPrint('Connected to Socket.IO');
+        _showSnackbar('Connected to server', Colors.green);
+      });
+
+      _socket?.off('csv-file-uploading-err');
+      _socket?.on('csv-file-uploading-err', (data) {
+        debugPrint('Error Data: $data');
+        setState(() {
+          _progressMessage = data['message'] ?? 'An error occurred';
+        });
+        _showSnackbar(_progressMessage, Colors.red);
+      });
+
+      _socket?.off('csv-file-uploading');
+      _socket?.on('csv-file-uploading', (data) {
+        Logger().e('Data progress: ${data['progress']}');
+        if (data['progress'] != null) {
+          double newProgress = double.tryParse(data['progress'].toString()) ?? 0;
+          _progressNotifier.value = newProgress;
+        }
+      });
+
+      _socket?.off('csv-file-uploaded');
+      _socket?.once('csv-file-uploaded', (data) {
+        log('CSV file uploaded: $data');
+        setState(() {
+          _progressMessage = data['message'] ?? 'File uploaded successfully';
+          _isCreating = false;
+          _csvData = [];
+          _rowCount = 0;
+          _isCreateEnabled = false;
+          _selectedFile = null;
+        });
+        _showSnackbar(_progressMessage, Colors.green);
+
+        if (data['downloadLink'] != null) {
+          log('Download link: ${data['downloadLink']}');
+          _launchDownloadUrl(data['downloadLink']);
+        }
+      });
+
+      _socket?.connect();
+    } catch (e) {
+      log('Error in _initializeSocket: $e');
+      _showSnackbar('Failed to connect to server', Colors.red);
+    }
+  }
+
+  void _showSnackbar(String message, Color color) {
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).removeCurrentSnackBar();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(message),
+          backgroundColor: color,
+          duration: const Duration(seconds: 3),
+        ),
+      );
+    }
+  }
+
   @override
   void initState() {
-    super.initState();
+    _initializeSocket();
     _verticalScrollController.addListener(_scrollListener);
+    super.initState();
   }
 
   @override
   void dispose() {
+    _socket?.disconnect();
     _horizontalScrollController.dispose();
     _verticalScrollController.dispose();
+    _progressNotifier.dispose();
     super.dispose();
+  }
+
+  Future<void> _launchDownloadUrl(String url) async {
+    if (await canLaunchUrl(Uri.parse(url))) {
+      await launchUrl(Uri.parse(url));
+      log('Download URL launched: $url');
+    } else {
+      debugPrint('Could not launch $url');
+    }
   }
 
   void _scrollListener() {
@@ -62,7 +161,8 @@ class _ConfirmOrdersState extends State<ConfirmOrders> {
 
   List<List<dynamic>> _getPagedData() {
     if (_csvData.isEmpty) return [];
-    const startIndex = 1; // Skip header row
+
+    const startIndex = 1;
     final endIndex = startIndex + (_currentPage + 1) * _pageSize;
     return _csvData.sublist(
       startIndex,
@@ -84,17 +184,6 @@ class _ConfirmOrdersState extends State<ConfirmOrders> {
 
       if (result != null) {
         final file = result.files.first;
-
-        // Check file size (200 KB = 200 * 1024 bytes)
-        if (file.size > 200 * 1024) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('File size exceeds 200 KB. Please select a smaller file.')),
-          );
-          setState(() {
-            _isPickingFile = false;
-          });
-          return;
-        }
 
         setState(() {
           _isProcessingFile = true;
@@ -124,6 +213,7 @@ class _ConfirmOrdersState extends State<ConfirmOrders> {
     try {
       final csvString = String.fromCharCodes(bytes);
       final rawData = const CsvToListConverter().convert(csvString);
+
       final filteredData = rawData.where((row) {
         return row.isNotEmpty && row.any((cell) => cell.toString().trim().isNotEmpty);
       }).toList();
@@ -131,8 +221,8 @@ class _ConfirmOrdersState extends State<ConfirmOrders> {
       setState(() {
         _csvData = filteredData;
         _rowCount = _csvData.isNotEmpty ? _csvData.length - 1 : 0;
-        _isConfirmEnabled = _rowCount > 0;
-        // _failedOrders = [];
+        _isCreateEnabled = _rowCount > 0;
+
         _isProcessingFile = false;
       });
     } catch (e) {
@@ -149,8 +239,10 @@ class _ConfirmOrdersState extends State<ConfirmOrders> {
   Future<void> _confirmOrders() async {
     if (_selectedFile == null) return;
 
+    Logger().e('1');
+
     setState(() {
-      _isConfirming = true;
+      _isCreating = true;
     });
 
     try {
@@ -159,9 +251,6 @@ class _ConfirmOrdersState extends State<ConfirmOrders> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Authentication token not found')),
         );
-        setState(() {
-          _isConfirming = false;
-        });
         return;
       }
 
@@ -170,13 +259,17 @@ class _ConfirmOrdersState extends State<ConfirmOrders> {
         Uri.parse('${await Constants.getBaseUrl()}/orders/confirmCsv'),
       );
 
+      Logger().e('2');
+
       request.files.add(
         http.MultipartFile.fromBytes(
           'file',
-          _selectedFile!.bytes!,
+          _selectedFile!.bytes ?? [],
           filename: _selectedFile!.name,
         ),
       );
+
+      Logger().e('3');
 
       request.headers.addAll({
         'Authorization': 'Bearer $token',
@@ -186,44 +279,23 @@ class _ConfirmOrdersState extends State<ConfirmOrders> {
       final responseBody = await response.stream.bytesToString();
       final jsonData = jsonDecode(responseBody);
 
-      log('Response Body: $responseBody, Status Code: ${response.statusCode}');
+      Logger().e('Create Csv Body: $responseBody, Status Code: ${response.statusCode}');
 
-      if (response.statusCode == 200) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(jsonData['message'])),
-        );
-
-        try {
-          await launchUrl(Uri.parse(jsonData['downloadUrl'].toString()));
-        } catch (e) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Error downloading file: $e')),
-          );
-        }
+      if (response.statusCode == 200 || response.statusCode == 201) {
       } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("${jsonData['message']}")),
+        );
         log('Failed to upload CSV: ${response.statusCode}\n$responseBody');
-        if (jsonData['downloadUrl'] != null && jsonData['downloadUrl'].toString().isNotEmpty) {
-          try {
-            await launchUrl(Uri.parse(jsonData['downloadUrl'].toString()));
-          } catch (e) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('Error downloading file: $e')),
-            );
-          }
-        } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(jsonData['message'] ?? 'Unknown error from API')),
-          );
-        }
       }
-    } catch (e, stackTrace) {
-      log('Error during order confirmation: $e', error: e, stackTrace: stackTrace);
+    } catch (e) {
+      log('Error during order creation: $e', error: e, stackTrace: StackTrace.current);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error during upload: $e')),
+        SnackBar(content: Text('Error: $e')),
       );
     } finally {
       setState(() {
-        _isConfirming = false;
+        _isCreating = false;
       });
     }
   }
@@ -254,8 +326,8 @@ class _ConfirmOrdersState extends State<ConfirmOrders> {
                     child: Text(_isPickingFile
                         ? 'Selecting File...'
                         : _isProcessingFile
-                            ? 'Processing File...'
-                            : 'Select CSV File'),
+                        ? 'Processing File...'
+                        : 'Select CSV File'),
                   ),
                 ),
                 const SizedBox(width: 16),
@@ -267,8 +339,8 @@ class _ConfirmOrdersState extends State<ConfirmOrders> {
                 if (_rowCount > 0)
                   Expanded(
                     child: ElevatedButton(
-                      onPressed: _isConfirmEnabled && !_isConfirming && !_isPickingFile && !_isProcessingFile ? _confirmOrders : null,
-                      child: Text(_isConfirming ? 'Confirming...' : 'Confirm Orders'),
+                      onPressed: _isCreateEnabled && !_isCreating && !_isPickingFile && !_isProcessingFile ? _confirmOrders : null,
+                      child: const Text('Confirm Orders'),
                     ),
                   ),
               ],
@@ -283,22 +355,27 @@ class _ConfirmOrdersState extends State<ConfirmOrders> {
             if (_rowCount > 0) ...[
               Text('Number of items: $_rowCount'),
               const SizedBox(height: 16),
-              Expanded(
-                child: Column(
-                  children: [
-                    // if (_failedOrders.isEmpty) Expanded(child: _buildDataTable()) else _buildFailedOrdersTable(),
-                    Expanded(
-                      // flex: 2,
-                      child: _buildDataTable(),
+              ValueListenableBuilder<double>(
+                valueListenable: _progressNotifier,
+                builder: (context, value, child) {
+                  return Text.rich(
+                    TextSpan(
+                      text: 'Progress: ',
+                      children: [
+                        TextSpan(
+                          text: '${value.toStringAsFixed(2)}%',
+                          style: const TextStyle(fontWeight: FontWeight.normal),
+                        ),
+                      ],
+                      style: const TextStyle(fontWeight: FontWeight.bold),
                     ),
-                    // if (_failedOrders.isNotEmpty) _buildFailedOrdersTable(),
-                  ],
-                ),
+                  );
+                },
               ),
-            ],
-            if (_isConfirming) ...[
-              const SizedBox(height: 16),
-              const LinearProgressIndicator(),
+              const SizedBox(height: 50),
+              Expanded(
+                child: _buildDataTable(),
+              ),
             ],
           ],
         ),
@@ -308,6 +385,7 @@ class _ConfirmOrdersState extends State<ConfirmOrders> {
 
   Widget _buildDataTable() {
     if (_csvData.isEmpty) return const SizedBox();
+
     final headers = _csvData.first;
     final pagedData = _getPagedData();
 
@@ -334,17 +412,17 @@ class _ConfirmOrdersState extends State<ConfirmOrders> {
               ),
               columns: headers
                   .map((header) => DataColumn(
-                        label: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                          child: Text(header.toString()),
-                        ),
-                      ))
+                label: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                  child: Text(header.toString()),
+                ),
+              ))
                   .toList(),
               rows: pagedData.map((row) {
                 return DataRow(
                   cells: List.generate(
                     row.length,
-                    (index) => DataCell(
+                        (index) => DataCell(
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 8.0),
                         child: Text(row[index].toString()),
@@ -359,487 +437,4 @@ class _ConfirmOrdersState extends State<ConfirmOrders> {
       ),
     );
   }
-
-// Widget _buildFailedOrdersTable() {
-//   return Expanded(
-//     flex: 1,
-//     child: Column(
-//       children: [
-//         const SizedBox(height: 16),
-//         const Text(
-//           'Failed Orders',
-//           style: TextStyle(
-//             fontSize: 18,
-//             fontWeight: FontWeight.bold,
-//             color: AppColors.primaryBlue,
-//           ),
-//         ),
-//         const SizedBox(height: 8),
-//         Expanded(
-//           child: Scrollbar(
-//             thumbVisibility: true,
-//             child: SingleChildScrollView(
-//               scrollDirection: Axis.vertical,
-//               child: SingleChildScrollView(
-//                 scrollDirection: Axis.horizontal,
-//                 child: DataTable(
-//                   headingTextStyle: const TextStyle(
-//                     fontWeight: FontWeight.bold,
-//                     color: AppColors.primaryBlue,
-//                   ),
-//                   border: TableBorder.all(
-//                     color: Colors.grey.shade300,
-//                     width: 1,
-//                   ),
-//                   columns: const [
-//                     DataColumn(
-//                       label: Padding(
-//                         padding: EdgeInsets.symmetric(horizontal: 8.0),
-//                         child: Text('Order ID'),
-//                       ),
-//                     ),
-//                     DataColumn(
-//                       label: Padding(
-//                         padding: EdgeInsets.symmetric(horizontal: 8.0),
-//                         child: Text('Error Message'),
-//                       ),
-//                     ),
-//                   ],
-//                   rows: _failedOrders.where((order) => (order['order_id']?.toString().trim().isNotEmpty ?? false) || (order['error']?.toString().trim().isNotEmpty ?? false)).map((order) {
-//                     return DataRow(
-//                       cells: [
-//                         DataCell(Padding(
-//                           padding: const EdgeInsets.symmetric(horizontal: 8.0),
-//                           child: Text(order['order_id'].toString()),
-//                         )),
-//                         DataCell(Padding(
-//                           padding: const EdgeInsets.symmetric(horizontal: 8.0),
-//                           child: Text(order['error'].toString()),
-//                         )),
-//                       ],
-//                     );
-//                   }).toList(),
-//                 ),
-//               ),
-//             ),
-//           ),
-//         ),
-//       ],
-//     ),
-//   );
-// }
 }
-
-// import 'dart:developer';
-// import 'package:csv/csv.dart';
-// import 'package:flutter/material.dart';
-// import 'package:inventory_management/Api/auth_provider.dart';
-// import 'package:inventory_management/Custom-Files/colors.dart';
-// import 'package:file_picker/file_picker.dart';
-// import 'package:http/http.dart' as http;
-// import 'dart:convert';
-// import 'package:inventory_management/constants/constants.dart';
-// import 'package:shared_preferences/shared_preferences.dart';
-
-// class ConfirmOrders extends StatefulWidget {
-//   const ConfirmOrders({super.key});
-
-//   @override
-//   State<ConfirmOrders> createState() => _ConfirmOrdersState();
-// }
-
-// class _ConfirmOrdersState extends State<ConfirmOrders> {
-//   List<List<dynamic>> _csvData = [];
-//   List<Map<String, String>> _failedOrders = [];
-//   int _rowCount = 0;
-//   bool _isCreating = false;
-//   bool _isPickingFile = false;
-//   bool _isProcessingFile = false;
-//   PlatformFile? _selectedFile;
-//   int _processedOrders = 0;
-//   final ScrollController _horizontalScrollController = ScrollController();
-//   final ScrollController _verticalScrollController = ScrollController();
-
-//   @override
-//   void dispose() {
-//     _horizontalScrollController.dispose();
-//     _verticalScrollController.dispose();
-//     super.dispose();
-//   }
-
-//   Map<String, dynamic> _createErrorResponse(int status, String orderId, String error) => {
-//         'status': status,
-//         'order_id': orderId,
-//         'data': {
-//           'message': error // Changed 'error' to 'message' to match usage
-//         }
-//       };
-
-//   Future<void> _pickAndReadCSV() async {
-//     if (_isCreating) return;
-
-//     setState(() {
-//       _isPickingFile = true;
-//       _processedOrders = 0;
-//       _csvData = [];
-//       _failedOrders = [];
-//     });
-
-//     try {
-//       final result = await FilePicker.platform.pickFiles(
-//         type: FileType.custom,
-//         allowedExtensions: [
-//           'csv'
-//         ],
-//       );
-
-//       if (result == null) {
-//         setState(() => _isPickingFile = false);
-//         return;
-//       }
-
-//       setState(() {
-//         _isProcessingFile = true;
-//         _isPickingFile = false;
-//         _selectedFile = result.files.first;
-//       });
-
-//       if (_selectedFile?.bytes == null) {
-//         throw Exception('Selected file is empty');
-//       }
-
-//       final String csvString = String.fromCharCodes(_selectedFile!.bytes!);
-//       final csvData = const CsvToListConverter().convert(csvString);
-
-//       if (csvData.isEmpty) {
-//         throw Exception('CSV file is empty');
-//       }
-
-//       setState(() {
-//         _csvData = csvData;
-//         _rowCount = csvData.length - 1;
-//       });
-//     } catch (e) {
-//       log('Error reading CSV file', error: e, stackTrace: StackTrace.current);
-//       _showErrorSnackBar('Error reading CSV file: ${e.toString()}');
-//     } finally {
-//       setState(() {
-//         _isPickingFile = false;
-//         _isProcessingFile = false;
-//       });
-//     }
-//   }
-
-//   Future<Map<String, dynamic>> _confirmOrder(List<dynamic> row) async {
-//     final orderId = row[0].toString();
-//     try {
-//       if (orderId.isEmpty) {
-//         return _createErrorResponse(400, orderId, 'Order ID is required');
-//       }
-
-//       final pref = await SharedPreferences.getInstance();
-//       final token = pref.getString('authToken');
-//       if (token == null) {
-//         return _createErrorResponse(401, orderId, 'Authentication token not found');
-//       }
-
-//       final baseUrl = await Constants.getBaseUrl();
-//       final uri = Uri.parse('$baseUrl/orders/confirm');
-
-//       final response = await http.post(
-//         uri,
-//         headers: {
-//           "Content-Type": "application/json",
-//           'Authorization': 'Bearer $token',
-//         },
-//         body: jsonEncode({
-//           'orderIds': [
-//             orderId
-//           ]
-//         }),
-//       );
-
-//       final responseBody = jsonDecode(response.body);
-//       log('Order API Response for $orderId: ${response.statusCode} - $responseBody');
-
-//       if (response.statusCode != 200 && response.statusCode != 201) {
-//         return _createErrorResponse(response.statusCode, orderId, responseBody['error'] ?? 'Unknown error');
-//       }
-
-//       return {
-//         'status': 200,
-//         'order_id': orderId,
-//         'data': responseBody
-//       };
-//     } catch (e) {
-//       log('Error confirming order: $e');
-//       return _createErrorResponse(400, orderId, e.toString());
-//     }
-//   }
-
-//   Future<void> _confirmOrders() async {
-//     if (_selectedFile == null || _isCreating || _csvData.isEmpty) return;
-
-//     setState(() {
-//       _isCreating = true;
-//       _failedOrders = [];
-//       _processedOrders = 0;
-//     });
-
-//     try {
-//       bool hasFailedOrders = false;
-
-//       for (int i = 1; i < _csvData.length; i++) {
-//         final result = await _confirmOrder(_csvData[i]);
-
-//         if (result['status'] != 200) {
-//           hasFailedOrders = true;
-//           _failedOrders.add({
-//             'order_id': result['order_id'],
-//             'error': result['data']['message'].toString(),
-//           });
-//         }
-
-//         setState(() {
-//           _processedOrders = i;
-//         });
-//       }
-
-//       if (mounted) {
-//         _showCompletionMessage(hasFailedOrders);
-//       }
-//     } catch (e) {
-//       log('Error processing CSV', error: e, stackTrace: StackTrace.current);
-//       if (mounted) {
-//         _showErrorSnackBar('Error processing CSV: ${e.toString()}');
-//       }
-//     } finally {
-//       setState(() {
-//         _isCreating = false;
-//       });
-//     }
-//   }
-
-//   void _showCompletionMessage(bool hasFailedOrders) {
-//     ScaffoldMessenger.of(context).showSnackBar(
-//       SnackBar(
-//         content: Text(hasFailedOrders ? 'Some orders failed. Check the failed orders table below.' : 'All orders confirmed successfully!'),
-//       ),
-//     );
-//   }
-
-//   void _showErrorSnackBar(String message) {
-//     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
-//   }
-
-//   @override
-//   Widget build(BuildContext context) {
-//     return Scaffold(
-//       backgroundColor: AppColors.white,
-//       body: Padding(
-//         padding: const EdgeInsets.all(16.0),
-//         child: Column(
-//           children: [
-//             _buildActionButtons(),
-//             const SizedBox(height: 16),
-//             if (_isPickingFile || _isProcessingFile) _buildProgressIndicator(),
-//             if (_rowCount > 0) ...[
-//               Text('Number of items: $_rowCount'),
-//               const SizedBox(height: 16),
-//               Expanded(
-//                 child: Column(
-//                   children: [
-//                     Expanded(
-//                       flex: 2,
-//                       child: _buildDataTable(),
-//                     ),
-//                     if (_failedOrders.isNotEmpty) _buildFailedOrdersTable(),
-//                   ],
-//                 ),
-//               ),
-//             ],
-//             if (_isCreating) _buildCreationProgress(),
-//           ],
-//         ),
-//       ),
-//     );
-//   }
-
-//   Widget _buildActionButtons() {
-//     return Row(
-//       children: [
-//         Expanded(
-//           child: ElevatedButton(
-//             onPressed: _isPickingFile || _isProcessingFile ? null : _pickAndReadCSV,
-//             child: Text(_isPickingFile
-//                 ? 'Selecting File...'
-//                 : _isProcessingFile
-//                     ? 'Processing File...'
-//                     : 'Select CSV File'),
-//           ),
-//         ),
-//         const SizedBox(width: 16),
-//         ElevatedButton(
-//           onPressed: _isPickingFile || _isProcessingFile ? null : () => AuthProvider().downloadTemplate(context, 'confirm'),
-//           child: const Text('Download Template'),
-//         ),
-//         const SizedBox(width: 16),
-//         if (_rowCount > 0)
-//           Expanded(
-//             child: ElevatedButton(
-//               onPressed: _isCreating || _isPickingFile || _isProcessingFile ? null : _confirmOrders,
-//               child: Text(_isCreating ? 'Confirming...' : 'Confirm Orders'),
-//             ),
-//           ),
-//       ],
-//     );
-//   }
-
-//   Widget _buildProgressIndicator() {
-//     return Column(
-//       children: [
-//         const LinearProgressIndicator(),
-//         const SizedBox(height: 8),
-//         Text(_isPickingFile ? 'Selecting file...' : 'Processing file...'),
-//         const SizedBox(height: 16),
-//       ],
-//     );
-//   }
-
-//   Widget _buildCreationProgress() {
-//     return Column(
-//       children: [
-//         const SizedBox(height: 16),
-//         LinearProgressIndicator(
-//           value: _processedOrders / (_csvData.length - 1),
-//         ),
-//         const SizedBox(height: 8),
-//         Text('Processing Order: $_processedOrders of ${_csvData.length - 1}'),
-//       ],
-//     );
-//   }
-
-//   Widget _buildDataTable() {
-//     if (_csvData.isEmpty) return const SizedBox();
-
-//     final headers = _csvData.first;
-//     final data = _csvData.skip(1).toList();
-
-//     return Scrollbar(
-//       controller: _verticalScrollController,
-//       thumbVisibility: true,
-//       child: Scrollbar(
-//         controller: _horizontalScrollController,
-//         thumbVisibility: true,
-//         notificationPredicate: (notification) => notification.depth == 1,
-//         child: SingleChildScrollView(
-//           controller: _verticalScrollController,
-//           child: SingleChildScrollView(
-//             controller: _horizontalScrollController,
-//             scrollDirection: Axis.horizontal,
-//             child: DataTable(
-//               headingTextStyle: const TextStyle(
-//                 fontWeight: FontWeight.bold,
-//                 color: AppColors.primaryBlue,
-//               ),
-//               border: TableBorder.all(
-//                 color: Colors.grey.shade300,
-//                 width: 1,
-//               ),
-//               columns: headers
-//                   .map((header) => DataColumn(
-//                         label: Padding(
-//                           padding: const EdgeInsets.symmetric(horizontal: 8.0),
-//                           child: Text(header.toString()),
-//                         ),
-//                       ))
-//                   .toList(),
-//               rows: data.map((row) {
-//                 return DataRow(
-//                   cells: List.generate(
-//                     row.length,
-//                     (index) => DataCell(
-//                       Padding(
-//                         padding: const EdgeInsets.symmetric(horizontal: 8.0),
-//                         child: Text(row[index].toString()),
-//                       ),
-//                     ),
-//                   ),
-//                 );
-//               }).toList(),
-//             ),
-//           ),
-//         ),
-//       ),
-//     );
-//   }
-
-//   Widget _buildFailedOrdersTable() {
-//     return Expanded(
-//       flex: 1,
-//       child: Column(
-//         children: [
-//           const SizedBox(height: 16),
-//           Text(
-//             'Failed Orders: ${_failedOrders.length}',
-//             style: const TextStyle(
-//               fontSize: 18,
-//               fontWeight: FontWeight.bold,
-//               color: AppColors.primaryBlue,
-//             ),
-//           ),
-//           const SizedBox(height: 8),
-//           Expanded(
-//             child: Scrollbar(
-//               thumbVisibility: true,
-//               child: SingleChildScrollView(
-//                 scrollDirection: Axis.vertical,
-//                 child: SingleChildScrollView(
-//                   scrollDirection: Axis.horizontal,
-//                   child: DataTable(
-//                     headingTextStyle: const TextStyle(
-//                       fontWeight: FontWeight.bold,
-//                       color: AppColors.primaryBlue,
-//                     ),
-//                     border: TableBorder.all(
-//                       color: Colors.grey.shade300,
-//                       width: 1,
-//                     ),
-//                     columns: const [
-//                       DataColumn(
-//                         label: Padding(
-//                           padding: EdgeInsets.symmetric(horizontal: 8.0),
-//                           child: Text('Order ID'),
-//                         ),
-//                       ),
-//                       DataColumn(
-//                         label: Padding(
-//                           padding: EdgeInsets.symmetric(horizontal: 8.0),
-//                           child: Text('Error Message'),
-//                         ),
-//                       ),
-//                     ],
-//                     rows: _failedOrders.where((order) => (order['order_id']?.toString().trim().isNotEmpty ?? false) || (order['error']?.toString().trim().isNotEmpty ?? false)).map((order) {
-//                       return DataRow(
-//                         cells: [
-//                           DataCell(Padding(
-//                             padding: const EdgeInsets.symmetric(horizontal: 8.0),
-//                             child: Text(order['order_id'].toString()),
-//                           )),
-//                           DataCell(Padding(
-//                             padding: const EdgeInsets.symmetric(horizontal: 8.0),
-//                             child: Text(order['error'].toString()),
-//                           )),
-//                         ],
-//                       );
-//                     }).toList(),
-//                   ),
-//                 ),
-//               ),
-//             ),
-//           ),
-//         ],
-//       ),
-//     );
-//   }
-// }

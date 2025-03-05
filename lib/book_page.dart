@@ -6,11 +6,13 @@ import 'package:inventory_management/Custom-Files/colors.dart';
 import 'package:inventory_management/Custom-Files/custom_pagination.dart';
 import 'package:inventory_management/Custom-Files/loading_indicator.dart';
 import 'package:inventory_management/Widgets/order_combo_card.dart';
+import 'package:inventory_management/provider/location_provider.dart';
 import 'package:inventory_management/provider/marketplace_provider.dart';
 import 'package:logger/logger.dart';
 import 'package:provider/provider.dart';
 import 'package:inventory_management/provider/book_provider.dart';
 import 'package:inventory_management/model/orders_model.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class BookPage extends StatefulWidget {
   const BookPage({super.key});
@@ -30,6 +32,17 @@ class _BookPageState extends State<BookPage> with SingleTickerProviderStateMixin
   String _selectedDate = 'Select Date';
   String bookingCourier = 'bookingCourier';
 
+  bool? isSuperAdmin = false;
+  bool? isAdmin = false;
+
+  Future<void> _fetchUserRole() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      isSuperAdmin = prefs.getBool('_isSuperAdminAssigned');
+      isAdmin = prefs.getBool('_isAdminAssigned');
+    });
+  }
+
   @override
   void initState() {
     super.initState();
@@ -43,23 +56,13 @@ class _BookPageState extends State<BookPage> with SingleTickerProviderStateMixin
         _b2cSearchController.clear();
       }
     });
-    // _b2bSearchController.addListener(() {
-    //   if (_b2bSearchController.text.isEmpty) {
-    //     _refreshOrders('B2B');
-    //     Provider.of<BookProvider>(context, listen: false).clearSearchResults();
-    //   }
-    // });
-    // _b2cSearchController.addListener(() {
-    //   if (_b2cSearchController.text.isEmpty) {
-    //     _refreshOrders('B2C');
-    //     Provider.of<BookProvider>(context, listen: false).clearSearchResults();
-    //   }
-    // });
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final bookProvider = Provider.of<BookProvider>(context, listen: false);
       bookProvider.fetchOrders('B2B', bookProvider.currentPageB2B);
       bookProvider.fetchOrders('B2C', bookProvider.currentPageB2C);
       context.read<MarketplaceProvider>().fetchMarketplaces();
+      context.read<LocationProvider>().fetchWarehouses();
+      _fetchUserRole();
     });
   }
 
@@ -118,13 +121,14 @@ class _BookPageState extends State<BookPage> with SingleTickerProviderStateMixin
       child: TabBar(
         controller: _tabController,
         tabs: const [
-          Tab(text: 'B2C'),
-          Tab(text: 'B2B'),
+          Tab(text: 'Business-to-Consumer (B2C)'),
+          Tab(text: 'Business-to-Business (B2B)'),
         ],
         indicatorColor: Colors.blue,
         labelColor: Colors.black,
         unselectedLabelColor: Colors.grey,
         indicatorWeight: 3,
+        indicatorSize: TabBarIndicatorSize.tab,
       ),
     );
   }
@@ -893,6 +897,7 @@ class _BookPageState extends State<BookPage> with SingleTickerProviderStateMixin
     }
 
     return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Expanded(
           flex: 6,
@@ -902,6 +907,8 @@ class _BookPageState extends State<BookPage> with SingleTickerProviderStateMixin
             toShowOrderDetails: true,
             checkboxWidget: checkboxWidget,
             isBookPage: true,
+            isAdmin: isAdmin ?? false,
+            isSuperAdmin: isSuperAdmin ?? false,
           ),
         ),
         // const SizedBox(width: 20),
@@ -1066,115 +1073,4 @@ class _BookPageState extends State<BookPage> with SingleTickerProviderStateMixin
       ),
     );
   }
-
-// void _showPicklistSourceDialog(BuildContext context) {
-//   final bookProvider = context.read<BookProvider>();
-//   showDialog(
-//     context: context,
-//     builder: (_) {
-//       // Add a state variable to track the selected option
-//       String? selectedMarketplace;
-
-//       return AlertDialog(
-//         title: const Text(
-//           'Select Marketplace',
-//           style: TextStyle(
-//             fontWeight: FontWeight.w500,
-//             color: AppColors.primaryBlue,
-//           ),
-//         ),
-//         content: StatefulBuilder(
-//           builder: (BuildContext context, StateSetter setState) {
-//             return Column(
-//               mainAxisSize: MainAxisSize.min,
-//               children: [
-//                 RadioListTile<String>(
-//                   contentPadding: const EdgeInsets.all(0),
-//                   title: const Text('Website', style: TextStyle(fontSize: 16)),
-//                   value: 'website',
-//                   groupValue: selectedMarketplace,
-//                   onChanged: (value) {
-//                     setState(() {
-//                       selectedMarketplace = value; // Store selected option
-//                     });
-//                   },
-//                 ),
-//                 RadioListTile<String>(
-//                   contentPadding: const EdgeInsets.all(0),
-//                   title: const Text('Offline', style: TextStyle(fontSize: 16)),
-//                   value: 'offline',
-//                   groupValue: selectedMarketplace,
-//                   onChanged: (value) {
-//                     setState(() {
-//                       selectedMarketplace = value; // Store selected option
-//                     });
-//                   },
-//                 ),
-//                 RadioListTile<String>(
-//                   contentPadding: const EdgeInsets.all(0),
-//                   title: const Text('All', style: TextStyle(fontSize: 16)),
-//                   value: 'all',
-//                   groupValue: selectedMarketplace,
-//                   onChanged: (value) {
-//                     setState(() {
-//                       selectedMarketplace = value; // Store selected option
-//                     });
-//                   },
-//                 ),
-//               ],
-//             );
-//           },
-//         ),
-//         shape: RoundedRectangleBorder(
-//           borderRadius: BorderRadius.circular(12),
-//         ),
-//         backgroundColor: Colors.white,
-//         actions: [
-//           TextButton(
-//             onPressed: () {
-//               Navigator.of(context).pop(); // Close the dialog
-//             },
-//             child: const Text('Cancel'),
-//           ),
-//           TextButton(
-//             onPressed: () {
-//               if (selectedMarketplace != null) {
-//                 log('Selected Marketplace: $selectedMarketplace');
-
-//                 // Show loading dialog
-//                 showDialog(
-//                   context: context,
-//                   barrierDismissible: false, // Prevent dismissing the dialog
-//                   builder: (BuildContext context) {
-//                     return const AlertDialog(
-//                       content: Row(
-//                         children: [
-//                           CircularProgressIndicator(),
-//                           SizedBox(width: 10),
-//                           Text("Generating picklist"),
-//                         ],
-//                       ),
-//                     );
-//                   },
-//                 ).then((_) {
-//                   // Close the marketplace selection dialog after loading dialog is dismissed
-//                   Navigator.of(context).pop();
-//                 });
-
-//                 // Fetch order picker data
-//                 bookProvider.generatePicklist(context, selectedMarketplace!).then((_) {
-//                   Navigator.of(context).pop(); // Close loading dialog
-//                 });
-//               }
-//             },
-//             child: const Text(
-//               'Ok',
-//               style: TextStyle(color: AppColors.primaryBlue),
-//             ),
-//           ),
-//         ],
-//       );
-//     },
-//   );
-// }
 }

@@ -113,7 +113,10 @@ class ReturnEntryProvider with ChangeNotifier {
 
   Future<void> searchOrders(String orderId) async {
     String encodedOrderId = Uri.encodeComponent(orderId);
-    final url = '${await Constants.getBaseUrl()}/orders?order_id=$encodedOrderId';
+    final prefs = await SharedPreferences.getInstance();
+    final warehouseId = prefs.getString('warehouseId') ?? '';
+
+    final url = '${await Constants.getBaseUrl()}/orders?warehouse=$warehouseId&orderStatus=9&order_id=$encodedOrderId';
     log('search all orders url: $url');
     final mainUrl = Uri.parse(url);
     final token = await _getToken();
@@ -132,7 +135,9 @@ class ReturnEntryProvider with ChangeNotifier {
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        _orders = [Order.fromJson(data)];
+        _orders = [
+          Order.fromJson(data)
+        ];
         Logger().e('return orders: $_orders');
       } else {
         _orders = [];
@@ -147,25 +152,28 @@ class ReturnEntryProvider with ChangeNotifier {
   }
 
   Future<Map<String, dynamic>> submitQualityCheck(
-      BuildContext context,
-      String orderId,
-      List<Map<String, dynamic>> itemsList,
-      ) async {
+    BuildContext context,
+    String orderId,
+    List<Map<String, dynamic>> itemsList,
+  ) async {
     for (var item in itemsList) {
       final goodQty = int.tryParse(item['goodQty'].text) ?? 0;
       final badQty = int.tryParse(item['badQty'].text) ?? 0;
       if (goodQty + badQty > item['total']) {
         showMessageDialog(context, 'Good + Bad quantity cannot exceed total for ${item['sku']}', Colors.red);
-        return {'success': false, 'message': 'Validation failed'};
+        return {
+          'success': false,
+          'message': 'Validation failed'
+        };
       }
     }
 
     List<Map<String, dynamic>> qualityCheckResults = itemsList
         .map((item) => {
-      "productSku": item['sku'],
-      "bad": int.tryParse(item['badQty'].text) ?? 0,
-      "good": int.tryParse(item['goodQty'].text) ?? 0,
-    })
+              "productSku": item['sku'],
+              "bad": int.tryParse(item['badQty'].text) ?? 0,
+              "good": int.tryParse(item['goodQty'].text) ?? 0,
+            })
         .toList();
 
     Map<String, dynamic> requestBody = {
@@ -184,15 +192,17 @@ class ReturnEntryProvider with ChangeNotifier {
     final token = await _getToken();
 
     if (token == null || token.isEmpty) {
-      return {'success': false, 'message': 'Authentication failed'};
+      return {
+        'success': false,
+        'message': 'Authentication failed'
+      };
     }
 
     try {
       _isLoading = true;
       notifyListeners();
 
-      var request = http.MultipartRequest('POST', mainUrl)
-        ..headers['Authorization'] = 'Bearer $token';
+      var request = http.MultipartRequest('POST', mainUrl)..headers['Authorization'] = 'Bearer $token';
 
       request.fields['qualityCheckResults'] = jsonEncode(body['qualityCheckResults']);
 
@@ -235,14 +245,23 @@ class ReturnEntryProvider with ChangeNotifier {
         Logger().e('return orders: $data');
         clearImages(isGood: true);
         clearImages(isGood: false);
-        return {'success': true, 'message': data['message']};
+        return {
+          'success': true,
+          'message': data['message']
+        };
       } else {
         Logger().e('return orders error: ${response.statusCode}');
-        return {'success': false, 'message': data['message'] ?? 'Failed to submit quality check'};
+        return {
+          'success': false,
+          'message': data['message'] ?? 'Failed to submit quality check'
+        };
       }
     } catch (e, s) {
       log('catched error: $e $s');
-      return {'success': false, 'message': 'An error occurred while uploading: $e'};
+      return {
+        'success': false,
+        'message': 'An error occurred while uploading: $e'
+      };
     } finally {
       _isLoading = false;
       notifyListeners();

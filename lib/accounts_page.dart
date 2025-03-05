@@ -1,6 +1,7 @@
 import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:inventory_management/Api/auth_provider.dart';
 import 'package:inventory_management/Custom-Files/utils.dart';
 import 'package:inventory_management/Widgets/big_combo_card.dart';
 import 'package:inventory_management/Widgets/order_info.dart';
@@ -28,6 +29,7 @@ class _AccountsPageState extends State<AccountsPage> {
   String _selectedDate = 'Select Date';
   final remarkController = TextEditingController();
   DateTime? picked;
+  final accountsRemark = TextEditingController();
 
   @override
   void initState() {
@@ -192,17 +194,18 @@ class _AccountsPageState extends State<AccountsPage> {
                             Text(selectedPaymentMode ?? ''),
                             PopupMenuButton<String>(
                               tooltip: 'Filter by Payment Mode',
-                              onSelected: (String value) {
-                                if (value != '') {
+                              onSelected: (String? value) {
+                                if (value != '' && value != null) {
                                   setState(() {
                                     selectedPaymentMode = value;
                                   });
-                                  accountsProvider.fetchOrdersWithStatus2(mode: selectedPaymentMode ?? '', date: picked);
+                                  accountsProvider.fetchOrdersWithStatus2(
+                                      mode: selectedPaymentMode ?? '', date: picked, market: selectedCourier);
                                 }
-                                if (selectedCourier != 'All') {
-                                  accountsProvider.fetchOrdersByMarketplace(selectedCourier, 2, accountsProvider.currentPage,
-                                      date: picked, mode: selectedPaymentMode);
-                                }
+                                // if (selectedCourier != 'All') {
+                                //   accountsProvider.fetchOrdersByMarketplace(selectedCourier, 2, accountsProvider.currentPage,
+                                //       date: picked, mode: selectedPaymentMode);
+                                // }
                                 log('Selected: $value');
                               },
                               itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
@@ -269,13 +272,14 @@ class _AccountsPageState extends State<AccountsPage> {
                                       _selectedDate = formattedDate;
                                     });
 
-                                    if (selectedCourier != 'All') {
-                                      accountsProvider.fetchOrdersByMarketplace(selectedCourier, 2, accountsProvider.currentPage,
-                                          date: picked, mode: selectedPaymentMode);
-                                    } else {
-                                      Logger().e('else me hai');
-                                      accountsProvider.fetchOrdersWithStatus2(date: picked, mode: selectedPaymentMode);
-                                    }
+                                    // if (selectedCourier != 'All') {
+                                    //   accountsProvider.fetchOrdersByMarketplace(selectedCourier, 2, accountsProvider.currentPage,
+                                    //       date: picked, mode: selectedPaymentMode);
+                                    // } else {
+                                    Logger().e('else me hai');
+                                    accountsProvider.fetchOrdersWithStatus2(
+                                        date: picked, mode: selectedPaymentMode, market: selectedCourier);
+                                    // }
                                   }
                                 },
                                 icon: const Icon(
@@ -299,20 +303,21 @@ class _AccountsPageState extends State<AccountsPage> {
                                   tooltip: 'Filter by Marketplace',
                                   onSelected: (String value) {
                                     Logger().e('ye hai value: $value');
-                                    if (value == 'All') {
-                                      setState(() {
-                                        selectedCourier = value;
-                                      });
-                                      accountsProvider.fetchOrdersWithStatus2(date: picked, mode: selectedPaymentMode);
-                                    } else {
-                                      Logger().e('ye hai else value: $value');
-                                      setState(() {
-                                        selectedCourier = value;
-                                      });
-                                      accountsProvider.fetchOrdersByMarketplace(value, 2, accountsProvider.currentPage,
-                                          date: picked, mode: selectedPaymentMode);
-                                    }
-                                    log('Selected: $value');
+                                    // if (value == 'All') {
+                                    setState(() {
+                                      selectedCourier = value;
+                                    });
+                                    accountsProvider.fetchOrdersWithStatus2(
+                                        date: picked, mode: selectedPaymentMode, market: selectedCourier);
+                                    // } else {
+                                    //   Logger().e('ye hai else value: $value');
+                                    //   setState(() {
+                                    //     selectedCourier = value;
+                                    //   });
+                                    //   accountsProvider.fetchOrdersByMarketplace(value, 2, accountsProvider.currentPage,
+                                    //       date: picked, mode: selectedPaymentMode);
+                                    // }
+                                    // log('Selected: $value');
                                   },
                                   itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
                                     ...provider.marketplaces.map((marketplace) => PopupMenuItem<String>(
@@ -341,68 +346,16 @@ class _AccountsPageState extends State<AccountsPage> {
                           style: ElevatedButton.styleFrom(
                             backgroundColor: AppColors.primaryBlue,
                           ),
-                          onPressed: accountsProvider.isCloning
-                              ? null // Disable button while loading
-                              : () async {
-                                  List<String> selectedOrderIds = accountsProvider.orders
-                                      .asMap()
-                                      .entries
-                                      .where((entry) => accountsProvider.selectedProducts[entry.key])
-                                      .map((entry) => entry.value.orderId)
-                                      .toList();
-
-                                  if (selectedOrderIds.isEmpty) {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(
-                                        content: Text('No orders selected'),
-                                        backgroundColor: AppColors.cardsred,
-                                      ),
-                                    );
-                                  } else {
-                                    String resultMessage = await accountsProvider.cloneOrders(context, selectedOrderIds);
-                                    Color snackBarColor;
-                                    if (resultMessage.contains('success')) {
-                                      snackBarColor = AppColors.green; // Success: Green
-                                    } else if (resultMessage.contains('error') || resultMessage.contains('failed')) {
-                                      snackBarColor = AppColors.cardsred; // Error: Red
-                                    } else {
-                                      snackBarColor = AppColors.orange; // Other: Orange
-                                    }
-
-                                    // Show feedback based on the result
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
-                                        content: Text(resultMessage),
-                                        backgroundColor: snackBarColor,
-                                      ),
-                                    );
-                                  }
-                                },
-                          child: accountsProvider.isCloning
-                              ? const SizedBox(
-                                  width: 20,
-                                  height: 20,
-                                  child: CircularProgressIndicator(color: Colors.white),
-                                )
-                              : const Text(
-                                  'Clone',
-                                  style: TextStyle(color: Colors.white),
-                                ),
-                        ),
-                        const SizedBox(width: 8),
-                        ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.primaryBlue,
-                          ),
                           onPressed: () async {
                             final res = await accountsProvider.statusUpdate(context);
                             if (res == true) {
-                              if (selectedCourier != 'All') {
-                                await accountsProvider.fetchOrdersByMarketplace(selectedCourier, 2, accountsProvider.currentPage,
-                                    date: picked, mode: selectedPaymentMode);
-                              } else {
-                                await accountsProvider.fetchOrdersWithStatus2(date: picked, mode: selectedPaymentMode);
-                              }
+                              // if (selectedCourier != 'All') {
+                              //   await accountsProvider.fetchOrdersByMarketplace(selectedCourier, 2, accountsProvider.currentPage,
+                              //       date: picked, mode: selectedPaymentMode);
+                              // } else {
+                              await accountsProvider.fetchOrdersWithStatus2(
+                                  date: picked, mode: selectedPaymentMode, market: selectedCourier);
+                              // }
                             }
                           },
                           child: accountsProvider.isUpdatingOrder
@@ -462,12 +415,13 @@ class _AccountsPageState extends State<AccountsPage> {
                                     // Determine the background color based on the result
                                     Color snackBarColor;
                                     if (resultMessage.contains('success')) {
-                                      if (selectedCourier != 'All') {
-                                        await accountsProvider.fetchOrdersByMarketplace(selectedCourier, 2, accountsProvider.currentPage,
-                                            date: picked, mode: selectedPaymentMode);
-                                      } else {
-                                        await accountsProvider.fetchOrdersWithStatus2(date: picked, mode: selectedPaymentMode);
-                                      }
+                                      // if (selectedCourier != 'All') {
+                                      //   await accountsProvider.fetchOrdersByMarketplace(selectedCourier, 2, accountsProvider.currentPage,
+                                      //       date: picked, mode: selectedPaymentMode);
+                                      // } else {
+                                      await accountsProvider.fetchOrdersWithStatus2(
+                                          date: picked, mode: selectedPaymentMode, market: selectedCourier);
+                                      // }
 
                                       snackBarColor = AppColors.green; // Success: Green
                                     } else if (resultMessage.contains('error') || resultMessage.contains('failed')) {
@@ -693,17 +647,8 @@ class _AccountsPageState extends State<AccountsPage> {
                                                 // Ready
                                                 if (searched.isNotEmpty) {
                                                   accountsProvider.searchOrders(searched, selectedSearchType);
-                                                } else if (selectedCourier != 'All') {
-                                                  accountsProvider.fetchOrdersByMarketplace(
-                                                      selectedCourier, 2, accountsProvider.currentPage,
-                                                      date: picked, mode: selectedPaymentMode);
-                                                } else if (searched.isNotEmpty && selectedCourier != 'All') {
-                                                  accountsProvider.fetchOrdersByMarketplace(
-                                                      selectedCourier, 2, accountsProvider.currentPage,
-                                                      mode: selectedPaymentMode);
-                                                  accountsProvider.searchOrders(searched, selectedSearchType);
                                                 } else {
-                                                  accountsProvider.fetchOrdersWithStatus2(date: picked, mode: selectedPaymentMode);
+                                                  accountsProvider.fetchOrdersWithStatus2(date: picked, mode: selectedPaymentMode, market: selectedCourier);
                                                 }
                                               }
                                             },
@@ -725,26 +670,23 @@ class _AccountsPageState extends State<AccountsPage> {
                                             onPressed: () async {
                                               showDialog(
                                                   context: context,
+                                                  barrierDismissible: true,
                                                   builder: (context) {
                                                     return const AlertDialog(
                                                       content: Row(
-                                                        children: [
-                                                          CircularProgressIndicator(),
-                                                          SizedBox(width: 8),
-                                                          Text('Reversing')
-                                                        ],
+                                                        children: [CircularProgressIndicator(), SizedBox(width: 8), Text('Reversing')],
                                                       ),
                                                     );
                                                   });
 
-                                              final res = await accountsProvider.reverseOrder(order.orderId);
+                                              final res = await context.read<AuthProvider>().reverseOrder(order.orderId, '1');
                                               Navigator.pop(context);
 
                                               if (res['success'] == true) {
-                                                Utils.showSnackBar(context, res['message'], AppColors.green);
-                                                accountsProvider.fetchOrdersWithStatus2();
+                                                Utils.showInfoDialog(
+                                                    context, "${res['message']}\nNew Order ID: ${res['newOrderId']}", true);
                                               } else {
-                                                Utils.showSnackBar(context, res['message'], AppColors.cardsred);
+                                                Utils.showInfoDialog(context, res['message'], false);
                                               }
                                             },
                                           ),
@@ -757,434 +699,6 @@ class _AccountsPageState extends State<AccountsPage> {
                                     color: AppColors.grey,
                                   ),
                                   OrderInfo(order: order, pro: accountsProvider),
-                                  // Padding(
-                                  //   padding: const EdgeInsets.all(8.0),
-                                  //   child: Row(
-                                  //     crossAxisAlignment:
-                                  //         CrossAxisAlignment.start,
-                                  //     children: [
-                                  //       Expanded(
-                                  //         child: Padding(
-                                  //           padding: const EdgeInsets.only(
-                                  //               right: 8.0),
-                                  //           child: Column(
-                                  //             crossAxisAlignment:
-                                  //                 CrossAxisAlignment.start,
-                                  //             children: [
-                                  //               buildLabelValueRow(
-                                  //                   'Payment Mode',
-                                  //                   order.paymentMode ?? ''),
-                                  //               buildLabelValueRow(
-                                  //                   'Currency Code',
-                                  //                   order.currencyCode ?? ''),
-                                  //               buildLabelValueRow(
-                                  //                   'COD Amount',
-                                  //                   order.codAmount
-                                  //                           .toString() ??
-                                  //                       ''),
-                                  //               buildLabelValueRow(
-                                  //                   'Prepaid Amount',
-                                  //                   order.prepaidAmount
-                                  //                           .toString() ??
-                                  //                       ''),
-                                  //               buildLabelValueRow(
-                                  //                   'Coin',
-                                  //                   order.coin.toString() ??
-                                  //                       ''),
-                                  //               buildLabelValueRow(
-                                  //                   'Tax Percent',
-                                  //                   order.taxPercent
-                                  //                           .toString() ??
-                                  //                       ''),
-                                  //               buildLabelValueRow(
-                                  //                   'Courier Name',
-                                  //                   order.courierName ?? ''),
-                                  //               buildLabelValueRow('Order Type',
-                                  //                   order.orderType ?? ''),
-                                  //               buildLabelValueRow(
-                                  //                   'Payment Bank',
-                                  //                   order.paymentBank ?? ''),
-                                  //             ],
-                                  //           ),
-                                  //         ),
-                                  //       ),
-                                  //       // const SizedBox(width: 12.0),
-                                  //       Expanded(
-                                  //         child: Padding(
-                                  //           padding: const EdgeInsets.only(
-                                  //               right: 8.0),
-                                  //           child: Column(
-                                  //             crossAxisAlignment:
-                                  //                 CrossAxisAlignment.start,
-                                  //             children: [
-                                  //               buildLabelValueRow(
-                                  //                   'Discount Amount',
-                                  //                   order.discountAmount
-                                  //                           .toString() ??
-                                  //                       ''),
-                                  //               buildLabelValueRow(
-                                  //                   'Discount Scheme',
-                                  //                   order.discountScheme ?? ''),
-                                  //               buildLabelValueRow(
-                                  //                   'Discount Percent',
-                                  //                   order.discountPercent
-                                  //                           .toString() ??
-                                  //                       ''),
-                                  //               buildLabelValueRow(
-                                  //                   'Agent', order.agent ?? ''),
-                                  //               buildLabelValueRow(
-                                  //                   'Notes', order.notes ?? ''),
-                                  //               buildLabelValueRow(
-                                  //                   'Marketplace',
-                                  //                   order.marketplace?.name ??
-                                  //                       ''),
-                                  //               buildLabelValueRow('Filter',
-                                  //                   order.filter ?? ''),
-                                  //               buildLabelValueRow(
-                                  //                 'Expected Delivery Date',
-                                  //                 order.expectedDeliveryDate !=
-                                  //                         null
-                                  //                     ? accountsProvider
-                                  //                         .formatDate(order
-                                  //                             .expectedDeliveryDate!)
-                                  //                     : '',
-                                  //               ),
-                                  //               buildLabelValueRow(
-                                  //                   'Preferred Courier',
-                                  //                   order.preferredCourier ??
-                                  //                       ''),
-                                  //               buildLabelValueRow(
-                                  //                 'Payment Date Time',
-                                  //                 order.paymentDateTime != null
-                                  //                     ? accountsProvider
-                                  //                         .formatDateTime(order
-                                  //                             .paymentDateTime!)
-                                  //                     : '',
-                                  //               ),
-                                  //             ],
-                                  //           ),
-                                  //         ),
-                                  //       ),
-                                  //       // const SizedBox(width: 12.0),
-                                  //       Expanded(
-                                  //         child: Padding(
-                                  //           padding: const EdgeInsets.only(
-                                  //               right: 8.0),
-                                  //           child: Column(
-                                  //             crossAxisAlignment:
-                                  //                 CrossAxisAlignment.start,
-                                  //             children: [
-                                  //               buildLabelValueRow(
-                                  //                   'Delivery Term',
-                                  //                   order.deliveryTerm ?? ''),
-                                  //               buildLabelValueRow(
-                                  //                   'Transaction Number',
-                                  //                   order.transactionNumber ??
-                                  //                       ''),
-                                  //               buildLabelValueRow(
-                                  //                   'Micro Dealer Order',
-                                  //                   order.microDealerOrder ??
-                                  //                       ''),
-                                  //               buildLabelValueRow(
-                                  //                   'Fulfillment Type',
-                                  //                   order.fulfillmentType ??
-                                  //                       ''),
-                                  //               buildLabelValueRow(
-                                  //                   'No. of Boxes',
-                                  //                   order.numberOfBoxes
-                                  //                           .toString() ??
-                                  //                       ''),
-                                  //               buildLabelValueRow(
-                                  //                   'Total Quantity',
-                                  //                   order.totalQuantity
-                                  //                           .toString() ??
-                                  //                       ''),
-                                  //               buildLabelValueRow(
-                                  //                   'SKU Qty',
-                                  //                   order.skuQty.toString() ??
-                                  //                       ''),
-                                  //               buildLabelValueRow(
-                                  //                   'Calc Entry No.',
-                                  //                   order.calcEntryNumber ??
-                                  //                       ''),
-                                  //               buildLabelValueRow('Currency',
-                                  //                   order.currency ?? ''),
-                                  //             ],
-                                  //           ),
-                                  //         ),
-                                  //       ),
-                                  //       // const SizedBox(width: 12.0),
-                                  //       Expanded(
-                                  //         child: Column(
-                                  //           crossAxisAlignment:
-                                  //               CrossAxisAlignment.start,
-                                  //           children: [
-                                  //             buildLabelValueRow(
-                                  //               'Dimensions',
-                                  //               '${order.length.toString() ?? ''} x ${order.breadth.toString() ?? ''} x ${order.height.toString() ?? ''}',
-                                  //             ),
-                                  //             buildLabelValueRow(
-                                  //                 'Tracking Status',
-                                  //                 order.trackingStatus ?? ''),
-                                  //             const SizedBox(
-                                  //               height: 7,
-                                  //             ),
-                                  //             const Text(
-                                  //               'Customer Details:',
-                                  //               style: TextStyle(
-                                  //                   fontWeight: FontWeight.bold,
-                                  //                   fontSize: 12.0,
-                                  //                   color:
-                                  //                       AppColors.primaryBlue),
-                                  //             ),
-                                  //             buildLabelValueRow(
-                                  //               'Customer ID',
-                                  //               order.customer?.customerId ??
-                                  //                   '',
-                                  //             ),
-                                  //             buildLabelValueRow(
-                                  //                 'Full Name',
-                                  //                 order.customer?.firstName !=
-                                  //                         order.customer
-                                  //                             ?.lastName
-                                  //                     ? '${order.customer?.firstName ?? ''} ${order.customer?.lastName ?? ''}'
-                                  //                         .trim()
-                                  //                     : order.customer
-                                  //                             ?.firstName ??
-                                  //                         ''),
-                                  //             buildLabelValueRow(
-                                  //               'Email',
-                                  //               order.customer?.email ?? '',
-                                  //             ),
-                                  //             buildLabelValueRow(
-                                  //               'Phone',
-                                  //               maskPhoneNumber(order
-                                  //                       .customer?.phone
-                                  //                       ?.toString()) ??
-                                  //                   '',
-                                  //             ),
-                                  //             buildLabelValueRow(
-                                  //               'GSTIN',
-                                  //               order.customer?.customerGstin ??
-                                  //                   '',
-                                  //             ),
-                                  //           ],
-                                  //         ),
-                                  //       ),
-                                  //     ],
-                                  //   ),
-                                  // ),
-                                  // Padding(
-                                  //   padding: const EdgeInsets.all(16.0),
-                                  //   child: Row(
-                                  //     mainAxisAlignment:
-                                  //         MainAxisAlignment.start,
-                                  //     children: [
-                                  //       Expanded(
-                                  //         // flex: 1,
-                                  //         child: FittedBox(
-                                  //           fit: BoxFit.scaleDown,
-                                  //           child: Column(
-                                  //             crossAxisAlignment:
-                                  //                 CrossAxisAlignment.start,
-                                  //             children: [
-                                  //               const Text(
-                                  //                 'Shipping Address:',
-                                  //                 style: TextStyle(
-                                  //                     fontWeight:
-                                  //                         FontWeight.bold,
-                                  //                     fontSize: 12.0,
-                                  //                     color: AppColors
-                                  //                         .primaryBlue),
-                                  //               ),
-                                  //               Row(
-                                  //                 crossAxisAlignment:
-                                  //                     CrossAxisAlignment.start,
-                                  //                 children: [
-                                  //                   const Text(
-                                  //                     'Address: ',
-                                  //                     style: TextStyle(
-                                  //                       fontWeight:
-                                  //                           FontWeight.bold,
-                                  //                       fontSize: 12.0,
-                                  //                     ),
-                                  //                   ),
-                                  //                   Text(
-                                  //                     [
-                                  //                       order.shippingAddress
-                                  //                           ?.address1,
-                                  //                       order.shippingAddress
-                                  //                           ?.address2,
-                                  //                       order.shippingAddress
-                                  //                           ?.city,
-                                  //                       order.shippingAddress
-                                  //                           ?.state,
-                                  //                       order.shippingAddress
-                                  //                           ?.country,
-                                  //                       order.shippingAddress
-                                  //                           ?.pincode
-                                  //                           ?.toString(),
-                                  //                     ]
-                                  //                         .where((element) =>
-                                  //                             element != null &&
-                                  //                             element
-                                  //                                 .isNotEmpty)
-                                  //                         .join(', ')
-                                  //                         .replaceAllMapped(
-                                  //                             RegExp('.{1,50}'),
-                                  //                             (match) =>
-                                  //                                 '${match.group(0)}\n'),
-                                  //                     softWrap: true,
-                                  //                     maxLines: null,
-                                  //                     style: const TextStyle(
-                                  //                       fontSize: 12.0,
-                                  //                     ),
-                                  //                   ),
-                                  //                 ],
-                                  //               ),
-                                  //               buildLabelValueRow(
-                                  //                 'Name',
-                                  //                 order.shippingAddress
-                                  //                             ?.firstName !=
-                                  //                         order.shippingAddress
-                                  //                             ?.lastName
-                                  //                     ? '${order.shippingAddress?.firstName ?? ''} ${order.shippingAddress?.lastName ?? ''}'
-                                  //                         .trim()
-                                  //                     : order.shippingAddress
-                                  //                             ?.firstName ??
-                                  //                         '',
-                                  //               ),
-                                  //               buildLabelValueRow(
-                                  //                   'Pincode',
-                                  //                   order.shippingAddress
-                                  //                           ?.pincode
-                                  //                           ?.toString() ??
-                                  //                       ''),
-                                  //               buildLabelValueRow(
-                                  //                   'Country Code',
-                                  //                   order.shippingAddress
-                                  //                           ?.countryCode ??
-                                  //                       ''),
-                                  //             ],
-                                  //           ),
-                                  //         ),
-                                  //       ),
-                                  //       Expanded(
-                                  //         // flex: 1,
-                                  //         child: FittedBox(
-                                  //           fit: BoxFit.scaleDown,
-                                  //           child: Column(
-                                  //             crossAxisAlignment:
-                                  //                 CrossAxisAlignment.start,
-                                  //             children: [
-                                  //               const Text(
-                                  //                 'Billing Address:',
-                                  //                 style: TextStyle(
-                                  //                     fontWeight:
-                                  //                         FontWeight.bold,
-                                  //                     fontSize: 12.0,
-                                  //                     color: AppColors
-                                  //                         .primaryBlue),
-                                  //               ),
-                                  //               Row(
-                                  //                 crossAxisAlignment:
-                                  //                     CrossAxisAlignment.start,
-                                  //                 children: [
-                                  //                   const Text(
-                                  //                     'Address: ',
-                                  //                     style: TextStyle(
-                                  //                       fontWeight:
-                                  //                           FontWeight.bold,
-                                  //                       fontSize: 12.0,
-                                  //                     ),
-                                  //                   ),
-                                  //                   Text(
-                                  //                     [
-                                  //                       order.billingAddress
-                                  //                           ?.address1,
-                                  //                       order.billingAddress
-                                  //                           ?.address2,
-                                  //                       order.billingAddress
-                                  //                           ?.city,
-                                  //                       order.billingAddress
-                                  //                           ?.state,
-                                  //                       order.billingAddress
-                                  //                           ?.country,
-                                  //                       order.billingAddress
-                                  //                           ?.pincode
-                                  //                           ?.toString(),
-                                  //                     ]
-                                  //                         .where((element) =>
-                                  //                             element != null &&
-                                  //                             element
-                                  //                                 .isNotEmpty)
-                                  //                         .join(', ')
-                                  //                         .replaceAllMapped(
-                                  //                             RegExp('.{1,50}'),
-                                  //                             (match) =>
-                                  //                                 '${match.group(0)}\n'),
-                                  //                     softWrap: true,
-                                  //                     maxLines: null,
-                                  //                     style: const TextStyle(
-                                  //                       fontSize: 12.0,
-                                  //                     ),
-                                  //                   ),
-                                  //                 ],
-                                  //               ),
-                                  //               // buildLabelValueRow(
-                                  //               //   'Address',
-                                  //               //   [
-                                  //               //     order.billingAddress
-                                  //               //         ?.address1,
-                                  //               //     order.billingAddress
-                                  //               //         ?.address2,
-                                  //               //     order.billingAddress?.city,
-                                  //               //     order.billingAddress?.state,
-                                  //               //     order.billingAddress
-                                  //               //         ?.country,
-                                  //               //     order
-                                  //               //         .billingAddress?.pincode
-                                  //               //         ?.toString(),
-                                  //               //   ]
-                                  //               //       .where((element) =>
-                                  //               //           element != null &&
-                                  //               //           element.isNotEmpty)
-                                  //               //       .join(', ')
-                                  //               //       .replaceAllMapped(
-                                  //               //           RegExp('.{1,50}'),
-                                  //               //           (match) =>
-                                  //               //               '${match.group(0)}\n'),
-                                  //               // ),
-                                  //               buildLabelValueRow(
-                                  //                 'Name',
-                                  //                 order.billingAddress
-                                  //                             ?.firstName !=
-                                  //                         order.billingAddress
-                                  //                             ?.lastName
-                                  //                     ? '${order.billingAddress?.firstName ?? ''} ${order.billingAddress?.lastName ?? ''}'
-                                  //                         .trim()
-                                  //                     : order.billingAddress
-                                  //                             ?.firstName ??
-                                  //                         '',
-                                  //               ),
-                                  //               buildLabelValueRow(
-                                  //                   'Pincode',
-                                  //                   order.billingAddress
-                                  //                           ?.pincode
-                                  //                           ?.toString() ??
-                                  //                       ''),
-                                  //               buildLabelValueRow(
-                                  //                   'Country Code',
-                                  //                   order.billingAddress
-                                  //                           ?.countryCode ??
-                                  //                       ''),
-                                  //             ],
-                                  //           ),
-                                  //         ),
-                                  //       ),
-                                  //     ],
-                                  //   ),
-                                  // ),
                                   Padding(
                                     padding: const EdgeInsets.symmetric(horizontal: 16.0),
                                     child: Text.rich(
@@ -1196,6 +710,13 @@ class _AccountsPageState extends State<AccountsPage> {
                                                 style: const TextStyle(
                                                   fontWeight: FontWeight.normal,
                                                 )),
+                                            (order.outBoundBy?['outboundBy']?.toString().isNotEmpty ?? false) ?
+                                            TextSpan(
+                                              text: "(${order.outBoundBy?['outboundBy'].toString().split('@')[0] ?? ''})",
+                                              style: const TextStyle(
+                                                fontWeight: FontWeight.normal,
+                                              ),
+                                            ) : const TextSpan()
                                           ],
                                           style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 20)),
                                     ),
@@ -1224,7 +745,7 @@ class _AccountsPageState extends State<AccountsPage> {
                                             )),
                                       ),
                                     ),
-                                  if (order.baApprovedBy!['status'] == true)
+                                  if (order.baApprovedBy?['status'] ?? false)
                                     Padding(
                                       padding: const EdgeInsets.symmetric(horizontal: 16.0),
                                       child: Text.rich(
@@ -1272,9 +793,126 @@ class _AccountsPageState extends State<AccountsPage> {
                                         Column(
                                           crossAxisAlignment: CrossAxisAlignment.end,
                                           children: [
+                                            ElevatedButton(
+                                              onPressed: () {
+                                                final pro = context.read<AccountsProvider>();
+                                                setState(() {
+                                                  accountsRemark.text = order.messages?['accountMessage']?.toString() ?? '';
+                                                });
+                                                showDialog(
+                                                  context: context,
+                                                  builder: (_) {
+                                                    return Dialog(
+                                                      shape: RoundedRectangleBorder(
+                                                        borderRadius: BorderRadius.circular(16),
+                                                      ),
+                                                      insetPadding: const EdgeInsets.symmetric(horizontal: 20),
+                                                      child: Container(
+                                                        width: MediaQuery.of(context).size.width * 0.9,
+                                                        constraints: const BoxConstraints(maxWidth: 600),
+                                                        padding: const EdgeInsets.all(20),
+                                                        child: Column(
+                                                          mainAxisSize: MainAxisSize.min,
+                                                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                                                          children: [
+                                                            const Text(
+                                                              'Remark',
+                                                              style: TextStyle(
+                                                                fontSize: 24,
+                                                                fontWeight: FontWeight.bold,
+                                                              ),
+                                                            ),
+                                                            const SizedBox(height: 20),
+                                                            TextField(
+                                                              controller: accountsRemark,
+                                                              maxLines: 10,
+                                                              decoration: InputDecoration(
+                                                                border: OutlineInputBorder(
+                                                                  borderRadius: BorderRadius.circular(8),
+                                                                ),
+                                                                hintText: 'Enter your remark here',
+                                                                filled: true,
+                                                                fillColor: Colors.grey[50],
+                                                                contentPadding: const EdgeInsets.all(16),
+                                                              ),
+                                                            ),
+                                                            const SizedBox(height: 24),
+                                                            Row(
+                                                              mainAxisAlignment: MainAxisAlignment.end,
+                                                              children: [
+                                                                TextButton(
+                                                                  onPressed: () => Navigator.of(context).pop(),
+                                                                  child: const Text(
+                                                                    'Cancel',
+                                                                    style: TextStyle(fontSize: 16),
+                                                                  ),
+                                                                ),
+                                                                const SizedBox(width: 16),
+                                                                ElevatedButton(
+                                                                  onPressed: () async {
+                                                                    showDialog(
+                                                                      context: context,
+                                                                      barrierDismissible: false,
+                                                                      builder: (_) {
+                                                                        return AlertDialog(
+                                                                          shape: RoundedRectangleBorder(
+                                                                            borderRadius: BorderRadius.circular(16),
+                                                                          ),
+                                                                          insetPadding: const EdgeInsets.symmetric(horizontal: 20),
+                                                                          content: const Row(
+                                                                            mainAxisSize: MainAxisSize.min,
+                                                                            children: [
+                                                                              CircularProgressIndicator(),
+                                                                              SizedBox(width: 20),
+                                                                              Text(
+                                                                                'Submitting Remark',
+                                                                                style: TextStyle(fontSize: 16),
+                                                                              ),
+                                                                            ],
+                                                                          ),
+                                                                        );
+                                                                      },
+                                                                    );
+
+                                                                    final res = await pro.writeRemark(context, order.id, accountsRemark.text);
+
+                                                                    log('saved :)');
+
+                                                                    Navigator.pop(context);
+                                                                    Navigator.pop(context);
+
+                                                                    res ? await pro.fetchAccountedOrders(pro.currentPageBooked) : null;
+                                                                  },
+                                                                  style: ElevatedButton.styleFrom(
+                                                                    padding: const EdgeInsets.symmetric(
+                                                                      horizontal: 24,
+                                                                      vertical: 12,
+                                                                    ),
+                                                                  ),
+                                                                  child: const Text(
+                                                                    'Submit',
+                                                                    style: TextStyle(fontSize: 16),
+                                                                  ),
+                                                                ),
+                                                              ],
+                                                            ),
+                                                          ],
+                                                        ),
+                                                      ),
+                                                    );
+                                                  },
+                                                );
+                                              },
+                                              child: (order.messages?['accountMessage']?.toString().isNotEmpty ?? false)
+                                                  ? const Text('Edit Remark')
+                                                  : const Text('Write Remark'),
+                                            ),
                                             if (order.messages?['confirmerMessage']?.toString().isNotEmpty ?? false) ...[
                                               Utils()
                                                   .showMessage(context, 'Confirmer Remark', order.messages!['confirmerMessage'].toString())
+                                            ],
+                                            if (order.messages?['accountMessage']?.toString().isNotEmpty ?? false) ...[
+                                              Utils().showMessage(context, 'Account Remark', order.messages!['accountMessage'].toString()),
                                             ],
                                           ],
                                         ),

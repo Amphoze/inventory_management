@@ -11,7 +11,7 @@ class PackerProvider with ChangeNotifier {
   bool _selectAll = false;
   List<bool> _selectedProducts = [];
   List<Order> _orders = [];
-  int _currentPage = 1; // Ensure this starts at 1
+  int _currentPage = 1;
   int _totalPages = 1;
   final PageController _pageController = PageController();
   final TextEditingController _textEditingController = TextEditingController();
@@ -112,7 +112,9 @@ class PackerProvider with ChangeNotifier {
 
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('authToken') ?? '';
-    String url = '${await Constants.getBaseUrl()}/orders?orderStatus=5&page=';
+    final warehouseId = prefs.getString('warehouseId') ?? '';
+
+    String url = '${await Constants.getBaseUrl()}/orders?warehouse=$warehouseId&orderStatus=5&page=';
 
     try {
       final response = await http.get(Uri.parse('$url$_currentPage'), headers: {
@@ -173,9 +175,11 @@ class PackerProvider with ChangeNotifier {
 
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('authToken') ?? '';
+    final warehouseId = prefs.getString('warehouseId') ?? '';
+
     String encodedOrderId = Uri.encodeComponent(query);
 
-    final url = '${await Constants.getBaseUrl()}/orders?orderStatus=5&order_id=$encodedOrderId';
+    final url = '${await Constants.getBaseUrl()}/orders?warehouse=$warehouseId&orderStatus=5&order_id=$encodedOrderId';
 
     print('Searching failed orders with term: $query');
 

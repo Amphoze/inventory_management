@@ -234,8 +234,9 @@ class ComboApi with ChangeNotifier {
         throw Exception('Failed to load products: ${response.statusCode}');
       }
     } catch (error) {
-      print('Error in getAllProducts: $error');
-      throw Exception('Error: $error');
+      log('Error in getAllProducts: $error');
+      // throw Exception('Error: $error');
+      return {};
     }
   }
 

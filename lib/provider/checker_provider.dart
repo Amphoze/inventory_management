@@ -27,8 +27,7 @@ class CheckerProvider with ChangeNotifier {
   PageController get pageController => _pageController;
   TextEditingController get textEditingController => _textEditingController;
 
-  int get selectedCount =>
-      _selectedProducts.where((isSelected) => isSelected).length;
+  int get selectedCount => _selectedProducts.where((isSelected) => isSelected).length;
 
   bool isRefreshingOrders = false;
 
@@ -39,8 +38,7 @@ class CheckerProvider with ChangeNotifier {
 
   void toggleSelectAll(bool value) {
     _selectAll = value;
-    _selectedProducts =
-        List<bool>.generate(_orders.length, (index) => _selectAll);
+    _selectedProducts = List<bool>.generate(_orders.length, (index) => _selectAll);
     notifyListeners();
   }
 
@@ -56,8 +54,7 @@ class CheckerProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  Future<String> cancelOrders(
-      BuildContext context, List<String> orderIds) async {
+  Future<String> cancelOrders(BuildContext context, List<String> orderIds) async {
     String baseUrl = await Constants.getBaseUrl();
     String cancelOrderUrl = '$baseUrl/orders/cancel';
     final prefs = await SharedPreferences.getInstance();
@@ -115,7 +112,9 @@ class CheckerProvider with ChangeNotifier {
 
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('authToken') ?? '';
-    String url = '${await Constants.getBaseUrl()}/orders?orderStatus=6&page=';
+    final warehouseId = prefs.getString('warehouseId') ?? '';
+
+    String url = '${await Constants.getBaseUrl()}/orders?warehouse=$warehouseId&orderStatus=6&page=';
 
     try {
       final response = await http.get(Uri.parse('$url$_currentPage'), headers: {
@@ -125,9 +124,7 @@ class CheckerProvider with ChangeNotifier {
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
-        List<Order> orders = (data['orders'] as List)
-            .map((order) => Order.fromJson(order))
-            .toList();
+        List<Order> orders = (data['orders'] as List).map((order) => Order.fromJson(order)).toList();
 
         _totalPages = data['totalPages']; // Get total pages from response
         _orders = orders; // Set the orders for the current page
@@ -178,9 +175,9 @@ class CheckerProvider with ChangeNotifier {
 
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('authToken') ?? '';
+    final warehouseId = prefs.getString('warehouseId') ?? '';
 
-    final url =
-        '${await Constants.getBaseUrl()}/orders?orderStatus=6&order_id=$query';
+    final url = '${await Constants.getBaseUrl()}/orders?warehouse=$warehouseId&orderStatus=6&order_id=$query';
 
     print('Searching failed orders with term: $query');
 

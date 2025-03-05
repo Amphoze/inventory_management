@@ -87,21 +87,6 @@ class _WarehousesPageState extends State<WarehousesPage> with SingleTickerProvid
         selectionControls: DesktopTextSelectionControls(),
         child: Stack(
           children: [
-            // Simplified background gradient
-            // Container(
-            //   decoration: const BoxDecoration(
-            //     gradient: LinearGradient(
-            //       begin: Alignment.topLeft,
-            //       end: Alignment.bottomRight,
-            //       colors: [
-            //         AppColors.lightGrey,
-            //         AppColors.greyBackground,
-            //       ],
-            //     ),
-            //   ),
-            // ),
-
-            // Content
             FadeTransition(
               opacity: _fadeAnimation,
               child: Column(
@@ -255,42 +240,6 @@ class _WarehousesPageState extends State<WarehousesPage> with SingleTickerProvid
                                                   _buildHeaderCell('Actions'),
                                                 ],
                                               ),
-                                              // ...provider.warehouses.map((warehouse) {
-                                              //   if (warehouse['country'] == 'usa') {
-                                              //     return const TableRow();
-                                              //   }
-                                              //   return TableRow(
-                                              //     decoration: BoxDecoration(
-                                              //       color: Colors.white,
-                                              //       border: Border(
-                                              //         bottom: BorderSide(
-                                              //           color: Colors.grey.shade200,
-                                              //         ),
-                                              //       ),
-                                              //     ),
-                                              //     children: [
-                                              //       _buildDataCell(warehouse['id']),
-                                              //       _buildDataCell(warehouse['name']),
-                                              //       _buildDataCell(warehouse['warehousePincode']),
-                                              //       Padding(
-                                              //         padding: const EdgeInsets.all(12),
-                                              //         child: ElevatedButton(
-                                              //           onPressed: () =>
-                                              //               _storeWarehouseId(warehouse['id'], warehouse['name'], warehouse['isPrimary']),
-                                              //           style: ElevatedButton.styleFrom(
-                                              //             backgroundColor: AppColors.primaryBlue,
-                                              //             foregroundColor: AppColors.white,
-                                              //             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                                              //             shape: RoundedRectangleBorder(
-                                              //               borderRadius: BorderRadius.circular(8),
-                                              //             ),
-                                              //           ),
-                                              //           child: const Text('Sign In'),
-                                              //         ),
-                                              //       ),
-                                              //     ],
-                                              //   );
-                                              // }),
                                               ...provider.warehouses.where((warehouse) {
                                                 if (isGGV == true) {
                                                   return warehouse['country'] != 'india';

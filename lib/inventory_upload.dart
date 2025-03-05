@@ -83,7 +83,7 @@ class _InventoryUploadState extends State<InventoryUpload> {
 
         final sku = _csvData[i][0].toString();
         final quantity = num.parse(_csvData[i][1].toString());
-        final binName = _csvData[i][2].toString();
+        // final binName = _csvData[i][2].toString();
         // log("${await ApiUrls.getBaseUrl()}/inventory?sku=$sku");
         // log({
         //   "newTotal": quantity,
@@ -101,7 +101,7 @@ class _InventoryUploadState extends State<InventoryUpload> {
             "action": type,
             "quantityChange": quantity,
             "warehouseId": warehouse,
-            "binName": binName
+            // "binName": binName
           }),
         );
 
@@ -258,12 +258,12 @@ class _InventoryUploadState extends State<InventoryUpload> {
                             child: Text('Quantity'),
                           ),
                         ),
-                        DataColumn(
-                          label: Padding(
-                            padding: EdgeInsets.symmetric(horizontal: 8.0),
-                            child: Text('Bin Name'),
-                          ),
-                        ),
+                        // DataColumn(
+                        //   label: Padding(
+                        //     padding: EdgeInsets.symmetric(horizontal: 8.0),
+                        //     child: Text('Bin Name'),
+                        //   ),
+                        // ),
                       ],
                       rows: _csvData.skip(1).map((row) {
                         return DataRow(
@@ -278,11 +278,11 @@ class _InventoryUploadState extends State<InventoryUpload> {
                                   const EdgeInsets.symmetric(horizontal: 8.0),
                               child: Text(row[1].toString()),
                             )),
-                            DataCell(Padding(
-                              padding:
-                                  const EdgeInsets.symmetric(horizontal: 8.0),
-                              child: Text(row[2].toString()),
-                            )),
+                            // DataCell(Padding(
+                            //   padding:
+                            //       const EdgeInsets.symmetric(horizontal: 8.0),
+                            //   child: Text(row[2].toString()),
+                            // )),
                           ],
                         );
                       }).toList(),

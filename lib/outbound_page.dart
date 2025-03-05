@@ -1046,6 +1046,13 @@ class _OutboundPageState extends State<OutboundPage> with TickerProviderStateMix
                                                           style: const TextStyle(
                                                             fontWeight: FontWeight.normal,
                                                           )),
+                                                      (order.outBoundBy?['outboundBy']?.toString().isNotEmpty ?? false) ?
+                                                      TextSpan(
+                                                        text: "(${order.outBoundBy?['outboundBy'].toString().split('@')[0] ?? ''})",
+                                                        style: const TextStyle(
+                                                          fontWeight: FontWeight.normal,
+                                                        ),
+                                                      ) : const TextSpan()
                                                     ],
                                                     style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 20)),
                                               ),

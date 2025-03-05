@@ -244,37 +244,35 @@ class OrdersProvider with ChangeNotifier {
   }
 
   Future<bool> writeRemark(String id, String msg) async {
-    // Get the auth token
     final token = await _getToken();
 
-    // Check if the token is valid
     if (token == null || token.isEmpty) {
       print('Token is missing. Please log in again.');
       return false;
     }
 
     final url = '${await Constants.getBaseUrl()}/orders/$id';
+
+    log('writeRemark url: $url');
+
     try {
       final response = await http.put(
         Uri.parse(url),
         headers: {
-          'Content-Type': 'application/json',
           'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
         },
         body: json.encode({
-          "messages": {"confirmerMessage": msg}
+          "messages": {
+            "confirmerMessage": msg
+          }
         }),
       );
 
-      log("response: ${response.statusCode}");
+      log("writeRemark code: ${response.statusCode}");
+      log("writeRemark body: ${response.body}");
 
       if (response.statusCode == 200) {
-        // Logger().e('code: ${response.statusCode}');
-        // Logger().e('body: ${response.body}');
-
-        // await fetchReadyOrders();
-
-        notifyListeners();
         return true;
       } else {
         log('Failed to update order: ${response.body}');
@@ -283,6 +281,8 @@ class OrdersProvider with ChangeNotifier {
     } catch (error) {
       log('Error updating order: $error');
       return false;
+    } finally {
+      notifyListeners();
     }
   }
 
@@ -295,10 +295,14 @@ class OrdersProvider with ChangeNotifier {
     }
     setFailedLoading(true);
 
-    var failedOrdersUrl = '${await Constants.getBaseUrl()}/orders?orderStatus=0&page=$page';
+    // Get the warehouse ID from shared preferences
+    final prefs = await SharedPreferences.getInstance();
+    final warehouseId = prefs.getString('warehouseId') ?? '';
+
+    var failedOrdersUrl = '${await Constants.getBaseUrl()}/orders?warehouse=$warehouseId&orderStatus=0&page=$page';
 
     if (date != null) {
-      String formattedDate = DateFormat('yyyy-MM-dd').format(date!);
+      String formattedDate = DateFormat('yyyy-MM-dd').format(date);
       failedOrdersUrl += '&date=$formattedDate';
     }
 
@@ -364,7 +368,10 @@ class OrdersProvider with ChangeNotifier {
     }
     setReadyLoading(true);
 
-    var readyOrdersUrl = '${await Constants.getBaseUrl()}/orders?orderStatus=1&isOutBound=true&page=$page';
+    final prefs = await SharedPreferences.getInstance();
+    final warehouseId = prefs.getString('warehouseId') ?? '';
+
+    var readyOrdersUrl = '${await Constants.getBaseUrl()}/orders?warehouse=$warehouseId&orderStatus=1&isOutBound=true&page=$page';
 
     if (date != null) {
       String formattedDate = DateFormat('yyyy-MM-dd').format(date);
@@ -617,8 +624,7 @@ class OrdersProvider with ChangeNotifier {
     notifyListeners();
     Logger().e('failedOrders: $failedOrders');
 
-    final List<String> failedOrderIds =
-        failedOrders.asMap().entries.where((entry) => _selectedFailedOrders[entry.key]).map((entry) => entry.value.orderId).toList();
+    final List<String> failedOrderIds = failedOrders.asMap().entries.where((entry) => _selectedFailedOrders[entry.key]).map((entry) => entry.value.orderId).toList();
     Logger().e('failedOrderIds: $failedOrderIds');
 
     if (failedOrderIds.isEmpty) {
@@ -643,8 +649,7 @@ class OrdersProvider with ChangeNotifier {
 
 // Update status for ready-to-confirm orders
   Future<void> updateReadyToConfirmOrders(BuildContext context) async {
-    final List<String> readyOrderIds =
-        readyOrders.asMap().entries.where((entry) => _selectedReadyOrders[entry.key]).map((entry) => entry.value.orderId).toList();
+    final List<String> readyOrderIds = readyOrders.asMap().entries.where((entry) => _selectedReadyOrders[entry.key]).map((entry) => entry.value.orderId).toList();
 
     if (readyOrderIds.isEmpty) {
       _showSnackbar(context, 'No orders selected to update.');
@@ -748,7 +753,10 @@ class OrdersProvider with ChangeNotifier {
   Future<void> searchReadyToConfirmOrders(String orderId) async {
     String encodedOrderId = Uri.encodeComponent(orderId);
 
-    final url = Uri.parse('${await Constants.getBaseUrl()}/orders?orderStatus=1&isOutBound=true&order_id=$encodedOrderId');
+    final prefs = await SharedPreferences.getInstance();
+    final warehouseId = prefs.getString('warehouseId') ?? '';
+
+    final url = Uri.parse('${await Constants.getBaseUrl()}/orders?warehouse=$warehouseId&orderStatus=1&isOutBound=true&order_id=$encodedOrderId');
     final token = await _getToken();
     if (token == null) return;
 
@@ -766,7 +774,9 @@ class OrdersProvider with ChangeNotifier {
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         log('data: $data');
-        _readyOrders = [Order.fromJson(data)];
+        _readyOrders = [
+          Order.fromJson(data)
+        ];
         log('selectedReadyOrders: $selectedReadyOrders');
       } else {
         _readyOrders = [];
@@ -781,8 +791,10 @@ class OrdersProvider with ChangeNotifier {
 
   Future<void> searchFailedOrders(String orderId) async {
     String encodedOrderId = Uri.encodeComponent(orderId);
+    final prefs = await SharedPreferences.getInstance();
+    final warehouseId = prefs.getString('warehouseId') ?? '';
 
-    final url = Uri.parse('${await Constants.getBaseUrl()}/orders?orderStatus=0&order_id=$encodedOrderId');
+    final url = Uri.parse('${await Constants.getBaseUrl()}/orders?warehouse=$warehouseId&orderStatus=0&order_id=$encodedOrderId');
     final token = await _getToken();
     if (token == null) return;
 
@@ -803,7 +815,9 @@ class OrdersProvider with ChangeNotifier {
         final data = jsonDecode(response.body);
         print(response.body);
 
-        _failedOrders = [Order.fromJson(data)];
+        _failedOrders = [
+          Order.fromJson(data)
+        ];
         print(response.body);
       } else {
         _failedOrders = [];
@@ -822,7 +836,9 @@ class OrdersProvider with ChangeNotifier {
       var response = await http.post(
         Uri.parse('${await Constants.getBaseUrl()}/orders/connectWithSupport'),
         body: jsonEncode({
-          'orderIds': [orderId],
+          'orderIds': [
+            orderId
+          ],
           'message': message,
         }),
         headers: {
@@ -859,11 +875,15 @@ class OrdersProvider with ChangeNotifier {
   Future<Map<String, dynamic>> splitOrder(String orderId, List<String> productSkus, {String weightLimit = ""}) async {
     final token = await _getToken();
     if (token == null || token.isEmpty) {
-      return {'success': false};
+      return {
+        'success': false
+      };
     }
 
     if (productSkus.isEmpty) {
-      return {'success': false};
+      return {
+        'success': false
+      };
     }
 
     try {
@@ -885,12 +905,20 @@ class OrdersProvider with ChangeNotifier {
       log('split order body: $responseData');
 
       if (response.statusCode == 200) {
-        return {'success': true, 'message': responseData['orders']}; // Success
+        return {
+          'success': true,
+          'message': responseData['orders']
+        }; // Success
       } else {
-        return {'success': false, 'message': responseData['message']}; // Success
+        return {
+          'success': false,
+          'message': responseData['message']
+        }; // Success
       }
     } catch (e) {
-      return {'success': false};
+      return {
+        'success': false
+      };
     }
   }
 

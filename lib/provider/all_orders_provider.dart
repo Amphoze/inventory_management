@@ -7,7 +7,6 @@ import 'package:intl/intl.dart';
 import 'package:inventory_management/constants/constants.dart';
 import 'package:inventory_management/model/orders_model.dart';
 import 'package:logger/logger.dart';
-// import 'package:logger/logger.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class AllOrdersProvider with ChangeNotifier {
@@ -137,16 +136,15 @@ class AllOrdersProvider with ChangeNotifier {
         },
       );
 
-      // Log response for debugging
       log('sss: ${response.statusCode}');
       debugPrint('rrr: ${response.body}');
 
       if (response.statusCode == 200) {
         final jsonResponse = jsonDecode(response.body);
-        log('body: $jsonResponse');
+        // log('body: $jsonResponse');
         final status = jsonResponse['ShipmentData'][0]['Shipment']['Status']['Status'].toString() ?? '';
 
-        log('sss: $status');
+        // log('sss: $status');
 
         return status;
       } else if (response.statusCode == 401) {
@@ -204,7 +202,7 @@ class AllOrdersProvider with ChangeNotifier {
 
       // Log response for debugging
       log('Response status: ${response.statusCode}');
-      log('Response body: ${response.body}');
+      // log('Response body: ${response.body}');
 
       if (response.statusCode == 200) {
         final jsonResponse = jsonDecode(response.body);
@@ -230,8 +228,9 @@ class AllOrdersProvider with ChangeNotifier {
   Future<void> fetchAllOrders({int page = 1, DateTime? date, String? status, String? marketplace}) async {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('authToken') ?? '';
+    final warehouseId = prefs.getString('warehouseId') ?? '';
 
-    String url = '${await Constants.getBaseUrl()}/orders?page=$page&isSalesApproved=true';
+    String url = '${await Constants.getBaseUrl()}/orders?warehouse=$warehouseId&page=$page&isSalesApproved=true';
 
     if (date != null) {
       String formattedDate = DateFormat('yyyy-MM-dd').format(date);
@@ -265,7 +264,7 @@ class AllOrdersProvider with ChangeNotifier {
 
       // Log response for debugging
       log('status: ${response.statusCode}');
-      print('body: ${response.body}');
+      // print('body: ${response.body}');
 
       if (response.statusCode == 200) {
         final jsonResponse = jsonDecode(response.body);
@@ -277,8 +276,8 @@ class AllOrdersProvider with ChangeNotifier {
         _currentPage = page;
         _totalPages = jsonResponse['totalPages'];
 
-        log('orders: $_orders');
-      }  else {
+        // log('orders: $_orders');
+      } else {
         _orders = [];
         _totalPages = 1;
         _currentPage = 1;
@@ -316,8 +315,7 @@ class AllOrdersProvider with ChangeNotifier {
         final jsonResponse = jsonDecode(response.body);
         statuses = (jsonResponse as List).map((data) {
           return {
-            data['status'].split('_').map((w) => '${w[0].toUpperCase()}${w.substring(1)}').join(' ').toString():
-                data['status_id'].toString(),
+            data['status'].split('_').map((w) => '${w[0].toUpperCase()}${w.substring(1)}').join(' ').toString(): data['status_id'].toString(),
             // 'statusId': data['status_id'].toString(),
           };
         }).toList();
@@ -347,12 +345,14 @@ class AllOrdersProvider with ChangeNotifier {
   Future<void> searchOrders(String orderId) async {
     String encodedOrderId = Uri.encodeComponent(orderId);
 
-    final url = '${await Constants.getBaseUrl()}/orders?order_id=$encodedOrderId&isSalesApproved=true';
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('authToken') ?? '';
+    final warehouseId = prefs.getString('warehouseId') ?? '';
+
+    final url = '${await Constants.getBaseUrl()}/orders?warehouse=$warehouseId&order_id=$encodedOrderId&isSalesApproved=true';
     log('search all orders url: $url');
     final mainUrl = Uri.parse(url);
     log('parsed url: $mainUrl');
-    final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString('authToken') ?? '';
 
     try {
       _isLoading = true;
@@ -368,9 +368,11 @@ class AllOrdersProvider with ChangeNotifier {
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        Logger().e('ye hai order id: ${data['order_id']}');
+        Logger().e('this is order id: ${data['order_id']}');
 
-        _orders = [Order.fromJson(data)];
+        _orders = [
+          Order.fromJson(data)
+        ];
         notifyListeners();
       } else {
         _orders = [];

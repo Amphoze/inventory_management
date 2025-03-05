@@ -9,6 +9,9 @@ import 'package:provider/provider.dart';
 import 'package:inventory_management/provider/book_provider.dart';
 import 'package:inventory_management/model/orders_model.dart';
 import 'package:intl/intl.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+import 'Custom-Files/utils.dart';
 
 class BookedPage extends StatefulWidget {
   const BookedPage({super.key});
@@ -24,6 +27,11 @@ class _BookedPageState extends State<BookedPage> with SingleTickerProviderStateM
   String selectedCourier = 'All';
   String _selectedDate = 'Select Date';
   String selectedSearchType = 'Order ID'; // Default selection
+  final TextEditingController _dateController = TextEditingController();
+  final DateFormat _dateFormat = DateFormat('yyyy-MM-dd');
+  String selectedPicklist = '';
+  List<String> picklistIds = ['W1', 'W2', 'W3', 'G1', 'G2', 'G3', 'E1', 'E2', 'E3'];
+  bool isDownloading = false;
 
   @override
   void initState() {
@@ -576,6 +584,113 @@ class _BookedPageState extends State<BookedPage> with SingleTickerProviderStateM
             const SizedBox(width: 8),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primaryBlue,
+              ),
+              onPressed: () {
+                showDialog(
+                  context: context,
+                  builder: (BuildContext context) {
+                    return StatefulBuilder(builder: (BuildContext context, StateSetter dialogSetState) {
+                      return AlertDialog(
+                        title: const Text('Download Packlist'),
+                        content: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            TextFormField(
+                              controller: _dateController,
+                              decoration: const InputDecoration(
+                                labelText: "Select Date",
+                                suffixIcon: Icon(Icons.calendar_today),
+                                border: OutlineInputBorder(),
+                              ),
+                              readOnly: true, // Prevent manual input
+                              onTap: () async {
+                                DateTime? picked = await showDatePicker(
+                                  context: context,
+                                  initialDate: DateTime.now(),
+                                  firstDate: DateTime(2000),
+                                  lastDate: DateTime.now(),
+                                );
+
+                                if (picked != null) {
+                                  dialogSetState(() {
+                                    _dateController.text = _dateFormat.format(picked);
+                                  });
+                                }
+                              },
+                            ),
+                            const SizedBox(height: 8),
+                            DropdownButton(
+                              value: picklistIds.contains(selectedPicklist)
+                                  ? selectedPicklist
+                                  : null, // Only set value if it exists in the list
+                              isExpanded: true,
+                              hint: const Text('Select Picklist ID'),
+                              items: picklistIds.map((id) {
+                                return DropdownMenuItem<String>(
+                                  value: id,
+                                  child: Text(id),
+                                );
+                              }).toList(),
+                              onChanged: (String? newValue) {
+                                dialogSetState(() {
+                                  // Update dialog state
+                                  if (newValue != null) {
+                                    selectedPicklist = newValue;
+                                  }
+                                });
+                              },
+                            )
+                          ],
+                        ),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(context),
+                            style: TextButton.styleFrom(
+                              foregroundColor: AppColors.primaryBlue,
+                            ),
+                            child: const Text('Cancel'),
+                          ),
+                          ElevatedButton(
+                            onPressed: () async {
+                              log('picklist id is: $selectedPicklist');
+                              if (selectedPicklist.isEmpty) return;
+
+                              dialogSetState(() {
+                                isDownloading = true;
+                              });
+
+                              showDialog(
+                                context: context,
+                                barrierDismissible: false,
+                                builder: (BuildContext context) {
+                                  return const AlertDialog(
+                                    content: Row(
+                                      children: [
+                                        CircularProgressIndicator(),
+                                        SizedBox(width: 16),
+                                        Text('Downloading'),
+                                      ],
+                                    ),
+                                  );
+                                },
+                              );
+
+
+                            },
+                            child: const Text('Download'),
+                          ),
+                        ],
+                      );
+                    });
+                  },
+                );
+              },
+              child: const Text('Download Packlist'),
+            ),
+            const SizedBox(width: 8),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.cardsred,
               ),
               onPressed: bookProvider.isCancel
@@ -638,10 +753,8 @@ class _BookedPageState extends State<BookedPage> with SingleTickerProviderStateM
                     ),
             ),
             const SizedBox(width: 8),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primaryBlue,
-              ),
+            IconButton(
+              tooltip: 'Refresh',
               onPressed: bookProvider.isRefreshingOrders
                   ? null
                   : () async {
@@ -651,18 +764,17 @@ class _BookedPageState extends State<BookedPage> with SingleTickerProviderStateM
                       });
                       _refreshOrders();
                     },
-              child: bookProvider.isRefreshingOrders
+              icon: bookProvider.isRefreshingOrders
                   ? const SizedBox(
                       width: 16,
                       height: 16,
                       child: CircularProgressIndicator(
-                        color: Colors.white,
+                        // color: Colors.white,
                         strokeWidth: 2,
                       ),
                     )
-                  : const Text(
-                      'Refresh',
-                      style: TextStyle(color: Colors.white),
+                  : const Icon(
+                      Icons.refresh
                     ),
             ),
           ],
@@ -740,7 +852,7 @@ class _BookedPageState extends State<BookedPage> with SingleTickerProviderStateM
     return Row(
       children: [
         Expanded(
-          flex: 14,
+          flex: 7,
           child: OrderComboCard(
             order: order,
             toShowBy: true,
@@ -749,9 +861,8 @@ class _BookedPageState extends State<BookedPage> with SingleTickerProviderStateM
             checkboxWidget: checkboxWidget,
           ),
         ),
-        const SizedBox(width: 50),
-        buildCell(order.isBooked, flex: 2),
-        // buildCell(order['isBooked']['status'], flex: 2),
+        // const SizedBox(width: 50),
+        buildCell(order.isBooked, flex: 1),
       ],
     );
   }
@@ -821,8 +932,8 @@ class _BookedPageState extends State<BookedPage> with SingleTickerProviderStateM
                   ),
                   RadioListTile<String>(
                     contentPadding: const EdgeInsets.all(0),
-                    title: const Text('All', style: TextStyle(fontSize: 16)),
-                    value: 'all',
+                    title: const Text('Ecom', style: TextStyle(fontSize: 16)),
+                    value: 'ecom',
                     groupValue: selectedMarketplace,
                     onChanged: (value) {
                       setState(() {
@@ -850,10 +961,9 @@ class _BookedPageState extends State<BookedPage> with SingleTickerProviderStateM
                 if (selectedMarketplace != null) {
                   log('Selected Marketplace: $selectedMarketplace');
 
-                  // Show loading dialog
                   showDialog(
                     context: context,
-                    barrierDismissible: false, // Prevent dismissing the dialog
+                    barrierDismissible: false,
                     builder: (BuildContext context) {
                       return const AlertDialog(
                         content: Row(
@@ -871,7 +981,7 @@ class _BookedPageState extends State<BookedPage> with SingleTickerProviderStateM
 
                   // Fetch order picker data
                   await bookProvider.generatePicklist(context, selectedMarketplace!).then((_) {
-                    Navigator.of(context).pop(); // Close loading dialog
+                    Navigator.of(context).pop();
                   });
                 }
               },

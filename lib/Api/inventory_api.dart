@@ -15,7 +15,6 @@ Future<String?> getToken() async {
 
 Future<String?> getWarehouseId() async {
   final prefs = await SharedPreferences.getInstance();
-  // _isAuthenticated = prefs.getString('authToken') != null;
   return prefs.getString('warehouseId');
 }
 

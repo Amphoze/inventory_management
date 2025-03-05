@@ -152,7 +152,7 @@ class _ProductMasterPageState extends State<ProductMasterPage> {
                     ),
                   );
                 }
-                return ProductCard(product: provider.products[index]);
+                return ProductMasterCard(product: provider.products[index]);
               },
             ),
     );

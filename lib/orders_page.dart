@@ -1,4 +1,5 @@
 import 'dart:developer';
+import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -11,6 +12,8 @@ import 'package:inventory_management/Widgets/order_info.dart';
 import 'package:inventory_management/Widgets/product_details_card.dart';
 import 'package:inventory_management/edit_outbound_page.dart';
 import 'package:inventory_management/model/orders_model.dart';
+import 'package:inventory_management/provider/book_provider.dart';
+import 'package:inventory_management/provider/location_provider.dart';
 import 'package:inventory_management/provider/marketplace_provider.dart';
 import 'package:inventory_management/provider/orders_provider.dart';
 import 'package:logger/logger.dart';
@@ -60,6 +63,7 @@ class _OrdersNewPageState extends State<OrdersNewPage> with TickerProviderStateM
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _reloadOrders();
       context.read<MarketplaceProvider>().fetchMarketplaces();
+      context.read<LocationProvider>().fetchWarehouses();
     });
   }
 
@@ -149,6 +153,8 @@ class _OrdersNewPageState extends State<OrdersNewPage> with TickerProviderStateM
       indicatorColor: Colors.blue,
       labelColor: Colors.black,
       unselectedLabelColor: Colors.grey,
+      indicatorWeight: 3,
+      indicatorSize: TabBarIndicatorSize.tab,
     );
   }
 
@@ -278,50 +284,50 @@ class _OrdersNewPageState extends State<OrdersNewPage> with TickerProviderStateM
                       onPressed: ordersProvider.isCloning
                           ? null // Disable button while loading
                           : () async {
-                        List<String> selectedOrderIds = ordersProvider.readyOrders
-                            .asMap()
-                            .entries
-                            .where((entry) => ordersProvider.selectedReadyOrders[entry.key])
-                            .map((entry) => entry.value.orderId)
-                            .toList();
+                              List<String> selectedOrderIds = ordersProvider.readyOrders
+                                  .asMap()
+                                  .entries
+                                  .where((entry) => ordersProvider.selectedReadyOrders[entry.key])
+                                  .map((entry) => entry.value.orderId)
+                                  .toList();
 
-                        if (selectedOrderIds.isEmpty) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('No orders selected'),
-                              backgroundColor: AppColors.cardsred,
-                            ),
-                          );
-                        } else {
-                          String resultMessage = await ordersProvider.cloneOrders(context, selectedOrderIds);
-                          Color snackBarColor;
-                          if (resultMessage.contains('success')) {
-                            snackBarColor = AppColors.green; // Success: Green
-                          } else if (resultMessage.contains('error') || resultMessage.contains('failed')) {
-                            snackBarColor = AppColors.cardsred; // Error: Red
-                          } else {
-                            snackBarColor = AppColors.orange; // Other: Orange
-                          }
+                              if (selectedOrderIds.isEmpty) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text('No orders selected'),
+                                    backgroundColor: AppColors.cardsred,
+                                  ),
+                                );
+                              } else {
+                                String resultMessage = await ordersProvider.cloneOrders(context, selectedOrderIds);
+                                Color snackBarColor;
+                                if (resultMessage.contains('success')) {
+                                  snackBarColor = AppColors.green; // Success: Green
+                                } else if (resultMessage.contains('error') || resultMessage.contains('failed')) {
+                                  snackBarColor = AppColors.cardsred; // Error: Red
+                                } else {
+                                  snackBarColor = AppColors.orange; // Other: Orange
+                                }
 
-                          // Show feedback based on the result
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(resultMessage),
-                              backgroundColor: snackBarColor,
-                            ),
-                          );
-                        }
-                      },
+                                // Show feedback based on the result
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(resultMessage),
+                                    backgroundColor: snackBarColor,
+                                  ),
+                                );
+                              }
+                            },
                       child: ordersProvider.isCloning
                           ? const SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(color: Colors.white),
-                      )
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(color: Colors.white),
+                            )
                           : const Text(
-                        'Clone',
-                        style: TextStyle(color: Colors.white),
-                      ),
+                              'Clone',
+                              style: TextStyle(color: Colors.white),
+                            ),
                     ),
                     const SizedBox(width: 8),
                     ElevatedButton(
@@ -456,7 +462,6 @@ class _OrdersNewPageState extends State<OrdersNewPage> with TickerProviderStateM
                         await ordersProvider.fetchReadyOrders();
                         ordersProvider.resetSelections();
                         ordersProvider.clearSearchResults();
-                        log('Ready to Confirm Orders refreshed');
                       },
                       child: const Text('Refresh'),
                     ),
@@ -648,7 +653,8 @@ class _OrdersNewPageState extends State<OrdersNewPage> with TickerProviderStateM
                                         ),
                                         Row(
                                           children: [
-                                            ElevatedButton(
+                                            IconButton(
+                                              tooltip: 'Edit Order',
                                               onPressed: () async {
                                                 final result = await Navigator.push(
                                                   context,
@@ -672,21 +678,102 @@ class _OrdersNewPageState extends State<OrdersNewPage> with TickerProviderStateM
                                                   }
                                                 }
                                               },
-                                              style: ElevatedButton.styleFrom(
-                                                foregroundColor: AppColors.white,
-                                                backgroundColor: AppColors.orange,
-                                                // Set the text color to white
-                                                textStyle: const TextStyle(
-                                                  fontWeight: FontWeight.bold,
-                                                ),
-                                              ),
-                                              child: const Text(
-                                                'Edit Order',
-                                              ),
+                                              icon: const Icon(Icons.edit_note),
                                             ),
                                             const SizedBox(width: 8),
                                             IconButton(
-                                              tooltip: 'Report Bug',
+                                              tooltip: 'Edit warehouse',
+                                              onPressed: () {
+                                                showDialog(
+                                                  context: context,
+                                                  builder: (context) {
+                                                    String selectedWarehouse = order.warehouseName ?? '';
+
+                                                    return StatefulBuilder(
+                                                      builder: (context, setState) {
+                                                        return AlertDialog(
+                                                          title: Column(
+                                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                                            children: [
+                                                              const Text('Edit Warehouse', style: TextStyle(fontSize: 20)),
+                                                              Text(order.orderId, style: const TextStyle(fontSize: 15)),
+                                                            ],
+                                                          ),
+                                                          content: Consumer<LocationProvider>(builder: (context, pro, child) {
+                                                            return DropdownButton(
+                                                              value: selectedWarehouse,
+                                                              isExpanded: true,
+                                                              hint: const Text('Select Warehouse'),
+                                                              items: pro.warehouses.map<DropdownMenuItem<String>>((dynamic warehouse) {
+                                                                return DropdownMenuItem<String>(
+                                                                  value: warehouse['name'],
+                                                                  child: Text(warehouse['name']),
+                                                                );
+                                                              }).toList(),
+                                                              onChanged: (newValue) {
+                                                                if (newValue != null) {
+                                                                  setState(() {
+                                                                    selectedWarehouse = newValue;
+                                                                  });
+                                                                }
+                                                              },
+                                                            );
+                                                          }),
+                                                          actions: <Widget>[
+                                                            TextButton(
+                                                              onPressed: () {
+                                                                Navigator.of(context).pop();
+                                                              },
+                                                              child: const Text('Cancel'),
+                                                            ),
+                                                            TextButton(
+                                                              onPressed: () async {
+                                                                if (selectedWarehouse.isNotEmpty) {
+                                                                  showDialog(
+                                                                    context: context,
+                                                                    builder: (context) => const AlertDialog(
+                                                                      content: Row(
+                                                                        children: [
+                                                                          CircularProgressIndicator(),
+                                                                          SizedBox(width: 8),
+                                                                          Text('Updating Warehouse'),
+                                                                        ],
+                                                                      ),
+                                                                    ),
+                                                                  );
+                                                                  final pro = Provider.of<BookProvider>(context, listen: false);
+                                                                  final res =
+                                                                      await pro.editWarehouse(order.orderId, selectedWarehouse.trim());
+                                                                  if (res == true) {
+                                                                    ordersProvider.fetchReadyOrders(
+                                                                        date: readyPicked, market: selectedReadyCourier);
+                                                                  } else {
+                                                                    if (context.mounted) {
+                                                                      ScaffoldMessenger.of(context).showSnackBar(
+                                                                        const SnackBar(content: Text('Failed to edit warehouse')),
+                                                                      );
+                                                                    }
+                                                                  }
+                                                                  if (context.mounted) {
+                                                                    Navigator.of(context).pop();
+                                                                    Navigator.of(context).pop();
+                                                                  }
+                                                                }
+                                                              },
+                                                              child: const Text('Submit'),
+                                                            ),
+                                                          ],
+                                                        );
+                                                      },
+                                                    );
+                                                  },
+                                                );
+                                              },
+                                              icon: const Icon(Icons.edit_location_alt_outlined),
+                                            ),
+                                            const SizedBox(width: 8),
+                                            IconButton(
+                                                tooltip: 'Report Bug',
                                                 onPressed: () {
                                                   TextEditingController messageController = TextEditingController();
                                                   showDialog(
@@ -825,8 +912,6 @@ class _OrdersNewPageState extends State<OrdersNewPage> with TickerProviderStateM
                                                               bool result = await context
                                                                   .read<OrdersProvider>()
                                                                   .connectWithSupport(order.orderId, messageController.text);
-
-                                                              log('result: $result');
 
                                                               Navigator.pop(context);
                                                               Navigator.pop(context);
@@ -999,6 +1084,13 @@ class _OrdersNewPageState extends State<OrdersNewPage> with TickerProviderStateM
                                                           style: const TextStyle(
                                                             fontWeight: FontWeight.normal,
                                                           )),
+                                                      (order.outBoundBy?['outboundBy']?.toString().isNotEmpty ?? false) ?
+                                                      TextSpan(
+                                                        text: "(${order.outBoundBy?['outboundBy'].toString().split('@')[0] ?? ''})",
+                                                        style: const TextStyle(
+                                                          fontWeight: FontWeight.normal,
+                                                        ),
+                                                      ) : const TextSpan()
                                                     ],
                                                     style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 20)),
                                               ),
@@ -1107,8 +1199,6 @@ class _OrdersNewPageState extends State<OrdersNewPage> with TickerProviderStateM
                                                                       Navigator.of(context).pop();
                                                                       Navigator.of(context).pop();
 
-                                                                      log(remarkController.text);
-
                                                                       res ? await ordersProvider.fetchReadyOrders() : null;
                                                                     },
                                                                     style: ElevatedButton.styleFrom(
@@ -1136,27 +1226,8 @@ class _OrdersNewPageState extends State<OrdersNewPage> with TickerProviderStateM
                                                     : const Text('Write Remark'),
                                               ),
                                               if (order.messages?['confirmerMessage']?.toString().isNotEmpty ?? false)
-                                                Tooltip(
-                                                  message: order.messages!['confirmerMessage'].toString(),
-                                                  child: Text.rich(
-                                                    TextSpan(
-                                                      text: "Conformer Remark: ",
-                                                      children: [
-                                                        TextSpan(
-                                                          text: order.messages!['confirmerMessage'].toString(),
-                                                          style: const TextStyle(
-                                                            fontWeight: FontWeight.normal,
-                                                          ),
-                                                        ),
-                                                      ],
-                                                      style: const TextStyle(
-                                                        fontWeight: FontWeight.bold,
-                                                      ),
-                                                    ),
-                                                    maxLines: 1,
-                                                    overflow: TextOverflow.ellipsis,
-                                                  ),
-                                                ),
+                                                Utils().showMessage(
+                                                    context, 'Confirmer Remark', order.messages!['confirmerMessage'].toString())
                                             ],
                                           ),
                                         ],
@@ -1913,7 +1984,7 @@ class _OrdersNewPageState extends State<OrdersNewPage> with TickerProviderStateM
                                               ),
                                             ),
                                           ),
-                                          (order.messages?['failureReason']?.toString().isNotEmpty ?? false)
+                                          ((order.messages?['failureReason'] ?? []).isEmpty ?? false)
                                               ? const SizedBox()
                                               : Expanded(
                                                   flex: 1,
@@ -1993,6 +2064,13 @@ class _OrdersNewPageState extends State<OrdersNewPage> with TickerProviderStateM
                                                       style: const TextStyle(
                                                         fontWeight: FontWeight.normal,
                                                       )),
+                                                  (order.outBoundBy?['outboundBy']?.toString().isNotEmpty ?? false) ?
+                                                  TextSpan(
+                                                    text: "(${order.outBoundBy?['outboundBy'].toString().split('@')[0] ?? ''})",
+                                                    style: const TextStyle(
+                                                      fontWeight: FontWeight.normal,
+                                                    ),
+                                                  ) : const TextSpan()
                                                 ],
                                                 style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 20)),
                                           ),
@@ -2257,8 +2335,6 @@ class _OrdersNewPageState extends State<OrdersNewPage> with TickerProviderStateM
                   },
                 );
                 bool result = await context.read<OrdersProvider>().connectWithSupport(orderId, messageController.text);
-
-                log('result: $result');
 
                 Navigator.pop(context);
                 Navigator.pop(context);

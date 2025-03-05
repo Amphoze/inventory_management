@@ -493,8 +493,21 @@ class _ManageInventoryPageState extends State<ManageInventoryPage> {
                           borderSide: const BorderSide(color: AppColors.primaryBlue),
                         ),
                         contentPadding: const EdgeInsets.symmetric(vertical: 10, horizontal: 20),
+                        prefixIcon: IconButton(
+                          tooltip: 'Search',
+                            icon: const Icon(Icons.search, color: AppColors.primaryBlue),
+                            onPressed: () {
+                              final value = _searchController.text.trim();
+                              Logger().e('$value ${provider.selectedSearchBy}');
+                              if (value.trim().isNotEmpty) {
+                                provider.filterInventory(value.trim(), provider.selectedSearchBy); // Fetch filtered data
+                              } else {
+                                provider.fetchInventory();
+                              }
+                            }),
                         suffixIcon: IconButton(
-                            icon: const Icon(Icons.close, color: AppColors.primaryBlue),
+                          tooltip: 'Clear',
+                            icon: const Icon(Icons.close, color: AppColors.cardsred),
                             onPressed: () {
                               final searchTerm = _searchController.text.trim();
                               if (searchTerm.isNotEmpty) {
@@ -568,7 +581,6 @@ class _ManageInventoryPageState extends State<ManageInventoryPage> {
                 const SizedBox(width: 10),
                 ElevatedButton(
                   onPressed: () async {
-                    // Show loading dialog
                     showDialog(
                       context: context,
                       barrierDismissible: false,

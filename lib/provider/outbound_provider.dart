@@ -11,14 +11,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 class OutboundProvider with ChangeNotifier {
   bool allSelectedReady = false;
-
-  // bool allSelectedFailed = false;
   int selectedReadyItemsCount = 0;
 
-  // int selectedFailedItemsCount = 0;
   List<bool> _selectedReadyOrders = [];
-
-  // List<bool> _selectedFailedOrders = [];
   List<Order> _outboundOrders = [];
   int _totalReadyPages = 1;
   int _currentPageReady = 1;
@@ -36,21 +31,9 @@ class OutboundProvider with ChangeNotifier {
   int? rtoCount;
   int? allCount;
 
-  // List<Order> readyOrders = [];
-  // List<Order> failedOrders = [];
-
-
-
-  // Loading state
   bool isLoading = false;
 
-  // Public getters for selected orders
-  // List<bool> get selectedFailedOrders => _selectedFailedOrders;
   List<bool> get selectedReadyOrders => _selectedReadyOrders;
-
-  // final List<Order> _failedOrder = [];
-
-  // List<Order> get failedOrder => _failedOrder;
 
   String? get selectedCourier => _selectedCourier;
 
@@ -286,11 +269,14 @@ class OutboundProvider with ChangeNotifier {
     // Ensure the requested page number is valid
     if (page < 1 || page > totalReadyPages) {
       print('Invalid page number for ready orders: $page');
-      return; // Exit if the page number is invalid
+      return;
     }
 
     isLoading = true;
     notifyListeners();
+
+    final prefs = await SharedPreferences.getInstance();
+    final warehouseId = prefs.getString('warehouseId') ?? '';
 
     var readyOrdersUrl = '${await Constants.getBaseUrl()}/orders?isOutBound=false&page=$page';
 
@@ -299,7 +285,7 @@ class OutboundProvider with ChangeNotifier {
       readyOrdersUrl += '&date=$formattedDate';
     }
 
-    if(market != 'All' && market != null){
+    if (market != 'All' && market != null) {
       readyOrdersUrl += '&marketplace=$market';
     } else {
       readyOrdersUrl += '&marketplace=Shopify,Woocommerce';
@@ -491,8 +477,7 @@ class OutboundProvider with ChangeNotifier {
 
 // Update status for ready-to-confirm orders
   Future<void> updateOutboundOrders(BuildContext context) async {
-    final List<String> readyOrderIds =
-        outboundOrders.asMap().entries.where((entry) => _selectedReadyOrders[entry.key]).map((entry) => entry.value.orderId).toList();
+    final List<String> readyOrderIds = outboundOrders.asMap().entries.where((entry) => _selectedReadyOrders[entry.key]).map((entry) => entry.value.orderId).toList();
 
     if (readyOrderIds.isEmpty) {
       _showSnackbar(context, 'No orders selected to update.');
@@ -597,9 +582,11 @@ class OutboundProvider with ChangeNotifier {
   Future<void> searchOrdersByID(String orderId) async {
     String encodedOrderId = Uri.encodeComponent(orderId);
 
+    final prefs = await SharedPreferences.getInstance();
+    final warehouseId = prefs.getString('warehouseId') ?? '';
+
     // log('searchOrdersByID');
     String url = '${await Constants.getBaseUrl()}/orders?marketplace=Shopify,Woocommerce&isOutBound=false&order_id=$encodedOrderId';
-    // final url = Uri.parse('${await ApiUrls.getBaseUrl()}/orders?marketplace=Shopify,Woocommerce&isOutBound=false&order_id=$orderId');
     final token = await _getToken();
     if (token == null) return;
 
@@ -619,7 +606,9 @@ class OutboundProvider with ChangeNotifier {
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        _outboundOrders = [Order.fromJson(data)];
+        _outboundOrders = [
+          Order.fromJson(data)
+        ];
         // log('readyOrders: $readyOrders');
 
         log('searchOrdersByID: $outboundOrders');
@@ -691,6 +680,9 @@ class OutboundProvider with ChangeNotifier {
 
   Future<void> searchOrdersByPhone(String phone) async {
     log('searchOrdersByPhone');
+    final prefs = await SharedPreferences.getInstance();
+    final warehouseId = prefs.getString('warehouseId') ?? '';
+
     String url = '${await Constants.getBaseUrl()}/orders?marketplace=Shopify,Woocommerce&isOutBound=false&phone=$phone';
     final token = await _getToken();
     if (token == null) return;
@@ -728,157 +720,6 @@ class OutboundProvider with ChangeNotifier {
       notifyListeners();
     }
   }
-
-  // Future<int> getRtoOrders(String phone) async {
-  //   Logger().e('getRtoOrders');
-  //   String url = '${await Constants.getBaseUrl()}/orders?orderStatus=11&phone=$phone';
-  //   final token = await _getToken();
-  //   if (token == null) return 0;
-
-  //   try {
-  //     final response = await http.get(
-  //       Uri.parse(url),
-  //       headers: {
-  //         'Authorization': 'Bearer $token',
-  //         'Content-Type': 'application/json',
-  //       },
-  //     );
-
-  //     if (response.statusCode == 200) {
-  //       final data = jsonDecode(response.body);
-  //       log('rtoOrders: ${data['orders']}');
-  //       return data['orders'].length;
-  //       // log('rtoCount: $rtoCount');
-  //       // return rtoCount!;
-  //     } else {
-  //       return 0;
-  //     }
-  //   } catch (e) {
-  //     log('Error fetching orders: $e');
-  //     return 0;
-  //   }
-  // }
-
-  // Future<int> getDispatchOrders(String phone) async {
-  //   Logger().e('getDispatchOrders');
-  //   String url = '${await Constants.getBaseUrl()}/orders?orderStatus=9&phone=$phone';
-  //   final token = await _getToken();
-  //   if (token == null) return 0;
-
-  //   try {
-  //     final response = await http.get(
-  //       Uri.parse(url),
-  //       headers: {
-  //         'Authorization': 'Bearer $token',
-  //         'Content-Type': 'application/json',
-  //       },
-  //     );
-
-  //     if (response.statusCode == 200) {
-  //       final data = jsonDecode(response.body);
-
-  //       log('dispatchOrders: ${data['orders']}');
-  //       // log('dispatchCount: $dispatchCount');
-  //       // return dispatchCount!;
-  //       return data['orders'].length;
-  //     } else {
-  //       return 0;
-  //     }
-  //   } catch (e) {
-  //     log('Error fetching orders: $e');
-  //     return 0;
-  //   }
-  // }
-
-  // Future<void> fetchOrdersByMarketplace(String marketplace, int page, {DateTime? date}) async {
-  //   String baseUrl = '${await Constants.getBaseUrl()}/orders';
-  //
-  //   // Build URL with base parameters
-  //   String url = '$baseUrl?isOutBound=false&marketplace=$marketplace&page=$page';
-  //
-  //   // Add date parameter if provided
-  //   if (date != null || date == 'Select Date') {
-  //     String formattedDate = DateFormat('yyyy-MM-dd').format(date!);
-  //     url += '&date=$formattedDate';
-  //   }
-  //
-  //   log("url: $url");
-  //
-  //   String? token = await _getToken(); // Assuming you have a method to get the token
-  //   if (token == null) {
-  //     print('Token is null, unable to fetch orders.');
-  //     return;
-  //   }
-  //
-  //   try {
-  //     isLoading = true;
-  //     notifyListeners();
-  //
-  //     // Clear checkboxes when a new page is fetched
-  //     // clearSearchResults();
-  //
-  //     final response = await http.get(
-  //       Uri.parse(url),
-  //       headers: {
-  //         'Authorization': 'Bearer $token',
-  //         'Content-Type': 'application/json',
-  //       },
-  //     );
-  //
-  //     // Log response for debugging
-  //     print('Response status: ${response.statusCode}');
-  //     print('Response body: ${response.body}');
-  //
-  //     if (response.statusCode == 200) {
-  //       final jsonResponse = jsonDecode(response.body);
-  //       List<Order> orders = (jsonResponse['orders'] as List).map((orderJson) => Order.fromJson(orderJson)).toList();
-  //
-  //       Logger().e("length: ${orders.length}");
-  //
-  //       outboundOrders = orders;
-  //       currentPageReady = page; // Track current page for B2B
-  //       totalReadyPages = jsonResponse['totalPages']; // Assuming API returns total pages
-  //       notifyListeners();
-  //     } else if (response.statusCode == 401) {
-  //       print('Unauthorized access - Token might be expired or invalid.');
-  //     } else if (response.statusCode == 404) {
-  //       outboundOrders = [];
-  //       notifyListeners();
-  //
-  //       print('Orders not found - Check the filter type.');
-  //     } else {
-  //       throw Exception('Failed to load orders: ${response.statusCode}');
-  //     }
-  //   } catch (e) {
-  //     print('Error fetching orders: $e');
-  //   } finally {
-  //     isLoading = false;
-  //     notifyListeners();
-  //   }
-  // }
-
-  // String sanitizeEmail(String email) {
-  //   return email.replaceAll(RegExp(r'[^a-zA-Z0-9_]'), '_');
-  // }
-  //
-  // Future<void> clearQueue(String id) async {
-  //   try {
-  //     var response = await http.post(
-  //       Uri.parse('https://callerapp.onrender.com/clear-topic-queue'),
-  //       headers: {'Content-Type': 'application/json'},
-  //       body: jsonEncode({
-  //         "topic": id,
-  //       }),
-  //     );
-  //     if (response.statusCode != 200) {
-  //       log('Failed to notify server. Status code: ${response.statusCode}');
-  //     } else {
-  //       log('send succusfully ${response.body}');
-  //     }
-  //   } catch (e) {
-  //     log('Error notifying server: $e');
-  //   }
-  // }
 
   Future<bool> sendSingleCall(BuildContext context, String orderId) async {
     String url = '${await Constants.getBaseUrl()}/orders/call';

@@ -46,14 +46,12 @@ class _AllOrdersPageState extends State<AllOrdersPage> with SingleTickerProvider
   void fetchStatuses() async {
     final allOrdersProvider = Provider.of<AllOrdersProvider>(context, listen: false);
     List<Map<String, String>> fetchedStatuses = await allOrdersProvider.getTrackingStatuses();
-    fetchedStatuses.insert(0, {'All': 'all'});
-
     log('fetchedStatuses: $fetchedStatuses');
+
+    fetchedStatuses.insert(0, {'All': 'all'});
 
     setState(() {
       statuses = fetchedStatuses;
-      // Ensure a default value is set only after statuses are loaded
-      // _selectedStatus = fetchedStatuses.isNotEmpty ? fetchedStatuses.first.keys.first : 'all';
     });
   }
 
@@ -61,7 +59,6 @@ class _AllOrdersPageState extends State<AllOrdersPage> with SingleTickerProvider
   void dispose() {
     _searchController.dispose();
     _pageController.dispose();
-    // Dispose all ValueNotifiers
     for (var notifier in delhiveryTrackingStatuses.values) {
       notifier.dispose();
     }
@@ -360,10 +357,7 @@ class _AllOrdersPageState extends State<AllOrdersPage> with SingleTickerProvider
                         final status = statuses.firstWhere((map) => map.containsKey(value), orElse: () => {})[value]!;
                         Logger().e('status is: $status');
                         allOrdersProvider.fetchAllOrders(
-                            page: allOrdersProvider.currentPage,
-                            date: picked,
-                            status: status,
-                            marketplace: selectedCourier);
+                            page: allOrdersProvider.currentPage, date: picked, status: status, marketplace: selectedCourier);
                       },
                       itemBuilder: (BuildContext context) {
                         List<String> temp = statuses.map((item) => item.keys.first).toList();

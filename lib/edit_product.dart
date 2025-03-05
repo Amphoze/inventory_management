@@ -484,12 +484,12 @@ class _EditProductPageState extends State<EditProductPage> {
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withOpacity(0.3),
+            color: Colors.grey.withValues(alpha: 0.3),
             offset: const Offset(4, 4),
             blurRadius: 8,
           ),
           BoxShadow(
-            color: Colors.white.withOpacity(0.8),
+            color: Colors.white.withValues(alpha: 0.8),
             offset: const Offset(-4, -4),
             blurRadius: 8,
           ),
@@ -524,7 +524,7 @@ class _EditProductPageState extends State<EditProductPage> {
           color: Colors.blueGrey[800],
           shadows: [
             Shadow(
-              color: Colors.blueAccent.withOpacity(0.3),
+              color: Colors.blueAccent.withValues(alpha: 0.3),
               blurRadius: 6,
               offset: const Offset(0, 2),
             ),
@@ -549,8 +549,8 @@ class _EditProductPageState extends State<EditProductPage> {
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                     colors: [
-                      Colors.blue.withOpacity(0.05),
-                      Colors.white.withOpacity(0.9),
+                      Colors.blue.withValues(alpha: 0.05),
+                      Colors.white.withValues(alpha: 0.9),
                     ],
                   ),
                 ),
@@ -601,7 +601,7 @@ class _EditProductPageState extends State<EditProductPage> {
                               backgroundColor: Colors.blueAccent,
                               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                               elevation: 6,
-                              shadowColor: Colors.blueAccent.withOpacity(0.4),
+                              shadowColor: Colors.blueAccent.withValues(alpha: 0.4),
                             ),
                           ),
                         ],
@@ -616,7 +616,7 @@ class _EditProductPageState extends State<EditProductPage> {
                           borderRadius: BorderRadius.circular(16),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.grey.withOpacity(0.1),
+                              color: Colors.grey.withValues(alpha: 0.1),
                               blurRadius: 20,
                               spreadRadius: 5,
                             ),

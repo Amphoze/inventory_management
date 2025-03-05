@@ -41,7 +41,6 @@ class _RoutingPageState extends State<RoutingPage> with TickerProviderStateMixin
         setState(() {
           _selectedDate = 'Select Date';
         });
-        _reloadOrders();
         _searchController.clear();
         _searchControllerReady.clear();
         _searchControllerFailed.clear();
@@ -50,6 +49,7 @@ class _RoutingPageState extends State<RoutingPage> with TickerProviderStateMixin
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<MarketplaceProvider>().fetchMarketplaces();
+      _reloadOrders();
     });
   }
 
@@ -65,10 +65,8 @@ class _RoutingPageState extends State<RoutingPage> with TickerProviderStateMixin
   }
 
   void _reloadOrders() {
-    // Access the RoutingProvider and fetch orders again
     final ordersProvider = Provider.of<RoutingProvider>(context, listen: false);
-    ordersProvider.fetchOrders(); // Fetch both orders
-    // ordersProvider.fetchFailedOrders();
+    ordersProvider.fetchOrders();
   }
 
   @override
@@ -76,46 +74,46 @@ class _RoutingPageState extends State<RoutingPage> with TickerProviderStateMixin
     return Scaffold(
       backgroundColor: Colors.white,
       // appBar: _buildAppBar(),
-      body: _buildReadyToConfirmTab(),
+      body: _buildOrdersTab(),
     );
   }
 
-  AppBar _buildAppBar() {
-    return AppBar(
-      backgroundColor: Colors.white,
-      elevation: 0,
-      toolbarHeight: 0, // Removes space above the tabs
-      bottom: PreferredSize(
-        preferredSize: const Size.fromHeight(50),
-        child: _buildTabBar(),
-      ),
-    );
-  }
+  // AppBar _buildAppBar() {
+  //   return AppBar(
+  //     backgroundColor: Colors.white,
+  //     elevation: 0,
+  //     toolbarHeight: 0, // Removes space above the tabs
+  //     bottom: PreferredSize(
+  //       preferredSize: const Size.fromHeight(50),
+  //       child: _buildTabBar(),
+  //     ),
+  //   );
+  // }
+  //
+  // Widget _buildTabBar() {
+  //   return TabBar(
+  //     controller: _tabController,
+  //     tabs: const [
+  //       Tab(text: 'Ready to Confirm'),
+  //       Tab(text: 'Failed Orders'),
+  //     ],
+  //     indicatorColor: Colors.blue,
+  //     labelColor: Colors.black,
+  //     unselectedLabelColor: Colors.grey,
+  //   );
+  // }
+  //
+  // Widget _buildBody() {
+  //   return TabBarView(
+  //     controller: _tabController,
+  //     children: [
+  //       _buildOrdersTab(),
+  //       // _buildFailedOrdersTab(),
+  //     ],
+  //   );
+  // }
 
-  Widget _buildTabBar() {
-    return TabBar(
-      controller: _tabController,
-      tabs: const [
-        Tab(text: 'Ready to Confirm'),
-        Tab(text: 'Failed Orders'),
-      ],
-      indicatorColor: Colors.blue,
-      labelColor: Colors.black,
-      unselectedLabelColor: Colors.grey,
-    );
-  }
-
-  Widget _buildBody() {
-    return TabBarView(
-      controller: _tabController,
-      children: [
-        _buildReadyToConfirmTab(),
-        // _buildFailedOrdersTab(),
-      ],
-    );
-  }
-
-  Widget _buildReadyToConfirmTab() {
+  Widget _buildOrdersTab() {
     return Consumer<RoutingProvider>(
       builder: (context, pro, child) {
         if (pro.isLoading) {
@@ -366,10 +364,10 @@ class _RoutingPageState extends State<RoutingPage> with TickerProviderStateMixin
                     const SizedBox(width: 8),
                     Container(
                       width: 200,
-                      height: 34,
+                      height: 35,
                       decoration: BoxDecoration(
                         border: Border.all(
-                          color: AppColors.green,
+                          color: AppColors.primaryBlue,
                           width: 1.5,
                         ),
                         borderRadius: BorderRadius.circular(8),
@@ -379,46 +377,38 @@ class _RoutingPageState extends State<RoutingPage> with TickerProviderStateMixin
                           Expanded(
                             child: TextField(
                               controller: _searchControllerReady,
-                              decoration: InputDecoration(
-                                prefixIcon: IconButton(
-                                  icon: const Icon(
-                                    Icons.search,
-                                    color: Color.fromRGBO(117, 117, 117, 1),
-                                  ),
-                                  onPressed: () {
-                                    final searchTerm = _searchControllerReady.text;
-
-                                    if (searchTerm.isNotEmpty) {
-                                      pro.searchOrders(searchTerm);
-                                    }
-                                  },
-                                ),
+                              decoration: const InputDecoration(
                                 hintText: 'Search Orders',
-                                hintStyle: const TextStyle(
+                                hintStyle: TextStyle(
                                   color: Color.fromRGBO(117, 117, 117, 1),
                                   fontSize: 16,
                                 ),
                                 border: InputBorder.none,
-                                contentPadding: const EdgeInsets.symmetric(vertical: 10.0),
+                                contentPadding: EdgeInsets.symmetric(vertical: 12, horizontal: 8),
                               ),
                               style: const TextStyle(color: AppColors.black),
                               onSubmitted: (value) {
-                                pro.searchOrders(value);
+                                if (value.isEmpty) {
+                                  pro.fetchOrders();
+                                } else {
+                                  pro.searchOrders(value);
+                                }
                               },
                               onChanged: (value) {
                                 if (value.isEmpty) {
                                   pro.clearSearchResults();
+                                  pro.fetchOrders();
                                 }
                               },
                             ),
                           ),
                           if (_searchControllerReady.text.isNotEmpty)
-                            IconButton(
-                              icon: Icon(
+                            InkWell(
+                              child: Icon(
                                 Icons.close,
                                 color: Colors.grey.shade600,
                               ),
-                              onPressed: () {
+                              onTap: () {
                                 _searchControllerReady.clear();
                                 pro.fetchOrders();
                                 pro.clearSearchResults();

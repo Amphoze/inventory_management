@@ -31,13 +31,6 @@ class _AccountsSectionPageState extends State<AccountsSectionPage> with SingleTi
   @override
   void initState() {
     super.initState();
-    // _searchController.addListener(() {
-    //   if (_searchController.text.isEmpty) {
-    //     _refreshBookedOrders();
-    //     Provider.of<AccountsProvider>(context, listen: false)
-    //         .clearSearchResults();
-    //   }
-    // });
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final accountsProvider = Provider.of<AccountsProvider>(context, listen: false);
       accountsProvider.fetchAccountedOrders(accountsProvider.currentPage);
@@ -307,15 +300,12 @@ class _AccountsSectionPageState extends State<AccountsSectionPage> with SingleTi
                       setState(() {
                         selectedPaymentMode = value;
                       });
-                      if (selectedCourier == 'All') {
-                        accountsProvider.fetchOrdersByMarketplace(selectedCourier, 2, accountsProvider.currentPage,
-                            date: picked, mode: selectedPaymentMode);
-                      }
-                      accountsProvider.fetchAccountedOrders(
-                        accountsProvider.currentPageBooked,
-                        date: picked,
-                        mode: selectedPaymentMode ?? '',
-                      );
+                      // if (selectedCourier == 'All') {
+                      //   accountsProvider.fetchOrdersByMarketplace(selectedCourier, 2, accountsProvider.currentPageBooked,
+                      //       date: picked, mode: selectedPaymentMode);
+                      // }
+                      accountsProvider.fetchAccountedOrders(accountsProvider.currentPageBooked,
+                          date: picked, mode: selectedPaymentMode ?? '', market: selectedCourier);
                     }
 
                     log('Selected: $value');
@@ -382,13 +372,13 @@ class _AccountsSectionPageState extends State<AccountsSectionPage> with SingleTi
                           _selectedDate = formattedDate;
                         });
 
-                        if (selectedCourier != 'All') {
-                          accountsProvider.fetchBookedOrdersByMarketplace(selectedCourier, accountsProvider.currentPageBooked,
-                              date: picked, mode: selectedPaymentMode);
-                        } else {
-                          accountsProvider.fetchAccountedOrders(accountsProvider.currentPageBooked,
-                              date: picked, mode: selectedPaymentMode ?? '');
-                        }
+                        // if (selectedCourier != 'All') {
+                        //   accountsProvider.fetchBookedOrdersByMarketplace(selectedCourier, accountsProvider.currentPageBooked,
+                        //       date: picked, mode: selectedPaymentMode);
+                        // } else {
+                        accountsProvider.fetchAccountedOrders(accountsProvider.currentPageBooked,
+                            date: picked, mode: selectedPaymentMode ?? '', market: selectedCourier);
+                        // }
                       }
                     },
                     icon: const Icon(
@@ -412,19 +402,19 @@ class _AccountsSectionPageState extends State<AccountsSectionPage> with SingleTi
                     return PopupMenuButton<String>(
                       tooltip: 'Filter by Marketplace',
                       onSelected: (String value) {
-                        if (value == 'All') {
-                          setState(() {
-                            selectedCourier = value;
-                          });
-                          accountsProvider.fetchAccountedOrders(accountsProvider.currentPageBooked,
-                              date: picked, mode: selectedPaymentMode ?? '');
-                        } else {
-                          setState(() {
-                            selectedCourier = value;
-                          });
-                          accountsProvider.fetchBookedOrdersByMarketplace(value, accountsProvider.currentPageBooked,
-                              date: picked, mode: selectedPaymentMode);
-                        }
+                        setState(() {
+                          selectedCourier = value;
+                        });
+                        // if (value == 'All') {
+                        accountsProvider.fetchAccountedOrders(accountsProvider.currentPageBooked,
+                            date: picked, mode: selectedPaymentMode ?? '', market: selectedCourier);
+                        // } else {
+                        //   setState(() {
+                        //     selectedCourier = value;
+                        //   });
+                        //   accountsProvider.fetchBookedOrdersByMarketplace(value, accountsProvider.currentPageBooked,
+                        //       date: picked, mode: selectedPaymentMode);
+                        // }
                         log('Selected: $value');
                       },
                       itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
@@ -492,13 +482,13 @@ class _AccountsSectionPageState extends State<AccountsSectionPage> with SingleTi
                         // Determine the background color based on the result
                         Color snackBarColor;
                         if (resultMessage.contains('success')) {
-                          if (selectedCourier != 'All') {
-                            await accountsProvider.fetchOrdersByMarketplace(selectedCourier, 2, accountsProvider.currentPage,
-                                date: picked, mode: selectedPaymentMode);
-                          } else {
-                            await accountsProvider.fetchAccountedOrders(accountsProvider.currentPageBooked,
-                                date: picked, mode: selectedPaymentMode);
-                          }
+                          // if (selectedCourier != 'All') {
+                          //   await accountsProvider.fetchOrdersByMarketplace(selectedCourier, 2, accountsProvider.currentPage,
+                          //       date: picked, mode: selectedPaymentMode);
+                          // } else {
+                          await accountsProvider.fetchAccountedOrders(accountsProvider.currentPageBooked,
+                              date: picked, mode: selectedPaymentMode, market: selectedCourier);
+                          // }
 
                           snackBarColor = AppColors.green; // Success: Green
                         } else if (resultMessage.contains('error') || resultMessage.contains('failed')) {

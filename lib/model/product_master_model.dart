@@ -69,9 +69,9 @@ class Product {
       outerPackageName: data['outerPackage_name'] ?? '',
       grade: data['grade'] ?? '',
       technicalName: data['technicalName'] ?? '',
-      length: data['length']?.toString() ?? '',
-      width: data['width']?.toString() ?? '',
-      height: data['height']?.toString() ?? '',
+      length: data['length']?.toString() ?? data['dimensions']['length'].toString() ?? '',
+      width: data['width']?.toString() ?? data['dimensions']['width'].toString() ?? '',
+      height: data['height']?.toString() ?? data['dimensions']['height'].toString() ?? '',
       mrp: data['mrp']?.toString() ?? '',
       cost: data['cost']?.toString() ?? '',
       taxRule: data['tax_rule']?.toString() ?? '',
@@ -98,7 +98,7 @@ class Product {
       'grossWeight': grossWeight,
       'ean': ean,
       'shopifyImage': shopifyImage,
-      'variantName' : variantName,
+      'variantName': variantName,
     };
   }
 }

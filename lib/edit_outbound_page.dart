@@ -19,7 +19,7 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
 class EditOutboundPage extends StatefulWidget {
-  final Order order; // Pass the order to edit
+  final Order order;
   final bool isBookPage;
 
   const EditOutboundPage({super.key, required this.order, required this.isBookPage});
@@ -34,8 +34,6 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
   final List<Map<String, dynamic>> productList = [];
   final List<Map<String, dynamic>> comboList = [];
   final _formKey = GlobalKey<FormState>();
-  // final List<TextEditingController> _quantityControllers = [];
-  // final List<TextEditingController> _amountControllers = [];
   List<dynamic> selectedProducts = [];
   Map<String, dynamic>? selectedProductDetails;
   String? selectedProduct;
@@ -43,7 +41,7 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
   bool isLoading = false;
   List<int> deletedItemsIndices = [];
   bool _isSavingOrder = false;
-  String _selectedItemType = 'Product'; // Default selection
+  String _selectedItemType = 'Product';
 
   final Map<String, List<Item>> groupedComboItems = {};
 
@@ -114,14 +112,13 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
   late TextEditingController _awbNumberController;
   late TextEditingController _trackingStatusController;
 
-  // Controllers for customer
   late TextEditingController _customerIdController;
   late TextEditingController _customerFirstNameController;
   late TextEditingController _customerLastNameController;
   late TextEditingController _customerEmailController;
   late TextEditingController _customerPhoneController;
   late TextEditingController _customerGstinController;
-  // Controllers for billing address
+
   late TextEditingController _billingFirstNameController;
   late TextEditingController _billingLastNameController;
   late TextEditingController _billingEmailController;
@@ -133,7 +130,7 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
   late TextEditingController _billingStateController;
   late TextEditingController _billingCountryController;
   late TextEditingController _billingCountryCodeController;
-  // Controllers for shipping address
+
   late TextEditingController _shippingFirstNameController;
   late TextEditingController _shippingLastNameController;
   late TextEditingController _shippingEmailController;
@@ -146,11 +143,9 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
   late TextEditingController _shippingCountryController;
   late TextEditingController _shippingCountryCodeController;
 
-  // Add these variables at the top of the state class
   Future<List<Product?>>? _productsFuture;
   Future<List<Combo?>>? _combosFuture;
 
-  // Separate controllers for products and combos
   final List<TextEditingController> _productQuantityControllers = [];
   final List<TextEditingController> _productRateControllers = [];
   final List<TextEditingController> _addedProductQuantityControllers = [];
@@ -167,14 +162,12 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
     _scrollController = ScrollController();
     _ordersProvider = OrdersProvider();
 
-    // Initialize controllers with the order data
     _orderIdController = TextEditingController(text: widget.order.orderId);
     _idController = TextEditingController(text: widget.order.id);
     _orderStatusController = TextEditingController(text: widget.order.orderStatus.toString());
     _dateController = TextEditingController(text: widget.order.date != null ? _ordersProvider.formatDate(widget.order.date!) : '');
     _paymentModeController = TextEditingController(text: widget.order.paymentMode ?? '');
 
-    // Initialize the provider with the initial payment mode
     _ordersProvider.setInitialPaymentMode(_paymentModeController.text);
 
     _currencyCodeController = TextEditingController(text: widget.order.currencyCode ?? '');
@@ -191,7 +184,6 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
     _taxPercentController = TextEditingController(text: widget.order.taxPercent.toStringAsFixed(2) ?? '');
     _courierNameController = TextEditingController(text: widget.order.courierName ?? '');
 
-    // Initialize the provider with the initial courier name
     _ordersProvider.setInitialCourier(_courierNameController.text);
 
     _orderTypeController = TextEditingController(text: widget.order.orderType ?? '');
@@ -199,12 +191,10 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
 
     _marketplaceController = TextEditingController(text: widget.order.marketplace?.name.toString() ?? '');
 
-    // Initialize the provider with the initial marketplace
     _ordersProvider.setInitialMarketplace(_marketplaceController.text);
 
     _filterController = TextEditingController(text: widget.order.filter ?? '');
 
-    // Initialize the provider with the initial filter
     _ordersProvider.setInitialFilter(_filterController.text);
 
     _freightChargeDelhiveryController = TextEditingController(text: widget.order.freightCharge?.delhivery?.toString() ?? '');
@@ -234,7 +224,6 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
     _awbNumberController = TextEditingController(text: widget.order.awbNumber);
     _trackingStatusController = TextEditingController(text: widget.order.trackingStatus ?? '');
 
-    // Initalize customer details controllers
     _customerIdController = TextEditingController(text: widget.order.customer?.customerId ?? '');
     _customerFirstNameController = TextEditingController(text: widget.order.customer?.firstName ?? '');
     _customerLastNameController = TextEditingController(text: widget.order.customer?.lastName ?? '');
@@ -242,7 +231,6 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
     _customerPhoneController = TextEditingController(text: widget.order.customer?.phone?.toString() ?? '');
     _customerGstinController = TextEditingController(text: widget.order.customer?.customerGstin ?? '');
 
-    // Initialize billing address controllers
     _billingFirstNameController = TextEditingController(text: widget.order.billingAddress?.firstName ?? '');
     _billingLastNameController = TextEditingController(text: widget.order.billingAddress?.lastName ?? '');
     _billingEmailController = TextEditingController(text: widget.order.billingAddress?.email ?? '');
@@ -255,7 +243,6 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
     _billingCountryController = TextEditingController(text: widget.order.billingAddress?.country ?? '');
     _billingCountryCodeController = TextEditingController(text: widget.order.billingAddress?.countryCode ?? '');
 
-    // Initialize shipping address controllers
     _shippingFirstNameController = TextEditingController(text: widget.order.shippingAddress?.firstName ?? '');
     _shippingLastNameController = TextEditingController(text: widget.order.shippingAddress?.lastName ?? '');
     _shippingEmailController = TextEditingController(text: widget.order.shippingAddress?.email ?? '');
@@ -268,27 +255,6 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
     _shippingCountryController = TextEditingController(text: widget.order.shippingAddress?.country ?? '');
     _shippingCountryCodeController = TextEditingController(text: widget.order.shippingAddress?.countryCode ?? '');
 
-    // final Map<String, List<Item>> groupedComboItems = {};
-
-    // for (var item in widget.order.items) {
-    //   if (item.isCombo == true && item.comboSku != null) {
-    //     if (!groupedComboItems.containsKey(item.comboSku)) {
-    //       groupedComboItems[item.comboSku!] = [];
-    //     }
-    //     groupedComboItems[item.comboSku]!.add(item);
-    //   }
-    // }
-
-    // final List<List<Item>> comboItemGroups =
-    //     groupedComboItems.values.where((items) => items.length > 1).toList();
-
-    // final List<Item> remainingItems = widget.order.items
-    //     .where((item) => !(item.isCombo == true &&
-    //         item.comboSku != null &&
-    //         groupedComboItems[item.comboSku]!.length > 1))
-    //     .toList();
-
-    // Process remaining items
     for (var item in remainingItems!) {
       if (item.product != null) {
         productList.add({
@@ -300,7 +266,6 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
       }
     }
 
-    // Process combo groups
     for (var comboGroup in comboItemGroups!) {
       if (comboGroup.isNotEmpty) {
         var item = comboGroup.first;
@@ -316,19 +281,7 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
       }
     }
 
-    // Initialize controllers for all items
-    // for (var item in [...remainingItems, ...comboItemGroups.expand((x) => x)]) {
-    //   _quantityControllers
-    //       .add(TextEditingController(text: item.qty.toString()));
-    //   _amountControllers.add(TextEditingController(
-    //       text: item.amount?.toStringAsFixed(2) ?? '0.00'));
-    // }
-
     _initializeControllers();
-
-    // Initialize the futures
-    // _productsFuture = fetchAllProducts(addedProductList);
-    // _combosFuture = fetchAllCombos(addedComboList);
 
     log("addedComboList: $addedComboList");
     log("addedProductList: $addedProductList");
@@ -388,7 +341,6 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
     _trackingStatusController.dispose();
     _awbNumberController.dispose();
 
-    // Dispose customer details controllers
     _customerIdController.dispose();
     _customerFirstNameController.dispose();
     _customerLastNameController.dispose();
@@ -396,7 +348,6 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
     _customerPhoneController.dispose();
     _customerGstinController.dispose();
 
-    // Dispose billing address controllers
     _billingFirstNameController.dispose();
     _billingLastNameController.dispose();
     _billingEmailController.dispose();
@@ -409,7 +360,6 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
     _billingCountryController.dispose();
     _billingCountryCodeController.dispose();
 
-    // Dispose shipping address controllers
     _shippingFirstNameController.dispose();
     _shippingLastNameController.dispose();
     _shippingEmailController.dispose();
@@ -422,7 +372,6 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
     _shippingCountryController.dispose();
     _shippingCountryCodeController.dispose();
 
-    // Dispose product controllers
     for (var controller in _productQuantityControllers) {
       controller.dispose();
     }
@@ -431,7 +380,6 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
       controller.dispose();
     }
 
-    // Dispose combo controllers
     for (var controller in _addedComboQuantityControllers) {
       controller.dispose();
     }
@@ -501,7 +449,6 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
   }
 
   void _initializeControllers() {
-    // Clear existing controllers
     _productQuantityControllers.clear();
     _productRateControllers.clear();
     _addedProductQuantityControllers.clear();
@@ -512,52 +459,28 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
     _comboQuantityControllers.clear();
     _comboRateControllers.clear();
 
-    // Initialize controllers for products
     for (var item in addedProductList) {
       final rate = item['amount'] / item['qty'];
       _addedProductQuantityControllers.add(TextEditingController(text: item['qty'].toString()));
       _addedProductRateControllers.add(TextEditingController(text: rate.toStringAsFixed(2)));
-      // _addedProductRateControllers.add(TextEditingController(text: item['amount'].toString()));
     }
 
-    // Initialize controllers for combos
     for (var item in addedComboList) {
       final rate = double.parse(item['amount']) / item['qty'];
       _addedComboQuantityControllers.add(TextEditingController(text: item['qty'].toString()));
       _addedComboRateControllers.add(TextEditingController(text: rate.toStringAsFixed(2)));
     }
 
-    // final Map<String, List<Item>> groupedComboItems = {};
-    // for (var item in widget.order.items) {
-    //   if (item.isCombo == true && item.comboSku != null) {
-    //     if (!groupedComboItems.containsKey(item.comboSku)) {
-    //       groupedComboItems[item.comboSku!] = [];
-    //     }
-    //     groupedComboItems[item.comboSku]!.add(item);
-    //   }
-    // }
-    // final List<List<Item>> comboItemGroups =
-    //     groupedComboItems.values.where((items) => items.length > 1).toList();
-
-    // for (var item in comboItemGroups) {
-    //   _tempQuantityControllers
-    //       .add(TextEditingController(text: item[0].qty.toString()));
-    //   _tempAmountControllers
-    //       .add(TextEditingController(text: item[0].comboAmount.toString()));
-    // }
-
     for (var item in productList) {
       final rate = item['amount'] / item['qty'];
       _productQuantityControllers.add(TextEditingController(text: item['qty'].toString()));
       _productRateControllers.add(TextEditingController(text: rate.toStringAsFixed(2)));
-      // _productRateControllers.add(TextEditingController(text: item['amount'].toString()));
     }
 
     for (var item in comboList) {
       final rate = item['amount'] / item['qty'];
       _comboQuantityControllers.add(TextEditingController(text: item['qty'].toString()));
       _comboRateControllers.add(TextEditingController(text: rate.toStringAsFixed(2)));
-      // _comboRateControllers.add(TextEditingController(text: item['amount'].toString()));
     }
   }
 
@@ -572,7 +495,7 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
         if (parsedDate != null) {
           initialDate = parsedDate;
           initialTime = TimeOfDay.fromDateTime(parsedDate);
-          initialSeconds = parsedDate.second; // Capture seconds
+          initialSeconds = parsedDate.second;
         }
       } catch (e) {
         print('Error parsing payment date: $e');
@@ -638,7 +561,7 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
 
   Future<void> _saveChanges() async {
     setState(() {
-      _isSavingOrder = true; // Set loading state
+      _isSavingOrder = true;
     });
 
     log('adddedProductList: $addedProductList');
@@ -675,14 +598,13 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
           'amount': amount,
         };
       }),
-      // if (productList.length != remainingItems!.length)
       ...productList.asMap().entries.map((entry) {
         int index = entry.key;
         var item = entry.value;
-        // double amount = double.tryParse(_productRateControllers[index].text) ?? 0.0;
+
         double rate = double.tryParse(_productRateControllers[index].text) ?? 0.0;
         int qty = int.tryParse(_productQuantityControllers[index].text) ?? 1;
-        double amount = rate * qty; //
+        double amount = rate * qty;
         return {
           'id': item['id'],
           'qty': qty,
@@ -690,7 +612,6 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
           'amount': amount,
         };
       }),
-      // if (comboList.length != comboItemGroups!.length)
       ...comboList.asMap().entries.map((entry) {
         int index = entry.key;
         var item = entry.value;
@@ -706,12 +627,10 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
       }),
     ];
 
-    log('itemsList: $itemsList'); // khaali jaari hai
+    log('itemsList: $itemsList');
 
     if (_formKey.currentState!.validate()) {
       Map<String, dynamic> updatedData = {
-        // 'order_id': _orderIdController.text, // required
-        // 'order_status': int.tryParse(_orderStatusController.text), // required
         'date': parseDate(_dateController.text)?.toIso8601String(),
         'payment_mode': _paymentModeController.text,
         'currency_code': _currencyCodeController.text,
@@ -728,7 +647,6 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
         'discount_amount': _discountAmountController.text,
         'courier_name': _courierNameController.text,
         'order_type': _orderTypeController.text,
-        // 'customer_type': _customerTypeController.text,
         'name': _marketplaceController.text,
         'filter': _filterController.text.isNotEmpty ? _filterController.text : null,
         'expected_delivery_date': parseDate(_expectedDeliveryDateController.text)?.toIso8601String(),
@@ -751,16 +669,13 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
         'agent': _agentController.text,
         'notes': _notesController.text,
         'awb_number': _awbNumberController.text,
-        // customer
         "customer": {
-          // 'customer_id': _customerIdController.text,
           'first_name': _customerFirstNameController.text,
           'last_name': _customerLastNameController.text,
           'phone': _customerPhoneController.text,
           'email': _customerEmailController.text,
           'customer_gstin': _customerGstinController.text
         },
-        //billing address
         "billing_addr": {
           "first_name": _billingFirstNameController.text,
           "last_name": _billingLastNameController.text,
@@ -774,7 +689,6 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
           "country": _billingCountryController.text,
           "country_code": _billingCountryCodeController.text,
         },
-        //shipping address
         "shipping_addr": {
           "first_name": _shippingFirstNameController.text,
           "last_name": _shippingLastNameController.text,
@@ -813,19 +727,17 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
           const SnackBar(content: Text('Failed to update order.')),
         );
       } finally {
-        // Reset loading state
         setState(() {
           _isSavingOrder = false;
         });
       }
     } else {
       setState(() {
-        _isSavingOrder = false; // Reset loading state if validation fails
+        _isSavingOrder = false;
       });
     }
   }
 
-  //////////////////////////////////////////////////////////// PRODUCTS ////////////////////////////////////////////////////////////
   Future<void> _addProduct(Map<String, String> selected) async {
     if (selected['id'] == null) {
       print('Invalid product selection: missing ID');
@@ -887,13 +799,10 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
               .toStringAsFixed(2);
 
           remainingItems!.removeAt(index);
-          // _productsFuture = fetchAllProducts(productList);
 
           _productQuantityControllers.removeAt(index);
           _productRateControllers.removeAt(index);
         });
-        // _productQuantityControllers[index].dispose();
-        // _productAmountControllers[index].dispose();
       }
       log('p: $productList');
     }
@@ -918,8 +827,6 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
 
           _productsFuture = fetchAllProducts(addedProductList);
         });
-        // _addedProductQuantityControllers[index].dispose();
-        // _addedProductAmountControllers[index].dispose();
       }
     }
     log('ap: $addedProductList');
@@ -948,35 +855,32 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
-        // final items = data['products'];
 
         if (data != null) {
-          return Product.fromJson(data); // Access the first product
+          return Product.fromJson(data);
         } else {
           print('No products found');
-          return null; // Handle case where no products are found
+          return null;
         }
       }
     } catch (error) {
       log("error: $error");
-      // return {'success': false, 'message': 'Error: $error'};
     }
     return null;
   }
 
   Future<List<Product?>> fetchAllProducts(List<dynamic> dynamicItemsList) async {
-    print('Fetching products for list: $dynamicItemsList'); // Debug print
+    print('Fetching products for list: $dynamicItemsList');
     List<Product?> products = [];
     for (var item in dynamicItemsList) {
       Product? product = await fetchProduct(item['id']);
-      print('Fetched product: $product'); // Debug print
+      print('Fetched product: $product');
       products.add(product);
     }
-    print('Final products list: $products'); // Debug print
+    print('Final products list: $products');
     return products;
   }
 
-  //////////////////////////////////////////////////////////// COMBOS ////////////////////////////////////////////////////////////
   Future<void> _addCombo(Map<String, String> selected) async {
     log('_addCombo called with: $selected');
 
@@ -985,10 +889,8 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
       return;
     }
 
-    // Add debug logging
     print('Adding combo with ID: ${selected['id']} and SKU: ${selected['sku']}');
 
-    // Check if the combo is already in the list
     bool comboExists = addedComboList.any((item) => item['id'] == selected['id']) || comboList.any((item) => item['id'] == selected['id']);
     if (comboExists) {
       print('Combo already added');
@@ -1019,7 +921,7 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
                 (100 - double.parse(_discountPercentController.text)) * (double.parse(fetchedCombo.comboAmount!) ?? 0))
             .toStringAsFixed(2);
       }
-      // Refresh the combos future
+
       _combosFuture = fetchAllCombos(addedComboList);
     });
 
@@ -1050,8 +952,6 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
           _addedComboQuantityControllers.removeAt(index);
           _addedComboRateControllers.removeAt(index);
         });
-        // _addedComboQuantityControllers[index].dispose();
-        // _addedComboAmountControllers[index].dispose();
       }
     }
 
@@ -1077,11 +977,7 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
           _comboQuantityControllers.removeAt(index);
           _comboRateControllers.removeAt(index);
           comboItemGroups!.removeAt(index);
-
-          // _combosFuture = fetchAllCombos(addedComboList);
         });
-        // _comboQuantityControllers[index].dispose();
-        // _comboAmountControllers[index].dispose();
       }
     }
     log('c: $comboList');
@@ -1110,7 +1006,6 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         if (data != null && data['combos'] != null && data['combos'].isNotEmpty) {
-          // Find the combo that matches the query
           final comboData = data['combos'].firstWhere(
             (combo) => combo['comboSku'] == query || combo['id'] == query,
             orElse: () => null,
@@ -1134,19 +1029,19 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
   }
 
   Future<List<Combo?>> fetchAllCombos(List<dynamic> addedComboList) async {
-    print('Starting fetchAllCombos with list: $addedComboList'); // Debug log
+    print('Starting fetchAllCombos with list: $addedComboList');
     List<Combo?> combos = [];
 
     for (var item in addedComboList) {
-      print('Fetching combo with sku: ${item['sku']}'); // Debug log
+      print('Fetching combo with sku: ${item['sku']}');
       Combo? combo = await fetchCombo(item['sku'] ?? item['id']);
-      print('Fetched combo result: $combo'); // Debug log
+      print('Fetched combo result: $combo');
       if (combo != null) {
         combos.add(combo);
       }
     }
 
-    print('Finished fetchAllCombos, returning combos: $combos'); // Debug log
+    print('Finished fetchAllCombos, returning combos: $combos');
     return combos;
   }
 
@@ -1155,7 +1050,6 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
     return Form(
       key: _formKey,
       child: Scaffold(
-        // backgroundColor: Colors.grey[100],
         appBar: AppBar(
           title: const Text('Edit Order'),
           actions: [
@@ -1194,7 +1088,6 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Order Details Card
                     Expanded(
                       child: Card(
                         elevation: 2,
@@ -1461,7 +1354,6 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
                       ),
                     ),
                     const SizedBox(width: 16),
-                    // Payment Details Card
                     Expanded(
                       child: Card(
                         elevation: 2,
@@ -1612,11 +1504,9 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Left Column
                     Expanded(
                       child: Column(
                         children: [
-                          // Shipping and Delivery Details Card
                           Card(
                             elevation: 2,
                             color: Colors.white,
@@ -1629,7 +1519,6 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
                                   child: Column(
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
-                                      // Courier Selection Row
                                       Row(
                                         children: [
                                           Expanded(
@@ -1685,7 +1574,6 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
                                         ],
                                       ),
                                       const SizedBox(height: 10),
-                                      // Preferred Courier & Delivery Term
                                       Row(
                                         children: [
                                           Expanded(
@@ -1706,7 +1594,6 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
                                         ],
                                       ),
                                       const SizedBox(height: 10),
-                                      // Tracking Details Row
                                       Row(
                                         children: [
                                           Expanded(
@@ -1744,7 +1631,6 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
                             ),
                           ),
                           const SizedBox(height: 16),
-                          // Order Specifications Card
                           Card(
                             elevation: 2,
                             color: Colors.white,
@@ -1782,11 +1668,9 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
                       ),
                     ),
                     const SizedBox(width: 16),
-                    // Right Column
                     Expanded(
                       child: Column(
                         children: [
-                          // Order Dimension Card
                           Card(
                             elevation: 2,
                             color: Colors.white,
@@ -1829,7 +1713,6 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
                             ),
                           ),
                           const SizedBox(height: 16),
-                          // Discount Information Card
                           Card(
                             elevation: 2,
                             color: Colors.white,
@@ -1888,7 +1771,6 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
                             ),
                           ),
                           const SizedBox(height: 16),
-                          // Additional Information Card
                           Card(
                             elevation: 2,
                             color: Colors.white,
@@ -1960,7 +1842,6 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
                   ],
                 ),
                 const SizedBox(height: 30),
-                // Customer Details
                 Card(
                   elevation: 2,
                   color: Colors.white,
@@ -2105,7 +1986,6 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
                     ],
                   ),
                 ),
-                // Billing Address
                 const SizedBox(height: 30),
                 Card(
                   elevation: 2,
@@ -2228,7 +2108,6 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
                     ],
                   ),
                 ),
-                // Shipping Address
                 const SizedBox(height: 30),
                 Card(
                   elevation: 2,
@@ -2353,7 +2232,6 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
                     ],
                   ),
                 ),
-                //Product Details
                 const SizedBox(height: 30),
                 Padding(
                   padding: const EdgeInsets.all(8.0),
@@ -2382,17 +2260,16 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
                               onChanged: (value) {
                                 setState(() {
                                   _selectedItemType = value!;
-                                  // Reset the SearchableDropdown when switching between Product and Combo
+
                                   selectedProduct = null;
                                   selectedProductDetails = null;
                                 });
                               },
                             ),
                           ),
-                          // Searchable dropdown with key to force rebuild
                           Expanded(
                             child: SearchableDropdown(
-                              key: ValueKey(_selectedItemType), // Add this key
+                              key: ValueKey(_selectedItemType),
                               label: 'Select $_selectedItemType',
                               isCombo: _selectedItemType == 'Combo',
                               onChanged: (selected) {
@@ -2423,7 +2300,7 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
                       itemCount: remainingItems!.length,
                       itemBuilder: (context, index) {
                         final item = remainingItems![index];
-                        final id = item.product!.id;
+                        final id = item.product?.id ?? '';
                         log('id: $id');
 
                         return Row(
@@ -2452,34 +2329,11 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
                                   SizedBox(
                                     width: 200,
                                     child: _buildRateTextField(
-                                      // origianl: (productList[index]['amount'] / productList[index]['qty']).toString(),
-                                      // original: (productList[index]['amount'] / productList[index]['qty']).toStringAsFixed(2),
-
-                                      // totalController: _totalAmtController,
                                       controller: _productRateControllers[index],
                                       label: 'Rate',
                                       icon: Icons.currency_rupee,
                                     ),
                                   ),
-                                  // const SizedBox(height: 8),
-                                  // ElevatedButton(
-                                  //   onPressed: () => _deleteProduct(index, id!),
-                                  //   style: ElevatedButton.styleFrom(
-                                  //     backgroundColor: Colors.red,
-                                  //     padding: const EdgeInsets.symmetric(
-                                  //       horizontal: 16,
-                                  //       vertical: 8,
-                                  //     ),
-                                  //   ),
-                                  //   child: const Row(
-                                  //     mainAxisSize: MainAxisSize.min,
-                                  //     children: [
-                                  //       Icon(Icons.delete),
-                                  //       SizedBox(width: 8),
-                                  //       Text('Delete Item'),
-                                  //     ],
-                                  //   ),
-                                  // ),
                                 ],
                               ),
                             ),
@@ -2506,7 +2360,6 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
                         );
                       },
                     ),
-
                     FutureBuilder<List<Product?>>(
                       future: _productsFuture,
                       builder: (context, snapshot) {
@@ -2516,7 +2369,7 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
                           return Center(child: Text('Error: ${snapshot.error}'));
                         } else {
                           final products = snapshot.data ?? [];
-                          // Only show products section if there are standalone products
+
                           if (products.isEmpty) return const SizedBox.shrink();
 
                           return Column(
@@ -2557,8 +2410,6 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
                                             SizedBox(
                                               width: 200,
                                               child: _buildRateTextField(
-                                                // origianl: (addedProductList[index]['amount'] / addedProductList[index]['qty']).toString(),
-                                                // original: (addedProductList[index]['amount'] / addedProductList[index]['qty']).toStringAsFixed(2),
                                                 controller: _addedProductRateControllers[index],
                                                 label: 'Rate',
                                                 icon: Icons.currency_rupee,
@@ -2592,8 +2443,6 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
                         }
                       },
                     ),
-
-                    // Combos section
                     ListView.builder(
                       shrinkWrap: true,
                       physics: const NeverScrollableScrollPhysics(),
@@ -2627,8 +2476,6 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
                                   SizedBox(
                                     width: 200,
                                     child: _buildRateTextField(
-                                      // origianl: (comboList[index]['amount'] / comboList[index]['qty']).toString(),
-                                      // original: (comboList[index]['amount'] / comboList[index]['qty']).toStringAsFixed(2),
                                       controller: _comboRateControllers[index],
                                       label: 'Rate',
                                       icon: Icons.currency_rupee,
@@ -2660,7 +2507,6 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
                         );
                       },
                     ),
-
                     FutureBuilder<List<Combo?>>(
                       future: _combosFuture,
                       builder: (context, snapshot) {
@@ -2708,7 +2554,6 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
                                             SizedBox(
                                               width: 200,
                                               child: _buildRateTextField(
-                                                // original: (addedComboList[index]['amount'] / addedComboList[index]['qty']).toStringAsFixed(2),
                                                 controller: _addedComboRateControllers[index],
                                                 label: 'Rate',
                                                 icon: Icons.currency_rupee,
@@ -2940,16 +2785,14 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
                     total += amount;
                   }
 
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////
                   final double discountPercent = double.parse(_discountPercentController.text);
 
                   if (discountPercent != 0) {
-                    // Calculate discount and update total amount
                     final double discountAmount = total * (discountPercent / 100);
                     final double newTotal = total - discountAmount;
-                    _discountAmountController.text = discountAmount.toStringAsFixed(2); // Convert to integer
-                    _totalAmtController.text = newTotal.toStringAsFixed(2); // Convert to integer
-                    _codAmountController.text = newTotal.toStringAsFixed(2); // Convert to integer
+                    _discountAmountController.text = discountAmount.toStringAsFixed(2);
+                    _totalAmtController.text = newTotal.toStringAsFixed(2);
+                    _codAmountController.text = newTotal.toStringAsFixed(2);
                   }
                 }
               });
@@ -2980,36 +2823,40 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
               style: TextStyle(
                 color: enabled ? AppColors.primaryBlue : Colors.grey[700],
                 fontWeight: FontWeight.w500,
-                fontSize: 13, // Reduced font size
+                fontSize: 13,
               ),
               decoration: InputDecoration(
-                isDense: true, // Makes the field more compact
+                isDense: true,
                 labelText: label,
                 labelStyle: TextStyle(
                   fontWeight: FontWeight.w500,
                   color: isFocused || !isEmpty ? AppColors.primaryBlue : Colors.grey.withValues(alpha: 0.7),
-                  fontSize: 12, // Reduced label font size
+                  fontSize: 12,
                 ),
-                prefixIcon: Icon(icon,
+                prefixIcon: Icon(
+                  icon,
                   color: isFocused ? AppColors.primaryBlue : Colors.grey[700],
-                  size: 18, // Reduced icon size
+                  size: 18,
                 ),
-                suffixIcon: isEmpty ? null : IconButton(
-                  icon: Icon(Icons.clear,
-                    color: Colors.grey[600],
-                    size: 16, // Reduced clear icon size
-                  ),
-                  onPressed: () => controller.clear(),
-                  constraints: const BoxConstraints(
-                    minWidth: 32, // Reduced button width
-                    minHeight: 32, // Reduced button height
-                  ),
-                ),
+                suffixIcon: isEmpty
+                    ? null
+                    : IconButton(
+                        icon: Icon(
+                          Icons.clear,
+                          color: Colors.grey[600],
+                          size: 16,
+                        ),
+                        onPressed: () => controller.clear(),
+                        constraints: const BoxConstraints(
+                          minWidth: 32,
+                          minHeight: 32,
+                        ),
+                      ),
                 enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8), // Reduced border radius
+                  borderRadius: BorderRadius.circular(8),
                   borderSide: BorderSide(
                     color: Colors.grey[400]!,
-                    width: 1.0, // Reduced border width
+                    width: 1.0,
                   ),
                 ),
                 focusedBorder: OutlineInputBorder(
@@ -3029,8 +2876,8 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
                 filled: true,
                 fillColor: enabled ? Colors.white : Colors.grey[200],
                 contentPadding: const EdgeInsets.symmetric(
-                  vertical: 0, // Reduced vertical padding
-                  horizontal: 4, // Reduced horizontal padding
+                  vertical: 0,
+                  horizontal: 4,
                 ),
               ),
               onFieldSubmitted: (value) {
@@ -3064,17 +2911,15 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
                     _totalAmtController.text = total.toStringAsFixed(2);
                     _codAmountController.text = total.toStringAsFixed(2);
 
-            //////////////////////////////////////////////////////////////////////////////////////////////////////////////
                     final double discountPercent = double.parse(_discountPercentController.text);
                     final double totalAmount = double.parse(_totalAmtController.text);
 
                     if (discountPercent != 0) {
-                      // Calculate discount and update total amount
                       final double discountAmount = totalAmount * (discountPercent / 100);
                       final double newTotal = totalAmount - discountAmount;
-                      _discountAmountController.text = discountAmount.toStringAsFixed(2); // Convert to integer
-                      _totalAmtController.text = newTotal.toStringAsFixed(2); // Convert to integer
-                      _codAmountController.text = newTotal.toStringAsFixed(2); // Convert to integer
+                      _discountAmountController.text = discountAmount.toStringAsFixed(2);
+                      _totalAmtController.text = newTotal.toStringAsFixed(2);
+                      _codAmountController.text = newTotal.toStringAsFixed(2);
                     }
                   }
                 });
@@ -3106,36 +2951,40 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
               style: TextStyle(
                 color: enabled ? AppColors.primaryBlue : Colors.grey[700],
                 fontWeight: FontWeight.w500,
-                fontSize: 13, // Reduced font size
+                fontSize: 13,
               ),
               decoration: InputDecoration(
-                isDense: true, // Makes the field more compact
+                isDense: true,
                 labelText: label,
                 labelStyle: TextStyle(
                   fontWeight: FontWeight.w500,
                   color: isFocused || !isEmpty ? AppColors.primaryBlue : Colors.grey.withValues(alpha: 0.7),
-                  fontSize: 12, // Reduced label font size
+                  fontSize: 12,
                 ),
-                prefixIcon: Icon(icon,
+                prefixIcon: Icon(
+                  icon,
                   color: isFocused ? AppColors.primaryBlue : Colors.grey[700],
-                  size: 18, // Reduced icon size
+                  size: 18,
                 ),
-                suffixIcon: isEmpty ? null : IconButton(
-                  icon: Icon(Icons.clear,
-                    color: Colors.grey[600],
-                    size: 16, // Reduced clear icon size
-                  ),
-                  onPressed: () => controller.clear(),
-                  constraints: const BoxConstraints(
-                    minWidth: 32, // Reduced button width
-                    minHeight: 32, // Reduced button height
-                  ),
-                ),
+                suffixIcon: isEmpty
+                    ? null
+                    : IconButton(
+                        icon: Icon(
+                          Icons.clear,
+                          color: Colors.grey[600],
+                          size: 16,
+                        ),
+                        onPressed: () => controller.clear(),
+                        constraints: const BoxConstraints(
+                          minWidth: 32,
+                          minHeight: 32,
+                        ),
+                      ),
                 enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8), // Reduced border radius
+                  borderRadius: BorderRadius.circular(8),
                   borderSide: BorderSide(
                     color: Colors.grey[400]!,
-                    width: 1.0, // Reduced border width
+                    width: 1.0,
                   ),
                 ),
                 focusedBorder: OutlineInputBorder(
@@ -3155,8 +3004,8 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
                 filled: true,
                 fillColor: enabled ? Colors.white : Colors.grey[200],
                 contentPadding: const EdgeInsets.symmetric(
-                  vertical: 0, // Reduced vertical padding
-                  horizontal: 4, // Reduced horizontal padding
+                  vertical: 0,
+                  horizontal: 4,
                 ),
               ),
               onFieldSubmitted: (value) {
@@ -3189,18 +3038,16 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
                     }
                     _totalAmtController.text = total.toStringAsFixed(2);
                     _codAmountController.text = total.toStringAsFixed(2);
-            
-                    //////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
                     final double discountPercent = double.parse(_discountPercentController.text);
                     final double totalAmount = double.parse(_totalAmtController.text);
-            
+
                     if (discountPercent != 0) {
-                      // Calculate discount and update total amount
                       final double discountAmount = totalAmount * (discountPercent / 100);
                       final double newTotal = totalAmount - discountAmount;
-                      _discountAmountController.text = discountAmount.toStringAsFixed(2); // Convert to integer
-                      _totalAmtController.text = newTotal.toStringAsFixed(2); // Convert to integer
-                      _codAmountController.text = newTotal.toStringAsFixed(2); // Convert to integer
+                      _discountAmountController.text = discountAmount.toStringAsFixed(2);
+                      _totalAmtController.text = newTotal.toStringAsFixed(2);
+                      _codAmountController.text = newTotal.toStringAsFixed(2);
                     }
                   }
                 });

@@ -8,18 +8,20 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:inventory_management/Api/inventory_api.dart';
 import 'package:inventory_management/constants/constants.dart';
+import 'package:logger/logger.dart';
+import 'package:socket_io_client/socket_io_client.dart' as IO;
+import 'package:url_launcher/url_launcher.dart';
 
-class CreateOrdersByCSV extends StatefulWidget {
-  const CreateOrdersByCSV({super.key});
+class UploadWarehouse extends StatefulWidget {
+  const UploadWarehouse({super.key});
 
   @override
-  State<CreateOrdersByCSV> createState() => _CreateOrdersByCSVState();
+  State<UploadWarehouse> createState() => _UploadWarehouseState();
 }
 
-class _CreateOrdersByCSVState extends State<CreateOrdersByCSV> {
-  static const int _pageSize = 50; // Number of rows to display per page
+class _UploadWarehouseState extends State<UploadWarehouse> {
+  static const int _pageSize = 50;
   List<List<dynamic>> _csvData = [];
-  List<Map<String, dynamic>> _failedOrders = [];
   int _rowCount = 0;
   bool _isCreateEnabled = false;
   bool _isCreating = false;
@@ -30,17 +32,117 @@ class _CreateOrdersByCSVState extends State<CreateOrdersByCSV> {
   final ScrollController _verticalScrollController = ScrollController();
   int _currentPage = 0;
 
+  String _progressMessage = '';
+
+  final ValueNotifier<double> _progressNotifier = ValueNotifier<double>(0);
+  IO.Socket? _socket;
+
+  void _initializeSocket() async {
+    if (_socket != null && _socket!.connected) {
+      log('Socket already connected. Skipping initialization.');
+      return;
+    }
+
+    try {
+      final baseUrl = await Constants.getBaseUrl();
+      log('Base URL in _initializeSocket: $baseUrl');
+      final email = await AuthProvider().getEmail();
+      log('email: $email');
+
+      _socket ??= IO.io(
+        baseUrl,
+        IO.OptionBuilder()
+            .setTransports(['websocket'])
+            .disableAutoConnect()
+            .setQuery({'email': email})
+            .build()
+      );
+
+      _socket?.onConnect((_) {
+        debugPrint('Connected to Socket.IO');
+        _showSnackbar('Connected to server', Colors.green);
+      });
+
+      _socket?.off('csv-file-uploading-err');
+      _socket?.on('csv-file-uploading-err', (data) {
+        debugPrint('Error Data: $data');
+        setState(() {
+          _progressMessage = data['message'] ?? 'An error occurred';
+        });
+        _showSnackbar(_progressMessage, Colors.red);
+      });
+
+      _socket?.off('csv-file-uploading');
+      _socket?.on('csv-file-uploading', (data) {
+        Logger().e('Data progress: ${data['progress']}');
+        if (data['progress'] != null) {
+          double newProgress = double.tryParse(data['progress'].toString()) ?? 0;
+          _progressNotifier.value = newProgress;
+        }
+      });
+
+      _socket?.off('csv-file-uploaded');
+      _socket?.once('csv-file-uploaded', (data) {
+        log('CSV file uploaded: $data');
+        setState(() {
+          _progressMessage = data['message'] ?? 'File uploaded successfully';
+          _isCreating = false;
+          _csvData = [];
+          _rowCount = 0;
+          _isCreateEnabled = false;
+          _selectedFile = null;
+        });
+        _showSnackbar(_progressMessage, Colors.green);
+
+        if (data['downloadLink'] != null) {
+          log('Download link: ${data['downloadLink']}');
+          _launchDownloadUrl(data['downloadLink']);
+        }
+      });
+
+      _socket?.connect();
+    } catch (e) {
+      log('Error in _initializeSocket: $e');
+      _showSnackbar('Failed to connect to server', Colors.red);
+    }
+  }
+
+  void _showSnackbar(String message, Color color) {
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).removeCurrentSnackBar();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(message),
+          backgroundColor: color,
+          duration: const Duration(seconds: 3),
+        ),
+      );
+    }
+  }
+
   @override
   void initState() {
-    super.initState();
+    _initializeSocket();
     _verticalScrollController.addListener(_scrollListener);
+    super.initState();
   }
 
   @override
   void dispose() {
+    _socket?.disconnect();
     _horizontalScrollController.dispose();
     _verticalScrollController.dispose();
+    _progressNotifier.dispose();
     super.dispose();
+  }
+
+  Future<void> _launchDownloadUrl(String url) async {
+    if (await canLaunchUrl(Uri.parse(url))) {
+      await launchUrl(Uri.parse(url));
+      log('Download URL launched: $url');
+    } else {
+      debugPrint('Could not launch $url');
+    }
   }
 
   void _scrollListener() {
@@ -60,7 +162,7 @@ class _CreateOrdersByCSVState extends State<CreateOrdersByCSV> {
   List<List<dynamic>> _getPagedData() {
     if (_csvData.isEmpty) return [];
 
-    const startIndex = 1; // Skip header row
+    const startIndex = 1;
     final endIndex = startIndex + (_currentPage + 1) * _pageSize;
     return _csvData.sublist(
       startIndex,
@@ -77,18 +179,17 @@ class _CreateOrdersByCSVState extends State<CreateOrdersByCSV> {
     try {
       FilePickerResult? result = await FilePicker.platform.pickFiles(
         type: FileType.custom,
-        allowedExtensions: [
-          'csv'
-        ],
+        allowedExtensions: ['csv'],
       );
 
       if (result != null) {
+        final file = result.files.first;
+
         setState(() {
           _isProcessingFile = true;
           _isPickingFile = false;
         });
 
-        final file = result.files.first;
         _selectedFile = file;
         await _processCSVInChunks(file.bytes!);
       } else {
@@ -121,7 +222,7 @@ class _CreateOrdersByCSVState extends State<CreateOrdersByCSV> {
         _csvData = filteredData;
         _rowCount = _csvData.isNotEmpty ? _csvData.length - 1 : 0;
         _isCreateEnabled = _rowCount > 0;
-        _failedOrders = [];
+
         _isProcessingFile = false;
       });
     } catch (e) {
@@ -135,12 +236,13 @@ class _CreateOrdersByCSVState extends State<CreateOrdersByCSV> {
     }
   }
 
-  Future<void> _createOrders() async {
+  Future<void> _uploadWarehouses() async {
     if (_selectedFile == null) return;
+
+    Logger().e('1');
 
     setState(() {
       _isCreating = true;
-      _failedOrders = [];
     });
 
     try {
@@ -154,8 +256,10 @@ class _CreateOrdersByCSVState extends State<CreateOrdersByCSV> {
 
       var request = http.MultipartRequest(
         'POST',
-        Uri.parse('${await Constants.getBaseUrl()}/orders/createOrderByCsv'),
+        Uri.parse('${await Constants.getBaseUrl()}/warehouse/upload'),
       );
+
+      Logger().e('2');
 
       request.files.add(
         http.MultipartFile.fromBytes(
@@ -165,6 +269,8 @@ class _CreateOrdersByCSVState extends State<CreateOrdersByCSV> {
         ),
       );
 
+      Logger().e('3');
+
       request.headers.addAll({
         'Authorization': 'Bearer $token',
       });
@@ -173,51 +279,19 @@ class _CreateOrdersByCSVState extends State<CreateOrdersByCSV> {
       final responseBody = await response.stream.bytesToString();
       final jsonData = jsonDecode(responseBody);
 
-      log('Response Body: $responseBody, Status Code: ${response.statusCode}');
+      Logger().e('Create Csv Body: $responseBody, Status Code: ${response.statusCode}');
 
-      if (response.statusCode == 200) {
-        if (jsonData['message'] == 'Orders processed' && jsonData.containsKey('results')) {
-          final results = jsonData['results'] as List;
-          bool hasFailedOrders = false;
-
-          for (var result in results) {
-            if (result['status'] == 400) {
-              hasFailedOrders = true;
-              final orderId = result['order_id']?.toString().trim();
-              final errorMessage = result['data']?['error']?.toString().trim();
-
-              if ((orderId?.isNotEmpty ?? false) || (errorMessage?.isNotEmpty ?? false)) {
-                _failedOrders.add({
-                  'order_id': orderId ?? 'Unknown Order ID',
-                  'error': errorMessage ?? 'Unknown error',
-                });
-              }
-            }
-          }
-
-          setState(() {}); // Trigger rebuild to show failed orders table
-
-          if (!hasFailedOrders) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('All orders created successfully!')),
-            );
-          } else {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Some orders failed. Check the failed orders table below.')),
-            );
-          }
-        } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Unexpected response format')),
-          );
-        }
+      if (response.statusCode == 200 || response.statusCode == 201) {
       } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("${jsonData['message']}")),
+        );
         log('Failed to upload CSV: ${response.statusCode}\n$responseBody');
       }
     } catch (e) {
-      log('Error during order confirmation: $e', error: e, stackTrace: StackTrace.current);
+      log('Error during order creation: $e', error: e, stackTrace: StackTrace.current);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error during upload: $e')),
+        SnackBar(content: Text('Error: $e')),
       );
     } finally {
       setState(() {
@@ -234,6 +308,16 @@ class _CreateOrdersByCSVState extends State<CreateOrdersByCSV> {
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
+            const Row(
+              mainAxisAlignment: MainAxisAlignment.start,
+              children: [
+                Text(
+                  'Upload Warehouse',
+                  style: TextStyle(fontSize: 25, fontWeight: FontWeight.bold),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
             Row(
               children: [
                 Expanded(
@@ -242,21 +326,21 @@ class _CreateOrdersByCSVState extends State<CreateOrdersByCSV> {
                     child: Text(_isPickingFile
                         ? 'Selecting File...'
                         : _isProcessingFile
-                            ? 'Processing File...'
-                            : 'Select CSV File'),
+                        ? 'Processing File...'
+                        : 'Select CSV File'),
                   ),
                 ),
                 const SizedBox(width: 16),
                 ElevatedButton(
-                  onPressed: _isPickingFile || _isProcessingFile ? null : () => AuthProvider().downloadTemplate(context, 'create'),
+                  onPressed: _isPickingFile || _isProcessingFile ? null : () => AuthProvider().downloadTemplate(context, 'warehouse'),
                   child: const Text('Download Template'),
                 ),
                 const SizedBox(width: 16),
                 if (_rowCount > 0)
                   Expanded(
                     child: ElevatedButton(
-                      onPressed: _isCreateEnabled && !_isCreating && !_isPickingFile && !_isProcessingFile ? _createOrders : null,
-                      child: Text(_isCreating ? 'Creating...' : 'Create Orders'),
+                      onPressed: _isCreateEnabled && !_isCreating && !_isPickingFile && !_isProcessingFile ? _uploadWarehouses : null,
+                      child: const Text('Upload'),
                     ),
                   ),
               ],
@@ -271,21 +355,27 @@ class _CreateOrdersByCSVState extends State<CreateOrdersByCSV> {
             if (_rowCount > 0) ...[
               Text('Number of items: $_rowCount'),
               const SizedBox(height: 16),
-              Expanded(
-                child: Column(
-                  children: [
-                    Expanded(
-                      flex: 2,
-                      child: _buildDataTable(),
+              ValueListenableBuilder<double>(
+                valueListenable: _progressNotifier,
+                builder: (context, value, child) {
+                  return Text.rich(
+                    TextSpan(
+                      text: 'Progress: ',
+                      children: [
+                        TextSpan(
+                          text: '${value.toStringAsFixed(2)}%',
+                          style: const TextStyle(fontWeight: FontWeight.normal),
+                        ),
+                      ],
+                      style: const TextStyle(fontWeight: FontWeight.bold),
                     ),
-                    if (_failedOrders.isNotEmpty) _buildFailedOrdersTable(),
-                  ],
-                ),
+                  );
+                },
               ),
-            ],
-            if (_isCreating) ...[
-              const SizedBox(height: 16),
-              const LinearProgressIndicator(),
+              const SizedBox(height: 50),
+              Expanded(
+                child: _buildDataTable(),
+              ),
             ],
           ],
         ),
@@ -322,17 +412,17 @@ class _CreateOrdersByCSVState extends State<CreateOrdersByCSV> {
               ),
               columns: headers
                   .map((header) => DataColumn(
-                        label: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                          child: Text(header.toString()),
-                        ),
-                      ))
+                label: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                  child: Text(header.toString()),
+                ),
+              ))
                   .toList(),
               rows: pagedData.map((row) {
                 return DataRow(
                   cells: List.generate(
                     row.length,
-                    (index) => DataCell(
+                        (index) => DataCell(
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 8.0),
                         child: Text(row[index].toString()),
@@ -344,73 +434,6 @@ class _CreateOrdersByCSVState extends State<CreateOrdersByCSV> {
             ),
           ),
         ),
-      ),
-    );
-  }
-
-  Widget _buildFailedOrdersTable() {
-    return Expanded(
-      flex: 1,
-      child: Column(
-        children: [
-          const SizedBox(height: 16),
-          const Text(
-            'Failed Orders',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: AppColors.primaryBlue,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Expanded(
-            child: Scrollbar(
-              thumbVisibility: true,
-              child: SingleChildScrollView(
-                scrollDirection: Axis.vertical,
-                child: SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: DataTable(
-                    headingTextStyle: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.primaryBlue,
-                    ),
-                    border: TableBorder.all(
-                      color: Colors.grey.shade300,
-                      width: 1,
-                    ),
-                    columns: const [
-                      DataColumn(
-                          label: Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 8.0),
-                        child: Text('Order ID'),
-                      )),
-                      DataColumn(
-                          label: Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 8.0),
-                        child: Text('Error Message'),
-                      )),
-                    ],
-                    rows: _failedOrders.where((order) => (order['order_id']?.toString().trim().isNotEmpty ?? false) || (order['error']?.toString().trim().isNotEmpty ?? false)).map((order) {
-                      return DataRow(
-                        cells: [
-                          DataCell(Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                            child: Text(order['order_id'].toString()),
-                          )),
-                          DataCell(Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                            child: Text(order['error'].toString()),
-                          )),
-                        ],
-                      );
-                    }).toList(),
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ],
       ),
     );
   }

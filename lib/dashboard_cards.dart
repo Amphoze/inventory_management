@@ -5,6 +5,7 @@ import 'package:inventory_management/provider/dashboard_provider.dart';
 import 'package:provider/provider.dart';
 
 import 'Custom-Files/colors.dart';
+import 'Widgets/percent_dashboard_card.dart';
 
 class DashboardCards extends StatefulWidget {
   final DateTime? date;
@@ -122,29 +123,26 @@ class _DashboardCardsState extends State<DashboardCards> {
             else if (dashboardProvider.errorMessage != null)
               Text('Error: ${dashboardProvider.errorMessage}') // Show error if there is one
             else if (dashboardData != null) ...[
-              if (widget.isSuperAdmin == true) ...[
+              // if (widget.isSuperAdmin == true) ...[
                 Wrap(
                   spacing: 8.0,
                   runSpacing: 8.0,
                   alignment: WrapAlignment.center,
                   children: [
+                    // Gross Revenue
                     DashboardCard(
                       title: isToday(widget.date!) ? "Today's Gross Revenue" : "Gross Revenue",
-                      value: '₹${dashboardData.totalAmountToday}',
-                      // Dynamic value from API
+                      value: '₹${dashboardData.totalAmountToday.toStringAsFixed(2)}',
                       subtitle: 'Yesterday: ₹${dashboardData.totalAmountYesterday}',
-                      // Dynamic subtitle from API
                       percentageChange:
                           calculatePercentageChange(dashboardData.totalAmountToday as double, dashboardData.totalAmountYesterday as double),
-                      // Calculate percentage change
                       changeColor:
                           calculateChangeColor(dashboardData.totalAmountToday as double, dashboardData.totalAmountYesterday as double),
-                      // Dynamic color based on increase/decrease
                       chartData: const [1.0, 0.9, 0.8, 0.7],
-                      // You can customize this
                       width: threeCardWidth,
                       height: cardHeight,
                     ),
+                    // Orders
                     DashboardCard(
                       title: isToday(widget.date!) ? "Today's Orders" : "Orders",
                       value: '${dashboardData.totalOrderToday}',
@@ -162,17 +160,20 @@ class _DashboardCardsState extends State<DashboardCards> {
                       width: threeCardWidth,
                       height: cardHeight,
                     ),
+                    // RTO-Delivered %
+                    PercentDashboardCard(width: threeCardWidth, height: cardHeight),
                   ],
                 ),
                 const Divider(
                   height: 30,
                 ),
-              ],
+              // ],
               Wrap(
                 spacing: 8.0,
                 runSpacing: 8.0,
                 alignment: WrapAlignment.center,
                 children: [
+                  // Failed Orders
                   DashboardCard(
                     title: "Failed Orders",
                     value: '${dashboardData.failedOrdersToday}',
@@ -266,7 +267,7 @@ class _DashboardCardsState extends State<DashboardCards> {
                       height: cardHeight,
                     ),
                   ],
-                  if (widget.isBooker == true || widget.isAdmin == true || widget.isSuperAdmin == true) ...[
+                  if (widget.isAdmin == true || widget.isSuperAdmin == true) ...[
                     DashboardCard(
                       title: "Ready to HOD Approval",
                       value: '${dashboardData.readyToHodApprovalToday}',
@@ -455,8 +456,6 @@ class DashboardCard extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
-                  // Optional: Add an icon here if needed
-                  // Icon(Icons.trending_up, size: 20, color: AppColors.grey)
                 ],
               ),
             ),

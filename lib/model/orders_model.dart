@@ -1,6 +1,4 @@
-// import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-// import 'package:inventory_management/Custom-Files/colors.dart';
 
 class Order {
   final List<CallStatus>? callStatus;
@@ -87,8 +85,6 @@ class Order {
   final bool? isHold;
   String? selectedCourier;
   String? selectedCourierId;
-
-  // final String? status;
 
   Order({
     this.callStatus,
@@ -177,126 +173,67 @@ class Order {
     this.trackingStatus,
   });
 
-  // Utility function to safely parse a string from any data type
   static String _parseString(dynamic value) {
-    return value?.toString() ?? ''; // Dispatched an empty string if null
+    return value?.toString() ?? '';
   }
 
-  // Utility function to parse a double from any data type
   static double _parseDouble(dynamic value) {
     if (value == null) return 0.0;
     return value is num ? value.toDouble() : double.tryParse(value.toString()) ?? 0.0;
   }
 
-  // Utility function to parse an integer from any data type
   static int _parseInt(dynamic value) {
     if (value == null) return 0;
     return value is int ? value : int.tryParse(value.toString()) ?? 0;
   }
 
-  // Method to get the image or a default icon if the image is not available
-  // Widget getOrderImage() {
-  //   if (image != null && image!.isNotEmpty) {
-  //     return Image.network(
-  //       image!,
-  //       width: 200, // You can adjust the size as needed
-  //       height: 200,
-  //       errorBuilder: (context, error, stackTrace) {
-  //         return const Icon(
-  //           Icons.broken_image,
-  //           size: 200,
-  //           color: AppColors.grey,
-  //         ); // Fallback to an icon if the image fails to load
-  //       },
-  //     );
-  //   } else {
-  //     return const Icon(Icons.image,
-  //         size: 200,
-  //         color:
-  //             AppColors.grey); // Dispatched an icon if the image is not present
-  //   }
-  // }
-
-// Function to parse a string and return a DateTime? object
-  /// Parses a date string and returns a DateTime object, handling multiple formats.
   static DateTime? _parseDate(String? dateString) {
     if (dateString == null || dateString.isEmpty) {
-      //print("Invalid or empty date string");
-      return null; // Dispatched null for invalid or empty strings
+      return null;
     }
 
-    // Try parsing using DateTime.parse()
     try {
       return DateTime.parse(dateString).toLocal();
-    } catch (e) {
-      //print("DateTime.parse failed for '$dateString': $e");
-    }
+    } catch (e) {}
 
-    // Define formats to try for parsing
     List<String> formats = [
       "EEE MMM dd yyyy HH:mm:ss 'GMT'Z",
-      // e.g., Thu Oct 10 2024 11:18:19 GMT+0000
       "yyyy-MM-dd HH:mm:ss",
-      // e.g., 2024-09-26 12:00:00
       "dd-MM-yyyy",
-      // e.g., 26-09-2024
       "MM/dd/yyyy",
-      // e.g., 09/26/2024
       "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'",
-      // e.g., 2024-09-26T12:00:00.000Z
       "yyyy-MM-dd'T'HH:mm:ss'Z'",
-      // e.g., 2024-09-26T12:00:00Z
       "yyyy-MM-dd'T'HH:mm:ss",
-      // e.g., 2024-09-26T12:00:00
       "yyyy.MM.dd HH:mm:ss",
-      // e.g., 2024.09.26 12:00:00
       "MMMM dd, yyyy",
-      // e.g., September 26, 2024
       "dd MMM yyyy",
-      // e.g., 26 Sep 2024
       "dd MMM yyyy hh:mm a",
-      // e.g., 10 Oct 2024 11:18 AM
     ];
 
-    // Try parsing with each format
     for (var format in formats) {
       try {
         return DateFormat(format).parse(dateString, true).toLocal();
-      } catch (e) {
-        // Log errors but continue trying other formats
-        //print("Failed to parse using format '$format': $e");
-      }
+      } catch (e) {}
     }
 
-    //print("Error: Could not parse date string: '$dateString'");
-    return null; // Dispatched null if all parsing attempts fail
+    return null;
   }
 
-  /// Formats a DateTime object to 'dd-MM-yyyy' string.
   static String? formatDate(DateTime? date) {
     return date == null ? null : DateFormat('dd-MM-yyyy').format(date);
   }
 
-  /// Parses a date string and returns it formatted as 'dd-MM-yyyy'.
   static String? parseAndFormatDate(String? dateString) {
     DateTime? parsedDate = _parseDate(dateString);
     return parsedDate != null ? formatDate(parsedDate) : null;
   }
 
   Map<String, int> countCallStatuses() {
-    // Initialize counts for all possible statuses
-    Map<String, int> statusCounts = {
-      "not answered": 0,
-      "answered": 0,
-      "not reach": 0,
-      "busy": 0
-    };
+    Map<String, int> statusCounts = {"not answered": 0, "answered": 0, "not reach": 0, "busy": 0};
 
-    // Count each call status
     if (callStatus != null) {
       for (var status in callStatus!) {
-        // Ensure the map contains the key and use null-aware operators to guard against nulls
-        int currentCount = statusCounts[status.status] ?? 0; // Safe-guard against null
+        int currentCount = statusCounts[status.status] ?? 0;
         statusCounts[status.status] = currentCount + 1;
       }
     }
@@ -305,7 +242,7 @@ class Order {
 
   factory Order.fromJson(Map<String, dynamic> json) {
     return Order(
-      callStatus: (json['callStatus'] as List?)?.map((e) => CallStatus.fromJson(e)).toList(),
+      callStatus: (json['callStatus'] as List? ?? []).map((e) => CallStatus.fromJson(e)).toList(),
       merged: json['merged'] ?? {},
       availableCouriers: (json['availableCouriers'] as List?)
               ?.map((courier) => {
@@ -317,38 +254,29 @@ class Order {
           [],
       warehouseId: json['warehouse']?['warehouse_id']?['_id'] ?? '',
       warehouseName: json['warehouse']?['warehouse_id']?['name'] ?? '',
-      // warehouseId: json['warehouse']?['warehouse_id'] ?? '',
-      // warehouseName: '',
       isHold: json['warehouse']?['isHold'] ?? false,
       messages: json['messages'] ?? {},
       outBoundBy: json['isOutBound'] ?? {},
-      // status
       confirmedBy: json['confirmedBy'] ?? {},
-      // confirmedBy: json['confirmedBy'] ?? {},
       baApprovedBy: json['baApprovedBy'] ?? {},
       checkInvoiceBy: json['checkInvoice'] ?? {},
       bookedBy: json['isBooked'] ?? {},
       rebookedBy: json['reBooked'] ?? {},
       pickedBy: json['isPicked'] ?? {},
-      // status
       packedBy: json['ispacked'] ?? {},
-      // status
       checkedBy: json['checker'] ?? {},
-      // approved
       rackedBy: json['racker'] ?? {},
-      // approved
       manifestedBy: json['checkManifest'] ?? {},
-      // approved
       isBooked: json['isBooked']?['status'] ?? false,
       checkInvoice: json['checkInvoice']?['approved'] ?? false,
-      customer: json['customer'] != null ? Customer.fromJson(json['customer']) : null,
+      customer: json['customer'] != null ? Customer.fromJson(json['customer'] ?? {}) : null,
       source: _parseString(json['source']),
       id: _parseString(json['_id']),
       orderId: _parseString(json['order_id']),
       date: _parseDate(_parseString(json['date'])),
       paymentMode: _parseString(json['payment_mode']),
       currencyCode: _parseString(json['currency_code']),
-      items: (json['items'] as List?)?.map((item) => Item.fromJson(item)).toList() ?? [],
+      items: (json['items'] as List? ?? []).map((item) => Item.fromJson(item)).toList(),
       skuTrackingId: _parseString(json['sku_tracking_id']),
       totalWeight: _parseDouble(json['total_weight'] ?? 0),
       totalAmount: _parseDouble(json['total_amt']),
@@ -360,14 +288,17 @@ class Order {
       discountPercent: _parseDouble(json['discount_percent']),
       discountAmount: _parseDouble(json['discount_amount']),
       taxPercent: _parseInt(json['tax_percent']),
-      billingAddress: json['billing_addr'] is Map<String, dynamic> ? Address.fromJson(json['billing_addr']) : Address(address1: _parseString(json['billing_addr'])),
-      shippingAddress: json['shipping_addr'] is Map<String, dynamic> ? Address.fromJson(json['shipping_addr']) : Address(address1: _parseString(json['shipping_addr'])),
+      billingAddress: json['billing_addr'] is Map<String, dynamic>
+          ? Address.fromJson(json['billing_addr'])
+          : Address(address1: _parseString(json['billing_addr'])),
+      shippingAddress: json['shipping_addr'] is Map<String, dynamic>
+          ? Address.fromJson(json['shipping_addr'])
+          : Address(address1: _parseString(json['shipping_addr'])),
       courierName: _parseString(json['courier_name']),
       orderType: _parseString(json['order_type']),
       outerPackage: _parseString(json['outerPackage']),
       replacement: json['replacement'] is bool ? json['replacement'] : false,
       orderStatus: _parseInt(json['order_status']),
-      // orderStatusMap: (json['order_status_map'] as List?) ?? [],
       orderStatusMap: (json['order_status_map'] as List?)?.map((status) => OrderStatusMap.fromJson(status)).toList() ?? [],
       marketplace: json['marketplace'] != null ? Marketplace.fromJson(json['marketplace']) : null,
       agent: _parseString(json['agent']),
@@ -396,13 +327,13 @@ class Order {
       height: _parseDouble(json['height']),
       shipmentId: _parseString(json['shipment_id']),
       shiprocketOrderId: _parseString(json['shiprocket_order_id']),
-      awbNumber: _parseString(json['awb_number']) ?? '',
-      bookingCourier: _parseString(json['bookingCourier']) ?? '',
+      awbNumber: _parseString(json['awb_number']),
+      bookingCourier: _parseString(json['bookingCourier']),
       image: json['image'] ?? '',
       checker: json['checker'] != null ? Checker.fromJson(json['checker']) : null,
       racker: json['racker'] != null ? Racker.fromJson(json['racker']) : null,
-      checkManifest: json['checkManifest'] != null ? CheckManifest.fromJson(json['checkManifest']) : null,
-      trackingStatus: json['tracking_status'] != null ? _parseString(json['tracking_status']) : null,
+      checkManifest: json['checkManifest'] != null ? CheckManifest.fromJson(json['checkManifest'] ?? {}) : null,
+      trackingStatus: _parseString(json['tracking_status'] ?? ''),
     );
   }
 }
@@ -431,11 +362,9 @@ class Customer {
   factory Customer.fromJson(Map<String, dynamic> json) {
     return Customer(
       customerId: json['customer_id']?.toString() ?? '',
-      // Handle null and non-string data
       firstName: json['first_name']?.toString() ?? '',
       lastName: json['last_name']?.toString() ?? '',
       phone: json['phone'] is int ? json['phone'] : null,
-      // Handle non-integer data
       billingAddress: json['billing_addr']?.toString() ?? '',
       email: json['email']?.toString() ?? '',
       customerGstin: json['customer_gstin']?.toString() ?? '',
@@ -447,7 +376,6 @@ class Customer {
 class Item {
   final int? qty;
 
-  //final String? productId;
   final Product? product;
   final double? amount;
   final double? comboWeight;
@@ -474,16 +402,13 @@ class Item {
   factory Item.fromJson(Map<String, dynamic> json) {
     return Item(
       qty: json['qty']?.toInt() ?? 0,
-      // Handle null and non-integer data
-      // productId: json['product_id']?.toString() ?? '',
       isCombo: json['isCombo'] ?? false,
       comboAmount: json['comboAmount'] ?? 0,
       comboSku: json['comboSku'] ?? '',
-      comboName: json['combo_id'] != null ? json['combo_id']['name'] : '',
-      comboWeight: json['combo_id'] != null ? json['combo_id']['comboWeight'] : 0,
-      product: json['product_id'] != null ? Product.fromJson(json['product_id']) : null,
+      comboName: json['combo_id']?['name'] ?? '',
+      comboWeight: json['combo_id']?['comboWeight'] ?? 0,
+      product: json['product_id'] != null ? Product.fromJson(json['product_id'] ?? {}) : null,
       amount: (json['amount'] as num?)?.toDouble() ?? 0.0,
-      // Handle null and non-numeric data
       sku: json['sku']?.toString() ?? '',
       id: json['_id']?.toString() ?? '',
     );
@@ -503,7 +428,6 @@ class Product {
   final String? technicalName;
   final Label? label;
 
-  // final Colour? color;
   final String? taxRule;
   final BoxSize? boxSize;
   final OuterPackage? outerPackage;
@@ -529,7 +453,6 @@ class Product {
     required this.category,
     required this.technicalName,
     this.label,
-    // required this.color,
     required this.taxRule,
     this.boxSize,
     this.outerPackage,
@@ -546,29 +469,35 @@ class Product {
 
   factory Product.fromJson(Map<String, dynamic> json) {
     return Product(
-      dimensions: json['dimensions'] != null ? Dimensions.fromJson(json['dimensions']) : null,
+      dimensions: json['dimensions'] != null ? Dimensions.fromJson(json['dimensions'] ?? {}) : null,
       id: json['_id']?.toString() ?? '',
       displayName: json['displayName']?.toString() ?? '',
       parentSku: json['parentSku']?.toString() ?? '',
       sku: json['sku']?.toString() ?? '',
       ean: json['ean']?.toString() ?? '',
       description: json['description']?.toString() ?? '',
-      brand: json['brand'] is Map<String, dynamic> ? Brand.fromJson(json['brand']) : (json['brand'] is String ? Brand(id: json['brand']) : null),
-      category: json['category'] is Map<String, dynamic> ? Category.fromJson(json['category']) : (json['category'] is String ? Category(id: json['category']) : null),
+      brand: json['brand'] is Map<String, dynamic>
+          ? Brand.fromJson(json['brand'])
+          : (json['brand'] is String ? Brand(id: json['brand']) : null),
+      category: json['category'] is Map<String, dynamic>
+          ? Category.fromJson(json['category'])
+          : (json['category'] is String ? Category(id: json['category']) : null),
       technicalName: json['technicalName']?.toString() ?? '',
-      label: json['label'] is Map<String, dynamic> ? Label.fromJson(json['label']) : (json['label'] is String ? Label(id: json['label']) : null),
-      // color: json['color'] is Map<String, dynamic>
-      //     ? Colour.fromJson(json['color'])
-      //     : (json['color'] is String ? Colour(id: json['color']) : null),
+      label: json['label'] is Map<String, dynamic>
+          ? Label.fromJson(json['label'])
+          : (json['label'] is String ? Label(id: json['label']) : null),
       taxRule: json['tax_rule']?.toString() ?? '',
-      boxSize: json['boxSize'] is Map<String, dynamic> ? BoxSize.fromJson(json['boxSize']) : (json['boxSize'] is String ? BoxSize(id: json['boxSize']) : null),
-      outerPackage: json['outerPackage'] is Map<String, dynamic> ? OuterPackage.fromJson(json['outerPackage']) : (json['outerPackage'] is String ? OuterPackage(id: json['outerPackage']) : null),
+      boxSize: json['boxSize'] is Map<String, dynamic>
+          ? BoxSize.fromJson(json['boxSize'])
+          : (json['boxSize'] is String ? BoxSize(id: json['boxSize']) : null),
+      outerPackage: json['outerPackage'] is Map<String, dynamic>
+          ? OuterPackage.fromJson(json['outerPackage'])
+          : (json['outerPackage'] is String ? OuterPackage(id: json['outerPackage']) : null),
       netWeight: (json['netWeight'] as num?)?.toDouble() ?? 0.0,
       grossWeight: (json['grossWeight'] as num?)?.toDouble() ?? 0.0,
       mrp: (json['mrp'] as num?)?.toDouble() ?? 0.0,
       cost: (json['cost'] as num?)?.toDouble() ?? 0.0,
       active: json['active'] ?? true,
-      // Default to true if not present
       images: (json['images'] as List?)?.map((img) => img.toString()).toList() ?? [],
       grade: json['grade']?.toString() ?? '',
       shopifyImage: json['shopifyImage']?.toString() ?? '',
@@ -589,7 +518,6 @@ class Product {
       'category': category?.toJson(),
       'technicalName': technicalName,
       'label': label?.toJson(),
-      // 'color': color?.toJson(), // If using colour, add the toJson logic
       'tax_rule': taxRule,
       'boxSize': boxSize?.toJson(),
       'outerPackage': outerPackage?.toJson(),
@@ -605,41 +533,6 @@ class Product {
     };
   }
 }
-
-// class Colour {
-//   final String? id;
-//   final String? name;
-//   final DateTime? createdAt;
-//   final DateTime? updatedAt;
-
-//   // Constructor
-//   Colour({
-//     this.id,
-//     this.name,
-//     this.createdAt,
-//     this.updatedAt,
-//   });
-
-//   // Factory constructor to create a Color object from JSON
-//   factory Colour.fromJson(Map<String, dynamic> json) {
-//     return Colour(
-//       id: json['_id'],
-//       name: json['name'],
-//       createdAt: DateTime.parse(json['createdAt']),
-//       updatedAt: DateTime.parse(json['updatedAt']),
-//     );
-//   }
-
-//   // Method to convert the Color object to JSON
-//   Map<String, dynamic> toJson() {
-//     return {
-//       '_id': id,
-//       'name': name,
-//       'createdAt': createdAt!.toIso8601String(),
-//       'updatedAt': updatedAt!.toIso8601String(),
-//     };
-//   }
-// }
 
 class Brand {
   final String? id;
@@ -658,8 +551,8 @@ class Brand {
 
   factory Brand.fromJson(Map<String, dynamic> json) {
     return Brand(
-      id: json['_id'],
-      name: json['name'],
+      id: json['_id'] ?? '',
+      name: json['name'] ?? '',
       createdAt: json['createdAt'] != null ? DateTime.parse(json['createdAt']) : null,
       updatedAt: json['updatedAt'] != null ? DateTime.parse(json['updatedAt']) : null,
       v: json['__v'] as int?,
@@ -670,8 +563,8 @@ class Brand {
     return {
       '_id': id,
       'name': name,
-      'createdAt': createdAt?.toIso8601String(),
-      'updatedAt': updatedAt?.toIso8601String(),
+      'createdAt': createdAt?.toIso8601String() ?? null,
+      'updatedAt': updatedAt?.toIso8601String() ?? null,
       '__v': v,
     };
   }
@@ -706,8 +599,8 @@ class Category {
     return {
       '_id': id,
       'name': name,
-      'createdAt': createdAt?.toIso8601String(),
-      'updatedAt': updatedAt?.toIso8601String(),
+      'createdAt': createdAt?.toIso8601String() ?? null,
+      'updatedAt': updatedAt?.toIso8601String() ?? null,
       '__v': v,
     };
   }
@@ -755,17 +648,18 @@ class OuterPackage {
   final String? weightUnit;
   final String? lengthUnit;
 
-  OuterPackage({this.id, this.outerPackageSku, this.outerPackageName, this.outerPackageType, this.occupiedWeight, this.weightUnit, this.lengthUnit});
+  OuterPackage(
+      {this.id, this.outerPackageSku, this.outerPackageName, this.outerPackageType, this.occupiedWeight, this.weightUnit, this.lengthUnit});
 
   factory OuterPackage.fromJson(Map<String, dynamic> json) {
     return OuterPackage(
       id: json['_id'] as String?,
-      outerPackageSku: json['outerPackage_sku'] as String?,
-      outerPackageName: json['outerPackage_name'] as String?,
-      outerPackageType: json['outerPackage_type'] as String?,
-      occupiedWeight: json['occupied_weight'] as num?,
-      weightUnit: json['weight_unit'] as String?,
-      lengthUnit: json['length_unit'] as String?,
+      outerPackageSku: json['outerPackage_sku'] as String? ?? '',
+      outerPackageName: json['outerPackage_name'] as String? ?? '',
+      outerPackageType: json['outerPackage_type'] as String? ?? '',
+      occupiedWeight: json['occupied_weight'] as num? ?? 0,
+      weightUnit: json['weight_unit'] as String? ?? '',
+      lengthUnit: json['length_unit'] as String? ?? '',
     );
   }
 
@@ -795,9 +689,9 @@ class BoxSize {
 
   factory BoxSize.fromJson(Map<String, dynamic> json) {
     return BoxSize(
-      id: json['_id'] as String?,
-      boxName: json['box_name'] as String?,
-      unit: json['unit'] as String?,
+      id: json['_id'] as String? ?? '',
+      boxName: json['box_name'] as String? ?? '',
+      unit: json['unit'] as String? ?? '',
     );
   }
 
@@ -851,7 +745,7 @@ class Dimensions {
 
   factory Dimensions.fromJson(Map<String, dynamic> json) {
     return Dimensions(
-      length: (json['length'] as num?)?.toDouble() ?? 0.0, // Handle null and non-numeric data
+      length: (json['length'] as num?)?.toDouble() ?? 0.0,
       width: (json['width'] as num?)?.toDouble() ?? 0.0,
       height: (json['height'] as num?)?.toDouble() ?? 0.0,
     );
@@ -873,7 +767,7 @@ class Address {
   final String? address2;
   final int? phone;
   final String? city;
-  final int? pincode;
+  final String? pincode;
   final String? state;
   final String? country;
   final String? countryCode;
@@ -896,15 +790,12 @@ class Address {
   factory Address.fromJson(Map<String, dynamic> json) {
     return Address(
       firstName: json['first_name']?.toString() ?? '',
-      // Handle null values
       lastName: json['last_name']?.toString() ?? '',
       address1: json['address1']?.toString() ?? '',
       address2: json['address2']?.toString() ?? '',
       phone: (json['phone'] as num?)?.toInt(),
-      // Handle numeric conversion
       city: json['city']?.toString() ?? '',
-      pincode: (json['pincode'] as num?)?.toInt() ?? 0,
-      // Handle numeric conversion
+      pincode: json['pincode'] is int ? json['pincode'].toString() : json['pincode'] ?? '0',
       state: json['state']?.toString() ?? '',
       country: json['country']?.toString() ?? '',
       countryCode: json['country_code']?.toString() ?? '',
@@ -913,10 +804,9 @@ class Address {
   }
 }
 
-// Updated OrderStatusMap class with status_id
 class OrderStatusMap {
   final String? status;
-  final int? statusId; // New field for status_id
+  final int? statusId;
   final DateTime? date;
 
   OrderStatusMap({
@@ -927,9 +817,9 @@ class OrderStatusMap {
 
   factory OrderStatusMap.fromJson(Map<String, dynamic> json) {
     return OrderStatusMap(
-      status: json['status']?.toString() ?? '', // Convert to String or default to empty
-      statusId: (json['status_id'] as num?)?.toInt() ?? 0, // Convert to int or default to 0
-      date: Order._parseDate(json['createdAt']), // Use the Order class date parsing method
+      status: json['status']?.toString() ?? '',
+      statusId: (json['status_id'] as num?)?.toInt() ?? 0,
+      date: Order._parseDate(json['createdAt']),
     );
   }
 }
@@ -947,9 +837,9 @@ class FreightCharge {
 
   factory FreightCharge.fromJson(Map<String, dynamic> json) {
     return FreightCharge(
-      delhivery: (json['Delhivery'] as num?)?.toDouble() ?? 0.0, // Default to 0.0 if null
-      shiprocket: (json['Shiprocket'] as num?)?.toDouble() ?? 0.0, // Default to 0.0 if null
-      standardShipping: (json['standard_shipping'] as num?)?.toDouble() ?? 0.0, // Default to 0.0 if null
+      delhivery: (json['Delhivery'] as num?)?.toDouble() ?? 0.0,
+      shiprocket: (json['Shiprocket'] as num?)?.toDouble() ?? 0.0,
+      standardShipping: (json['standard_shipping'] as num?)?.toDouble() ?? 0.0,
     );
   }
 }
@@ -957,10 +847,10 @@ class FreightCharge {
 class Marketplace {
   final String id;
   final String name;
-  final List<Map<String, dynamic>> skuMap; // Assuming sku_map is a list of strings
+  final List<Map<String, dynamic>> skuMap;
   final int version;
-  final DateTime createdAt;
-  final DateTime updatedAt;
+  final DateTime? createdAt;
+  final DateTime? updatedAt;
 
   Marketplace({
     required this.id,
@@ -971,27 +861,25 @@ class Marketplace {
     required this.updatedAt,
   });
 
-  // Factory constructor to create a Marketplace object from JSON
   factory Marketplace.fromJson(Map<String, dynamic> json) {
     return Marketplace(
       id: json['_id'],
       name: json['name'],
       skuMap: List<Map<String, dynamic>>.from(json['sku_map']) ?? [],
       version: json['__v'],
-      createdAt: DateTime.parse(json['createdAt']),
-      updatedAt: DateTime.parse(json['updatedAt']),
+      createdAt: json['createdAt'] != null ? DateTime.parse(json['createdAt']) : null,
+      updatedAt: json['updatedAt'] != null ? DateTime.parse(json['updatedAt']) : null,
     );
   }
 
-  // Method to convert Marketplace object to JSON
   Map<String, dynamic> toJson() {
     return {
       '_id': id,
       'name': name,
       'sku_map': skuMap,
       '__v': version,
-      'createdAt': createdAt.toIso8601String(),
-      'updatedAt': updatedAt.toIso8601String(),
+      'createdAt': createdAt?.toIso8601String(),
+      'updatedAt': updatedAt?.toIso8601String(),
     };
   }
 }
@@ -1051,9 +939,9 @@ class CallStatus {
 
   factory CallStatus.fromJson(Map<String, dynamic> json) {
     return CallStatus(
-      status: json['status'],
+      status: json['status'] ?? '',
       timestamp: DateTime.parse(json['timestamp']),
-      id: json['_id'],
+      id: json['_id'] ?? '',
     );
   }
 }

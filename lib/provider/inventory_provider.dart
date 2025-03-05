@@ -9,50 +9,35 @@ import '../Api/auth_provider.dart';
 import 'package:flutter/material.dart';
 
 class InventoryProvider with ChangeNotifier {
-  List<Map<String, dynamic>> inventory = [];
-  int currentPage = 1;
-  int rowsPerPage = 20;
-  int totalPages = 1;
-  bool isLoading = false;
+  List<Map<String, dynamic>> _inventory = [];
+  int _currentPage = 1;
+  int _rowsPerPage = 20;
+  int _totalPages = 1;
+  bool _isLoading = false;
   String? errorMessage;
-  String selectedSearchBy = 'productSku'; // Default selection
+  String selectedSearchBy = 'productSku';
+
+  List<Map<String, dynamic>> get inventory => _inventory;
+  int get currentPage => _currentPage;
+  int get rowsPerPage => _rowsPerPage;
+  int get totalPages => _totalPages;
+  bool get isLoading => _isLoading;
 
   void setSelectedSearchBy(String value) {
     selectedSearchBy = value;
     notifyListeners();
   }
 
-  // late final String baseUrl;
-
-  // InventoryProvider() {
-  //   initialize();
-  // }
-
-  // Future<void> initialize() async {
-  //   baseUrl = await ApiUrls.getBaseUrl();
-  // }
-
-  // Getters
-  // List<Map<String, dynamic>> get inventory => inventory;
-  // int get totalPages => totalPages;
-  // int get currentPage => currentPage;
-  // //int get totalPages => (_inventory.length / _rowsPerPage).ceil();
-  // bool get isLoading => isLoading;
-  // String? get errorMessage => errorMessage;
-
-  // Toggle loading state
-  void toggleLoading() {
-    isLoading = !isLoading;
+  void setLoading(bool value) {
+    _isLoading = value;
     notifyListeners();
   }
 
-  // Update current page
   void updateCurrentPage(int page) {
-    currentPage = page;
+    _currentPage = page;
     notifyListeners();
   }
 
-  // Go to a specific page
   void goToPage(int page) {
     if (page >= 1 && page <= totalPages) {
       fetchInventory(page: page);
@@ -66,64 +51,12 @@ class InventoryProvider with ChangeNotifier {
   }
 
   Map<String, dynamic>? inventoryDetail;
-  // Map<String, dynamic>? get inventoryDetail => inventoryDetail;
   List<dynamic> inventoryD = [];
-  //bool isLoading = false;
-
-  // Future<void> fetchInventoryById(String inventoryId) async {
-  //   //_isLoading=true;
-  //   _errorMessage = null; // Reset error message
-  //   _inventoryDetail = null; // Reset the inventory detail
-  //   notifyListeners();
-  //   final url =
-  //       Uri.parse('$baseUrl/inventory/$inventoryId'); // URL for fetching by ID
-  //   try {
-  //     final token =
-  //         await AuthProvider().getToken(); // Get the authentication token
-  //     if (token == null) {
-  //       _errorMessage = 'No token found';
-  //       notifyListeners();
-  //       return;
-  //     }
-  //     final response = await http.get(
-  //       url,
-  //       headers: {
-  //         'Content-Type': 'application/json',
-  //         'Authorization': 'Bearer $token',
-  //       },
-  //     );
-  //     // // print the raw response for debugging purposes
-  //     // log('Response Status Code: ${response.statusCode}');
-  //     // log('Response Body: ${response.body}');
-  //     if (response.statusCode == 200) {
-  //       final data = json.decode(response.body);
-  //       // Check if the data contains what you're expecting
-  //       if (data != null && data is Map<String, dynamic>) {
-  //         log('Parsed Data: $data'); // Log parsed data for debugging
-  //         _inventoryDetail = data; // Store the fetched inventory detail
-  //         notifyListeners();
-  //       } else {
-  //         _errorMessage =
-  //             'No data found for this inventory ID or unexpected response structure';
-  //         log('Data structure issue: $data');
-  //       }
-  //     } else {
-  //       _errorMessage =
-  //           'Failed to fetch inventory. Status code: ${response.statusCode}';
-  //     }
-  //   } catch (error) {
-  //     _errorMessage = 'An error occurred: $error';
-  //     log('Error: $error');
-  //   } finally {
-  //     notifyListeners();
-  //   }
-  // }
 
   Future<void> fetchInventory({int page = 1}) async {
     String baseUrl = await Constants.getBaseUrl();
-    isLoading = true;
+    setLoading(true);
     errorMessage = null;
-    notifyListeners();
 
     final pref = await SharedPreferences.getInstance();
     final warehouseId = pref.getString('warehouseId');
@@ -136,7 +69,7 @@ class InventoryProvider with ChangeNotifier {
       final token = await AuthProvider().getToken();
       if (token == null) {
         errorMessage = 'No token found';
-        isLoading = false;
+        setLoading(false);
         notifyListeners();
         return;
       }
@@ -198,9 +131,9 @@ class InventoryProvider with ChangeNotifier {
           // log('bhaai: $inventory');
           // log('fetchedInventory: $fetchedInventory');
 
-          inventory = fetchedInventory.reversed.toList();
-          totalPages = data['data']['totalPages'] ?? 1;
-          currentPage = page;
+          _inventory = fetchedInventory.reversed.toList();
+          _totalPages = data['data']['totalPages'] ?? 1;
+          _currentPage = page;
           notifyListeners();
         } else {
           errorMessage = 'Unexpected response format';
@@ -214,8 +147,7 @@ class InventoryProvider with ChangeNotifier {
       errorMessage = 'An error occurred: $error';
       log('fetchInventory error: $error $s');
     } finally {
-      isLoading = false;
-      notifyListeners();
+      setLoading(false);
     }
   }
 
@@ -304,42 +236,34 @@ class InventoryProvider with ChangeNotifier {
     }
   }
 
-  bool isLoadings = false;
-
-  // bool get isLoadings => isLoadings;
-
-  void setLoading(bool loading) {
-    isLoadings = loading;
-    notifyListeners();
-  }
-
   Future<void> filterInventory(String query, String searchBy) async {
     setLoading(true);
     try {
       final result = await searchByInventory(query, searchBy);
       if (result['success']) {
-        inventory = result["data"];
+        _inventory = result["data"];
         // log(result['data']['inventoryId']);
       } else {
+        _inventory = [];
         log(result['message']);
       }
     } catch (e, s) {
+      _inventory = [];
       log('filterInventory error: $e $s');
     } finally {
       setLoading(false);
     }
-    notifyListeners();
   }
 
   void cancelInventorySearch() {
     // Reset the inventory information to the original state
-    inventory = List<Map<String, dynamic>>.from(replicationInventory);
+    _inventory = List<Map<String, dynamic>>.from(replicationInventory);
     notifyListeners(); // Notify listeners about the change
   }
 
   Future<void> updateInventoryQuantity(String inventoryId, int newQuantity, String warehousId, String reason) async {
     String baseUrl = await Constants.getBaseUrl();
-    isLoading = true;
+    _isLoading = true;
     errorMessage = null;
     notifyListeners();
     log("Id $inventoryId");
@@ -351,7 +275,7 @@ class InventoryProvider with ChangeNotifier {
       final token = await AuthProvider().getToken();
       if (token == null) {
         errorMessage = 'No token found';
-        isLoading = false;
+        _isLoading = false;
         notifyListeners();
         return;
       }
@@ -389,7 +313,7 @@ class InventoryProvider with ChangeNotifier {
       errorMessage = 'An error occurred: $error';
       log('An error occurred: $error');
     } finally {
-      isLoading = false;
+      _isLoading = false;
       notifyListeners();
     }
   }
@@ -399,7 +323,7 @@ class InventoryProvider with ChangeNotifier {
     int newQuantity,
   ) async {
     String baseUrl = await Constants.getBaseUrl();
-    isLoading = true;
+    _isLoading = true;
     errorMessage = null;
     notifyListeners();
 
@@ -415,7 +339,7 @@ class InventoryProvider with ChangeNotifier {
       final token = await AuthProvider().getToken();
       if (token == null) {
         errorMessage = 'No token found';
-        isLoading = false;
+        _isLoading = false;
         notifyListeners();
         return;
       }
@@ -451,18 +375,21 @@ class InventoryProvider with ChangeNotifier {
       errorMessage = 'An error occurred: $error';
       log('An error occurred: $error');
     } finally {
-      isLoading = false;
+      _isLoading = false;
       notifyListeners();
     }
   }
 
   Future<String?> getInventoryItems() async {
     String baseUrl = await Constants.getBaseUrl();
+    final prefs = await SharedPreferences.getInstance();
+    final warehouseId = prefs.getString('warehouseId') ?? '';
+
     // _isLoading = true;
     errorMessage = null;
     notifyListeners();
 
-    final url = Uri.parse('$baseUrl/inventory/download');
+    final url = Uri.parse('$baseUrl/inventory/download?warehouseId=$warehouseId');
 
     try {
       final token = await AuthProvider().getToken();

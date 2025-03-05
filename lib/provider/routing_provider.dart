@@ -174,7 +174,7 @@ class RoutingProvider with ChangeNotifier {
   }
 
   Future<void> fetchOrders({int page = 1, DateTime? date}) async {
-    log('date: $date');
+    log('routing fetchOrders: $date');
     // Ensure the requested page number is valid
     if (page < 1 || page > totalReadyPages) {
       print('Invalid page number for orders: $page');
@@ -184,7 +184,10 @@ class RoutingProvider with ChangeNotifier {
     isLoading = true;
     notifyListeners();
 
-    String readyOrdersUrl = '${await Constants.getBaseUrl()}/orders/getHoldOrders?page=$page';
+    final prefs = await SharedPreferences.getInstance();
+    final warehouseId = prefs.getString('warehouseId') ?? '';
+
+    String readyOrdersUrl = '${await Constants.getBaseUrl()}/orders/getHoldOrders?warehouse=$warehouseId&page=$page';
 
     if (date != null) {
       String formattedDate = DateFormat('yyyy-MM-dd').format(date);
@@ -353,7 +356,10 @@ class RoutingProvider with ChangeNotifier {
   }
 
   Future<void> searchOrders(String orderId) async {
-    final url = Uri.parse('${await Constants.getBaseUrl()}/orders/getHoldOrders?order_id=$orderId');
+    final prefs = await SharedPreferences.getInstance();
+    final warehouseId = prefs.getString('warehouseId') ?? '';
+    
+    final url = Uri.parse('${await Constants.getBaseUrl()}/orders/getHoldOrders?warehouse=$warehouseId&order_id=$orderId');
     final token = await _getToken();
     if (token == null) return;
 
@@ -372,7 +378,9 @@ class RoutingProvider with ChangeNotifier {
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         log('data: $data');
-        readyOrders = [Order.fromJson(data)];
+        readyOrders = [
+          Order.fromJson(data)
+        ];
         // log('readyOrders: $readyOrders');
       } else {
         readyOrders = [];
