@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import 'package:inventory_management/Custom-Files/colors.dart';
 import 'package:inventory_management/Custom-Files/custom_pagination.dart';
 import 'package:inventory_management/Custom-Files/loading_indicator.dart';
+import 'package:inventory_management/Custom-Files/utils.dart';
 import 'package:inventory_management/Widgets/order_combo_card.dart';
 import 'package:inventory_management/provider/location_provider.dart';
 import 'package:inventory_management/provider/marketplace_provider.dart';
@@ -48,7 +49,6 @@ class _BookPageState extends State<BookPage> with SingleTickerProviderStateMixin
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
     _tabController.addListener(() {
-      // Reload data when the tab changes
       if (_tabController.indexIsChanging) {
         _refreshOrders("B2B");
         _refreshOrders("B2C");
@@ -78,34 +78,34 @@ class _BookPageState extends State<BookPage> with SingleTickerProviderStateMixin
 
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider(
-      create: (_) => BookProvider(),
-      child: Scaffold(
-        backgroundColor: Colors.white,
-        appBar: AppBar(
+    return Consumer<BookProvider>(
+      builder: (context, pro, child) {
+        return Scaffold(
           backgroundColor: Colors.white,
-          elevation: 0,
-          toolbarHeight: 0,
-          bottom: PreferredSize(
-            preferredSize: const Size.fromHeight(50),
-            child: _buildTabBar(),
+          appBar: AppBar(
+            backgroundColor: Colors.white,
+            elevation: 0,
+            toolbarHeight: 0,
+            bottom: PreferredSize(
+              preferredSize: const Size.fromHeight(50),
+              child: _buildTabBar(),
+            ),
           ),
-        ),
-        body: Padding(
-          padding: const EdgeInsets.only(top: 3.0),
-          child: TabBarView(
-            controller: _tabController,
-            children: [
-              _buildOrderList('B2C'),
-              _buildOrderList('B2B'),
-            ],
+          body: Padding(
+            padding: const EdgeInsets.only(top: 3.0),
+            child: TabBarView(
+              controller: _tabController,
+              children: [
+                _buildOrderList('B2C'),
+                _buildOrderList('B2B'),
+              ],
+            ),
           ),
-        ),
-      ),
+        );
+      }
     );
   }
 
-// Refresh orders for both B2B and B2C
   void _refreshOrders(String orderType) {
     final bookProvider = Provider.of<BookProvider>(context, listen: false);
     if (orderType == 'B2B') {
@@ -133,7 +133,7 @@ class _BookPageState extends State<BookPage> with SingleTickerProviderStateMixin
     );
   }
 
-  String selectedSearchType = 'Order ID'; // Default selection
+  String selectedSearchType = 'Order ID';
 
   Widget _searchBar(String orderType) {
     final TextEditingController controller = orderType == 'B2B' ? _b2bSearchController : _b2cSearchController;
@@ -235,9 +235,8 @@ class _BookPageState extends State<BookPage> with SingleTickerProviderStateMixin
 
     int selectedCount = orders.where((order) => order.isSelected).length;
 
-    // Update flag when orders are fetched
     if (orders.isNotEmpty) {
-      areOrdersFetched = true; // Set flag to true when orders are available
+      areOrdersFetched = true;
     }
 
     return Column(
@@ -245,21 +244,7 @@ class _BookPageState extends State<BookPage> with SingleTickerProviderStateMixin
         Row(
           children: [
             _searchBar(orderType),
-            // const SizedBox(width: 8),
-            // ElevatedButton(
-            //   style: ElevatedButton.styleFrom(
-            //     backgroundColor: AppColors.primaryBlue,
-            //   ),
-            //   onPressed: () {
-            //     _showPicklistSourceDialog(context);
-            //   },
-            //   child: const Text(
-            //     'Generate Picklist',
-            //     style: TextStyle(color: Colors.white),
-            //   ),
-            // ),
             const Spacer(),
-            // Add the Confirm button here
             _buildConfirmButtons(orderType),
           ],
         ),
@@ -468,9 +453,9 @@ class _BookPageState extends State<BookPage> with SingleTickerProviderStateMixin
                         ...provider.marketplaces.map((marketplace) => PopupMenuItem<String>(
                               value: marketplace.name,
                               child: Text(marketplace.name),
-                            )), // Fetched marketplaces
+                            )),
                         const PopupMenuItem<String>(
-                          value: 'All', // Hardcoded marketplace
+                          value: 'All',
                           child: Text('All'),
                         ),
                       ],
@@ -512,11 +497,11 @@ class _BookPageState extends State<BookPage> with SingleTickerProviderStateMixin
                         String resultMessage = await bookProvider.cloneOrders(context, orderType, page, selectedOrderIds);
                         Color snackBarColor;
                         if (resultMessage.contains('success')) {
-                          snackBarColor = AppColors.green; // Success: Green
+                          snackBarColor = AppColors.green;
                         } else if (resultMessage.contains('error') || resultMessage.contains('failed')) {
-                          snackBarColor = AppColors.cardsred; // Error: Red
+                          snackBarColor = AppColors.cardsred;
                         } else {
-                          snackBarColor = AppColors.orange; // Other: Orange
+                          snackBarColor = AppColors.orange;
                         }
 
                         ScaffoldMessenger.of(context).showSnackBar(
@@ -545,20 +530,17 @@ class _BookPageState extends State<BookPage> with SingleTickerProviderStateMixin
             const SizedBox(width: 8),
             _buildBookButton('Others', orderType, AppColors.primaryBlue),
             const SizedBox(width: 8),
-            // _buildBookButton('Cancel', orderType, AppColors.cardsred),
-            // const SizedBox(width: 8),
             orderType == 'B2B'
                 ? ElevatedButton(
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.cardsred,
                     ),
                     onPressed: bookProvider.isCancel
-                        ? null // Disable button while loading
+                        ? null
                         : () async {
                             log("B2C");
                             final provider = Provider.of<BookProvider>(context, listen: false);
 
-                            // Collect selected order IDs
                             List<String> selectedOrderIds = provider.ordersB2B
                                 .asMap()
                                 .entries
@@ -567,7 +549,6 @@ class _BookPageState extends State<BookPage> with SingleTickerProviderStateMixin
                                 .toList();
 
                             if (selectedOrderIds.isEmpty) {
-                              // Show an error message if no orders are selected
                               ScaffoldMessenger.of(context).removeCurrentSnackBar();
                               ScaffoldMessenger.of(context).showSnackBar(
                                 const SnackBar(
@@ -576,26 +557,21 @@ class _BookPageState extends State<BookPage> with SingleTickerProviderStateMixin
                                 ),
                               );
                             } else {
-                              // Set loading status to true before starting the operation
                               provider.setCancelStatus(true);
 
-                              // Call confirmOrders method with selected IDs
                               String resultMessage = await provider.cancelOrders(context, selectedOrderIds);
 
-                              // Set loading status to false after operation completes
                               provider.setCancelStatus(false);
 
-                              // Determine the background color based on the result
                               Color snackBarColor;
                               if (resultMessage.contains('success')) {
-                                snackBarColor = AppColors.green; // Success: Green
+                                snackBarColor = AppColors.green;
                               } else if (resultMessage.contains('error') || resultMessage.contains('failed')) {
-                                snackBarColor = AppColors.cardsred; // Error: Red
+                                snackBarColor = AppColors.cardsred;
                               } else {
-                                snackBarColor = AppColors.orange; // Other: Orange
+                                snackBarColor = AppColors.orange;
                               }
 
-                              // Show feedback based on the result
                               ScaffoldMessenger.of(context).removeCurrentSnackBar();
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
@@ -621,12 +597,11 @@ class _BookPageState extends State<BookPage> with SingleTickerProviderStateMixin
                       backgroundColor: AppColors.cardsred,
                     ),
                     onPressed: bookProvider.isCancel
-                        ? null // Disable button while loading
+                        ? null
                         : () async {
                             log("B2C");
                             final provider = Provider.of<BookProvider>(context, listen: false);
 
-                            // Collect selected order IDs
                             List<String> selectedOrderIds = provider.ordersB2C
                                 .asMap()
                                 .entries
@@ -635,7 +610,6 @@ class _BookPageState extends State<BookPage> with SingleTickerProviderStateMixin
                                 .toList();
 
                             if (selectedOrderIds.isEmpty) {
-                              // Show an error message if no orders are selected
                               ScaffoldMessenger.of(context).removeCurrentSnackBar();
                               ScaffoldMessenger.of(context).showSnackBar(
                                 const SnackBar(
@@ -644,26 +618,21 @@ class _BookPageState extends State<BookPage> with SingleTickerProviderStateMixin
                                 ),
                               );
                             } else {
-                              // Set loading status to true before starting the operation
                               provider.setCancelStatus(true);
 
-                              // Call confirmOrders method with selected IDs
                               String resultMessage = await provider.cancelOrders(context, selectedOrderIds);
 
-                              // Set loading status to false after operation completes
                               provider.setCancelStatus(false);
 
-                              // Determine the background color based on the result
                               Color snackBarColor;
                               if (resultMessage.contains('success')) {
-                                snackBarColor = AppColors.green; // Success: Green
+                                snackBarColor = AppColors.green;
                               } else if (resultMessage.contains('error') || resultMessage.contains('failed')) {
-                                snackBarColor = AppColors.cardsred; // Error: Red
+                                snackBarColor = AppColors.cardsred;
                               } else {
-                                snackBarColor = AppColors.orange; // Other: Orange
+                                snackBarColor = AppColors.orange;
                               }
 
-                              // Show feedback based on the result
                               ScaffoldMessenger.of(context).removeCurrentSnackBar();
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
@@ -718,6 +687,8 @@ class _BookPageState extends State<BookPage> with SingleTickerProviderStateMixin
     );
   }
 
+  bool isLoading = false;
+
   Widget _buildBookButton(
     String courier,
     String orderType,
@@ -725,7 +696,6 @@ class _BookPageState extends State<BookPage> with SingleTickerProviderStateMixin
   ) {
     final bookProvider = Provider.of<BookProvider>(context);
 
-    bool isLoading;
     switch (courier) {
       case 'Delhivery':
         isLoading = bookProvider.isDelhiveryLoading;
@@ -766,20 +736,23 @@ class _BookPageState extends State<BookPage> with SingleTickerProviderStateMixin
     final bookProvider = Provider.of<BookProvider>(context, listen: false);
     List<Map<String, String>> selectedOrderIds = [];
 
-    // Collect selected order IDs based on the order type
-    if (orderType == 'B2B') {
-      selectedOrderIds = bookProvider.ordersB2B
+    setState(() {
+      selectedOrderIds = (orderType == 'B2B' ? bookProvider.ordersB2B : bookProvider.ordersB2C)
           .where((order) => order.isSelected)
-          .map((order) => {'orderId': order.orderId, 'courierId': order.selectedCourierId!, 'selectedCourier': order.selectedCourier!})
+          .map((order) =>
+              {'orderId': order.orderId, 'courierId': order.selectedCourierId ?? '', 'selectedCourier': order.selectedCourier ?? ''})
           .toList();
-    } else {
-      selectedOrderIds = bookProvider.ordersB2C
-          .where((order) => order.isSelected)
-          .map((order) => {'orderId': order.orderId, 'courierId': order.selectedCourierId!, 'selectedCourier': order.selectedCourier!})
-          .toList();
+    });
+
+    if (courier == 'Shiprocket' &&
+        selectedOrderIds.every((order) => (order['courierId']?.isEmpty ?? false) || (order['selectedCourier']?.isEmpty ?? false))) {
+      Utils.showSnackBar(context, 'Selected Delivery Courier', color: Colors.red);
+      setState(() {
+        isLoading = false;
+      });
+      return;
     }
 
-    // If no orders are selected, show a message
     if (selectedOrderIds.isEmpty) {
       ScaffoldMessenger.of(context).removeCurrentSnackBar();
       ScaffoldMessenger.of(context).showSnackBar(
@@ -788,15 +761,16 @@ class _BookPageState extends State<BookPage> with SingleTickerProviderStateMixin
           backgroundColor: AppColors.orange,
         ),
       );
+      setState(() {
+        isLoading = false;
+      });
       return;
     }
 
     log('Selected Orders: $selectedOrderIds');
 
-    // Confirm the selected orders using the new API
     try {
-      String responseMessage =
-          await bookProvider.bookOrders(context, selectedOrderIds, courier.toLowerCase(), courier); ////////////////////
+      String responseMessage = await bookProvider.bookOrders(context, selectedOrderIds, courier);
       ScaffoldMessenger.of(context).clearSnackBars();
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -806,7 +780,6 @@ class _BookPageState extends State<BookPage> with SingleTickerProviderStateMixin
         ),
       );
 
-      // Refresh the orders after booking
       await bookProvider.fetchOrders(
         orderType,
         orderType == 'B2B' ? bookProvider.currentPageB2B : bookProvider.currentPageB2C,
@@ -869,7 +842,6 @@ class _BookPageState extends State<BookPage> with SingleTickerProviderStateMixin
     Widget? checkboxWidget;
     bool isBookPage = true;
 
-    // checkbox widget if it's for the book page
     if (isBookPage) {
       checkboxWidget = SizedBox(
         width: 30,
@@ -884,7 +856,7 @@ class _BookPageState extends State<BookPage> with SingleTickerProviderStateMixin
                   order.selectedCourier = null;
                 }
               });
-              // order.isSelected = false;
+
               bookProvider.handleRowCheckboxChange(
                 order.orderId,
                 value!,
@@ -911,11 +883,9 @@ class _BookPageState extends State<BookPage> with SingleTickerProviderStateMixin
             isSuperAdmin: isSuperAdmin ?? false,
           ),
         ),
-        // const SizedBox(width: 20),
         order.freightCharge == null
             ? const Text('No freight charge found')
             : buildCell(order.freightCharge?.delhivery!, order.totalAmount!, flex: 1),
-
         order.availableCouriers!.isEmpty || order.availableCouriers == null
             ? const Expanded(
                 flex: 2,
@@ -974,8 +944,6 @@ class _BookPageState extends State<BookPage> with SingleTickerProviderStateMixin
                         var courier = order.availableCouriers![index];
                         var freightCharge = courier['freight_charge'];
                         var courierCompanyId = courier['courier_company_id'];
-
-                        // Logger().e(courier);
 
                         var total = order.totalAmount!;
                         final percent = double.parse(((freightCharge! / total) * 100).toStringAsFixed(2));

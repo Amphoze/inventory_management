@@ -12,7 +12,6 @@ import 'package:inventory_management/provider/book_provider.dart';
 import 'package:inventory_management/provider/location_provider.dart';
 import 'package:inventory_management/provider/packer_provider.dart';
 import 'package:provider/provider.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 import '../provider/orders_provider.dart';
 
@@ -525,6 +524,8 @@ class _OrderComboCardState extends State<OrderComboCard> {
                                   'Phone', OrderComboCard.maskPhoneNumber(widget.order.shippingAddress?.phone?.toString()) ?? ''),
                               buildLabelValueRow('Email', widget.order.shippingAddress?.email ?? ''),
                               buildLabelValueRow('Country Code', widget.order.shippingAddress?.countryCode ?? ''),
+                              if (widget.order.shippingAddress?.zipcode?.isNotEmpty ?? false)
+                                buildLabelValueRow('Zipcode', widget.order.shippingAddress?.zipcode),
                             ],
                           ),
                         ),
@@ -560,6 +561,8 @@ class _OrderComboCardState extends State<OrderComboCard> {
                                   'Phone', OrderComboCard.maskPhoneNumber(widget.order.billingAddress?.phone?.toString()) ?? ''),
                               buildLabelValueRow('Email', widget.order.billingAddress?.email ?? ''),
                               buildLabelValueRow('Country Code', widget.order.billingAddress?.countryCode ?? ''),
+                              if (widget.order.billingAddress?.zipcode?.isNotEmpty ?? false)
+                                buildLabelValueRow('Zipcode', widget.order.billingAddress?.zipcode),
                             ],
                           ),
                         ),
@@ -788,6 +791,8 @@ class _OrderComboCardState extends State<OrderComboCard> {
                                               Navigator.pop(context);
 
                                               res ? await pro.fetchBookedOrders(pro.currentPageBooked) : null;
+                                              res ? await pro.fetchPaginatedOrdersB2B(pro.currentPageB2B) : null;
+                                              res ? await pro.fetchPaginatedOrdersB2C(pro.currentPageB2C) : null;
                                             },
                                             style: ElevatedButton.styleFrom(
                                               padding: const EdgeInsets.symmetric(
@@ -905,6 +910,7 @@ class _OrderComboCardState extends State<OrderComboCard> {
                                               Navigator.pop(context);
 
                                               res ? await pro.fetchAccountedOrders(pro.currentPageBooked) : null;
+                                              res ? await pro.fetchOrdersWithStatus2() : null;
                                             },
                                             style: ElevatedButton.styleFrom(
                                               padding: const EdgeInsets.symmetric(

@@ -177,7 +177,6 @@ class AccountsProvider with ChangeNotifier {
   Future<String> cancelOrders(BuildContext context, List<String> orderIds) async {
     String baseUrl = await Constants.getBaseUrl();
     String cancelOrderUrl = '$baseUrl/orders/cancel';
-    // final String? token = await _getToken();
 
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('authToken') ?? '';
@@ -209,20 +208,16 @@ class AccountsProvider with ChangeNotifier {
       final responseData = json.decode(response.body);
 
       if (response.statusCode == 200) {
-        // await fetchOrdersWithStatus2();
-        // setRefreshingOrders(false);
-        setCancelStatus(false);
-        notifyListeners();
-
         return responseData['message'] ?? 'Orders cancelled successfully';
       } else {
         return responseData['message'] ?? 'Failed to cancel orders';
       }
     } catch (error) {
-      setCancelStatus(false);
-      notifyListeners();
       print('Error during API request: $error');
       return 'An error occurred: $error';
+    } finally {
+      setCancelStatus(false);
+      notifyListeners();
     }
   }
 
@@ -344,9 +339,7 @@ class AccountsProvider with ChangeNotifier {
         // print('Response data: $jsonData');
         if (jsonData != null) {
           if (searchType == "Order ID") {
-            _orders = [
-              Order.fromJson(jsonData)
-            ];
+            _orders = [Order.fromJson(jsonData)];
           } else {
             _orders = (jsonData['orders'] as List).map((orderJson) => Order.fromJson(orderJson)).toList();
           }
@@ -377,7 +370,8 @@ class AccountsProvider with ChangeNotifier {
   ) async {
     setUpdatingOrder(true);
     notifyListeners();
-    final selectedOrderIds = _orders.asMap().entries.where((entry) => _selectedProducts[entry.key]).map((entry) => entry.value.orderId).toList();
+    final selectedOrderIds =
+        _orders.asMap().entries.where((entry) => _selectedProducts[entry.key]).map((entry) => entry.value.orderId).toList();
 
     if (selectedOrderIds.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -399,9 +393,7 @@ class AccountsProvider with ChangeNotifier {
           'Authorization': 'Bearer $token',
           'Content-Type': 'application/json',
         },
-        body: jsonEncode({
-          'orderIds': selectedOrderIds
-        }),
+        body: jsonEncode({'orderIds': selectedOrderIds}),
       );
 
       if (response.statusCode == 200) {
@@ -461,9 +453,7 @@ class AccountsProvider with ChangeNotifier {
           'Authorization': 'Bearer $token',
         },
         body: json.encode({
-          "messages": {
-            "accountMessage": msg
-          }
+          "messages": {"accountMessage": msg}
         }),
       );
 
@@ -580,9 +570,7 @@ class AccountsProvider with ChangeNotifier {
         // log(response.body);
         // final newData = data['orders'][0]; //////////////////////////////////////////////////////////////
         if (searchType == "Order ID") {
-          _ordersBooked = [
-            Order.fromJson(data)
-          ];
+          _ordersBooked = [Order.fromJson(data)];
         } else {
           _ordersBooked = (data['orders'] as List).map((orderJson) => Order.fromJson(orderJson)).toList();
         }

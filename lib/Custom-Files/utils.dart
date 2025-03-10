@@ -4,23 +4,27 @@ class Utils {
   Widget showMessage(BuildContext context, String title, String msg) {
     return Tooltip(
       message: msg,
-      child: Text.rich(
-        TextSpan(
-          text: "$title: ",
-          children: [
-            TextSpan(
-              text: msg,
-              style: const TextStyle(
-                fontWeight: FontWeight.normal,
+      child: SizedBox(
+        width: MediaQuery.of(context).size.width * 0.3,
+        child: Text.rich(
+          textAlign: TextAlign.end,
+          TextSpan(
+            text: "$title: ",
+            children: [
+              TextSpan(
+                text: msg,
+                style: const TextStyle(
+                  fontWeight: FontWeight.normal,
+                ),
               ),
+            ],
+            style: const TextStyle(
+              fontWeight: FontWeight.bold,
             ),
-          ],
-          style: const TextStyle(
-            fontWeight: FontWeight.bold,
           ),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
         ),
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
       ),
     );
   }

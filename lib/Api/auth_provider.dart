@@ -250,6 +250,9 @@ class AuthProvider with ChangeNotifier {
         await prefs.setBool('_isRackerAssigned', _isRackerAssigned);
         await prefs.setBool('_isManifestAssigned', _isManifestAssigned);
         await prefs.setBool('_isOutboundAssigned', _isOutboundAssigned);
+        await prefs.setBool('_isSupportAssigned', _isSupportAssigned);
+        await prefs.setBool('_isCreateOrderAssigned', _isCreateOrderAssigned);
+        await prefs.setBool('_isGGVAssigned', _isGGVAssigned);
         await prefs.setString('userPrimaryRole', userPrimaryRole ?? 'none');
         await prefs.setString('userName', responseData['userName'] ?? '');
 

@@ -22,16 +22,6 @@ class BinApi with ChangeNotifier {
   String _binName = '';
   final TextEditingController _textEditingController = TextEditingController();
 
-// late final String _baseUrl;
-
-//   BinApi() {
-//     _initialize();
-//   }
-
-//   Future<void> _initialize() async {
-//     _baseUrl = await ApiUrls.getBaseUrl();
-//   }
-  // Get all labels
   List<String> get bins => _bins;
   List<Map<String, dynamic>> get products => _products;
   bool get isLoadingBins => _isLoadingBins;
@@ -74,14 +64,16 @@ class BinApi with ChangeNotifier {
 
   Future<void> fetchBins(BuildContext context) async {
     String baseUrl = await Constants.getBaseUrl();
-    final url = Uri.parse('$baseUrl/inventory/bins');
+    String? warehouseId = await AuthProvider().getWarehouseId();
+    final url = Uri.parse('$baseUrl/bin/$warehouseId');
+    // final url = Uri.parse('$baseUrl/inventory/bins');
     setBinsLoadingStatus(true);
 
     Logger().e('url: $url');
 
     try {
       final token = await AuthProvider().getToken();
-      final response = await http.post(
+      final response = await http.get(
         url,
         headers: {
           'Content-Type': 'application/json',
@@ -89,10 +81,12 @@ class BinApi with ChangeNotifier {
         },
       );
 
+      log('Bins Response body: ${response.body}');
+
+      final res = json.decode(response.body);
       if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        if (data.containsKey('data')) {
-          _bins = List<String>.from(data['data'].map((bin) => bin['binName']));
+        if (res.containsKey('bins')) {
+          _bins = List<String>.from(res['bins'].map((bin) => bin['binName']));
 
           log("bins: $bins");
 
@@ -101,7 +95,7 @@ class BinApi with ChangeNotifier {
           throw Exception('Unexpected response format');
         }
       } else {
-        throw Exception('Failed to fetch bins: ${response.statusCode}');
+        throw Exception('${res['message']}: ${response.statusCode}');
       }
     } catch (error) {
       log('error hai: $error');

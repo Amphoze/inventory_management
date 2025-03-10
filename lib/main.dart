@@ -44,6 +44,7 @@ import 'package:inventory_management/provider/return_provoider.dart';
 import 'package:inventory_management/provider/routing_provider.dart';
 import 'package:inventory_management/provider/show-details-order-provider.dart';
 import 'package:inventory_management/provider/support_provider.dart';
+import 'package:inventory_management/provider/transfer_order_provider.dart';
 import 'package:inventory_management/stockship_version_control/version_controller.dart';
 import 'package:inventory_management/warehouses_page.dart';
 import 'package:provider/provider.dart';
@@ -95,6 +96,7 @@ void main() async {
       ChangeNotifierProvider(create: (context) => AccountsProvider()),
       ChangeNotifierProvider(create: (context) => BaApproveProvider()),
       ChangeNotifierProvider(create: (context) => CreateOrderProvider()),
+      ChangeNotifierProvider(create: (context) => TransferOrderProvider()),
       ChangeNotifierProvider(create: (context) => OuterboxProvider()),
       ChangeNotifierProvider(create: (context) => InnerPackagingProvider()),
       ChangeNotifierProvider(create: (context) => VersionController()),

@@ -136,67 +136,63 @@ class DashboardProvider with ChangeNotifier {
 
   String _message = "Order Statistics";
   int _totalOrders = 0;
-  int _totalDelivered = 0;
-  String _deliveredPercentage = "0";
-  int _totalRto = 0;
-  String _rtoPercentage = "0";
   String _marketplace = "";
   bool _isPercentLoading = false;
+  Map<String, int> _statusTotals = {};
+  Map<String, String> _statusPercentages = {};
 
   // Getters
   String get message => _message;
   int get totalOrders => _totalOrders;
-  int get totalDelivered => _totalDelivered;
-  String get deliveredPercentage => _deliveredPercentage;
-  int get totalRto => _totalRto;
-  String get rtoPercentage => _rtoPercentage;
   String get marketplace => _marketplace;
   bool get isPercentLoading => _isPercentLoading;
+  Map<String, int> get statusTotals => _statusTotals;
+  Map<String, String> get statusPercentages => _statusPercentages;
 
-    void resetValues() {
+  // Legacy getters for backward compatibility (optional)
+  int get totalDelivered => _statusTotals['delivered'] ?? 0;
+  String get deliveredPercentage => _statusPercentages['delivered'] ?? "0";
+  int get totalRto => _statusTotals['rto'] ?? 0;
+  String get rtoPercentage => _statusPercentages['rto'] ?? "0";
+
+  void resetValues() {
     _message = "Order Statistics";
     _totalOrders = 0;
-    _totalDelivered = 0;
-    _deliveredPercentage = "0";
-    _totalRto = 0;
-    _rtoPercentage = "0";
     _marketplace = "";
+    _statusTotals = {};
+    _statusPercentages = {};
     notifyListeners();
   }
-
 
   Future<void> fetchPercentageData(
     String dateRange,
     String marketplace,
-    String options,
+    List<String> options
   ) async {
     setPercentLoading(true);
 
-    // final token = await _getToken();
-    //
-    // if (token != null) {
-    //   log('Token is missing. Please log in again.');
-    //   setPercentLoading(false);
-    //   notifyListeners();
-    //   return;
-    // }
+    final token = await _getToken();
+    log('token is: $token');
+    if (token == null || token.isEmpty) {
+      notifyListeners();
+      log('Token is missing. Please log in again.');
+      setPercentLoading(false);
+      return;
+    }
 
     try {
       final headers = {
-        'Authorization':
-            'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFudXBrdW1hcnNvbmlAa2F0eWF5YW5pb3JnYW5pY3MuY29tIiwiaWQiOiI2NzU5NGY3NTczM2I1NWViMWE2MTlmMTYiLCJpYXQiOjE3NDExNTM4ODcsImV4cCI6MTc0MTE5NzA4N30.hnxvPyTgkkbAy0Eqq7_5WPxJhA44t3gWD8M7I_tpLAs',
-        // 'Authorization': 'Bearer $token',
+        'Authorization': 'Bearer $token',
         'Content-Type': 'application/json',
       };
 
       String url = '${await Constants.getBaseUrl()}/dashboard/rto-percentage';
-
       log('percentage url: $url');
 
       final body = {
         "date_range": dateRange,
         "marketplace": marketplace,
-        "options": options,
+        "options": options, // Send as array
       };
 
       log('percentage body: $body');
@@ -206,26 +202,32 @@ class DashboardProvider with ChangeNotifier {
         headers: headers,
         body: jsonEncode(body),
       );
+      log('Percentage response body: ${response.body}');
 
       if (response.statusCode == 200) {
         resetValues();
 
         final data = json.decode(response.body);
+
         _message = data['message'] ?? "Order Statistics";
         _totalOrders = data['total_orders'] ?? 0;
-        _totalDelivered = data['total_delivered'] ?? 0;
-        _deliveredPercentage = data['delivered_percentage'] ?? '0';
-        _totalRto = data['total_rto'] ?? 0;
-        _rtoPercentage = data['rto_percentage'] ?? '0';
         _marketplace = data['marketplace'] ?? "";
 
-        log('percentage body : ${response.body}');
+        data.forEach((key, value) {
+          if (key.startsWith('total_')) {
+            String status = key.replaceFirst('total_', '');
+            _statusTotals[status] = value ?? 0;
+          } else if (key.endsWith('_percentage')) {
+            String status = key.replaceFirst('_percentage', '');
+            _statusPercentages[status] = value?.toString() ?? "0";
+          }
+        });
+
+        log('percentage response: ${response.body}');
         log('Message: $_message');
         log('total_orders: $_totalOrders');
-        log('total_delivered: $_totalDelivered');
-        log('delivered_percentage: $_deliveredPercentage');
-        log('total_rto: $_totalRto');
-        log('rto_percentage: $_rtoPercentage');
+        log('status_totals: $_statusTotals');
+        log('status_percentages: $_statusPercentages');
       } else {
         log('Failed to fetch data: ${response.statusCode}');
       }

@@ -7,6 +7,7 @@ import 'package:provider/provider.dart';
 import 'package:inventory_management/provider/location_provider.dart';
 import 'package:inventory_management/Custom-Files/custom-button.dart';
 import 'package:inventory_management/Custom-Files/colors.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class NewLocationForm extends StatefulWidget {
   final bool isEditing;
@@ -23,6 +24,7 @@ class NewLocationForm extends StatefulWidget {
 }
 
 class _NewLocationFormState extends State<NewLocationForm> {
+  bool? isSuperAdmin;
   final _formKey = GlobalKey<FormState>();
 
   final _warehouseNameController = TextEditingController();
@@ -49,41 +51,36 @@ class _NewLocationFormState extends State<NewLocationForm> {
   final bool holdStock = true;
   final bool copyStock = true;
 
+  void getSuperAdminStatus() async {
+    final prefs = await SharedPreferences.getInstance();
+    isSuperAdmin = prefs.getBool('_isSuperAdminAssigned');
+  }
+
   @override
   void initState() {
     super.initState();
 
     // _userEmailController.addListener(_onEmailChanged);
+    getSuperAdminStatus();
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final locationProvider =
-          Provider.of<LocationProvider>(context, listen: false);
+      final locationProvider = Provider.of<LocationProvider>(context, listen: false);
 
       if (widget.isEditing && widget.warehouseData != null) {
         //print("1");
         //print("Data loaded in form - ${widget.warehouseData}");
         _warehouseIDController.text = widget.warehouseData!['_id'] ?? '';
         _warehouseNameController.text = widget.warehouseData!['name'] ?? '';
-        _userEmailController.text = widget.warehouseData!['userEmail'] ??
-            ''; // Adjust based on your data
-        _taxIdController.text = widget.warehouseData!['location']
-                    ['otherDetails']?['taxIdentificationNumber']
-                ?.toString() ??
-            '';
+        _userEmailController.text = widget.warehouseData!['userEmail'] ?? ''; // Adjust based on your data
+        _taxIdController.text = widget.warehouseData!['location']['otherDetails']?['taxIdentificationNumber']?.toString() ?? '';
 
-        _billingAddress1Controller.text = widget.warehouseData!['location']
-                ['billingAddress']['addressLine1'] ??
-            '';
-        _billingAddress2Controller.text = widget.warehouseData!['location']
-                ['billingAddress']['addressLine2'] ??
-            '';
+        _billingAddress1Controller.text = widget.warehouseData!['location']['billingAddress']['addressLine1'] ?? '';
+        _billingAddress2Controller.text = widget.warehouseData!['location']['billingAddress']['addressLine2'] ?? '';
 
-        final billingAddress =
-            widget.warehouseData!['location']['billingAddress'];
+        final billingAddress = widget.warehouseData!['location']['billingAddress'];
 
         // Get country index based on warehouseData
-        final selectedBillingCountryIndex =
-            locationProvider.countries.indexWhere(
+        final selectedBillingCountryIndex = locationProvider.countries.indexWhere(
           (country) => country['name'] == billingAddress['country'],
         );
         if (selectedBillingCountryIndex != -1) {
@@ -98,12 +95,10 @@ class _NewLocationFormState extends State<NewLocationForm> {
           locationProvider.selectBillingState(selectedBillingStateIndex);
         }
 
-        final shippingAddress =
-            widget.warehouseData!['location']['shippingAddress'];
+        final shippingAddress = widget.warehouseData!['location']['shippingAddress'];
 
         // Get country index based on warehouseData
-        final selectedShippingCountryIndex =
-            locationProvider.countries.indexWhere(
+        final selectedShippingCountryIndex = locationProvider.countries.indexWhere(
           (country) => country['name'] == shippingAddress['country'],
         );
         if (selectedShippingCountryIndex != -1) {
@@ -119,59 +114,31 @@ class _NewLocationFormState extends State<NewLocationForm> {
           // }
 
           // Get location type index based on warehouseData
-          final selectedLocationTypeIndex =
-              locationProvider.locationTypes.indexWhere(
-            (type) =>
-                type['name'] ==
-                widget.warehouseData!['location']['locationType'],
+          final selectedLocationTypeIndex = locationProvider.locationTypes.indexWhere(
+            (type) => type['name'] == widget.warehouseData!['location']['locationType'],
           );
           if (selectedLocationTypeIndex != -1) {
             locationProvider.selectLocationType(selectedLocationTypeIndex);
           }
 
-          _cityController.text =
-              widget.warehouseData!['location']['billingAddress']['city'] ?? '';
-          _zipCodeController.text = widget.warehouseData!['location']
-                      ['billingAddress']['zipCode']
-                  ?.toString() ??
-              '';
-          _phoneNumberController.text = widget.warehouseData!['location']
-                      ['billingAddress']['phoneNumber']
-                  ?.toString() ??
-              '';
-          _shippingAddress1Controller.text = widget.warehouseData!['location']
-                  ['shippingAddress']['addressLine1'] ??
-              '';
-          _shippingAddress2Controller.text = widget.warehouseData!['location']
-                  ['shippingAddress']['addressLine2'] ??
-              '';
-          _shippingCityController.text = widget.warehouseData!['location']
-                  ['shippingAddress']['city'] ??
-              '';
-          _shippingZipCodeController.text = widget.warehouseData!['location']
-                      ['shippingAddress']['zipCode']
-                  ?.toString() ??
-              '';
-          _shippingPhoneNumberController.text = widget
-                  .warehouseData!['location']['shippingAddress']['phoneNumber']
-                  ?.toString() ??
-              '';
-          _warehousePincodeController.text =
-              widget.warehouseData!['warehousePincode']?.toString() ?? '';
-          _pincodeController.text = (widget
-                      .warehouseData!['pincode']?.isNotEmpty ==
-                  true)
-              ? widget.warehouseData!['pincode'][0]
-                  .toString() // Just an example, modify according to your needs
+          _cityController.text = widget.warehouseData!['location']['billingAddress']['city'] ?? '';
+          _zipCodeController.text = widget.warehouseData!['location']['billingAddress']['zipCode']?.toString() ?? '';
+          _phoneNumberController.text = widget.warehouseData!['location']['billingAddress']['phoneNumber']?.toString() ?? '';
+          _shippingAddress1Controller.text = widget.warehouseData!['location']['shippingAddress']['addressLine1'] ?? '';
+          _shippingAddress2Controller.text = widget.warehouseData!['location']['shippingAddress']['addressLine2'] ?? '';
+          _shippingCityController.text = widget.warehouseData!['location']['shippingAddress']['city'] ?? '';
+          _shippingZipCodeController.text = widget.warehouseData!['location']['shippingAddress']['zipCode']?.toString() ?? '';
+          _shippingPhoneNumberController.text = widget.warehouseData!['location']['shippingAddress']['phoneNumber']?.toString() ?? '';
+          _warehousePincodeController.text = widget.warehouseData!['warehousePincode']?.toString() ?? '';
+          _pincodeController.text = (widget.warehouseData!['pincode']?.isNotEmpty == true)
+              ? widget.warehouseData!['pincode'][0].toString() // Just an example, modify according to your needs
               : '';
 
           // // Prefill holdsStock
-          locationProvider
-              .updateHoldsStock(widget.warehouseData!['holdStocks'] ?? false);
+          locationProvider.updateHoldsStock(widget.warehouseData!['holdStocks'] ?? false);
 
           // Prefill copyStock
-          locationProvider.updateCopysku(
-              widget.warehouseData!['copyMasterSkuFromPrimary'] ?? false);
+          locationProvider.updateCopysku(widget.warehouseData!['copyMasterSkuFromPrimary'] ?? false);
         }
       }
     });
@@ -231,26 +198,21 @@ class _NewLocationFormState extends State<NewLocationForm> {
               Row(
                 children: [
                   IconButton(
-                    icon: const Icon(Icons.arrow_back_rounded,
-                        color: AppColors.primaryBlue), // Back icon
+                    icon: const Icon(Icons.arrow_back_rounded, color: AppColors.primaryBlue), // Back icon
                     onPressed: () {
                       locationProvider.resetForm();
                       _pincodeController.clear();
                       // Check current mode and toggle accordingly
                       if (locationProvider.isEditingLocation) {
-                        locationProvider
-                            .toggleEditingLocation(); // Turn off editing mode
+                        locationProvider.toggleEditingLocation(); // Turn off editing mode
                       } else if (locationProvider.isCreatingNewLocation) {
-                        locationProvider
-                            .toggleCreatingNewLocation(); // Turn off creating mode
+                        locationProvider.toggleCreatingNewLocation(); // Turn off creating mode
                       }
                     },
                   ),
                   const SizedBox(width: 8), // Space between icon and text
                   Text(
-                    locationProvider.isEditingLocation
-                        ? 'Edit Location'
-                        : 'New Location',
+                    locationProvider.isEditingLocation ? 'Edit Location' : 'New Location',
                     style: const TextStyle(
                       fontSize: 27,
                       fontWeight: FontWeight.bold,
@@ -286,8 +248,7 @@ class _NewLocationFormState extends State<NewLocationForm> {
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(8),
                               ),
-                              floatingLabelBehavior:
-                                  FloatingLabelBehavior.never,
+                              floatingLabelBehavior: FloatingLabelBehavior.never,
                             ),
                             // validator: (value) {
                             //   if (value == null || value.isEmpty) {
@@ -314,8 +275,7 @@ class _NewLocationFormState extends State<NewLocationForm> {
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(8),
                               ),
-                              floatingLabelBehavior:
-                                  FloatingLabelBehavior.never,
+                              floatingLabelBehavior: FloatingLabelBehavior.never,
                             ),
                             validator: (value) {
                               if (value == null || value.isEmpty) {
@@ -344,9 +304,7 @@ class _NewLocationFormState extends State<NewLocationForm> {
                           TextFormField(
                             controller: _userEmailController,
                             onChanged: (text) {
-                              Provider.of<LocationProvider>(context,
-                                      listen: false)
-                                  .validateEmail(text);
+                              Provider.of<LocationProvider>(context, listen: false).validateEmail(text);
                             },
                             decoration: InputDecoration(
                               labelText: 'User Email',
@@ -354,13 +312,10 @@ class _NewLocationFormState extends State<NewLocationForm> {
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(8),
                               ),
-                              floatingLabelBehavior:
-                                  FloatingLabelBehavior.never,
+                              floatingLabelBehavior: FloatingLabelBehavior.never,
                               suffixIcon: isEmailValid
-                                  ? const Icon(Icons.check_circle,
-                                      color: Colors.green)
-                                  : const Icon(Icons.error,
-                                      color: Colors.red),
+                                  ? const Icon(Icons.check_circle, color: Colors.green)
+                                  : const Icon(Icons.error, color: Colors.red),
                             ),
                             // validator: (value) {
                             //   if (value == null || value.isEmpty) {
@@ -425,10 +380,8 @@ class _NewLocationFormState extends State<NewLocationForm> {
                           borderRadius: BorderRadius.circular(8),
                         ),
                         floatingLabelBehavior: FloatingLabelBehavior.never,
-                        suffixIcon: isEmailValid
-                            ? const Icon(Icons.check_circle,
-                                color: Colors.green)
-                            : const Icon(Icons.error, color: Colors.red),
+                        suffixIcon:
+                            isEmailValid ? const Icon(Icons.check_circle, color: Colors.green) : const Icon(Icons.error, color: Colors.red),
                       ),
                       // validator: (value) {
                       //   if (value == null || value.isEmpty) {
@@ -625,16 +578,11 @@ class _NewLocationFormState extends State<NewLocationForm> {
 
                           if (value == true) {
                             // Copy billing address to shipping address and update controllers
-                            _shippingAddress1Controller.text =
-                                _billingAddress1Controller.text;
-                            _shippingAddress2Controller.text =
-                                _billingAddress2Controller.text;
-                            _shippingCityController.text =
-                                _cityController.text;
-                            _shippingZipCodeController.text =
-                                _zipCodeController.text;
-                            _shippingPhoneNumberController.text =
-                                _phoneNumberController.text;
+                            _shippingAddress1Controller.text = _billingAddress1Controller.text;
+                            _shippingAddress2Controller.text = _billingAddress2Controller.text;
+                            _shippingCityController.text = _cityController.text;
+                            _shippingZipCodeController.text = _zipCodeController.text;
+                            _shippingPhoneNumberController.text = _phoneNumberController.text;
 
                             // Notify provider to update any additional state
                             locationProvider.updateShippingAddress(
@@ -940,21 +888,23 @@ class _NewLocationFormState extends State<NewLocationForm> {
                 },
               ),
 
-              const SizedBox(height: 16),
-              Row(
-                children: [
-                  Checkbox(
-                    value: _isPrimary,
-                    onChanged: (bool? value) {
-                      setState(() {
-                        _isPrimary = value ?? false;
-                      });
-                    },
-                  ),
-                  // const Text('Is Primary Location'),
-                  labelWithRequiredSymbol('Is Primary Location'),
-                ],
-              ),
+              if (isSuperAdmin == true) ...[
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    Checkbox(
+                      value: _isPrimary,
+                      onChanged: (bool? value) {
+                        setState(() {
+                          _isPrimary = value ?? false;
+                        });
+                      },
+                    ),
+                    // const Text('Is Primary Location'),
+                    labelWithRequiredSymbol('Is Primary Location'),
+                  ],
+                ),
+              ],
 
               const SizedBox(height: 16),
               labelWithRequiredSymbol('Pincodes'),
@@ -984,10 +934,7 @@ class _NewLocationFormState extends State<NewLocationForm> {
                                 labelText: 'Start Pincode',
                                 border: OutlineInputBorder(),
                               ),
-                              validator: (value) =>
-                                  value == null || value.isEmpty
-                                      ? 'Please enter start pincode'
-                                      : null,
+                              validator: (value) => value == null || value.isEmpty ? 'Please enter start pincode' : null,
                             ),
                           ),
                           const SizedBox(width: 8),
@@ -999,10 +946,7 @@ class _NewLocationFormState extends State<NewLocationForm> {
                                 labelText: 'End Pincode',
                                 border: OutlineInputBorder(),
                               ),
-                              validator: (value) =>
-                                  value == null || value.isEmpty
-                                      ? 'Please enter end pincode'
-                                      : null,
+                              validator: (value) => value == null || value.isEmpty ? 'Please enter end pincode' : null,
                             ),
                           ),
                           const SizedBox(width: 8),
@@ -1013,26 +957,19 @@ class _NewLocationFormState extends State<NewLocationForm> {
                                 labelText: 'City',
                                 border: OutlineInputBorder(),
                               ),
-                              validator: (value) =>
-                                  value == null || value.isEmpty
-                                      ? 'Please enter city'
-                                      : null,
+                              validator: (value) => value == null || value.isEmpty ? 'Please enter city' : null,
                             ),
                           ),
                           IconButton(
                             icon: const Icon(Icons.delete),
-                            onPressed: _pincodeList.length > 1
-                                ? () => setState(
-                                    () => _pincodeList.removeAt(index))
-                                : null,
+                            onPressed: _pincodeList.length > 1 ? () => setState(() => _pincodeList.removeAt(index)) : null,
                           )
                         ],
                       ),
                     );
                   }),
                   ElevatedButton(
-                    onPressed: () =>
-                        setState(() => _pincodeList.add(PincodeData())),
+                    onPressed: () => setState(() => _pincodeList.add(PincodeData())),
                     child: const Text('Add Pincode Range'),
                   ),
                 ],
@@ -1124,11 +1061,9 @@ class _NewLocationFormState extends State<NewLocationForm> {
                       _pincodeController.clear();
                       // Check current mode and toggle accordingly
                       if (locationProvider.isEditingLocation) {
-                        locationProvider
-                            .toggleEditingLocation(); // Turn off editing mode
+                        locationProvider.toggleEditingLocation(); // Turn off editing mode
                       } else if (locationProvider.isCreatingNewLocation) {
-                        locationProvider
-                            .toggleCreatingNewLocation(); // Turn off creating mode
+                        locationProvider.toggleCreatingNewLocation(); // Turn off creating mode
                       }
                     },
                     color: AppColors.grey,
@@ -1149,77 +1084,51 @@ class _NewLocationFormState extends State<NewLocationForm> {
                           'email': _userEmailController.text,
                           'location': {
                             'otherDetails': {
-                              'taxIdentificationNumber':
-                                  int.tryParse(_taxIdController.text) ?? 0,
+                              'taxIdentificationNumber': int.tryParse(_taxIdController.text) ?? 0,
                             },
                             // Billing address
                             'billingAddress': {
                               'addressLine1': _billingAddress1Controller.text,
                               'addressLine2': _billingAddress2Controller.text,
-                              'country':
-                                  _billingCountryController.text.toString() ??
-                                      '',
-                              'state':
-                                  _billingStateController.text.toString() ??
-                                      '',
+                              'country': _billingCountryController.text.toString() ?? '',
+                              'state': _billingStateController.text.toString() ?? '',
                               'city': _cityController.text,
-                              'zipCode':
-                                  int.tryParse(_zipCodeController.text) ?? 0,
-                              'phoneNumber':
-                                  int.tryParse(_phoneNumberController.text) ??
-                                      0,
+                              'zipCode': int.tryParse(_zipCodeController.text) ?? 0,
+                              'phoneNumber': int.tryParse(_phoneNumberController.text) ?? 0,
                             },
                             // Shipping address
                             'shippingAddress': {
-                              'addressLine1':
-                                  _shippingAddress1Controller.text,
-                              'addressLine2':
-                                  _shippingAddress2Controller.text,
-                              'country': _shippingCountryController.text
-                                      .toString() ??
-                                  '',
-                              'state':
-                                  _shippingStateController.text.toString() ??
-                                      '',
+                              'addressLine1': _shippingAddress1Controller.text,
+                              'addressLine2': _shippingAddress2Controller.text,
+                              'country': _shippingCountryController.text.toString() ?? '',
+                              'state': _shippingStateController.text.toString() ?? '',
                               'city': _shippingCityController.text,
-                              'zipCode': int.tryParse(
-                                      _shippingZipCodeController.text) ??
-                                  0,
-                              'phoneNumber': int.tryParse(
-                                      _shippingPhoneNumberController.text) ??
-                                  0,
+                              'zipCode': int.tryParse(_shippingZipCodeController.text) ?? 0,
+                              'phoneNumber': int.tryParse(_shippingPhoneNumberController.text) ?? 0,
                             },
                             // Other fields
-                            'locationType': locationProvider
-                                    .selectedLocationTypeIndex
-                                    .toString() ??
-                                '',
+                            'locationType': locationProvider.selectedLocationTypeIndex.toString() ?? '',
                             // 'holdStocks':
                             //     locationProvider.holdsStock ?? false,
                             // 'copyMasterSkuFromPrimary':
                             //     locationProvider.copysku ?? false,
                           },
-                          "pinCodes": _pincodeList
-                              .map((pincode) => pincode.toJson())
-                              .toList(),
+                          "pinCodes": _pincodeList.map((pincode) => pincode.toJson()).toList(),
                           "isPrimary": _isPrimary,
                           'warehouse_id': ''
                         };
 
                         log('Body: $body');
 
-                        final success =
-                            await locationProvider.createWarehouse(body);
+                        final success = await locationProvider.createWarehouse(body);
 
                         final snackBar = success
                             ? const SnackBar(
-                                content:
-                                    Text('Warehouse created successfully!'),
+                                content: Text('Warehouse created successfully!'),
                                 backgroundColor: Colors.green,
                               )
                             : SnackBar(
-                                content: Text(
-                                    'Failed to create warehouse: ${locationProvider.errorMessage}'),
+                                content: Text('Failed to create warehouse: ${locationProvider.errorMessage}'),
                                 backgroundColor: Colors.red,
                               );
 
@@ -1245,9 +1154,7 @@ class _NewLocationFormState extends State<NewLocationForm> {
                     color: AppColors.primaryGreen,
                     textColor: AppColors.white,
                     fontSize: 14,
-                    text: locationProvider.isEditingLocation
-                        ? 'Update Location'
-                        : 'Save Location',
+                    text: locationProvider.isEditingLocation ? 'Update Location' : 'Save Location',
                     borderRadius: BorderRadius.circular(8),
                   ),
                 ],
@@ -1290,9 +1197,6 @@ class PincodeData {
   final TextEditingController endController = TextEditingController();
   final TextEditingController cityController = TextEditingController();
 
-  Map<String, dynamic> toJson() => {
-        'startPincode': int.parse(startController.text),
-        'endPincode': int.parse(endController.text),
-        'city': cityController.text
-      };
+  Map<String, dynamic> toJson() =>
+      {'startPincode': int.parse(startController.text), 'endPincode': int.parse(endController.text), 'city': cityController.text};
 }

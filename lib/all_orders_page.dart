@@ -148,6 +148,9 @@ class _AllOrdersPageState extends State<AllOrdersPage> with SingleTickerProvider
                   }
                 },
                 onSubmitted: (text) {
+                  if (text.isEmpty) {
+                    context.read<AllOrdersProvider>().fetchAllOrders();
+                  }
                   Provider.of<AllOrdersProvider>(context, listen: false).searchOrders(text);
                 },
               ),
@@ -348,7 +351,7 @@ class _AllOrdersPageState extends State<AllOrdersPage> with SingleTickerProvider
                 Consumer<AllOrdersProvider>(
                   builder: (context, provider, child) {
                     return PopupMenuButton<String>(
-                      tooltip: 'Filter by Tracking Status',
+                      tooltip: 'Filter by Status',
                       initialValue: selectedStatus,
                       onSelected: (String value) {
                         setState(() {

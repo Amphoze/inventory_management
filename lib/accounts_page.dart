@@ -12,6 +12,7 @@ import 'package:inventory_management/provider/accounts_provider.dart';
 import 'package:inventory_management/provider/marketplace_provider.dart';
 import 'package:logger/logger.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'Custom-Files/colors.dart';
 import 'Custom-Files/custom_pagination.dart';
@@ -30,10 +31,21 @@ class _AccountsPageState extends State<AccountsPage> {
   final remarkController = TextEditingController();
   DateTime? picked;
   final accountsRemark = TextEditingController();
+  bool? isSuperAdmin = false;
+  bool? isAdmin = false;
+
+  Future<void> _fetchUserRole() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      isSuperAdmin = prefs.getBool('_isSuperAdminAssigned');
+      isAdmin = prefs.getBool('_isAdminAssigned');
+    });
+  }
 
   @override
   void initState() {
     super.initState();
+    _fetchUserRole();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       Provider.of<AccountsProvider>(context, listen: false).fetchOrdersWithStatus2();
       context.read<MarketplaceProvider>().fetchMarketplaces();
@@ -403,25 +415,12 @@ class _AccountsPageState extends State<AccountsPage> {
                                       ),
                                     );
                                   } else {
-                                    // Set loading status to true before starting the operation
-                                    provider.setCancelStatus(true);
-
-                                    // Call confirmOrders method with selected IDs
                                     String resultMessage = await provider.cancelOrders(context, selectedOrderIds);
 
-                                    // Set loading status to false after operation completes
-                                    provider.setCancelStatus(false);
-
-                                    // Determine the background color based on the result
                                     Color snackBarColor;
                                     if (resultMessage.contains('success')) {
-                                      // if (selectedCourier != 'All') {
-                                      //   await accountsProvider.fetchOrdersByMarketplace(selectedCourier, 2, accountsProvider.currentPage,
-                                      //       date: picked, mode: selectedPaymentMode);
-                                      // } else {
                                       await accountsProvider.fetchOrdersWithStatus2(
                                           date: picked, mode: selectedPaymentMode, market: selectedCourier);
-                                      // }
 
                                       snackBarColor = AppColors.green; // Success: Green
                                     } else if (resultMessage.contains('error') || resultMessage.contains('failed')) {
@@ -430,7 +429,6 @@ class _AccountsPageState extends State<AccountsPage> {
                                       snackBarColor = AppColors.orange; // Other: Orange
                                     }
 
-                                    // Show feedback based on the result
                                     ScaffoldMessenger.of(context).removeCurrentSnackBar();
                                     ScaffoldMessenger.of(context).showSnackBar(
                                       SnackBar(
@@ -623,7 +621,7 @@ class _AccountsPageState extends State<AccountsPage> {
                                             style: TextStyle(fontWeight: FontWeight.bold),
                                           ),
                                           Text(
-                                            '${order.totalWeight ?? ''}',
+                                            order.totalWeight.toStringAsFixed(2),
                                             style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.primaryBlue),
                                           ),
                                         ],
@@ -648,7 +646,8 @@ class _AccountsPageState extends State<AccountsPage> {
                                                 if (searched.isNotEmpty) {
                                                   accountsProvider.searchOrders(searched, selectedSearchType);
                                                 } else {
-                                                  accountsProvider.fetchOrdersWithStatus2(date: picked, mode: selectedPaymentMode, market: selectedCourier);
+                                                  accountsProvider.fetchOrdersWithStatus2(
+                                                      date: picked, mode: selectedPaymentMode, market: selectedCourier);
                                                 }
                                               }
                                             },
@@ -663,33 +662,35 @@ class _AccountsPageState extends State<AccountsPage> {
                                               'Edit Order',
                                             ),
                                           ),
-                                          const SizedBox(width: 8),
-                                          IconButton(
-                                            tooltip: 'Revert to Status 1',
-                                            icon: const Icon(Icons.undo),
-                                            onPressed: () async {
-                                              showDialog(
-                                                  context: context,
-                                                  barrierDismissible: true,
-                                                  builder: (context) {
-                                                    return const AlertDialog(
-                                                      content: Row(
-                                                        children: [CircularProgressIndicator(), SizedBox(width: 8), Text('Reversing')],
-                                                      ),
-                                                    );
-                                                  });
+                                          if ((isSuperAdmin ?? false) || (isAdmin ?? false)) ...[
+                                            const SizedBox(width: 8),
+                                            IconButton(
+                                              tooltip: 'Revert to Status 1',
+                                              icon: const Icon(Icons.undo),
+                                              onPressed: () async {
+                                                showDialog(
+                                                    context: context,
+                                                    barrierDismissible: true,
+                                                    builder: (context) {
+                                                      return const AlertDialog(
+                                                        content: Row(
+                                                          children: [CircularProgressIndicator(), SizedBox(width: 8), Text('Reversing')],
+                                                        ),
+                                                      );
+                                                    });
 
-                                              final res = await context.read<AuthProvider>().reverseOrder(order.orderId, '1');
-                                              Navigator.pop(context);
+                                                final res = await context.read<AuthProvider>().reverseOrder(order.orderId, '1');
+                                                Navigator.pop(context);
 
-                                              if (res['success'] == true) {
-                                                Utils.showInfoDialog(
-                                                    context, "${res['message']}\nNew Order ID: ${res['newOrderId']}", true);
-                                              } else {
-                                                Utils.showInfoDialog(context, res['message'], false);
-                                              }
-                                            },
-                                          ),
+                                                if (res['success'] == true) {
+                                                  Utils.showInfoDialog(
+                                                      context, "${res['message']}\nNew Order ID: ${res['newOrderId']}", true);
+                                                } else {
+                                                  Utils.showInfoDialog(context, res['message'], false);
+                                                }
+                                              },
+                                            ),
+                                          ]
                                         ],
                                       ),
                                     ],
@@ -699,222 +700,228 @@ class _AccountsPageState extends State<AccountsPage> {
                                     color: AppColors.grey,
                                   ),
                                   OrderInfo(order: order, pro: accountsProvider),
+                                  // Bottom Row before items
                                   Padding(
-                                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                                    child: Text.rich(
-                                      TextSpan(
-                                          text: "Outbound: ",
-                                          children: [
-                                            TextSpan(
-                                                text: "${order.outBoundBy?['status'] ?? false}",
-                                                style: const TextStyle(
-                                                  fontWeight: FontWeight.normal,
-                                                )),
-                                            (order.outBoundBy?['outboundBy']?.toString().isNotEmpty ?? false) ?
-                                            TextSpan(
-                                              text: "(${order.outBoundBy?['outboundBy'].toString().split('@')[0] ?? ''})",
-                                              style: const TextStyle(
-                                                fontWeight: FontWeight.normal,
-                                              ),
-                                            ) : const TextSpan()
-                                          ],
-                                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 20)),
-                                    ),
-                                  ),
-                                  // const SizedBox(height: 6),
-                                  if (order.confirmedBy!['status'] == true)
-                                    Padding(
-                                      padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                                      child: Text.rich(
-                                        TextSpan(
-                                            text: "Confirmed By: ",
-                                            children: [
-                                              TextSpan(
-                                                  text: order.confirmedBy!['confirmedBy'].toString().split('@')[0],
-                                                  style: const TextStyle(
-                                                    fontWeight: FontWeight.normal,
-                                                  )),
-                                              TextSpan(
-                                                  text: formatIsoDate(order.confirmedBy!['timestamp']),
-                                                  style: const TextStyle(
-                                                    fontWeight: FontWeight.normal,
-                                                  )),
-                                            ],
-                                            style: const TextStyle(
-                                              fontWeight: FontWeight.bold,
-                                            )),
-                                      ),
-                                    ),
-                                  if (order.baApprovedBy?['status'] ?? false)
-                                    Padding(
-                                      padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                                      child: Text.rich(
-                                        TextSpan(
-                                            text: "BA Approved By: ",
-                                            children: [
-                                              TextSpan(
-                                                  text: order.baApprovedBy!['baApprovedBy'],
-                                                  style: const TextStyle(
-                                                    fontWeight: FontWeight.normal,
-                                                  )),
-                                              TextSpan(
-                                                  text: formatIsoDate(order.baApprovedBy!['timestamp']),
-                                                  style: const TextStyle(
-                                                    fontWeight: FontWeight.normal,
-                                                  )),
-                                            ],
-                                            style: const TextStyle(
-                                              fontWeight: FontWeight.bold,
-                                            )),
-                                      ),
-                                    ),
-
-                                  Padding(
-                                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                                    padding: const EdgeInsets.symmetric(horizontal: 8.0),
                                     child: Row(
                                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                       children: [
-                                        Text.rich(
-                                          TextSpan(
-                                              text: "Updated on: ",
-                                              children: [
+                                        // Left Column
+                                        Expanded(
+                                          child: Column(
+                                            mainAxisAlignment: MainAxisAlignment.end,
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            children: [
+                                              Text.rich(
                                                 TextSpan(
-                                                    text: DateFormat('yyyy-MM-dd\',\' hh:mm a').format(
-                                                      DateTime.parse("${order.updatedAt}"),
-                                                    ),
+                                                    text: "Outbound: ",
+                                                    children: [
+                                                      TextSpan(
+                                                          text: "${order.outBoundBy?['status'] ?? false}",
+                                                          style: const TextStyle(
+                                                            fontWeight: FontWeight.normal,
+                                                          )),
+                                                      (order.outBoundBy?['outboundBy']?.toString().isNotEmpty ?? false)
+                                                          ? TextSpan(
+                                                              text: "(${order.outBoundBy?['outboundBy'].toString().split('@')[0] ?? ''})",
+                                                              style: const TextStyle(
+                                                                fontWeight: FontWeight.normal,
+                                                              ),
+                                                            )
+                                                          : const TextSpan()
+                                                    ],
+                                                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 20)),
+                                              ),
+                                              if (order.confirmedBy!['status'] == true)
+                                                Text.rich(
+                                                  TextSpan(
+                                                      text: "Confirmed By: ",
+                                                      children: [
+                                                        TextSpan(
+                                                            text: order.confirmedBy!['confirmedBy'].toString().split('@')[0],
+                                                            style: const TextStyle(
+                                                              fontWeight: FontWeight.normal,
+                                                            )),
+                                                        TextSpan(
+                                                            text: formatIsoDate(order.confirmedBy!['timestamp']),
+                                                            style: const TextStyle(
+                                                              fontWeight: FontWeight.normal,
+                                                            )),
+                                                      ],
+                                                      style: const TextStyle(
+                                                        fontWeight: FontWeight.bold,
+                                                      )),
+                                                ),
+                                              if (order.baApprovedBy?['status'] ?? false)
+                                                Text.rich(
+                                                  TextSpan(
+                                                      text: "BA Approved By: ",
+                                                      children: [
+                                                        TextSpan(
+                                                            text: order.baApprovedBy!['baApprovedBy'],
+                                                            style: const TextStyle(
+                                                              fontWeight: FontWeight.normal,
+                                                            )),
+                                                        TextSpan(
+                                                            text: formatIsoDate(order.baApprovedBy!['timestamp']),
+                                                            style: const TextStyle(
+                                                              fontWeight: FontWeight.normal,
+                                                            )),
+                                                      ],
+                                                      style: const TextStyle(
+                                                        fontWeight: FontWeight.bold,
+                                                      )),
+                                                ),
+                                              Text.rich(
+                                                TextSpan(
+                                                    text: "Updated on: ",
+                                                    children: [
+                                                      TextSpan(
+                                                          text: DateFormat('yyyy-MM-dd\',\' hh:mm a').format(
+                                                            DateTime.parse("${order.updatedAt}"),
+                                                          ),
+                                                          style: const TextStyle(
+                                                            fontWeight: FontWeight.normal,
+                                                          )),
+                                                    ],
                                                     style: const TextStyle(
-                                                      fontWeight: FontWeight.normal,
+                                                      fontWeight: FontWeight.bold,
                                                     )),
-                                              ],
-                                              style: const TextStyle(
-                                                fontWeight: FontWeight.bold,
-                                              )),
+                                              ),
+                                            ],
+                                          ),
                                         ),
-                                        Column(
-                                          crossAxisAlignment: CrossAxisAlignment.end,
-                                          children: [
-                                            ElevatedButton(
-                                              onPressed: () {
-                                                final pro = context.read<AccountsProvider>();
-                                                setState(() {
-                                                  accountsRemark.text = order.messages?['accountMessage']?.toString() ?? '';
-                                                });
-                                                showDialog(
-                                                  context: context,
-                                                  builder: (_) {
-                                                    return Dialog(
-                                                      shape: RoundedRectangleBorder(
-                                                        borderRadius: BorderRadius.circular(16),
-                                                      ),
-                                                      insetPadding: const EdgeInsets.symmetric(horizontal: 20),
-                                                      child: Container(
-                                                        width: MediaQuery.of(context).size.width * 0.9,
-                                                        constraints: const BoxConstraints(maxWidth: 600),
-                                                        padding: const EdgeInsets.all(20),
-                                                        child: Column(
-                                                          mainAxisSize: MainAxisSize.min,
-                                                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                                                          children: [
-                                                            const Text(
-                                                              'Remark',
-                                                              style: TextStyle(
-                                                                fontSize: 24,
-                                                                fontWeight: FontWeight.bold,
-                                                              ),
-                                                            ),
-                                                            const SizedBox(height: 20),
-                                                            TextField(
-                                                              controller: accountsRemark,
-                                                              maxLines: 10,
-                                                              decoration: InputDecoration(
-                                                                border: OutlineInputBorder(
-                                                                  borderRadius: BorderRadius.circular(8),
+                                        // Right Column
+                                        Expanded(
+                                          child: Column(
+                                            crossAxisAlignment: CrossAxisAlignment.end,
+                                            mainAxisAlignment: MainAxisAlignment.end,
+                                            children: [
+                                              ElevatedButton(
+                                                onPressed: () {
+                                                  final pro = context.read<AccountsProvider>();
+                                                  setState(() {
+                                                    accountsRemark.text = order.messages?['accountMessage']?.toString() ?? '';
+                                                  });
+                                                  showDialog(
+                                                    context: context,
+                                                    builder: (_) {
+                                                      return Dialog(
+                                                        shape: RoundedRectangleBorder(
+                                                          borderRadius: BorderRadius.circular(16),
+                                                        ),
+                                                        insetPadding: const EdgeInsets.symmetric(horizontal: 20),
+                                                        child: Container(
+                                                          width: MediaQuery.of(context).size.width * 0.9,
+                                                          constraints: const BoxConstraints(maxWidth: 600),
+                                                          padding: const EdgeInsets.all(20),
+                                                          child: Column(
+                                                            mainAxisSize: MainAxisSize.min,
+                                                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                                                            children: [
+                                                              const Text(
+                                                                'Remark',
+                                                                style: TextStyle(
+                                                                  fontSize: 24,
+                                                                  fontWeight: FontWeight.bold,
                                                                 ),
-                                                                hintText: 'Enter your remark here',
-                                                                filled: true,
-                                                                fillColor: Colors.grey[50],
-                                                                contentPadding: const EdgeInsets.all(16),
                                                               ),
-                                                            ),
-                                                            const SizedBox(height: 24),
-                                                            Row(
-                                                              mainAxisAlignment: MainAxisAlignment.end,
-                                                              children: [
-                                                                TextButton(
-                                                                  onPressed: () => Navigator.of(context).pop(),
-                                                                  child: const Text(
-                                                                    'Cancel',
-                                                                    style: TextStyle(fontSize: 16),
+                                                              const SizedBox(height: 20),
+                                                              TextField(
+                                                                controller: accountsRemark,
+                                                                maxLines: 10,
+                                                                decoration: InputDecoration(
+                                                                  border: OutlineInputBorder(
+                                                                    borderRadius: BorderRadius.circular(8),
                                                                   ),
+                                                                  hintText: 'Enter your remark here',
+                                                                  filled: true,
+                                                                  fillColor: Colors.grey[50],
+                                                                  contentPadding: const EdgeInsets.all(16),
                                                                 ),
-                                                                const SizedBox(width: 16),
-                                                                ElevatedButton(
-                                                                  onPressed: () async {
-                                                                    showDialog(
-                                                                      context: context,
-                                                                      barrierDismissible: false,
-                                                                      builder: (_) {
-                                                                        return AlertDialog(
-                                                                          shape: RoundedRectangleBorder(
-                                                                            borderRadius: BorderRadius.circular(16),
-                                                                          ),
-                                                                          insetPadding: const EdgeInsets.symmetric(horizontal: 20),
-                                                                          content: const Row(
-                                                                            mainAxisSize: MainAxisSize.min,
-                                                                            children: [
-                                                                              CircularProgressIndicator(),
-                                                                              SizedBox(width: 20),
-                                                                              Text(
-                                                                                'Submitting Remark',
-                                                                                style: TextStyle(fontSize: 16),
-                                                                              ),
-                                                                            ],
-                                                                          ),
-                                                                        );
-                                                                      },
-                                                                    );
-
-                                                                    final res = await pro.writeRemark(context, order.id, accountsRemark.text);
-
-                                                                    log('saved :)');
-
-                                                                    Navigator.pop(context);
-                                                                    Navigator.pop(context);
-
-                                                                    res ? await pro.fetchAccountedOrders(pro.currentPageBooked) : null;
-                                                                  },
-                                                                  style: ElevatedButton.styleFrom(
-                                                                    padding: const EdgeInsets.symmetric(
-                                                                      horizontal: 24,
-                                                                      vertical: 12,
+                                                              ),
+                                                              const SizedBox(height: 24),
+                                                              Row(
+                                                                mainAxisAlignment: MainAxisAlignment.end,
+                                                                children: [
+                                                                  TextButton(
+                                                                    onPressed: () => Navigator.of(context).pop(),
+                                                                    child: const Text(
+                                                                      'Cancel',
+                                                                      style: TextStyle(fontSize: 16),
                                                                     ),
                                                                   ),
-                                                                  child: const Text(
-                                                                    'Submit',
-                                                                    style: TextStyle(fontSize: 16),
+                                                                  const SizedBox(width: 16),
+                                                                  ElevatedButton(
+                                                                    onPressed: () async {
+                                                                      showDialog(
+                                                                        context: context,
+                                                                        barrierDismissible: false,
+                                                                        builder: (_) {
+                                                                          return AlertDialog(
+                                                                            shape: RoundedRectangleBorder(
+                                                                              borderRadius: BorderRadius.circular(16),
+                                                                            ),
+                                                                            insetPadding: const EdgeInsets.symmetric(horizontal: 20),
+                                                                            content: const Row(
+                                                                              mainAxisSize: MainAxisSize.min,
+                                                                              children: [
+                                                                                CircularProgressIndicator(),
+                                                                                SizedBox(width: 20),
+                                                                                Text(
+                                                                                  'Submitting Remark',
+                                                                                  style: TextStyle(fontSize: 16),
+                                                                                ),
+                                                                              ],
+                                                                            ),
+                                                                          );
+                                                                        },
+                                                                      );
+
+                                                                      final res =
+                                                                          await pro.writeRemark(context, order.id, accountsRemark.text);
+
+                                                                      log('saved :)');
+
+                                                                      Navigator.pop(context);
+                                                                      Navigator.pop(context);
+
+                                                                      res ? await pro.fetchOrdersWithStatus2() : null;
+                                                                    },
+                                                                    style: ElevatedButton.styleFrom(
+                                                                      padding: const EdgeInsets.symmetric(
+                                                                        horizontal: 24,
+                                                                        vertical: 12,
+                                                                      ),
+                                                                    ),
+                                                                    child: const Text(
+                                                                      'Submit',
+                                                                      style: TextStyle(fontSize: 16),
+                                                                    ),
                                                                   ),
-                                                                ),
-                                                              ],
-                                                            ),
-                                                          ],
+                                                                ],
+                                                              ),
+                                                            ],
+                                                          ),
                                                         ),
-                                                      ),
-                                                    );
-                                                  },
-                                                );
-                                              },
-                                              child: (order.messages?['accountMessage']?.toString().isNotEmpty ?? false)
-                                                  ? const Text('Edit Remark')
-                                                  : const Text('Write Remark'),
-                                            ),
-                                            if (order.messages?['confirmerMessage']?.toString().isNotEmpty ?? false) ...[
-                                              Utils()
-                                                  .showMessage(context, 'Confirmer Remark', order.messages!['confirmerMessage'].toString())
+                                                      );
+                                                    },
+                                                  );
+                                                },
+                                                child: (order.messages?['accountMessage']?.toString().isNotEmpty ?? false)
+                                                    ? const Text('Edit Remark')
+                                                    : const Text('Write Remark'),
+                                              ),
+                                              if (order.messages?['confirmerMessage']?.toString().isNotEmpty ?? false) ...[
+                                                Utils().showMessage(
+                                                    context, 'Confirmer Remark', order.messages!['confirmerMessage'].toString())
+                                              ],
+                                              if (order.messages?['accountMessage']?.toString().isNotEmpty ?? false) ...[
+                                                Utils()
+                                                    .showMessage(context, 'Account Remark', order.messages!['accountMessage'].toString()),
+                                              ],
                                             ],
-                                            if (order.messages?['accountMessage']?.toString().isNotEmpty ?? false) ...[
-                                              Utils().showMessage(context, 'Account Remark', order.messages!['accountMessage'].toString()),
-                                            ],
-                                          ],
+                                          ),
                                         ),
                                       ],
                                     ),

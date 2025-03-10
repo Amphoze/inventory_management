@@ -1,4 +1,6 @@
+import 'package:dropdown_search/dropdown_search.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:inventory_management/provider/dashboard_provider.dart';
 import 'package:inventory_management/provider/marketplace_provider.dart';
 import 'package:provider/provider.dart';
@@ -21,22 +23,48 @@ class PercentDashboardCard extends StatefulWidget {
 class _PercentDashboardCardState extends State<PercentDashboardCard> {
   DateTime? startDate;
   DateTime? endDate;
-  String? selectedOption;
+  List<String> selectedStatuses = [];
   String? selectedSource;
+  int currentStatusIndex = 0;
 
-  final List<String> options = ['RTO', 'Delivered'];
+  final Map<String, String> orderStatusMap = {
+    "failed": "Failed",
+    "confirmed": "Ready to Confirm",
+    "readyToInvoice": "Ready to Invoice",
+    "readyToBook": "Ready to Book",
+    "readyToPick": "Ready to Pick",
+    "readyToPack": "Ready to Pack",
+    "checkWeight": "Ready to Check",
+    "readyToRack": "Ready to Rack",
+    "readyToManifest": "Ready to Manifest",
+    "dispatch": "Dispatched",
+    "cancelled": "Cancelled",
+    "rto": "RTO",
+    "merged": "Merged",
+    "split": "Split",
+    "inTransit": "In-Transit",
+    "delivered": "Delivered",
+    "rto_inTransit": "RTO, In-Transit",
+  };
 
   void _fetchData(BuildContext context) {
-    if (startDate != null && endDate != null && selectedOption != null && selectedSource != null) {
+    if (startDate != null && endDate != null && selectedStatuses.isNotEmpty && selectedSource != null) {
       final dateRange = "${startDate!.toIso8601String().split('T')[0]},${endDate!.toIso8601String().split('T')[0]}";
-      Provider.of<DashboardProvider>(context, listen: false).fetchPercentageData(dateRange, selectedSource!, selectedOption!.toLowerCase());
+      Provider.of<DashboardProvider>(context, listen: false).fetchPercentageData(
+        dateRange,
+        selectedSource!,
+        selectedStatuses.map((status) => status.toLowerCase()).toList(),
+      );
+      setState(() {
+        currentStatusIndex = 0;
+      });
     }
   }
 
   void _showSettingsDialog(BuildContext context) {
     DateTime? tempStartDate = startDate;
     DateTime? tempEndDate = endDate;
-    String? tempOption = selectedOption;
+    List<String> tempStatuses = List.from(selectedStatuses);
     String? tempSource = selectedSource;
 
     showDialog(
@@ -60,7 +88,6 @@ class _PercentDashboardCardState extends State<PercentDashboardCard> {
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Start Date
                     Padding(
                       padding: const EdgeInsets.only(bottom: 8.0),
                       child: TextField(
@@ -68,13 +95,10 @@ class _PercentDashboardCardState extends State<PercentDashboardCard> {
                         decoration: const InputDecoration(
                           labelText: 'Start Date',
                           labelStyle: TextStyle(color: Colors.grey),
-                          // border: OutlineInputBorder(
-                          //   borderRadius: BorderRadius.circular(8.0),
-                          // ),
                           suffixIcon: Icon(Icons.calendar_today, color: AppColors.primaryBlue),
                         ),
                         controller: TextEditingController(
-                          text: tempStartDate == null ? 'Select' : tempStartDate!.toString().split(' ')[0],
+                          text: tempStartDate == null ? 'Select Start Date' : DateFormat('dd-MM-yyyy').format(tempStartDate!).toString(),
                         ),
                         onTap: () async {
                           final picked = await showDatePicker(
@@ -91,8 +115,6 @@ class _PercentDashboardCardState extends State<PercentDashboardCard> {
                         },
                       ),
                     ),
-
-                    // End Date
                     Padding(
                       padding: const EdgeInsets.only(bottom: 8.0),
                       child: TextField(
@@ -100,13 +122,10 @@ class _PercentDashboardCardState extends State<PercentDashboardCard> {
                         decoration: const InputDecoration(
                           labelText: 'End Date',
                           labelStyle: TextStyle(color: Colors.grey),
-                          // border: OutlineInputBorder(
-                          //   borderRadius: BorderRadius.circular(8.0),
-                          // ),
                           suffixIcon: Icon(Icons.calendar_today, color: AppColors.primaryBlue),
                         ),
                         controller: TextEditingController(
-                          text: tempEndDate == null ? 'Select' : tempEndDate!.toString().split(' ')[0],
+                          text: tempEndDate == null ? 'Select End Date' : DateFormat('dd-MM-yyyy').format(tempEndDate!).toString(),
                         ),
                         onTap: () async {
                           final picked = await showDatePicker(
@@ -123,35 +142,35 @@ class _PercentDashboardCardState extends State<PercentDashboardCard> {
                         },
                       ),
                     ),
-
-                    // Option Dropdown
                     Padding(
                       padding: const EdgeInsets.only(bottom: 8.0),
-                      child: DropdownButtonFormField<String>(
-                        value: tempOption,
-                        decoration: const InputDecoration(
-                          labelText: 'Option',
-                          labelStyle: TextStyle(color: Colors.grey),
-                          // border: OutlineInputBorder(
-                          //   borderRadius: BorderRadius.circular(8.0),
-                          // ),
+                      child: ConstrainedBox(
+                        constraints: const BoxConstraints(maxWidth: 500, minWidth: 300),
+                        child: DropdownSearch<String>.multiSelection(
+                          items: orderStatusMap.values.toList(),
+                          dropdownDecoratorProps: const DropDownDecoratorProps(
+                            dropdownSearchDecoration: InputDecoration(
+                              labelText: "Select Order Statuses",
+                            ),
+                          ),
+                          onChanged: (List<String> values) {
+                            setDialogState(() {
+                              tempStatuses = values;
+                            });
+                          },
+                          selectedItems: tempStatuses,
+                          popupProps: PopupPropsMultiSelection.menu(
+                            showSearchBox: true,
+                            searchFieldProps: TextFieldProps(
+                              decoration: InputDecoration(
+                                labelText: "Search Status",
+                                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                              ),
+                            ),
+                          ),
                         ),
-                        hint: const Text('Select from RTO or Delivered', style: TextStyle(fontSize: 14)),
-                        items: options.map((String value) {
-                          return DropdownMenuItem<String>(
-                            value: value,
-                            child: Text(value, style: const TextStyle(fontSize: 14)),
-                          );
-                        }).toList(),
-                        onChanged: (newValue) {
-                          setDialogState(() {
-                            tempOption = newValue;
-                          });
-                        },
                       ),
                     ),
-
-                    // Source Dropdown
                     Padding(
                       padding: const EdgeInsets.only(bottom: 8.0),
                       child: Consumer<MarketplaceProvider>(
@@ -161,11 +180,8 @@ class _PercentDashboardCardState extends State<PercentDashboardCard> {
                             decoration: const InputDecoration(
                               labelText: 'Marketplace',
                               labelStyle: TextStyle(color: Colors.grey),
-                              // border: OutlineInputBorder(
-                              //   borderRadius: BorderRadius.circular(8.0),
-                              // ),
                             ),
-                            hint: const Text('Select', style: TextStyle(fontSize: 14)),
+                            hint: const Text('Select Marketplace', style: TextStyle(fontSize: 14)),
                             items: pro.marketplaces.map((market) {
                               return DropdownMenuItem<String>(
                                 value: market.name,
@@ -190,9 +206,7 @@ class _PercentDashboardCardState extends State<PercentDashboardCard> {
           actions: [
             TextButton(
               onPressed: () => Navigator.of(dialogContext).pop(),
-              style: TextButton.styleFrom(
-                foregroundColor: Colors.grey,
-              ),
+              style: TextButton.styleFrom(foregroundColor: Colors.grey),
               child: const Text('Cancel'),
             ),
             ElevatedButton(
@@ -200,7 +214,7 @@ class _PercentDashboardCardState extends State<PercentDashboardCard> {
                 setState(() {
                   startDate = tempStartDate;
                   endDate = tempEndDate;
-                  selectedOption = tempOption;
+                  selectedStatuses = tempStatuses;
                   selectedSource = tempSource;
                   _fetchData(context);
                 });
@@ -223,135 +237,233 @@ class _PercentDashboardCardState extends State<PercentDashboardCard> {
   Widget build(BuildContext context) {
     return Consumer<DashboardProvider>(
       builder: (context, provider, child) {
-        // Determine the percentage and color based on selectedOption
-        String percentage = selectedOption == 'Delivered' ? provider.deliveredPercentage : provider.rtoPercentage;
-        Color changeColor = double.parse(percentage) >= 0 ? Colors.green : Colors.red;
+        final statusKeys = selectedStatuses
+            .map((s) => orderStatusMap.keys.firstWhere(
+                  (k) => orderStatusMap[k] == s,
+                  orElse: () => s.toLowerCase(),
+                ))
+            .toList();
+
+        String currentStatus = statusKeys.isNotEmpty && currentStatusIndex < statusKeys.length ? statusKeys[currentStatusIndex] : '';
+        int currentTotal = currentStatus.isNotEmpty ? provider.statusTotals[currentStatus] ?? 0 : 0;
+        String currentPercentage = currentStatus.isNotEmpty ? provider.statusPercentages[currentStatus] ?? "0" : "0";
+        double parsedPercentage = double.tryParse(currentPercentage) ?? 0;
+        Color changeColor = parsedPercentage >= 0 ? Colors.green : Colors.red;
 
         return SizedBox(
           width: widget.width,
           height: widget.height,
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 300),
-            padding: const EdgeInsets.all(14.0),
+            padding: const EdgeInsets.all(12.0),
             decoration: BoxDecoration(
               color: AppColors.white,
               borderRadius: BorderRadius.circular(12.0),
               boxShadow: [
                 BoxShadow(
-                  color: AppColors.grey.withOpacity(0.2),
+                  color: AppColors.grey.withValues(alpha: 0.2),
                   offset: const Offset(0, 4),
                   spreadRadius: 0,
                   blurRadius: 10,
                 ),
               ],
               border: Border.all(
-                color: AppColors.grey.withOpacity(0.1),
+                color: AppColors.grey.withValues(alpha: 0.1),
                 width: 1,
               ),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Title Section with Button
-                Container(
-                  margin: const EdgeInsets.only(bottom: 12),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Expanded(
-                        child: Text(
-                          'RTO/Delivered',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                            color: AppColors.primaryBlue.withOpacity(0.9),
-                            letterSpacing: -0.5,
-                          ),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                      Tooltip(
-                        message: 'Set Filters',
-                        child: InkWell(
-                          child: const Icon(Icons.filter_alt_outlined, size: 20),
-                          onTap: () => _showSettingsDialog(context),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-
-                // Value Section
-                Container(
-                  margin: const EdgeInsets.only(bottom: 8),
-                  child: provider.isPercentLoading
-                      ? const CircularProgressIndicator()
-                      : Text(
-                          selectedOption == 'RTO' ? provider.totalRto.toString() : provider.totalDelivered.toString(),
-                          style: const TextStyle(
-                            fontSize: 28,
-                            fontWeight: FontWeight.w700,
-                            color: Colors.black,
-                            letterSpacing: -0.5,
-                            height: 1.2,
-                          ),
-                        ),
-                ),
-
-                const Spacer(),
-
-                // Bottom Info Section
-                Container(
-                  padding: const EdgeInsets.only(top: 12),
-                  decoration: BoxDecoration(
-                    border: Border(
-                      top: BorderSide(
-                        color: AppColors.grey.withOpacity(0.1),
-                        width: 1,
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Order Status',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.primaryBlue.withValues(alpha: 0.9),
+                        letterSpacing: -0.5,
                       ),
                     ),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Expanded(
-                        child: Text(
-                          selectedOption?.toUpperCase() ?? 'N/A',
+                    if (startDate != null && endDate != null)
+                      RichText(
+                        text: TextSpan(
+                          text: DateFormat('dd-MM-yyyy').format(startDate!),
+                          children: [
+                            const TextSpan(
+                              text: ' | ',
+                              style: TextStyle(
+                                color: Colors.black,
+                              ),
+                            ),
+                            TextSpan(
+                              text: DateFormat('dd-MM-yyyy').format(endDate!),
+                            ),
+                          ],
                           style: TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w500,
-                            color: AppColors.grey.withOpacity(0.8),
+                            color: Colors.grey.shade600,
+                            fontFamily: 'Poppins',
+                            fontWeight: FontWeight.normal,
                           ),
                         ),
                       ),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: changeColor.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(6),
+                    Row(
+                      children: [
+                        Text(
+                          provider.isPercentLoading ? '...' : provider.marketplace,
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w500,
+                            color: Colors.grey.shade500,
+                          ),
                         ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              double.parse(percentage) >= 0 ? Icons.arrow_upward_rounded : Icons.arrow_downward_rounded,
-                              size: 14,
-                              color: changeColor,
-                            ),
-                            const SizedBox(width: 4),
-                            Text(
-                              '$percentage%',
-                              style: TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w600,
-                                color: changeColor,
-                              ),
-                            ),
-                          ],
+                        const SizedBox(width: 5),
+                        Tooltip(
+                          message: 'Set Filters',
+                          child: InkWell(
+                            child: const Icon(Icons.filter_alt_outlined, size: 20),
+                            onTap: () => _showSettingsDialog(context),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 6),
+                RichText(
+                  text: TextSpan(
+                    text: 'Total: ',
+                    children: [
+                      TextSpan(
+                        text: '${provider.isPercentLoading ? '...' : provider.totalOrders}',
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.normal,
+                          color: Colors.black,
                         ),
                       ),
                     ],
+                    style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.black, fontFamily: 'Poppins'),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Expanded(
+                  child: provider.isPercentLoading
+                      ? const Center(child: CircularProgressIndicator())
+                      : statusKeys.isNotEmpty
+                          ? Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                IconButton(
+                                  tooltip: 'Previous Status',
+                                  icon: const Icon(Icons.arrow_left, size: 20),
+                                  padding: EdgeInsets.zero,
+                                  constraints: const BoxConstraints(),
+                                  onPressed: currentStatusIndex > 0 ? () => setState(() => currentStatusIndex--) : null,
+                                  color: currentStatusIndex > 0 ? AppColors.primaryBlue : Colors.grey,
+                                ),
+                                provider.isPercentLoading
+                                    ? const Center(child: CircularProgressIndicator())
+                                    : statusKeys.isNotEmpty
+                                        ? Container(
+                                            decoration: BoxDecoration(
+                                              borderRadius: BorderRadius.circular(8.0),
+                                            ),
+                                            child: Row(
+                                              mainAxisAlignment: MainAxisAlignment.center,
+                                              children: [
+                                                Text(
+                                                  "${orderStatusMap[currentStatus] ?? currentStatus.toUpperCase()}: ",
+                                                  style: const TextStyle(
+                                                    fontSize: 20,
+                                                    fontWeight: FontWeight.w700,
+                                                    color: Colors.black,
+                                                  ),
+                                                  overflow: TextOverflow.ellipsis,
+                                                ),
+                                                const SizedBox(height: 4),
+                                                Row(
+                                                  mainAxisAlignment: MainAxisAlignment.center,
+                                                  children: [
+                                                    Text(
+                                                      '$currentTotal',
+                                                      style: const TextStyle(
+                                                        fontSize: 18,
+                                                        color: Colors.black,
+                                                      ),
+                                                    ),
+                                                    const SizedBox(width: 6),
+                                                    Text(
+                                                      '(${parsedPercentage.toStringAsFixed(2)}%)',
+                                                      style: TextStyle(
+                                                        fontSize: 18,
+                                                        fontWeight: FontWeight.w500,
+                                                        color: changeColor,
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ],
+                                            ),
+                                          )
+                                        : const Center(
+                                            child: Text(
+                                              'No Status Selected',
+                                              style: TextStyle(
+                                                fontSize: 14,
+                                                fontWeight: FontWeight.w500,
+                                                color: Colors.grey,
+                                              ),
+                                            ),
+                                          ),
+                                IconButton(
+                                  tooltip: 'Next Status',
+                                  icon: const Icon(Icons.arrow_right, size: 20),
+                                  padding: EdgeInsets.zero,
+                                  constraints: const BoxConstraints(),
+                                  onPressed: currentStatusIndex < statusKeys.length - 1 ? () => setState(() => currentStatusIndex++) : null,
+                                  color: currentStatusIndex < statusKeys.length - 1 ? AppColors.primaryBlue : Colors.grey,
+                                ),
+                              ],
+                            )
+                          : const Text(
+                              'Select Statuses to View',
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w500,
+                                color: Colors.grey,
+                              ),
+                            ),
+                ),
+                const SizedBox(height: 8),
+                Container(
+                  padding: const EdgeInsets.only(top: 8),
+                  decoration: BoxDecoration(
+                    border: Border(
+                      top: BorderSide(color: AppColors.grey.withValues(alpha: 0.1), width: 1),
+                    ),
+                  ),
+                  child: Tooltip(
+                    message: selectedStatuses.isEmpty
+                        ? 'N/A'
+                        : selectedStatuses.length == 17
+                            ? 'All'
+                            : selectedStatuses.map((s) => s.toUpperCase()).join(', '),
+                    child: Text(
+                      selectedStatuses.isEmpty
+                          ? 'N/A'
+                          : selectedStatuses.length == 17
+                              ? 'All'
+                              : selectedStatuses.map((s) => s.toUpperCase()).join(', '),
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                        color: AppColors.grey.withValues(alpha: 0.8),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
                   ),
                 ),
               ],

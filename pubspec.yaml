@@ -69,6 +69,7 @@ dependencies:
   socket_io_client: ^3.0.2
   flutter_html: ^3.0.0-beta.2
   country_code_picker: ^3.2.0
+  email_validator: ^3.0.0
 #  fl_chart: ^0.70.2
 
 dev_dependencies:

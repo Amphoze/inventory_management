@@ -54,9 +54,9 @@ class MarketplaceProvider with ChangeNotifier {
         }
       }
 
-    } catch (e) {
+    } catch (e, s) {
       // Handle general errors
-      log('Error fetching marketplaces: $e');
+      log('Error fetching marketplaces: $e $s');
       _marketplaces = []; // Clear the list on error
     } finally {
       _loading = false;

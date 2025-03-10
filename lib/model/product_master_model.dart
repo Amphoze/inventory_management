@@ -23,6 +23,7 @@ class Product {
   String taxRule;
   String grade;
   final String shopifyImage;
+  final List<String> images;
   final String variantName;
 
   Product({
@@ -42,6 +43,7 @@ class Product {
     required this.taxRule,
     required this.grade,
     required this.shopifyImage,
+    required this.images,
     required this.netWeight,
     required this.grossWeight,
     required this.labelSku,
@@ -76,6 +78,7 @@ class Product {
       cost: data['cost']?.toString() ?? '',
       taxRule: data['tax_rule']?.toString() ?? '',
       shopifyImage: data['shopifyImage'] ?? '',
+      images: data['images'] ?? [],
       createdDate: data['createdAt'] ?? '',
       lastUpdated: data['updatedAt'] ?? '',
       displayName: data['displayName'] ?? '',

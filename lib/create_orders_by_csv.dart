@@ -38,7 +38,6 @@ class _CreateOrdersByCSVState extends State<CreateOrdersByCSV> {
   IO.Socket? _socket;
 
   void _initializeSocket() async {
-    // Check if socket is already initialized
     if (_socket != null && _socket!.connected) {
       log('Socket already connected. Skipping initialization.');
       return;

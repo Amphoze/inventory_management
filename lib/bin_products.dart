@@ -19,8 +19,10 @@ class _BinProductsPageState extends State<BinProductsPage> {
 
   @override
   void initState() {
-    context.read<BinApi>().fetchBinProducts(widget.binName);
-    context.read<BinApi>().setBinName(widget.binName);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<BinApi>().fetchBinProducts(widget.binName);
+      context.read<BinApi>().setBinName(widget.binName);
+    });
     super.initState();
   }
 

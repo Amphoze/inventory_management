@@ -16,22 +16,18 @@ import 'package:pdf/widgets.dart' as pw;
 class BookProvider with ChangeNotifier {
   final TextEditingController searchController = TextEditingController();
 
-  // Store selected states for B2B and B2C orders
   List<bool> selectedB2BItems = List.generate(40, (index) => false);
   List<bool> selectedB2CItems = List.generate(40, (index) => false);
   List<bool> selectedBookedItems = List.generate(40, (index) => false);
 
-  // Select all flags for B2B and B2C
   bool selectAllB2B = false;
   bool selectAllB2C = false;
   bool selectAllBooked = false;
 
-  // Loading states for B2B and B2C orders
   bool isLoadingB2B = false;
   bool isLoadingB2C = false;
   bool isLoadingBooked = false;
 
-  // Sort option for orders
   String? _sortOption;
   String? get sortOption => _sortOption;
 
@@ -43,7 +39,6 @@ class BookProvider with ChangeNotifier {
   List<Order> get ordersB2C => _ordersB2C;
   List<Order> get ordersBooked => _ordersBooked;
 
-  // Pagination
   int currentPageB2B = 1;
   int currentPageB2C = 1;
   int currentPageBooked = 1;
@@ -94,7 +89,6 @@ class BookProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  // Set the sort option and notify listeners
   void setSortOption(String? option) {
     _sortOption = option;
     notifyListeners();
@@ -107,26 +101,22 @@ class BookProvider with ChangeNotifier {
   Future<String> cancelOrders(BuildContext context, List<String> orderIds) async {
     String baseUrl = await Constants.getBaseUrl();
     String cancelOrderUrl = '$baseUrl/orders/cancel';
-    // final String? token = await _getToken();
 
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('authToken') ?? '';
     setCancelStatus(true);
     notifyListeners();
 
-    // Headers for the API request
     final headers = {
       'Authorization': 'Bearer $token',
       'Content-Type': 'application/json',
     };
 
-    // Request body containing the order IDs
     final body = json.encode({
       'orderIds': orderIds,
     });
 
     try {
-      // Make the POST request to confirm the orders
       final response = await http.post(
         Uri.parse(cancelOrderUrl),
         headers: headers,
@@ -134,14 +124,13 @@ class BookProvider with ChangeNotifier {
       );
 
       print('Response status: ${response.statusCode}');
-      //print('Response body: ${response.body}');
 
       final responseData = json.decode(response.body);
 
       if (response.statusCode == 200) {
-        setRefreshingOrders(false); // Clear selected order IDs
+        setRefreshingOrders(false);
         setCancelStatus(false);
-        notifyListeners(); // Notify the UI to rebuild
+        notifyListeners();
 
         return responseData['message'] ?? 'Orders cancelled successfully';
       } else {
@@ -156,7 +145,6 @@ class BookProvider with ChangeNotifier {
   }
 
   Future<bool> writeRemark(BuildContext context, String id, String msg) async {
-    // Get the auth token
     final token = await _getToken();
     notifyListeners();
     if (token!.isEmpty) {
@@ -173,9 +161,7 @@ class BookProvider with ChangeNotifier {
           'Authorization': 'Bearer $token',
         },
         body: json.encode({
-          "messages": {
-            "bookerMessage": msg
-          }
+          "messages": {"bookerMessage": msg}
         }),
       );
 
@@ -196,26 +182,22 @@ class BookProvider with ChangeNotifier {
   Future<String> rebookOrders(List<String> orderIds) async {
     String baseUrl = await Constants.getBaseUrl();
     String url = '$baseUrl/orders/reBooking';
-    // final String? token = await _getToken();
 
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('authToken') ?? '';
     setRebookingStatus(true);
     notifyListeners();
 
-    // Headers for the API request
     final headers = {
       'Authorization': 'Bearer $token',
       'Content-Type': 'application/json',
     };
 
-    // Request body containing the order IDs
     final body = json.encode({
       'orderIds': orderIds,
     });
 
     try {
-      // Make the POST request to confirm the orders
       final response = await http.post(
         Uri.parse(url),
         headers: headers,
@@ -223,14 +205,13 @@ class BookProvider with ChangeNotifier {
       );
 
       print('Response status: ${response.statusCode}');
-      //print('Response body: ${response.body}');
 
       final responseData = json.decode(response.body);
 
       if (response.statusCode == 200) {
-        setRefreshingOrders(false); // Clear selected order IDs
+        setRefreshingOrders(false);
         setRebookingStatus(false);
-        notifyListeners(); // Notify the UI to rebuild
+        notifyListeners();
 
         return responseData['message'] ?? 'Orders cancelled successfully';
       } else {
@@ -249,7 +230,6 @@ class BookProvider with ChangeNotifier {
     await fetchOrders('B2C', page);
   }
 
-  // Fetch orders based on type (B2B or B2C)
   Future<void> fetchOrders(String type, int page, {DateTime? date, String? market}) async {
     String? token = await _getToken();
     final prefs = await SharedPreferences.getInstance();
@@ -274,7 +254,6 @@ class BookProvider with ChangeNotifier {
     Logger().e('fetchOrders url: $url');
 
     try {
-      // Set loading state based on order type
       if (type == 'B2B') {
         isLoadingB2B = true;
         setRefreshingOrders(true);
@@ -284,7 +263,6 @@ class BookProvider with ChangeNotifier {
       }
       notifyListeners();
 
-      // Clear checkboxes when a new page is fetched
       clearAllSelections();
 
       final response = await http.get(
@@ -302,12 +280,12 @@ class BookProvider with ChangeNotifier {
         log('fetch book orders: ${orders.length}');
         if (type == 'B2B') {
           _ordersB2B = orders;
-          currentPageB2B = page; // Track current page for B2B
-          totalPagesB2B = jsonResponse['totalPages']; // Assuming API returns total pages
+          currentPageB2B = page;
+          totalPagesB2B = jsonResponse['totalPages'];
         } else {
           _ordersB2C = orders;
-          currentPageB2C = page; // Track current page for B2C
-          totalPagesB2C = jsonResponse['totalPages']; // Assuming API returns total pages
+          currentPageB2C = page;
+          totalPagesB2C = jsonResponse['totalPages'];
         }
       } else {
         if (type == 'B2B') {
@@ -332,7 +310,6 @@ class BookProvider with ChangeNotifier {
       }
       log('Error fetching book page - $type orders: $e');
     } finally {
-      // Reset loading states
       if (type == 'B2B') {
         isLoadingB2B = false;
         setRefreshingOrders(false);
@@ -354,10 +331,8 @@ class BookProvider with ChangeNotifier {
       return;
     }
 
-    // Base URL
     String url = '${await Constants.getBaseUrl()}/orders?warehouse=$warehouseId&isBooked=true&page=$page';
 
-    // Add date parameter if provided
     if (date != null) {
       String formattedDate = DateFormat('yyyy-MM-dd').format(date);
       url += '&date=$formattedDate';
@@ -408,8 +383,7 @@ class BookProvider with ChangeNotifier {
     }
   }
 
-  // Function to book orders
-  Future<String> bookOrders(BuildContext context, List<Map<String, String>> orderIds, String lowerCase, String courier) async {
+  Future<String> bookOrders(BuildContext context, List<Map<String, String>> orderIds, String courier) async {
     log('courier: $courier');
     setLoading(courier, true);
     String baseUrl = await Constants.getBaseUrl();
@@ -422,59 +396,48 @@ class BookProvider with ChangeNotifier {
     }
 
     log('list: $orderIds');
-
+    String? res;
     if (courier == 'Shiprocket') {
       for (int i = 0; i < orderIds.length; i++) {
         String orderId = orderIds[i]['orderId']!;
         String courierId = orderIds[i]['courierId']!;
 
-        bookShiprocketOrder(context, orderId, courierId, lowerCase, courier);
+        res = await bookShiprocketOrder(context, orderId, courierId, courier);
       }
-      return '';
+      return res ?? '';
     }
 
     List<String?> orderIdsList = orderIds.map((orderId) => orderId['orderId']).toList();
 
-    log('orderIdsList: $orderIdsList');
-
-    // Headers for the API request
     final headers = {
       'Authorization': 'Bearer $token',
       'Content-Type': 'application/json',
     };
 
-    // Request body containing the order IDs
     final body = json.encode({
       'orderIds': orderIdsList,
-      'service': lowerCase,
+      'service': courier.toLowerCase(),
     });
     log(body);
 
     try {
-      // Make the POST request to book the orders
       final response = await http.post(
         Uri.parse(bookOrderUrl),
         headers: headers,
         body: body,
       );
 
-      // Log response status and body
-      // print('Response status: ${response.statusCode}');
-      // print('Response body: ${response.body}');
-
-      // Parse the response
       final responseData = json.decode(response.body);
 
-      // Check if the response is successful
+      log('book responseData: $responseData');
+
       if (response.statusCode == 200) {
-        // Optionally, you can also clear the selected orders here
         clearAllSelections();
         setLoading(courier, false);
-        // Notify listeners after successful booking
+
         notifyListeners();
-        return "${responseData['message']} ${responseData['pickup_location']['name']}" ?? 'Orders booked successfully';
+        return "${responseData['message'] ?? ''} - (${responseData["serviceResponse"][0]["orderCreationResponse"]["pickup_location"]["name"] ?? ''})";
       } else {
-        // If the API returns an error, return the error message
         setLoading(courier, false);
         return responseData['message'] ?? 'Failed to book orders';
       }
@@ -487,54 +450,42 @@ class BookProvider with ChangeNotifier {
     }
   }
 
-  Future<String> bookShiprocketOrder(BuildContext context, String orderId, String courierId, String lowerCase, String courier) async {
-    // setLoading(courier, true);
+  Future<String> bookShiprocketOrder(BuildContext context, String orderId, String courierId, String courier) async {
     String baseUrl = await Constants.getBaseUrl();
     String bookOrderUrl = '$baseUrl/orders/book';
     final String? token = await _getToken();
 
-    // Headers for the API request
     final headers = {
       'Authorization': 'Bearer $token',
       'Content-Type': 'application/json',
     };
 
-    // Request body containing the order IDs
     final body = json.encode({
-      'orderIds': [
-        orderId
-      ],
-      'service': lowerCase,
+      'orderIds': [orderId],
+      'service': courier.toLowerCase(),
       'courierId': courierId,
     });
 
     log('body: $body');
 
     try {
-      // Make the POST request to book the orders
       final response = await http.post(
         Uri.parse(bookOrderUrl),
         headers: headers,
         body: body,
       );
 
-      // Log response status and body
-      // log('Response status: ${response.statusCode}');
-      // log('Response body: ${response.body}');
-
-      // Parse the response
       final responseData = json.decode(response.body);
 
-      // Check if the response is successful
+      log('Shiprocket response: $responseData');
+
       if (response.statusCode == 200) {
-        // Optionally, you can also clear the selected orders here
         clearAllSelections();
         setLoading(courier, false);
-        // Notify listeners after successful booking
+
         notifyListeners();
-        return "${responseData['message']} ${responseData['pickup_location']}" ?? 'Orders booked successfully';
+        return "${responseData['message'] ?? 'Orders booked successfully'}";
       } else {
-        // If the API returns an error, return the error message
         setLoading(courier, false);
         return responseData['message'] ?? 'Failed to book orders';
       }
@@ -548,19 +499,16 @@ class BookProvider with ChangeNotifier {
     return '';
   }
 
-  // Get the auth token from SharedPreferences
   Future<String?> _getToken() async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getString('authToken');
   }
 
-  // Update search query and notify listeners
   void onSearchChanged() {
     print('Search query: ${searchController.text}');
     notifyListeners();
   }
 
-  // Handle individual row checkbox change
   void handleRowCheckboxChange(String? orderId, bool isSelected, bool isB2B) {
     int index;
     if (isB2B) {
@@ -589,11 +537,10 @@ class BookProvider with ChangeNotifier {
     }
 
     selectAllBooked = selectedBookedItems.every((item) => item);
-    // _updateSelectAllState(isB2B);
+
     notifyListeners();
   }
 
-  // Update the select all state based on selected items
   void _updateSelectAllState(bool isB2B) {
     if (isB2B) {
       selectAllB2B = selectedB2BItems.every((item) => item);
@@ -603,19 +550,18 @@ class BookProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  // Toggle select all checkboxes
   void toggleSelectAll(bool isB2B, bool? value) {
     if (isB2B) {
       selectAllB2B = value!;
       selectedB2BItems.fillRange(0, selectedB2BItems.length, selectAllB2B);
-      // Update the selection state for B2B orders
+
       for (int i = 0; i < _ordersB2B.length; i++) {
         _ordersB2B[i].isSelected = selectAllB2B;
       }
     } else {
       selectAllB2C = value!;
       selectedB2CItems.fillRange(0, selectedB2CItems.length, selectAllB2C);
-      // Update the selection state for B2C orders
+
       for (int i = 0; i < _ordersB2C.length; i++) {
         _ordersB2C[i].isSelected = selectAllB2C;
       }
@@ -626,7 +572,7 @@ class BookProvider with ChangeNotifier {
   void toggleBookedSelectAll(bool? value) {
     selectAllBooked = value!;
     selectedBookedItems.fillRange(0, selectedBookedItems.length, selectAllBooked);
-    // Update the selection state for B2B orders
+
     for (int i = 0; i < _ordersBooked.length; i++) {
       _ordersBooked[i].isSelected = selectAllBooked;
     }
@@ -634,7 +580,6 @@ class BookProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  // Clear all checkboxes when the page is changed
   void clearAllSelections() {
     selectedB2BItems.fillRange(0, selectedB2BItems.length, false);
     selectedB2CItems.fillRange(0, selectedB2CItems.length, false);
@@ -669,19 +614,16 @@ class BookProvider with ChangeNotifier {
       return 'No auth token found';
     }
 
-    // Headers for the API request
     final headers = {
       'Authorization': 'Bearer $token',
       'Content-Type': 'application/json',
     };
 
-    // Request body containing the order IDs
     final body = json.encode({
       'orderIds': orderIds,
     });
 
     try {
-      // Make the POST request to confirm the orders
       final response = await http.post(
         Uri.parse(cloneOrderUrl),
         headers: headers,
@@ -742,9 +684,7 @@ class BookProvider with ChangeNotifier {
         final data = jsonDecode(response.body);
         print(response.body);
 
-        _ordersB2B = [
-          Order.fromJson(data)
-        ];
+        _ordersB2B = [Order.fromJson(data)];
         print(response.body);
       } else {
         _ordersB2B = [];
@@ -791,9 +731,7 @@ class BookProvider with ChangeNotifier {
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
 
-        _ordersB2C = [
-          Order.fromJson(data)
-        ];
+        _ordersB2C = [Order.fromJson(data)];
         log('_ordersB2C: $ordersB2C');
       } else {
         _ordersB2C = [];
@@ -837,19 +775,13 @@ class BookProvider with ChangeNotifier {
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        // print(response.body);
 
-        // final newData = data['orders'][0]; //////////////////////////////////////////////////////////////
         if (searchType == 'Order ID') {
-          _ordersBooked = [
-            Order.fromJson(data)
-          ];
+          _ordersBooked = [Order.fromJson(data)];
         } else {
-          _ordersBooked = [
-            Order.fromJson(data['orders'][0])
-          ];
+          _ordersBooked = [Order.fromJson(data['orders'][0])];
         }
-        // _ordersBooked = [Order.fromJson(data)];
+
         log('_ordersBooked: $ordersBooked');
       } else {
         _ordersBooked = [];
@@ -863,67 +795,7 @@ class BookProvider with ChangeNotifier {
     }
   }
 
-  // Add this method to the BookProvider class
-  // Future<void> generatePicklist(BuildContext context, String marketplace) async {
-  //   // Get the current time in ISO 8601 format
-  //   String currentTime = DateTime.now().toIso8601String();
-
-  //   log("currentTime: $currentTime");
-  //   log("marketplace: $marketplace");
-
-  //   String baseUrl = await Constants.getBaseUrl();
-  //   String url = '$baseUrl/order-picker?currentTime=$currentTime&marketplace=$marketplace';
-
-  //   String? token = await _getToken();
-  //   if (token == null) {
-  //     print('Token is null, unable to fetch order picker data.');
-  //     return;
-  //   }
-
-  //   try {
-  //     // Make the GET request
-  //     final response = await http.post(
-  //       Uri.parse(url),
-  //       headers: {
-  //         'Authorization': 'Bearer $token',
-  //         'Content-Type': 'application/json',
-  //       },
-  //     );
-
-  //     // Log response for debugging
-  //     log('Status: ${response.statusCode}');
-  //     log('Body: ${response.body}');
-
-  //     final data = jsonDecode(response.body);
-
-  //     if (response.statusCode == 201) {
-  //       // Handle the successful response
-  //       // Process the data as needed
-  //       ScaffoldMessenger.of(context).showSnackBar(
-  //         SnackBar(
-  //           content: Text(data['error']['message']),
-  //           backgroundColor: AppColors.green,
-  //         ),
-  //       );
-  //       log("data: $data");
-  //     } else {
-  //       ScaffoldMessenger.of(context).showSnackBar(
-  //         SnackBar(
-  //           content: Text(data['error']['message']),
-  //           backgroundColor: AppColors.cardsred,
-  //         ),
-  //       );
-  //       print('Failed to post order picker data: ${response.statusCode}');
-  //     }
-  //   } catch (e) {
-  //     print('Error posting order picker data: $e');
-  //   } finally {
-  //     notifyListeners();
-  //   }
-  // }
-
   Future<void> generatePicklist(BuildContext context, String marketplace) async {
-    // Get the current time in ISO 8601 format
     String currentTime = DateTime.now().toIso8601String();
 
     log("currentTime: $currentTime");
@@ -941,7 +813,6 @@ class BookProvider with ChangeNotifier {
     }
 
     try {
-      // Make the GET request
       final response = await http.post(
         Uri.parse(url),
         headers: {
@@ -950,20 +821,12 @@ class BookProvider with ChangeNotifier {
         },
       );
 
-      // Log response for debugging
       log('Picklist Status: ${response.statusCode}');
       log('Picklist Body: ${response.body}');
 
       final data = jsonDecode(response.body);
 
       if (response.statusCode == 201) {
-        // Extract the order data
-        // final List<dynamic> orders = data['data'] ?? [];
-
-        // Generate and download PDF
-        // final pdfBytes = await generatePdf(orders);
-        // downloadPdf(pdfBytes, "order_picklist_${marketplace}_$currentTime.pdf");
-
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(data['error']['message']),
@@ -1000,7 +863,6 @@ class BookProvider with ChangeNotifier {
             child: pw.Column(
               crossAxisAlignment: pw.CrossAxisAlignment.start,
               children: [
-                // Title
                 pw.Text(
                   "Picklist",
                   style: pw.TextStyle(
@@ -1009,8 +871,6 @@ class BookProvider with ChangeNotifier {
                   ),
                 ),
                 pw.SizedBox(height: 10),
-
-                // Table Header
                 pw.Table(
                   border: pw.TableBorder.all(width: 1),
                   columnWidths: {
@@ -1029,14 +889,6 @@ class BookProvider with ChangeNotifier {
                           padding: const pw.EdgeInsets.all(8),
                           child: pw.Text(" SUM of Single Qty", style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
                         ),
-                        // pw.Padding(
-                        //   padding: pw.EdgeInsets.all(8),
-                        //   child: pw.Text("SKU", style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
-                        // ),
-                        // pw.Padding(
-                        //   padding: pw.EdgeInsets.all(8),
-                        //   child: pw.Text("Amount", style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
-                        // ),
                       ],
                     ),
                     ...data.map(
@@ -1050,18 +902,9 @@ class BookProvider with ChangeNotifier {
                             padding: const pw.EdgeInsets.all(8),
                             child: pw.Text(item["qty"].toString()),
                           ),
-                          // pw.Padding(
-                          //   padding: pw.EdgeInsets.all(8),
-                          //   child: pw.Text(item["sku"]),
-                          // ),
-                          // pw.Padding(
-                          //   padding: pw.EdgeInsets.all(8),
-                          //   child: pw.Text("₹${item["amount"]}"),
-                          // ),
                         ],
                       ),
                     ),
-                    // Total Row
                     pw.TableRow(
                       decoration: const pw.BoxDecoration(color: PdfColors.grey300),
                       children: [
@@ -1073,14 +916,6 @@ class BookProvider with ChangeNotifier {
                           padding: const pw.EdgeInsets.all(8),
                           child: pw.Text("₹$totalAmount", style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
                         ),
-                        // pw.Padding(
-                        //   padding: pw.EdgeInsets.all(8),
-                        //   child: pw.Text("-"),
-                        // ),
-                        // pw.Padding(
-                        //   padding: pw.EdgeInsets.all(8),
-                        //   child: pw.Text("-"),
-                        // ),
                       ],
                     ),
                   ],
@@ -1097,9 +932,7 @@ class BookProvider with ChangeNotifier {
 
   void downloadPdf(List<Map<String, dynamic>> data) async {
     final pdfBytes = await generatePdf(data);
-    final blob = html.Blob([
-      pdfBytes
-    ], 'application/pdf');
+    final blob = html.Blob([pdfBytes], 'application/pdf');
     final url = html.Url.createObjectUrlFromBlob(blob);
     final anchor = html.AnchorElement(href: url)
       ..setAttribute("download", "picklist.pdf")
@@ -1141,13 +974,10 @@ class BookProvider with ChangeNotifier {
       final responseData = json.decode(response.body);
       Logger().e(responseData);
 
-      // Check if the response is successful
       if (response.statusCode == 200) {
-        // Notify listeners after successful booking
         notifyListeners();
         return true;
       } else {
-        // If the API returns an error, return the error message
         return false;
       }
     } catch (error) {
@@ -1161,7 +991,7 @@ class BookProvider with ChangeNotifier {
     final token = prefs.getString('authToken') ?? '';
     String url = '${await Constants.getBaseUrl()}/order-picker/packerCsv?date=$date&picklistId=$selectedPicklist';
 
-    log('picklist url: $url'); // Use developer.log instead of Logger()
+    log('picklist url: $url');
 
     try {
       final response = await http.get(
@@ -1174,32 +1004,21 @@ class BookProvider with ChangeNotifier {
 
       final data = json.decode(response.body);
       if (response.statusCode == 200) {
-        await generateAndDownloadPdf(data, selectedPicklist, date); // Call the PDF generation function
-        return {
-          'status': 'success',
-          'message': 'PDF downloaded successfully'
-        };
+        await generateAndDownloadPdf(data, selectedPicklist, date);
+        return {'status': 'success', 'message': 'PDF downloaded successfully'};
       } else {
         log('Error: Status code ${response.statusCode}');
-        return {
-          'status': 'error',
-          'message': 'Failed to fetch data: ${response.statusCode}'
-        };
+        return {'status': 'error', 'message': 'Failed to fetch data: ${response.statusCode}'};
       }
     } catch (e, s) {
       log('Error occurred: $e, Stacktrace: $s');
-      return {
-        'status': 'error',
-        'message': 'Error: $e'
-      };
+      return {'status': 'error', 'message': 'Error: $e'};
     }
   }
 
   Future<void> generateAndDownloadPdf(dynamic jsonData, String selectedPicklist, String date) async {
-    // Create a new PDF document
     final pdf = pw.Document();
 
-    // Define table headers
     final headers = [
       'Order ID',
       'SKU',
@@ -1213,7 +1032,6 @@ class BookProvider with ChangeNotifier {
       'Checked By',
     ];
 
-    // Parse JSON data
     Map<String, dynamic> data;
     if (jsonData is String) {
       data = jsonDecode(jsonData);
@@ -1223,10 +1041,8 @@ class BookProvider with ChangeNotifier {
       throw Exception('Invalid JSON data format');
     }
 
-    // Extract orders
     List<dynamic> orders = data['orders'] ?? [];
 
-    // Prepare table rows
     List<List<String>> rows = [];
     for (var order in orders) {
       String orderId = order['OrderId']?.toString() ?? '';
@@ -1246,17 +1062,16 @@ class BookProvider with ChangeNotifier {
           awbNumber,
           courierName,
           confirmerRemark,
-          '', // Packed_By (empty)
-          '', // Checked_By (empty)
+          '',
+          '',
         ]);
       }
     }
 
-    // Add table to PDF with landscape orientation, improved styling, and colors
     pdf.addPage(
       pw.MultiPage(
-        pageFormat: PdfPageFormat.a4.landscape, // Keep landscape
-        margin: const pw.EdgeInsets.all(20), // Add margins for better spacing
+        pageFormat: PdfPageFormat.a4.landscape,
+        margin: const pw.EdgeInsets.all(20),
         build: (pw.Context context) {
           return [
             pw.Container(
@@ -1283,64 +1098,57 @@ class BookProvider with ChangeNotifier {
                 ],
               ),
             ),
-            pw.SizedBox(height: 20), // Space between title and table
-            // Table with improved styling and colors
+            pw.SizedBox(height: 20),
             pw.TableHelper.fromTextArray(
               headers: headers,
               data: rows,
               border: pw.TableBorder.all(
-                width: 0.5, // Thinner borders for cleaner look
-                color: PdfColors.grey800, // Darker grey for borders
+                width: 0.5,
+                color: PdfColors.grey800,
               ),
               headerDecoration: const pw.BoxDecoration(
                 color: PdfColors.blueGrey100,
               ),
               headerStyle: pw.TextStyle(
-                fontSize: 10, // Reduced font size for headers to prevent wrapping
+                fontSize: 10,
                 fontWeight: pw.FontWeight.bold,
                 color: PdfColors.black,
               ),
               cellStyle: const pw.TextStyle(
-                fontSize: 10, // Keep data font size consistent
-                color: PdfColors.black, // Black text for data
+                fontSize: 10,
+                color: PdfColors.black,
               ),
               cellAlignments: {
-                // Use column indices for alignments
-                3: pw.Alignment.centerRight, // Qty (column 3)
-                4: pw.Alignment.centerRight, // Total Wt. (column 4)
-                // Default to centerLeft for other columns
+                3: pw.Alignment.centerRight,
+                4: pw.Alignment.centerRight,
                 for (int i = 0; i < headers.length; i++)
                   if (i != 3 && i != 4) i: pw.Alignment.centerLeft,
               },
               columnWidths: const {
-                0: pw.FlexColumnWidth(0.8), // OrderId
-                1: pw.FlexColumnWidth(0.8), // SKU
-                2: pw.FlexColumnWidth(2.0), // Name (wider for long names)
-                3: pw.FlexColumnWidth(0.3), // Qty
-                4: pw.FlexColumnWidth(0.8), // Total Wt.
-                5: pw.FlexColumnWidth(1.0), // AWB
-                6: pw.FlexColumnWidth(1.2), // Courier
-                7: pw.FlexColumnWidth(1.2), // Conformer Remark
-                8: pw.FlexColumnWidth(0.8), // Pack By
-                9: pw.FlexColumnWidth(0.8), // Check By
+                0: pw.FlexColumnWidth(0.8),
+                1: pw.FlexColumnWidth(0.8),
+                2: pw.FlexColumnWidth(2.0),
+                3: pw.FlexColumnWidth(0.3),
+                4: pw.FlexColumnWidth(0.8),
+                5: pw.FlexColumnWidth(1.0),
+                6: pw.FlexColumnWidth(1.2),
+                7: pw.FlexColumnWidth(1.2),
+                8: pw.FlexColumnWidth(0.8),
+                9: pw.FlexColumnWidth(0.8),
               },
-              cellPadding: const pw.EdgeInsets.all(2), // Reduced padding for better fit
+              cellPadding: const pw.EdgeInsets.all(2),
             ),
           ];
         },
       ),
     );
 
-    // Generate PDF as bytes
     final Uint8List pdfBytes = await pdf.save();
 
-    // Download the PDF in the browser (Flutter web)
-    final blob = html.Blob([
-      pdfBytes
-    ]);
+    final blob = html.Blob([pdfBytes]);
     final url = html.Url.createObjectUrlFromBlob(blob);
     final anchor = html.AnchorElement(href: url)
-      ..setAttribute('download', 'packlist_$selectedPicklist.pdf') // Use picklist ID in filename
+      ..setAttribute('download', 'packlist_$selectedPicklist.pdf')
       ..click();
     html.Url.revokeObjectUrl(url);
   }

@@ -5,6 +5,8 @@ import 'package:inventory_management/Api/auth_provider.dart';
 import 'package:inventory_management/stockship_version_control/version_controller.dart';
 import 'package:logger/logger.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'crm_developer_notes_dialog.dart';
 import 'crm_update_version_dialog.dart';
 import 'model/development_notes_model.dart';
 
@@ -31,13 +33,13 @@ class CrmUpdatedDateWidget extends StatelessWidget {
           child: InkWell(
             borderRadius: BorderRadius.circular(8),
             onTap: () async {
-              // final prefs = await SharedPreferences.getInstance();
-              // if ((prefs.getBool('_isSuperAdminAssigned') ?? false) || (prefs.getBool('_isAdminAssigned') ?? false)) {
-              //   showDialog(
-              //     context: context,
-              //     builder: (context) => const CrmDeveloperNotesDialog(),
-              //   );
-              // }
+              final prefs = await SharedPreferences.getInstance();
+              if ((prefs.getBool('_isSuperAdminAssigned') ?? false) || (prefs.getBool('_isAdminAssigned') ?? false)) {
+                showDialog(
+                  context: context,
+                  builder: (context) => const CrmDeveloperNotesDialog(),
+                );
+              }
             },
             child: StreamBuilder<QuerySnapshot>(
               stream: FirebaseFirestore.instance.collectionGroup('ReleaseNotes').snapshots(),

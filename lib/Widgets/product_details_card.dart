@@ -218,7 +218,7 @@ class ProductDetailsCard extends StatelessWidget {
                   child: InkWell(
                     onTap: () => _showDescriptionDialog(context),
                     child: Tooltip(
-                      message: value,
+                      message: 'Click to view description',
                       child: Text(
                         value,
                         maxLines: 1,

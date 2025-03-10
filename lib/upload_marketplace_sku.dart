@@ -12,14 +12,14 @@ import 'package:logger/logger.dart';
 import 'package:socket_io_client/socket_io_client.dart' as IO;
 import 'package:url_launcher/url_launcher.dart';
 
-class ConfirmOrders extends StatefulWidget {
-  const ConfirmOrders({super.key});
+class UploadMarketplaceSKU extends StatefulWidget {
+  const UploadMarketplaceSKU({super.key});
 
   @override
-  State<ConfirmOrders> createState() => _ConfirmOrdersState();
+  State<UploadMarketplaceSKU> createState() => _UploadMarketplaceSKUState();
 }
 
-class _ConfirmOrdersState extends State<ConfirmOrders> {
+class _UploadMarketplaceSKUState extends State<UploadMarketplaceSKU> {
   static const int _pageSize = 50;
   List<List<dynamic>> _csvData = [];
   int _rowCount = 0;
@@ -49,7 +49,14 @@ class _ConfirmOrdersState extends State<ConfirmOrders> {
       final email = await AuthProvider().getEmail();
       log('email: $email');
 
-      _socket ??= IO.io(baseUrl, IO.OptionBuilder().setTransports(['websocket']).disableAutoConnect().setQuery({'email': email}).build());
+      _socket ??= IO.io(
+          baseUrl,
+          IO.OptionBuilder()
+              .setTransports(['websocket'])
+              .disableAutoConnect()
+              .setQuery({'email': email})
+              .build()
+      );
 
       _socket?.onConnect((_) {
         debugPrint('Connected to Socket.IO');
@@ -100,24 +107,17 @@ class _ConfirmOrdersState extends State<ConfirmOrders> {
     }
   }
 
-  late ScaffoldMessengerState? _scaffoldMessenger;
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    _scaffoldMessenger = ScaffoldMessenger.of(context);
-  }
-
   void _showSnackbar(String message, Color color) {
-    if (!mounted) return;
-    _scaffoldMessenger?.removeCurrentSnackBar();
-    _scaffoldMessenger?.showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: color,
-        duration: const Duration(seconds: 3),
-      ),
-    );
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).removeCurrentSnackBar();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(message),
+          backgroundColor: color,
+          duration: const Duration(seconds: 3),
+        ),
+      );
+    }
   }
 
   @override
@@ -236,7 +236,7 @@ class _ConfirmOrdersState extends State<ConfirmOrders> {
     }
   }
 
-  Future<void> _confirmOrders() async {
+  Future<void> _uploadMarketplaceSku() async {
     if (_selectedFile == null) return;
 
     Logger().e('1');
@@ -256,7 +256,7 @@ class _ConfirmOrdersState extends State<ConfirmOrders> {
 
       var request = http.MultipartRequest(
         'POST',
-        Uri.parse('${await Constants.getBaseUrl()}/orders/confirmCsv'),
+        Uri.parse('${await Constants.getBaseUrl()}/marketplace/addProductToMarketplace'),
       );
 
       Logger().e('2');
@@ -279,11 +279,9 @@ class _ConfirmOrdersState extends State<ConfirmOrders> {
       final responseBody = await response.stream.bytesToString();
       final jsonData = jsonDecode(responseBody);
 
+      Logger().e('Create Csv Body: $responseBody, Status Code: ${response.statusCode}');
+
       if (response.statusCode == 200 || response.statusCode == 201) {
-        if (_csvData.length == 1) {
-          Logger().e('_csvData: ${_csvData.length}');
-          showOrderStatusSnackbar(context, jsonData);
-        }
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text("${jsonData['message']}")),
@@ -302,38 +300,6 @@ class _ConfirmOrdersState extends State<ConfirmOrders> {
     }
   }
 
-  void showOrderStatusSnackbar(BuildContext context, Map<String, dynamic> response) {
-    String message = response['message'];
-    List results = response['results'];
-
-    // Check if any order has failed
-    bool hasError = results.any((order) => order['status'] == 'Failed');
-
-    if (hasError) {
-      String firstErrorMessage = results.firstWhere((order) => order['status'] == 'Failed')['errors'][0];
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            'Error: $firstErrorMessage',
-            style: const TextStyle(color: Colors.white),
-          ),
-          backgroundColor: Colors.red,
-        ),
-      );
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            'Success: $message',
-            style: const TextStyle(color: Colors.white),
-          ),
-          backgroundColor: Colors.green,
-        ),
-      );
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -346,7 +312,7 @@ class _ConfirmOrdersState extends State<ConfirmOrders> {
               mainAxisAlignment: MainAxisAlignment.start,
               children: [
                 Text(
-                  'Confirm Orders',
+                  'Upload Marketplace SKU',
                   style: TextStyle(fontSize: 25, fontWeight: FontWeight.bold),
                 ),
               ],
@@ -360,21 +326,21 @@ class _ConfirmOrdersState extends State<ConfirmOrders> {
                     child: Text(_isPickingFile
                         ? 'Selecting File...'
                         : _isProcessingFile
-                            ? 'Processing File...'
-                            : 'Select CSV File'),
+                        ? 'Processing File...'
+                        : 'Select CSV File'),
                   ),
                 ),
                 const SizedBox(width: 16),
                 ElevatedButton(
-                  onPressed: _isPickingFile || _isProcessingFile ? null : () => AuthProvider().downloadTemplate(context, 'confirm'),
+                  onPressed: _isPickingFile || _isProcessingFile ? null : () => AuthProvider().downloadTemplate(context, 'marketplace'),
                   child: const Text('Download Template'),
                 ),
                 const SizedBox(width: 16),
                 if (_rowCount > 0)
                   Expanded(
                     child: ElevatedButton(
-                      onPressed: _isCreateEnabled && !_isCreating && !_isPickingFile && !_isProcessingFile ? _confirmOrders : null,
-                      child: const Text('Confirm Orders'),
+                      onPressed: _isCreateEnabled && !_isCreating && !_isPickingFile && !_isProcessingFile ? _uploadMarketplaceSku : null,
+                      child: const Text('Upload SKUs'),
                     ),
                   ),
               ],
@@ -446,17 +412,17 @@ class _ConfirmOrdersState extends State<ConfirmOrders> {
               ),
               columns: headers
                   .map((header) => DataColumn(
-                        label: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                          child: Text(header.toString()),
-                        ),
-                      ))
+                label: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                  child: Text(header.toString()),
+                ),
+              ))
                   .toList(),
               rows: pagedData.map((row) {
                 return DataRow(
                   cells: List.generate(
                     row.length,
-                    (index) => DataCell(
+                        (index) => DataCell(
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 8.0),
                         child: Text(row[index].toString()),

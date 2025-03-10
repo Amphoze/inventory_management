@@ -20,13 +20,7 @@ class ProductMasterCard extends StatelessWidget {
       color: Colors.white,
       child: Padding(
         padding: const EdgeInsets.all(16.0),
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            final bool isSmallScreen = constraints.maxWidth < 800;
-
-            return isSmallScreen ? _buildSmallScreenContent() : _buildWideScreenContent(context);
-          },
-        ),
+        child: _buildWideScreenContent(context),
       ),
     );
   }
@@ -39,18 +33,41 @@ class ProductMasterCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(8),
         color: Colors.grey[300],
       ),
-      child: product.shopifyImage.isNotEmpty
+      // child: product.shopifyImage.isNotEmpty
+      //     ? ClipRRect(
+      //         borderRadius: BorderRadius.circular(8),
+      //         child: Image.network(
+      //           product.shopifyImage,
+      //           fit: BoxFit.cover,
+      //           errorBuilder: (context, error, stackTrace) {
+      //             return _buildPlaceholder();
+      //           },
+      //         ),
+      //       )
+      //     : _buildPlaceholder(),
+      child: (product.images.isNotEmpty)
           ? ClipRRect(
               borderRadius: BorderRadius.circular(8),
               child: Image.network(
-                product.shopifyImage,
+                product.images[0],
                 fit: BoxFit.cover,
                 errorBuilder: (context, error, stackTrace) {
                   return _buildPlaceholder();
                 },
               ),
             )
-          : _buildPlaceholder(),
+          : (product.shopifyImage.isNotEmpty)
+              ? ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: Image.network(
+                    product.shopifyImage,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) {
+                      return _buildPlaceholder();
+                    },
+                  ),
+                )
+              : _buildPlaceholder(),
     );
   }
 
@@ -65,39 +82,6 @@ class ProductMasterCard extends StatelessWidget {
         size: 50,
         color: Colors.grey,
       ),
-    );
-  }
-
-  Widget _buildSmallScreenContent() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _buildImage(),
-        const SizedBox(height: 12),
-        _buildTitle(product.displayName),
-        _buildText('SKU', product.sku),
-        _buildText('Parent SKU', product.parentSku),
-        _buildText('EAN', product.ean),
-        _buildText('Description', product.description),
-        _buildText('Category Name', product.categoryName),
-        _buildText('Colour', product.colour),
-        _buildText('Net Weight', product.netWeight),
-        _buildText('Gross Weight', product.grossWeight),
-        _buildText('Label SKU', product.labelSku),
-        _buildText('Outer Package Name', product.outerPackageName),
-        _buildText('Outer Package Quantity', product.outerPackageQuantity),
-        _buildText('Brand', product.brand),
-        _buildText('Technical Name', product.technicalName),
-        _buildText('MRP', product.mrp.isNotEmpty ? '₹${product.mrp}' : ''),
-        _buildText('Cost', product.cost.isNotEmpty ? '₹${product.cost}' : ''),
-        _buildText('Tax Rule', product.taxRule.isNotEmpty ? '${product.taxRule}%' : ''),
-        _buildText('Grade', product.grade),
-        _buildText('Created Date', formatDate(product.createdDate)),
-        _buildText('Last Updated', formatDate(product.lastUpdated)),
-        _buildText('Length', product.length.isNotEmpty ? '${product.length} cm' : ''),
-        _buildText('Width', product.width.isNotEmpty ? '${product.width} cm' : ''),
-        _buildText('Heigth', product.height.isNotEmpty ? '${product.height} cm' : ''),
-      ],
     );
   }
 
@@ -193,6 +177,7 @@ class ProductMasterCard extends StatelessWidget {
       child: Text(
         title,
         overflow: TextOverflow.ellipsis,
+        maxLines: 1,
         style: const TextStyle(
           fontSize: 20,
           fontWeight: FontWeight.bold,

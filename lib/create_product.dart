@@ -22,9 +22,8 @@ class CreateProduct extends StatefulWidget {
 }
 
 class _CreateProductState extends State<CreateProduct> {
-  // String productProvider!.selectedProductCategory = "Create Simple Product";
+  String? token;
   List<String>? webImages;
-  // int variationCount = 1;
 
   CustomDropdown brandd = CustomDropdown();
   final TextEditingController _productNameController = TextEditingController();
@@ -49,13 +48,13 @@ class _CreateProductState extends State<CreateProduct> {
   final TextEditingController _depthController = TextEditingController();
   final TextEditingController _sizeController = TextEditingController();
   final TextEditingController _colorController = TextEditingController();
+  final TextEditingController _itemQtyController = TextEditingController();
 
   final TextEditingController _skuController = TextEditingController();
   final TextEditingController _eanUpcController = TextEditingController();
   final TextEditingController _technicalNameController = TextEditingController();
   final TextEditingController _variantNameController = TextEditingController();
   final TextEditingController _parentSkuController = TextEditingController();
-  String? token;
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   final GlobalKey<CustomDropdownState> dropdownKey = GlobalKey<CustomDropdownState>();
   final GlobalKey<CustomDropdownState> categoryKey = GlobalKey<CustomDropdownState>();
@@ -64,9 +63,7 @@ class _CreateProductState extends State<CreateProduct> {
 
   final GlobalKey<CustomDropdownState> sizeKey = GlobalKey<CustomDropdownState>();
   final GlobalKey<CustomDropdownState> gradeKey = GlobalKey<CustomDropdownState>();
-  // final GlobalKey<CustomDropdown> _scaffoldKey = GlobalKey<CustomDropdown>();
-  // Add a form key
-  // final _brandDropdownKey = GlobalKey<CustomDropdownState>();
+
   String? selectedItemName;
   String? selectedBrandId;
   String? selectedCategory;
@@ -106,14 +103,12 @@ class _CreateProductState extends State<CreateProduct> {
 
   void clear() {
     setState(() {
-      // Reset dropdown indexes
       selectedIndexOfBrand = 0;
       selectedIndexOfCategory = 0;
       selectedIndexOfLabel = 0;
       selectedIndexOfBoxSize = 0;
       selectedIndexOfColorDrop = 0;
 
-      // Reset dropdown states
       dropdownKey.currentState!.reset();
       categoryKey.currentState!.reset();
       labelKey.currentState!.reset();
@@ -121,7 +116,6 @@ class _CreateProductState extends State<CreateProduct> {
       sizeKey.currentState!.reset();
       gradeKey.currentState!.reset();
 
-      // Clear all text controllers
       _productNameController.clear();
       _productIdentifierController.clear();
       _productBrandController.clear();
@@ -480,7 +474,8 @@ class _CreateProductState extends State<CreateProduct> {
       var res = await ProductPageApi().createProduct(
         context: context,
         displayName: _productNameController.text.trim(),
-        parentSku: productProvider!.selectedProductCategory == 'Create Simple Product' ? _skuController.text.trim() : selectedParentSku ?? '',
+        parentSku:
+            productProvider!.selectedProductCategory == 'Create Simple Product' ? _skuController.text.trim() : selectedParentSku ?? '',
         sku: _skuController.text.trim(),
         ean: _eanUpcController.text.trim(),
         brand_id: selectedBrandId ?? '', ///////////////////////////////////////
@@ -503,7 +498,7 @@ class _CreateProductState extends State<CreateProduct> {
         grade: selectedGrade ?? 'A', ///////////////////////////////////////
         shopifyImage: _shopifyController.text.trim(),
         variant_name: _variantNameController.text.trim(),
-        itemQty: selectedBoxName ?? '', /////////////////////////////////
+        itemQty: _itemQtyController.text.trim() ?? '', /////////////////////////////////
       );
 
       // Log the actual values being sent
@@ -541,10 +536,10 @@ class _CreateProductState extends State<CreateProduct> {
     //   _scrollToField('Brand');
     //   return false;
     // }
-    // if (selectedCategory == null) {
-    //   _scrollToField('Category');
-    //   return false;
-    // }
+    if (selectedCategory == null) {
+      _scrollToField('Category');
+      return false;
+    }
     // if (selectedLabelSku == null) {
     //   _scrollToField('Label');
     //   return false;
@@ -653,8 +648,21 @@ class _CreateProductState extends State<CreateProduct> {
               //     // },
               //   ),
               // ),
-              // const SizedBox(height: 12),
-
+              formLayout(
+                fieldTitle('Item Quantity', show: true),
+                SizedBox(
+                  child: CustomTextField(
+                    controller: _itemQtyController,
+                    height: 51,
+                    keyboardType: TextInputType.number,
+                    validator: (value) {
+                      if (value == null || value.isEmpty) return "Item quantity is required";
+                      return null;
+                    },
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
               formLayout(
                 fieldTitle('Brand'),
                 SizedBox(
@@ -898,30 +906,30 @@ class _CreateProductState extends State<CreateProduct> {
               ),
               const SizedBox(height: 12),
               formLayout(
-                fieldTitle('Net Weight'),
+                fieldTitle('Net Weight', show: true),
                 CustomTextField(
                   controller: _netWeightController,
                   height: 51,
-                  // validator: (value) {
-                  //   if (value == null || value.isEmpty) {
-                  //     return 'Weight is required';
-                  //   }
-                  //   return null;
-                  // },
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Weight is required';
+                    }
+                    return null;
+                  },
                 ),
               ),
               const SizedBox(height: 12),
               formLayout(
-                fieldTitle('Gross Weight'),
+                fieldTitle('Gross Weight', show: true),
                 CustomTextField(
                   controller: _grossWeightController,
                   height: 51,
-                  // validator: (value) {
-                  //   if (value == null || value.isEmpty) {
-                  //     return 'Weight is required';
-                  //   }
-                  //   return null;
-                  // },
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Weight is required';
+                    }
+                    return null;
+                  },
                 ),
               ),
               const SizedBox(height: 12),
@@ -1015,69 +1023,69 @@ class _CreateProductState extends State<CreateProduct> {
                 ),
               ),
               const SizedBox(height: 12),
-              formLayout(
-                fieldTitle('Custom Fields', show: false),
-                Container(
-                  height: 120,
-                  width: 550,
-                  decoration: BoxDecoration(
-                    border: Border.all(color: Colors.grey[300]!),
-                    borderRadius: BorderRadius.circular(12),
-                    color: Colors.grey[50],
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.all(16.0),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              'Add Custom Properties',
-                              style: TextStyle(
-                                fontSize: 14,
-                                color: Colors.grey[700],
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                            ElevatedButton.icon(
-                              onPressed: () {
-                                CustomAlertBox.showKeyValueDialog(context);
-                              },
-                              icon: const Icon(Icons.add, size: 18),
-                              label: const Text('Add Field'),
-                              style: ElevatedButton.styleFrom(
-                                foregroundColor: Colors.white,
-                                backgroundColor: AppColors.primaryBlue,
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 16,
-                                  vertical: 8,
-                                ),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(6),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      Expanded(
-                        child: Center(
-                          child: Text(
-                            'No custom fields added yet',
-                            style: TextStyle(
-                              color: Colors.grey[500],
-                              fontSize: 14,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: 12),
+              // formLayout(
+              //   fieldTitle('Custom Fields', show: false),
+              //   Container(
+              //     height: 120,
+              //     width: 550,
+              //     decoration: BoxDecoration(
+              //       border: Border.all(color: Colors.grey[300]!),
+              //       borderRadius: BorderRadius.circular(12),
+              //       color: Colors.grey[50],
+              //     ),
+              //     child: Column(
+              //       crossAxisAlignment: CrossAxisAlignment.start,
+              //       children: [
+              //         Padding(
+              //           padding: const EdgeInsets.all(16.0),
+              //           child: Row(
+              //             mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              //             children: [
+              //               Text(
+              //                 'Add Custom Properties',
+              //                 style: TextStyle(
+              //                   fontSize: 14,
+              //                   color: Colors.grey[700],
+              //                   fontWeight: FontWeight.w500,
+              //                 ),
+              //               ),
+              //               ElevatedButton.icon(
+              //                 onPressed: () {
+              //                   CustomAlertBox.showKeyValueDialog(context);
+              //                 },
+              //                 icon: const Icon(Icons.add, size: 18),
+              //                 label: const Text('Add Field'),
+              //                 style: ElevatedButton.styleFrom(
+              //                   foregroundColor: Colors.white,
+              //                   backgroundColor: AppColors.primaryBlue,
+              //                   padding: const EdgeInsets.symmetric(
+              //                     horizontal: 16,
+              //                     vertical: 8,
+              //                   ),
+              //                   shape: RoundedRectangleBorder(
+              //                     borderRadius: BorderRadius.circular(6),
+              //                   ),
+              //                 ),
+              //               ),
+              //             ],
+              //           ),
+              //         ),
+              //         Expanded(
+              //           child: Center(
+              //             child: Text(
+              //               'No custom fields added yet',
+              //               style: TextStyle(
+              //                 color: Colors.grey[500],
+              //                 fontSize: 14,
+              //               ),
+              //             ),
+              //           ),
+              //         ),
+              //       ],
+              //     ),
+              //   ),
+              // ),
+              // const SizedBox(height: 12),
               formLayout(
                 fieldTitle('Active Status'),
                 SizedBox(
@@ -1132,34 +1140,8 @@ class _CreateProductState extends State<CreateProduct> {
               radioCheck('Variant Product Creation', (val) {
                 productProvider!.updateSelectedProductCategory(val!);
               }),
-              // MediaQuery.of(context).size.width > 1400
-              //     ? radioCheck('Create Virtual Combo Products', (val) {
-              //         productProvider!.updateSelectedProductCategory(val!);
-              //       })
-              //     : const SizedBox(),
-              // MediaQuery.of(context).size.width > 1400
-              //     ? radioCheck('Create Kit Products', (val) {
-              //         productProvider!.updateSelectedProductCategory(val!);
-              //       })
-              //     : const SizedBox(),
             ],
           ),
-          // MediaQuery.of(context).size.width > 1200 &&
-          //         MediaQuery.of(context).size.width < 1400
-          //     ? Padding(
-          //         padding: const EdgeInsets.only(left: 20),
-          //         child: Row(
-          //           children: [
-          //             radioCheck('Create Virtual Combo Products', (val) {
-          //               productProvider!.updateSelectedProductCategory(val!);
-          //             }),
-          //             radioCheck('Create Kit Products', (val) {
-          //               productProvider!.updateSelectedProductCategory(val!);
-          //             }),
-          //           ],
-          //         ),
-          //       )
-          //     : const SizedBox(),
         ],
       ),
     );

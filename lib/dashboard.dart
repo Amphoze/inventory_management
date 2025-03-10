@@ -47,6 +47,7 @@ import 'package:inventory_management/picker_page.dart';
 import 'package:inventory_management/product_master.dart';
 import 'package:inventory_management/product_upload.dart';
 import 'package:inventory_management/provider/dashboard_provider.dart';
+import 'package:inventory_management/provider/label_in_out.dart';
 import 'package:inventory_management/provider/location_provider.dart';
 import 'package:inventory_management/provider/marketplace_provider.dart';
 import 'package:inventory_management/racked_page.dart';
@@ -58,7 +59,9 @@ import 'package:inventory_management/show-label-page.dart';
 import 'package:inventory_management/stockship_version_control/crm_updated_date_widget.dart';
 import 'package:inventory_management/support_page.dart';
 import 'package:inventory_management/threshold_upload.dart';
+import 'package:inventory_management/transfer_order.dart';
 import 'package:inventory_management/upload_inner.dart';
+import 'package:inventory_management/upload_marketplace_sku.dart';
 import 'package:inventory_management/upload_warehouse.dart';
 import 'package:inventory_management/uploadproduct-quantity.dart';
 import 'package:logger/logger.dart';
@@ -990,6 +993,8 @@ class _DashboardPageState extends State<DashboardPage> {
           "Marketplace Master",
           "Warehouse Master",
           "Bin Master",
+          "Label In-Out",
+          "Transfer Order",
         ].contains(selectedDrawerItem)
             ? Colors.blue.withValues(alpha: 0.2)
             : AppColors.white,
@@ -1103,6 +1108,38 @@ class _DashboardPageState extends State<DashboardPage> {
               fontSize: 14,
             ),
           ),
+          // Padding(
+          //   padding: const EdgeInsets.only(left: 10.0),
+          //   child: _buildDrawerItem(
+          //     icon: Icons.label_important,
+          //     text: 'Label In-Out',
+          //     isSelected: selectedDrawerItem == 'Label In-Out',
+          //     onTap: () => isConfirmer == true || isBooker == true || isSuperAdmin == true || isAdmin == true
+          //         ? _onDrawerItemTapped('Label In-Out', isSmallScreen)
+          //         : ScaffoldMessenger.of(context).showSnackBar(
+          //       const SnackBar(content: Text("You are not authorized to view this page.")),
+          //     ),
+          //     isIndented: true,
+          //     iconSize: 20,
+          //     fontSize: 14,
+          //   ),
+          // ),
+          Padding(
+            padding: const EdgeInsets.only(left: 10.0),
+            child: _buildDrawerItem(
+              icon: Icons.swap_horiz,
+              text: 'Transfer Order',
+              isSelected: selectedDrawerItem == 'Transfer Order',
+              onTap: () => isConfirmer == true || isBooker == true || isSuperAdmin == true || isAdmin == true
+                  ? _onDrawerItemTapped('Transfer Order', isSmallScreen)
+                  : ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text("You are not authorized to view this page.")),
+              ),
+              isIndented: true,
+              iconSize: 20,
+              fontSize: 14,
+            ),
+          )
         ],
       ),
     );
@@ -1125,6 +1162,7 @@ class _DashboardPageState extends State<DashboardPage> {
           "Create Invoice",
           "Book Orders",
           "Upload Products",
+          "Upload Marketplace SKU",
           "Upload Labels",
           "Manage Labels",
           "Upload Inner Packaging",
@@ -1256,6 +1294,22 @@ class _DashboardPageState extends State<DashboardPage> {
                   : ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(content: Text("You are not authorized to view this page.")),
                     ),
+              isIndented: true,
+              iconSize: 20,
+              fontSize: 14,
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.only(left: 10.0),
+            child: _buildDrawerItem(
+              icon: Icons.cloud_upload,
+              text: 'Upload Marketplace SKU',
+              isSelected: selectedDrawerItem == 'Upload Marketplace SKU',
+              onTap: () => isConfirmer == true || isAccounts == true || isBooker == true || isSuperAdmin == true || isAdmin == true
+                  ? _onDrawerItemTapped('Upload Marketplace SKU', isSmallScreen)
+                  : ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text("You are not authorized to view this page.")),
+              ),
               isIndented: true,
               iconSize: 20,
               fontSize: 14,
@@ -1506,6 +1560,10 @@ class _DashboardPageState extends State<DashboardPage> {
         return const LocationMaster();
       case 'Bin Master':
         return const BinMasterPage();
+      case 'Label In-Out':
+        return LabelFormPage();
+      case 'Transfer Order':
+        return const TransferOrderPage();
       case 'Marketplace Master':
         return const MarketplacePage();
       case 'Accounting':
@@ -1526,6 +1584,8 @@ class _DashboardPageState extends State<DashboardPage> {
         return const BookOrdersByCsv();
       case 'Upload Products':
         return const ProductDataDisplay();
+      case 'Upload Marketplace SKU':
+        return const UploadMarketplaceSKU();
       case 'Upload Labels':
         return const LabelUpload();
       case 'Manage Labels':

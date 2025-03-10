@@ -24,7 +24,6 @@ class _QualityCheckState extends State<QualityCheck> {
             title: Text(widget.orderId),
             centerTitle: true,
             elevation: 2,
-            // backgroundColor: Theme.of(context).primaryColor,
           ),
           body: Stack(
             children: [

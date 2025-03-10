@@ -309,7 +309,7 @@ class PickerProvider with ChangeNotifier {
 
       final data = json.decode(response.body);
       if (response.statusCode == 200) {
-        await generateAndDownloadPdf(data, selectedPicklist); // Call the PDF generation function
+        await generateAndDownloadPdf(data, selectedPicklist, date); // Call the PDF generation function
         return {'status': 'success', 'message': 'PDF downloaded successfully'};
       } else {
         log('Error: Status code ${response.statusCode}');
@@ -321,7 +321,7 @@ class PickerProvider with ChangeNotifier {
     }
   }
 
-  Future<void> generateAndDownloadPdf(dynamic jsonData, String selectedPicklist) async {
+  Future<void> generateAndDownloadPdf(dynamic jsonData, String selectedPicklist, String date) async {
     final pdf = pw.Document();
 
     // Define table headers based on the provided PDF structure
@@ -360,7 +360,7 @@ class PickerProvider with ChangeNotifier {
                   ),
                 ),
                 pw.Text(
-                  'Date: ${DateFormat('dd-MM-yyyy').format(DateTime.parse(jsonData['date']))}',
+                  'Date: ${DateFormat('dd-MM-yyyy').format(DateTime.parse(date))}',
                   style: pw.TextStyle(
                     fontSize: 14,
                     fontWeight: pw.FontWeight.normal,

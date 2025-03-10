@@ -653,7 +653,6 @@ class _BookedPageState extends State<BookedPage> with SingleTickerProviderStateM
                           ),
                           ElevatedButton(
                             onPressed: () async {
-                              log('picklist id is: $selectedPicklist');
                               if (selectedPicklist.isEmpty) return;
 
                               dialogSetState(() {
@@ -676,7 +675,16 @@ class _BookedPageState extends State<BookedPage> with SingleTickerProviderStateM
                                 },
                               );
 
+                              final res = await bookProvider.generatePacklist(context, _dateController.text, selectedPicklist);
 
+                              Utils.showSnackBar(context, res['message']);
+
+                              Navigator.pop(context);
+                              Navigator.pop(context);
+
+                              dialogSetState(() {
+                                isDownloading = false;
+                              });
                             },
                             child: const Text('Download'),
                           ),
@@ -773,9 +781,7 @@ class _BookedPageState extends State<BookedPage> with SingleTickerProviderStateM
                         strokeWidth: 2,
                       ),
                     )
-                  : const Icon(
-                      Icons.refresh
-                    ),
+                  : const Icon(Icons.refresh),
             ),
           ],
         ),

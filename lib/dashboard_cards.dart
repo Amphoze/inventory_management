@@ -123,7 +123,7 @@ class _DashboardCardsState extends State<DashboardCards> {
             else if (dashboardProvider.errorMessage != null)
               Text('Error: ${dashboardProvider.errorMessage}') // Show error if there is one
             else if (dashboardData != null) ...[
-              // if (widget.isSuperAdmin == true) ...[
+              if (widget.isSuperAdmin == true) ...[
                 Wrap(
                   spacing: 8.0,
                   runSpacing: 8.0,
@@ -132,7 +132,7 @@ class _DashboardCardsState extends State<DashboardCards> {
                     // Gross Revenue
                     DashboardCard(
                       title: isToday(widget.date!) ? "Today's Gross Revenue" : "Gross Revenue",
-                      value: '₹${dashboardData.totalAmountToday.toStringAsFixed(2)}',
+                      value: '₹${dashboardData.totalAmountToday.round()}',
                       subtitle: 'Yesterday: ₹${dashboardData.totalAmountYesterday}',
                       percentageChange:
                           calculatePercentageChange(dashboardData.totalAmountToday as double, dashboardData.totalAmountYesterday as double),
@@ -160,19 +160,19 @@ class _DashboardCardsState extends State<DashboardCards> {
                       width: threeCardWidth,
                       height: cardHeight,
                     ),
-                    // RTO-Delivered %
-                    PercentDashboardCard(width: threeCardWidth, height: cardHeight),
                   ],
                 ),
                 const Divider(
                   height: 30,
                 ),
-              // ],
+              ],
               Wrap(
                 spacing: 8.0,
                 runSpacing: 8.0,
                 alignment: WrapAlignment.center,
                 children: [
+                  // RTO-Delivered %
+                  PercentDashboardCard(width: threeCardWidth, height: cardHeight),
                   // Failed Orders
                   DashboardCard(
                     title: "Failed Orders",

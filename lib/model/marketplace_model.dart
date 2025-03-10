@@ -14,8 +14,8 @@ class SkuMap {
 
   factory SkuMap.fromJson(Map<String, dynamic> json) {
     return SkuMap(
-      mktpSku: json['mktp_sku'],
-      productId: json['product_id'],
+      mktpSku: json['mktp_sku'] ?? '',
+      productId: json['product_id'] ?? '',
       product: json['product'] != null ? Product.fromJson(json['product']) : null, // Assuming you need product details
     );
   }

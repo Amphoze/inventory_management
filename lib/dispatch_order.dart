@@ -339,70 +339,73 @@ class _DispatchedOrdersState extends State<DispatchedOrders> {
                       builder: (BuildContext context, StateSetter setState) {
                     return Column(
                       children: [
-                        PopupMenuButton<String>(
-                          tooltip: 'Select tracking status',
-                          onSelected: (String newStatus) {
-                            setState(() {
-                              selectedStatus = newStatus;
-                              order.trackingStatus = newStatus;
-                            });
-                          },
-                          itemBuilder: (BuildContext context) {
-                            return <String>[
-                              "Delivered",
-                              "RTO",
-                              "Disposed Off",
-                              "Rack Up",
-                              "Lost",
-                              "In Transit",
-                              "Damaged",
-                              "Out For Delivery",
-                              "Not Confirmed",
-                              "Cancelled",
-                              "Confirmed",
-                              "Shipped",
-                              "Destroyed",
-                              "Discarded Entry",
-                              "Attempted",
-                              "Hold"
-                            ].map<PopupMenuItem<String>>((String value) {
-                              return PopupMenuItem<String>(
-                                value: value,
-                                child: Text(value),
-                              );
-                            }).toList();
-                          },
-                          child: isSaved == true
-                              ? Text(
-                                  order.trackingStatus!,
-                                )
-                              : Text(
-                                  selectedStatus == null
-                                      ? "Select tracking status"
-                                      : selectedStatus!,
-                                  style: TextStyle(
-                                      color: selectedStatus == null
-                                          ? AppColors.primaryBlue
-                                          : Colors.black),
-                                ),
+                        // PopupMenuButton<String>(
+                        //   tooltip: 'Select tracking status',
+                        //   onSelected: (String newStatus) {
+                        //     setState(() {
+                        //       selectedStatus = newStatus;
+                        //       order.trackingStatus = newStatus;
+                        //     });
+                        //   },
+                        //   itemBuilder: (BuildContext context) {
+                        //     return <String>[
+                        //       "Delivered",
+                        //       "RTO",
+                        //       "Disposed Off",
+                        //       "Rack Up",
+                        //       "Lost",
+                        //       "In Transit",
+                        //       "Damaged",
+                        //       "Out For Delivery",
+                        //       "Not Confirmed",
+                        //       "Cancelled",
+                        //       "Confirmed",
+                        //       "Shipped",
+                        //       "Destroyed",
+                        //       "Discarded Entry",
+                        //       "Attempted",
+                        //       "Hold"
+                        //     ].map<PopupMenuItem<String>>((String value) {
+                        //       return PopupMenuItem<String>(
+                        //         value: value,
+                        //         child: Text(value),
+                        //       );
+                        //     }).toList();
+                        //   },
+                        //   child: isSaved == true
+                        //       ? Text(
+                        //           order.trackingStatus!,
+                        //         )
+                        //       : Text(
+                        //           selectedStatus == null
+                        //               ? "Select tracking status"
+                        //               : selectedStatus!,
+                        //           style: TextStyle(
+                        //               color: selectedStatus == null
+                        //                   ? AppColors.primaryBlue
+                        //                   : Colors.black),
+                        //         ),
+                        // ),
+                        Text(
+                          order.trackingStatus?.toUpperCase() ?? '',
                         ),
-                        const SizedBox(
-                          height: 8,
-                        ),
-                        if (selectedStatus != null)
-                          ElevatedButton(
-                            onPressed: () {
-                              isSaved = true;
-                              if (selectedStatus != null) {
-                                dispatchProvider.updateOrderTrackingStatus(
-                                    context, order.id, selectedStatus!);
-                              }
-                              log("id: ${order.id}");
-                              log("tracking: ${order.trackingStatus}");
-                              log('Saving status: $selectedStatus');
-                            },
-                            child: const Text('Save'),
-                          ),
+                        // const SizedBox(
+                        //   height: 8,
+                        // ),
+                        // if (selectedStatus != null)
+                        //   ElevatedButton(
+                        //     onPressed: () {
+                        //       isSaved = true;
+                        //       if (selectedStatus != null) {
+                        //         dispatchProvider.updateOrderTrackingStatus(
+                        //             context, order.id, selectedStatus!);
+                        //       }
+                        //       log("id: ${order.id}");
+                        //       log("tracking: ${order.trackingStatus}");
+                        //       log('Saving status: $selectedStatus');
+                        //     },
+                        //     child: const Text('Save'),
+                        //   ),
                       ],
                     );
                   }),

@@ -1119,134 +1119,128 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
                                     ),
                                   ),
                                   const SizedBox(height: 10),
-                                  ChangeNotifierProvider.value(
-                                    value: _ordersProvider,
-                                    child: Consumer<OrdersProvider>(
-                                      builder: (context, ordersProvider, child) {
-                                        final String? selectedOrderType = ordersProvider.selectedOrderType;
+                                  Consumer<OrdersProvider>(
+                                    builder: (context, ordersProvider, child) {
+                                      final String? selectedOrderType = ordersProvider.selectedOrderType;
 
-                                        final List<DropdownMenuItem<String>> orderTypeItems = [
-                                          const DropdownMenuItem<String>(
-                                            value: 'New Buyer',
-                                            child: Text('New Buyer'),
-                                          ),
-                                          const DropdownMenuItem<String>(
-                                            value: 'Repeat Buyer',
-                                            child: Text('Repeat Buyer'),
-                                          ),
-                                        ];
+                                      final List<DropdownMenuItem<String>> orderTypeItems = [
+                                        const DropdownMenuItem<String>(
+                                          value: 'New Buyer',
+                                          child: Text('New Buyer'),
+                                        ),
+                                        const DropdownMenuItem<String>(
+                                          value: 'Repeat Buyer',
+                                          child: Text('Repeat Buyer'),
+                                        ),
+                                      ];
 
-                                        return DropdownButtonFormField<String>(
-                                          value: selectedOrderType,
-                                          decoration: InputDecoration(
-                                            labelText: 'Order Type',
-                                            labelStyle: TextStyle(
-                                              fontWeight: FontWeight.w500,
-                                              color: Colors.grey.withValues(alpha: 0.7),
-                                              fontSize: 14,
-                                            ),
-                                            prefixIcon: Icon(Icons.shopping_cart, color: Colors.grey[700]),
-                                            border: OutlineInputBorder(
-                                              borderRadius: BorderRadius.circular(10),
-                                              borderSide: BorderSide(
-                                                color: Colors.grey[400]!,
-                                                width: 1.2,
-                                              ),
-                                            ),
-                                            enabledBorder: OutlineInputBorder(
-                                              borderRadius: BorderRadius.circular(10),
-                                              borderSide: BorderSide(
-                                                color: Colors.grey[400]!,
-                                                width: 1.2,
-                                              ),
-                                            ),
-                                            focusedBorder: OutlineInputBorder(
-                                              borderRadius: BorderRadius.circular(10),
-                                              borderSide: const BorderSide(
-                                                color: AppColors.primaryBlue,
-                                                width: 1.5,
-                                              ),
-                                            ),
-                                            contentPadding: const EdgeInsets.symmetric(
-                                              vertical: 15,
-                                              horizontal: 12,
+                                      return DropdownButtonFormField<String>(
+                                        value: selectedOrderType,
+                                        decoration: InputDecoration(
+                                          labelText: 'Order Type',
+                                          labelStyle: TextStyle(
+                                            fontWeight: FontWeight.w500,
+                                            color: Colors.grey.withValues(alpha: 0.7),
+                                            fontSize: 14,
+                                          ),
+                                          prefixIcon: Icon(Icons.shopping_cart, color: Colors.grey[700]),
+                                          border: OutlineInputBorder(
+                                            borderRadius: BorderRadius.circular(10),
+                                            borderSide: BorderSide(
+                                              color: Colors.grey[400]!,
+                                              width: 1.2,
                                             ),
                                           ),
-                                          dropdownColor: Colors.white,
-                                          hint: const Text('Select Order Type'),
-                                          items: orderTypeItems,
-                                          onChanged: (value) {
-                                            if (value != null) {
-                                              ordersProvider.selectOrderType(value);
-                                              _orderTypeController.text = value;
-                                            }
-                                          },
-                                        );
-                                      },
-                                    ),
+                                          enabledBorder: OutlineInputBorder(
+                                            borderRadius: BorderRadius.circular(10),
+                                            borderSide: BorderSide(
+                                              color: Colors.grey[400]!,
+                                              width: 1.2,
+                                            ),
+                                          ),
+                                          focusedBorder: OutlineInputBorder(
+                                            borderRadius: BorderRadius.circular(10),
+                                            borderSide: const BorderSide(
+                                              color: AppColors.primaryBlue,
+                                              width: 1.5,
+                                            ),
+                                          ),
+                                          contentPadding: const EdgeInsets.symmetric(
+                                            vertical: 15,
+                                            horizontal: 12,
+                                          ),
+                                        ),
+                                        dropdownColor: Colors.white,
+                                        hint: const Text('Select Order Type'),
+                                        items: orderTypeItems,
+                                        onChanged: (value) {
+                                          if (value != null) {
+                                            ordersProvider.selectOrderType(value);
+                                            _orderTypeController.text = value;
+                                          }
+                                        },
+                                      );
+                                    },
                                   ),
                                   const SizedBox(height: 10),
-                                  ChangeNotifierProvider.value(
-                                    value: _ordersProvider,
-                                    child: Consumer<OrdersProvider>(
-                                      builder: (context, ordersProvider, child) {
-                                        final String? selectedMarketplace = ordersProvider.selectedMarketplace;
-                                        final bool isCustomMarketplace = selectedMarketplace != null &&
-                                            selectedMarketplace.isNotEmpty &&
-                                            !['Shopify', 'Woocommerce', 'Offline'].contains(selectedMarketplace);
+                                  Consumer<OrdersProvider>(
+                                    builder: (context, ordersProvider, child) {
+                                      final String? selectedMarketplace = ordersProvider.selectedMarketplace;
+                                      final bool isCustomMarketplace = selectedMarketplace != null &&
+                                          selectedMarketplace.isNotEmpty &&
+                                          !['Shopify', 'Woocommerce', 'Offline'].contains(selectedMarketplace);
 
-                                        final List<DropdownMenuItem<String>> items = [
-                                          const DropdownMenuItem<String>(
-                                            value: 'Shopify',
-                                            child: Text('Shopify'),
-                                          ),
-                                          const DropdownMenuItem<String>(
-                                            value: 'Woocommerce',
-                                            child: Text('Woocommerce'),
-                                          ),
-                                          const DropdownMenuItem<String>(
-                                            value: 'Offline',
-                                            child: Text('Offline'),
-                                          ),
-                                        ];
+                                      final List<DropdownMenuItem<String>> items = [
+                                        const DropdownMenuItem<String>(
+                                          value: 'Shopify',
+                                          child: Text('Shopify'),
+                                        ),
+                                        const DropdownMenuItem<String>(
+                                          value: 'Woocommerce',
+                                          child: Text('Woocommerce'),
+                                        ),
+                                        const DropdownMenuItem<String>(
+                                          value: 'Offline',
+                                          child: Text('Offline'),
+                                        ),
+                                      ];
 
-                                        if (isCustomMarketplace) {
-                                          items.add(DropdownMenuItem<String>(
-                                            value: selectedMarketplace,
-                                            child: Text(selectedMarketplace),
-                                          ));
-                                        }
-
-                                        return DropdownButtonFormField<String>(
+                                      if (isCustomMarketplace) {
+                                        items.add(DropdownMenuItem<String>(
                                           value: selectedMarketplace,
-                                          decoration: InputDecoration(
-                                            labelText: 'Marketplace',
-                                            labelStyle: TextStyle(
-                                              fontWeight: FontWeight.w500,
-                                              color: Colors.grey.withValues(alpha: 0.7),
-                                              fontSize: 14,
-                                            ),
-                                            prefixIcon: Icon(Icons.store, color: Colors.grey[700]),
-                                            border: OutlineInputBorder(
-                                              borderRadius: BorderRadius.circular(10),
-                                              borderSide: BorderSide(
-                                                color: Colors.grey[400]!,
-                                                width: 1.2,
-                                              ),
+                                          child: Text(selectedMarketplace),
+                                        ));
+                                      }
+
+                                      return DropdownButtonFormField<String>(
+                                        value: selectedMarketplace,
+                                        decoration: InputDecoration(
+                                          labelText: 'Marketplace',
+                                          labelStyle: TextStyle(
+                                            fontWeight: FontWeight.w500,
+                                            color: Colors.grey.withValues(alpha: 0.7),
+                                            fontSize: 14,
+                                          ),
+                                          prefixIcon: Icon(Icons.store, color: Colors.grey[700]),
+                                          border: OutlineInputBorder(
+                                            borderRadius: BorderRadius.circular(10),
+                                            borderSide: BorderSide(
+                                              color: Colors.grey[400]!,
+                                              width: 1.2,
                                             ),
                                           ),
-                                          dropdownColor: Colors.white,
-                                          hint: const Text('Select Marketplace'),
-                                          items: items,
-                                          onChanged: (value) {
-                                            if (value != null) {
-                                              ordersProvider.selectMarketplace(value);
-                                              _marketplaceController.text = value;
-                                            }
-                                          },
-                                        );
-                                      },
-                                    ),
+                                        ),
+                                        dropdownColor: Colors.white,
+                                        hint: const Text('Select Marketplace'),
+                                        items: items,
+                                        onChanged: (value) {
+                                          if (value != null) {
+                                            ordersProvider.selectMarketplace(value);
+                                            _marketplaceController.text = value;
+                                          }
+                                        },
+                                      );
+                                    },
                                   ),
                                   const SizedBox(height: 10),
                                   _buildTextField(
@@ -1273,78 +1267,75 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
                                     icon: Icons.calculate,
                                   ),
                                   const SizedBox(height: 10),
-                                  ChangeNotifierProvider.value(
-                                    value: _ordersProvider,
-                                    child: Consumer<OrdersProvider>(
-                                      builder: (context, ordersProvider, child) {
-                                        final String? selectedFilter = ordersProvider.selectedFilter;
-                                        final List<DropdownMenuItem<String>> items = [
-                                          const DropdownMenuItem<String>(
-                                            value: 'B2B',
-                                            child: Text('B2B'),
-                                          ),
-                                          const DropdownMenuItem<String>(
-                                            value: 'B2C',
-                                            child: Text('B2C'),
-                                          ),
-                                        ];
+                                  Consumer<OrdersProvider>(
+                                    builder: (context, ordersProvider, child) {
+                                      final String? selectedFilter = ordersProvider.selectedFilter;
+                                      final List<DropdownMenuItem<String>> items = [
+                                        const DropdownMenuItem<String>(
+                                          value: 'B2B',
+                                          child: Text('B2B'),
+                                        ),
+                                        const DropdownMenuItem<String>(
+                                          value: 'B2C',
+                                          child: Text('B2C'),
+                                        ),
+                                      ];
 
-                                        if (selectedFilter != null &&
-                                            selectedFilter.isNotEmpty &&
-                                            selectedFilter != 'B2B' &&
-                                            selectedFilter != 'B2C') {
-                                          items.add(DropdownMenuItem<String>(
-                                            value: selectedFilter,
-                                            child: Text(selectedFilter),
-                                          ));
-                                        }
-
-                                        return DropdownButtonFormField<String>(
+                                      if (selectedFilter != null &&
+                                          selectedFilter.isNotEmpty &&
+                                          selectedFilter != 'B2B' &&
+                                          selectedFilter != 'B2C') {
+                                        items.add(DropdownMenuItem<String>(
                                           value: selectedFilter,
-                                          decoration: InputDecoration(
-                                            labelText: 'Filter',
-                                            labelStyle: TextStyle(
-                                              fontWeight: FontWeight.w500,
-                                              color: Colors.grey.withValues(alpha: 0.7),
-                                              fontSize: 14,
-                                            ),
-                                            prefixIcon: Icon(Icons.filter_1, color: Colors.grey[700]),
-                                            border: OutlineInputBorder(
-                                              borderRadius: BorderRadius.circular(10),
-                                              borderSide: BorderSide(
-                                                color: Colors.grey[400]!,
-                                                width: 1.2,
-                                              ),
-                                            ),
-                                            enabledBorder: OutlineInputBorder(
-                                              borderRadius: BorderRadius.circular(10),
-                                              borderSide: BorderSide(
-                                                color: Colors.grey[400]!,
-                                                width: 1.2,
-                                              ),
-                                            ),
-                                            focusedBorder: OutlineInputBorder(
-                                              borderRadius: BorderRadius.circular(10),
-                                              borderSide: const BorderSide(
-                                                color: AppColors.primaryBlue,
-                                                width: 1.5,
-                                              ),
-                                            ),
-                                            contentPadding: const EdgeInsets.symmetric(
-                                              vertical: 15,
-                                              horizontal: 12,
+                                          child: Text(selectedFilter),
+                                        ));
+                                      }
+
+                                      return DropdownButtonFormField<String>(
+                                        value: selectedFilter,
+                                        decoration: InputDecoration(
+                                          labelText: 'Filter',
+                                          labelStyle: TextStyle(
+                                            fontWeight: FontWeight.w500,
+                                            color: Colors.grey.withValues(alpha: 0.7),
+                                            fontSize: 14,
+                                          ),
+                                          prefixIcon: Icon(Icons.filter_1, color: Colors.grey[700]),
+                                          border: OutlineInputBorder(
+                                            borderRadius: BorderRadius.circular(10),
+                                            borderSide: BorderSide(
+                                              color: Colors.grey[400]!,
+                                              width: 1.2,
                                             ),
                                           ),
-                                          dropdownColor: Colors.white,
-                                          hint: const Text('Select Filter'),
-                                          items: items,
-                                          onChanged: (value) {
-                                            ordersProvider.selectFilter(value);
-                                            _filterController.text = value ?? '';
-                                          },
-                                        );
-                                      },
-                                    ),
+                                          enabledBorder: OutlineInputBorder(
+                                            borderRadius: BorderRadius.circular(10),
+                                            borderSide: BorderSide(
+                                              color: Colors.grey[400]!,
+                                              width: 1.2,
+                                            ),
+                                          ),
+                                          focusedBorder: OutlineInputBorder(
+                                            borderRadius: BorderRadius.circular(10),
+                                            borderSide: const BorderSide(
+                                              color: AppColors.primaryBlue,
+                                              width: 1.5,
+                                            ),
+                                          ),
+                                          contentPadding: const EdgeInsets.symmetric(
+                                            vertical: 15,
+                                            horizontal: 12,
+                                          ),
+                                        ),
+                                        dropdownColor: Colors.white,
+                                        hint: const Text('Select Filter'),
+                                        items: items,
+                                        onChanged: (value) {
+                                          ordersProvider.selectFilter(value);
+                                          _filterController.text = value ?? '';
+                                        },
+                                      );
+                                    },
                                   ),
                                 ],
                               ),
@@ -1367,82 +1358,79 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  ChangeNotifierProvider.value(
-                                    value: _ordersProvider,
-                                    child: Consumer<OrdersProvider>(
-                                      builder: (context, ordersProvider, child) {
-                                        final String? selectedPayment = ordersProvider.selectedPayment;
-                                        final bool isCustomPayment = selectedPayment != null &&
-                                            selectedPayment.isNotEmpty &&
-                                            selectedPayment != 'PrePaid' &&
-                                            selectedPayment != 'COD';
+                                  Consumer<OrdersProvider>(
+                                    builder: (context, ordersProvider, child) {
+                                      final String? selectedPayment = ordersProvider.selectedPayment;
+                                      final bool isCustomPayment = selectedPayment != null &&
+                                          selectedPayment.isNotEmpty &&
+                                          selectedPayment != 'PrePaid' &&
+                                          selectedPayment != 'COD';
 
-                                        final List<DropdownMenuItem<String>> item = [
-                                          const DropdownMenuItem<String>(
-                                            value: 'PrePaid',
-                                            child: Text('PrePaid'),
-                                          ),
-                                          const DropdownMenuItem<String>(
-                                            value: 'COD',
-                                            child: Text('COD'),
-                                          ),
-                                        ];
+                                      final List<DropdownMenuItem<String>> item = [
+                                        const DropdownMenuItem<String>(
+                                          value: 'PrePaid',
+                                          child: Text('PrePaid'),
+                                        ),
+                                        const DropdownMenuItem<String>(
+                                          value: 'COD',
+                                          child: Text('COD'),
+                                        ),
+                                      ];
 
-                                        if (isCustomPayment) {
-                                          item.add(DropdownMenuItem<String>(
-                                            value: selectedPayment,
-                                            child: Text(selectedPayment),
-                                          ));
-                                        }
-
-                                        return DropdownButtonFormField<String>(
+                                      if (isCustomPayment) {
+                                        item.add(DropdownMenuItem<String>(
                                           value: selectedPayment,
-                                          decoration: InputDecoration(
-                                            labelText: 'Payment Mode',
-                                            labelStyle: TextStyle(
-                                              fontWeight: FontWeight.w500,
-                                              color: Colors.grey.withValues(alpha: 0.7),
-                                              fontSize: 14,
-                                            ),
-                                            prefixIcon: Icon(Icons.payment, color: Colors.grey[700]),
-                                            border: OutlineInputBorder(
-                                              borderRadius: BorderRadius.circular(10),
-                                              borderSide: BorderSide(
-                                                color: Colors.grey[400]!,
-                                                width: 1.2,
-                                              ),
-                                            ),
-                                            enabledBorder: OutlineInputBorder(
-                                              borderRadius: BorderRadius.circular(10),
-                                              borderSide: BorderSide(
-                                                color: Colors.grey[400]!,
-                                                width: 1.2,
-                                              ),
-                                            ),
-                                            focusedBorder: OutlineInputBorder(
-                                              borderRadius: BorderRadius.circular(10),
-                                              borderSide: const BorderSide(
-                                                color: AppColors.green,
-                                                width: 1.5,
-                                              ),
-                                            ),
-                                            contentPadding: const EdgeInsets.symmetric(
-                                              vertical: 15,
-                                              horizontal: 12,
+                                          child: Text(selectedPayment),
+                                        ));
+                                      }
+
+                                      return DropdownButtonFormField<String>(
+                                        value: selectedPayment,
+                                        decoration: InputDecoration(
+                                          labelText: 'Payment Mode',
+                                          labelStyle: TextStyle(
+                                            fontWeight: FontWeight.w500,
+                                            color: Colors.grey.withValues(alpha: 0.7),
+                                            fontSize: 14,
+                                          ),
+                                          prefixIcon: Icon(Icons.payment, color: Colors.grey[700]),
+                                          border: OutlineInputBorder(
+                                            borderRadius: BorderRadius.circular(10),
+                                            borderSide: BorderSide(
+                                              color: Colors.grey[400]!,
+                                              width: 1.2,
                                             ),
                                           ),
-                                          dropdownColor: Colors.white,
-                                          hint: const Text('Select Payment Mode'),
-                                          items: item,
-                                          onChanged: (value) {
-                                            if (value != null) {
-                                              ordersProvider.selectPayment(value);
-                                              _paymentModeController.text = value;
-                                            }
-                                          },
-                                        );
-                                      },
-                                    ),
+                                          enabledBorder: OutlineInputBorder(
+                                            borderRadius: BorderRadius.circular(10),
+                                            borderSide: BorderSide(
+                                              color: Colors.grey[400]!,
+                                              width: 1.2,
+                                            ),
+                                          ),
+                                          focusedBorder: OutlineInputBorder(
+                                            borderRadius: BorderRadius.circular(10),
+                                            borderSide: const BorderSide(
+                                              color: AppColors.green,
+                                              width: 1.5,
+                                            ),
+                                          ),
+                                          contentPadding: const EdgeInsets.symmetric(
+                                            vertical: 15,
+                                            horizontal: 12,
+                                          ),
+                                        ),
+                                        dropdownColor: Colors.white,
+                                        hint: const Text('Select Payment Mode'),
+                                        items: item,
+                                        onChanged: (value) {
+                                          if (value != null) {
+                                            ordersProvider.selectPayment(value);
+                                            _paymentModeController.text = value;
+                                          }
+                                        },
+                                      );
+                                    },
                                   ),
                                   const SizedBox(height: 10),
                                   _buildTextField(
@@ -1522,53 +1510,50 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
                                       Row(
                                         children: [
                                           Expanded(
-                                            child: ChangeNotifierProvider.value(
-                                              value: _ordersProvider,
-                                              child: Consumer<OrdersProvider>(
-                                                builder: (context, ordersProvider, child) {
-                                                  final String? selectedCourier = ordersProvider.selectedCourier;
-                                                  final bool isCustomCourier = selectedCourier != null &&
-                                                      selectedCourier.isNotEmpty &&
-                                                      selectedCourier != 'Delhivery' &&
-                                                      selectedCourier != 'Shiprocket';
+                                            child: Consumer<OrdersProvider>(
+                                              builder: (context, ordersProvider, child) {
+                                                final String? selectedCourier = ordersProvider.selectedCourier;
+                                                final bool isCustomCourier = selectedCourier != null &&
+                                                    selectedCourier.isNotEmpty &&
+                                                    selectedCourier != 'Delhivery' &&
+                                                    selectedCourier != 'Shiprocket';
 
-                                                  final List<DropdownMenuItem<String>> items = [
-                                                    const DropdownMenuItem<String>(
-                                                      value: 'Delhivery',
-                                                      child: Text('Delhivery'),
-                                                    ),
-                                                    const DropdownMenuItem<String>(
-                                                      value: 'Shiprocket',
-                                                      child: Text('Shiprocket'),
-                                                    ),
-                                                  ];
+                                                final List<DropdownMenuItem<String>> items = [
+                                                  const DropdownMenuItem<String>(
+                                                    value: 'Delhivery',
+                                                    child: Text('Delhivery'),
+                                                  ),
+                                                  const DropdownMenuItem<String>(
+                                                    value: 'Shiprocket',
+                                                    child: Text('Shiprocket'),
+                                                  ),
+                                                ];
 
-                                                  if (isCustomCourier) {
-                                                    items.add(DropdownMenuItem<String>(
-                                                      value: selectedCourier,
-                                                      child: Text(selectedCourier),
-                                                    ));
-                                                  }
-
-                                                  return DropdownButtonFormField<String>(
+                                                if (isCustomCourier) {
+                                                  items.add(DropdownMenuItem<String>(
                                                     value: selectedCourier,
-                                                    decoration: const InputDecoration(
-                                                      labelText: 'Courier Name',
-                                                      prefixIcon: Icon(Icons.local_shipping),
-                                                      border: OutlineInputBorder(),
-                                                    ),
-                                                    dropdownColor: Colors.white,
-                                                    hint: const Text('Select Courier'),
-                                                    items: items,
-                                                    onChanged: (value) {
-                                                      if (value != null) {
-                                                        ordersProvider.selectCourier(value);
-                                                        _courierNameController.text = value;
-                                                      }
-                                                    },
-                                                  );
-                                                },
-                                              ),
+                                                    child: Text(selectedCourier),
+                                                  ));
+                                                }
+
+                                                return DropdownButtonFormField<String>(
+                                                  value: selectedCourier,
+                                                  decoration: const InputDecoration(
+                                                    labelText: 'Courier Name',
+                                                    prefixIcon: Icon(Icons.local_shipping),
+                                                    border: OutlineInputBorder(),
+                                                  ),
+                                                  dropdownColor: Colors.white,
+                                                  hint: const Text('Select Courier'),
+                                                  items: items,
+                                                  onChanged: (value) {
+                                                    if (value != null) {
+                                                      ordersProvider.selectCourier(value);
+                                                      _courierNameController.text = value;
+                                                    }
+                                                  },
+                                                );
+                                              },
                                             ),
                                           ),
                                         ],
@@ -1917,65 +1902,62 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
                             Row(
                               children: [
                                 Expanded(
-                                  child: ChangeNotifierProvider.value(
-                                    value: _ordersProvider,
-                                    child: Consumer<OrdersProvider>(
-                                      builder: (context, ordersProvider, child) {
-                                        final String? selectedCustomerType = ordersProvider.selectedCustomerType;
-                                        final List<DropdownMenuItem<String>> customerTypeItems = [
-                                          const DropdownMenuItem<String>(value: 'New Order', child: Text('New Order')),
-                                          const DropdownMenuItem<String>(value: 'Replacement Order', child: Text('Replacement Order')),
-                                          const DropdownMenuItem<String>(value: 'Partial Replacement', child: Text('Partial Replacement')),
-                                        ];
+                                  child: Consumer<OrdersProvider>(
+                                    builder: (context, ordersProvider, child) {
+                                      final String? selectedCustomerType = ordersProvider.selectedCustomerType;
+                                      final List<DropdownMenuItem<String>> customerTypeItems = [
+                                        const DropdownMenuItem<String>(value: 'New Order', child: Text('New Order')),
+                                        const DropdownMenuItem<String>(value: 'Replacement Order', child: Text('Replacement Order')),
+                                        const DropdownMenuItem<String>(value: 'Partial Replacement', child: Text('Partial Replacement')),
+                                      ];
 
-                                        return DropdownButtonFormField<String>(
-                                          value: selectedCustomerType,
-                                          decoration: InputDecoration(
-                                            labelText: 'Customer Type',
-                                            labelStyle: TextStyle(
-                                              fontWeight: FontWeight.w500,
-                                              color: Colors.grey.withValues(alpha: 0.7),
-                                              fontSize: 14,
-                                            ),
-                                            prefixIcon: Icon(Icons.person, color: Colors.grey[700]),
-                                            border: OutlineInputBorder(
-                                              borderRadius: BorderRadius.circular(10),
-                                              borderSide: BorderSide(
-                                                color: Colors.grey[400]!,
-                                                width: 1.2,
-                                              ),
-                                            ),
-                                            enabledBorder: OutlineInputBorder(
-                                              borderRadius: BorderRadius.circular(10),
-                                              borderSide: BorderSide(
-                                                color: Colors.grey[400]!,
-                                                width: 1.2,
-                                              ),
-                                            ),
-                                            focusedBorder: OutlineInputBorder(
-                                              borderRadius: BorderRadius.circular(10),
-                                              borderSide: const BorderSide(
-                                                color: AppColors.primaryBlue,
-                                                width: 1.5,
-                                              ),
-                                            ),
-                                            contentPadding: const EdgeInsets.symmetric(
-                                              vertical: 15,
-                                              horizontal: 12,
+                                      return DropdownButtonFormField<String>(
+                                        value: selectedCustomerType,
+                                        decoration: InputDecoration(
+                                          labelText: 'Customer Type',
+                                          labelStyle: TextStyle(
+                                            fontWeight: FontWeight.w500,
+                                            color: Colors.grey.withValues(alpha: 0.7),
+                                            fontSize: 14,
+                                          ),
+                                          prefixIcon: Icon(Icons.person, color: Colors.grey[700]),
+                                          border: OutlineInputBorder(
+                                            borderRadius: BorderRadius.circular(10),
+                                            borderSide: BorderSide(
+                                              color: Colors.grey[400]!,
+                                              width: 1.2,
                                             ),
                                           ),
-                                          dropdownColor: Colors.white,
-                                          hint: const Text('Select Customer Type'),
-                                          items: customerTypeItems,
-                                          onChanged: (value) {
-                                            if (value != null) {
-                                              ordersProvider.selectCustomerType(value);
-                                              _customerTypeController.text = value;
-                                            }
-                                          },
-                                        );
-                                      },
-                                    ),
+                                          enabledBorder: OutlineInputBorder(
+                                            borderRadius: BorderRadius.circular(10),
+                                            borderSide: BorderSide(
+                                              color: Colors.grey[400]!,
+                                              width: 1.2,
+                                            ),
+                                          ),
+                                          focusedBorder: OutlineInputBorder(
+                                            borderRadius: BorderRadius.circular(10),
+                                            borderSide: const BorderSide(
+                                              color: AppColors.primaryBlue,
+                                              width: 1.5,
+                                            ),
+                                          ),
+                                          contentPadding: const EdgeInsets.symmetric(
+                                            vertical: 15,
+                                            horizontal: 12,
+                                          ),
+                                        ),
+                                        dropdownColor: Colors.white,
+                                        hint: const Text('Select Customer Type'),
+                                        items: customerTypeItems,
+                                        onChanged: (value) {
+                                          if (value != null) {
+                                            ordersProvider.selectCustomerType(value);
+                                            _customerTypeController.text = value;
+                                          }
+                                        },
+                                      );
+                                    },
                                   ),
                                 ),
                               ],

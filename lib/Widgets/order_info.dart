@@ -115,6 +115,7 @@ class OrderInfo extends StatelessWidget {
                 order.shippingAddress?.firstName,
                 order.shippingAddress?.lastName,
                 order.shippingAddress?.pincode,
+                order.shippingAddress?.zipcode,
                 order.shippingAddress?.countryCode,
               ),
             ),
@@ -126,6 +127,7 @@ class OrderInfo extends StatelessWidget {
                 order.billingAddress?.firstName,
                 order.billingAddress?.lastName,
                 order.billingAddress?.pincode,
+                order.billingAddress?.zipcode,
                 order.billingAddress?.countryCode,
               ),
             ),
@@ -191,6 +193,7 @@ class OrderInfo extends StatelessWidget {
     String? firstName,
     String? lastName,
     dynamic pincode,
+    dynamic zipcode,
     String? countryCode,
   ) {
     return Card(
@@ -245,6 +248,7 @@ class OrderInfo extends StatelessWidget {
               firstName != lastName ? '$firstName $lastName'.trim() : firstName ?? '',
             ),
             buildLabelValueRow('Pincode', pincode?.toString() ?? ''),
+            buildLabelValueRow('Zipcode', zipcode?.toString() ?? ''),
             buildLabelValueRow('Country Code', countryCode ?? ''),
           ],
         ),

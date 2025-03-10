@@ -93,9 +93,9 @@ class _ConfirmOutboundByCSVState extends State<ConfirmOutboundByCSV> {
         });
         _showSnackbar(_progressMessage, Colors.green);
 
-        if (data['download_csv'] != null) {
-          log('Download link: ${data['download_csv']}');
-          _launchDownloadUrl(data['download_csv']);
+        if (data['downloadLink'] != null) {
+          log('Download link: ${data['downloadLink']}');
+          _launchDownloadUrl(data['downloadLink']);
         }
       });
 

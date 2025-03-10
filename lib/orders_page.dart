@@ -545,6 +545,7 @@ class _OrdersNewPageState extends State<OrdersNewPage> with TickerProviderStateM
                           itemBuilder: (context, index) {
                             final order = ordersProvider.readyOrders[index];
                             if (order.messages?['confirmerMessage']?.toString().isNotEmpty ?? false) {
+                              remarkController.clear();
                               remarkController.text = order.messages!['confirmerMessage'].toString() ?? '';
                             }
                             //////////////////////////////////////////////////////////////
@@ -646,7 +647,7 @@ class _OrdersNewPageState extends State<OrdersNewPage> with TickerProviderStateM
                                               style: TextStyle(fontWeight: FontWeight.bold),
                                             ),
                                             Text(
-                                              '${order.totalWeight ?? ''}',
+                                              order.totalWeight.toStringAsFixed(2) ?? '',
                                               style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.primaryBlue),
                                             ),
                                           ],
@@ -1124,7 +1125,6 @@ class _OrdersNewPageState extends State<OrdersNewPage> with TickerProviderStateM
                                                         shape: RoundedRectangleBorder(
                                                           borderRadius: BorderRadius.circular(16),
                                                         ),
-                                                        // Making dialog wider by using custom insetPadding
                                                         insetPadding: const EdgeInsets.symmetric(horizontal: 20),
                                                         child: Container(
                                                           width: MediaQuery.of(context).size.width * 0.9, // 90% of screen width
@@ -1723,7 +1723,7 @@ class _OrdersNewPageState extends State<OrdersNewPage> with TickerProviderStateM
                                               style: TextStyle(fontWeight: FontWeight.bold),
                                             ),
                                             Text(
-                                              '${order.totalWeight ?? ''}',
+                                              order.totalWeight.toStringAsFixed(2),
                                               style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.primaryBlue),
                                             ),
                                           ],

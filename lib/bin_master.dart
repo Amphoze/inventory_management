@@ -121,10 +121,24 @@ class _BinMasterPageState extends State<BinMasterPage> {
                     ),
                   ),
                   const SizedBox(width: 8),
+                  IconButton(
+                    tooltip: 'Refresh Bins',
+                    onPressed: () {
+                      provider.fetchBins(context);
+                    },
+                    icon: const Icon(
+                      Icons.refresh_rounded,
+                      color: AppColors.primaryBlue,
+                      size: 28,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
                   ElevatedButton(
                     onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const CreateBinPage())),
                     child: const Text('Create Bin'),
                   ),
+                  const SizedBox(width: 8),
+
                 ],
               ),
             ),
@@ -169,7 +183,7 @@ class _BinMasterPageState extends State<BinMasterPage> {
                         ),
                         itemCount: provider.bins.length,
                         itemBuilder: (context, index) => BinCard(
-                          title: provider.bins[index],
+                          binName: provider.bins[index],
                           onTap: () {
                             selectBin(provider.bins[index]); // Set the selected bin first
                             provider.toggle(false);
@@ -186,11 +200,11 @@ class _BinMasterPageState extends State<BinMasterPage> {
 }
 
 class BinCard extends StatelessWidget {
-  final String title;
+  final String binName;
   final VoidCallback onTap;
 
   const BinCard({
-    required this.title,
+    required this.binName,
     required this.onTap,
     super.key,
   });
@@ -220,12 +234,12 @@ class BinCard extends StatelessWidget {
               stops: const [0.0, 0.6, 1.0],
             ),
           ),
-          padding: const EdgeInsets.all(24.0),
+          padding: const EdgeInsets.all(16.0),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Container(
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
                   color: AppColors.primaryBlue.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(16),
@@ -243,13 +257,13 @@ class BinCard extends StatelessWidget {
                   color: AppColors.primaryBlue,
                 ),
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 10),
               Text(
-                title,
+                binName,
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w700,
+                      // fontWeight: FontWeight.w700,
                       color: Colors.grey[850],
-                      letterSpacing: -0.5,
+                      letterSpacing: 0.5,
                     ),
                 textAlign: TextAlign.center,
               ),
