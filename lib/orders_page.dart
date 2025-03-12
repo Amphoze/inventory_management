@@ -43,7 +43,6 @@ class _OrdersNewPageState extends State<OrdersNewPage> with TickerProviderStateM
 
   @override
   void initState() {
-    super.initState();
     _tabController = TabController(length: 2, vsync: this);
     _searchController = TextEditingController();
     _searchControllerReady = TextEditingController();
@@ -61,10 +60,12 @@ class _OrdersNewPageState extends State<OrdersNewPage> with TickerProviderStateM
       }
     });
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      provider.initializeSocket(context);
       _reloadOrders();
       context.read<MarketplaceProvider>().fetchMarketplaces();
       context.read<LocationProvider>().fetchWarehouses();
     });
+    super.initState();
   }
 
   @override
@@ -335,7 +336,7 @@ class _OrdersNewPageState extends State<OrdersNewPage> with TickerProviderStateM
                         backgroundColor: AppColors.primaryBlue,
                       ),
                       onPressed: ordersProvider.isConfirm
-                          ? null // Disable button while loading
+                          ? null
                           : () async {
                               List<String> selectedOrderIds = provider.readyOrders
                                   .asMap()
@@ -345,7 +346,6 @@ class _OrdersNewPageState extends State<OrdersNewPage> with TickerProviderStateM
                                   .toList();
 
                               if (selectedOrderIds.isEmpty) {
-                                // Show an error message if no orders are selected
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   const SnackBar(
                                     content: Text('No orders selected'),
@@ -353,29 +353,50 @@ class _OrdersNewPageState extends State<OrdersNewPage> with TickerProviderStateM
                                   ),
                                 );
                               } else {
-                                String resultMessage = await provider.confirmOrders(context, selectedOrderIds);
-                                Color snackBarColor;
-                                if (resultMessage.contains('success')) {
-                                  snackBarColor = AppColors.green; // Success: Green
-                                } else if (resultMessage.contains('error') || resultMessage.contains('failed')) {
-                                  snackBarColor = AppColors.cardsred; // Error: Red
-                                } else {
-                                  snackBarColor = AppColors.orange; // Other: Orange
-                                }
+                                Utils.showSnackBar(context, 'Confirmation Started!!');
 
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text(resultMessage),
-                                    backgroundColor: snackBarColor,
-                                  ),
-                                );
+                                // String resultMessage =
+                                await provider.confirmOrders(context, selectedOrderIds);
+                                // Color snackBarColor;
+                                // if (resultMessage.contains('success')) {
+                                //   snackBarColor = AppColors.green; // Success: Green
+                                // } else if (resultMessage.contains('error') || resultMessage.contains('failed')) {
+                                //   snackBarColor = AppColors.cardsred; // Error: Red
+                                // } else {
+                                //   snackBarColor = AppColors.orange; // Other: Orange
+                                // }
+                                //
+                                // ScaffoldMessenger.of(context).showSnackBar(
+                                //   SnackBar(
+                                //     content: Text(resultMessage),
+                                //     backgroundColor: snackBarColor,
+                                //   ),
+                                // );
                               }
                             },
                       child: ordersProvider.isConfirm
-                          ? const SizedBox(
-                              width: 20,
-                              height: 20,
-                              child: CircularProgressIndicator(color: Colors.white),
+                          ?
+                          // const SizedBox(
+                          //   width: 20,
+                          //   height: 20,
+                          //   child: CircularProgressIndicator(color: Colors.white),
+                          // )
+                          ValueListenableBuilder<double>(
+                              valueListenable: ordersProvider.progressNotifier,
+                              builder: (context, value, child) {
+                                return Text.rich(
+                                  TextSpan(
+                                    text: 'Progress: ',
+                                    children: [
+                                      TextSpan(
+                                        text: '${value.toStringAsFixed(2)}%',
+                                        style: const TextStyle(fontWeight: FontWeight.normal),
+                                      ),
+                                    ],
+                                    style: const TextStyle(fontWeight: FontWeight.bold),
+                                  ),
+                                );
+                              },
                             )
                           : const Text(
                               'Confirm Orders',
@@ -607,10 +628,11 @@ class _OrdersNewPageState extends State<OrdersNewPage> with TickerProviderStateM
                                               'Date: ',
                                               style: TextStyle(fontWeight: FontWeight.bold),
                                             ),
-                                            Text(
-                                              ordersProvider.formatDate(order.date!),
-                                              style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.primaryBlue),
-                                            ),
+                                            if (order.date != null)
+                                              Text(
+                                                ordersProvider.formatDate(order.date!),
+                                                style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.primaryBlue),
+                                              ),
                                           ],
                                         ),
                                         Column(
@@ -1085,15 +1107,29 @@ class _OrdersNewPageState extends State<OrdersNewPage> with TickerProviderStateM
                                                           style: const TextStyle(
                                                             fontWeight: FontWeight.normal,
                                                           )),
-                                                      (order.outBoundBy?['outboundBy']?.toString().isNotEmpty ?? false) ?
+                                                      (order.outBoundBy?['outboundBy']?.toString().isNotEmpty ?? false)
+                                                          ? TextSpan(
+                                                              text: "(${order.outBoundBy?['outboundBy'].toString().split('@')[0] ?? ''})",
+                                                              style: const TextStyle(
+                                                                fontWeight: FontWeight.normal,
+                                                              ),
+                                                            )
+                                                          : const TextSpan()
+                                                    ],
+                                                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 20)),
+                                              ),
+                                              Text.rich(
+                                                TextSpan(
+                                                    text: "Warehouse: ",
+                                                    children: [
                                                       TextSpan(
-                                                        text: "(${order.outBoundBy?['outboundBy'].toString().split('@')[0] ?? ''})",
+                                                        text: "${order.warehouseName}",
                                                         style: const TextStyle(
                                                           fontWeight: FontWeight.normal,
                                                         ),
-                                                      ) : const TextSpan()
+                                                      ),
                                                     ],
-                                                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 20)),
+                                                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
                                               ),
                                               Text.rich(
                                                 TextSpan(
@@ -2064,13 +2100,14 @@ class _OrdersNewPageState extends State<OrdersNewPage> with TickerProviderStateM
                                                       style: const TextStyle(
                                                         fontWeight: FontWeight.normal,
                                                       )),
-                                                  (order.outBoundBy?['outboundBy']?.toString().isNotEmpty ?? false) ?
-                                                  TextSpan(
-                                                    text: "(${order.outBoundBy?['outboundBy'].toString().split('@')[0] ?? ''})",
-                                                    style: const TextStyle(
-                                                      fontWeight: FontWeight.normal,
-                                                    ),
-                                                  ) : const TextSpan()
+                                                  (order.outBoundBy?['outboundBy']?.toString().isNotEmpty ?? false)
+                                                      ? TextSpan(
+                                                          text: "(${order.outBoundBy?['outboundBy'].toString().split('@')[0] ?? ''})",
+                                                          style: const TextStyle(
+                                                            fontWeight: FontWeight.normal,
+                                                          ),
+                                                        )
+                                                      : const TextSpan()
                                                 ],
                                                 style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 20)),
                                           ),

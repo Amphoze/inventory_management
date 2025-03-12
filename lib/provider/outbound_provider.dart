@@ -291,9 +291,8 @@ class OutboundProvider with ChangeNotifier {
       readyOrdersUrl += '&marketplace=Shopify,Woocommerce';
     }
 
-    log("readyOrdersUrl: $readyOrdersUrl");
+    log("fetchOrders outbound: $readyOrdersUrl");
 
-    // Get the auth token
     final token = await _getToken();
 
     // Check if the token is valid

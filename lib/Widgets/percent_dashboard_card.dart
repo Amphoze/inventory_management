@@ -147,7 +147,7 @@ class _PercentDashboardCardState extends State<PercentDashboardCard> {
                       child: ConstrainedBox(
                         constraints: const BoxConstraints(maxWidth: 500, minWidth: 300),
                         child: DropdownSearch<String>.multiSelection(
-                          items: orderStatusMap.values.toList(),
+                          items: ['All', ...orderStatusMap.values],
                           dropdownDecoratorProps: const DropDownDecoratorProps(
                             dropdownSearchDecoration: InputDecoration(
                               labelText: "Select Order Statuses",
@@ -155,7 +155,13 @@ class _PercentDashboardCardState extends State<PercentDashboardCard> {
                           ),
                           onChanged: (List<String> values) {
                             setDialogState(() {
-                              tempStatuses = values;
+                              if (values.contains('All')) {
+                                // If 'All' is selected, add all statuses
+                                tempStatuses = orderStatusMap.values.toList();
+                              } else {
+                                // Remove 'All' from the selection if present and use the selected values
+                                tempStatuses = values.where((item) => item != 'All').toList();
+                              }
                             });
                           },
                           selectedItems: tempStatuses,
@@ -276,10 +282,10 @@ class _PercentDashboardCardState extends State<PercentDashboardCard> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  // mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      'Order Status',
+                      'Status Report',
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
@@ -287,6 +293,7 @@ class _PercentDashboardCardState extends State<PercentDashboardCard> {
                         letterSpacing: -0.5,
                       ),
                     ),
+                    const Spacer(),
                     if (startDate != null && endDate != null)
                       RichText(
                         text: TextSpan(
@@ -309,25 +316,13 @@ class _PercentDashboardCardState extends State<PercentDashboardCard> {
                           ),
                         ),
                       ),
-                    Row(
-                      children: [
-                        Text(
-                          provider.isPercentLoading ? '...' : provider.marketplace,
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w500,
-                            color: Colors.grey.shade500,
-                          ),
-                        ),
-                        const SizedBox(width: 5),
-                        Tooltip(
-                          message: 'Set Filters',
-                          child: InkWell(
-                            child: const Icon(Icons.filter_alt_outlined, size: 20),
-                            onTap: () => _showSettingsDialog(context),
-                          ),
-                        ),
-                      ],
+                    // const SizedBox(width: 6),
+                    Tooltip(
+                      message: 'Set Filters',
+                      child: InkWell(
+                        child: const Icon(Icons.filter_alt_outlined, size: 20),
+                        onTap: () => _showSettingsDialog(context),
+                      ),
                     ),
                   ],
                 ),
@@ -437,34 +432,43 @@ class _PercentDashboardCardState extends State<PercentDashboardCard> {
                               ),
                             ),
                 ),
-                const SizedBox(height: 8),
-                Container(
-                  padding: const EdgeInsets.only(top: 8),
-                  decoration: BoxDecoration(
-                    border: Border(
-                      top: BorderSide(color: AppColors.grey.withValues(alpha: 0.1), width: 1),
+                // const SizedBox(height: 8),
+                Divider(height: 8, color: AppColors.grey.withValues(alpha: 0.1)),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Flexible(
+                      child: Tooltip(
+                        message: selectedStatuses.isEmpty
+                            ? 'N/A'
+                            : selectedStatuses.length == 17
+                                ? 'All'
+                                : selectedStatuses.map((s) => s.toUpperCase()).join(', '),
+                        child: Text(
+                          selectedStatuses.isEmpty
+                              ? 'N/A'
+                              : selectedStatuses.length == 17
+                                  ? 'All'
+                                  : selectedStatuses.map((s) => s.toUpperCase()).join(', '),
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w500,
+                            color: AppColors.grey.withValues(alpha: 0.8),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ),
                     ),
-                  ),
-                  child: Tooltip(
-                    message: selectedStatuses.isEmpty
-                        ? 'N/A'
-                        : selectedStatuses.length == 17
-                            ? 'All'
-                            : selectedStatuses.map((s) => s.toUpperCase()).join(', '),
-                    child: Text(
-                      selectedStatuses.isEmpty
-                          ? 'N/A'
-                          : selectedStatuses.length == 17
-                              ? 'All'
-                              : selectedStatuses.map((s) => s.toUpperCase()).join(', '),
+                    const SizedBox(width: 6),
+                    Text(
+                      provider.isPercentLoading ? '...' : provider.marketplace,
                       style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w500,
-                        color: AppColors.grey.withValues(alpha: 0.8),
-                        overflow: TextOverflow.ellipsis,
+                        color: Colors.grey.shade500,
                       ),
                     ),
-                  ),
+                  ],
                 ),
               ],
             ),

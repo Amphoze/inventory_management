@@ -131,6 +131,8 @@ class PickerProvider with ChangeNotifier {
     final token = prefs.getString('authToken') ?? '';
     String url = '${await Constants.getBaseUrl()}/order-picker?page=$_currentPage&limit=5';
 
+    log('fetchOrdersWithStatus4 url: $url');
+
     try {
       final response = await http.get(Uri.parse(url), headers: {
         'Authorization': 'Bearer $token',
@@ -145,7 +147,7 @@ class PickerProvider with ChangeNotifier {
         _extractedOrders = data['data'];
         _totalPages = data['totalPages'] ?? 1;
         _currentPage = data['currentPage'] ?? 1;
-        log("_extractedOrders: $_extractedOrders");
+        // log("_extractedOrders: $_extractedOrders");
         log("${_extractedOrders.length}");
       } else {
         // Handle non-success responses
@@ -193,7 +195,7 @@ class PickerProvider with ChangeNotifier {
 
     final url = '${await Constants.getBaseUrl()}/orders?warehouse=$warehouseId&orderStatus=4&order_id=$encodedOrderId';
 
-    print('Searching orders with term: $query');
+    log('search pick: $url');
 
     try {
       final response = await http.get(

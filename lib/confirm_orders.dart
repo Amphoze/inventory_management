@@ -12,6 +12,8 @@ import 'package:logger/logger.dart';
 import 'package:socket_io_client/socket_io_client.dart' as IO;
 import 'package:url_launcher/url_launcher.dart';
 
+import 'Custom-Files/utils.dart';
+
 class ConfirmOrders extends StatefulWidget {
   const ConfirmOrders({super.key});
 
@@ -31,10 +33,10 @@ class _ConfirmOrdersState extends State<ConfirmOrders> {
   final ScrollController _horizontalScrollController = ScrollController();
   final ScrollController _verticalScrollController = ScrollController();
   int _currentPage = 0;
-
-  String _progressMessage = '';
+  late ScaffoldMessengerState? _scaffoldMessenger;
 
   final ValueNotifier<double> _progressNotifier = ValueNotifier<double>(0);
+  String _progressMessage = '';
   IO.Socket? _socket;
 
   void _initializeSocket() async {
@@ -100,7 +102,6 @@ class _ConfirmOrdersState extends State<ConfirmOrders> {
     }
   }
 
-  late ScaffoldMessengerState? _scaffoldMessenger;
 
   @override
   void didChangeDependencies() {
@@ -277,12 +278,14 @@ class _ConfirmOrdersState extends State<ConfirmOrders> {
 
       final response = await request.send();
       final responseBody = await response.stream.bytesToString();
-      final jsonData = jsonDecode(responseBody);
+      final jsonData = jsonDecode(responseBody) as Map<String, dynamic>;
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         if (_csvData.length == 1) {
           Logger().e('_csvData: ${_csvData.length}');
           showOrderStatusSnackbar(context, jsonData);
+        } else {
+          Utils.showSnackBar(context, jsonData['message']);
         }
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -295,10 +298,6 @@ class _ConfirmOrdersState extends State<ConfirmOrders> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error: $e')),
       );
-    } finally {
-      setState(() {
-        _isCreating = false;
-      });
     }
   }
 
@@ -306,7 +305,8 @@ class _ConfirmOrdersState extends State<ConfirmOrders> {
     String message = response['message'];
     List results = response['results'];
 
-    // Check if any order has failed
+    log('showOrderStatusSnackbar message: $message}');
+
     bool hasError = results.any((order) => order['status'] == 'Failed');
 
     if (hasError) {

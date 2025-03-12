@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:inventory_management/provider/invoice_provider.dart';
 import 'package:provider/provider.dart';
@@ -118,11 +120,8 @@ class _InvoicePageState extends State<InvoicePage> {
                         itemBuilder: (context, index) {
                           final invoice = invoiceProvider.invoices[index];
 
-                          // Format the createdAt date and time
-                          // String formattedDate = DateFormat('yyyy-MM-dd')
-                          //     .format(invoice.createdAt);
-                          // String formattedTime =
-                          //     DateFormat('hh:mm a').format(invoice.createdAt);
+                          log('invoice name: ${invoiceProvider.invoices[0].invoiceNumber}');
+                          log('invoice url: ${invoiceProvider.invoices[0].invoiceUrl}');
 
                           // Convert to IST (UTC+5:30)
                           DateTime istDateTime = invoice.createdAt
@@ -157,8 +156,8 @@ class _InvoicePageState extends State<InvoicePage> {
                                         onPressed: () async {
                                           final url = invoice.invoiceUrl;
                                           if (url != null &&
-                                              await canLaunch(url)) {
-                                            await launch(url);
+                                              await canLaunchUrl(Uri.parse(url))) {
+                                            await launchUrl(Uri.parse(url));
                                           } else {
                                             ScaffoldMessenger.of(context)
                                                 .showSnackBar(

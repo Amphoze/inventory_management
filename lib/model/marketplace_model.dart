@@ -43,8 +43,8 @@ class Marketplace {
 
   factory Marketplace.fromJson(Map<String, dynamic> json) {
     return Marketplace(
-      id: json['_id'],
-      name: json['name'],
+      id: json['_id'] ?? '',
+      name: json['name'] ?? '',
       skuMap: (json['sku_map'] as List)
           .map((skuMapJson) => SkuMap.fromJson(skuMapJson))
           .toList(),

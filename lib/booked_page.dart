@@ -33,19 +33,25 @@ class _BookedPageState extends State<BookedPage> with SingleTickerProviderStateM
   List<String> picklistIds = ['W1', 'W2', 'W3', 'G1', 'G2', 'G3', 'E1', 'E2', 'E3'];
   bool isDownloading = false;
 
+  bool? isSuperAdmin = false;
+  bool? isAdmin = false;
+
+  Future<void> _fetchUserRole() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      isSuperAdmin = prefs.getBool('_isSuperAdminAssigned');
+      isAdmin = prefs.getBool('_isAdminAssigned');
+    });
+  }
+
   @override
   void initState() {
     super.initState();
-    // _searchController.addListener(() {
-    //   if (_searchController.text.isEmpty) {
-    //     _refreshOrders();
-    //     Provider.of<BookProvider>(context, listen: false).clearSearchResults();
-    //   }
-    // });
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final bookProvider = Provider.of<BookProvider>(context, listen: false);
       bookProvider.fetchBookedOrders(bookProvider.currentPageBooked);
       context.read<MarketplaceProvider>().fetchMarketplaces();
+      _fetchUserRole();
     });
   }
 
@@ -865,6 +871,8 @@ class _BookedPageState extends State<BookedPage> with SingleTickerProviderStateM
             isBookedPage: true,
             toShowOrderDetails: true,
             checkboxWidget: checkboxWidget,
+            isAdmin: isAdmin ?? false,
+            isSuperAdmin: isSuperAdmin ?? false,
           ),
         ),
         // const SizedBox(width: 50),

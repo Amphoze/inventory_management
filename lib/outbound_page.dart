@@ -35,7 +35,6 @@ class _OutboundPageState extends State<OutboundPage> with TickerProviderStateMix
   // String _selectedFailedDate = 'Select Date';
   String selectedCourier = 'All';
 
-  // bool isEditOrder = false;
 
   late OutboundProvider provider;
 
@@ -306,18 +305,8 @@ class _OutboundPageState extends State<OutboundPage> with TickerProviderStateMix
                                   ),
                                 );
                               } else {
-                                // Set loading status to true before starting the operation
-                                provider.setConfirmStatus(true);
-
-                                // Call confirmOrders method with selected IDs
                                 String resultMessage = await provider.approveOrders(context, selectedOrderIds);
 
-                                log('resultMessage: $resultMessage');
-
-                                // Set loading status to false after operation completes
-                                provider.setConfirmStatus(false);
-
-                                // Determine the background color based on the result
                                 Color snackBarColor;
                                 if (resultMessage.contains('success')) {
                                   snackBarColor = AppColors.green; // Success: Green
@@ -1055,6 +1044,19 @@ class _OutboundPageState extends State<OutboundPage> with TickerProviderStateMix
                                                       ) : const TextSpan()
                                                     ],
                                                     style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 20)),
+                                              ),
+                                              Text.rich(
+                                                TextSpan(
+                                                    text: "Warehouse: ",
+                                                    children: [
+                                                      TextSpan(
+                                                        text: "${order.warehouseName}",
+                                                        style: const TextStyle(
+                                                          fontWeight: FontWeight.normal,
+                                                        ),
+                                                      ),
+                                                    ],
+                                                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
                                               ),
                                               Text.rich(
                                                 TextSpan(

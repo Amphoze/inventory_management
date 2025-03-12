@@ -273,7 +273,7 @@ class Order {
       source: _parseString(json['source']),
       id: _parseString(json['_id']),
       orderId: _parseString(json['order_id']),
-      date: _parseDate(_parseString(json['date'])),
+      date: _parseDate(json['date']?.toString()),
       paymentMode: _parseString(json['payment_mode']),
       currencyCode: _parseString(json['currency_code']),
       items: (json['items'] as List? ?? []).map((item) => Item.fromJson(item)).toList(),

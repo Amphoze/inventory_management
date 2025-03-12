@@ -10,15 +10,16 @@ import 'package:inventory_management/provider/marketplace_provider.dart';
 import 'package:logger/logger.dart';
 import 'package:provider/provider.dart';
 import 'package:inventory_management/model/orders_model.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
-class AccountsSectionPage extends StatefulWidget {
-  const AccountsSectionPage({super.key});
+class InvoicedOrders extends StatefulWidget {
+  const InvoicedOrders({super.key});
 
   @override
-  _AccountsSectionPageState createState() => _AccountsSectionPageState();
+  _InvoicedOrdersState createState() => _InvoicedOrdersState();
 }
 
-class _AccountsSectionPageState extends State<AccountsSectionPage> with SingleTickerProviderStateMixin {
+class _InvoicedOrdersState extends State<InvoicedOrders> with SingleTickerProviderStateMixin {
   final TextEditingController _searchController = TextEditingController();
   final TextEditingController _pageController = TextEditingController();
   bool areOrdersFetched = false;
@@ -28,6 +29,17 @@ class _AccountsSectionPageState extends State<AccountsSectionPage> with SingleTi
   String? selectedPaymentMode = ''; // Default selection
   DateTime? picked;
 
+  bool? isSuperAdmin = false;
+  bool? isAdmin = false;
+
+  Future<void> _fetchUserRole() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      isSuperAdmin = prefs.getBool('_isSuperAdminAssigned');
+      isAdmin = prefs.getBool('_isAdminAssigned');
+    });
+  }
+
   @override
   void initState() {
     super.initState();
@@ -35,6 +47,7 @@ class _AccountsSectionPageState extends State<AccountsSectionPage> with SingleTi
       final accountsProvider = Provider.of<AccountsProvider>(context, listen: false);
       accountsProvider.fetchAccountedOrders(accountsProvider.currentPage);
       context.read<MarketplaceProvider>().fetchMarketplaces();
+      _fetchUserRole();
     });
   }
 
@@ -629,6 +642,8 @@ class _AccountsSectionPageState extends State<AccountsSectionPage> with SingleTi
             toShowOrderDetails: true,
             isAccountSection: true,
             checkboxWidget: checkboxWidget,
+            isAdmin: isAdmin ?? false,
+            isSuperAdmin: isSuperAdmin ?? false,
           ),
         ),
         const SizedBox(width: 50),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:inventory_management/Custom-Files/colors.dart';
 import 'package:inventory_management/Widgets/combo_card.dart';
 import 'package:inventory_management/Widgets/product_card.dart';
@@ -237,16 +238,10 @@ class _CreateOrderPageState extends State<CreateOrderPage> {
               children: [
                 _buildHeading("Discount Information"),
                 const SizedBox(height: 10),
-                Row(
-                  children: [
-                    Expanded(
-                      child: _buildTextField(
-                        controller: provider.discountCodeController,
-                        label: 'Discount Code',
-                        icon: Icons.discount,
-                      ),
-                    ),
-                  ],
+                _buildTextField(
+                  controller: provider.discountCodeController,
+                  label: 'Discount Code',
+                  icon: Icons.discount,
                 ),
                 const SizedBox(height: 10),
                 Row(
@@ -364,7 +359,6 @@ class _CreateOrderPageState extends State<CreateOrderPage> {
                         controller: provider.customerLastNameController,
                         label: 'Last Name',
                         icon: Icons.person,
-                        validator: (value) => (value?.isEmpty ?? false) ? 'Required' : null,
                       ),
                     ),
                   ],
@@ -378,7 +372,6 @@ class _CreateOrderPageState extends State<CreateOrderPage> {
                 const SizedBox(height: 10),
                 _buildPhoneField(
                   phoneController: provider.customerPhoneController,
-                  // countryCodeController: provider.customerCountryCodeController,
                   label: 'Phone',
                   enabled: true,
                 ),
@@ -420,7 +413,6 @@ class _CreateOrderPageState extends State<CreateOrderPage> {
                         controller: provider.billingLastNameController,
                         label: 'Last Name',
                         icon: Icons.person,
-                        validator: (value) => (value?.isEmpty ?? false) ? 'Required' : null,
                         enabled: !provider.isBillingSameAsShipping,
                       ),
                     ),
@@ -577,7 +569,6 @@ class _CreateOrderPageState extends State<CreateOrderPage> {
                         controller: provider.shippingLastNameController,
                         label: 'Last Name',
                         icon: Icons.person,
-                        validator: (value) => (value?.isEmpty ?? false) ? 'Required' : null,
                       ),
                     ),
                     const SizedBox(width: 10),
@@ -586,7 +577,6 @@ class _CreateOrderPageState extends State<CreateOrderPage> {
                         controller: provider.shippingEmailController,
                         label: 'Email',
                         icon: Icons.email,
-                        validator: (value) => (value?.isEmpty ?? false) ? 'Required' : null,
                       ),
                     ),
                   ],
@@ -666,7 +656,7 @@ class _CreateOrderPageState extends State<CreateOrderPage> {
                 Row(
                   children: [
                     SizedBox(
-                      width: 120,
+                      width: 200,
                       child: _buildTextField(
                         controller: provider.shippingCountryCodeController,
                         label: 'Country Code',
@@ -696,7 +686,7 @@ class _CreateOrderPageState extends State<CreateOrderPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildHeading('Items (Product Details)'),
+        _buildHeading('Items (Product Details)', color: Colors.red),
         const SizedBox(height: 10),
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -901,13 +891,13 @@ class _CreateOrderPageState extends State<CreateOrderPage> {
     );
   }
 
-  Widget _buildHeading(String title) {
+  Widget _buildHeading(String title, {Color? color = AppColors.primaryBlue}) {
     return Text(
       title,
-      style: const TextStyle(
+      style: TextStyle(
         fontWeight: FontWeight.bold,
         fontSize: 18,
-        color: AppColors.primaryBlue,
+        color: color,
       ),
     );
   }
@@ -932,7 +922,7 @@ class _CreateOrderPageState extends State<CreateOrderPage> {
       keyboardType: isNumber! ? TextInputType.number : TextInputType.text,
       onFieldSubmitted: onSubmitted,
       decoration: InputDecoration(
-        labelText: label,
+        label: Text(label, style: TextStyle(color: validator != null ? Colors.red : Colors.grey)),
         prefixIcon: Icon(icon, color: Colors.grey[700]),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
@@ -947,7 +937,7 @@ class _CreateOrderPageState extends State<CreateOrderPage> {
           borderSide: const BorderSide(color: AppColors.primaryBlue, width: 1.5),
         ),
         filled: true,
-        fillColor: enabled ? Colors.white : Colors.grey[200],
+        fillColor: enabled ? Colors.white : Colors.grey[100],
         contentPadding: const EdgeInsets.symmetric(vertical: 15, horizontal: 12),
       ),
     );
@@ -963,7 +953,8 @@ class _CreateOrderPageState extends State<CreateOrderPage> {
     return DropdownButtonFormField<String>(
       value: value,
       decoration: InputDecoration(
-        labelText: label,
+        // labelText: label,
+        label: Text(label, style: TextStyle(color: validator != null ? Colors.red : Colors.grey)),
         prefixIcon: Icon(Icons.list, color: Colors.grey[700]),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
@@ -987,7 +978,6 @@ class _CreateOrderPageState extends State<CreateOrderPage> {
 
   Widget _buildPhoneField({
     required TextEditingController phoneController,
-    // required TextEditingController countryCodeController,
     required String label,
     bool enabled = true,
     String? Function(String?)? validator,
@@ -996,7 +986,10 @@ class _CreateOrderPageState extends State<CreateOrderPage> {
       controller: phoneController,
       enabled: enabled,
       keyboardType: TextInputType.phone,
-      maxLength: 10,
+      inputFormatters: [
+        FilteringTextInputFormatter.digitsOnly,
+        LengthLimitingTextInputFormatter(10),
+      ],
       validator: validator ??
           (value) {
             if (value != null) {
@@ -1009,7 +1002,7 @@ class _CreateOrderPageState extends State<CreateOrderPage> {
             return null;
           },
       decoration: InputDecoration(
-        labelText: label,
+        label: Text(label, style: const TextStyle(color: Colors.red)),
         prefixIcon: Icon(Icons.phone, color: Colors.grey[700]),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),

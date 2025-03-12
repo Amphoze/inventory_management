@@ -665,29 +665,65 @@ class _AccountsPageState extends State<AccountsPage> {
                                           if ((isSuperAdmin ?? false) || (isAdmin ?? false)) ...[
                                             const SizedBox(width: 8),
                                             IconButton(
-                                              tooltip: 'Revert to Status 1',
+                                              tooltip: 'Revert Order',
                                               icon: const Icon(Icons.undo),
                                               onPressed: () async {
                                                 showDialog(
-                                                    context: context,
-                                                    barrierDismissible: true,
-                                                    builder: (context) {
-                                                      return const AlertDialog(
-                                                        content: Row(
-                                                          children: [CircularProgressIndicator(), SizedBox(width: 8), Text('Reversing')],
+                                                  context: context,
+                                                  builder: (context) {
+                                                    return AlertDialog(
+                                                      title: const Text('Revert Order'),
+                                                      content: Text('Are you sure you want to revert ${order.orderId} to READY TO CONFIRM'),
+                                                      actions: [
+                                                        TextButton(
+                                                          onPressed: () {
+                                                            Navigator.of(context).pop();
+                                                          },
+                                                          child: const Text('Cancel'),
                                                         ),
-                                                      );
-                                                    });
+                                                        TextButton(
+                                                          onPressed: () async {
+                                                            Navigator.pop(context);
 
-                                                final res = await context.read<AuthProvider>().reverseOrder(order.orderId, '1');
-                                                Navigator.pop(context);
+                                                            showDialog(
+                                                              barrierDismissible: false,
+                                                              context: context,
+                                                              builder: (context) {
+                                                                return const AlertDialog(
+                                                                  content: Row(
+                                                                    children: [
+                                                                      CircularProgressIndicator(),
+                                                                      SizedBox(width: 8),
+                                                                      Text('Reversing'),
+                                                                    ],
+                                                                  ),
+                                                                );
+                                                              },
+                                                            );
 
-                                                if (res['success'] == true) {
-                                                  Utils.showInfoDialog(
-                                                      context, "${res['message']}\nNew Order ID: ${res['newOrderId']}", true);
-                                                } else {
-                                                  Utils.showInfoDialog(context, res['message'], false);
-                                                }
+                                                            try {
+                                                              final authPro = context.read<AuthProvider>();
+                                                              final res = await authPro.reverseOrder(order.orderId);
+
+                                                              Navigator.pop(context);
+
+                                                              if (res['success'] == true) {
+                                                                Utils.showInfoDialog(
+                                                                    context, "${res['message']}\nNew Order ID: ${res['newOrderId']}", true);
+                                                              } else {
+                                                                Utils.showInfoDialog(context, res['message'], false);
+                                                              }
+                                                            } catch (e) {
+                                                              Navigator.pop(context);
+                                                              Utils.showInfoDialog(context, 'An error occurred: $e', false);
+                                                            }
+                                                          },
+                                                          child: const Text('Submit'),
+                                                        ),
+                                                      ],
+                                                    );
+                                                  },
+                                                );
                                               },
                                             ),
                                           ]
@@ -731,6 +767,19 @@ class _AccountsPageState extends State<AccountsPage> {
                                                           : const TextSpan()
                                                     ],
                                                     style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 20)),
+                                              ),
+                                              Text.rich(
+                                                TextSpan(
+                                                    text: "Warehouse: ",
+                                                    children: [
+                                                      TextSpan(
+                                                        text: "${order.warehouseName}",
+                                                        style: const TextStyle(
+                                                          fontWeight: FontWeight.normal,
+                                                        ),
+                                                      ),
+                                                    ],
+                                                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
                                               ),
                                               if (order.confirmedBy!['status'] == true)
                                                 Text.rich(

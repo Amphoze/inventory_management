@@ -1,21 +1,15 @@
-import 'dart:convert';
 import 'dart:developer';
-
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:inventory_management/Custom-Files/utils.dart';
-import 'package:logger/logger.dart';
 import 'package:provider/provider.dart';
 import 'package:inventory_management/Custom-Files/colors.dart';
 import 'package:inventory_management/provider/picker_provider.dart';
 import 'package:inventory_management/Custom-Files/custom_pagination.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 import 'Api/auth_provider.dart';
 import 'Custom-Files/loading_indicator.dart';
-import 'constants/constants.dart';
-import 'package:http/http.dart' as http;
 
 class PickerPage extends StatefulWidget {
   const PickerPage({super.key});
@@ -91,100 +85,69 @@ class _PickerPageState extends State<PickerPage> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(filteredIds[index]),
-                        (isSuperAdmin ?? false) || (isAdmin ?? false)
-                            ? IconButton(
-                                tooltip: 'Revert Order',
-                                icon: const Icon(Icons.undo),
-                                onPressed: () async {
-                                  String localStatus = status;
-
-                                  // Show status selection dialog
-                                  final selectedStatus = await showDialog<String>(
-                                    context: context,
-                                    builder: (context) {
-                                      return StatefulBuilder(
-                                        builder: (context, setDialogState) {
-                                          return AlertDialog(
-                                            title: const Text('Select Status'),
-                                            content: Column(
-                                              mainAxisSize: MainAxisSize.min,
-                                              children: [
-                                                RadioListTile<String>(
-                                                  value: '1',
-                                                  groupValue: localStatus,
-                                                  title: const Text('Ready to Confirm (1)'),
-                                                  onChanged: (value) => setDialogState(() => localStatus = value!),
-                                                ),
-                                                RadioListTile<String>(
-                                                  value: '2',
-                                                  groupValue: localStatus,
-                                                  title: const Text('Ready to Account (2)'),
-                                                  onChanged: (value) => setDialogState(() => localStatus = value!),
-                                                ),
-                                                RadioListTile<String>(
-                                                  value: '3',
-                                                  groupValue: localStatus,
-                                                  title: const Text('Ready to Book (3)'),
-                                                  onChanged: (value) => setDialogState(() => localStatus = value!),
-                                                ),
-                                              ],
-                                            ),
-                                            actions: [
-                                              TextButton(
-                                                onPressed: () => Navigator.of(context).pop(),
-                                                child: const Text('Cancel'),
-                                              ),
-                                              TextButton(
-                                                onPressed: () => Navigator.of(context).pop(localStatus),
-                                                child: const Text('Submit'),
-                                              ),
-                                            ],
-                                          );
+                        if ((isSuperAdmin ?? false) || (isAdmin ?? false))
+                          IconButton(
+                            tooltip: 'Revert Order',
+                            icon: const Icon(Icons.undo),
+                            onPressed: () async {
+                              showDialog(
+                                context: context,
+                                builder: (context) {
+                                  return AlertDialog(
+                                    title: const Text('Revert Order'),
+                                    content: Text('Are you sure you want to revert ${filteredIds[index]} to READY TO CONFIRM'),
+                                    actions: [
+                                      TextButton(
+                                        onPressed: () {
+                                          Navigator.of(context).pop();
                                         },
-                                      );
-                                    },
+                                        child: const Text('Cancel'),
+                                      ),
+                                      TextButton(
+                                        onPressed: () async {
+                                          Navigator.pop(context);
+                                          Navigator.pop(context);
+
+                                          showDialog(
+                                            barrierDismissible: false,
+                                            context: context,
+                                            builder: (context) {
+                                              return const AlertDialog(
+                                                content: Row(
+                                                  children: [
+                                                    CircularProgressIndicator(),
+                                                    SizedBox(width: 8),
+                                                    Text('Reversing'),
+                                                  ],
+                                                ),
+                                              );
+                                            },
+                                          );
+
+                                          try {
+                                            final authPro = context.read<AuthProvider>();
+                                            final res = await authPro.reverseOrder(filteredIds[index]);
+
+                                            Navigator.pop(context);
+
+                                            if (res['success'] == true) {
+                                              Utils.showInfoDialog(context, "${res['message']}\nNew Order ID: ${res['newOrderId']}", true);
+                                            } else {
+                                              Utils.showInfoDialog(context, res['message'], false);
+                                            }
+                                          } catch (e) {
+                                            Navigator.pop(context);
+                                            Utils.showInfoDialog(context, 'An error occurred: $e', false);
+                                          }
+                                        },
+                                        child: const Text('Submit'),
+                                      ),
+                                    ],
                                   );
-
-                                  if (selectedStatus == null) return; // User canceled
-
-                                  showDialog(
-                                    context: dialogContext, // Use outer dialog's context
-                                    barrierDismissible: false,
-                                    builder: (context) {
-                                      return const AlertDialog(
-                                        content: Row(
-                                          children: [
-                                            CircularProgressIndicator(),
-                                            SizedBox(width: 8),
-                                            Text('Reversing'),
-                                          ],
-                                        ),
-                                      );
-                                    },
-                                  );
-
-                                  try {
-                                    setState(() => status = selectedStatus);
-                                    final authPro = context.read<AuthProvider>();
-                                    final res = await authPro.reverseOrder(filteredIds[index], selectedStatus);
-
-                                    // Close "Reversing" dialog
-                                    Navigator.pop(dialogContext);
-                                    // Close the order IDs dialog after success
-                                    Navigator.pop(dialogContext);
-
-                                    if (res['success'] == true) {
-                                      Utils.showInfoDialog(context, "${res['message']}\nNew Order ID: ${res['newOrderId']}", true);
-                                    } else {
-                                      Utils.showInfoDialog(context, res['message'], false);
-                                    }
-                                  } catch (e) {
-                                    Navigator.pop(dialogContext);
-                                    Utils.showInfoDialog(context, 'Error: $e', false);
-                                  }
                                 },
-                              )
-                            : const SizedBox(),
+                              );
+                            },
+                          ),
                       ],
                     ),
                     onTap: () => Navigator.of(dialogContext).pop(),

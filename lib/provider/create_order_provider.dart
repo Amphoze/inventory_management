@@ -600,10 +600,13 @@ class CreateOrderProvider with ChangeNotifier {
       'discount_amount': double.tryParse(discountAmountController.text) ?? 0,
       'tax_percent': double.tryParse(taxPercentController.text) ?? 0, // Not required
       'total_quantity': int.tryParse(totalQuantityController.text) ?? 0,
+      'marketplace': marketplaceController.text.trim(),
       'source': source,
       'agent': agentController.text, // Not required
       'notes': notesController.text, // Not required
     };
+
+    log('create order data: ${orderData}');
 
     try {
       final url = Uri.parse('${await Constants.getBaseUrl()}/orders');

@@ -975,7 +975,45 @@ class BookProvider with ChangeNotifier {
       Logger().e(responseData);
 
       if (response.statusCode == 200) {
-        notifyListeners();
+        return await reCalculateDeliveryCharges(orderId, warehouse);
+      } else {
+        return false;
+      }
+    } catch (error) {
+      log('Error during API request: $error');
+      return false;
+    } finally {
+      notifyListeners();
+    }
+  }
+
+  Future<bool> reCalculateDeliveryCharges(String orderId, String newWarehouseName) async {
+    log('reCalculateDeliveryCharges called');
+    String baseUrl = await Constants.getBaseUrl();
+    String url = '$baseUrl/orders/reCalculateDeliverCharges';
+    final String? token = await _getToken();
+
+    log('reCalculateDeliveryCharges url: $url');
+
+    final headers = {
+      'Authorization': 'Bearer $token',
+      'Content-Type': 'application/json',
+    };
+
+    final body = json.encode({
+      'order_id': orderId,
+      'new_warehouse_name': newWarehouseName,
+    });
+
+    log('reCalculateDeliveryCharges body: $body');
+
+    try {
+      final response = await http.post(
+        Uri.parse(url),
+        headers: headers,
+        body: body,
+      );
+      if (response.statusCode == 200 || response.statusCode == 201) {
         return true;
       } else {
         return false;
@@ -983,6 +1021,8 @@ class BookProvider with ChangeNotifier {
     } catch (error) {
       log('Error during API request: $error');
       return false;
+    } finally {
+      notifyListeners();
     }
   }
 

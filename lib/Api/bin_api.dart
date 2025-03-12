@@ -66,7 +66,6 @@ class BinApi with ChangeNotifier {
     String baseUrl = await Constants.getBaseUrl();
     String? warehouseId = await AuthProvider().getWarehouseId();
     final url = Uri.parse('$baseUrl/bin/$warehouseId');
-    // final url = Uri.parse('$baseUrl/inventory/bins');
     setBinsLoadingStatus(true);
 
     Logger().e('url: $url');

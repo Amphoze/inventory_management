@@ -76,7 +76,8 @@ class _OrderComboCardState extends State<OrderComboCard> {
     final provider = Provider.of<OrdersProvider>(context, listen: false);
 
     log('Building OrderCard for Order ID: ${widget.order.id}');
-    log('accountMessage: ${widget.order.messages!['accountMessage']}');
+    log('bookerMessage in card: ${widget.order.orderId}  ${widget.order.messages?['bookerMessage']?.toString() ?? ''}');
+    // log('accountMessage: ${widget.order.messages!['accountMessage']}');
 
     final Map<String, List<Item>> groupedComboItems = {};
 
@@ -242,110 +243,68 @@ class _OrderComboCardState extends State<OrderComboCard> {
                       ),
                       const SizedBox(width: 8),
                     ],
-                    widget.isSuperAdmin || widget.isAdmin
-                        ? IconButton(
-                            tooltip: 'Revert Order',
-                            icon: const Icon(Icons.undo),
-                            onPressed: () async {
-                              showDialog(
-                                context: context,
-                                builder: (context) {
-                                  String localStatus = status;
-                                  return StatefulBuilder(
-                                    builder: (context, setDialogState) {
-                                      return AlertDialog(
-                                        title: const Text('Select Status'),
-                                        content: Column(
-                                          mainAxisSize: MainAxisSize.min,
-                                          children: [
-                                            RadioListTile<String>(
-                                              value: '1',
-                                              groupValue: localStatus,
-                                              title: const Text('Ready to Confirm (1)'),
-                                              onChanged: (value) {
-                                                setDialogState(() {
-                                                  localStatus = value!;
-                                                });
-                                              },
-                                            ),
-                                            RadioListTile<String>(
-                                              value: '2',
-                                              groupValue: localStatus,
-                                              title: const Text('Ready to Account (2)'),
-                                              onChanged: (value) {
-                                                setDialogState(() {
-                                                  localStatus = value!;
-                                                });
-                                              },
-                                            ),
-                                          ],
-                                        ),
-                                        actions: [
-                                          TextButton(
-                                            onPressed: () {
-                                              Navigator.of(context).pop();
-                                            },
-                                            child: const Text('Cancel'),
-                                          ),
-                                          TextButton(
-                                            onPressed: () async {
-                                              setState(() {
-                                                status = localStatus;
-                                              });
-
-                                              // Store the current context for the first dialog
-                                              final firstDialogContext = context;
-
-                                              // Show loading dialog and store its context
-                                              showDialog(
-                                                barrierDismissible: false, // Prevent dismissing while loading
-                                                context: context,
-                                                builder: (loadingContext) {
-                                                  return const AlertDialog(
-                                                    content: Row(
-                                                      children: [
-                                                        CircularProgressIndicator(),
-                                                        SizedBox(width: 8),
-                                                        Text('Reversing'),
-                                                      ],
-                                                    ),
-                                                  );
-                                                },
-                                              );
-
-                                              try {
-                                                final authPro = context.read<AuthProvider>();
-                                                final res = await authPro.reverseOrder(widget.order.orderId, status);
-
-                                                // Close loading dialog
-                                                Navigator.pop(context);
-                                                // Close first dialog
-                                                Navigator.pop(firstDialogContext);
-
-                                                if (res['success'] == true) {
-                                                  Utils.showInfoDialog(
-                                                      context, "${res['message']}\nNew Order ID: ${res['newOrderId']}", true);
-                                                } else {
-                                                  Utils.showInfoDialog(context, res['message'], false);
-                                                }
-                                              } catch (e) {
-                                                // Close loading dialog in case of error
-                                                Navigator.pop(context);
-                                                Navigator.pop(firstDialogContext);
-                                                Utils.showInfoDialog(context, 'An error occurred: $e', false);
-                                              }
-                                            },
-                                            child: const Text('Submit'),
-                                          ),
-                                        ],
-                                      );
+                    if (widget.isSuperAdmin || widget.isAdmin)
+                      IconButton(
+                        tooltip: 'Revert Order',
+                        icon: const Icon(Icons.undo),
+                        onPressed: () async {
+                          showDialog(
+                            context: context,
+                            builder: (context) {
+                              return AlertDialog(
+                                title: const Text('Revert Order'),
+                                content: Text('Are you sure you want to revert ${widget.order.orderId} to READY TO CONFIRM'),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () {
+                                      Navigator.of(context).pop();
                                     },
-                                  );
-                                },
+                                    child: const Text('Cancel'),
+                                  ),
+                                  TextButton(
+                                    onPressed: () async {
+                                      Navigator.pop(context);
+
+                                      showDialog(
+                                        barrierDismissible: false,
+                                        context: context,
+                                        builder: (context) {
+                                          return const AlertDialog(
+                                            content: Row(
+                                              children: [
+                                                CircularProgressIndicator(),
+                                                SizedBox(width: 8),
+                                                Text('Reversing'),
+                                              ],
+                                            ),
+                                          );
+                                        },
+                                      );
+
+                                      try {
+                                        final authPro = context.read<AuthProvider>();
+                                        final res = await authPro.reverseOrder(widget.order.orderId);
+
+                                        Navigator.pop(context);
+
+                                        if (res['success'] == true) {
+                                          Utils.showInfoDialog(context, "${res['message']}\nNew Order ID: ${res['newOrderId']}", true);
+                                        } else {
+                                          Utils.showInfoDialog(context, res['message'], false);
+                                        }
+                                      } catch (e) {
+                                        Navigator.pop(context);
+                                        Utils.showInfoDialog(context, 'An error occurred: $e', false);
+                                      }
+                                    },
+                                    child: const Text('Submit'),
+                                  ),
+                                ],
                               );
                             },
-                          )
-                        : const SizedBox(),
+                          );
+                        },
+                      ),
                   ],
                 ),
               ],
@@ -666,36 +625,20 @@ class _OrderComboCardState extends State<OrderComboCard> {
                       ),
                       const SizedBox(height: 8),
                     ],
-                    if (widget.isBookPage) ...[
-                      Text.rich(
-                        TextSpan(
-                          text: "Warehouse ID: ",
-                          children: [
-                            TextSpan(
-                              text: widget.order.warehouseId ?? '',
-                              style: const TextStyle(
-                                fontWeight: FontWeight.normal,
-                              ),
+                    Text.rich(
+                      TextSpan(
+                        text: "Warehouse Name: ",
+                        children: [
+                          TextSpan(
+                            text: widget.order.warehouseName,
+                            style: const TextStyle(
+                              fontWeight: FontWeight.normal,
                             ),
-                          ],
-                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
-                        ),
+                          ),
+                        ],
+                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
                       ),
-                      Text.rich(
-                        TextSpan(
-                          text: "Warehouse Name: ",
-                          children: [
-                            TextSpan(
-                              text: widget.order.warehouseName ?? '',
-                              style: const TextStyle(
-                                fontWeight: FontWeight.normal,
-                              ),
-                            ),
-                          ],
-                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
-                        ),
-                      ),
-                    ],
+                    ),
                   ],
                 ),
                 Column(
@@ -818,7 +761,6 @@ class _OrderComboCardState extends State<OrderComboCard> {
                             ? const Text('Edit Remark')
                             : const Text('Write Remark'),
                       ),
-
                     if (widget.isAccountSection)
                       ElevatedButton(
                         onPressed: () {
@@ -833,11 +775,10 @@ class _OrderComboCardState extends State<OrderComboCard> {
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(16),
                                 ),
-                                // Making dialog wider by using custom insetPadding
                                 insetPadding: const EdgeInsets.symmetric(horizontal: 20),
                                 child: Container(
-                                  width: MediaQuery.of(context).size.width * 0.9, // 90% of screen width
-                                  constraints: const BoxConstraints(maxWidth: 600), // Maximum width limit
+                                  width: MediaQuery.of(context).size.width * 0.9,
+                                  constraints: const BoxConstraints(maxWidth: 600),
                                   padding: const EdgeInsets.all(20),
                                   child: Column(
                                     mainAxisSize: MainAxisSize.min,
@@ -880,7 +821,7 @@ class _OrderComboCardState extends State<OrderComboCard> {
                                             onPressed: () async {
                                               showDialog(
                                                 context: context,
-                                                barrierDismissible: false, // Prevent dismissing the dialog by tapping outside
+                                                barrierDismissible: false,
                                                 builder: (_) {
                                                   return AlertDialog(
                                                     shape: RoundedRectangleBorder(
@@ -891,7 +832,7 @@ class _OrderComboCardState extends State<OrderComboCard> {
                                                       mainAxisSize: MainAxisSize.min,
                                                       children: [
                                                         CircularProgressIndicator(),
-                                                        SizedBox(width: 20), // Adjust to create horizontal spacing
+                                                        SizedBox(width: 20),
                                                         Text(
                                                           'Submitting Remark',
                                                           style: TextStyle(fontSize: 16),
@@ -936,7 +877,6 @@ class _OrderComboCardState extends State<OrderComboCard> {
                             ? const Text('Edit Remark')
                             : const Text('Write Remark'),
                       ),
-                    ///////////////////////////////////////////////////////////////
                     if (widget.order.messages?['confirmerMessage']?.toString().isNotEmpty ?? false) ...[
                       Utils().showMessage(context, 'Confirmer Remark', widget.order.messages!['confirmerMessage'].toString())
                     ],
@@ -1003,30 +943,6 @@ class _OrderComboCardState extends State<OrderComboCard> {
                         style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
                       ),
                     ),
-                    // if (showBy(widget.order.outBoundBy?['status'] ?? false))
-                    //   Text.rich(
-                    //     TextSpan(
-                    //       text: "Outbound By: ",
-                    //       children: [
-                    //         TextSpan(
-                    //           text: widget.order.outBoundBy!['outBoundBy']?.toString().split('@')[0] ?? '',
-                    //           style: const TextStyle(
-                    //             fontWeight: FontWeight.normal,
-                    //           ),
-                    //         ),
-                    //         if (widget.order.outBoundBy!['timestamp'] != null)
-                    //           TextSpan(
-                    //             text: ' (${formatIsoDate(widget.order.outBoundBy!['timestamp'])})' ?? '',
-                    //             style: const TextStyle(
-                    //               fontWeight: FontWeight.normal,
-                    //             ),
-                    //           ),
-                    //       ],
-                    //       style: const TextStyle(
-                    //         fontWeight: FontWeight.bold,
-                    //       ),
-                    //     ),
-                    //   ),
                     if (showBy(widget.order.confirmedBy?['status'] ?? false))
                       Text.rich(
                         TextSpan(

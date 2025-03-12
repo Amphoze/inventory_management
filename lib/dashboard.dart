@@ -5,7 +5,7 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:intl/intl.dart';
 import 'package:inventory_management/Api/auth_provider.dart';
 import 'package:inventory_management/accounts_page.dart';
-import 'package:inventory_management/accounts_section.dart';
+import 'package:inventory_management/invoiced_orders.dart';
 import 'package:inventory_management/all_orders_page.dart';
 import 'package:inventory_management/ba_approve_page.dart';
 import 'package:inventory_management/bin_master.dart';
@@ -248,6 +248,11 @@ class _DashboardPageState extends State<DashboardPage> {
                     ),
                   )
                 : null,
+            // appBar: AppBar(
+            //   actions: [
+            //     Text('hi')
+            //   ]
+            // ),
             body: Row(
               children: <Widget>[
                 if (!isSmallScreen)
@@ -273,7 +278,60 @@ class _DashboardPageState extends State<DashboardPage> {
                               ),
                           ],
                         ),
-                        const SizedBox(height: 20),
+                        const SizedBox(height: 8),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                            SizedBox(
+                              width: 200,
+                              child: Consumer<LocationProvider>(
+                                builder: (context, provider, _) {
+                                  return Tooltip(
+                                    message: 'Switch Warehouse',
+                                    child: InkWell(
+                                      onTap: () => _showWarehouseSelector(context, provider),
+                                      child: Container(
+                                        padding: const EdgeInsets.all(8),
+                                        decoration: BoxDecoration(
+                                          color: Colors.white,
+                                          borderRadius: BorderRadius.circular(8),
+                                          boxShadow: [
+                                            BoxShadow(
+                                              color: Colors.black.withValues(alpha: 0.05),
+                                              blurRadius: 4,
+                                              offset: const Offset(0, 2),
+                                            ),
+                                          ],
+                                          border: Border.all(color: Colors.grey.shade200),
+                                        ),
+                                        child: Row(
+                                          children: [
+                                            Expanded(
+                                              child: Text(
+                                                selectedWarehouse ?? 'Select Warehouse',
+                                                style: TextStyle(
+                                                  color: selectedWarehouse != null ? Colors.black87 : Colors.black54,
+                                                  fontWeight: selectedWarehouse != null ? FontWeight.w500 : FontWeight.normal,
+                                                ),
+                                                overflow: TextOverflow.ellipsis,
+                                              ),
+                                            ),
+                                            const Icon(
+                                              Icons.business,
+                                              size: 18,
+                                              color: Colors.black54,
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  );
+                                },
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
                         Expanded(
                           child: _buildMainContent(selectedDrawerItem, isSmallScreen),
                         ),
@@ -1519,7 +1577,7 @@ class _DashboardPageState extends State<DashboardPage> {
       case 'Accounts Page':
         return const AccountsPage();
       case 'Invoiced Orders':
-        return const AccountsSectionPage();
+        return const InvoicedOrders();
       case 'Book Page':
         return const BookPage();
       case 'Booked Orders':
@@ -1608,7 +1666,7 @@ class _DashboardPageState extends State<DashboardPage> {
   Widget _buildDashboardContent(bool isSmallScreen) {
     return SingleChildScrollView(
       child: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(8.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
@@ -1639,53 +1697,53 @@ class _DashboardPageState extends State<DashboardPage> {
                       ),
                     ),
                   ),
-                  SizedBox(
-                    width: 200,
-                    child: Consumer<LocationProvider>(
-                      builder: (context, provider, _) {
-                        return Tooltip(
-                          message: 'Switch Warehouse',
-                          child: InkWell(
-                            onTap: () => _showWarehouseSelector(context, provider),
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(8),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.black.withValues(alpha: 0.05),
-                                    blurRadius: 4,
-                                    offset: const Offset(0, 2),
-                                  ),
-                                ],
-                                border: Border.all(color: Colors.grey.shade200),
-                              ),
-                              child: Row(
-                                children: [
-                                  Expanded(
-                                    child: Text(
-                                      selectedWarehouse ?? 'Select Warehouse',
-                                      style: TextStyle(
-                                        color: selectedWarehouse != null ? Colors.black87 : Colors.black54,
-                                        fontWeight: selectedWarehouse != null ? FontWeight.w500 : FontWeight.normal,
-                                      ),
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                  ),
-                                  const Icon(
-                                    Icons.business,
-                                    size: 18,
-                                    color: Colors.black54,
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        );
-                      },
-                    ),
-                  ),
+                  // SizedBox(
+                  //   width: 200,
+                  //   child: Consumer<LocationProvider>(
+                  //     builder: (context, provider, _) {
+                  //       return Tooltip(
+                  //         message: 'Switch Warehouse',
+                  //         child: InkWell(
+                  //           onTap: () => _showWarehouseSelector(context, provider),
+                  //           child: Container(
+                  //             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                  //             decoration: BoxDecoration(
+                  //               color: Colors.white,
+                  //               borderRadius: BorderRadius.circular(8),
+                  //               boxShadow: [
+                  //                 BoxShadow(
+                  //                   color: Colors.black.withValues(alpha: 0.05),
+                  //                   blurRadius: 4,
+                  //                   offset: const Offset(0, 2),
+                  //                 ),
+                  //               ],
+                  //               border: Border.all(color: Colors.grey.shade200),
+                  //             ),
+                  //             child: Row(
+                  //               children: [
+                  //                 Expanded(
+                  //                   child: Text(
+                  //                     selectedWarehouse ?? 'Select Warehouse',
+                  //                     style: TextStyle(
+                  //                       color: selectedWarehouse != null ? Colors.black87 : Colors.black54,
+                  //                       fontWeight: selectedWarehouse != null ? FontWeight.w500 : FontWeight.normal,
+                  //                     ),
+                  //                     overflow: TextOverflow.ellipsis,
+                  //                   ),
+                  //                 ),
+                  //                 const Icon(
+                  //                   Icons.business,
+                  //                   size: 18,
+                  //                   color: Colors.black54,
+                  //                 ),
+                  //               ],
+                  //             ),
+                  //           ),
+                  //         ),
+                  //       );
+                  //     },
+                  //   ),
+                  // ),
                   Padding(
                     padding: const EdgeInsets.all(8.0),
                     child: Container(

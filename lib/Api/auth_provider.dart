@@ -1407,7 +1407,7 @@ class AuthProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  Future<Map<String, dynamic>> reverseOrder(String orderId, String status) async {
+  Future<Map<String, dynamic>> reverseOrder(String orderId) async {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('authToken');
     String url = '${await Constants.getBaseUrl()}/orders/reverse';
@@ -1429,7 +1429,7 @@ class AuthProvider with ChangeNotifier {
           'Content-Type': 'application/json',
         },
         body: jsonEncode(
-          {'order_id': orderId, 'order_status': status},
+          {'order_id': orderId, 'order_status': '1'},
         ),
       );
 
