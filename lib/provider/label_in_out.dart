@@ -377,14 +377,14 @@ class _LabelFormPageState extends State<LabelFormPage> with SingleTickerProvider
                 // Form header
                 Center(
                   child: Container(
-                    padding: EdgeInsets.symmetric(vertical: 12, horizontal: 24),
+                    padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 24),
                     decoration: BoxDecoration(
                       color: AppColors.primaryBlue.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(30),
                     ),
                     child: Text(
                       formType,
-                      style: TextStyle(
+                      style: const TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
                         color: AppColors.primaryBlue,

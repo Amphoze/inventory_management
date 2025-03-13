@@ -1712,19 +1712,20 @@ class _OrdersNewPageState extends State<OrdersNewPage> with TickerProviderStateM
                                             ),
                                           ],
                                         ),
-                                        Column(
-                                          crossAxisAlignment: CrossAxisAlignment.start,
-                                          children: [
-                                            const Text(
-                                              'Date: ',
-                                              style: TextStyle(fontWeight: FontWeight.bold),
-                                            ),
-                                            Text(
-                                              ordersProvider.formatDate(order.date!),
-                                              style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.primaryBlue),
-                                            ),
-                                          ],
-                                        ),
+                                        if (order.date != null)
+                                          Column(
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            children: [
+                                              const Text(
+                                                'Date: ',
+                                                style: TextStyle(fontWeight: FontWeight.bold),
+                                              ),
+                                              Text(
+                                                ordersProvider.formatDate(order.date!),
+                                                style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.primaryBlue),
+                                              ),
+                                            ],
+                                          ),
                                         Column(
                                           crossAxisAlignment: CrossAxisAlignment.start,
                                           children: [
@@ -2111,6 +2112,7 @@ class _OrdersNewPageState extends State<OrdersNewPage> with TickerProviderStateM
                                                 ],
                                                 style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 20)),
                                           ),
+                                          if(order.updatedAt != null)
                                           Text.rich(
                                             TextSpan(
                                                 text: "Updated on: ",

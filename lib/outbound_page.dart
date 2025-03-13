@@ -35,7 +35,6 @@ class _OutboundPageState extends State<OutboundPage> with TickerProviderStateMix
   // String _selectedFailedDate = 'Select Date';
   String selectedCourier = 'All';
 
-
   late OutboundProvider provider;
 
   @override
@@ -571,19 +570,20 @@ class _OutboundPageState extends State<OutboundPage> with TickerProviderStateMix
                                             ),
                                           ],
                                         ),
-                                        Column(
-                                          crossAxisAlignment: CrossAxisAlignment.start,
-                                          children: [
-                                            const Text(
-                                              'Date: ',
-                                              style: TextStyle(fontWeight: FontWeight.bold),
-                                            ),
-                                            Text(
-                                              pro.formatDate(order.date!),
-                                              style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.primaryBlue),
-                                            ),
-                                          ],
-                                        ),
+                                        if (order.date != null)
+                                          Column(
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            children: [
+                                              const Text(
+                                                'Date: ',
+                                                style: TextStyle(fontWeight: FontWeight.bold),
+                                              ),
+                                              Text(
+                                                pro.formatDate(order.date!),
+                                                style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.primaryBlue),
+                                              ),
+                                            ],
+                                          ),
                                         Column(
                                           crossAxisAlignment: CrossAxisAlignment.start,
                                           children: [
@@ -1035,13 +1035,14 @@ class _OutboundPageState extends State<OutboundPage> with TickerProviderStateMix
                                                           style: const TextStyle(
                                                             fontWeight: FontWeight.normal,
                                                           )),
-                                                      (order.outBoundBy?['outboundBy']?.toString().isNotEmpty ?? false) ?
-                                                      TextSpan(
-                                                        text: "(${order.outBoundBy?['outboundBy'].toString().split('@')[0] ?? ''})",
-                                                        style: const TextStyle(
-                                                          fontWeight: FontWeight.normal,
-                                                        ),
-                                                      ) : const TextSpan()
+                                                      (order.outBoundBy?['outboundBy']?.toString().isNotEmpty ?? false)
+                                                          ? TextSpan(
+                                                              text: "(${order.outBoundBy?['outboundBy'].toString().split('@')[0] ?? ''})",
+                                                              style: const TextStyle(
+                                                                fontWeight: FontWeight.normal,
+                                                              ),
+                                                            )
+                                                          : const TextSpan()
                                                     ],
                                                     style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 20)),
                                               ),
@@ -1058,22 +1059,24 @@ class _OutboundPageState extends State<OutboundPage> with TickerProviderStateMix
                                                     ],
                                                     style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
                                               ),
-                                              Text.rich(
-                                                TextSpan(
-                                                    text: "Updated on: ",
-                                                    children: [
-                                                      TextSpan(
+                                              if (order.updatedAt != null)
+                                                Text.rich(
+                                                  TextSpan(
+                                                      text: "Updated on: ",
+                                                      children: [
+                                                        TextSpan(
                                                           text: DateFormat('yyyy-MM-dd\',\' hh:mm a').format(
                                                             DateTime.parse("${order.updatedAt}"),
                                                           ),
                                                           style: const TextStyle(
                                                             fontWeight: FontWeight.normal,
-                                                          )),
-                                                    ],
-                                                    style: const TextStyle(
-                                                      fontWeight: FontWeight.bold,
-                                                    )),
-                                              ),
+                                                          ),
+                                                        ),
+                                                      ],
+                                                      style: const TextStyle(
+                                                        fontWeight: FontWeight.bold,
+                                                      )),
+                                                ),
                                             ],
                                           ),
                                           // from - 0/1, to-1

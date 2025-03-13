@@ -1,11 +1,8 @@
 import 'dart:developer';
-
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:logger/logger.dart';
-
 import 'model/development_notes_model.dart';
-// import 'package:inventory_management/lead/model/lead_model.dart';
 
 class VersionController extends ChangeNotifier {
   FirebaseFirestore firebaseFirestore = FirebaseFirestore.instance;
@@ -16,7 +13,7 @@ class VersionController extends ChangeNotifier {
   /// 3. firebase deploy                                              ///
   /// 4. Change version in firebase to match this currentVersion.     ///
   ///////////////////////////////////////////////////////////////////////
-  String currentVersion = '6.6.4';
+  String currentVersion = '6.6.5';
   String? latestVersion = '';
 
   void setLatest(String value) {

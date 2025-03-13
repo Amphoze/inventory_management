@@ -2,6 +2,8 @@ import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:inventory_management/Custom-Files/utils.dart';
+import 'package:inventory_management/Widgets/order_combo_card.dart';
+import 'package:inventory_management/model/picker_model.dart';
 import 'package:provider/provider.dart';
 import 'package:inventory_management/Custom-Files/colors.dart';
 import 'package:inventory_management/provider/picker_provider.dart';
@@ -47,20 +49,19 @@ class _PickerPageState extends State<PickerPage> {
     Provider.of<PickerProvider>(context, listen: false).textEditingController.clear();
   }
 
-  void _onSearchButtonPressed() {
-    final query = _searchController.text.trim();
-    if (query.isNotEmpty) {
-      Provider.of<PickerProvider>(context, listen: false).onSearchChanged(query);
-    }
-  }
+  // void _onSearchButtonPressed() {
+  //   final query = _searchController.text.trim();
+  //   if (query.isNotEmpty) {
+  //     Provider.of<PickerProvider>(context, listen: false).onSearchChanged(query);
+  //   }
+  // }
 
-  void _showOrderIdsDialog(Map<String, dynamic> order) {
+  void _showOrderIdsDialog(Picklist picklist) {
     showDialog(
       context: context,
       builder: (BuildContext dialogContext) {
-        // Use a unique context for the outer dialog
         String searchQuery = '';
-        List<String> orderIds = (order['orderIds'] as List).cast<String>();
+        List<String> orderIds = (picklist.orderIds as List).cast<String>();
 
         return StatefulBuilder(
           builder: (context, setState) {
@@ -180,7 +181,6 @@ class _PickerPageState extends State<PickerPage> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.start,
                 children: [
-                  // Search TextField
                   Container(
                     height: 35,
                     width: 200,
@@ -200,38 +200,32 @@ class _PickerPageState extends State<PickerPage> {
                         contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 12.0),
                       ),
                       onChanged: (query) {
-                        // Trigger a rebuild to show/hide the search button
-                        setState(() {
-                          // Update search focus
-                        });
+                        setState(() {});
                         if (query.isEmpty) {
-                          // Reset to all orders if search is cleared
                           pickerProvider.fetchOrdersWithStatus4();
                         }
                       },
                       onTap: () {
-                        setState(() {
-                          // Mark the search field as focused
-                        });
+                        setState(() {});
                       },
                       onSubmitted: (query) {
                         if (query.isNotEmpty) {
                           pickerProvider.searchOrders(query);
+                        } else {
+                          pickerProvider.fetchOrdersWithStatus4();
                         }
                       },
                       onEditingComplete: () {
-                        // Mark it as not focused when done
-                        FocusScope.of(context).unfocus(); // Dismiss the keyboard
+                        FocusScope.of(context).unfocus();
                       },
                     ),
                   ),
                   const SizedBox(width: 8),
-                  // Search Button
                   ElevatedButton(
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.primaryBlue,
                     ),
-                    onPressed: _searchController.text.isNotEmpty ? _onSearchButtonPressed : null,
+                    onPressed: _searchController.text.isNotEmpty ? () => pickerProvider.searchOrders(_searchController.text) : null,
                     child: const Text(
                       'Search',
                       style: TextStyle(color: Colors.white),
@@ -259,7 +253,7 @@ class _PickerPageState extends State<PickerPage> {
                                       suffixIcon: Icon(Icons.calendar_today),
                                       border: OutlineInputBorder(),
                                     ),
-                                    readOnly: true, // Prevent manual input
+                                    readOnly: true,
                                     onTap: () async {
                                       DateTime? picked = await showDatePicker(
                                         context: context,
@@ -277,9 +271,7 @@ class _PickerPageState extends State<PickerPage> {
                                   ),
                                   const SizedBox(height: 8),
                                   DropdownButton(
-                                    value: picklistIds.contains(selectedPicklist)
-                                        ? selectedPicklist
-                                        : null, // Only set value if it exists in the list
+                                    value: picklistIds.contains(selectedPicklist) ? selectedPicklist : null,
                                     isExpanded: true,
                                     hint: const Text('Select Picklist ID'),
                                     items: picklistIds.map((id) {
@@ -290,7 +282,6 @@ class _PickerPageState extends State<PickerPage> {
                                     }).toList(),
                                     onChanged: (String? newValue) {
                                       dialogSetState(() {
-                                        // Update dialog state
                                         if (newValue != null) {
                                           selectedPicklist = newValue;
                                         }
@@ -332,7 +323,7 @@ class _PickerPageState extends State<PickerPage> {
                                       },
                                     );
 
-                                    final res = await pickerProvider.generatePicklist(context, _dateController.text, selectedPicklist);
+                                    final res = await pickerProvider.downloadPicklist(context, _dateController.text, selectedPicklist);
 
                                     Utils.showSnackBar(context, res['message']);
 
@@ -358,12 +349,12 @@ class _PickerPageState extends State<PickerPage> {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.primaryBlue,
                     ),
-                    onPressed: pickerProvider.isRefreshingOrders
+                    onPressed: pickerProvider.isLoading
                         ? null
                         : () async {
                             pickerProvider.fetchOrdersWithStatus4();
                           },
-                    child: pickerProvider.isRefreshingOrders
+                    child: pickerProvider.isLoading
                         ? const SizedBox(
                             width: 16,
                             height: 16,
@@ -381,7 +372,7 @@ class _PickerPageState extends State<PickerPage> {
               ),
             ),
             const SizedBox(height: 8),
-            _buildTableHeader(pickerProvider.extractedOrders.length, pickerProvider),
+            _buildTableHeader(pickerProvider.picklists.length, pickerProvider),
             Expanded(
               child: Stack(
                 children: [
@@ -394,7 +385,7 @@ class _PickerPageState extends State<PickerPage> {
                         size: 80.0,
                       ),
                     )
-                  else if (pickerProvider.extractedOrders.isEmpty)
+                  else if (pickerProvider.picklists.isEmpty)
                     const Center(
                       child: Text(
                         'No Orders Found',
@@ -407,12 +398,15 @@ class _PickerPageState extends State<PickerPage> {
                     )
                   else
                     ListView.builder(
-                      itemCount: pickerProvider.extractedOrders.length,
+                      itemCount: pickerProvider.picklists.length,
                       itemBuilder: (context, index) {
-                        final extractedOrders = pickerProvider.extractedOrders[index];
+                        final picklist = pickerProvider.picklists[index];
                         return Column(
                           children: [
-                            _buildOrderCard(extractedOrders),
+                            // if (_searchController.text.trim().isNotEmpty)
+                            //   OrderComboCard(toShowBy: true, order: pickerProvider.orders[0], toShowOrderDetails: false)
+                            // else
+                            _buildPicklistCard(picklist),
                             const Divider(thickness: 1, color: Colors.grey),
                           ],
                         );
@@ -428,33 +422,33 @@ class _PickerPageState extends State<PickerPage> {
               pageController: pickerProvider.textEditingController,
               onFirstPage: () {
                 pickerProvider.goToPage(1);
-                pickerProvider.textEditingController.clear(); // Reset the page number
+                pickerProvider.textEditingController.clear();
               },
               onLastPage: () {
                 pickerProvider.goToPage(pickerProvider.totalPages);
-                pickerProvider.textEditingController.clear(); // Reset the page number
+                pickerProvider.textEditingController.clear();
               },
               onNextPage: () {
                 if (pickerProvider.currentPage < pickerProvider.totalPages) {
                   pickerProvider.goToPage(pickerProvider.currentPage + 1);
-                  pickerProvider.textEditingController.clear(); // Reset the page number
+                  pickerProvider.textEditingController.clear();
                 }
               },
               onPreviousPage: () {
                 if (pickerProvider.currentPage > 1) {
                   pickerProvider.goToPage(pickerProvider.currentPage - 1);
-                  pickerProvider.textEditingController.clear(); // Reset the page number
+                  pickerProvider.textEditingController.clear();
                 }
               },
               onGoToPage: (page) {
                 pickerProvider.goToPage(page);
-                pickerProvider.textEditingController.clear(); // Reset the page number
+                pickerProvider.textEditingController.clear();
               },
               onJumpToPage: () {
                 final page = int.tryParse(pickerProvider.textEditingController.text);
                 if (page != null && page > 0 && page <= pickerProvider.totalPages) {
                   pickerProvider.goToPage(page);
-                  pickerProvider.textEditingController.clear(); // Reset the page number
+                  pickerProvider.textEditingController.clear();
                 } else {
                   _showSnackbar(context, 'Please enter a valid page number between 1 and ${pickerProvider.totalPages}.');
                 }
@@ -480,11 +474,7 @@ class _PickerPageState extends State<PickerPage> {
         children: [
           buildHeader('PRODUCTS', flex: 9),
           buildHeader('QUANTITY', flex: 2),
-          // buildHeader('CUSTOMER', flex: 3),
           buildHeader('ID', flex: 2),
-          // buildHeader('DATE', flex: 3),
-          // buildHeader('TOTAL', flex: 2),
-          // buildHeader('CONFIRM', flex: 2),
         ],
       ),
     );
@@ -508,35 +498,34 @@ class _PickerPageState extends State<PickerPage> {
 
   String status = '1';
 
-  Widget _buildOrderCard(
-    Map<String, dynamic> order,
-  ) {
-    // order['items][index]['product_id'][]
+  Widget _buildPicklistCard(Picklist picklist) {
+    final items = picklist.items;
+
     return Card(
       color: AppColors.white,
-      elevation: 4, // Reduced elevation for less shadow
+      elevation: 4,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12), // Slightly smaller rounded corners
+        borderRadius: BorderRadius.circular(12),
       ),
       child: Padding(
-        padding: const EdgeInsets.all(8.0), // Add padding here
+        padding: const EdgeInsets.all(8.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             InkWell(
-              onTap: () => _showOrderIdsDialog(order),
+              onTap: () => _showOrderIdsDialog(picklist),
               child: Text.rich(
                 TextSpan(
                     text: "Order ID: ",
                     children: [
                       TextSpan(
-                        text: (order['orderIds'] as List).join(', '),
+                        text: (picklist.orderIds).join(', '),
                         style: const TextStyle(
                           fontWeight: FontWeight.normal,
                         ),
                       ),
                       TextSpan(
-                        text: " (${order['orderIds'].length})",
+                        text: " (${picklist.orderIds.length})",
                       ),
                     ],
                     style: const TextStyle(
@@ -553,18 +542,17 @@ class _PickerPageState extends State<PickerPage> {
                 Expanded(
                   flex: 15,
                   child: SizedBox(
-                    // height: 200, // Removed fixed height
                     child: ListView.builder(
-                      shrinkWrap: true, // Allow ListView to take necessary height
-                      itemCount: order['items'].length,
+                      shrinkWrap: true,
+                      itemCount: items.length,
                       itemBuilder: (context, index) {
                         return Container(
                           decoration: BoxDecoration(
                             color: AppColors.lightGrey,
-                            borderRadius: BorderRadius.circular(10), // Slightly smaller rounded corners
+                            borderRadius: BorderRadius.circular(10),
                             boxShadow: [
                               BoxShadow(
-                                color: Colors.black.withValues(alpha: 0.08), // Lighter shadow for smaller card
+                                color: Colors.black.withValues(alpha: 0.08),
                                 offset: const Offset(0, 1),
                                 blurRadius: 3,
                               ),
@@ -572,7 +560,7 @@ class _PickerPageState extends State<PickerPage> {
                           ),
                           margin: const EdgeInsets.symmetric(vertical: 4.0),
                           child: Padding(
-                            padding: const EdgeInsets.all(10.0), // Reduced padding inside product card
+                            padding: const EdgeInsets.all(10.0),
                             child: Column(
                               children: [
                                 Row(
@@ -581,36 +569,35 @@ class _PickerPageState extends State<PickerPage> {
                                     ClipRRect(
                                       borderRadius: BorderRadius.circular(6),
                                       child: SizedBox(
-                                        width: 60, // Smaller image size
+                                        width: 60,
                                         height: 60,
-                                        child: order['items'][index]['product_id']['shopifyImage'] != null &&
-                                                order['items'][index]['product_id']['shopifyImage'].isNotEmpty
+                                        child: (items[index].productId.shopifyImage.isNotEmpty ?? false)
                                             ? Image.network(
-                                                '${order['items'][index]['product_id']['shopifyImage']}',
+                                                items[index].productId.shopifyImage,
                                               )
                                             : const Icon(
                                                 Icons.image_not_supported,
-                                                size: 40, // Fallback icon size
+                                                size: 40,
                                                 color: AppColors.grey,
                                               ),
                                       ),
                                     ),
-                                    const SizedBox(width: 8.0), // Reduced spacing between image and text
+                                    const SizedBox(width: 8.0),
                                     Expanded(
                                       child: Column(
                                         crossAxisAlignment: CrossAxisAlignment.start,
                                         children: [
                                           Text(
-                                            order['items'][index]['product_id']['displayName'],
+                                            items[index].productId.displayName,
                                             style: const TextStyle(
                                               fontWeight: FontWeight.w600,
-                                              fontSize: 14, // Reduced font size
+                                              fontSize: 14,
                                               color: Colors.black87,
                                             ),
                                             maxLines: 2,
                                             overflow: TextOverflow.ellipsis,
                                           ),
-                                          const SizedBox(height: 6.0), // Reduced spacing between text elements
+                                          const SizedBox(height: 6.0),
                                           Row(
                                             mainAxisAlignment: MainAxisAlignment.start,
                                             children: [
@@ -622,15 +609,15 @@ class _PickerPageState extends State<PickerPage> {
                                                       style: TextStyle(
                                                         color: Colors.blueAccent,
                                                         fontWeight: FontWeight.bold,
-                                                        fontSize: 13, // Reduced font size
+                                                        fontSize: 13,
                                                       ),
                                                     ),
                                                     TextSpan(
-                                                      text: order['items'][index]['product_id']['sku'],
+                                                      text: items[index].productId.sku,
                                                       style: const TextStyle(
                                                         color: Colors.black87,
                                                         fontWeight: FontWeight.w500,
-                                                        fontSize: 13, // Reduced font size
+                                                        fontSize: 13,
                                                       ),
                                                     ),
                                                   ],
@@ -645,15 +632,15 @@ class _PickerPageState extends State<PickerPage> {
                                                       style: TextStyle(
                                                         color: Colors.blueAccent,
                                                         fontWeight: FontWeight.bold,
-                                                        fontSize: 13, // Reduced font size
+                                                        fontSize: 13,
                                                       ),
                                                     ),
                                                     TextSpan(
-                                                      text: order['items'][index]['product_id']['mrp'].toString(),
+                                                      text: items[index].productId.mrp.toString(),
                                                       style: const TextStyle(
                                                         color: Colors.black87,
                                                         fontWeight: FontWeight.w500,
-                                                        fontSize: 13, // Reduced font size
+                                                        fontSize: 13,
                                                       ),
                                                     ),
                                                   ],
@@ -664,19 +651,19 @@ class _PickerPageState extends State<PickerPage> {
                                         ],
                                       ),
                                     ),
-                                    const Spacer(), // Ensures `qty` is aligned to the right end
+                                    const Spacer(),
                                     const Text(
                                       "X",
                                       style: TextStyle(
                                         fontSize: 20,
                                       ),
                                     ),
-                                    const Spacer(), // Ensures `qty` is aligned to the right end
+                                    const Spacer(),
                                     Container(
                                       padding: const EdgeInsets.symmetric(vertical: 2.0, horizontal: 2.0),
                                       child: Center(
                                         child: Text(
-                                          "${order['items'][index]['product_id']['itemQty']}",
+                                          "${items[index].productId.itemQty}",
                                           style: const TextStyle(
                                             fontSize: 20,
                                             fontWeight: FontWeight.bold,
@@ -703,7 +690,7 @@ class _PickerPageState extends State<PickerPage> {
                 const SizedBox(width: 4),
                 buildCell(
                   Text(
-                    "${order['picklistId']}",
+                    picklist.picklistId,
                     style: const TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 16,
@@ -724,7 +711,7 @@ class _PickerPageState extends State<PickerPage> {
                       children: [
                         TextSpan(
                           text: DateFormat('yyyy-MM-dd, hh:mm a').format(
-                            DateTime.parse(order['createdAt']).toLocal(),
+                            DateTime.parse(picklist.createdAt).toLocal(),
                           ),
                           style: const TextStyle(
                             fontWeight: FontWeight.normal,
@@ -735,24 +722,19 @@ class _PickerPageState extends State<PickerPage> {
                         fontWeight: FontWeight.bold,
                       )),
                 ),
-                // const Text('skjfbsfiab'),
-                if (order['messages'] != null &&
-                    order['messages']!['confirmerMessage'] != null &&
-                    order['messages']!['confirmerMessage'].toString().isNotEmpty) ...[
-                  Utils().showMessage(context, 'Confirmer Remark', order['messages']!['confirmerMessage'].toString())
-                ],
-                ///////////////////////////////////////////////////////////
-                if (order['messages'] != null &&
-                    order['messages']!['accountMessage'] != null &&
-                    order['messages']!['accountMessage'].toString().isNotEmpty) ...[
-                  Utils().showMessage(context, 'Account Remark', order['messages']!['accountMessage'].toString()),
-                ],
-                /////////////////////////////////////////////////////////
-                if (order['messages'] != null &&
-                    order['messages']!['bookerMessage'] != null &&
-                    order['messages']!['bookerMessage'].toString().isNotEmpty) ...[
-                  Utils().showMessage(context, 'Booker Remark', order['messages']!['bookerMessage'].toString())
-                ],
+                // if (picklist['messages']!['confirmerMessage'].toString().isNotEmpty) ...[
+                //   Utils().showMessage(context, 'Confirmer Remark', picklist['messages']!['confirmerMessage'].toString())
+                // ],
+                // if (picklist['messages'] != null &&
+                //     picklist['messages']!['accountMessage'] != null &&
+                //     picklist['messages']!['accountMessage'].toString().isNotEmpty) ...[
+                //   Utils().showMessage(context, 'Account Remark', picklist['messages']!['accountMessage'].toString()),
+                // ],
+                // if (picklist['messages'] != null &&
+                //     picklist['messages']!['bookerMessage'] != null &&
+                //     picklist['messages']!['bookerMessage'].toString().isNotEmpty) ...[
+                //   Utils().showMessage(context, 'Booker Remark', picklist['messages']!['bookerMessage'].toString())
+                // ],
               ],
             ),
           ],

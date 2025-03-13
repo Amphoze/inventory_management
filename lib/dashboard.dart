@@ -1166,22 +1166,22 @@ class _DashboardPageState extends State<DashboardPage> {
               fontSize: 14,
             ),
           ),
-          // Padding(
-          //   padding: const EdgeInsets.only(left: 10.0),
-          //   child: _buildDrawerItem(
-          //     icon: Icons.label_important,
-          //     text: 'Label In-Out',
-          //     isSelected: selectedDrawerItem == 'Label In-Out',
-          //     onTap: () => isConfirmer == true || isBooker == true || isSuperAdmin == true || isAdmin == true
-          //         ? _onDrawerItemTapped('Label In-Out', isSmallScreen)
-          //         : ScaffoldMessenger.of(context).showSnackBar(
-          //       const SnackBar(content: Text("You are not authorized to view this page.")),
-          //     ),
-          //     isIndented: true,
-          //     iconSize: 20,
-          //     fontSize: 14,
-          //   ),
-          // ),
+          Padding(
+            padding: const EdgeInsets.only(left: 10.0),
+            child: _buildDrawerItem(
+              icon: Icons.label_important,
+              text: 'Label In-Out',
+              isSelected: selectedDrawerItem == 'Label In-Out',
+              onTap: () => isConfirmer == true || isBooker == true || isSuperAdmin == true || isAdmin == true
+                  ? _onDrawerItemTapped('Label In-Out', isSmallScreen)
+                  : ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text("You are not authorized to view this page.")),
+              ),
+              isIndented: true,
+              iconSize: 20,
+              fontSize: 14,
+            ),
+          ),
           Padding(
             padding: const EdgeInsets.only(left: 10.0),
             child: _buildDrawerItem(

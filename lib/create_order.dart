@@ -44,12 +44,12 @@ class _CreateOrderPageState extends State<CreateOrderPage> {
     }
 
     if (_formKey.currentState!.validate()) {
+      final res = await provider.saveOrder();
       try {
-        await provider.saveOrder();
-        Utils.showSnackBar(context, 'Order Created successfully!', color: Colors.green);
+        Utils.showSnackBar(context, res ?? '', color: Colors.green);
         _formKey.currentState!.reset();
       } catch (e) {
-        Utils.showSnackBar(context, 'Error creating order: $e', color: Colors.red);
+        Utils.showSnackBar(context, res ?? 'Error: $e', color: Colors.red);
       }
     }
   }
@@ -69,16 +69,16 @@ class _CreateOrderPageState extends State<CreateOrderPage> {
                 const SizedBox(height: 30),
                 _buildCustomerDetailsSection(provider),
                 const SizedBox(height: 30),
-                _buildPaymentDetailsSection(context, provider),
+                _buildItemsSection(context, provider),
                 const SizedBox(height: 30),
-                _buildDiscountAndAdditionalSection(context, provider),
+                _buildPaymentDetailsSection(context, provider),
                 const SizedBox(height: 30),
                 _buildShippingAddressSection(provider),
                 const SizedBox(height: 30),
                 if (provider.isBillingSameAsShipping == false) _buildBillingAddressSection(provider),
                 if (provider.isBillingSameAsShipping == false) const SizedBox(height: 30),
-                _buildItemsSection(context, provider),
-                const SizedBox(height: 20),
+                _buildDiscountAndAdditionalSection(context, provider),
+                const SizedBox(height: 30),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
@@ -389,7 +389,12 @@ class _CreateOrderPageState extends State<CreateOrderPage> {
       color: Colors.white,
       child: ExpansionTile(
         initiallyExpanded: true,
-        title: _buildHeading("Billing Address"),
+        title: Row(
+          children: [
+            _buildHeading("Billing Address"),
+            const Text("(Enter the pincode only. We'll fetch the address for you.)", style: TextStyle(color: Colors.red)),
+          ],
+        ),
         children: [
           Padding(
             padding: const EdgeInsets.all(16.0),
@@ -455,6 +460,25 @@ class _CreateOrderPageState extends State<CreateOrderPage> {
                   children: [
                     Expanded(
                       child: _buildTextField(
+                        controller: provider.billingPincodeController,
+                        label: 'Pincode',
+                        icon: Icons.code,
+                        validator: (value) => (value?.isEmpty ?? false) ? 'Required' : null,
+                        onChanged: (value) {
+                          if (value.isEmpty) {
+                            context.read<CreateOrderProvider>().clearLocationDetails(isBilling: true);
+                          }
+                          if (value.length == 6) {
+                            context.read<CreateOrderProvider>().getLocationDetails(context: context, pincode: value, isBilling: true);
+                          }
+                        },
+                        maxLength: 6,
+                        isNumber: true,
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: _buildTextField(
                         controller: provider.billingCityController,
                         label: 'City',
                         icon: Icons.location_city,
@@ -482,29 +506,11 @@ class _CreateOrderPageState extends State<CreateOrderPage> {
                         enabled: !provider.isBillingSameAsShipping,
                       ),
                     ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: _buildTextField(
-                        controller: provider.billingPincodeController,
-                        label: 'Pincode',
-                        icon: Icons.code,
-                        validator: (value) => (value?.isEmpty ?? false) ? 'Required' : null,
-                        onChanged: (value) {
-                          if (value.isEmpty) {
-                            context.read<CreateOrderProvider>().clearLocationDetails(isBilling: true);
-                          }
-                          if (value.length == 6) {
-                            context.read<CreateOrderProvider>().getLocationDetails(context: context, pincode: value, isBilling: true);
-                          }
-                        },
-                        maxLength: 6,
-                        isNumber: true,
-                      ),
-                    ),
                   ],
                 ),
                 const SizedBox(height: 10),
                 Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     SizedBox(
                       width: 120,
@@ -540,7 +546,12 @@ class _CreateOrderPageState extends State<CreateOrderPage> {
       color: Colors.white,
       child: ExpansionTile(
         initiallyExpanded: true,
-        title: _buildHeading("Shipping Address"),
+        title: Row(
+          children: [
+            _buildHeading("Shipping Address "),
+            const Text("(Enter the pincode only. We'll fetch the address for you.)", style: TextStyle(color: Colors.red)),
+          ],
+        ),
         children: [
           Padding(
             padding: const EdgeInsets.all(16.0),
@@ -654,6 +665,7 @@ class _CreateOrderPageState extends State<CreateOrderPage> {
                 ),
                 const SizedBox(height: 10),
                 Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     SizedBox(
                       width: 200,
@@ -669,9 +681,7 @@ class _CreateOrderPageState extends State<CreateOrderPage> {
                       ),
                     ),
                     const SizedBox(width: 10),
-                    Expanded(
-                      child: _buildPhoneField(phoneController: provider.shippingPhoneController, label: 'Phone'),
-                    ),
+                    Flexible(child: _buildPhoneField(phoneController: provider.shippingPhoneController, label: 'Phone')),
                   ],
                 ),
               ],

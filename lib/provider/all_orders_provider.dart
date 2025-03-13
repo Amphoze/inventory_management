@@ -27,7 +27,7 @@ class AllOrdersProvider with ChangeNotifier {
 
   bool get selectAll => _selectAll;
   List<bool> get selectedProducts => _selectedProducts;
-  // List<Map<String,String>> get statuses => _statuses;
+
   bool get isLoading => _isLoading;
   int get currentPage => _currentPage;
   int get totalPages => _totalPages;
@@ -36,7 +36,6 @@ class AllOrdersProvider with ChangeNotifier {
 
   int get selectedCount => _selectedProducts.where((isSelected) => isSelected).length;
 
-  // New variables for booked orders
   List<bool> selectedItems = List.generate(40, (index) => false);
   List<Order> get ordersBooked => _orders;
 
@@ -48,26 +47,22 @@ class AllOrdersProvider with ChangeNotifier {
   Future<String> cancelOrders(BuildContext context, List<String> orderIds) async {
     String baseUrl = await Constants.getBaseUrl();
     String cancelOrderUrl = '$baseUrl/orders/cancel';
-    // final String? token = await _getToken();
 
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('authToken') ?? '';
     setCancelStatus(true);
     notifyListeners();
 
-    // Headers for the API request
     final headers = {
       'Authorization': 'Bearer $token',
       'Content-Type': 'application/json',
     };
 
-    // Request body containing the order IDs
     final body = json.encode({
       'orderIds': orderIds,
     });
 
     try {
-      // Make the POST request to confirm the orders
       final response = await http.post(
         Uri.parse(Uri.encodeFull(cancelOrderUrl)),
         headers: headers,
@@ -80,11 +75,10 @@ class AllOrdersProvider with ChangeNotifier {
       final responseData = json.decode(response.body);
 
       if (response.statusCode == 200) {
-        // After successful confirmation, fetch updated orders and notify listeners
-        await fetchAllOrders(page: _currentPage); // Assuming fetchOrders is a function that reloads the orders
-        setRefreshingOrders(false); // Clear selected order IDs
+        await fetchAllOrders(page: _currentPage);
+        setRefreshingOrders(false);
         setCancelStatus(false);
-        notifyListeners(); // Notify the UI to rebuild
+        notifyListeners();
 
         return responseData['message'] ?? 'Orders cancelled successfully';
       } else {
@@ -102,15 +96,14 @@ class AllOrdersProvider with ChangeNotifier {
     if (_debounce?.isActive ?? false) _debounce!.cancel();
     _debounce = Timer(const Duration(milliseconds: 500), () {
       if (query.isEmpty) {
-        // If query is empty, reload all orders
         fetchAllOrders(page: _currentPage);
       } else {
-        searchOrders(query); // Trigger the search after the debounce period
+        searchOrders(query);
       }
     });
   }
 
-  ///////////////////////////////////////////////////////////////////////////////// BOOKED
+  ///////////////////////////////////////////////////////////////////////////////
 
   void setRefreshingOrders(bool value) {
     isRefreshingOrders = value;
@@ -141,10 +134,8 @@ class AllOrdersProvider with ChangeNotifier {
 
       if (response.statusCode == 200) {
         final jsonResponse = jsonDecode(response.body);
-        // log('body: $jsonResponse');
-        final status = jsonResponse['ShipmentData'][0]['Shipment']['Status']['Status'].toString() ?? '';
 
-        // log('sss: $status');
+        final status = jsonResponse['ShipmentData'][0]['Shipment']['Status']['Status'].toString() ?? '';
 
         return status;
       } else if (response.statusCode == 401) {
@@ -200,9 +191,7 @@ class AllOrdersProvider with ChangeNotifier {
         },
       );
 
-      // Log response for debugging
       log('Response status: ${response.statusCode}');
-      // log('Response body: ${response.body}');
 
       if (response.statusCode == 200) {
         final jsonResponse = jsonDecode(response.body);
@@ -247,7 +236,6 @@ class AllOrdersProvider with ChangeNotifier {
 
     log('fetchAllOrders url: $url');
     try {
-      // Set loading state based on order type
       _isLoading = true;
       setRefreshingOrders(true);
       notifyListeners();
@@ -262,21 +250,15 @@ class AllOrdersProvider with ChangeNotifier {
         },
       );
 
-      // Log response for debugging
       log('status: ${response.statusCode}');
-      // print('body: ${response.body}');
 
       if (response.statusCode == 200) {
         final jsonResponse = jsonDecode(response.body);
         List<Order> orders = (jsonResponse['orders'] as List).map((order) => Order.fromJson(order)).toList();
 
-        // Logger().e(jsonResponse['orders'][0]['isBooked']['status']);
-
         _orders = orders;
         _currentPage = page;
         _totalPages = jsonResponse['totalPages'];
-
-        // log('orders: $_orders');
       } else {
         _orders = [];
         _totalPages = 1;
@@ -315,13 +297,12 @@ class AllOrdersProvider with ChangeNotifier {
         final jsonResponse = jsonDecode(response.body);
         statuses = (jsonResponse as List).map((data) {
           return {
-            data['status'].split('_').map((w) => '${w[0].toUpperCase()}${w.substring(1)}').join(' ').toString(): data['status_id'].toString(),
-            // 'statusId': data['status_id'].toString(),
+            data['status'].split('_').map((w) => '${w[0].toUpperCase()}${w.substring(1)}').join(' ').toString():
+                data['status_id'].toString(),
           };
         }).toList();
 
         return statuses;
-        // _statuses = statuses;
       } else if (response.statusCode == 401) {
         print('Unauthorized access - Token might be expired or invalid.');
         return [];
@@ -331,7 +312,6 @@ class AllOrdersProvider with ChangeNotifier {
       } else {
         log('Failed to load orders: ${response.statusCode}');
         return [];
-        // throw Exception('Failed to load orders: ${response.statusCode}');
       }
     } catch (e) {
       log('Error fetching orders: $e');
@@ -370,9 +350,7 @@ class AllOrdersProvider with ChangeNotifier {
         final data = jsonDecode(response.body);
         Logger().e('this is order id: ${data['order_id']}');
 
-        _orders = [
-          Order.fromJson(data)
-        ];
+        _orders = [Order.fromJson(data)];
         notifyListeners();
       } else {
         _orders = [];
@@ -386,7 +364,6 @@ class AllOrdersProvider with ChangeNotifier {
     }
   }
 
-  // Handle individual row checkbox change for booked orders
   void handleRowCheckboxChangeBooked(String? orderId, bool isSelected) {
     int index;
     index = ordersBooked.indexWhere((order) => order.orderId == orderId);
@@ -399,7 +376,6 @@ class AllOrdersProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  // Toggle select all checkboxes for booked orders
   void toggleSelectAll(bool? value) {
     _selectAll = value!;
     _selectedProducts.fillRange(0, _selectedProducts.length, _selectAll);
@@ -409,7 +385,6 @@ class AllOrdersProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  // Clear all checkboxes for booked orders
   void clearAllSelections() {
     selectedItems.fillRange(0, selectedItems.length, false);
     _selectAll = false;

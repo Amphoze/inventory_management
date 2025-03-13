@@ -33,6 +33,7 @@ class _AccountsPageState extends State<AccountsPage> {
   final accountsRemark = TextEditingController();
   bool? isSuperAdmin = false;
   bool? isAdmin = false;
+  late AccountsProvider accountsProvider;
 
   Future<void> _fetchUserRole() async {
     final prefs = await SharedPreferences.getInstance();
@@ -45,6 +46,7 @@ class _AccountsPageState extends State<AccountsPage> {
   @override
   void initState() {
     super.initState();
+    accountsProvider = context.read<AccountsProvider>();
     _fetchUserRole();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       Provider.of<AccountsProvider>(context, listen: false).fetchOrdersWithStatus2();
@@ -52,25 +54,11 @@ class _AccountsPageState extends State<AccountsPage> {
     });
   }
 
-  void _onSearchButtonPressed() {
-    final query = _searchController.text.trim();
-    if (query.isNotEmpty) {
-      Provider.of<AccountsProvider>(context, listen: false).onSearchChanged(query);
-    }
-  }
-
   String formatIsoDate(String isoDate) {
     final dateTime = DateTime.parse(isoDate).toUtc().add(const Duration(hours: 5, minutes: 30));
     final date = DateFormat('yyyy-MM-dd').format(dateTime);
     final time = DateFormat('hh:mm:ss a').format(dateTime);
     return " ($date, $time)";
-  }
-
-  static String maskPhoneNumber(dynamic phone) {
-    if (phone == null) return '';
-    String phoneStr = phone.toString();
-    if (phoneStr.length < 4) return phoneStr;
-    return '${'*' * (phoneStr.length - 4)}${phoneStr.substring(phoneStr.length - 4)}';
   }
 
   @override
@@ -185,7 +173,6 @@ class _AccountsPageState extends State<AccountsPage> {
                       ),
                     ),
                     // const SizedBox(width: 8),
-                    //
                     // ElevatedButton(
                     //   style: ElevatedButton.styleFrom(
                     //     backgroundColor: AppColors.primaryBlue,
@@ -315,21 +302,11 @@ class _AccountsPageState extends State<AccountsPage> {
                                   tooltip: 'Filter by Marketplace',
                                   onSelected: (String value) {
                                     Logger().e('ye hai value: $value');
-                                    // if (value == 'All') {
                                     setState(() {
                                       selectedCourier = value;
                                     });
                                     accountsProvider.fetchOrdersWithStatus2(
                                         date: picked, mode: selectedPaymentMode, market: selectedCourier);
-                                    // } else {
-                                    //   Logger().e('ye hai else value: $value');
-                                    //   setState(() {
-                                    //     selectedCourier = value;
-                                    //   });
-                                    //   accountsProvider.fetchOrdersByMarketplace(value, 2, accountsProvider.currentPage,
-                                    //       date: picked, mode: selectedPaymentMode);
-                                    // }
-                                    // log('Selected: $value');
                                   },
                                   itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
                                     ...provider.marketplaces.map((marketplace) => PopupMenuItem<String>(
@@ -583,8 +560,6 @@ class _AccountsPageState extends State<AccountsPage> {
                                               accountsProvider.formatDate(order.date!),
                                               style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.primaryBlue),
                                             )
-                                          else
-                                            const SizedBox()
                                         ],
                                       ),
                                       Column(
@@ -821,6 +796,7 @@ class _AccountsPageState extends State<AccountsPage> {
                                                         fontWeight: FontWeight.bold,
                                                       )),
                                                 ),
+                                              if(order.updatedAt != null)
                                               Text.rich(
                                                 TextSpan(
                                                     text: "Updated on: ",
@@ -1046,28 +1022,28 @@ class _AccountsPageState extends State<AccountsPage> {
                 buttonSize: 30,
                 pageController: accountsProvider.textEditingController,
                 onFirstPage: () {
-                  accountsProvider.goToPage(1);
+                  goToPage(1);
                 },
                 onLastPage: () {
-                  accountsProvider.goToPage(accountsProvider.totalPages);
+                  goToPage(accountsProvider.totalPages);
                 },
                 onNextPage: () {
                   if (accountsProvider.currentPage < accountsProvider.totalPages) {
-                    accountsProvider.goToPage(accountsProvider.currentPage + 1);
+                    goToPage(accountsProvider.currentPage + 1);
                   }
                 },
                 onPreviousPage: () {
                   if (accountsProvider.currentPage > 1) {
-                    accountsProvider.goToPage(accountsProvider.currentPage - 1);
+                    goToPage(accountsProvider.currentPage - 1);
                   }
                 },
                 onGoToPage: (page) {
-                  accountsProvider.goToPage(page);
+                  goToPage(page);
                 },
                 onJumpToPage: () {
                   final page = int.tryParse(accountsProvider.textEditingController.text);
                   if (page != null && page > 0 && page <= accountsProvider.totalPages) {
-                    accountsProvider.goToPage(page);
+                    goToPage(page);
                   }
                 },
               ),
@@ -1077,43 +1053,6 @@ class _AccountsPageState extends State<AccountsPage> {
       },
     );
   }
-
-  // Widget _buildOrderCard(
-  //     Order order, int index, AccountsProvider accountsProvider) {
-  //   return Padding(
-  //     padding: const EdgeInsets.symmetric(vertical: 4.0, horizontal: 8.0),
-  //     child: Row(
-  //       crossAxisAlignment: CrossAxisAlignment.center,
-  //       children: [
-  //         Checkbox(
-  //           value: accountsProvider
-  //               .selectedProducts[index], // Accessing selected products
-  //           onChanged: (isSelected) {
-  //             accountsProvider.handleRowCheckboxChange(index, isSelected!);
-  //           },
-  //         ),
-  //         Expanded(
-  //           flex: 5,
-  //           child: Row(
-  //             mainAxisAlignment:
-  //                 MainAxisAlignment.spaceBetween, // Space between elements
-  //             children: [
-  //               Expanded(
-  //                 child:
-  //                     OrderCard(order: order), // Your existing OrderCard widget
-  //               ),
-  //             ],
-  //           ),
-  //         ),
-  //         const SizedBox(width: 20),
-  //         // if (dispatchProvider.isReturning)
-  //         //   Center(
-  //         //     child: CircularProgressIndicator(), // Loading indicator
-  //         //   ),
-  //       ],
-  //     ),
-  //   );
-  // }
 
   Widget _buildTableHeader(int totalCount, AccountsProvider accountsProvider) {
     return Container(
@@ -1163,6 +1102,12 @@ class _AccountsPageState extends State<AccountsPage> {
         child: Center(child: content),
       ),
     );
+  }
+
+  void goToPage(int page) {
+    if (page < 1 || page > accountsProvider.totalPages) return;
+    accountsProvider.setCurrentPage(page);
+    accountsProvider.fetchOrdersWithStatus2();
   }
 }
 

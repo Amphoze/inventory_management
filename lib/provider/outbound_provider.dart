@@ -608,12 +608,6 @@ class OutboundProvider with ChangeNotifier {
         _outboundOrders = [
           Order.fromJson(data)
         ];
-        // log('readyOrders: $readyOrders');
-
-        log('searchOrdersByID: $outboundOrders');
-        log('selectedReadyOrders: $selectedReadyOrders');
-
-        // notifyListeners();
       } else {
         _outboundOrders = [];
       }

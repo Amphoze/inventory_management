@@ -6,6 +6,7 @@ class Order {
   final String source;
   final String id;
   final String orderId;
+  final String picklistId;
   final DateTime? date;
   final String paymentMode;
   final String currencyCode;
@@ -89,6 +90,7 @@ class Order {
   Order({
     this.callStatus,
     this.merged,
+    this.picklistId = '',
     this.rebookedBy,
     this.isHold,
     this.selectedCourier = '',
@@ -194,29 +196,9 @@ class Order {
 
     try {
       return DateTime.parse(dateString).toLocal();
-    } catch (e) {}
-
-    List<String> formats = [
-      "EEE MMM dd yyyy HH:mm:ss 'GMT'Z",
-      "yyyy-MM-dd HH:mm:ss",
-      "dd-MM-yyyy",
-      "MM/dd/yyyy",
-      "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'",
-      "yyyy-MM-dd'T'HH:mm:ss'Z'",
-      "yyyy-MM-dd'T'HH:mm:ss",
-      "yyyy.MM.dd HH:mm:ss",
-      "MMMM dd, yyyy",
-      "dd MMM yyyy",
-      "dd MMM yyyy hh:mm a",
-    ];
-
-    for (var format in formats) {
-      try {
-        return DateFormat(format).parse(dateString, true).toLocal();
-      } catch (e) {}
+    } catch (e) {
+      return null;
     }
-
-    return null;
   }
 
   static String? formatDate(DateTime? date) {
@@ -252,6 +234,7 @@ class Order {
                   })
               .toList() ??
           [],
+      picklistId: _parseString(json['picklistId']),
       warehouseId: json['warehouse']?['warehouse_id']?['_id'] ?? '',
       warehouseName: json['warehouse']?['warehouse_id']?['name'] ?? '',
       isHold: json['warehouse']?['isHold'] ?? false,
@@ -273,7 +256,7 @@ class Order {
       source: _parseString(json['source']),
       id: _parseString(json['_id']),
       orderId: _parseString(json['order_id']),
-      date: _parseDate(json['date']?.toString()),
+      date: _parseDate(json['date'] ?? ''),
       paymentMode: _parseString(json['payment_mode']),
       currencyCode: _parseString(json['currency_code']),
       items: (json['items'] as List? ?? []).map((item) => Item.fromJson(item)).toList(),

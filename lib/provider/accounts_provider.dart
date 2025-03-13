@@ -37,9 +37,7 @@ class AccountsProvider with ChangeNotifier {
   bool isUpdatingOrder = false;
   bool isRefreshingOrders = false;
   bool isCancel = false;
-  // bool isRemarking = false;
 
-  // New variables for booked orders
   List<bool> selectedBookedItems = List.generate(40, (index) => false);
   bool selectAllBooked = false;
   bool isLoadingBooked = false;
@@ -63,22 +61,20 @@ class AccountsProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  // void setRemarkingStatus(bool value) {
-  //   isRemarking = value;
-  //   notifyListeners();
-  // }
-
   void handleRowCheckboxChange(int index, bool isSelected) {
     _selectedProducts[index] = isSelected;
 
-    // If any individual checkbox is unchecked, deselect "Select All"
     if (!isSelected) {
       _selectAll = false;
     } else {
-      // If all boxes are checked, select "Select All"
       _selectAll = _selectedProducts.every((element) => element);
     }
 
+    notifyListeners();
+  }
+
+  void setCurrentPage(int value) {
+    _currentPage = value;
     notifyListeners();
   }
 
@@ -88,15 +84,14 @@ class AccountsProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  void goToPage(int page) {
-    if (page < 1 || page > _totalPages) return;
-    _currentPage = page;
-    print('Current page set to: $_currentPage'); // Debugging line
-    fetchOrdersWithStatus2();
-    notifyListeners();
-  }
+  // void goToPage(int page) {
+  //   if (page < 1 || page > _totalPages) return;
+  //   _currentPage = page;
+  //   print('Current page set to: $_currentPage');
+  //   fetchOrdersWithStatus2();
+  //   notifyListeners();
+  // }
 
-  // Format date
   String formatDate(DateTime date) {
     String year = date.year.toString();
     String month = date.month.toString().padLeft(2, '0');
@@ -134,19 +129,16 @@ class AccountsProvider with ChangeNotifier {
       return 'No auth token found';
     }
 
-    // Headers for the API request
     final headers = {
       'Authorization': 'Bearer $token',
       'Content-Type': 'application/json',
     };
 
-    // Request body containing the order IDs
     final body = json.encode({
       'orderIds': orderIds,
     });
 
     try {
-      // Make the POST request to confirm the orders
       final response = await http.post(
         Uri.parse(cloneOrderUrl),
         headers: headers,
@@ -183,19 +175,16 @@ class AccountsProvider with ChangeNotifier {
     setCancelStatus(true);
     notifyListeners();
 
-    // Headers for the API request
     final headers = {
       'Authorization': 'Bearer $token',
       'Content-Type': 'application/json',
     };
 
-    // Request body containing the order IDs
     final body = json.encode({
       'orderIds': orderIds,
     });
 
     try {
-      // Make the POST request to confirm the orders
       final response = await http.post(
         Uri.parse(cancelOrderUrl),
         headers: headers,
@@ -203,7 +192,6 @@ class AccountsProvider with ChangeNotifier {
       );
 
       print('Response status: ${response.statusCode}');
-      //print('Response body: ${response.body}');
 
       final responseData = json.decode(response.body);
 
@@ -244,7 +232,7 @@ class AccountsProvider with ChangeNotifier {
 
     url += '&page=$_currentPage';
 
-    Logger().e('final url: $url');
+    Logger().e('fetchOrdersWithStatus2 url: $url');
 
     try {
       final response = await http.get(
@@ -260,24 +248,22 @@ class AccountsProvider with ChangeNotifier {
         List<Order> orders = (data['orders'] as List).map((order) => Order.fromJson(order)).toList();
         log(orders.toString());
 
-        _totalPages = data['totalPages']; // Get total pages from response
-        _orders = orders; // Set the orders for the current page
+        _totalPages = data['totalPages'];
+        _orders = orders;
+        _currentPage = data['currentPage'];
 
-        // Initialize selected products list
         _selectedProducts = List<bool>.filled(_orders.length, false);
 
-        // Print the total number of orders fetched from the current page
         print('Total Orders Fetched from Page $_currentPage: ${orders.length}');
       } else {
-        // Handle non-success responses
         _orders = [];
-        _totalPages = 1; // Reset total pages if there’s an error
+        _totalPages = 1;
       }
     } catch (e) {
       log(e.toString());
-      // Handle errors
+
       _orders = [];
-      _totalPages = 1; // Reset total pages if there’s an error
+      _totalPages = 1;
     } finally {
       _isLoading = false;
       setRefreshingOrders(false);
@@ -289,10 +275,9 @@ class AccountsProvider with ChangeNotifier {
     if (_debounce?.isActive ?? false) _debounce!.cancel();
     _debounce = Timer(const Duration(milliseconds: 500), () {
       if (query.isEmpty) {
-        // If query is empty, reload all orders
         fetchOrdersWithStatus2();
       } else {
-        searchOrders(query, 'Order ID'); // Trigger the search after the debounce period
+        searchOrders(query, 'Order ID');
       }
     });
   }
@@ -336,7 +321,6 @@ class AccountsProvider with ChangeNotifier {
       if (response.statusCode == 200) {
         final jsonData = json.decode(response.body);
 
-        // print('Response data: $jsonData');
         if (jsonData != null) {
           if (searchType == "Order ID") {
             _orders = [Order.fromJson(jsonData)];
@@ -364,7 +348,6 @@ class AccountsProvider with ChangeNotifier {
     return _orders;
   }
 
-  // New function to update status of selected orders
   Future<bool> statusUpdate(
     BuildContext context,
   ) async {
@@ -402,8 +385,6 @@ class AccountsProvider with ChangeNotifier {
         );
 
         return true;
-
-        // fetchOrdersWithStatus2();
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Failed to update orders')),
@@ -506,10 +487,6 @@ class AccountsProvider with ChangeNotifier {
         },
       );
 
-      // Log response for debugging
-      // log('Response status: ${response.statusCode}');
-      // log('Response body: ${response.body}');
-
       Logger().e('account provider');
 
       if (response.statusCode == 200) {
@@ -567,14 +544,13 @@ class AccountsProvider with ChangeNotifier {
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        // log(response.body);
-        // final newData = data['orders'][0]; //////////////////////////////////////////////////////////////
+
         if (searchType == "Order ID") {
           _ordersBooked = [Order.fromJson(data)];
         } else {
           _ordersBooked = (data['orders'] as List).map((orderJson) => Order.fromJson(orderJson)).toList();
         }
-        // _ordersBooked = [Order.fromJson(data)]; ////////////////////////////////////////////
+
         log('Orders found: $_ordersBooked');
       } else {
         _ordersBooked = [];
@@ -588,7 +564,6 @@ class AccountsProvider with ChangeNotifier {
     }
   }
 
-  // Handle individual row checkbox change for booked orders
   void handleRowCheckboxChangeBooked(String? orderId, bool isSelected) {
     int index;
     index = ordersBooked.indexWhere((order) => order.orderId == orderId);
@@ -601,7 +576,6 @@ class AccountsProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  // Toggle select all checkboxes for booked orders
   void toggleBookedSelectAll(bool? value) {
     selectAllBooked = value!;
     selectedBookedItems.fillRange(0, selectedBookedItems.length, selectAllBooked);
@@ -611,7 +585,6 @@ class AccountsProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  // Clear all checkboxes for booked orders
   void clearAllSelections() {
     selectedBookedItems.fillRange(0, selectedBookedItems.length, false);
     selectAllBooked = false;

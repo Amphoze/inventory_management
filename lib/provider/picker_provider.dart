@@ -13,39 +13,29 @@ import 'dart:html' as html;
 import 'dart:typed_data';
 import 'package:pdf/widgets.dart' as pw;
 
+import '../model/picker_model.dart';
+
 class PickerProvider with ChangeNotifier {
   bool _isLoading = false;
   bool _selectAll = false;
   List<bool> _selectedProducts = [];
   List<Order> _orders = [];
-  List<dynamic> _extractedOrders = [];
+  List<Picklist> _picklists = [];
   int _currentPage = 1;
   int _totalPages = 1;
   final PageController _pageController = PageController();
   final TextEditingController _textEditingController = TextEditingController();
-  Timer? _debounce;
 
-  List<dynamic> get extractedOrders => _extractedOrders;
-
+  List<Picklist> get picklists => _picklists;
   bool get selectAll => _selectAll;
-
   List<bool> get selectedProducts => _selectedProducts;
-
   List<Order> get orders => _orders;
-
   bool get isLoading => _isLoading;
-
   int get currentPage => _currentPage;
-
   int get totalPages => _totalPages;
-
   PageController get pageController => _pageController;
-
   TextEditingController get textEditingController => _textEditingController;
-
   int get selectedCount => _selectedProducts.where((isSelected) => isSelected).length;
-
-  bool isRefreshingOrders = false;
 
   bool isCancel = false;
 
@@ -54,8 +44,8 @@ class PickerProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  void setRefreshingOrders(bool value) {
-    isRefreshingOrders = value;
+  void setLoading(bool value) {
+    _isLoading  = value;
     notifyListeners();
   }
 
@@ -79,36 +69,29 @@ class PickerProvider with ChangeNotifier {
     setCancelStatus(true);
     notifyListeners();
 
-    // Headers for the API request
     final headers = {
       'Authorization': 'Bearer $token',
       'Content-Type': 'application/json',
     };
 
-    // Request body containing the order IDs
     final body = json.encode({
       'orderIds': orderIds,
     });
 
     try {
-      // Make the POST request to confirm the orders
       final response = await http.post(
         Uri.parse(cancelOrderUrl),
         headers: headers,
         body: body,
       );
 
-      print('Response status: ${response.statusCode}');
-      //print('Response body: ${response.body}');
-
       final responseData = json.decode(response.body);
 
       if (response.statusCode == 200) {
-        // After successful confirmation, fetch updated orders and notify listeners
-        await fetchOrdersWithStatus4(); // Assuming fetchOrders is a function that reloads the orders
-        // resetSelections(); // Clear selected order IDs
+        await fetchOrdersWithStatus4();
+
         setCancelStatus(false);
-        notifyListeners(); // Notify the UI to rebuild
+        notifyListeners();
 
         return responseData['message'] ?? 'Orders cancelled successfully';
       } else {
@@ -117,15 +100,13 @@ class PickerProvider with ChangeNotifier {
     } catch (error) {
       setCancelStatus(false);
       notifyListeners();
-      print('Error during API request: $error');
+
       return 'An error occurred: $error';
     }
   }
 
   Future<void> fetchOrdersWithStatus4() async {
-    _isLoading = true;
-    setRefreshingOrders(true);
-    notifyListeners();
+    setLoading(true);
 
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('authToken') ?? '';
@@ -140,42 +121,25 @@ class PickerProvider with ChangeNotifier {
       });
 
       if (response.statusCode == 200) {
-        final data = json.decode(response.body);
+        final res = json.decode(response.body);
 
-        log(data['data'].runtimeType.toString());
+        _picklists = (res['data'] as List).map((picklist) => Picklist.fromJson(picklist)).toList();
+        _totalPages = res['totalPages'] ?? 1;
+        _currentPage = res['currentPage'] ?? 1;
 
-        _extractedOrders = data['data'];
-        _totalPages = data['totalPages'] ?? 1;
-        _currentPage = data['currentPage'] ?? 1;
-        // log("_extractedOrders: $_extractedOrders");
-        log("${_extractedOrders.length}");
+        log("${_picklists.length}");
       } else {
-        // Handle non-success responses
-        _extractedOrders = [];
-        _totalPages = 1; // Reset total pages if there’s an error
+        _picklists = [];
+        _totalPages = 1;
       }
-    } catch (e) {
-      // Handle errors
-      log(e.toString());
-      _extractedOrders = [];
-      _totalPages = 1; // Reset total pages if there’s an error
+    } catch (e, s) {
+      log('picker error: $e $s');
+      _picklists = [];
+      _totalPages = 1;
     } finally {
-      _isLoading = false;
-      setRefreshingOrders(false);
+      setLoading(false);
       notifyListeners();
     }
-  }
-
-  void onSearchChanged(String query) {
-    if (_debounce?.isActive ?? false) _debounce!.cancel();
-    _debounce = Timer(const Duration(milliseconds: 500), () {
-      if (query.isEmpty) {
-        // If query is empty, reload all orders
-        fetchOrdersWithStatus4();
-      } else {
-        searchOrders(query); // Trigger the search after the debounce period
-      }
-    });
   }
 
   Future<List<Order>> searchOrders(String query) async {
@@ -206,28 +170,21 @@ class PickerProvider with ChangeNotifier {
         },
       );
 
-      print('Response status: ${response.statusCode}');
-
       if (response.statusCode == 200) {
         final jsonData = json.decode(response.body);
 
         List<Order> orders = [];
-        // print('Response data: $jsonData');
+
         if (jsonData != null) {
           orders.add(Order.fromJson(jsonData));
-          print('Response data: $jsonData');
-        } else {
-          print('No data found in response.');
-        }
+        } else {}
 
         _orders = orders;
-        print('Orders fetched: ${orders.length}');
       } else {
-        print('Failed to load orders: ${response.statusCode}');
         _orders = [];
       }
-    } catch (error) {
-      print('Error searching failed orders: $error');
+    } catch (error, s) {
+      log('Error occurred: $error $s');
       _orders = [];
     } finally {
       _isLoading = false;
@@ -245,7 +202,6 @@ class PickerProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  // Format date
   String formatDate(DateTime date) {
     String year = date.year.toString();
     String month = date.month.toString().padLeft(2, '0');
@@ -253,52 +209,12 @@ class PickerProvider with ChangeNotifier {
     return '$day-$month-$year';
   }
 
-  Future<void> fetchPicklist(BuildContext context, String date, String picklistId) async {
-    // _isLoading = true;
-    // notifyListeners();
-
-    final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString('authToken') ?? '';
-    String url = '${await Constants.getBaseUrl()}/order-picker/picklistCsv?date=$date&picklistId=$picklistId';
-
-    try {
-      final response = await http.post(
-        Uri.parse(url),
-        headers: {
-          'Authorization': 'Bearer $token',
-          'Content-Type': 'application/json',
-        },
-      );
-
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        final downloadUrl = data['downloadUrl'];
-
-        if (downloadUrl != null) {
-          final canLaunch = await canLaunchUrl(Uri.parse(downloadUrl));
-          if (canLaunch) {
-            await launchUrl(Uri.parse(downloadUrl));
-          } else {
-            log('Could not launch $downloadUrl');
-          }
-        } else {
-          log('No download URL found');
-          // throw Exception('No download URL found');
-        }
-      } else {
-        // Handle non-success responses
-      }
-    } catch (e) {
-      log('error aaya hai: $e');
-    }
-  }
-
-  Future<Map<String, dynamic>> generatePicklist(BuildContext context, String date, String selectedPicklist) async {
+  Future<Map<String, dynamic>> downloadPicklist(BuildContext context, String date, String selectedPicklist) async {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('authToken') ?? '';
     String url = '${await Constants.getBaseUrl()}/order-picker/picklistCsv?date=$date&picklistId=$selectedPicklist';
 
-    log('picklist url: $url'); // Use developer.log instead of Logger()
+    log('picklist url: $url');
 
     try {
       final response = await http.get(
@@ -311,7 +227,7 @@ class PickerProvider with ChangeNotifier {
 
       final data = json.decode(response.body);
       if (response.statusCode == 200) {
-        await generateAndDownloadPdf(data, selectedPicklist, date); // Call the PDF generation function
+        await generateAndDownloadPdf(data, selectedPicklist, date);
         return {'status': 'success', 'message': 'PDF downloaded successfully'};
       } else {
         log('Error: Status code ${response.statusCode}');
@@ -326,14 +242,11 @@ class PickerProvider with ChangeNotifier {
   Future<void> generateAndDownloadPdf(dynamic jsonData, String selectedPicklist, String date) async {
     final pdf = pw.Document();
 
-    // Define table headers based on the provided PDF structure
     final headers = ['Item Name', 'Quantity'];
 
-    // Parse JSON data
     Map<String, dynamic> data = jsonData is String ? jsonDecode(jsonData) : jsonData;
     List<dynamic> items = data['items'] ?? [];
 
-    // Prepare table rows and calculate total quantity
     int grandTotal = 0;
     List<List<String>> rows = items.map((item) {
       int qty = item['qty'] ?? 0;
@@ -387,11 +300,11 @@ class PickerProvider with ChangeNotifier {
                 color: PdfColors.black,
               ),
               cellAlignments: {
-                1: pw.Alignment.centerRight, // Quantity column right aligned
+                1: pw.Alignment.centerRight,
               },
               columnWidths: const {
-                0: pw.FlexColumnWidth(2.0), // Item Name wider
-                1: pw.FlexColumnWidth(0.2), // Quantity narrower
+                0: pw.FlexColumnWidth(2.0),
+                1: pw.FlexColumnWidth(0.2),
               },
               cellPadding: const pw.EdgeInsets.all(3),
             ),
@@ -411,10 +324,8 @@ class PickerProvider with ChangeNotifier {
       ),
     );
 
-    // Generate PDF as bytes
     final Uint8List pdfBytes = await pdf.save();
 
-    // Download the PDF in the browser
     final blob = html.Blob([pdfBytes]);
     final url = html.Url.createObjectUrlFromBlob(blob);
     final anchor = html.AnchorElement(href: url)

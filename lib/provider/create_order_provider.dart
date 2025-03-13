@@ -490,7 +490,7 @@ class CreateOrderProvider with ChangeNotifier {
     return prefs.getString('authToken');
   }
 
-  Future<void> saveOrder() async {
+  Future<String?> saveOrder() async {
     isSavingOrder = true;
     notifyListeners();
 
@@ -606,7 +606,7 @@ class CreateOrderProvider with ChangeNotifier {
       'notes': notesController.text, // Not required
     };
 
-    log('create order data: ${orderData}');
+    log('create order data: $orderData');
 
     try {
       final url = Uri.parse('${await Constants.getBaseUrl()}/orders');
@@ -620,15 +620,19 @@ class CreateOrderProvider with ChangeNotifier {
         body: json.encode(orderData),
       );
 
+      final res = json.decode(response.body);
+
       if (response.statusCode == 200 || response.statusCode == 201) {
-        Logger().i('Order saved successfully: ${response.body}');
+        Logger().i('Order saved successfully: $res}');
+        return res['message'];
       } else {
         Logger().e('Failed to save order: ${response.statusCode} - ${response.body}');
-        throw Exception('Failed to save order');
+        // throw Exception('Failed to save order');
+        return res['message'] ?? res['error'];
       }
     } catch (e) {
       Logger().e('Error saving order: $e');
-      // rethrow;
+      return 'Error saving order: $e';
     } finally {
       isSavingOrder = false;
       notifyListeners();

@@ -194,7 +194,7 @@ class OrdersProvider with ChangeNotifier {
     if (token == null || token.isEmpty) {
       setReadyLoading(true);
       setFailedLoading(true);
-      print('Token is missing. Please log in again.');
+      // print('Token is missing. Please log in again.');
       return;
     }
 
@@ -241,7 +241,7 @@ class OrdersProvider with ChangeNotifier {
     final token = await _getToken();
 
     if (token == null || token.isEmpty) {
-      print('Token is missing. Please log in again.');
+      // print('Token is missing. Please log in again.');
       return false;
     }
 
@@ -282,7 +282,7 @@ class OrdersProvider with ChangeNotifier {
     log("called");
 
     if (page < 1 || page > totalFailedPages) {
-      print('Invalid page number for failed orders: $page');
+      // print('Invalid page number for failed orders: $page');
       return;
     }
     setFailedLoading(true);
@@ -305,7 +305,7 @@ class OrdersProvider with ChangeNotifier {
 
     if (token == null || token.isEmpty) {
       setFailedLoading(false);
-      print('Token is missing. Please log in again.');
+      // print('Token is missing. Please log in again.');
       return;
     }
 
@@ -335,7 +335,7 @@ class OrdersProvider with ChangeNotifier {
         log('Failed to load failed orders: ${responseFailed.body}');
       }
     } catch (e) {
-      print('Error fetching failed orders: $e');
+      // print('Error fetching failed orders: $e');
     } finally {
       setFailedLoading(false);
     }
@@ -344,7 +344,7 @@ class OrdersProvider with ChangeNotifier {
   Future<void> fetchReadyOrders({int page = 1, DateTime? date, String? market}) async {
     log('fetchReadyOrders');
     if (page < 1 || page > totalReadyPages) {
-      print('Invalid page number for ready orders: $page');
+      // print('Invalid page number for ready orders: $page');
       return;
     }
     setReadyLoading(true);
@@ -369,7 +369,7 @@ class OrdersProvider with ChangeNotifier {
 
     if (token == null || token.isEmpty) {
       setReadyLoading(false);
-      print('Token is missing. Please log in again.');
+      // print('Token is missing. Please log in again.');
       return;
     }
 
@@ -426,8 +426,8 @@ class OrdersProvider with ChangeNotifier {
         body: body,
       );
 
-      print('Response status: ${response.statusCode}');
-      print('Response body: ${response.body}');
+      // print('Response status: ${response.statusCode}');
+      // print('Response body: ${response.body}');
 
       final responseData = json.decode(response.body);
 
@@ -530,8 +530,8 @@ class OrdersProvider with ChangeNotifier {
         body: body,
       );
 
-      print('Response status: ${response.statusCode}');
-      print('Response body: ${response.body}');
+      // print('Response status: ${response.statusCode}');
+      // print('Response body: ${response.body}');
 
       final responseData = json.decode(response.body);
 
@@ -577,7 +577,7 @@ class OrdersProvider with ChangeNotifier {
         body: body,
       );
 
-      print('Response status: ${response.statusCode}');
+      // print('Response status: ${response.statusCode}');
 
       final responseData = json.decode(response.body);
 
@@ -594,7 +594,7 @@ class OrdersProvider with ChangeNotifier {
     } catch (error) {
       setCancelStatus(false);
       notifyListeners();
-      print('Error during API request: $error');
+      // print('Error during API request: $error');
       return 'An error occurred: $error';
     }
   }
@@ -768,6 +768,8 @@ class OrdersProvider with ChangeNotifier {
     final token = await _getToken();
     if (token == null) return;
 
+    log('ready search url: $url');
+
     try {
       setReadyLoading(true);
 
@@ -818,11 +820,10 @@ class OrdersProvider with ChangeNotifier {
       );
 
       if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        print(response.body);
+        final res = jsonDecode(response.body);
 
-        _failedOrders = [Order.fromJson(data)];
-        print(response.body);
+        // _failedOrders = [Order.fromJson(res['orders'][0])];
+        _failedOrders = [Order.fromJson(res)];
       } else {
         _failedOrders = [];
       }
