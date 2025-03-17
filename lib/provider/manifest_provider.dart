@@ -16,7 +16,7 @@ class ManifestProvider with ChangeNotifier {
   List<bool> _selectedProducts = [];
   List<Order> _orders = [];
   List<Manifest> _manifests = [];
-  int _currentPage = 1; // Ensure this starts at 1
+  int _currentPage = 1;
   int _totalPages = 1;
   final PageController _pageController = PageController();
   final TextEditingController _textEditingController = TextEditingController();
@@ -75,19 +75,16 @@ class ManifestProvider with ChangeNotifier {
     setCancelStatus(true);
     notifyListeners();
 
-    // Headers for the API request
     final headers = {
       'Authorization': 'Bearer $token',
       'Content-Type': 'application/json',
     };
 
-    // Request body containing the order IDs
     final body = json.encode({
       'orderIds': orderIds,
     });
 
     try {
-      // Make the POST request to confirm the orders
       final response = await http.post(
         Uri.parse(cancelOrderUrl),
         headers: headers,
@@ -95,16 +92,14 @@ class ManifestProvider with ChangeNotifier {
       );
 
       print('Response status: ${response.statusCode}');
-      //print('Response body: ${response.body}');
 
       final responseData = json.decode(response.body);
 
       if (response.statusCode == 200) {
-        // After successful confirmation, fetch updated orders and notify listeners
-        await fetchOrdersWithStatus8(); // Assuming fetchOrders is a function that reloads the orders
-        // resetSelections(); // Clear selected order IDs
+        await fetchOrdersWithStatus8();
+
         setCancelStatus(false);
-        notifyListeners(); // Notify the UI to rebuild
+        notifyListeners();
 
         return responseData['message'] ?? 'Orders cancelled successfully';
       } else {
@@ -147,7 +142,6 @@ class ManifestProvider with ChangeNotifier {
       });
 
       log("Code: ${response.statusCode}");
-      // log("Body: ${response.body}");
 
       log('Fetching URL for  manifest orders :- $uri');
 
@@ -156,24 +150,20 @@ class ManifestProvider with ChangeNotifier {
 
         List<Order> orders = (data['orders'] as List).map((order) => Order.fromJson(order)).toList();
 
-        _totalPages = data['totalPages']; // Get total pages from response
-        _orders = orders; // Set the orders for the current page
+        _totalPages = data['totalPages'];
+        _orders = orders;
 
-        // Initialize selected products list
         _selectedProducts = List<bool>.filled(_orders.length, false);
 
-        // Print the total number of orders fetched from the current page
         print('Total Orders Fetched from Page $_currentPage: ${orders.length}');
       } else {
-        // Handle non-success responses
         _orders = [];
-        _totalPages = 1; // Reset total pages if there’s an error
+        _totalPages = 1;
       }
     } catch (e, s) {
-      // Handle errors
       log('error aaya hai: $e $s');
       _orders = [];
-      _totalPages = 1; // Reset total pages if there’s an error
+      _totalPages = 1;
     } finally {
       _isLoading = false;
       setRefreshingOrders(false);
@@ -200,32 +190,76 @@ class ManifestProvider with ChangeNotifier {
       });
 
       log("Code: ${response.statusCode}");
-      // log("Body: ${response.body}");
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
-        // debugPrint("data: $data");
 
         List<Manifest> manifests = (data['data']['manifest'] as List).map((manifest) => Manifest.fromJson(manifest)).toList();
 
         log('manifests hai" $manifests');
 
         _totalPages = data['data']['totalPages'];
-        _currentPage = data['data']['currentPage']; // Get total pages from response
-        _manifests = manifests; // Set the orders for the current page
-        // log(_totalPages.toString());
+        _currentPage = data['data']['currentPage'];
+        _manifests = manifests;
 
         log('Total Orders Fetched from Page $_currentPage: ${manifests.length}');
       } else {
-        // Handle non-success responses
         _manifests = [];
-        _totalPages = 1; // Reset total pages if there’s an error
+        _totalPages = 1;
       }
     } catch (e, s) {
       log("catch data $e $s");
-      // Handle errors
+
       _manifests = [];
-      _totalPages = 1; // Reset total pages if there’s an error
+      _totalPages = 1;
+    } finally {
+      _isLoading = false;
+      setRefreshingOrders(false);
+      notifyListeners();
+    }
+  }
+
+  Future<void> searchManifests(String query) async {
+    Logger().e('fetchCreatedManifests');
+    _isLoading = true;
+    setRefreshingOrders(true);
+    notifyListeners();
+
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('authToken') ?? '';
+    var url = '${await Constants.getBaseUrl()}/manifest?manifestId=$query';
+
+    Logger().e('url: $url');
+
+    try {
+      final response = await http.get(Uri.parse(url), headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      });
+
+      log("Code: ${response.statusCode}");
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+
+        List<Manifest> manifests = (data['data']['manifest'] as List).map((manifest) => Manifest.fromJson(manifest)).toList();
+
+        log('manifests hai" $manifests');
+
+        _totalPages = data['data']['totalPages'];
+        _currentPage = data['data']['currentPage'];
+        _manifests = manifests;
+
+        log('Total Orders Fetched from Page $_currentPage: ${manifests.length}');
+      } else {
+        _manifests = [];
+        _totalPages = 1;
+      }
+    } catch (e, s) {
+      log("catch data $e $s");
+
+      _manifests = [];
+      _totalPages = 1;
     } finally {
       _isLoading = false;
       setRefreshingOrders(false);
@@ -249,7 +283,8 @@ class ManifestProvider with ChangeNotifier {
       return;
     }
 
-    final selectedOrderIds = _orders.asMap().entries.where((entry) => _selectedProducts[entry.key]).map((entry) => entry.value.orderId).toList();
+    final selectedOrderIds =
+        _orders.asMap().entries.where((entry) => _selectedProducts[entry.key]).map((entry) => entry.value.orderId).toList();
 
     if (selectedOrderIds.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -322,11 +357,9 @@ class ManifestProvider with ChangeNotifier {
   void handleRowCheckboxChange(int index, bool isSelected) {
     _selectedProducts[index] = isSelected;
 
-    // If any individual checkbox is unchecked, deselect "Select All"
     if (!isSelected) {
       _selectAll = false;
     } else {
-      // If all boxes are checked, select "Select All"
       _selectAll = _selectedProducts.every((element) => element);
     }
 
@@ -344,12 +377,10 @@ class ManifestProvider with ChangeNotifier {
     final token = prefs.getString('authToken') ?? '';
     String baseUrl = await Constants.getBaseUrl();
 
-    // Build URL with base parameters
     String url = '$baseUrl/orders?orderStatus=8&bookingCourier=$courier&page=$page';
 
-    // Add date parameter if provided
     if (date != null) {
-      String formattedDate = DateFormat('yyyy-MM-dd').format(date!);
+      String formattedDate = DateFormat('yyyy-MM-dd').format(date);
       url += '&date=$formattedDate';
     }
 
@@ -370,23 +401,19 @@ class ManifestProvider with ChangeNotifier {
 
         log("orders: $orders");
 
-        _totalPages = data['totalPages']; // Get total pages from response
-        _orders = orders; // Set the orders for the current page
+        _totalPages = data['totalPages'];
+        _orders = orders;
 
-        // Initialize selected products list
         _selectedProducts = List<bool>.filled(_orders.length, false);
 
-        // Print the total number of orders fetched from the current page
         print('Total Orders Fetched from Page $_currentPage: ${orders.length}');
       } else {
-        // Handle non-success responses
         _orders = [];
-        _totalPages = 1; // Reset total pages if there’s an error
+        _totalPages = 1;
       }
     } catch (e) {
-      // Handle errors
       _orders = [];
-      _totalPages = 1; // Reset total pages if there’s an error
+      _totalPages = 1;
     } finally {
       _isLoading = false;
       setRefreshingOrders(false);
@@ -394,20 +421,17 @@ class ManifestProvider with ChangeNotifier {
     }
   }
 
-// Debounce function to avoid searching on every keystroke
   void onSearchChanged(String query) {
     if (_debounce?.isActive ?? false) _debounce!.cancel();
     _debounce = Timer(const Duration(milliseconds: 500), () {
       if (query.isEmpty) {
-        // If query is empty, reload all orders
         fetchOrdersWithStatus8();
       } else {
-        searchOrders(query); // Trigger the search after the debounce period
+        searchOrders(query);
       }
     });
   }
 
-// Method to search orders by order ID
   Future<List<Order>> searchOrders(String query) async {
     if (query.isEmpty) {
       await fetchOrdersWithStatus8();
@@ -467,12 +491,11 @@ class ManifestProvider with ChangeNotifier {
   void goToPage(int page) {
     if (page < 1 || page > _totalPages) return;
     _currentPage = page;
-    print('Current page set to: $_currentPage'); // Debugging line
+    print('Current page set to: $_currentPage');
     fetchOrdersWithStatus8();
     notifyListeners();
   }
 
-  // Format date
   String formatDate(DateTime date) {
     String year = date.year.toString();
     String month = date.month.toString().padLeft(2, '0');

@@ -195,7 +195,7 @@ class DashboardProvider with ChangeNotifier {
         "options": options, // Send as array
       };
 
-      log('percentage body: $body');
+      log('percentage payload: $body');
 
       final response = await http.post(
         Uri.parse(url),

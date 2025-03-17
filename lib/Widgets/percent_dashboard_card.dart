@@ -1,6 +1,8 @@
+import 'package:carousel_slider/carousel_slider.dart';
 import 'package:dropdown_search/dropdown_search.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:inventory_management/Widgets/status_details_page.dart';
 import 'package:inventory_management/provider/dashboard_provider.dart';
 import 'package:inventory_management/provider/marketplace_provider.dart';
 import 'package:provider/provider.dart';
@@ -30,30 +32,38 @@ class _PercentDashboardCardState extends State<PercentDashboardCard> {
   final Map<String, String> orderStatusMap = {
     "failed": "Failed",
     "confirmed": "Ready to Confirm",
-    "readyToInvoice": "Ready to Invoice",
-    "readyToBook": "Ready to Book",
-    "readyToPick": "Ready to Pick",
-    "readyToPack": "Ready to Pack",
-    "checkWeight": "Ready to Check",
-    "readyToRack": "Ready to Rack",
-    "readyToManifest": "Ready to Manifest",
+    "readytoinvoice": "Ready to Invoice",
+    "readytobook": "Ready to Book",
+    "readytopick": "Ready to Pick",
+    "readytopack": "Ready to Pack",
+    "checkweight": "Ready to Check",
+    "readytorack": "Ready to Rack",
+    "readytomanifest": "Ready to Manifest",
     "dispatch": "Dispatched",
     "cancelled": "Cancelled",
     "rto": "RTO",
     "merged": "Merged",
     "split": "Split",
-    "inTransit": "In-Transit",
+    "intransit": "In-Transit",
     "delivered": "Delivered",
-    "rto_inTransit": "RTO, In-Transit",
+    "rto_intransit": "RTO, In-Transit",
   };
 
   void _fetchData(BuildContext context) {
     if (startDate != null && endDate != null && selectedStatuses.isNotEmpty && selectedSource != null) {
       final dateRange = "${startDate!.toIso8601String().split('T')[0]},${endDate!.toIso8601String().split('T')[0]}";
+
+      final statusKeys = selectedStatuses.map((status) {
+        return orderStatusMap.keys.firstWhere(
+          (key) => orderStatusMap[key] == status,
+          orElse: () => status.toLowerCase(),
+        );
+      }).toList();
+
       Provider.of<DashboardProvider>(context, listen: false).fetchPercentageData(
         dateRange,
         selectedSource!,
-        selectedStatuses.map((status) => status.toLowerCase()).toList(),
+        statusKeys, // Pass the keys instead of the values
       );
       setState(() {
         currentStatusIndex = 0;
@@ -188,12 +198,18 @@ class _PercentDashboardCardState extends State<PercentDashboardCard> {
                               labelStyle: TextStyle(color: Colors.grey),
                             ),
                             hint: const Text('Select Marketplace', style: TextStyle(fontSize: 14)),
-                            items: pro.marketplaces.map((market) {
-                              return DropdownMenuItem<String>(
-                                value: market.name,
-                                child: Text(market.name, style: const TextStyle(fontSize: 14)),
-                              );
-                            }).toList(),
+                            items: [
+                              const DropdownMenuItem<String>(
+                                value: 'all',
+                                child: Text('All', style: TextStyle(fontSize: 14)),
+                              ),
+                              ...pro.marketplaces.map((market) {
+                                return DropdownMenuItem<String>(
+                                  value: market.name,
+                                  child: Text(market.name, style: const TextStyle(fontSize: 14)),
+                                );
+                              })
+                            ],
                             onChanged: (newValue) {
                               setDialogState(() {
                                 tempSource = newValue;
@@ -240,6 +256,19 @@ class _PercentDashboardCardState extends State<PercentDashboardCard> {
   }
 
   @override
+  void initState() {
+    startDate = DateTime.now().subtract(const Duration(days: 15));
+    endDate = DateTime.now();
+    selectedSource = 'all';
+    selectedStatuses = orderStatusMap.values.toList();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _fetchData(context);
+    });
+    // Optionally call _fetchData here if other required fields are also initialized
+    super.initState();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Consumer<DashboardProvider>(
       builder: (context, provider, child) {
@@ -259,218 +288,285 @@ class _PercentDashboardCardState extends State<PercentDashboardCard> {
         return SizedBox(
           width: widget.width,
           height: widget.height,
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 300),
-            padding: const EdgeInsets.all(12.0),
-            decoration: BoxDecoration(
-              color: AppColors.white,
-              borderRadius: BorderRadius.circular(12.0),
-              boxShadow: [
-                BoxShadow(
-                  color: AppColors.grey.withValues(alpha: 0.2),
-                  offset: const Offset(0, 4),
-                  spreadRadius: 0,
-                  blurRadius: 10,
+          child: InkWell(
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => StatusDetailsPage(
+                    startDate: startDate,
+                    endDate: endDate,
+                    selectedSource: selectedSource,
+                    selectedStatuses: selectedStatuses,
+                  ),
                 ),
-              ],
-              border: Border.all(
-                color: AppColors.grey.withValues(alpha: 0.1),
-                width: 1,
+              );
+            },
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 300),
+              padding: const EdgeInsets.all(12.0),
+              decoration: BoxDecoration(
+                color: AppColors.white,
+                borderRadius: BorderRadius.circular(12.0),
+                boxShadow: [
+                  BoxShadow(
+                    color: AppColors.grey.withValues(alpha: 0.2),
+                    offset: const Offset(0, 4),
+                    spreadRadius: 0,
+                    blurRadius: 10,
+                  ),
+                ],
+                border: Border.all(
+                  color: AppColors.grey.withValues(alpha: 0.1),
+                  width: 1,
+                ),
               ),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  // mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      'Status Report',
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    // mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Status Report',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.primaryBlue.withValues(alpha: 0.9),
+                          letterSpacing: -0.5,
+                        ),
+                      ),
+                      const Spacer(),
+                      if (startDate != null && endDate != null)
+                        RichText(
+                          text: TextSpan(
+                            text: DateFormat('dd-MM-yyyy').format(startDate!),
+                            children: [
+                              const TextSpan(
+                                text: ' | ',
+                                style: TextStyle(
+                                  color: Colors.black,
+                                ),
+                              ),
+                              TextSpan(
+                                text: DateFormat('dd-MM-yyyy').format(endDate!),
+                              ),
+                            ],
+                            style: TextStyle(
+                              color: Colors.grey.shade600,
+                              fontFamily: 'Poppins',
+                              fontWeight: FontWeight.normal,
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                  const SizedBox(height: 6),
+                  RichText(
+                    text: TextSpan(
+                      text: 'Total: ',
+                      children: [
+                        TextSpan(
+                          text: '${provider.isPercentLoading ? '...' : provider.totalOrders}',
+                          style: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.normal,
+                            color: Colors.black,
+                          ),
+                        ),
+                      ],
+                      style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.black, fontFamily: 'Poppins'),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  // Expanded(
+                  //   child: provider.isPercentLoading
+                  //       ? const Center(child: CircularProgressIndicator())
+                  //       : statusKeys.isNotEmpty
+                  //           ? Row(
+                  //               mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  //               children: [
+                  //                 IconButton(
+                  //                   tooltip: 'Previous Status',
+                  //                   icon: const Icon(Icons.arrow_left, size: 20),
+                  //                   padding: EdgeInsets.zero,
+                  //                   constraints: const BoxConstraints(),
+                  //                   onPressed: currentStatusIndex > 0 ? () => setState(() => currentStatusIndex--) : null,
+                  //                   color: currentStatusIndex > 0 ? AppColors.primaryBlue : Colors.grey,
+                  //                 ),
+                  //                 provider.isPercentLoading
+                  //                     ? const Center(child: CircularProgressIndicator())
+                  //                     : statusKeys.isNotEmpty
+                  //                         ? Container(
+                  //                             decoration: BoxDecoration(
+                  //                               borderRadius: BorderRadius.circular(8.0),
+                  //                             ),
+                  //                             child: Row(
+                  //                               mainAxisAlignment: MainAxisAlignment.center,
+                  //                               children: [
+                  //                                 Text(
+                  //                                   "${orderStatusMap[currentStatus] ?? currentStatus.toUpperCase()}: ",
+                  //                                   style: const TextStyle(
+                  //                                     fontSize: 20,
+                  //                                     fontWeight: FontWeight.w700,
+                  //                                     color: Colors.black,
+                  //                                   ),
+                  //                                   overflow: TextOverflow.ellipsis,
+                  //                                 ),
+                  //                                 const SizedBox(height: 4),
+                  //                                 Row(
+                  //                                   mainAxisAlignment: MainAxisAlignment.center,
+                  //                                   children: [
+                  //                                     Text(
+                  //                                       '$currentTotal',
+                  //                                       style: const TextStyle(
+                  //                                         fontSize: 18,
+                  //                                         color: Colors.black,
+                  //                                       ),
+                  //                                     ),
+                  //                                     const SizedBox(width: 6),
+                  //                                     Text(
+                  //                                       '(${parsedPercentage.toStringAsFixed(2)}%)',
+                  //                                       style: TextStyle(
+                  //                                         fontSize: 18,
+                  //                                         fontWeight: FontWeight.w500,
+                  //                                         color: changeColor,
+                  //                                       ),
+                  //                                     ),
+                  //                                   ],
+                  //                                 ),
+                  //                               ],
+                  //                             ),
+                  //                           )
+                  //                         : const Center(
+                  //                             child: Text(
+                  //                               'No Status Selected',
+                  //                               style: TextStyle(
+                  //                                 fontSize: 14,
+                  //                                 fontWeight: FontWeight.w500,
+                  //                                 color: Colors.grey,
+                  //                               ),
+                  //                             ),
+                  //                           ),
+                  //                 IconButton(
+                  //                   tooltip: 'Next Status',
+                  //                   icon: const Icon(Icons.arrow_right, size: 20),
+                  //                   padding: EdgeInsets.zero,
+                  //                   constraints: const BoxConstraints(),
+                  //                   onPressed:
+                  //                       currentStatusIndex < statusKeys.length - 1 ? () => setState(() => currentStatusIndex++) : null,
+                  //                   color: currentStatusIndex < statusKeys.length - 1 ? AppColors.primaryBlue : Colors.grey,
+                  //                 ),
+                  //               ],
+                  //             )
+                  //           : const Text(
+                  //               'Select Statuses to View',
+                  //               style: TextStyle(
+                  //                 fontSize: 14,
+                  //                 fontWeight: FontWeight.w500,
+                  //                 color: Colors.grey,
+                  //               ),
+                  //             ),
+                  // ),
+                  Expanded(
+                    child: provider.isPercentLoading
+                        ? Center(child: CircularProgressIndicator())
+                        : statusKeys.isNotEmpty
+                        ? CarouselSlider(
+                      options: CarouselOptions(
+                        height: widget.height * 0.6, // Adjust height as needed
+                        autoPlay: true,
+                        autoPlayInterval: Duration(seconds: 3),
+                        enlargeCenterPage: true,
+                        viewportFraction: 0.9,
+                      ),
+                      items: statusKeys.map((status) {
+                        int currentTotal = provider.statusTotals[status] ?? 0;
+                        String currentPercentage = provider.statusPercentages[status] ?? "0";
+                        double parsedPercentage = double.tryParse(currentPercentage) ?? 0;
+                        Color changeColor = parsedPercentage >= 0 ? Colors.green : Colors.red;
+
+                        return Container(
+                          margin: EdgeInsets.symmetric(horizontal: 5.0),
+                          decoration: BoxDecoration(
+                            color: AppColors.white,
+                            borderRadius: BorderRadius.circular(8.0),
+                            border: Border.all(color: AppColors.grey.withValues(alpha: 0.1)),
+                          ),
+                          child: Center(
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Text(
+                                  "${orderStatusMap[status] ?? status.toUpperCase()}: ",
+                                  style: TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.w700,
+                                    color: Colors.black,
+                                  ),
+                                ),
+                                Text(
+                                  '$currentTotal (${parsedPercentage.toStringAsFixed(2)}%)',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w500,
+                                    color: changeColor,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      }).toList(),
+                    )
+                        : Text(
+                      'Select Statuses to View',
                       style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.primaryBlue.withValues(alpha: 0.9),
-                        letterSpacing: -0.5,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                        color: Colors.grey,
                       ),
                     ),
-                    const Spacer(),
-                    if (startDate != null && endDate != null)
-                      RichText(
-                        text: TextSpan(
-                          text: DateFormat('dd-MM-yyyy').format(startDate!),
-                          children: [
-                            const TextSpan(
-                              text: ' | ',
-                              style: TextStyle(
-                                color: Colors.black,
-                              ),
+                  ),
+                  Divider(height: 8, color: AppColors.grey.withValues(alpha: 0.1)),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Flexible(
+                        child: Tooltip(
+                          message: selectedStatuses.isEmpty
+                              ? 'N/A'
+                              : selectedStatuses.length == 17
+                                  ? 'All Statuses'
+                                  : selectedStatuses.map((s) => s.toUpperCase()).join(', '),
+                          child: Text(
+                            selectedStatuses.isEmpty
+                                ? 'N/A'
+                                : selectedStatuses.length == 17
+                                    ? 'All Statuses'
+                                    : selectedStatuses.map((s) => s.toUpperCase()).join(', '),
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500,
+                              color: AppColors.grey.withValues(alpha: 0.8),
+                              overflow: TextOverflow.ellipsis,
                             ),
-                            TextSpan(
-                              text: DateFormat('dd-MM-yyyy').format(endDate!),
-                            ),
-                          ],
-                          style: TextStyle(
-                            color: Colors.grey.shade600,
-                            fontFamily: 'Poppins',
-                            fontWeight: FontWeight.normal,
                           ),
                         ),
                       ),
-                    // const SizedBox(width: 6),
-                    Tooltip(
-                      message: 'Set Filters',
-                      child: InkWell(
-                        child: const Icon(Icons.filter_alt_outlined, size: 20),
-                        onTap: () => _showSettingsDialog(context),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 6),
-                RichText(
-                  text: TextSpan(
-                    text: 'Total: ',
-                    children: [
-                      TextSpan(
-                        text: '${provider.isPercentLoading ? '...' : provider.totalOrders}',
-                        style: const TextStyle(
+                      const SizedBox(width: 6),
+                      Text(
+                        provider.isPercentLoading ? '...' : provider.marketplace,
+                        style: TextStyle(
                           fontSize: 12,
-                          fontWeight: FontWeight.normal,
-                          color: Colors.black,
+                          fontWeight: FontWeight.w500,
+                          color: Colors.grey.shade500,
                         ),
                       ),
                     ],
-                    style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.black, fontFamily: 'Poppins'),
                   ),
-                ),
-                const SizedBox(height: 8),
-                Expanded(
-                  child: provider.isPercentLoading
-                      ? const Center(child: CircularProgressIndicator())
-                      : statusKeys.isNotEmpty
-                          ? Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                IconButton(
-                                  tooltip: 'Previous Status',
-                                  icon: const Icon(Icons.arrow_left, size: 20),
-                                  padding: EdgeInsets.zero,
-                                  constraints: const BoxConstraints(),
-                                  onPressed: currentStatusIndex > 0 ? () => setState(() => currentStatusIndex--) : null,
-                                  color: currentStatusIndex > 0 ? AppColors.primaryBlue : Colors.grey,
-                                ),
-                                provider.isPercentLoading
-                                    ? const Center(child: CircularProgressIndicator())
-                                    : statusKeys.isNotEmpty
-                                        ? Container(
-                                            decoration: BoxDecoration(
-                                              borderRadius: BorderRadius.circular(8.0),
-                                            ),
-                                            child: Row(
-                                              mainAxisAlignment: MainAxisAlignment.center,
-                                              children: [
-                                                Text(
-                                                  "${orderStatusMap[currentStatus] ?? currentStatus.toUpperCase()}: ",
-                                                  style: const TextStyle(
-                                                    fontSize: 20,
-                                                    fontWeight: FontWeight.w700,
-                                                    color: Colors.black,
-                                                  ),
-                                                  overflow: TextOverflow.ellipsis,
-                                                ),
-                                                const SizedBox(height: 4),
-                                                Row(
-                                                  mainAxisAlignment: MainAxisAlignment.center,
-                                                  children: [
-                                                    Text(
-                                                      '$currentTotal',
-                                                      style: const TextStyle(
-                                                        fontSize: 18,
-                                                        color: Colors.black,
-                                                      ),
-                                                    ),
-                                                    const SizedBox(width: 6),
-                                                    Text(
-                                                      '(${parsedPercentage.toStringAsFixed(2)}%)',
-                                                      style: TextStyle(
-                                                        fontSize: 18,
-                                                        fontWeight: FontWeight.w500,
-                                                        color: changeColor,
-                                                      ),
-                                                    ),
-                                                  ],
-                                                ),
-                                              ],
-                                            ),
-                                          )
-                                        : const Center(
-                                            child: Text(
-                                              'No Status Selected',
-                                              style: TextStyle(
-                                                fontSize: 14,
-                                                fontWeight: FontWeight.w500,
-                                                color: Colors.grey,
-                                              ),
-                                            ),
-                                          ),
-                                IconButton(
-                                  tooltip: 'Next Status',
-                                  icon: const Icon(Icons.arrow_right, size: 20),
-                                  padding: EdgeInsets.zero,
-                                  constraints: const BoxConstraints(),
-                                  onPressed: currentStatusIndex < statusKeys.length - 1 ? () => setState(() => currentStatusIndex++) : null,
-                                  color: currentStatusIndex < statusKeys.length - 1 ? AppColors.primaryBlue : Colors.grey,
-                                ),
-                              ],
-                            )
-                          : const Text(
-                              'Select Statuses to View',
-                              style: TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w500,
-                                color: Colors.grey,
-                              ),
-                            ),
-                ),
-                // const SizedBox(height: 8),
-                Divider(height: 8, color: AppColors.grey.withValues(alpha: 0.1)),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Flexible(
-                      child: Tooltip(
-                        message: selectedStatuses.isEmpty
-                            ? 'N/A'
-                            : selectedStatuses.length == 17
-                                ? 'All'
-                                : selectedStatuses.map((s) => s.toUpperCase()).join(', '),
-                        child: Text(
-                          selectedStatuses.isEmpty
-                              ? 'N/A'
-                              : selectedStatuses.length == 17
-                                  ? 'All'
-                                  : selectedStatuses.map((s) => s.toUpperCase()).join(', '),
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w500,
-                            color: AppColors.grey.withValues(alpha: 0.8),
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 6),
-                    Text(
-                      provider.isPercentLoading ? '...' : provider.marketplace,
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w500,
-                        color: Colors.grey.shade500,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         );

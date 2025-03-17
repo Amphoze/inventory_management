@@ -33,7 +33,7 @@ class _CreateOrderPageState extends State<CreateOrderPage> {
   @override
   void dispose() {
     _scrollController.dispose();
-    Provider.of<CreateOrderProvider>(context, listen: false).disposeControllers();
+    // Provider.of<CreateOrderProvider>(context, listen: false).disposeControllers();
     super.dispose();
   }
 
@@ -44,12 +44,12 @@ class _CreateOrderPageState extends State<CreateOrderPage> {
     }
 
     if (_formKey.currentState!.validate()) {
-      final res = await provider.saveOrder();
-      try {
-        Utils.showSnackBar(context, res ?? '', color: Colors.green);
+      final result = await provider.saveOrder();
+      if (result['success'] == true) {
+        Utils.showSnackBar(context, result['response']?['message'] ?? 'Order Created Successfully', color: Colors.green);
         _formKey.currentState!.reset();
-      } catch (e) {
-        Utils.showSnackBar(context, res ?? 'Error: $e', color: Colors.red);
+      } else {
+        Utils.showSnackBar(context, result['response']?['error'] ?? "An error occurred", details: result['response']?['details'] ?? "Unknown error", color: Colors.red);
       }
     }
   }

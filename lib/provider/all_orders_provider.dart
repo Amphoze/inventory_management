@@ -350,7 +350,13 @@ class AllOrdersProvider with ChangeNotifier {
         final data = jsonDecode(response.body);
         Logger().e('this is order id: ${data['order_id']}');
 
-        _orders = [Order.fromJson(data)];
+        if(data['orders'] is List) {
+          _orders = (data['orders'] as List).map((order) => Order.fromJson(order)).toList();
+        } else {
+          _orders = [Order.fromJson(data)];
+        }
+
+        // _orders = [Order.fromJson(data)];
         notifyListeners();
       } else {
         _orders = [];
@@ -391,11 +397,11 @@ class AllOrdersProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  void goToPage(int page) {
+  void goToPage(int page, {DateTime? date, String? status, String? marketplace}) {
     if (page < 1 || page > totalPages) return;
     _currentPage = page;
     print('Current booked page set to: $_currentPage');
-    fetchAllOrders(page: _currentPage);
+    fetchAllOrders(page: _currentPage, date: date, status: status, marketplace: marketplace);
     notifyListeners();
   }
 

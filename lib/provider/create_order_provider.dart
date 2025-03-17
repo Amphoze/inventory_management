@@ -414,6 +414,7 @@ class CreateOrderProvider with ChangeNotifier {
   }
 
   Future<Product?> fetchProduct(String query) async {
+    log('fetchProduct called');
     final url = Uri.parse('${await Constants.getBaseUrl()}/products/search/$query');
     final token = await _getToken();
 
@@ -490,7 +491,7 @@ class CreateOrderProvider with ChangeNotifier {
     return prefs.getString('authToken');
   }
 
-  Future<String?> saveOrder() async {
+  Future<Map<String, dynamic>> saveOrder() async {
     isSavingOrder = true;
     notifyListeners();
 
@@ -622,17 +623,18 @@ class CreateOrderProvider with ChangeNotifier {
 
       final res = json.decode(response.body);
 
+      log('order create response: $res');
+
       if (response.statusCode == 200 || response.statusCode == 201) {
         Logger().i('Order saved successfully: $res}');
-        return res['message'];
+        return {"success": true, "response": res};
       } else {
         Logger().e('Failed to save order: ${response.statusCode} - ${response.body}');
-        // throw Exception('Failed to save order');
-        return res['message'] ?? res['error'];
+        return {"success": false, "response": res};
       }
     } catch (e) {
       Logger().e('Error saving order: $e');
-      return 'Error saving order: $e';
+      return {"success": false, "response": 'Error saving order: $e'};
     } finally {
       isSavingOrder = false;
       notifyListeners();

@@ -44,6 +44,7 @@ import 'package:inventory_management/orders_page.dart';
 import 'package:inventory_management/outbound_page.dart';
 import 'package:inventory_management/packer_page.dart';
 import 'package:inventory_management/picker_page.dart';
+import 'package:inventory_management/planning.dart';
 import 'package:inventory_management/product_master.dart';
 import 'package:inventory_management/product_upload.dart';
 import 'package:inventory_management/provider/dashboard_provider.dart';
@@ -69,6 +70,7 @@ import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'Custom-Files/colors.dart';
+import 'Custom-Files/switch_warehouse.dart';
 
 class DashboardPage extends StatefulWidget {
   final String warehouseId;
@@ -76,7 +78,6 @@ class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key, required this.warehouseId});
 
   @override
-  // ignore: library_private_types_in_public_api
   _DashboardPageState createState() => _DashboardPageState();
 }
 
@@ -86,7 +87,7 @@ class _DashboardPageState extends State<DashboardPage> {
   DateTime? lastUpdatedTime; // Make sure this is initialized properly in your actual code
   DateTime? previousDate;
   bool isCreateOrderPage = false;
-  String? selectedWarehouse;
+  // String? selectedWarehouse;
 
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   List<Map<String, String>> statuses = [];
@@ -96,7 +97,7 @@ class _DashboardPageState extends State<DashboardPage> {
   void initState() {
     super.initState();
     lastUpdatedTime = DateTime.now();
-    getWarehouse();
+    // getWarehouse();
     _fetchUserRole();
     _loadSelectedDrawerItem();
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -106,10 +107,10 @@ class _DashboardPageState extends State<DashboardPage> {
     });
   }
 
-  void getWarehouse() async {
-    selectedWarehouse = await context.read<AuthProvider>().getWarehouseName();
-    log('Warehouse ID: $selectedWarehouse');
-  }
+  // void getWarehouse() async {
+  //   selectedWarehouse = await context.read<AuthProvider>().getWarehouseName();
+  //   log('Warehouse ID: $selectedWarehouse');
+  // }
 
   String sanitizeEmail(String email) {
     return email.replaceAll(RegExp(r'[^a-zA-Z0-9_]'), '_');
@@ -282,53 +283,7 @@ class _DashboardPageState extends State<DashboardPage> {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.end,
                           children: [
-                            SizedBox(
-                              width: 200,
-                              child: Consumer<LocationProvider>(
-                                builder: (context, provider, _) {
-                                  return Tooltip(
-                                    message: 'Switch Warehouse',
-                                    child: InkWell(
-                                      onTap: () => _showWarehouseSelector(context, provider),
-                                      child: Container(
-                                        padding: const EdgeInsets.all(8),
-                                        decoration: BoxDecoration(
-                                          color: Colors.white,
-                                          borderRadius: BorderRadius.circular(8),
-                                          boxShadow: [
-                                            BoxShadow(
-                                              color: Colors.black.withValues(alpha: 0.05),
-                                              blurRadius: 4,
-                                              offset: const Offset(0, 2),
-                                            ),
-                                          ],
-                                          border: Border.all(color: Colors.grey.shade200),
-                                        ),
-                                        child: Row(
-                                          children: [
-                                            Expanded(
-                                              child: Text(
-                                                selectedWarehouse ?? 'Select Warehouse',
-                                                style: TextStyle(
-                                                  color: selectedWarehouse != null ? Colors.black87 : Colors.black54,
-                                                  fontWeight: selectedWarehouse != null ? FontWeight.w500 : FontWeight.normal,
-                                                ),
-                                                overflow: TextOverflow.ellipsis,
-                                              ),
-                                            ),
-                                            const Icon(
-                                              Icons.business,
-                                              size: 18,
-                                              color: Colors.black54,
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    ),
-                                  );
-                                },
-                              ),
-                            ),
+                            SwitchWarehouse(),
                           ],
                         ),
                         const SizedBox(height: 8),
@@ -1051,6 +1006,7 @@ class _DashboardPageState extends State<DashboardPage> {
           "Marketplace Master",
           "Warehouse Master",
           "Bin Master",
+          "Material Planning",
           "Label In-Out",
           "Transfer Order",
         ].contains(selectedDrawerItem)
@@ -1169,14 +1125,30 @@ class _DashboardPageState extends State<DashboardPage> {
           Padding(
             padding: const EdgeInsets.only(left: 10.0),
             child: _buildDrawerItem(
+              icon: Icons.inventory,
+              text: 'Material Planning',
+              isSelected: selectedDrawerItem == 'Material Planning',
+              onTap: () => isConfirmer == true || isAccounts == true || isBooker == true || isSuperAdmin == true || isAdmin == true
+                  ? _onDrawerItemTapped('Material Planning', isSmallScreen)
+                  : ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text("You are not authorized to view this page.")),
+                    ),
+              isIndented: true,
+              iconSize: 20,
+              fontSize: 14,
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.only(left: 10.0),
+            child: _buildDrawerItem(
               icon: Icons.label_important,
               text: 'Label In-Out',
               isSelected: selectedDrawerItem == 'Label In-Out',
               onTap: () => isConfirmer == true || isBooker == true || isSuperAdmin == true || isAdmin == true
                   ? _onDrawerItemTapped('Label In-Out', isSmallScreen)
                   : ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text("You are not authorized to view this page.")),
-              ),
+                      const SnackBar(content: Text("You are not authorized to view this page.")),
+                    ),
               isIndented: true,
               iconSize: 20,
               fontSize: 14,
@@ -1191,8 +1163,8 @@ class _DashboardPageState extends State<DashboardPage> {
               onTap: () => isConfirmer == true || isBooker == true || isSuperAdmin == true || isAdmin == true
                   ? _onDrawerItemTapped('Transfer Order', isSmallScreen)
                   : ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text("You are not authorized to view this page.")),
-              ),
+                      const SnackBar(content: Text("You are not authorized to view this page.")),
+                    ),
               isIndented: true,
               iconSize: 20,
               fontSize: 14,
@@ -1366,8 +1338,8 @@ class _DashboardPageState extends State<DashboardPage> {
               onTap: () => isConfirmer == true || isAccounts == true || isBooker == true || isSuperAdmin == true || isAdmin == true
                   ? _onDrawerItemTapped('Upload Marketplace SKU', isSmallScreen)
                   : ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text("You are not authorized to view this page.")),
-              ),
+                      const SnackBar(content: Text("You are not authorized to view this page.")),
+                    ),
               isIndented: true,
               iconSize: 20,
               fontSize: 14,
@@ -1618,8 +1590,10 @@ class _DashboardPageState extends State<DashboardPage> {
         return const LocationMaster();
       case 'Bin Master':
         return const BinMasterPage();
+      case 'Material Planning':
+        return const PlanningScreen();
       case 'Label In-Out':
-        return LabelFormPage();
+        return const LabelFormPage();
       case 'Transfer Order':
         return const TransferOrderPage();
       case 'Marketplace Master':
@@ -1697,53 +1671,6 @@ class _DashboardPageState extends State<DashboardPage> {
                       ),
                     ),
                   ),
-                  // SizedBox(
-                  //   width: 200,
-                  //   child: Consumer<LocationProvider>(
-                  //     builder: (context, provider, _) {
-                  //       return Tooltip(
-                  //         message: 'Switch Warehouse',
-                  //         child: InkWell(
-                  //           onTap: () => _showWarehouseSelector(context, provider),
-                  //           child: Container(
-                  //             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                  //             decoration: BoxDecoration(
-                  //               color: Colors.white,
-                  //               borderRadius: BorderRadius.circular(8),
-                  //               boxShadow: [
-                  //                 BoxShadow(
-                  //                   color: Colors.black.withValues(alpha: 0.05),
-                  //                   blurRadius: 4,
-                  //                   offset: const Offset(0, 2),
-                  //                 ),
-                  //               ],
-                  //               border: Border.all(color: Colors.grey.shade200),
-                  //             ),
-                  //             child: Row(
-                  //               children: [
-                  //                 Expanded(
-                  //                   child: Text(
-                  //                     selectedWarehouse ?? 'Select Warehouse',
-                  //                     style: TextStyle(
-                  //                       color: selectedWarehouse != null ? Colors.black87 : Colors.black54,
-                  //                       fontWeight: selectedWarehouse != null ? FontWeight.w500 : FontWeight.normal,
-                  //                     ),
-                  //                     overflow: TextOverflow.ellipsis,
-                  //                   ),
-                  //                 ),
-                  //                 const Icon(
-                  //                   Icons.business,
-                  //                   size: 18,
-                  //                   color: Colors.black54,
-                  //                 ),
-                  //               ],
-                  //             ),
-                  //           ),
-                  //         ),
-                  //       );
-                  //     },
-                  //   ),
-                  // ),
                   Padding(
                     padding: const EdgeInsets.all(8.0),
                     child: Container(
@@ -2104,117 +2031,5 @@ class _DashboardPageState extends State<DashboardPage> {
     });
     // Fetch today's data
     Provider.of<DashboardProvider>(context, listen: false).fetchAllData(formattedDate);
-  }
-
-  void _showWarehouseSelector(BuildContext context, LocationProvider provider) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-      ),
-      builder: (context) {
-        return Container(
-          padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
-          constraints: BoxConstraints(
-            maxHeight: MediaQuery.of(context).size.height * 0.7,
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  const Text(
-                    'Select Warehouse',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const Spacer(),
-                  IconButton(
-                    icon: const Icon(Icons.close),
-                    onPressed: () => Navigator.pop(context),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              Flexible(
-                child: ListView.builder(
-                  shrinkWrap: true,
-                  itemCount: provider.warehouses.length,
-                  itemBuilder: (context, index) {
-                    final warehouse = provider.warehouses[index];
-                    final isSelected = warehouse['name'] == selectedWarehouse;
-
-                    return InkWell(
-                      onTap: () async {
-                        Navigator.pop(context);
-                        setState(() {
-                          selectedWarehouse = warehouse['name'];
-                        });
-                        await provider.saveWarehouseData(
-                          context,
-                          warehouse['_id'] ?? '',
-                          warehouse['name'] ?? '',
-                          warehouse['isPrimary'] ?? false,
-                        );
-                        log('warehouse id: ${warehouse['_id']}');
-                      },
-                      child: Container(
-                        margin: const EdgeInsets.only(bottom: 8),
-                        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-                        decoration: BoxDecoration(
-                          color: isSelected ? Colors.blue.withValues(alpha: 0.1) : Colors.white,
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(
-                            color: isSelected ? Colors.blue : Colors.grey.shade200,
-                          ),
-                        ),
-                        child: Row(
-                          children: [
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    warehouse['name'] ?? '',
-                                    style: TextStyle(
-                                      fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-                                    ),
-                                  ),
-                                  if (warehouse['isPrimary'] ?? false)
-                                    const Padding(
-                                      padding: EdgeInsets.only(top: 4),
-                                      child: Text(
-                                        'Primary',
-                                        style: TextStyle(
-                                          fontSize: 12,
-                                          color: Colors.blue,
-                                        ),
-                                      ),
-                                    ),
-                                ],
-                              ),
-                            ),
-                            if (isSelected)
-                              const Icon(
-                                Icons.check_circle,
-                                color: Colors.blue,
-                                size: 20,
-                              ),
-                          ],
-                        ),
-                      ),
-                    );
-                  },
-                ),
-              ),
-            ],
-          ),
-        );
-      },
-    );
   }
 }

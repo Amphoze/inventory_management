@@ -20,6 +20,7 @@ class BaApproveProvider with ChangeNotifier {
   final PageController _pageController = PageController();
   final TextEditingController _textEditingController = TextEditingController();
   Timer? _debounce;
+  final TextEditingController searchController = TextEditingController();
 
   bool get selectAll => _selectAll;
 
@@ -164,6 +165,10 @@ class BaApproveProvider with ChangeNotifier {
   }
 
   Future<void> fetchOrdersWithStatus2({DateTime? date, String? market}) async {
+    if(searchController.text.trim().isNotEmpty) {
+      searchOrders(searchController.text.trim());
+      return;
+    }
     _isLoading = true;
     setRefreshingOrders(true);
     notifyListeners();

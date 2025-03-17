@@ -150,6 +150,8 @@ class LabelApi with ChangeNotifier {
   Future<Map<String, dynamic>> searchByLabel(String lbl) async {
     String baseUrl = await Constants.getBaseUrl();
     final url = Uri.parse('$baseUrl/label?labelSku=$lbl');
+
+    log('searchByLabel url: $url');
     try {
       final token = await AuthProvider().getToken();
       final response = await http.get(
@@ -161,6 +163,9 @@ class LabelApi with ChangeNotifier {
       );
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
+
+        log('searchByLabel data: $data');
+
         if (data.containsKey('data')) {
           // _labelInformation.clear();
           // print("heeelo ${_labelInformation.length}   ${_replication.length}");

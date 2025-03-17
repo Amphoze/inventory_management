@@ -13,7 +13,7 @@ class VersionController extends ChangeNotifier {
   /// 3. firebase deploy                                              ///
   /// 4. Change version in firebase to match this currentVersion.     ///
   ///////////////////////////////////////////////////////////////////////
-  String currentVersion = '6.6.5';
+  String currentVersion = '6.6.8';
   String? latestVersion = '';
 
   void setLatest(String value) {

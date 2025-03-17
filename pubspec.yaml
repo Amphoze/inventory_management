@@ -70,6 +70,9 @@ dependencies:
   flutter_html: ^3.0.0-beta.2
   country_code_picker: ^3.2.0
   email_validator: ^3.0.0
+  flutter_typeahead: ^5.2.0
+  web: ^1.1.1
+  carousel_slider: ^5.0.0
 #  fl_chart: ^0.70.2
 
 dev_dependencies:

@@ -185,27 +185,7 @@ class _HomeState extends State<Home> {
   void initState() {
     fetchAndSaveBaseUrl();
     getWarehouseId();
-    _injectSearchableText();
     super.initState();
-  }
-
-  void _injectSearchableText() {
-    // Check if already added to avoid duplication
-    if (html.document.getElementById('searchable-text') != null) return;
-
-    html.DivElement divElement = html.DivElement()
-      ..id = 'searchable-text'
-      ..style.display = 'block' // Make it visible to the browser
-      ..style.position = 'absolute' // Keeps it out of the way
-      ..style.left = '-9999px' // Moves it off-screen (invisible in UI)
-      ..innerHtml = '''
-        <p>Flutter Web now supports Ctrl + F search.</p>
-        <p>Try searching for "Flutter Web" using Ctrl + F.</p>
-        <p>This text is not visible in the UI but can be found.</p>
-      ''';
-
-    // Append the element to the HTML body
-    html.document.body?.append(divElement);
   }
 
   Future<String?> getWarehouseId() async {
@@ -216,8 +196,6 @@ class _HomeState extends State<Home> {
 
   @override
   Widget build(BuildContext context) {
-    // var prov=Provider.of<AuthProvider>(context,listen:true);
-
     return Consumer<AuthProvider>(
       builder: (context, authprovider, child) => FutureBuilder<String?>(
           future: authprovider.getToken(),

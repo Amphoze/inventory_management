@@ -270,7 +270,7 @@ class _OrderComboCardState extends State<OrderComboCard> {
                                         context: context,
                                         builder: (context) {
                                           return const AlertDialog(
-                                            content: Row(
+                                            title: Row(
                                               children: [
                                                 CircularProgressIndicator(),
                                                 SizedBox(width: 8),
@@ -850,7 +850,7 @@ class _OrderComboCardState extends State<OrderComboCard> {
                                               Navigator.pop(context);
                                               Navigator.pop(context);
 
-                                              res ? await pro.fetchAccountedOrders(pro.currentPageBooked) : null;
+                                              res ? await pro.fetchInvoicedOrders(pro.currentPageBooked) : null;
                                               res ? await pro.fetchOrdersWithStatus2() : null;
                                             },
                                             style: ElevatedButton.styleFrom(
@@ -917,217 +917,194 @@ class _OrderComboCardState extends State<OrderComboCard> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
-                Column(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text.rich(
-                      TextSpan(
-                        text: "Outbound: ",
-                        children: [
-                          TextSpan(
-                            text: "${widget.order.outBoundBy?['status'] ?? false}",
-                            style: const TextStyle(
-                              fontWeight: FontWeight.normal,
-                            ),
-                          ),
-                          (widget.order.outBoundBy?['outboundBy']?.toString().isNotEmpty ?? false)
-                              ? TextSpan(
-                                  text: "(${widget.order.outBoundBy?['outboundBy'].toString().split('@')[0] ?? ''})",
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.normal,
-                                  ),
-                                )
-                              : const TextSpan(),
-                        ],
-                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
-                      ),
-                    ),
-                    if (showBy(widget.order.confirmedBy?['status'] ?? false))
+                Expanded(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
                       Text.rich(
                         TextSpan(
-                            text: "Confirmed By: ",
-                            children: [
-                              TextSpan(
-                                  text: widget.order.confirmedBy!['confirmedBy']?.toString().split('@')[0] ?? '',
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.normal,
-                                  )),
-                              if (widget.order.confirmedBy!['timestamp'] != null)
-                                TextSpan(
-                                    text: ' (${formatIsoDate(widget.order.confirmedBy!['timestamp'])})' ?? '',
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.normal,
-                                    )),
-                            ],
-                            style: const TextStyle(
-                              fontWeight: FontWeight.bold,
-                            )),
-                      ),
-                    if (showBy(widget.order.baApprovedBy?['status'] ?? false))
-                      Text.rich(
-                        TextSpan(
-                            text: "BA Approved By: ",
-                            children: [
-                              TextSpan(
-                                  text: widget.order.baApprovedBy!['baApprovedBy']?.toString().split('@')[0] ?? '',
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.normal,
-                                  )),
-                              if (widget.order.baApprovedBy!['timestamp'] != null)
-                                TextSpan(
-                                    text: ' (${formatIsoDate(widget.order.baApprovedBy!['timestamp'])})' ?? '',
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.normal,
-                                    )),
-                            ],
-                            style: const TextStyle(
-                              fontWeight: FontWeight.bold,
-                            )),
-                      ),
-                    if (showBy(widget.order.checkInvoiceBy?['approved'] ?? false))
-                      Text.rich(
-                        TextSpan(
-                            text: "Invoiced By: ",
-                            children: [
-                              TextSpan(
-                                  text: widget.order.checkInvoiceBy!['invoiceBy']?.toString().split('@')[0] ?? '',
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.normal,
-                                  )),
-                              if (widget.order.checkInvoiceBy != null && widget.order.checkInvoiceBy?['timestamp'] != null)
-                                TextSpan(
-                                    text: ' (${formatIsoDate(widget.order.checkInvoiceBy!['timestamp'])})' ?? '',
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.normal,
-                                    )),
-                            ],
-                            style: const TextStyle(
-                              fontWeight: FontWeight.bold,
-                            )),
-                      ),
-                    if (showBy(widget.order.bookedBy?['status'] ?? false))
-                      Text.rich(
-                        TextSpan(
-                            text: "Booked By: ",
-                            children: [
-                              TextSpan(
-                                  text: widget.order.bookedBy!['bookedBy']?.toString().split('@')[0] ?? '',
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.normal,
-                                  )),
-                              if (widget.order.bookedBy!['timestamp'] != null)
-                                TextSpan(
-                                    text: ' (${formatIsoDate(widget.order.bookedBy!['timestamp'])})' ?? '',
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.normal,
-                                    )),
-                            ],
-                            style: const TextStyle(
-                              fontWeight: FontWeight.bold,
-                            )),
-                      ),
-                    if (showBy(widget.order.pickedBy?['status'] ?? false))
-                      Text.rich(
-                        TextSpan(
-                            text: "Picked By: ",
-                            children: [
-                              TextSpan(
-                                  text: widget.order.pickedBy!['pickedBy']?.toString().split('@')[0] ?? '',
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.normal,
-                                  )),
-                              if (widget.order.pickedBy!['timestamp'] != null)
-                                TextSpan(
-                                    text: ' (${formatIsoDate(widget.order.pickedBy!['timestamp'])})' ?? '',
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.normal,
-                                    )),
-                            ],
-                            style: const TextStyle(
-                              fontWeight: FontWeight.bold,
-                            )),
-                      ),
-                    if (showBy(widget.order.packedBy?['status'] ?? false))
-                      Text.rich(
-                        TextSpan(
-                            text: "Packed By: ",
-                            children: [
-                              TextSpan(
-                                  text: widget.order.packedBy!['packedBy']?.toString().split('@')[0] ?? '',
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.normal,
-                                  )),
-                              if (widget.order.packedBy!['timestamp'] != null)
-                                TextSpan(
-                                    text: ' (${formatIsoDate(widget.order.packedBy!['timestamp'])})' ?? '',
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.normal,
-                                    )),
-                            ],
-                            style: const TextStyle(
-                              fontWeight: FontWeight.bold,
-                            )),
-                      ),
-                    if (showBy(widget.order.checkedBy?['approved'] ?? false))
-                      Text.rich(
-                        TextSpan(
-                            text: "Checked By: ",
-                            children: [
-                              TextSpan(
-                                  text: widget.order.checkedBy!['checkedBy']?.toString().split('@')[0] ?? '',
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.normal,
-                                  )),
-                              if (widget.order.checkedBy!['timestamp'] != null)
-                                TextSpan(
-                                    text: ' (${formatIsoDate(widget.order.checkedBy!['timestamp'])})' ?? '',
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.normal,
-                                    )),
-                            ],
-                            style: const TextStyle(
-                              fontWeight: FontWeight.bold,
-                            )),
-                      ),
-                    if (showBy((widget.order.rackedBy?['approved'] ?? false)))
-                      Text.rich(
-                        TextSpan(
-                          text: "Racked By: ",
+                          text: "Outbound: ",
                           children: [
                             TextSpan(
-                              text: widget.order.rackedBy!['rackedBy']?.toString().split('@')[0] ?? '',
+                              text: "${widget.order.outBoundBy?['status'] ?? false}",
                               style: const TextStyle(
                                 fontWeight: FontWeight.normal,
                               ),
                             ),
-                            if (widget.order.rackedBy!['timestamp'] != null)
-                              TextSpan(
-                                text: ' (${formatIsoDate(widget.order.rackedBy!['timestamp'])})' ?? '',
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.normal,
-                                ),
-                              ),
+                            (widget.order.outBoundBy?['outboundBy']?.toString().isNotEmpty ?? false)
+                                ? TextSpan(
+                                    text: "(${widget.order.outBoundBy?['outboundBy'].toString().split('@')[0] ?? ''})",
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.normal,
+                                    ),
+                                  )
+                                : const TextSpan(),
                           ],
-                          style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                          ),
+                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15, overflow: TextOverflow.ellipsis),
                         ),
                       ),
-                    if (showBy(widget.order.manifestedBy?['approved'] ?? false))
-                      Text.rich(
-                        TextSpan(
-                            text: "Manifested By: ",
+                      if (showBy(widget.order.confirmedBy?['status'] ?? false))
+                        Text.rich(
+                          TextSpan(
+                              text: "Confirmed By: ",
+                              children: [
+                                TextSpan(
+                                    text: widget.order.confirmedBy!['confirmedBy']?.toString().split('@')[0] ?? '',
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.normal,
+                                    )),
+                                if (widget.order.confirmedBy!['timestamp'] != null)
+                                  TextSpan(
+                                      text: ' (${formatIsoDate(widget.order.confirmedBy!['timestamp'])})' ?? '',
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.normal,
+                                      )),
+                              ],
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                              )),
+                        ),
+                      if (showBy(widget.order.baApprovedBy?['status'] ?? false))
+                        Text.rich(
+                          TextSpan(
+                              text: "BA Approved By: ",
+                              children: [
+                                TextSpan(
+                                    text: widget.order.baApprovedBy!['baApprovedBy']?.toString().split('@')[0] ?? '',
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.normal,
+                                    )),
+                                if (widget.order.baApprovedBy!['timestamp'] != null)
+                                  TextSpan(
+                                      text: ' (${formatIsoDate(widget.order.baApprovedBy!['timestamp'])})' ?? '',
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.normal,
+                                      )),
+                              ],
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                              )),
+                        ),
+                      if (showBy(widget.order.checkInvoiceBy?['approved'] ?? false))
+                        Text.rich(
+                          TextSpan(
+                              text: "Invoiced By: ",
+                              children: [
+                                TextSpan(
+                                    text: widget.order.checkInvoiceBy!['invoiceBy']?.toString().split('@')[0] ?? '',
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.normal,
+                                    )),
+                                if (widget.order.checkInvoiceBy != null && widget.order.checkInvoiceBy?['timestamp'] != null)
+                                  TextSpan(
+                                      text: ' (${formatIsoDate(widget.order.checkInvoiceBy!['timestamp'])})' ?? '',
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.normal,
+                                      )),
+                              ],
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                              )),
+                        ),
+                      if (showBy(widget.order.bookedBy?['status'] ?? false))
+                        Text.rich(
+                          TextSpan(
+                              text: "Booked By: ",
+                              children: [
+                                TextSpan(
+                                    text: widget.order.bookedBy!['bookedBy']?.toString().split('@')[0] ?? '',
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.normal,
+                                    )),
+                                if (widget.order.bookedBy!['timestamp'] != null)
+                                  TextSpan(
+                                      text: ' (${formatIsoDate(widget.order.bookedBy!['timestamp'])})' ?? '',
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.normal,
+                                      )),
+                              ],
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                              )),
+                        ),
+                      if (showBy(widget.order.pickedBy?['status'] ?? false))
+                        Text.rich(
+                          TextSpan(
+                              text: "Picked By: ",
+                              children: [
+                                TextSpan(
+                                    text: widget.order.pickedBy!['pickedBy']?.toString().split('@')[0] ?? '',
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.normal,
+                                    )),
+                                if (widget.order.pickedBy!['timestamp'] != null)
+                                  TextSpan(
+                                      text: ' (${formatIsoDate(widget.order.pickedBy!['timestamp'])})' ?? '',
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.normal,
+                                      )),
+                              ],
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                              )),
+                        ),
+                      if (showBy(widget.order.packedBy?['status'] ?? false))
+                        Text.rich(
+                          TextSpan(
+                              text: "Packed By: ",
+                              children: [
+                                TextSpan(
+                                    text: widget.order.packedBy!['packedBy']?.toString().split('@')[0] ?? '',
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.normal,
+                                    )),
+                                if (widget.order.packedBy!['timestamp'] != null)
+                                  TextSpan(
+                                      text: ' (${formatIsoDate(widget.order.packedBy!['timestamp'])})' ?? '',
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.normal,
+                                      )),
+                              ],
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                              )),
+                        ),
+                      if (showBy(widget.order.checkedBy?['approved'] ?? false))
+                        Text.rich(
+                          TextSpan(
+                              text: "Checked By: ",
+                              children: [
+                                TextSpan(
+                                    text: widget.order.checkedBy!['checkedBy']?.toString().split('@')[0] ?? '',
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.normal,
+                                    )),
+                                if (widget.order.checkedBy!['timestamp'] != null)
+                                  TextSpan(
+                                      text: ' (${formatIsoDate(widget.order.checkedBy!['timestamp'])})' ?? '',
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.normal,
+                                      )),
+                              ],
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                              )),
+                        ),
+                      if (showBy((widget.order.rackedBy?['approved'] ?? false)))
+                        Text.rich(
+                          TextSpan(
+                            text: "Racked By: ",
                             children: [
                               TextSpan(
-                                text: widget.order.manifestedBy!['manifestBy']?.toString().split('@')[0] ?? '',
+                                text: widget.order.rackedBy!['rackedBy']?.toString().split('@')[0] ?? '',
                                 style: const TextStyle(
                                   fontWeight: FontWeight.normal,
                                 ),
                               ),
-                              if (widget.order.manifestedBy!['timestamp'] != null)
+                              if (widget.order.rackedBy!['timestamp'] != null)
                                 TextSpan(
-                                  text: ' (${formatIsoDate(widget.order.manifestedBy!['timestamp'])})' ?? '',
+                                  text: ' (${formatIsoDate(widget.order.rackedBy!['timestamp'])})' ?? '',
                                   style: const TextStyle(
                                     fontWeight: FontWeight.normal,
                                   ),
@@ -1135,27 +1112,52 @@ class _OrderComboCardState extends State<OrderComboCard> {
                             ],
                             style: const TextStyle(
                               fontWeight: FontWeight.bold,
-                            )),
-                      ),
-                  ],
+                            ),
+                          ),
+                        ),
+                      if (showBy(widget.order.manifestedBy?['approved'] ?? false))
+                        Text.rich(
+                          TextSpan(
+                              text: "Manifested By: ",
+                              children: [
+                                TextSpan(
+                                  text: widget.order.manifestedBy!['manifestBy']?.toString().split('@')[0] ?? '',
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.normal,
+                                  ),
+                                ),
+                                if (widget.order.manifestedBy!['timestamp'] != null)
+                                  TextSpan(
+                                    text: ' (${formatIsoDate(widget.order.manifestedBy!['timestamp'])})' ?? '',
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.normal,
+                                    ),
+                                  ),
+                              ],
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                              )),
+                        ),
+                    ],
+                  ),
                 ),
-                Text.rich(
-                  TextSpan(
-                      text: "Updated on: ",
-                      children: [
-                        TextSpan(
-                            text: widget.order.updatedAt != null
-                                ? DateFormat('yyyy-MM-dd, hh:mm a').format(
-                                    DateTime.parse("${widget.order.updatedAt}"),
-                                  )
-                                : '',
-                            style: const TextStyle(
-                              fontWeight: FontWeight.normal,
-                            )),
-                      ],
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                      )),
+                Expanded(
+                  child: Text.rich(
+                    TextSpan(
+                        text: "Updated on: ",
+                        children: [
+                          TextSpan(
+                              text: widget.order.updatedAt != null
+                                  ? DateFormat('yyyy-MM-dd, hh:mm a').format(
+                                      DateTime.parse("${widget.order.updatedAt}"),
+                                    )
+                                  : '',
+                              style: const TextStyle(
+                                fontWeight: FontWeight.normal,
+                              )),
+                        ],
+                        style: const TextStyle(fontWeight: FontWeight.bold, overflow: TextOverflow.ellipsis)),
+                  ),
                 ),
               ],
             ),

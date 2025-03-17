@@ -31,29 +31,29 @@ class TransferOrderProvider with ChangeNotifier {
 
   // Controllers for all fields
   // late TextEditingController orderIdController;
-  late TextEditingController paymentModeController;
-  late TextEditingController currencyCodeController;
-  late TextEditingController coinController; // Not required
-  late TextEditingController codAmountController;
-  late TextEditingController prepaidAmountController;
-  late TextEditingController discountCodeController; // Not required
-  late TextEditingController discountPercentController;
-  late TextEditingController discountAmountController;
-  late TextEditingController taxPercentController; // Not required
+  // late TextEditingController paymentModeController;
+  // late TextEditingController currencyCodeController;
+  // late TextEditingController codAmountController;
+  // late TextEditingController prepaidAmountController;
+  // late TextEditingController coinController; // Not required
+  // late TextEditingController discountCodeController; // Not required
+  // late TextEditingController discountPercentController;
+  // late TextEditingController discountAmountController;
+  // late TextEditingController taxPercentController; // Not required
   late TextEditingController marketplaceController;
   late TextEditingController totalQuantityController;
-  late TextEditingController agentController; // Not required
+  // late TextEditingController agentController; // Not required
   late TextEditingController notesController; // Not required
   late TextEditingController totalAmtController; // Not required
 
-  late TextEditingController customerFirstNameController;
-  late TextEditingController customerLastNameController;
-  late TextEditingController customerEmailController; // Not required
+  // late TextEditingController customerFirstNameController;
+  // late TextEditingController customerLastNameController;
+  // late TextEditingController customerEmailController; // Not required
   late TextEditingController customerPhoneController;
 
-  late TextEditingController billingFirstNameController;
-  late TextEditingController billingLastNameController;
-  late TextEditingController billingEmailController; // Not required
+  // late TextEditingController billingFirstNameController;
+  // late TextEditingController billingLastNameController;
+  // late TextEditingController billingEmailController; // Not required
   late TextEditingController billingAddress1Controller; // Not required
   late TextEditingController billingAddress2Controller; // Not required
   late TextEditingController billingPhoneController;
@@ -61,11 +61,11 @@ class TransferOrderProvider with ChangeNotifier {
   late TextEditingController billingPincodeController;
   late TextEditingController billingStateController;
   late TextEditingController billingCountryController;
-  late TextEditingController billingCountryCodeController;
+  // late TextEditingController billingCountryCodeController;
 
-  late TextEditingController shippingFirstNameController;
-  late TextEditingController shippingLastNameController;
-  late TextEditingController shippingEmailController;
+  // late TextEditingController shippingFirstNameController;
+  // late TextEditingController shippingLastNameController;
+  // late TextEditingController shippingEmailController;
   late TextEditingController shippingAddress1Controller; // Not required
   late TextEditingController shippingAddress2Controller; // Not required
   late TextEditingController shippingPhoneController;
@@ -73,7 +73,7 @@ class TransferOrderProvider with ChangeNotifier {
   late TextEditingController shippingPincodeController;
   late TextEditingController shippingStateController;
   late TextEditingController shippingCountryController;
-  late TextEditingController shippingCountryCodeController;
+  // late TextEditingController shippingCountryCodeController;
 
   final List<TextEditingController> addedProductQuantityControllers = [];
   final List<TextEditingController> addedProductRateControllers = [];
@@ -87,29 +87,27 @@ class TransferOrderProvider with ChangeNotifier {
 
   void initializeControllers() {
     // orderIdController = TextEditingController();
-    paymentModeController = TextEditingController();
-    currencyCodeController = TextEditingController(text: 'INR');
-    coinController = TextEditingController(); // Not required
-    codAmountController = TextEditingController(text: '0.00');
-    prepaidAmountController = TextEditingController();
-    discountCodeController = TextEditingController(); // Not required
-    discountPercentController = TextEditingController(text: '0');
-    discountAmountController = TextEditingController(text: '0.00');
-    taxPercentController = TextEditingController();
+    // paymentModeController = TextEditingController();
+    // currencyCodeController = TextEditingController(text: 'INR');
+    // coinController = TextEditingController(); // Not required
+    // codAmountController = TextEditingController(text: '0.00');
+    // prepaidAmountController = TextEditingController();
+    // discountCodeController = TextEditingController(); // Not required
+    // discountPercentController = TextEditingController(text: '0');
+    // discountAmountController = TextEditingController(text: '0.00');
+    // taxPercentController = TextEditingController();
     marketplaceController = TextEditingController();
     totalQuantityController = TextEditingController();
-    agentController = TextEditingController(); // Not required
+    // agentController = TextEditingController(); // Not required
     notesController = TextEditingController(); // Not required
     totalAmtController = TextEditingController(text: '0.00');
 
-    customerFirstNameController = TextEditingController();
-    customerLastNameController = TextEditingController();
-    customerEmailController = TextEditingController(); // Not required
+    // customerFirstNameController = TextEditingController();
+    // customerLastNameController = TextEditingController();
+    // customerEmailController = TextEditingController(); // Not required
     customerPhoneController = TextEditingController();
 
-    billingFirstNameController = TextEditingController();
-    billingLastNameController = TextEditingController();
-    billingEmailController = TextEditingController(); // Not required
+    // billingEmailController = TextEditingController(); // Not required
     billingAddress1Controller = TextEditingController(); // Not required
     billingAddress2Controller = TextEditingController(); // Not required
     billingPhoneController = TextEditingController();
@@ -117,11 +115,7 @@ class TransferOrderProvider with ChangeNotifier {
     billingPincodeController = TextEditingController();
     billingStateController = TextEditingController();
     billingCountryController = TextEditingController();
-    billingCountryCodeController = TextEditingController(text: 'IN');
 
-    shippingFirstNameController = TextEditingController();
-    shippingLastNameController = TextEditingController();
-    shippingEmailController = TextEditingController();
     shippingAddress1Controller = TextEditingController(); // Not required
     shippingAddress2Controller = TextEditingController(); // Not required
     shippingPhoneController = TextEditingController();
@@ -129,7 +123,6 @@ class TransferOrderProvider with ChangeNotifier {
     shippingPincodeController = TextEditingController();
     shippingStateController = TextEditingController();
     shippingCountryController = TextEditingController();
-    shippingCountryCodeController = TextEditingController(text: 'IN');
 
     _updateItemControllers();
   }
@@ -161,29 +154,29 @@ class TransferOrderProvider with ChangeNotifier {
 
   void disposeControllers() {
     // orderIdController.dispose();
-    paymentModeController.dispose();
-    currencyCodeController.dispose();
-    coinController.dispose();
-    codAmountController.dispose();
-    prepaidAmountController.dispose();
-    discountCodeController.dispose();
-    discountPercentController.dispose();
-    discountAmountController.dispose();
-    taxPercentController.dispose();
+    // paymentModeController.dispose();
+    // currencyCodeController.dispose();
+    // coinController.dispose();
+    // codAmountController.dispose();
+    // prepaidAmountController.dispose();
+    // discountCodeController.dispose();
+    // discountPercentController.dispose();
+    // discountAmountController.dispose();
+    // taxPercentController.dispose();
     marketplaceController.dispose();
     totalQuantityController.dispose();
 
-    agentController.dispose();
+    // agentController.dispose();
     notesController.dispose();
 
-    customerFirstNameController.dispose();
-    customerLastNameController.dispose();
-    customerEmailController.dispose();
+    // customerFirstNameController.dispose();
+    // customerLastNameController.dispose();
+    // customerEmailController.dispose();
     customerPhoneController.dispose();
 
-    billingFirstNameController.dispose();
-    billingLastNameController.dispose();
-    billingEmailController.dispose();
+    // billingFirstNameController.dispose();
+    // billingLastNameController.dispose();
+    // billingEmailController.dispose();
     billingAddress1Controller.dispose();
     billingAddress2Controller.dispose();
     billingPhoneController.dispose();
@@ -191,11 +184,11 @@ class TransferOrderProvider with ChangeNotifier {
     billingPincodeController.dispose();
     billingStateController.dispose();
     billingCountryController.dispose();
-    billingCountryCodeController.dispose();
+    // billingCountryCodeController.dispose();
 
-    shippingFirstNameController.dispose();
-    shippingLastNameController.dispose();
-    shippingEmailController.dispose();
+    // shippingFirstNameController.dispose();
+    // shippingLastNameController.dispose();
+    // shippingEmailController.dispose();
     shippingAddress1Controller.dispose();
     shippingAddress2Controller.dispose();
     shippingPhoneController.dispose();
@@ -203,7 +196,7 @@ class TransferOrderProvider with ChangeNotifier {
     shippingPincodeController.dispose();
     shippingStateController.dispose();
     shippingCountryController.dispose();
-    shippingCountryCodeController.dispose();
+    // shippingCountryCodeController.dispose();
 
     for (var controller in addedProductQuantityControllers) controller.dispose();
     for (var controller in addedProductRateControllers) controller.dispose();
@@ -261,15 +254,53 @@ class TransferOrderProvider with ChangeNotifier {
     selectedFromWarehouse = value;
     notifyListeners();
   }
-  void selectToWarehouse(String? value) {
+
+  void selectToWarehouse(String? value, String? id) async {
     selectedToWarehouse = value;
+
+    log('selectedToWarehouse: $selectedToWarehouse');
+    log('selectedToWarehouse id: $id');
+
+    if (id != null) {
+      final warehouseDetails = await fetchWarehouseDetails(id);
+      log('warehouseDetails: $warehouseDetails');
+
+      if (warehouseDetails != null) {
+        final shippingAddress = warehouseDetails['location']?['shippingAddress'];
+        log('shippingAddress: $shippingAddress');
+
+        if (shippingAddress != null) {
+          final phoneNumber = shippingAddress['phoneNumber'];
+          final zipCode = shippingAddress['zipCode'];
+          shippingPhoneController.text = phoneNumber?.toString() ?? '';
+          shippingCityController.text = shippingAddress['city'] as String? ?? '';
+          shippingPincodeController.text = zipCode?.toString() ?? '';
+          shippingStateController.text = shippingAddress['state'] as String? ?? '';
+          shippingCountryController.text = shippingAddress['country'] as String? ?? '';
+        }
+      }
+    }
     notifyListeners();
   }
 
-  void selectPayment(String? value) {
-    selectedPayment = value;
-    paymentModeController.text = value ?? '';
-    notifyListeners();
+  Future<Map<String, dynamic>?> fetchWarehouseDetails(String warehouseId) async {
+    final url = Uri.parse('${await Constants.getBaseUrl()}/warehouse/$warehouseId');
+    final token = await _getToken();
+
+    try {
+      final response = await http.get(url, headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      });
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        return data; // Return the warehouse details
+      }
+    } catch (e) {
+      Logger().e('Error fetching warehouse details: $e');
+    }
+    return null; // Return null if there's an error or no warehouse found
   }
 
   Future<void> addProduct(Map<String, String> selected) async {
@@ -300,7 +331,6 @@ class TransferOrderProvider with ChangeNotifier {
       final rate = double.parse(addedProductRateControllers[index].text);
       addedProductList.removeAt(index);
       totalAmtController.text = (double.parse(totalAmtController.text) - (rate * qty)).toStringAsFixed(2);
-      codAmountController.text = totalAmtController.text;
       addedProductQuantityControllers.removeAt(index);
       addedProductRateControllers.removeAt(index);
       _productsFuture = fetchAllProducts(addedProductList);
@@ -326,10 +356,7 @@ class TransferOrderProvider with ChangeNotifier {
     addedComboQuantityControllers.add(TextEditingController(text: '1'));
     addedComboRateControllers.add(TextEditingController(text: fetchedCombo.comboAmount ?? '0'));
     if (fetchedCombo.comboAmount != null && fetchedCombo.comboAmount != '0') {
-      totalAmtController.text = (double.parse(totalAmtController.text) +
-              (100 - double.parse(discountPercentController.text)) * (double.parse(fetchedCombo.comboAmount!) ?? 0))
-          .toStringAsFixed(2);
-      codAmountController.text = totalAmtController.text;
+      totalAmtController.text = (double.parse(totalAmtController.text) + double.parse(fetchedCombo.comboAmount!)).toStringAsFixed(2);
     }
     _combosFuture = fetchAllCombos(addedComboList);
     setTotalQuantity();
@@ -343,7 +370,6 @@ class TransferOrderProvider with ChangeNotifier {
       final rate = double.parse(addedComboRateControllers[index].text);
       addedComboList.removeAt(index);
       totalAmtController.text = (double.parse(totalAmtController.text) - (rate * qty)).toStringAsFixed(2);
-      codAmountController.text = totalAmtController.text;
       addedComboQuantityControllers.removeAt(index);
       addedComboRateControllers.removeAt(index);
       _combosFuture = fetchAllCombos(addedComboList);
@@ -369,29 +395,10 @@ class TransferOrderProvider with ChangeNotifier {
       total += qty * rate;
     }
 
-    // Apply discount if any (before calculating prepaid & COD)
-    final discountPercent = double.tryParse(discountPercentController.text) ?? 0;
-    double discountAmount = 0;
-
-    if (discountPercent > 0) {
-      discountAmount = total * (discountPercent / 100);
-      total -= discountAmount;
-    }
-
-    // Assign discount amount to the controller
-    discountAmountController.text = discountAmount.toStringAsFixed(2);
-
-    // Assign the discounted total amount
+    // Assign the total amount
     totalAmtController.text = total.toStringAsFixed(2);
 
-    // Handle Prepaid, Partial, and COD Payments
-    final prepaidAmount = double.tryParse(prepaidAmountController.text) ?? 0.0;
-    final codAmount = (total - prepaidAmount).clamp(0, total); // Ensure no negative COD
-
-    codAmountController.text = codAmount.toStringAsFixed(2);
-
     setTotalQuantity();
-
     notifyListeners();
   }
 
@@ -495,7 +502,7 @@ class TransferOrderProvider with ChangeNotifier {
     return prefs.getString('authToken');
   }
 
-  Future<String> saveOrder() async {
+  Future<Map<String, dynamic>> saveOrder() async {
     isSavingOrder = true;
     notifyListeners();
 
@@ -533,15 +540,15 @@ class TransferOrderProvider with ChangeNotifier {
     Map<String, dynamic> orderData = {
       // 'order_id': orderIdController.text,
       'customer': {
-        'first_name': customerFirstNameController.text,
-        'last_name': customerLastNameController.text,
-        'email': customerEmailController.text, // Uncomment
+        // 'first_name': customerFirstNameController.text,
+        // 'last_name': customerLastNameController.text,
+        // 'email': customerEmailController.text, // Uncomment
         'phone': customerPhoneController.text, // Keep as string
       },
       'billing_addr': {
-        'first_name': billingFirstNameController.text,
-        'last_name': billingLastNameController.text,
-        'email': billingEmailController.text, // Uncomment
+        // 'first_name': billingFirstNameController.text,
+        // 'last_name': billingLastNameController.text,
+        // 'email': billingEmailController.text, // Uncomment
         'address1': billingAddress1Controller.text, // Uncomment
         'address2': billingAddress2Controller.text, // Uncomment
         'phone': billingPhoneController.text, // Keep as string
@@ -549,12 +556,12 @@ class TransferOrderProvider with ChangeNotifier {
         'pincode': billingPincodeController.text, // Keep as string
         'state': billingStateController.text,
         'country': billingCountryController.text,
-        'country_code': billingCountryCodeController.text,
+        // 'country_code': billingCountryCodeController.text,
       },
       'shipping_addr': {
-        'first_name': shippingFirstNameController.text,
-        'last_name': shippingLastNameController.text,
-        'email': shippingEmailController.text,
+        // 'first_name': shippingFirstNameController.text,
+        // 'last_name': shippingLastNameController.text,
+        // 'email': shippingEmailController.text,
         'address1': shippingAddress1Controller.text, // Uncomment
         'address2': shippingAddress2Controller.text, // Uncomment
         'phone': shippingPhoneController.text, // Keep as string
@@ -562,27 +569,29 @@ class TransferOrderProvider with ChangeNotifier {
         'pincode': shippingPincodeController.text, // Keep as string
         'state': shippingStateController.text,
         'country': shippingCountryController.text,
-        'country_code': shippingCountryCodeController.text,
+        // 'country_code': shippingCountryCodeController.text,
       },
-      'payment_mode': paymentModeController.text,
-      'currency_code': currencyCodeController.text,
+      // 'payment_mode': paymentModeController.text,
+      // 'currency_code': currencyCodeController.text,
       'items': itemsList,
       'total_amt': double.tryParse(totalAmtController.text) ?? 0,
-      'coin': int.tryParse(coinController.text) ?? 0, // Not required
-      'cod_amount': double.tryParse(codAmountController.text) ?? 0,
-      'prepaid_amount': double.tryParse(prepaidAmountController.text) ?? 0,
-      'discount_code': discountCodeController.text, // Not required
-      'discount_percent': double.tryParse(discountPercentController.text) ?? 0,
-      'discount_amount': double.tryParse(discountAmountController.text) ?? 0,
-      'tax_percent': double.tryParse(taxPercentController.text) ?? 0, // Not required
+      // 'coin': int.tryParse(coinController.text) ?? 0, // Not required
+      // 'cod_amount': double.tryParse(codAmountController.text) ?? 0,
+      // 'prepaid_amount': double.tryParse(prepaidAmountController.text) ?? 0,
+      // 'discount_code': discountCodeController.text, // Not required
+      // 'discount_percent': double.tryParse(discountPercentController.text) ?? 0,
+      // 'discount_amount': double.tryParse(discountAmountController.text) ?? 0,
+      // 'tax_percent': double.tryParse(taxPercentController.text) ?? 0, // Not required
       'total_quantity': int.tryParse(totalQuantityController.text) ?? 0,
       'marketplace': selectedMarketplace,
       'source': selectedMarketplace,
-      'agent': agentController.text, // Not required
+      // 'agent': agentController.text, // Not required
       'notes': notesController.text, // Not required
       'warehouseFrom': selectedFromWarehouse,
       'warehouseTo': selectedToWarehouse,
     };
+
+    log('transfer order: $orderData');
 
     try {
       final url = Uri.parse('${await Constants.getBaseUrl()}/orders');
@@ -600,18 +609,18 @@ class TransferOrderProvider with ChangeNotifier {
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         Logger().i('Order saved successfully: ${response.body}');
-        return res['order_id'];
+        return {"success": true, "message": res['order_id']};
       } else {
         Logger().e('Failed to save order: ${response.statusCode} - ${response.body}');
         throw Exception('Failed to save order');
       }
     } catch (e) {
       Logger().e('Error saving order: $e');
+      return {"success": false, "message": e.toString()};
     } finally {
       isSavingOrder = false;
       notifyListeners();
     }
-    return '';
   }
 
   void clearLocationDetails({required bool isBilling}) {
@@ -619,12 +628,12 @@ class TransferOrderProvider with ChangeNotifier {
       billingCountryController.clear();
       billingStateController.clear();
       billingCityController.clear();
-      billingCountryCodeController.clear();
+      // billingCountryCodeController.clear();
     } else {
       shippingCountryController.clear();
       shippingStateController.clear();
       shippingCityController.clear();
-      shippingCountryCodeController.clear();
+      // shippingCountryCodeController.clear();
     }
   }
 
@@ -651,12 +660,12 @@ class TransferOrderProvider with ChangeNotifier {
             billingCountryController.text = country;
             billingStateController.text = state;
             billingCityController.text = city;
-            billingCountryCodeController.text = countryCode;
+            // billingCountryCodeController.text = countryCode;
           } else {
             shippingCountryController.text = country;
             shippingStateController.text = state;
             shippingCityController.text = city;
-            shippingCountryCodeController.text = countryCode;
+            // shippingCountryCodeController.text = countryCode;
           }
         } else {
           log('No location details found for the provided pincode :- ${response.body}');
@@ -680,9 +689,9 @@ class TransferOrderProvider with ChangeNotifier {
   void setBillingSameAsShipping(bool? value) {
     isBillingSameAsShipping = value ?? true;
     if (isBillingSameAsShipping) {
-      billingFirstNameController.text = shippingFirstNameController.text;
-      billingLastNameController.text = shippingLastNameController.text;
-      billingEmailController.text = shippingEmailController.text;
+      // billingFirstNameController.text = shippingFirstNameController.text;
+      // billingLastNameController.text = shippingLastNameController.text;
+      // billingEmailController.text = shippingEmailController.text;
       billingAddress1Controller.text = shippingAddress1Controller.text;
       billingAddress2Controller.text = shippingAddress2Controller.text;
       billingPhoneController.text = shippingPhoneController.text;
@@ -690,7 +699,7 @@ class TransferOrderProvider with ChangeNotifier {
       billingPincodeController.text = shippingPincodeController.text;
       billingStateController.text = shippingStateController.text;
       billingCountryController.text = shippingCountryController.text;
-      billingCountryCodeController.text = shippingCountryCodeController.text;
+      // billingCountryCodeController.text = shippingCountryCodeController.text;
     }
     notifyListeners();
   }

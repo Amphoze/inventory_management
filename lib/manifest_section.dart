@@ -35,7 +35,6 @@ class _ManifestSectionState extends State<ManifestSection> {
 
   @override
   Widget build(BuildContext context) {
-    // String? selectedCourier;
     return Consumer<ManifestProvider>(
       builder: (context, manifestProvider, child) {
         return Scaffold(
@@ -58,42 +57,33 @@ class _ManifestSectionState extends State<ManifestSection> {
                       ),
                       child: TextField(
                         controller: _searchController,
-                        textAlign: TextAlign.center,
                         style: const TextStyle(color: Colors.black),
                         decoration: const InputDecoration(
-                          hintText: 'Search by Order ID',
+                          hintText: 'Search by Manifest ID',
                           hintStyle: TextStyle(color: Colors.black),
                           border: InputBorder.none,
                           contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 12.0),
                         ),
                         onChanged: (query) {
-                          // Trigger a rebuild to show/hide the search button
-                          setState(() {
-                            // Update search focus
-                          });
+                          setState(() {});
                           if (query.isEmpty) {
-                            // Reset to all orders if search is cleared
                             manifestProvider.fetchCreatedManifests(manifestProvider.currentPage);
                           }
                         },
                         onTap: () {
-                          setState(() {
-                            // Mark the search field as focused
-                          });
+                          setState(() {});
                         },
                         onSubmitted: (query) {
                           if (query.isNotEmpty) {
-                            manifestProvider.searchOrders(query);
+                            manifestProvider.searchManifests(query);
                           }
                         },
                         onEditingComplete: () {
-                          // Mark it as not focused when done
-                          FocusScope.of(context).unfocus(); // Dismiss the keyboard
+                          FocusScope.of(context).unfocus();
                         },
                       ),
                     ),
                     const SizedBox(width: 8),
-                    // Search Button
                     ElevatedButton(
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.primaryBlue,
@@ -131,9 +121,9 @@ class _ManifestSectionState extends State<ManifestSection> {
                   ],
                 ),
               ),
-              const SizedBox(height: 8), // Decreased space here
+              const SizedBox(height: 8),
               _buildTableHeader(manifestProvider.manifests.length, manifestProvider),
-              const SizedBox(height: 4), // New space for alignment
+              const SizedBox(height: 4),
               Expanded(
                 child: Stack(
                   children: [
@@ -174,7 +164,7 @@ class _ManifestSectionState extends State<ManifestSection> {
                 ),
               ),
               CustomPaginationFooter(
-                currentPage: manifestProvider.currentPage, // Ensure correct currentPage
+                currentPage: manifestProvider.currentPage,
                 totalPages: manifestProvider.totalPages,
                 buttonSize: 30,
                 pageController: manifestProvider.textEditingController,
@@ -219,9 +209,8 @@ class _ManifestSectionState extends State<ManifestSection> {
       padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
       child: Row(
         children: [
-          buildHeader('ORDERS', '', flex: 9), // Increased flex
-          buildHeader('ID', '(Delivery Partner)', flex: 3), // Decreased flex for better alignment
-          // buildHeader('CONFIRM', flex: 3),
+          buildHeader('ORDERS', '', flex: 9),
+          buildHeader('ID', '(Delivery Partner)', flex: 3),
         ],
       ),
     );
@@ -256,7 +245,7 @@ class _ManifestSectionState extends State<ManifestSection> {
 
   Widget _buildManifest(Manifest manifest, int index, ManifestProvider manifestProvider) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4.0, horizontal: 8.0), // Increased vertical space for order cards
+      padding: const EdgeInsets.symmetric(vertical: 4.0, horizontal: 8.0),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [

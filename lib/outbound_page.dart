@@ -24,16 +24,13 @@ class OutboundPage extends StatefulWidget {
 }
 
 class _OutboundPageState extends State<OutboundPage> with TickerProviderStateMixin {
-  // late TabController _tabController;
-  late TextEditingController _searchController;
-  late TextEditingController _searchControllerReady;
-  late TextEditingController _searchControllerFailed;
+  // late TextEditingController _searchController;
+  // late TextEditingController _searchControllerFailed;
   final TextEditingController _pageController = TextEditingController();
   final TextEditingController pageController = TextEditingController();
-  String _selectedDate = 'Select Date';
-
-  // String _selectedFailedDate = 'Select Date';
-  String selectedCourier = 'All';
+  // String _selectedDate = 'Select Date';
+  // String selectedCourier = 'All';
+  // DateTime? picked;
 
   late OutboundProvider provider;
 
@@ -41,27 +38,27 @@ class _OutboundPageState extends State<OutboundPage> with TickerProviderStateMix
   void initState() {
     super.initState();
     // _tabController = TabController(length: 2, vsync: this);
-    _searchController = TextEditingController();
-    _searchControllerReady = TextEditingController();
-    _searchControllerFailed = TextEditingController();
+    // _searchController = TextEditingController();
+    provider.searchController = TextEditingController();
+    // _searchControllerFailed = TextEditingController();
 
     provider = context.read<OutboundProvider>();
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _reloadOrders();
     });
-    _searchController.clear();
-    _searchControllerReady.clear();
-    _searchControllerFailed.clear();
+    // _searchController.clear();
+    provider.searchController.clear();
+    // _searchControllerFailed.clear();
 
     // context.read<MarketplaceProvider>().fetchMarketplaces();
   }
 
   @override
   void dispose() {
-    _searchController.dispose();
-    _searchControllerReady.dispose();
-    _searchControllerFailed.dispose();
+    // _searchController.dispose();
+    provider.searchController.dispose();
+    // _searchControllerFailed.dispose();
     _pageController.dispose();
     pageController.dispose();
     super.dispose();
@@ -72,8 +69,6 @@ class _OutboundPageState extends State<OutboundPage> with TickerProviderStateMix
     await provider.fetchOrders(); // Fetch both orders
     // ordersProvider.fetchFailedOrders();
   }
-
-  DateTime? picked;
 
   @override
   Widget build(BuildContext context) {
@@ -177,17 +172,17 @@ class _OutboundPageState extends State<OutboundPage> with TickerProviderStateMix
                     Column(
                       children: [
                         Text(
-                          _selectedDate,
+                          pro.selectedDate,
                           style: TextStyle(
                             fontSize: 11,
-                            color: _selectedDate == 'Select Date' ? Colors.grey : AppColors.primaryBlue,
+                            color: pro.selectedDate == 'Select Date' ? Colors.grey : AppColors.primaryBlue,
                           ),
                         ),
                         Tooltip(
                           message: 'Filter by Date',
                           child: IconButton(
                             onPressed: () async {
-                              picked = await showDatePicker(
+                              pro.picked = await showDatePicker(
                                 context: context,
                                 initialDate: DateTime.now(),
                                 firstDate: DateTime(2020),
@@ -207,17 +202,13 @@ class _OutboundPageState extends State<OutboundPage> with TickerProviderStateMix
                                 },
                               );
 
-                              if (picked != null) {
-                                String formattedDate = DateFormat('dd-MM-yyyy').format(picked!);
+                              if (pro.picked != null) {
+                                String formattedDate = DateFormat('dd-MM-yyyy').format(pro.picked!);
                                 setState(() {
-                                  _selectedDate = formattedDate;
+                                  pro.selectedDate = formattedDate;
                                 });
 
-                                pro.fetchOrders(
-                                  page: pro.currentPageReady,
-                                  date: picked,
-                                  market: selectedCourier,
-                                );
+                                pro.fetchOrders(page: pro.currentPageReady);
                               }
                             },
                             icon: const Icon(
@@ -233,7 +224,7 @@ class _OutboundPageState extends State<OutboundPage> with TickerProviderStateMix
                     Column(
                       children: [
                         Text(
-                          selectedCourier,
+                          pro.selectedCourier,
                         ),
                         Consumer<MarketplaceProvider>(
                           builder: (context, provider, child) {
@@ -241,13 +232,9 @@ class _OutboundPageState extends State<OutboundPage> with TickerProviderStateMix
                               tooltip: 'Filter by Marketplace',
                               onSelected: (String value) {
                                 setState(() {
-                                  selectedCourier = value;
+                                  pro.selectedCourier = value;
                                 });
-                                pro.fetchOrders(
-                                  page: pro.currentPageReady,
-                                  date: picked,
-                                  market: selectedCourier,
-                                );
+                                pro.fetchOrders(page: pro.currentPageReady);
                               },
                               itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
                                 const PopupMenuItem<String>(
@@ -408,13 +395,10 @@ class _OutboundPageState extends State<OutboundPage> with TickerProviderStateMix
                         backgroundColor: Colors.grey,
                       ),
                       onPressed: () {
-                        // Call fetchOrders method on refresh button press
-                        setState(() {
-                          selectedCourier = 'All';
-                          _selectedDate = 'Select Date';
-                        });
-                        Provider.of<OutboundProvider>(context, listen: false).fetchOrders();
-                        Provider.of<OutboundProvider>(context, listen: false).resetSelections();
+                        pro.searchController.clear();
+                        pro.resetOutbound();
+                        pro.fetchOrders();
+                        pro.resetSelections();
                         pro.clearSearchResults();
                         print('Ready to Confirm Orders refreshed');
                       },
@@ -423,7 +407,7 @@ class _OutboundPageState extends State<OutboundPage> with TickerProviderStateMix
                     const SizedBox(width: 8),
                     Container(
                       width: 300,
-                      height: 34,
+                      height: 35,
                       decoration: BoxDecoration(
                         border: Border.all(
                           color: AppColors.primaryBlue,
@@ -435,7 +419,7 @@ class _OutboundPageState extends State<OutboundPage> with TickerProviderStateMix
                         children: [
                           Expanded(
                             child: TextField(
-                              controller: _searchControllerReady,
+                              controller: provider.searchController,
                               decoration: const InputDecoration(
                                 hintText: 'Search Orders By ID/Phone',
                                 hintStyle: TextStyle(
@@ -443,10 +427,12 @@ class _OutboundPageState extends State<OutboundPage> with TickerProviderStateMix
                                   fontSize: 16,
                                 ),
                                 border: InputBorder.none,
-                                contentPadding: EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+                                contentPadding: EdgeInsets.symmetric(vertical: 10, horizontal: 8),
                               ),
                               style: const TextStyle(color: AppColors.black),
                               onSubmitted: (value) async {
+                                pro.resetOutbound();
+
                                 if (value.startsWith(RegExp(r'^[0-9]'))) {
                                   await pro.searchOrdersByPhone(value);
                                 } else if (value.contains('-')) {
@@ -462,14 +448,14 @@ class _OutboundPageState extends State<OutboundPage> with TickerProviderStateMix
                               },
                             ),
                           ),
-                          if (_searchControllerReady.text.isNotEmpty)
+                          if (provider.searchController.text.isNotEmpty)
                             IconButton(
                               icon: Icon(
                                 Icons.close,
                                 color: Colors.grey.shade600,
                               ),
                               onPressed: () {
-                                _searchControllerReady.clear();
+                                provider.searchController.clear();
                                 pro.fetchOrders();
                                 pro.clearSearchResults();
                               },
@@ -640,13 +626,13 @@ class _OutboundPageState extends State<OutboundPage> with TickerProviderStateMix
                                                     ),
                                                   );
                                                   if (result == true) {
-                                                    final readySearched = _searchControllerReady.text;
+                                                    final readySearched = provider.searchController.text;
 
                                                     // Ready
                                                     if (readySearched.isNotEmpty) {
                                                       pro.searchOrdersByID(readySearched);
                                                     } else {
-                                                      pro.fetchOrders(page: pro.currentPageReady, date: picked, market: selectedCourier);
+                                                      pro.fetchOrders(page: pro.currentPageReady);
                                                     }
                                                   }
                                                 },

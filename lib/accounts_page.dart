@@ -26,10 +26,7 @@ class AccountsPage extends StatefulWidget {
 }
 
 class _AccountsPageState extends State<AccountsPage> {
-  final TextEditingController _searchController = TextEditingController();
-  String _selectedDate = 'Select Date';
   final remarkController = TextEditingController();
-  DateTime? picked;
   final accountsRemark = TextEditingController();
   bool? isSuperAdmin = false;
   bool? isAdmin = false;
@@ -63,14 +60,11 @@ class _AccountsPageState extends State<AccountsPage> {
 
   @override
   void dispose() {
-    _searchController.dispose();
+    accountsProvider.accountsSearch.dispose();
     remarkController.dispose();
+    accountsProvider.resetFilterData();
     super.dispose();
   }
-
-  String selectedSearchType = 'Order ID'; // Default selection
-  String selectedCourier = 'All';
-  String? selectedPaymentMode = '';
 
   @override
   Widget build(BuildContext context) {
@@ -90,7 +84,7 @@ class _AccountsPageState extends State<AccountsPage> {
                       height: 40,
                       margin: const EdgeInsets.only(right: 16),
                       child: DropdownButtonFormField<String>(
-                        value: selectedSearchType,
+                        value: accountsProvider.selectedSearchType,
                         isExpanded: true,
                         decoration: const InputDecoration(
                           border: OutlineInputBorder(),
@@ -102,12 +96,11 @@ class _AccountsPageState extends State<AccountsPage> {
                         ],
                         onChanged: (value) {
                           setState(() {
-                            selectedSearchType = value!;
+                            accountsProvider.selectedSearchType = value!;
                           });
                         },
                       ),
                     ),
-
                     Container(
                       height: 40,
                       width: 220,
@@ -121,7 +114,7 @@ class _AccountsPageState extends State<AccountsPage> {
                         children: [
                           Expanded(
                             child: TextField(
-                              controller: _searchController,
+                              controller: accountsProvider.accountsSearch,
                               style: const TextStyle(color: Colors.black),
                               decoration: const InputDecoration(
                                 hintText: 'Search by Order ID',
@@ -132,11 +125,7 @@ class _AccountsPageState extends State<AccountsPage> {
                               onChanged: (query) {
                                 setState(() {});
                                 if (query.isEmpty) {
-                                  setState(() {
-                                    selectedCourier = 'All';
-                                    picked = null;
-                                    selectedPaymentMode = '';
-                                  });
+                                  accountsProvider.resetFilterData();
                                   accountsProvider.fetchOrdersWithStatus2();
                                 }
                               },
@@ -144,8 +133,9 @@ class _AccountsPageState extends State<AccountsPage> {
                                 setState(() {});
                               },
                               onSubmitted: (query) {
+                                accountsProvider.resetFilterData();
                                 if (query.isNotEmpty) {
-                                  accountsProvider.searchOrders(query, selectedSearchType);
+                                  accountsProvider.searchOrders(query, accountsProvider.selectedSearchType);
                                 } else {
                                   accountsProvider.fetchOrdersWithStatus2();
                                 }
@@ -155,7 +145,7 @@ class _AccountsPageState extends State<AccountsPage> {
                               },
                             ),
                           ),
-                          if (_searchController.text.isNotEmpty)
+                          if (accountsProvider.accountsSearch.text.isNotEmpty)
                             IconButton(
                               icon: Icon(
                                 Icons.close,
@@ -163,7 +153,7 @@ class _AccountsPageState extends State<AccountsPage> {
                               ),
                               onPressed: () {
                                 setState(() {
-                                  _searchController.clear();
+                                  accountsProvider.accountsSearch.clear();
                                 });
                                 accountsProvider.fetchOrdersWithStatus2();
                                 accountsProvider.clearAllSelections();
@@ -172,39 +162,22 @@ class _AccountsPageState extends State<AccountsPage> {
                         ],
                       ),
                     ),
-                    // const SizedBox(width: 8),
-                    // ElevatedButton(
-                    //   style: ElevatedButton.styleFrom(
-                    //     backgroundColor: AppColors.primaryBlue,
-                    //   ),
-                    //   onPressed: _searchController.text.isNotEmpty ? _onSearchButtonPressed : null,
-                    //   child: const Text(
-                    //     'Search',
-                    //     style: TextStyle(color: Colors.white),
-                    //   ),
-                    // ),
                     const Spacer(),
-                    // const SizedBox(width: 8),
-                    // Refresh Button
                     Row(
                       children: [
                         Column(
                           children: [
-                            Text(selectedPaymentMode ?? ''),
+                            Text(accountsProvider.selectedPaymentMode!),
                             PopupMenuButton<String>(
                               tooltip: 'Filter by Payment Mode',
                               onSelected: (String? value) {
-                                if (value != '' && value != null) {
+                                if (value != null) {
                                   setState(() {
-                                    selectedPaymentMode = value;
+                                    accountsProvider.selectedPaymentMode = value;
                                   });
-                                  accountsProvider.fetchOrdersWithStatus2(
-                                      mode: selectedPaymentMode ?? '', date: picked, market: selectedCourier);
+                                  accountsProvider.fetchOrdersWithStatus2();
                                 }
-                                // if (selectedCourier != 'All') {
-                                //   accountsProvider.fetchOrdersByMarketplace(selectedCourier, 2, accountsProvider.currentPage,
-                                //       date: picked, mode: selectedPaymentMode);
-                                // }
+
                                 log('Selected: $value');
                               },
                               itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
@@ -233,17 +206,17 @@ class _AccountsPageState extends State<AccountsPage> {
                         Column(
                           children: [
                             Text(
-                              _selectedDate,
+                              accountsProvider.selectedDate,
                               style: TextStyle(
                                 fontSize: 11,
-                                color: _selectedDate == 'Select Date' ? Colors.grey : AppColors.primaryBlue,
+                                color: accountsProvider.selectedDate == 'Select Date' ? Colors.grey : AppColors.primaryBlue,
                               ),
                             ),
                             Tooltip(
                               message: 'Filter by Date',
                               child: IconButton(
                                 onPressed: () async {
-                                  picked = await showDatePicker(
+                                  accountsProvider.picked = await showDatePicker(
                                     context: context,
                                     initialDate: DateTime.now(),
                                     firstDate: DateTime(2020),
@@ -263,22 +236,14 @@ class _AccountsPageState extends State<AccountsPage> {
                                     },
                                   );
 
-                                  Logger().e('picked: $picked');
-
-                                  if (picked != null) {
-                                    String formattedDate = DateFormat('dd-MM-yyyy').format(picked!);
+                                  if (accountsProvider.picked != null) {
+                                    String formattedDate = DateFormat('dd-MM-yyyy').format(accountsProvider.picked!);
                                     setState(() {
-                                      _selectedDate = formattedDate;
+                                      accountsProvider.selectedDate = formattedDate;
                                     });
 
-                                    // if (selectedCourier != 'All') {
-                                    //   accountsProvider.fetchOrdersByMarketplace(selectedCourier, 2, accountsProvider.currentPage,
-                                    //       date: picked, mode: selectedPaymentMode);
-                                    // } else {
                                     Logger().e('else me hai');
-                                    accountsProvider.fetchOrdersWithStatus2(
-                                        date: picked, mode: selectedPaymentMode, market: selectedCourier);
-                                    // }
+                                    accountsProvider.fetchOrdersWithStatus2();
                                   }
                                 },
                                 icon: const Icon(
@@ -294,7 +259,7 @@ class _AccountsPageState extends State<AccountsPage> {
                         Column(
                           children: [
                             Text(
-                              selectedCourier,
+                              accountsProvider.selectedCourier,
                             ),
                             Consumer<MarketplaceProvider>(
                               builder: (context, provider, child) {
@@ -303,18 +268,17 @@ class _AccountsPageState extends State<AccountsPage> {
                                   onSelected: (String value) {
                                     Logger().e('ye hai value: $value');
                                     setState(() {
-                                      selectedCourier = value;
+                                      accountsProvider.selectedCourier = value;
                                     });
-                                    accountsProvider.fetchOrdersWithStatus2(
-                                        date: picked, mode: selectedPaymentMode, market: selectedCourier);
+                                    accountsProvider.fetchOrdersWithStatus2();
                                   },
                                   itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
                                     ...provider.marketplaces.map((marketplace) => PopupMenuItem<String>(
                                           value: marketplace.name,
                                           child: Text(marketplace.name),
-                                        )), // Fetched marketplaces
+                                        )),
                                     const PopupMenuItem<String>(
-                                      value: 'All', // Hardcoded marketplace
+                                      value: 'All',
                                       child: Text('All'),
                                     ),
                                   ],
@@ -338,13 +302,7 @@ class _AccountsPageState extends State<AccountsPage> {
                           onPressed: () async {
                             final res = await accountsProvider.statusUpdate(context);
                             if (res == true) {
-                              // if (selectedCourier != 'All') {
-                              //   await accountsProvider.fetchOrdersByMarketplace(selectedCourier, 2, accountsProvider.currentPage,
-                              //       date: picked, mode: selectedPaymentMode);
-                              // } else {
-                              await accountsProvider.fetchOrdersWithStatus2(
-                                  date: picked, mode: selectedPaymentMode, market: selectedCourier);
-                              // }
+                              await accountsProvider.fetchOrdersWithStatus2();
                             }
                           },
                           child: accountsProvider.isUpdatingOrder
@@ -366,15 +324,11 @@ class _AccountsPageState extends State<AccountsPage> {
                           style: ElevatedButton.styleFrom(
                             backgroundColor: AppColors.cardsred,
                           ),
-                          // onPressed: () async {
-                          //   await accountsProvider.statusUpdate(context);
-                          // },
                           onPressed: accountsProvider.isCancel
-                              ? null // Disable button while loading
+                              ? null
                               : () async {
                                   final provider = Provider.of<AccountsProvider>(context, listen: false);
 
-                                  // Collect selected order IDs
                                   List<String> selectedOrderIds = provider.orders
                                       .asMap()
                                       .entries
@@ -383,7 +337,6 @@ class _AccountsPageState extends State<AccountsPage> {
                                       .toList();
 
                                   if (selectedOrderIds.isEmpty) {
-                                    // Show an error message if no orders are selected
                                     ScaffoldMessenger.of(context).removeCurrentSnackBar();
                                     ScaffoldMessenger.of(context).showSnackBar(
                                       const SnackBar(
@@ -396,14 +349,13 @@ class _AccountsPageState extends State<AccountsPage> {
 
                                     Color snackBarColor;
                                     if (resultMessage.contains('success')) {
-                                      await accountsProvider.fetchOrdersWithStatus2(
-                                          date: picked, mode: selectedPaymentMode, market: selectedCourier);
+                                      await accountsProvider.fetchOrdersWithStatus2();
 
-                                      snackBarColor = AppColors.green; // Success: Green
+                                      snackBarColor = AppColors.green;
                                     } else if (resultMessage.contains('error') || resultMessage.contains('failed')) {
-                                      snackBarColor = AppColors.cardsred; // Error: Red
+                                      snackBarColor = AppColors.cardsred;
                                     } else {
-                                      snackBarColor = AppColors.orange; // Other: Orange
+                                      snackBarColor = AppColors.orange;
                                     }
 
                                     ScaffoldMessenger.of(context).removeCurrentSnackBar();
@@ -434,18 +386,14 @@ class _AccountsPageState extends State<AccountsPage> {
                           style: ElevatedButton.styleFrom(
                             backgroundColor: AppColors.primaryBlue,
                           ),
-                          onPressed: accountsProvider.isRefreshingOrders
+                          onPressed: accountsProvider.isLoading
                               ? null
                               : () async {
-                                  setState(() {
-                                    selectedCourier = 'All';
-                                    _selectedDate = 'Select Date';
-                                    picked = null;
-                                    selectedPaymentMode = '';
-                                  });
+                                  accountsProvider.accountsSearch.clear();
+                                  accountsProvider.resetFilterData();
                                   await accountsProvider.fetchOrdersWithStatus2();
                                 },
-                          child: accountsProvider.isRefreshingOrders
+                          child: accountsProvider.isLoading
                               ? const SizedBox(
                                   width: 16,
                                   height: 16,
@@ -496,7 +444,6 @@ class _AccountsPageState extends State<AccountsPage> {
                         itemBuilder: (context, index) {
                           final order = accountsProvider.orders[index];
 
-                          ///////////////////////////////////////////////////////////////////
                           final Map<String, List<Item>> groupedComboItems = {};
                           for (var item in order.items) {
                             if (item.isCombo == true && item.comboSku != null) {
@@ -615,14 +562,12 @@ class _AccountsPageState extends State<AccountsPage> {
                                                 ),
                                               );
                                               if (result == true) {
-                                                final searched = _searchController.text;
+                                                final searched = accountsProvider.accountsSearch.text.trim();
 
-                                                // Ready
                                                 if (searched.isNotEmpty) {
-                                                  accountsProvider.searchOrders(searched, selectedSearchType);
+                                                  accountsProvider.searchOrders(searched, accountsProvider.selectedSearchType);
                                                 } else {
-                                                  accountsProvider.fetchOrdersWithStatus2(
-                                                      date: picked, mode: selectedPaymentMode, market: selectedCourier);
+                                                  accountsProvider.fetchOrdersWithStatus2();
                                                 }
                                               }
                                             },
@@ -711,13 +656,11 @@ class _AccountsPageState extends State<AccountsPage> {
                                     color: AppColors.grey,
                                   ),
                                   OrderInfo(order: order, pro: accountsProvider),
-                                  // Bottom Row before items
                                   Padding(
                                     padding: const EdgeInsets.symmetric(horizontal: 8.0),
                                     child: Row(
                                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                       children: [
-                                        // Left Column
                                         Expanded(
                                           child: Column(
                                             mainAxisAlignment: MainAxisAlignment.end,
@@ -796,27 +739,26 @@ class _AccountsPageState extends State<AccountsPage> {
                                                         fontWeight: FontWeight.bold,
                                                       )),
                                                 ),
-                                              if(order.updatedAt != null)
-                                              Text.rich(
-                                                TextSpan(
-                                                    text: "Updated on: ",
-                                                    children: [
-                                                      TextSpan(
-                                                          text: DateFormat('yyyy-MM-dd\',\' hh:mm a').format(
-                                                            DateTime.parse("${order.updatedAt}"),
-                                                          ),
-                                                          style: const TextStyle(
-                                                            fontWeight: FontWeight.normal,
-                                                          )),
-                                                    ],
-                                                    style: const TextStyle(
-                                                      fontWeight: FontWeight.bold,
-                                                    )),
-                                              ),
+                                              if (order.updatedAt != null)
+                                                Text.rich(
+                                                  TextSpan(
+                                                      text: "Updated on: ",
+                                                      children: [
+                                                        TextSpan(
+                                                            text: DateFormat('yyyy-MM-dd\',\' hh:mm a').format(
+                                                              DateTime.parse("${order.updatedAt}"),
+                                                            ),
+                                                            style: const TextStyle(
+                                                              fontWeight: FontWeight.normal,
+                                                            )),
+                                                      ],
+                                                      style: const TextStyle(
+                                                        fontWeight: FontWeight.bold,
+                                                      )),
+                                                ),
                                             ],
                                           ),
                                         ),
-                                        // Right Column
                                         Expanded(
                                           child: Column(
                                             crossAxisAlignment: CrossAxisAlignment.end,
@@ -955,7 +897,6 @@ class _AccountsPageState extends State<AccountsPage> {
                                     thickness: 1,
                                     color: AppColors.grey,
                                   ),
-                                  // Nested cards for each item in the order
                                   const SizedBox(height: 6),
                                   ListView.builder(
                                     shrinkWrap: true,
@@ -963,14 +904,10 @@ class _AccountsPageState extends State<AccountsPage> {
                                     itemCount: comboItemGroups.length,
                                     itemBuilder: (context, comboIndex) {
                                       final combo = comboItemGroups[comboIndex];
-                                      // print(
-                                      //     'Item $itemIndex: ${item.product?.displayName.toString() ?? ''}, Quantity: ${item.qty ?? 0}');
+
                                       return BigComboCard(
                                         items: combo,
                                         index: comboIndex,
-                                        // courierName: order.courierName,
-                                        // orderStatus:
-                                        //     order.orderStatus.toString(),
                                       );
                                     },
                                   ),
@@ -984,29 +921,9 @@ class _AccountsPageState extends State<AccountsPage> {
                                       return ProductDetailsCard(
                                         item: item,
                                         index: itemIndex,
-                                        // courierName: order.courierName,
-                                        // orderStatus:
-                                        //     order.orderStatus.toString(),
                                       );
                                     },
                                   ),
-                                  // ListView.builder(
-                                  //   shrinkWrap: true,
-                                  //   physics:
-                                  //       const NeverScrollableScrollPhysics(),
-                                  //   itemCount: order.items.length,
-                                  //   itemBuilder: (context, itemIndex) {
-                                  //     final item = order.items[itemIndex];
-
-                                  //     return ProductDetailsCard(
-                                  //       item: item,
-                                  //       index: itemIndex,
-                                  //       courierName: order.courierName,
-                                  //       // orderStatus:
-                                  //       //     order.orderStatus.toString(),
-                                  //     );
-                                  //   },
-                                  // ),
                                 ],
                               ),
                             ),
@@ -1128,7 +1045,6 @@ Widget buildLabelValueRow(String label, String? value) {
           message: value ?? '',
           child: Text(
             value ?? '',
-            // softWrap: true,
             overflow: TextOverflow.ellipsis,
             maxLines: 1,
             style: const TextStyle(

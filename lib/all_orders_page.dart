@@ -21,14 +21,13 @@ class AllOrdersPage extends StatefulWidget {
 class _AllOrdersPageState extends State<AllOrdersPage> with SingleTickerProviderStateMixin {
   final TextEditingController _searchController = TextEditingController();
   final TextEditingController _pageController = TextEditingController();
+  List<Map<String, String>> statuses = [];
   bool areOrdersFetched = false;
   String selectedCourier = 'All';
   String selectedStatus = 'All';
-  String _selectedDate = 'Select Date';
-  List<Map<String, String>> statuses = [];
   DateTime? picked;
+  String _selectedDate = 'Select Date';
 
-  // Add ValueNotifiers for tracking statuses
   final Map<String, ValueNotifier<String?>> delhiveryTrackingStatuses = {};
   final Map<String, ValueNotifier<String?>> shiprocketTrackingStatuses = {};
 
@@ -103,14 +102,15 @@ class _AllOrdersPageState extends State<AllOrdersPage> with SingleTickerProvider
     );
   }
 
-  void _refreshBookedOrders() {
+  void _refreshOrders() {
     final allOrdersProvider = Provider.of<AllOrdersProvider>(context, listen: false);
-    allOrdersProvider.fetchAllOrders(page: allOrdersProvider.currentPage);
     setState(() {
+      picked = null;
       selectedCourier = 'All';
       selectedStatus = 'All';
       _selectedDate = 'Select Date';
     });
+    allOrdersProvider.fetchAllOrders(page: allOrdersProvider.currentPage);
   }
 
   Widget _searchBar() {
@@ -144,14 +144,27 @@ class _AllOrdersPageState extends State<AllOrdersPage> with SingleTickerProvider
                 style: const TextStyle(color: AppColors.black),
                 onChanged: (text) {
                   if (text.isEmpty) {
+                    setState(() {
+                      _selectedDate = 'Select Date';
+                      picked = null;
+                      selectedCourier = 'All';
+                      selectedStatus = 'All';
+                    });
                     context.read<AllOrdersProvider>().fetchAllOrders();
                   }
                 },
                 onSubmitted: (text) {
-                  if (text.isEmpty) {
+                  setState(() {
+                    _selectedDate = 'Select Date';
+                    picked = null;
+                    selectedCourier = 'All';
+                    selectedStatus = 'All';
+                  });
+                  if (text.trim().isEmpty) {
                     context.read<AllOrdersProvider>().fetchAllOrders();
+                  } else {
+                    Provider.of<AllOrdersProvider>(context, listen: false).searchOrders(text);
                   }
-                  Provider.of<AllOrdersProvider>(context, listen: false).searchOrders(text);
                 },
               ),
             ),
@@ -163,7 +176,12 @@ class _AllOrdersPageState extends State<AllOrdersPage> with SingleTickerProvider
                 ),
                 onPressed: () {
                   controller.clear();
-
+                  setState(() {
+                    _selectedDate = 'Select Date';
+                    picked = null;
+                    selectedCourier = 'All';
+                    selectedStatus = 'All';
+                  });
                   Provider.of<AllOrdersProvider>(context, listen: false).clearSearchResults();
                   Provider.of<AllOrdersProvider>(context, listen: false).fetchAllOrders();
                 },
@@ -234,28 +252,30 @@ class _AllOrdersPageState extends State<AllOrdersPage> with SingleTickerProvider
             buttonSize: 30,
             pageController: _pageController,
             onFirstPage: () {
-              allOrdersProvider.goToPage(1);
+              allOrdersProvider.goToPage(1, date: picked, status: selectedStatus, marketplace: selectedCourier);
             },
             onLastPage: () {
-              allOrdersProvider.goToPage(allOrdersProvider.totalPages);
+              allOrdersProvider.goToPage(allOrdersProvider.totalPages, date: picked, status: selectedStatus, marketplace: selectedCourier);
             },
             onNextPage: () {
               int currentPage = allOrdersProvider.currentPage;
               int totalPages = allOrdersProvider.totalPages;
               if (currentPage < totalPages) {
-                allOrdersProvider.goToPage(allOrdersProvider.currentPage + 1);
+                allOrdersProvider.goToPage(allOrdersProvider.currentPage + 1,
+                    date: picked, status: selectedStatus, marketplace: selectedCourier);
               }
             },
             onPreviousPage: () {
               int currentPage = allOrdersProvider.currentPage;
               if (currentPage > 1) {
-                allOrdersProvider.goToPage(allOrdersProvider.currentPage - 1);
+                allOrdersProvider.goToPage(allOrdersProvider.currentPage - 1,
+                    date: picked, status: selectedStatus, marketplace: selectedCourier);
               }
             },
             onGoToPage: (int page) {
               int totalPages = allOrdersProvider.totalPages;
               if (page > 0 && page <= totalPages) {
-                allOrdersProvider.goToPage(page);
+                allOrdersProvider.goToPage(page, date: picked, status: selectedStatus, marketplace: selectedCourier);
               } else {
                 _showSnackbar(context, 'Please enter a valid page number between 1 and $totalPages.');
               }
@@ -270,7 +290,7 @@ class _AllOrdersPageState extends State<AllOrdersPage> with SingleTickerProvider
                 return;
               }
 
-              allOrdersProvider.goToPage(page);
+              allOrdersProvider.goToPage(page, date: picked, status: selectedStatus, marketplace: selectedCourier);
               _pageController.clear();
             },
           ),
@@ -505,7 +525,7 @@ class _AllOrdersPageState extends State<AllOrdersPage> with SingleTickerProvider
                         _selectedDate = 'Select Date';
                         picked = null;
                       });
-                      _refreshBookedOrders();
+                      _refreshOrders();
                     },
               child: allOrdersProvider.isRefreshingOrders
                   ? const SizedBox(
@@ -604,11 +624,7 @@ class _AllOrdersPageState extends State<AllOrdersPage> with SingleTickerProvider
             checkboxWidget: checkboxWidget,
           ),
         ),
-        buildCell(
-            order.orderStatusMap != null && order.orderStatusMap?.isNotEmpty == true
-                ? order.orderStatusMap!.last.status?.split('_').map((w) => '${w[0].toUpperCase()}${w.substring(1)}').join(' ')
-                : 'Unknown Status',
-            flex: 1),
+        buildCell((order.orderStatusMap?.isNotEmpty ?? false) ? order.orderStatusMap!.last.status : 'Unknown Status', flex: 1),
         if (order.awbNumber == '')
           const Expanded(
               flex: 1,

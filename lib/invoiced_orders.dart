@@ -20,14 +20,14 @@ class InvoicedOrders extends StatefulWidget {
 }
 
 class _InvoicedOrdersState extends State<InvoicedOrders> with SingleTickerProviderStateMixin {
-  final TextEditingController _searchController = TextEditingController();
   final TextEditingController _pageController = TextEditingController();
   bool areOrdersFetched = false;
-  String selectedCourier = 'All';
-  String _selectedDate = 'Select Date';
   String selectedSearchType = 'Order ID'; // Default selection
-  String? selectedPaymentMode = ''; // Default selection
-  DateTime? picked;
+  // String selectedCourier = 'All';
+  // String _selectedDate = 'Select Date';
+  // String? selectedPaymentMode = ''; // Default selection
+  // DateTime? picked;
+  late AccountsProvider provider;
 
   bool? isSuperAdmin = false;
   bool? isAdmin = false;
@@ -44,8 +44,7 @@ class _InvoicedOrdersState extends State<InvoicedOrders> with SingleTickerProvid
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final accountsProvider = Provider.of<AccountsProvider>(context, listen: false);
-      accountsProvider.fetchAccountedOrders(accountsProvider.currentPage);
+      provider.fetchInvoicedOrders(provider.currentPage);
       context.read<MarketplaceProvider>().fetchMarketplaces();
       _fetchUserRole();
     });
@@ -53,8 +52,9 @@ class _InvoicedOrdersState extends State<InvoicedOrders> with SingleTickerProvid
 
   @override
   void dispose() {
-    _searchController.dispose();
+    provider.invoiceSearch.dispose();
     _pageController.dispose();
+    provider.resetFilterData();
     super.dispose();
   }
 
@@ -74,14 +74,13 @@ class _InvoicedOrdersState extends State<InvoicedOrders> with SingleTickerProvid
 // Refresh ordersBooked for both B2B and B2C
   void _refreshBookedOrders() {
     final accountsProvider = Provider.of<AccountsProvider>(context, listen: false);
-    accountsProvider.fetchAccountedOrders(accountsProvider.currentPage);
-    setState(() {
-      selectedCourier = 'All';
-    });
+    accountsProvider.fetchInvoicedOrders(accountsProvider.currentPage);
+    accountsProvider.resetFilterData();
+    accountsProvider.invoiceSearch.clear();
   }
 
   Widget _searchBar() {
-    final TextEditingController controller = _searchController;
+    final TextEditingController controller = provider.invoiceSearch;
 
     return Padding(
       padding: const EdgeInsets.all(8.0),
@@ -138,28 +137,28 @@ class _InvoicedOrdersState extends State<InvoicedOrders> with SingleTickerProvid
                     ),
                     style: const TextStyle(color: AppColors.black),
                     onChanged: (text) {
-                      if (_searchController.text.isEmpty) {
+                      if (provider.invoiceSearch.text.isEmpty) {
                         _refreshBookedOrders();
                         Provider.of<AccountsProvider>(context, listen: false).clearSearchResults();
                       }
                     },
                     onSubmitted: (text) {
-                      Logger().e(selectedSearchType);
+                      provider.resetFilterData();
                       if (text.isEmpty) {
                         _refreshBookedOrders();
                       } else {
-                        Provider.of<AccountsProvider>(context, listen: false).searchBookedOrders(text, selectedSearchType);
+                        Provider.of<AccountsProvider>(context, listen: false).searchInvoicedOrders(text, selectedSearchType);
                       }
                     },
                   ),
                 ),
                 if (controller.text.isNotEmpty)
-                  IconButton(
-                    icon: Icon(
+                  InkWell(
+                    child: Icon(
                       Icons.close,
                       color: Colors.grey.shade600,
                     ),
-                    onPressed: () {
+                    onTap: () {
                       setState(() {
                         controller.clear();
                       });
@@ -237,10 +236,10 @@ class _InvoicedOrdersState extends State<InvoicedOrders> with SingleTickerProvid
             buttonSize: 30,
             pageController: _pageController,
             onFirstPage: () {
-              accountsProvider.goToBookedPage(1);
+              goToBookedPage(1);
             },
             onLastPage: () {
-              accountsProvider.goToBookedPage(accountsProvider.totalPagesBooked);
+              goToBookedPage(accountsProvider.totalPagesBooked);
             },
             onNextPage: () {
               int currentPage = accountsProvider.currentPageBooked;
@@ -248,21 +247,21 @@ class _InvoicedOrdersState extends State<InvoicedOrders> with SingleTickerProvid
               int totalPages = accountsProvider.totalPagesBooked;
 
               if (currentPage < totalPages) {
-                accountsProvider.goToBookedPage(accountsProvider.currentPageBooked + 1);
+                goToBookedPage(accountsProvider.currentPageBooked + 1);
               }
             },
             onPreviousPage: () {
               int currentPage = accountsProvider.currentPageBooked;
 
               if (currentPage > 1) {
-                accountsProvider.goToBookedPage(accountsProvider.currentPageBooked - 1);
+                goToBookedPage(accountsProvider.currentPageBooked - 1);
               }
             },
             onGoToPage: (int page) {
               int totalPages = accountsProvider.totalPages;
 
               if (page > 0 && page <= totalPages) {
-                accountsProvider.goToBookedPage(page);
+                goToBookedPage(page);
               } else {
                 _showSnackbar(context, 'Please enter a valid page number between 1 and $totalPages.');
               }
@@ -277,7 +276,7 @@ class _InvoicedOrdersState extends State<InvoicedOrders> with SingleTickerProvid
                 return;
               }
 
-              accountsProvider.goToBookedPage(page);
+              goToBookedPage(page);
 
               _pageController.clear();
             },
@@ -305,20 +304,19 @@ class _InvoicedOrdersState extends State<InvoicedOrders> with SingleTickerProvid
           children: [
             Column(
               children: [
-                Text(selectedPaymentMode ?? ''),
+                Text(provider.selectedPaymentMode ?? ''),
                 PopupMenuButton<String>(
                   tooltip: 'Filter by Payment Mode',
                   onSelected: (String value) {
                     if (value != '') {
                       setState(() {
-                        selectedPaymentMode = value;
+                        provider.selectedPaymentMode = value;
                       });
                       // if (selectedCourier == 'All') {
                       //   accountsProvider.fetchOrdersByMarketplace(selectedCourier, 2, accountsProvider.currentPageBooked,
                       //       date: picked, mode: selectedPaymentMode);
                       // }
-                      accountsProvider.fetchAccountedOrders(accountsProvider.currentPageBooked,
-                          date: picked, mode: selectedPaymentMode ?? '', market: selectedCourier);
+                      accountsProvider.fetchInvoicedOrders(accountsProvider.currentPageBooked);
                     }
 
                     log('Selected: $value');
@@ -349,17 +347,17 @@ class _InvoicedOrdersState extends State<InvoicedOrders> with SingleTickerProvid
             Column(
               children: [
                 Text(
-                  _selectedDate,
+                  provider.selectedDate,
                   style: TextStyle(
                     fontSize: 11,
-                    color: _selectedDate == 'Select Date' ? Colors.grey : AppColors.primaryBlue,
+                    color: provider.selectedDate == 'Select Date' ? Colors.grey : AppColors.primaryBlue,
                   ),
                 ),
                 Tooltip(
                   message: 'Filter by Date',
                   child: IconButton(
                     onPressed: () async {
-                      picked = await showDatePicker(
+                      provider.picked = await showDatePicker(
                         context: context,
                         initialDate: DateTime.now(),
                         firstDate: DateTime(2020),
@@ -379,18 +377,17 @@ class _InvoicedOrdersState extends State<InvoicedOrders> with SingleTickerProvid
                         },
                       );
 
-                      if (picked != null) {
-                        String formattedDate = DateFormat('dd-MM-yyyy').format(picked!);
+                      if (provider.picked != null) {
+                        String formattedDate = DateFormat('dd-MM-yyyy').format(provider.picked!);
                         setState(() {
-                          _selectedDate = formattedDate;
+                          provider.selectedDate = formattedDate;
                         });
 
                         // if (selectedCourier != 'All') {
                         //   accountsProvider.fetchBookedOrdersByMarketplace(selectedCourier, accountsProvider.currentPageBooked,
                         //       date: picked, mode: selectedPaymentMode);
                         // } else {
-                        accountsProvider.fetchAccountedOrders(accountsProvider.currentPageBooked,
-                            date: picked, mode: selectedPaymentMode ?? '', market: selectedCourier);
+                        accountsProvider.fetchInvoicedOrders(accountsProvider.currentPageBooked);
                         // }
                       }
                     },
@@ -408,30 +405,20 @@ class _InvoicedOrdersState extends State<InvoicedOrders> with SingleTickerProvid
             Column(
               children: [
                 Text(
-                  selectedCourier,
+                  provider.selectedCourier,
                 ),
                 Consumer<MarketplaceProvider>(
-                  builder: (context, provider, child) {
+                  builder: (context, marketPro, child) {
                     return PopupMenuButton<String>(
                       tooltip: 'Filter by Marketplace',
                       onSelected: (String value) {
                         setState(() {
-                          selectedCourier = value;
+                          provider.selectedCourier = value;
                         });
-                        // if (value == 'All') {
-                        accountsProvider.fetchAccountedOrders(accountsProvider.currentPageBooked,
-                            date: picked, mode: selectedPaymentMode ?? '', market: selectedCourier);
-                        // } else {
-                        //   setState(() {
-                        //     selectedCourier = value;
-                        //   });
-                        //   accountsProvider.fetchBookedOrdersByMarketplace(value, accountsProvider.currentPageBooked,
-                        //       date: picked, mode: selectedPaymentMode);
-                        // }
-                        log('Selected: $value');
+                        accountsProvider.fetchInvoicedOrders(accountsProvider.currentPageBooked);
                       },
                       itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
-                        ...provider.marketplaces.map((marketplace) => PopupMenuItem<String>(
+                        ...marketPro.marketplaces.map((marketplace) => PopupMenuItem<String>(
                               value: marketplace.name,
                               child: Text(marketplace.name),
                             )), // Fetched marketplaces
@@ -499,8 +486,7 @@ class _InvoicedOrdersState extends State<InvoicedOrders> with SingleTickerProvid
                           //   await accountsProvider.fetchOrdersByMarketplace(selectedCourier, 2, accountsProvider.currentPage,
                           //       date: picked, mode: selectedPaymentMode);
                           // } else {
-                          await accountsProvider.fetchAccountedOrders(accountsProvider.currentPageBooked,
-                              date: picked, mode: selectedPaymentMode, market: selectedCourier);
+                          await accountsProvider.fetchInvoicedOrders(accountsProvider.currentPageBooked);
                           // }
 
                           snackBarColor = AppColors.green; // Success: Green
@@ -536,18 +522,12 @@ class _InvoicedOrdersState extends State<InvoicedOrders> with SingleTickerProvid
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primaryBlue,
               ),
-              onPressed: accountsProvider.isRefreshingOrders
+              onPressed: accountsProvider.isLoadingBooked
                   ? null
                   : () async {
-                      setState(() {
-                        selectedCourier = 'All';
-                        _selectedDate = 'Select Date';
-                        picked = null;
-                        selectedPaymentMode = '';
-                      });
                       _refreshBookedOrders();
                     },
-              child: accountsProvider.isRefreshingOrders
+              child: accountsProvider.isLoadingBooked
                   ? const SizedBox(
                       width: 16,
                       height: 16,
@@ -671,5 +651,11 @@ class _InvoicedOrdersState extends State<InvoicedOrders> with SingleTickerProvid
               ),
       ),
     );
+  }
+
+  void goToBookedPage(int page) {
+    if (page < 1 || page > provider.totalPagesBooked) return;
+    provider.setCurrentPage(page);
+    provider.fetchInvoicedOrders(page);
   }
 }

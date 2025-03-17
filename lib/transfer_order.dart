@@ -42,18 +42,28 @@ class _TransferOrderPageState extends State<TransferOrderPage> {
       return;
     }
 
+    if (provider.selectedFromWarehouse == null || provider.selectedFromWarehouse!.isEmpty) {
+      Utils.showSnackBar(context, 'Please select source warehouse.');
+      return;
+    }
+
+    if (provider.selectedToWarehouse == null || provider.selectedToWarehouse!.isEmpty) {
+      Utils.showSnackBar(context, 'Please select destination warehouse.');
+      return;
+    }
+
     if (provider.selectedFromWarehouse == provider.selectedToWarehouse) {
       Utils.showSnackBar(context, 'Please select different warehouses.');
       return;
     }
 
     if (_formKey.currentState!.validate()) {
-      try {
-        final orderId = await provider.saveOrder();
+        final res = await provider.saveOrder();
+      if(res['success'] == true) {
         Utils.showSnackBar(context, 'Order Transferred successfully!', color: Colors.green);
-        Utils.showInfoDialog(context, 'Order ID: $orderId!', true);
-      } catch (e) {
-        Utils.showSnackBar(context, 'Error transferring order: $e', color: Colors.red);
+        Utils.showInfoDialog(context, 'Order ID: ${res['message']}!', true);
+      } else {
+        Utils.showSnackBar(context, 'Error transferring order: ${res['message']}', color: Colors.red);
       }
     }
   }
@@ -76,15 +86,9 @@ class _TransferOrderPageState extends State<TransferOrderPage> {
                 const SizedBox(height: 20),
                 _buildWarehouseSection(context, provider),
                 const SizedBox(height: 30),
-                _buildOrderDetailsSection(context, provider),
-                const SizedBox(height: 30),
-                _buildCustomerDetailsSection(provider),
-                const SizedBox(height: 30),
-                _buildPaymentDetailsSection(context, provider),
-                const SizedBox(height: 30),
-                _buildDiscountAndAdditionalSection(context, provider),
-                const SizedBox(height: 30),
                 _buildShippingAddressSection(provider),
+                const SizedBox(height: 30),
+                _buildOrderDetailsSection(context, provider),
                 const SizedBox(height: 30),
                 if (provider.isBillingSameAsShipping == false) _buildBillingAddressSection(provider),
                 if (provider.isBillingSameAsShipping == false) const SizedBox(height: 30),
@@ -126,49 +130,78 @@ class _TransferOrderPageState extends State<TransferOrderPage> {
         children: [
           Padding(
             padding: const EdgeInsets.all(16.0),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            child: Column(
               children: [
-                Consumer<LocationProvider>(
-                  builder: (context, pro, child) {
-                    return Flexible(
-                      child: _buildDropdown(
-                        value: provider.selectedFromWarehouse,
-                        icon: Icons.store,
-                        label: 'Source Warehouse',
-                        items: pro.warehouses.map((e) => e['name'].toString()).toList(),
-                        onChanged: provider.selectFromWarehouse,
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Required';
-                          }
-                          return null;
-                        },
-                      ),
-                    );
-                  },
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Consumer<LocationProvider>(
+                      builder: (context, pro, child) {
+                        return Flexible(
+                          child: _buildDropdown(
+                            value: provider.selectedFromWarehouse,
+                            icon: Icons.store,
+                            label: 'Source Warehouse',
+                            items: pro.warehouses.map((e) => e['name'].toString()).toList(),
+                            onChanged: provider.selectFromWarehouse,
+                            validator: (value) {
+                              if (value == null || value.isEmpty) {
+                                return 'Required';
+                              }
+                              return null;
+                            },
+                          ),
+                        );
+                      },
+                    ),
+                    const SizedBox(width: 8),
+                    Consumer<LocationProvider>(
+                      builder: (context, pro, child) {
+                        return Flexible(
+                          child: _buildDropdown(
+                            value: provider.selectedToWarehouse,
+                            icon: Icons.home_work,
+                            label: 'Destination Warehouse',
+                            items: pro.warehouses.map((e) => e['name'].toString()).toList(),
+                            onChanged: (value) {
+                              final selectedWarehouse = pro.warehouses.firstWhere((e) => e['name'] == value);
+                              provider.selectToWarehouse(value, selectedWarehouse['_id'].toString());
+                            },
+                            validator: (value) {
+                              if (value == null || value.isEmpty) {
+                                return 'Required';
+                              }
+                              return null;
+                            },
+                          ),
+                        );
+                      },
+                    ),
+                    const SizedBox(width: 8),
+                  ],
                 ),
-                const SizedBox(width: 8),
-                Consumer<LocationProvider>(
-                  builder: (context, pro, child) {
-                    return Flexible(
-                      child: _buildDropdown(
-                        value: provider.selectedToWarehouse,
-                        icon: Icons.home_work,
-                        label: 'Destination Warehouse',
-                        items: pro.warehouses.map((e) => e['name'].toString()).toList(),
-                        onChanged: provider.selectToWarehouse,
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Required';
-                          }
-                          return null;
-                        },
+                const SizedBox(height: 8),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Flexible(
+                    //   child: _buildPhoneField(
+                    //     phoneController: provider.customerPhoneController,
+                    //     // countryCodeController: provider.customerCountryCodeController,
+                    //     label: "Customer's Phone",
+                    //     enabled: true,
+                    //   ),
+                    // ),
+                    // const SizedBox(width: 8),
+                    Flexible(
+                      child: _buildTextField(
+                        controller: provider.notesController,
+                        label: 'Notes',
+                        icon: Icons.note,
                       ),
-                    );
-                  },
+                    ),
+                  ],
                 ),
-                const SizedBox(width: 8),
               ],
             ),
           ),
@@ -183,7 +216,7 @@ class _TransferOrderPageState extends State<TransferOrderPage> {
       color: Colors.white,
       child: ExpansionTile(
         initiallyExpanded: true,
-        title: _buildHeading("Order Details"),
+        title: _buildHeading("Other Details"),
         children: [
           Padding(
             padding: const EdgeInsets.all(16.0),
@@ -205,239 +238,7 @@ class _TransferOrderPageState extends State<TransferOrderPage> {
                     label: 'Total Items',
                     icon: Icons.format_list_numbered,
                     enabled: false,
-                    // onSubmitted: (value) => provider.setTotalQuantity(),
                   ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildPaymentDetailsSection(BuildContext context, TransferOrderProvider provider) {
-    return Card(
-      elevation: 2,
-      color: Colors.white,
-      child: ExpansionTile(
-        initiallyExpanded: true,
-        title: _buildHeading("Payment Details"),
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildDropdown(
-                  value: provider.selectedPayment,
-                  label: 'Payment Mode',
-                  items: const ['Partial Payment', 'Prepaid', 'COD'],
-                  onChanged: provider.selectPayment,
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Required';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 10),
-                _buildTextField(
-                  controller: provider.currencyCodeController,
-                  label: "Currency Code",
-                  icon: Icons.currency_bitcoin,
-                  validator: (value) => (value?.isEmpty ?? false) ? 'Required' : null,
-                ),
-                const SizedBox(height: 10),
-                _buildTextField(
-                  controller: provider.codAmountController,
-                  label: 'COD Amount',
-                  icon: Icons.money,
-                  enabled: false,
-                  validator: (value) => (value?.isEmpty ?? false) ? 'Required' : null,
-                ),
-                const SizedBox(height: 10),
-                provider.selectedPayment != 'COD'
-                    ? _buildTextField(
-                        controller: provider.prepaidAmountController,
-                        label: 'Prepaid Amount',
-                        icon: Icons.credit_card,
-                        validator: (value) => (value?.isEmpty ?? false) ? 'Required' : null,
-                      )
-                    : const SizedBox(),
-                const SizedBox(height: 10),
-                _buildTextField(
-                  controller: provider.totalAmtController,
-                  label: 'Total Amount',
-                  enabled: false,
-                  icon: Icons.currency_rupee,
-                  validator: (value) => (value?.isEmpty ?? false) ? 'Required' : null,
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildDiscountAndAdditionalSection(BuildContext context, TransferOrderProvider provider) {
-    return Column(
-      children: [
-        Card(
-          elevation: 2,
-          color: Colors.white,
-          child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildHeading("Discount Information"),
-                const SizedBox(height: 10),
-                Row(
-                  children: [
-                    Expanded(
-                      child: _buildTextField(
-                        controller: provider.discountCodeController,
-                        label: 'Discount Code',
-                        icon: Icons.discount,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 10),
-                Row(
-                  children: [
-                    Expanded(
-                      child: _buildTextField(
-                        controller: provider.discountPercentController,
-                        label: 'Discount Percent',
-                        icon: Icons.percent,
-                        onSubmitted: (_) => provider.updateTotalAmount(),
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: _buildTextField(
-                        controller: provider.discountAmountController,
-                        label: 'Discount Amount',
-                        icon: Icons.money_off,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ),
-        const SizedBox(height: 16),
-        Card(
-          elevation: 2,
-          color: Colors.white,
-          child: ExpansionTile(
-            initiallyExpanded: true,
-            title: _buildHeading("Additional Information"),
-            children: [
-              Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Expanded(
-                          child: _buildTextField(
-                            controller: provider.coinController,
-                            label: 'Coin',
-                            icon: Icons.monetization_on,
-                          ),
-                        ),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: _buildTextField(
-                            controller: provider.taxPercentController,
-                            label: 'Tax Percent',
-                            icon: Icons.account_balance_wallet,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 10),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: _buildTextField(
-                            controller: provider.agentController,
-                            label: 'Agent',
-                            icon: Icons.person,
-                          ),
-                        ),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: _buildTextField(
-                            controller: provider.notesController,
-                            label: 'Notes',
-                            icon: Icons.note,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildCustomerDetailsSection(TransferOrderProvider provider) {
-    return Card(
-      elevation: 2,
-      color: Colors.white,
-      child: ExpansionTile(
-        initiallyExpanded: true,
-        title: _buildHeading("Customer Details"),
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: _buildTextField(
-                        controller: provider.customerFirstNameController,
-                        label: 'First Name',
-                        icon: Icons.person,
-                        validator: (value) => (value?.isEmpty ?? false) ? 'Required' : null,
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: _buildTextField(
-                        controller: provider.customerLastNameController,
-                        label: 'Last Name',
-                        icon: Icons.person,
-                        validator: (value) => (value?.isEmpty ?? false) ? 'Required' : null,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 10),
-                _buildTextField(
-                  controller: provider.customerEmailController,
-                  label: 'Email',
-                  icon: Icons.email,
-                ),
-                const SizedBox(height: 10),
-                _buildPhoneField(
-                  phoneController: provider.customerPhoneController,
-                  // countryCodeController: provider.customerCountryCodeController,
-                  label: 'Phone',
-                  enabled: true,
                 ),
               ],
             ),
@@ -460,39 +261,6 @@ class _TransferOrderPageState extends State<TransferOrderPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: _buildTextField(
-                        controller: provider.billingFirstNameController,
-                        label: 'First Name',
-                        icon: Icons.person,
-                        validator: (value) => (value?.isEmpty ?? false) ? 'Required' : null,
-                        enabled: !provider.isBillingSameAsShipping,
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: _buildTextField(
-                        controller: provider.billingLastNameController,
-                        label: 'Last Name',
-                        icon: Icons.person,
-                        validator: (value) => (value?.isEmpty ?? false) ? 'Required' : null,
-                        enabled: !provider.isBillingSameAsShipping,
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: _buildTextField(
-                        controller: provider.billingEmailController,
-                        label: 'Email',
-                        icon: Icons.email,
-                        enabled: !provider.isBillingSameAsShipping,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 10),
                 Row(
                   children: [
                     Expanded(
@@ -551,7 +319,7 @@ class _TransferOrderPageState extends State<TransferOrderPage> {
                     Expanded(
                       child: _buildTextField(
                         controller: provider.billingPincodeController,
-                        label: 'Pincode',
+                        label: 'Pincode/Zipcode',
                         icon: Icons.code,
                         validator: (value) => (value?.isEmpty ?? false) ? 'Required' : null,
                         onChanged: (value) {
@@ -569,27 +337,12 @@ class _TransferOrderPageState extends State<TransferOrderPage> {
                   ],
                 ),
                 const SizedBox(height: 10),
-                Row(
-                  children: [
-                    SizedBox(
-                      width: 120,
-                      child: _buildTextField(
-                        controller: provider.billingCountryCodeController,
-                        label: 'Country Code',
-                        icon: Icons.flag,
-                        maxLength: 3,
-                        enabled: !provider.isBillingSameAsShipping,
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Flexible(
-                      child: _buildPhoneField(
-                        phoneController: provider.billingPhoneController,
-                        label: 'Phone',
-                        enabled: !provider.isBillingSameAsShipping,
-                      ),
-                    ),
-                  ],
+                Flexible(
+                  child: _buildPhoneField(
+                    phoneController: provider.billingPhoneController,
+                    label: 'Phone',
+                    enabled: !provider.isBillingSameAsShipping,
+                  ),
                 ),
               ],
             ),
@@ -618,37 +371,6 @@ class _TransferOrderPageState extends State<TransferOrderPage> {
                   onChanged: (bool? value) => provider.setBillingSameAsShipping(value),
                   controlAffinity: ListTileControlAffinity.leading,
                 ),
-                Row(
-                  children: [
-                    Expanded(
-                      child: _buildTextField(
-                        controller: provider.shippingFirstNameController,
-                        label: 'First Name',
-                        icon: Icons.person,
-                        validator: (value) => (value?.isEmpty ?? false) ? 'Required' : null,
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: _buildTextField(
-                        controller: provider.shippingLastNameController,
-                        label: 'Last Name',
-                        icon: Icons.person,
-                        validator: (value) => (value?.isEmpty ?? false) ? 'Required' : null,
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: _buildTextField(
-                        controller: provider.shippingEmailController,
-                        label: 'Email',
-                        icon: Icons.email,
-                        // validator: (value) => (value?.isEmpty ?? false) ? 'Required' : null,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 10),
                 Row(
                   children: [
                     Expanded(
@@ -722,20 +444,6 @@ class _TransferOrderPageState extends State<TransferOrderPage> {
                 const SizedBox(height: 10),
                 Row(
                   children: [
-                    SizedBox(
-                      width: 120,
-                      child: _buildTextField(
-                        controller: provider.shippingCountryCodeController,
-                        label: 'Country Code',
-                        icon: Icons.flag,
-                        maxLength: 3,
-                        validator: (value) {
-                          if (value == null || value.isEmpty) return 'Required';
-                          return null;
-                        },
-                      ),
-                    ),
-                    const SizedBox(width: 10),
                     Expanded(
                       child: _buildPhoneField(phoneController: provider.shippingPhoneController, label: 'Phone'),
                     ),
@@ -1004,7 +712,7 @@ class _TransferOrderPageState extends State<TransferOrderPage> {
           borderSide: const BorderSide(color: AppColors.primaryBlue, width: 1.5),
         ),
         filled: true,
-        fillColor: enabled ? Colors.white : Colors.grey[200],
+        fillColor: enabled ? Colors.white : Colors.grey[100],
         contentPadding: const EdgeInsets.symmetric(vertical: 15, horizontal: 12),
       ),
     );
@@ -1021,7 +729,7 @@ class _TransferOrderPageState extends State<TransferOrderPage> {
     return DropdownButtonFormField<String>(
       value: value,
       decoration: InputDecoration(
-        labelText: label,
+        label: Text(label, style: const TextStyle(color: Colors.black)),
         prefixIcon: Icon(icon, color: Colors.grey[700]),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
@@ -1067,7 +775,7 @@ class _TransferOrderPageState extends State<TransferOrderPage> {
             return null;
           },
       decoration: InputDecoration(
-        labelText: label,
+        label: Text(label, style: const TextStyle(color: Colors.black)),
         prefixIcon: Icon(Icons.phone, color: Colors.grey[700]),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),

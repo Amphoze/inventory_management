@@ -833,11 +833,9 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
   }
 
   Future<Product?> fetchProduct(String query) async {
-    Logger().e('fetched product called');
+    log('fetchProduct called');
 
-    Uri url;
-
-    url = Uri.parse('${await Constants.getBaseUrl()}/products/search/$query');
+    Uri url = Uri.parse('${await Constants.getBaseUrl()}/products/search/$query');
 
     try {
       final prefs = await SharedPreferences.getInstance();

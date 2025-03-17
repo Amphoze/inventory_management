@@ -29,13 +29,32 @@ class Utils {
     );
   }
 
-  static showSnackBar(BuildContext context, String message, {Color? color}) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: color,
-      ),
-    );
+  static showSnackBar(BuildContext context, String message, {String? details, Color? color}) {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: Text(message),
+      backgroundColor: color,
+      action: details != null
+          ? SnackBarAction(
+              label: 'Details',
+              onPressed: () {
+                showDialog(
+                  context: context,
+                  builder: (context) {
+                    return AlertDialog(
+                      title: const Text('Details'),
+                      content: Text(details),
+                      actions: [
+                        TextButton(
+                            onPressed: () => Navigator.pop(context),
+                            child: const Text('Ok'))
+                      ],
+                    );
+                  },
+                );
+              },
+            )
+          : null,
+    ));
   }
 
   static showInfoDialog(BuildContext context, String message, bool success) {

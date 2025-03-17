@@ -54,6 +54,20 @@ class BookProvider with ChangeNotifier {
   bool isCancel = false;
   bool isRebook = false;
 
+  String selectedDate = 'Select Date';
+  DateTime? picked;
+  String selectedCourier = 'All';
+
+  final TextEditingController b2bSearchController = TextEditingController();
+  final TextEditingController b2cSearchController = TextEditingController();
+
+  void resetFilterData() {
+    selectedDate = 'Select Date';
+    picked = null;
+    selectedCourier = 'All';
+    notifyListeners();
+  }
+
   void setCancelStatus(bool status) {
     isCancel = status;
     notifyListeners();
@@ -92,10 +106,6 @@ class BookProvider with ChangeNotifier {
   void setSortOption(String? option) {
     _sortOption = option;
     notifyListeners();
-  }
-
-  Future<void> fetchPaginatedOrdersB2B(int page) async {
-    await fetchOrders('B2B', page);
   }
 
   Future<String> cancelOrders(BuildContext context, List<String> orderIds) async {
@@ -226,11 +236,14 @@ class BookProvider with ChangeNotifier {
   }
 
   Future<void> fetchPaginatedOrdersB2C(int page) async {
-    Logger().e('ye le call ho gaya');
     await fetchOrders('B2C', page);
   }
 
-  Future<void> fetchOrders(String type, int page, {DateTime? date, String? market}) async {
+  Future<void> fetchPaginatedOrdersB2B(int page) async {
+    await fetchOrders('B2B', page);
+  }
+
+  Future<void> fetchOrders(String type, int page) async {
     String? token = await _getToken();
     final prefs = await SharedPreferences.getInstance();
     final warehouseId = prefs.getString('warehouseId') ?? '';
@@ -242,13 +255,13 @@ class BookProvider with ChangeNotifier {
 
     String url = '${await Constants.getBaseUrl()}/orders?warehouse=$warehouseId&filter=$type&orderStatus=3&page=$page';
 
-    if (date != null) {
-      String formattedDate = DateFormat('yyyy-MM-dd').format(date);
+    if (picked != null) {
+      String formattedDate = DateFormat('yyyy-MM-dd').format(picked!);
       url += '&date=$formattedDate';
     }
 
-    if (market != 'All' && market != null) {
-      url += '&marketplace=$market';
+    if (selectedCourier != 'All') {
+      url += '&marketplace=$selectedCourier';
     }
 
     Logger().e('fetchOrders url: $url');
@@ -321,7 +334,7 @@ class BookProvider with ChangeNotifier {
     }
   }
 
-  Future<void> fetchBookedOrders(int page, {DateTime? date, String? market}) async {
+  Future<void> fetchBookedOrders(int page) async {
     String? token = await _getToken();
     final prefs = await SharedPreferences.getInstance();
     final warehouseId = prefs.getString('warehouseId') ?? '';
@@ -333,14 +346,15 @@ class BookProvider with ChangeNotifier {
 
     String url = '${await Constants.getBaseUrl()}/orders?warehouse=$warehouseId&isBooked=true&page=$page';
 
-    if (date != null) {
-      String formattedDate = DateFormat('yyyy-MM-dd').format(date);
+    if (picked != null) {
+      String formattedDate = DateFormat('yyyy-MM-dd').format(picked!);
       url += '&date=$formattedDate';
     }
 
-    if (market != 'All' && market != null) {
-      url += '&marketplace=$market';
+    if (selectedCourier != 'All') {
+      url += '&marketplace=$selectedCourier';
     }
+    log('fetchBookedOrders url: $url');
 
     try {
       isLoadingBooked = true;
@@ -776,11 +790,11 @@ class BookProvider with ChangeNotifier {
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
 
-        if (searchType == 'Order ID') {
-          _ordersBooked = [Order.fromJson(data)];
-        } else {
-          _ordersBooked = [Order.fromJson(data['orders'][0])];
-        }
+        // if (searchType == 'Order ID') {
+        _ordersBooked = [Order.fromJson(data)];
+        // } else {
+        //   _ordersBooked = [Order.fromJson(data['orders'][0])];
+        // }
 
         log('_ordersBooked: $ordersBooked');
       } else {

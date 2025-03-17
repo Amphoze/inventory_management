@@ -17,10 +17,8 @@ class OutboundProvider with ChangeNotifier {
   List<Order> _outboundOrders = [];
   int _totalReadyPages = 1;
   int _currentPageReady = 1;
-  String? _selectedCourier;
   String? _selectedPayment;
   String? _selectedFilter;
-  String? _selectedMarketplace;
   String? _selectedOrderType;
   String? _selectedCustomerType;
   String _expectedDeliveryDate = '';
@@ -30,29 +28,23 @@ class OutboundProvider with ChangeNotifier {
   int? dispatchCount;
   int? rtoCount;
   int? allCount;
+  late TextEditingController searchController;
+
+
+  String selectedDate = 'Select Date';
+  String selectedCourier = 'All';
+  DateTime? picked;
 
   bool isLoading = false;
 
   List<bool> get selectedReadyOrders => _selectedReadyOrders;
-
-  String? get selectedCourier => _selectedCourier;
-
   String? get selectedPayment => _selectedPayment;
-
-  String? get selectedMarketplace => _selectedMarketplace;
-
   String? get selectedOrderType => _selectedOrderType;
-
   String? get selectedCustomerType => _selectedCustomerType;
-
   String? get selectedFilter => _selectedFilter;
-
   String get expectedDeliveryDate => _expectedDeliveryDate;
-
   String get paymentDateTime => _paymentDateTime;
-
   String get normalDate => _normalDate;
-
   String get sanitizedEmail => _sanitizedEmail;
 
   int get currentPageReady => _currentPageReady;
@@ -62,6 +54,13 @@ class OutboundProvider with ChangeNotifier {
   bool isConfirm = false;
   bool isCancel = false;
   bool isUpdating = false;
+
+  void resetOutbound() {
+    selectedCourier = 'All';
+    selectedDate = 'Select Date';
+    picked = null;
+    notifyListeners();
+  }
 
   void setUpdating(bool status) {
     isUpdating = status;
@@ -93,33 +92,23 @@ class OutboundProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  // Method to set the selected payment mode
   void selectPayment(String? paymentMode) {
     _selectedPayment = paymentMode;
     notifyListeners();
   }
 
-  // Method to set an initial value for pre-filling
   void setInitialPaymentMode(String? paymentMode) {
     _selectedPayment = (paymentMode == null || paymentMode.isEmpty) ? null : paymentMode;
     notifyListeners();
   }
 
-  // Method to set the selected filter
   void selectFilter(String? filter) {
     _selectedFilter = filter;
     notifyListeners();
   }
 
-  // Method to set an initial value for pre-filling
   void setInitialFilter(String? filter) {
     _selectedFilter = (filter == null || filter.isEmpty) ? null : filter;
-    notifyListeners();
-  }
-
-  // Method to set the selected Marketplace
-  void selectMarketplace(String? marketplace) {
-    _selectedMarketplace = marketplace;
     notifyListeners();
   }
 
@@ -133,25 +122,7 @@ class OutboundProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  // Method to set an initial value for pre-filling
-  void setInitialMarketplace(String? marketplace) {
-    _selectedMarketplace = (marketplace == null || marketplace.isEmpty) ? null : marketplace;
-    notifyListeners();
-  }
 
-  // Method to set the selected courier
-  void selectCourier(String? courier) {
-    _selectedCourier = courier;
-    notifyListeners();
-  }
-
-  // Method to set an initial value for pre-filling
-  void setInitialCourier(String? courier) {
-    _selectedCourier = (courier == null || courier.isEmpty) ? null : courier;
-    notifyListeners();
-  }
-
-  // New method to reset selections and counts
   void resetSelections() {
     allSelectedReady = false;
     // allSelectedFailed = false;
@@ -215,7 +186,6 @@ class OutboundProvider with ChangeNotifier {
     }
   }
 
-  // Function to update an order
   Future<void> updateOrder(String id, Map<String, dynamic> updatedData) async {
     // Get the auth token
     final token = await _getToken();
@@ -263,12 +233,15 @@ class OutboundProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> fetchOrders({int page = 1, DateTime? date, String? market}) async {
+  Future<void> fetchOrders({int page = 1}) async {
     dispatchCount = rtoCount = allCount = null;
-    log(date.toString());
-    // Ensure the requested page number is valid
     if (page < 1 || page > totalReadyPages) {
       print('Invalid page number for ready orders: $page');
+      return;
+    }
+
+    if(searchController.text.trim().isNotEmpty) {
+      searchOrdersByID(searchController.text.trim());
       return;
     }
 
@@ -280,13 +253,13 @@ class OutboundProvider with ChangeNotifier {
 
     var readyOrdersUrl = '${await Constants.getBaseUrl()}/orders?isOutBound=false&page=$page';
 
-    if (date != null) {
-      String formattedDate = DateFormat('yyyy-MM-dd').format(date);
+    if (picked != null) {
+      String formattedDate = DateFormat('yyyy-MM-dd').format(picked!);
       readyOrdersUrl += '&date=$formattedDate';
     }
 
-    if (market != 'All' && market != null) {
-      readyOrdersUrl += '&marketplace=$market';
+    if (selectedCourier != 'All') {
+      readyOrdersUrl += '&marketplace=$selectedCourier';
     } else {
       readyOrdersUrl += '&marketplace=Shopify,Woocommerce';
     }

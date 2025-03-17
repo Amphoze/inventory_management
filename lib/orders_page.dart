@@ -2,6 +2,7 @@ import 'dart:developer';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
+import 'package:http/http.dart';
 import 'package:intl/intl.dart';
 import 'package:inventory_management/Custom-Files/colors.dart';
 import 'package:inventory_management/Custom-Files/custom_pagination.dart';
@@ -28,35 +29,34 @@ class OrdersNewPage extends StatefulWidget {
 
 class _OrdersNewPageState extends State<OrdersNewPage> with TickerProviderStateMixin {
   late TabController _tabController;
-  late TextEditingController _searchController;
-  late TextEditingController _searchControllerReady;
-  late TextEditingController _searchControllerFailed;
+  // late TextEditingController _searchController;
   final TextEditingController _pageController = TextEditingController();
   final TextEditingController pageController = TextEditingController();
   final remarkController = TextEditingController();
-  String _selectedReadyDate = 'Select Date';
-  String _selectedFailedDate = 'Select Date';
-  String selectedReadyCourier = 'All';
-  String selectedFailedCourier = 'All';
   late OrdersProvider provider;
-  DateTime? readyPicked, failedPicked;
+  // String _selectedReadyDate = 'Select Date';
+  // String selectedReadyCourier = 'All';
+  // DateTime? readyPicked;
+  // String _selectedFailedDate = 'Select Date';
+  // String selectedFailedCourier = 'All';
+  // DateTime? failedPicked;
 
   @override
   void initState() {
-    _tabController = TabController(length: 2, vsync: this);
-    _searchController = TextEditingController();
-    _searchControllerReady = TextEditingController();
-    _searchControllerFailed = TextEditingController();
     provider = Provider.of(context, listen: false);
+    _tabController = TabController(length: 2, vsync: this);
+    // _searchController = TextEditingController();
+    provider.searchControllerReady = TextEditingController();
+    provider.searchControllerFailed = TextEditingController();
     _tabController.addListener(() {
       if (_tabController.indexIsChanging) {
-        setState(() {
-          _selectedReadyDate = 'Select Date';
-          _selectedFailedDate = 'Select Date';
-        });
-        _searchController.clear();
-        _searchControllerReady.clear();
-        _searchControllerFailed.clear();
+        // setState(() {
+        //   _selectedReadyDate = 'Select Date';
+        //   _selectedFailedDate = 'Select Date';
+        // });
+        // _searchController.clear();
+        provider.searchControllerReady.clear();
+        provider.searchControllerFailed.clear();
       }
     });
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -72,9 +72,9 @@ class _OrdersNewPageState extends State<OrdersNewPage> with TickerProviderStateM
   void dispose() {
     super.dispose();
     _tabController.dispose();
-    _searchController.dispose();
-    _searchControllerReady.dispose();
-    _searchControllerFailed.dispose();
+    // _searchController.dispose();
+    provider.searchControllerReady.dispose();
+    provider.searchControllerFailed.dispose();
     _pageController.dispose();
     pageController.dispose();
     remarkController.dispose();
@@ -194,17 +194,17 @@ class _OrdersNewPageState extends State<OrdersNewPage> with TickerProviderStateM
                     Column(
                       children: [
                         Text(
-                          _selectedReadyDate,
+                          ordersProvider.selectedReadyDate,
                           style: TextStyle(
                             fontSize: 11,
-                            color: _selectedReadyDate == 'Select Date' ? Colors.grey : AppColors.primaryBlue,
+                            color: ordersProvider.selectedReadyDate == 'Select Date' ? Colors.grey : AppColors.primaryBlue,
                           ),
                         ),
                         Tooltip(
                           message: 'Filter by Date',
                           child: IconButton(
                             onPressed: () async {
-                              readyPicked = await showDatePicker(
+                              ordersProvider.readyPicked = await showDatePicker(
                                 context: context,
                                 initialDate: DateTime.now(),
                                 firstDate: DateTime(2020),
@@ -224,10 +224,14 @@ class _OrdersNewPageState extends State<OrdersNewPage> with TickerProviderStateM
                                 },
                               );
 
-                              Logger().e('picked: $readyPicked');
+                              String formattedDate = DateFormat('dd-MM-yyyy').format(ordersProvider.readyPicked!);
+                              setState(() {
+                                ordersProvider.selectedReadyDate = formattedDate;
+                              });
 
-                              ordersProvider.fetchReadyOrders(
-                                  page: ordersProvider.currentPageReady, date: readyPicked, market: selectedReadyCourier);
+                              ordersProvider.fetchReadyOrders(page: ordersProvider.currentPageReady);
+
+                              Logger().e('picked: ${ordersProvider.readyPicked}');
                             },
                             icon: const Icon(
                               Icons.calendar_today,
@@ -242,7 +246,7 @@ class _OrdersNewPageState extends State<OrdersNewPage> with TickerProviderStateM
                     Column(
                       children: [
                         Text(
-                          selectedReadyCourier,
+                          ordersProvider.selectedReadyCourier,
                         ),
                         Consumer<MarketplaceProvider>(
                           builder: (context, provider, child) {
@@ -250,10 +254,9 @@ class _OrdersNewPageState extends State<OrdersNewPage> with TickerProviderStateM
                               tooltip: 'Filter by Marketplace',
                               onSelected: (String value) {
                                 setState(() {
-                                  selectedReadyCourier = value;
+                                  ordersProvider.selectedReadyCourier = value;
                                 });
-                                ordersProvider.fetchReadyOrders(
-                                    page: ordersProvider.currentPageReady, date: readyPicked, market: selectedReadyCourier);
+                                ordersProvider.fetchReadyOrders(page: ordersProvider.currentPageReady);
                               },
                               itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
                                 ...provider.marketplaces.map((marketplace) => PopupMenuItem<String>(
@@ -476,13 +479,10 @@ class _OrdersNewPageState extends State<OrdersNewPage> with TickerProviderStateM
                         backgroundColor: Colors.grey,
                       ),
                       onPressed: () async {
-                        setState(() {
-                          selectedReadyCourier = 'All';
-                          _selectedReadyDate = 'Select Date';
-                        });
+                        ordersProvider.searchControllerReady.clear();
+                        ordersProvider.resetReadyData();
                         await ordersProvider.fetchReadyOrders();
                         ordersProvider.resetSelections();
-                        ordersProvider.clearSearchResults();
                       },
                       child: const Text('Refresh'),
                     ),
@@ -501,7 +501,7 @@ class _OrdersNewPageState extends State<OrdersNewPage> with TickerProviderStateM
                         children: [
                           Expanded(
                             child: TextField(
-                              controller: _searchControllerReady,
+                              controller: provider.searchControllerReady,
                               decoration: const InputDecoration(
                                 hintText: 'Search Orders',
                                 hintStyle: TextStyle(
@@ -513,17 +513,24 @@ class _OrdersNewPageState extends State<OrdersNewPage> with TickerProviderStateM
                               ),
                               style: const TextStyle(color: AppColors.black),
                               onSubmitted: (value) {
-                                ordersProvider.searchReadyToConfirmOrders(value);
+                                ordersProvider.resetReadyData();
+                                if (value.isEmpty) {
+                                  ordersProvider.fetchReadyOrders();
+                                  ordersProvider.clearSearchResults();
+                                } else {
+                                  ordersProvider.searchReadyToConfirmOrders(value);
+                                }
                               },
                               onChanged: (value) {
                                 if (value.isEmpty) {
+                                  ordersProvider.resetReadyData();
                                   ordersProvider.fetchReadyOrders();
                                   ordersProvider.clearSearchResults();
                                 }
                               },
                             ),
                           ),
-                          if (_searchControllerReady.text.isNotEmpty)
+                          if (provider.searchControllerReady.text.isNotEmpty)
                             InkWell(
                               child: Icon(
                                 Icons.close,
@@ -531,7 +538,7 @@ class _OrdersNewPageState extends State<OrdersNewPage> with TickerProviderStateM
                                 color: Colors.grey.shade600,
                               ),
                               onTap: () {
-                                _searchControllerReady.clear();
+                                provider.searchControllerReady.clear();
                                 ordersProvider.fetchReadyOrders();
                                 ordersProvider.clearSearchResults();
                               },
@@ -689,15 +696,12 @@ class _OrdersNewPageState extends State<OrdersNewPage> with TickerProviderStateM
                                                   ),
                                                 );
                                                 if (result == true) {
-                                                  final readySearched = _searchControllerReady.text;
+                                                  final readySearched = provider.searchControllerReady.text;
 
                                                   if (readySearched.isNotEmpty) {
                                                     ordersProvider.searchReadyToConfirmOrders(readySearched);
                                                   } else {
-                                                    ordersProvider.fetchReadyOrders(
-                                                        page: ordersProvider.currentPageReady,
-                                                        date: readyPicked,
-                                                        market: selectedReadyCourier);
+                                                    ordersProvider.fetchReadyOrders(page: ordersProvider.currentPageReady);
                                                   }
                                                 }
                                               },
@@ -768,8 +772,7 @@ class _OrdersNewPageState extends State<OrdersNewPage> with TickerProviderStateM
                                                                   final res =
                                                                       await pro.editWarehouse(order.orderId, selectedWarehouse.trim());
                                                                   if (res == true) {
-                                                                    ordersProvider.fetchReadyOrders(
-                                                                        date: readyPicked, market: selectedReadyCourier);
+                                                                    ordersProvider.fetchReadyOrders();
                                                                   } else {
                                                                     if (context.mounted) {
                                                                       ScaffoldMessenger.of(context).showSnackBar(
@@ -1094,6 +1097,7 @@ class _OrdersNewPageState extends State<OrdersNewPage> with TickerProviderStateM
                                       padding: const EdgeInsets.symmetric(horizontal: 16.0),
                                       child: Row(
                                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                        crossAxisAlignment: CrossAxisAlignment.end,
                                         children: [
                                           Column(
                                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -1384,17 +1388,17 @@ class _OrdersNewPageState extends State<OrdersNewPage> with TickerProviderStateM
                     Column(
                       children: [
                         Text(
-                          _selectedFailedDate,
+                          ordersProvider.selectedFailedDate,
                           style: TextStyle(
                             fontSize: 11,
-                            color: _selectedFailedDate == 'Select Date' ? Colors.grey : AppColors.primaryBlue,
+                            color: ordersProvider.selectedFailedDate == 'Select Date' ? Colors.grey : AppColors.primaryBlue,
                           ),
                         ),
                         Tooltip(
                           message: 'Filter by Date',
                           child: IconButton(
                             onPressed: () async {
-                              failedPicked = await showDatePicker(
+                              ordersProvider.failedPicked = await showDatePicker(
                                 context: context,
                                 initialDate: DateTime.now(),
                                 firstDate: DateTime(2020),
@@ -1414,16 +1418,14 @@ class _OrdersNewPageState extends State<OrdersNewPage> with TickerProviderStateM
                                 },
                               );
 
-                              if (failedPicked != null) {
-                                String formattedDate = DateFormat('dd-MM-yyyy').format(failedPicked!);
+                              if (ordersProvider.failedPicked != null) {
+                                String formattedDate = DateFormat('dd-MM-yyyy').format(ordersProvider.failedPicked!);
                                 setState(() {
-                                  _selectedFailedDate = formattedDate;
+                                  ordersProvider.selectedFailedDate = formattedDate;
                                 });
 
                                 ordersProvider.fetchFailedOrders(
                                   page: ordersProvider.currentPageFailed,
-                                  date: failedPicked,
-                                  market: selectedFailedCourier,
                                 );
                               }
                             },
@@ -1440,7 +1442,7 @@ class _OrdersNewPageState extends State<OrdersNewPage> with TickerProviderStateM
                     Column(
                       children: [
                         Text(
-                          selectedFailedCourier,
+                          ordersProvider.selectedFailedCourier,
                         ),
                         Consumer<MarketplaceProvider>(
                           builder: (context, provider, child) {
@@ -1448,11 +1450,10 @@ class _OrdersNewPageState extends State<OrdersNewPage> with TickerProviderStateM
                               tooltip: 'Filter by Marketplace',
                               onSelected: (String value) async {
                                 setState(() {
-                                  selectedFailedCourier = value;
+                                  ordersProvider.selectedFailedCourier = value;
                                 });
 
-                                ordersProvider.fetchFailedOrders(
-                                    page: ordersProvider.currentPageFailed, date: failedPicked, market: selectedFailedCourier);
+                                ordersProvider.fetchFailedOrders(page: ordersProvider.currentPageFailed);
                               },
                               itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
                                 ...provider.marketplaces.map((marketplace) => PopupMenuItem<String>(
@@ -1526,16 +1527,8 @@ class _OrdersNewPageState extends State<OrdersNewPage> with TickerProviderStateM
                                   ),
                                 );
                               } else {
-                                // Set loading status to true before starting the operation
-                                provider.setCancelStatus(true);
-
-                                // Call confirmOrders method with selected IDs
                                 String resultMessage = await provider.cancelOrders(context, selectedOrderIds);
 
-                                // Set loading status to false after operation completes
-                                provider.setCancelStatus(false);
-
-                                // Determine the background color based on the result
                                 Color snackBarColor;
                                 if (resultMessage.contains('success')) {
                                   snackBarColor = AppColors.green; // Success: Green
@@ -1572,14 +1565,10 @@ class _OrdersNewPageState extends State<OrdersNewPage> with TickerProviderStateM
                         backgroundColor: Colors.grey,
                       ),
                       onPressed: () async {
-                        setState(() {
-                          selectedFailedCourier = 'All';
-                          _selectedFailedDate = 'Select Date';
-                        });
+                        ordersProvider.searchControllerFailed.clear();
+                        ordersProvider.resetFailedData();
                         await ordersProvider.fetchFailedOrders();
                         ordersProvider.resetSelections();
-                        ordersProvider.clearSearchResults();
-
                         print('Failed Orders refreshed');
                       },
                       child: const Text('Refresh'),
@@ -1599,7 +1588,7 @@ class _OrdersNewPageState extends State<OrdersNewPage> with TickerProviderStateM
                         children: [
                           Expanded(
                             child: TextField(
-                              controller: _searchControllerFailed,
+                              controller: provider.searchControllerFailed,
                               decoration: const InputDecoration(
                                 hintText: 'Search Orders',
                                 hintStyle: TextStyle(
@@ -1611,7 +1600,13 @@ class _OrdersNewPageState extends State<OrdersNewPage> with TickerProviderStateM
                               ),
                               style: const TextStyle(color: Colors.black),
                               onSubmitted: (value) {
-                                ordersProvider.searchFailedOrders(value);
+                                ordersProvider.resetFailedData();
+                                if (value.isEmpty) {
+                                  ordersProvider.fetchFailedOrders();
+                                  ordersProvider.clearSearchResults();
+                                } else {
+                                  ordersProvider.searchFailedOrders(value);
+                                }
                               },
                               onChanged: (value) {
                                 if (value.isEmpty) {
@@ -1621,14 +1616,14 @@ class _OrdersNewPageState extends State<OrdersNewPage> with TickerProviderStateM
                               },
                             ),
                           ),
-                          if (_searchControllerFailed.text.isNotEmpty)
+                          if (provider.searchControllerFailed.text.isNotEmpty)
                             InkWell(
                               child: Icon(
                                 Icons.close,
                                 color: Colors.grey.shade600,
                               ),
                               onTap: () {
-                                _searchControllerFailed.clear();
+                                provider.searchControllerFailed.clear();
                                 ordersProvider.fetchFailedOrders();
                                 ordersProvider.clearSearchResults();
                               },
@@ -1777,16 +1772,13 @@ class _OrdersNewPageState extends State<OrdersNewPage> with TickerProviderStateM
                                               ),
                                             );
 
-                                            final failedSearched = _searchControllerFailed.text;
+                                            final failedSearched = provider.searchControllerFailed.text;
 
                                             if (result == true) {
                                               if (failedSearched.isNotEmpty) {
                                                 ordersProvider.searchFailedOrders(failedSearched);
                                               } else {
-                                                ordersProvider.fetchFailedOrders(
-                                                    page: ordersProvider.currentPageFailed,
-                                                    date: failedPicked,
-                                                    market: selectedFailedCourier);
+                                                ordersProvider.fetchFailedOrders(page: ordersProvider.currentPageFailed);
                                               }
                                             }
                                           },
@@ -2112,23 +2104,23 @@ class _OrdersNewPageState extends State<OrdersNewPage> with TickerProviderStateM
                                                 ],
                                                 style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 20)),
                                           ),
-                                          if(order.updatedAt != null)
-                                          Text.rich(
-                                            TextSpan(
-                                                text: "Updated on: ",
-                                                children: [
-                                                  TextSpan(
-                                                      text: DateFormat('yyyy-MM-dd\',\' hh:mm a').format(
-                                                        DateTime.parse("${order.updatedAt}"),
-                                                      ),
-                                                      style: const TextStyle(
-                                                        fontWeight: FontWeight.normal,
-                                                      )),
-                                                ],
-                                                style: const TextStyle(
-                                                  fontWeight: FontWeight.bold,
-                                                )),
-                                          ),
+                                          if (order.updatedAt != null)
+                                            Text.rich(
+                                              TextSpan(
+                                                  text: "Updated on: ",
+                                                  children: [
+                                                    TextSpan(
+                                                        text: DateFormat('yyyy-MM-dd\',\' hh:mm a').format(
+                                                          DateTime.parse("${order.updatedAt}"),
+                                                        ),
+                                                        style: const TextStyle(
+                                                          fontWeight: FontWeight.normal,
+                                                        )),
+                                                  ],
+                                                  style: const TextStyle(
+                                                    fontWeight: FontWeight.bold,
+                                                  )),
+                                            ),
                                         ],
                                       ),
                                     ),

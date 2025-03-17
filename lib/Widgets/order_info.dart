@@ -248,7 +248,7 @@ class OrderInfo extends StatelessWidget {
               firstName != lastName ? '$firstName $lastName'.trim() : firstName ?? '',
             ),
             buildLabelValueRow('Pincode', pincode?.toString() ?? ''),
-            buildLabelValueRow('Zipcode', zipcode?.toString() ?? ''),
+            if (zipcode?.toString().isNotEmpty ?? false) buildLabelValueRow('Zipcode', zipcode?.toString() ?? ''),
             buildLabelValueRow('Country Code', countryCode ?? ''),
           ],
         ),

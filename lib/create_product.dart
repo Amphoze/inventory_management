@@ -590,7 +590,7 @@ class _CreateProductState extends State<CreateProduct> {
                     controller: _productNameController,
                     height: 51,
                     validator: (value) {
-                      if (value == null || value.isEmpty) {
+                      if (value == null || value.trim().isEmpty) {
                         return 'Product Name is required';
                       }
                       return null;
@@ -626,8 +626,11 @@ class _CreateProductState extends State<CreateProduct> {
                       controller: _skuController,
                       height: 51,
                       validator: (value) {
-                        if (value == null || value.isEmpty) {
+                        if (value == null || value.trim().isEmpty) {
                           return 'SKU is required';
+                        }
+                        if (!RegExp(r'^K-\d+$').hasMatch(value)) {
+                          return 'SKU must be of the form K- followed by a number';
                         }
                         return null;
                       }),
@@ -641,7 +644,7 @@ class _CreateProductState extends State<CreateProduct> {
               //     controller: _variantNameController,
               //     height: 51,
               //     // validator: (value) {
-              //     //   if (value == null || value.isEmpty) {
+              //     //   if (value == null || value.trim().isEmpty) {
               //     //     return 'Variant Name is required';
               //     //   }
               //     //   return null;
@@ -656,7 +659,7 @@ class _CreateProductState extends State<CreateProduct> {
                     height: 51,
                     keyboardType: TextInputType.number,
                     validator: (value) {
-                      if (value == null || value.isEmpty) return "Item quantity is required";
+                      if (value == null || value.trim().isEmpty) return "Item quantity is required";
                       return null;
                     },
                   ),
@@ -763,7 +766,7 @@ class _CreateProductState extends State<CreateProduct> {
                         controller: _technicalNameController,
                         height: 51,
                         // validator: (value) {
-                        //   if (value == null || value.isEmpty) {
+                        //   if (value == null || value.trim().isEmpty) {
                         //     return 'Technical name is required';
                         //   }
                         //   return null;
@@ -799,7 +802,7 @@ class _CreateProductState extends State<CreateProduct> {
                   height: 100,
                   maxLines: 150,
                   // validator: (value) {
-                  //   if (value == null || value.isEmpty) {
+                  //   if (value == null || value.trim().isEmpty) {
                   //     return 'Description is required';
                   //   }
                   //   return null;
@@ -815,7 +818,7 @@ class _CreateProductState extends State<CreateProduct> {
                   controller: _predefinedTaxRuleController,
                   height: 51,
                   // validator: (value) {
-                  //   if (value == null || value.isEmpty) {
+                  //   if (value == null || value.trim().isEmpty) {
                   //     return 'Accounting Item Name is required';
                   //   }
                   //   return null;
@@ -846,7 +849,7 @@ class _CreateProductState extends State<CreateProduct> {
               //               controller: _sizeController,
               //               width: 150,
               //               validator: (value) {
-              //                 if (value == null || value.isEmpty) {
+              //                 if (value == null || value.trim().isEmpty) {
               //                   return 'Size is required';
               //                 }
               //                 return null;
@@ -883,7 +886,7 @@ class _CreateProductState extends State<CreateProduct> {
                   controller: _mrpController,
                   height: 51,
                   // validator: (value) {
-                  //   if (value == null || value.isEmpty) {
+                  //   if (value == null || value.trim().isEmpty) {
                   //     return 'MRP is required';
                   //   }
                   //   return null;
@@ -897,7 +900,7 @@ class _CreateProductState extends State<CreateProduct> {
                   controller: _costController,
                   height: 51,
                   // validator: (value) {
-                  //   if (value == null || value.isEmpty) {
+                  //   if (value == null || value.trim().isEmpty) {
                   //     return 'Cost is required';
                   //   }
                   //   return null;
@@ -911,7 +914,7 @@ class _CreateProductState extends State<CreateProduct> {
                   controller: _netWeightController,
                   height: 51,
                   validator: (value) {
-                    if (value == null || value.isEmpty) {
+                    if (value == null || value.trim().isEmpty) {
                       return 'Weight is required';
                     }
                     return null;
@@ -925,7 +928,7 @@ class _CreateProductState extends State<CreateProduct> {
                   controller: _grossWeightController,
                   height: 51,
                   validator: (value) {
-                    if (value == null || value.isEmpty) {
+                    if (value == null || value.trim().isEmpty) {
                       return 'Weight is required';
                     }
                     return null;
@@ -939,7 +942,7 @@ class _CreateProductState extends State<CreateProduct> {
                   controller: _shopifyController,
                   height: 51,
                   // validator: (value) {
-                  //   if (value == null || value.isEmpty) {
+                  //   if (value == null || value.trim().isEmpty) {
                   //     return 'image is required';
                   //   }
                   //   return null;

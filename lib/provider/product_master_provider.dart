@@ -73,7 +73,7 @@ class ProductMasterProvider with ChangeNotifier {
 
   Future<void> performSearch(BuildContext context) async {
     if (_searchbarController.text.trim().isEmpty) {
-      refreshPage();
+      // refreshPage();
       return;
     }
 

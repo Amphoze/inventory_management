@@ -101,6 +101,11 @@ class _ProductMasterPageState extends State<ProductMasterPage> {
                   borderSide: const BorderSide(color: Colors.orange, width: 2.0),
                 ),
               ),
+              onChanged: (value) {
+                if(value.trim().isEmpty) {
+                  provider.loadMoreProducts();
+                }
+              },
               onSubmitted: (_) => provider.performSearch(context),
             ),
           ),

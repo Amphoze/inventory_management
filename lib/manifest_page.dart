@@ -21,12 +21,13 @@ class _ManifestPageState extends State<ManifestPage> {
   final TextEditingController _searchController = TextEditingController();
   String _selectedDate = 'Select Date';
   DateTime? picked;
+  String selectedCourier = 'All';
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      Provider.of<ManifestProvider>(context, listen: false).fetchOrdersWithStatus8();
+      Provider.of<ManifestProvider>(context, listen: false).fetchOrdersWithStatus8(date: picked, courier: selectedCourier);
     });
     Provider.of<ManifestProvider>(context, listen: false).textEditingController.clear();
   }
@@ -40,7 +41,6 @@ class _ManifestPageState extends State<ManifestPage> {
 
   @override
   Widget build(BuildContext context) {
-    String selectedCourier = 'All';
     return Consumer<ManifestProvider>(
       builder: (context, manifestProvider, child) {
         return Scaffold(
@@ -71,12 +71,7 @@ class _ManifestPageState extends State<ManifestPage> {
                           contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 12.0),
                         ),
                         onChanged: (query) {
-                          // Trigger a rebuild to show/hide the search button
-                          setState(() {
-                            // Update search focus
-                          });
-                          if (query.isEmpty) {
-                            // Reset to all orders if search is cleared
+                          if (query.trim().isEmpty) {
                             manifestProvider.fetchOrdersWithStatus8();
                           }
                         },

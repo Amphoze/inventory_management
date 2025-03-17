@@ -26,22 +26,23 @@ class BaApprovePage extends StatefulWidget {
 }
 
 class _BaApprovePageState extends State<BaApprovePage> {
-  final TextEditingController _searchController = TextEditingController();
   String _selectedDate = 'Select Date';
   final remarkController = TextEditingController();
   DateTime? picked;
+  String selectedCourier = 'All';
+  late BaApproveProvider baApproveProvider;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      Provider.of<BaApproveProvider>(context, listen: false).fetchOrdersWithStatus2();
+      Provider.of<BaApproveProvider>(context, listen: false).fetchOrdersWithStatus2(date: picked, market: selectedCourier);
       context.read<MarketplaceProvider>().fetchMarketplaces();
     });
   }
 
   void _onSearchButtonPressed() {
-    final query = _searchController.text.trim();
+    final query = baApproveProvider.searchController.text.trim();
     if (query.isNotEmpty) {
       Provider.of<BaApproveProvider>(context, listen: false).onSearchChanged(query);
     }
@@ -56,7 +57,7 @@ class _BaApprovePageState extends State<BaApprovePage> {
 
   @override
   void dispose() {
-    _searchController.dispose();
+    baApproveProvider.searchController.dispose();
     remarkController.dispose();
     super.dispose();
   }
@@ -70,7 +71,6 @@ class _BaApprovePageState extends State<BaApprovePage> {
 
   @override
   Widget build(BuildContext context) {
-    String selectedCourier = 'All';
     return Consumer<BaApproveProvider>(
       builder: (context, baApproveProvider, child) {
         return Scaffold(
@@ -92,7 +92,7 @@ class _BaApprovePageState extends State<BaApprovePage> {
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: TextField(
-                        controller: _searchController,
+                        controller: baApproveProvider.searchController,
                         style: const TextStyle(color: Colors.black),
                         decoration: const InputDecoration(
                           hintText: 'Search by Order ID',
@@ -103,6 +103,11 @@ class _BaApprovePageState extends State<BaApprovePage> {
                         onChanged: (query) {
                           setState(() {});
                           if (query.isEmpty) {
+                            setState(() {
+                              selectedCourier = 'All';
+                              _selectedDate = 'Select Date';
+                              picked = null;
+                            });
                             baApproveProvider.fetchOrdersWithStatus2();
                           }
                         },
@@ -110,6 +115,11 @@ class _BaApprovePageState extends State<BaApprovePage> {
                           setState(() {});
                         },
                         onSubmitted: (query) {
+                          setState(() {
+                            selectedCourier = 'All';
+                            _selectedDate = 'Select Date';
+                            picked = null;
+                          });
                           if (query.isNotEmpty) {
                             baApproveProvider.searchOrders(query);
                           }
@@ -124,7 +134,7 @@ class _BaApprovePageState extends State<BaApprovePage> {
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.primaryBlue,
                       ),
-                      onPressed: _searchController.text.isNotEmpty ? _onSearchButtonPressed : null,
+                      onPressed: baApproveProvider.searchController.text.isNotEmpty ? _onSearchButtonPressed : null,
                       child: const Text(
                         'Search',
                         style: TextStyle(color: Colors.white),
@@ -515,7 +525,7 @@ class _BaApprovePageState extends State<BaApprovePage> {
                                             ),
                                           );
                                           if (result == true) {
-                                            final searched = _searchController.text;
+                                            final searched = baApproveProvider.searchController.text;
 
                                             // Ready
                                             if (searched.isNotEmpty) {
@@ -1004,13 +1014,14 @@ class _BaApprovePageState extends State<BaApprovePage> {
                                                     style: const TextStyle(
                                                       fontWeight: FontWeight.normal,
                                                     )),
-                                                (order.outBoundBy?['outboundBy']?.toString().isNotEmpty ?? false) ?
-                                                TextSpan(
-                                                  text: "(${order.outBoundBy?['outboundBy'].toString().split('@')[0] ?? ''})",
-                                                  style: const TextStyle(
-                                                    fontWeight: FontWeight.normal,
-                                                  ),
-                                                ) : const TextSpan()
+                                                (order.outBoundBy?['outboundBy']?.toString().isNotEmpty ?? false)
+                                                    ? TextSpan(
+                                                        text: "(${order.outBoundBy?['outboundBy'].toString().split('@')[0] ?? ''})",
+                                                        style: const TextStyle(
+                                                          fontWeight: FontWeight.normal,
+                                                        ),
+                                                      )
+                                                    : const TextSpan()
                                               ],
                                               style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 20)),
                                         )

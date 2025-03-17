@@ -24,14 +24,17 @@ class _BookedPageState extends State<BookedPage> with SingleTickerProviderStateM
   final TextEditingController _searchController = TextEditingController();
   final TextEditingController _pageController = TextEditingController();
   bool areOrdersFetched = false;
-  String selectedCourier = 'All';
-  String _selectedDate = 'Select Date';
-  String selectedSearchType = 'Order ID'; // Default selection
+  String selectedSearchType = 'Order ID';
   final TextEditingController _dateController = TextEditingController();
   final DateFormat _dateFormat = DateFormat('yyyy-MM-dd');
   String selectedPicklist = '';
   List<String> picklistIds = ['W1', 'W2', 'W3', 'G1', 'G2', 'G3', 'E1', 'E2', 'E3'];
   bool isDownloading = false;
+  late BookProvider bookProvider;
+
+  // String _selectedDate = 'Select Date';
+  // String selectedCourier = 'All';
+  // DateTime? picked;
 
   bool? isSuperAdmin = false;
   bool? isAdmin = false;
@@ -46,19 +49,21 @@ class _BookedPageState extends State<BookedPage> with SingleTickerProviderStateM
 
   @override
   void initState() {
-    super.initState();
+    bookProvider = Provider.of<BookProvider>(context, listen: false);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final bookProvider = Provider.of<BookProvider>(context, listen: false);
       bookProvider.fetchBookedOrders(bookProvider.currentPageBooked);
       context.read<MarketplaceProvider>().fetchMarketplaces();
       _fetchUserRole();
     });
+    super.initState();
   }
 
   @override
   void dispose() {
     _searchController.dispose();
     _pageController.dispose();
+    bookProvider.resetFilterData();
     super.dispose();
   }
 
@@ -79,6 +84,7 @@ class _BookedPageState extends State<BookedPage> with SingleTickerProviderStateM
   void _refreshOrders() {
     final bookProvider = Provider.of<BookProvider>(context, listen: false);
     bookProvider.fetchBookedOrders(bookProvider.currentPageBooked);
+    bookProvider.resetFilterData();
   }
 
   Widget _searchBar() {
@@ -143,6 +149,7 @@ class _BookedPageState extends State<BookedPage> with SingleTickerProviderStateM
                       }
                     },
                     onSubmitted: (text) {
+                      bookProvider.resetFilterData();
                       if (text.isEmpty) {
                         _refreshOrders();
                       } else {
@@ -289,8 +296,6 @@ class _BookedPageState extends State<BookedPage> with SingleTickerProviderStateM
     );
   }
 
-  DateTime? picked;
-
   Widget _buildConfirmButtons() {
     final bookProvider = Provider.of<BookProvider>(context, listen: false);
     return Align(
@@ -303,17 +308,17 @@ class _BookedPageState extends State<BookedPage> with SingleTickerProviderStateM
             Column(
               children: [
                 Text(
-                  _selectedDate,
+                  bookProvider.selectedDate,
                   style: TextStyle(
                     fontSize: 11,
-                    color: _selectedDate == 'Select Date' ? Colors.grey : AppColors.primaryBlue,
+                    color: bookProvider.selectedDate == 'Select Date' ? Colors.grey : AppColors.primaryBlue,
                   ),
                 ),
                 Tooltip(
                   message: 'Filter by Date',
                   child: IconButton(
                     onPressed: () async {
-                      picked = await showDatePicker(
+                      bookProvider.picked = await showDatePicker(
                         context: context,
                         initialDate: DateTime.now(),
                         firstDate: DateTime(2020),
@@ -333,13 +338,13 @@ class _BookedPageState extends State<BookedPage> with SingleTickerProviderStateM
                         },
                       );
 
-                      if (picked != null) {
-                        String formattedDate = DateFormat('dd-MM-yyyy').format(picked!);
+                      if (bookProvider.picked != null) {
+                        String formattedDate = DateFormat('dd-MM-yyyy').format(bookProvider.picked!);
                         setState(() {
-                          _selectedDate = formattedDate;
+                          bookProvider.selectedDate = formattedDate;
                         });
 
-                        bookProvider.fetchBookedOrders(bookProvider.currentPageBooked, date: picked, market: selectedCourier);
+                        bookProvider.fetchBookedOrders(bookProvider.currentPageBooked);
                       }
                     },
                     icon: const Icon(
@@ -355,7 +360,7 @@ class _BookedPageState extends State<BookedPage> with SingleTickerProviderStateM
             Column(
               children: [
                 Text(
-                  selectedCourier,
+                  bookProvider.selectedCourier,
                 ),
                 Consumer<MarketplaceProvider>(
                   builder: (context, provider, child) {
@@ -363,9 +368,9 @@ class _BookedPageState extends State<BookedPage> with SingleTickerProviderStateM
                       tooltip: 'Filter by Marketplace',
                       onSelected: (String value) {
                         setState(() {
-                          selectedCourier = value;
+                          bookProvider.selectedCourier = value;
                         });
-                        bookProvider.fetchBookedOrders(bookProvider.currentPageBooked, date: picked, market: selectedCourier);
+                        bookProvider.fetchBookedOrders(bookProvider.currentPageBooked);
                       },
                       itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
                         ...provider.marketplaces.map((marketplace) => PopupMenuItem<String>(
@@ -772,10 +777,7 @@ class _BookedPageState extends State<BookedPage> with SingleTickerProviderStateM
               onPressed: bookProvider.isRefreshingOrders
                   ? null
                   : () async {
-                      setState(() {
-                        selectedCourier = 'All';
-                        _selectedDate = 'Select Date';
-                      });
+                      bookProvider.searchController.clear();
                       _refreshOrders();
                     },
               icon: bookProvider.isRefreshingOrders

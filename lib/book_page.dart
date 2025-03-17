@@ -24,14 +24,10 @@ class BookPage extends StatefulWidget {
 
 class _BookPageState extends State<BookPage> with SingleTickerProviderStateMixin {
   late TabController _tabController;
-  final TextEditingController _b2bSearchController = TextEditingController();
-  final TextEditingController _b2cSearchController = TextEditingController();
   final TextEditingController b2bPageController = TextEditingController();
   final TextEditingController b2cPageController = TextEditingController();
   bool areOrdersFetched = false;
-  String selectedCourier = 'All';
-  String _selectedDate = 'Select Date';
-  String bookingCourier = 'bookingCourier';
+  late BookProvider bookProvider;
 
   bool? isSuperAdmin = false;
   bool? isAdmin = false;
@@ -47,13 +43,14 @@ class _BookPageState extends State<BookPage> with SingleTickerProviderStateMixin
   @override
   void initState() {
     super.initState();
+    bookProvider = Provider.of<BookProvider>(context, listen: false);
     _tabController = TabController(length: 2, vsync: this);
     _tabController.addListener(() {
       if (_tabController.indexIsChanging) {
         _refreshOrders("B2B");
         _refreshOrders("B2C");
-        _b2bSearchController.clear();
-        _b2cSearchController.clear();
+        bookProvider.b2bSearchController.clear();
+        bookProvider.b2cSearchController.clear();
       }
     });
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -69,45 +66,45 @@ class _BookPageState extends State<BookPage> with SingleTickerProviderStateMixin
   @override
   void dispose() {
     _tabController.dispose();
-    _b2bSearchController.dispose();
-    _b2cSearchController.dispose();
+    // bookProvider.b2bSearchController.dispose();
+    // bookProvider.b2cSearchController.dispose();
     b2bPageController.dispose();
     b2cPageController.dispose();
+    bookProvider.resetFilterData();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<BookProvider>(
-      builder: (context, pro, child) {
-        return Scaffold(
+    return Consumer<BookProvider>(builder: (context, pro, child) {
+      return Scaffold(
+        backgroundColor: Colors.white,
+        appBar: AppBar(
           backgroundColor: Colors.white,
-          appBar: AppBar(
-            backgroundColor: Colors.white,
-            elevation: 0,
-            toolbarHeight: 0,
-            bottom: PreferredSize(
-              preferredSize: const Size.fromHeight(50),
-              child: _buildTabBar(),
-            ),
+          elevation: 0,
+          toolbarHeight: 0,
+          bottom: PreferredSize(
+            preferredSize: const Size.fromHeight(50),
+            child: _buildTabBar(),
           ),
-          body: Padding(
-            padding: const EdgeInsets.only(top: 3.0),
-            child: TabBarView(
-              controller: _tabController,
-              children: [
-                _buildOrderList('B2C'),
-                _buildOrderList('B2B'),
-              ],
-            ),
+        ),
+        body: Padding(
+          padding: const EdgeInsets.only(top: 3.0),
+          child: TabBarView(
+            controller: _tabController,
+            children: [
+              _buildOrderList('B2C'),
+              _buildOrderList('B2B'),
+            ],
           ),
-        );
-      }
-    );
+        ),
+      );
+    });
   }
 
   void _refreshOrders(String orderType) {
     final bookProvider = Provider.of<BookProvider>(context, listen: false);
+    bookProvider.resetFilterData();
     if (orderType == 'B2B') {
       bookProvider.fetchOrders('B2B', bookProvider.currentPageB2B);
     } else {
@@ -136,7 +133,7 @@ class _BookPageState extends State<BookPage> with SingleTickerProviderStateMixin
   String selectedSearchType = 'Order ID';
 
   Widget _searchBar(String orderType) {
-    final TextEditingController controller = orderType == 'B2B' ? _b2bSearchController : _b2cSearchController;
+    final TextEditingController controller = orderType == 'B2B' ? bookProvider.b2bSearchController : bookProvider.b2cSearchController;
 
     return Padding(
       padding: const EdgeInsets.all(8.0),
@@ -191,6 +188,7 @@ class _BookPageState extends State<BookPage> with SingleTickerProviderStateMixin
                     style: const TextStyle(color: AppColors.black),
                     onChanged: (text) {
                       if (text.isEmpty) {
+                        bookProvider.resetFilterData();
                         orderType == 'B2B' ? _refreshOrders('B2B') : _refreshOrders('B2C');
                       } else {
                         if (orderType == 'B2B') {
@@ -201,10 +199,18 @@ class _BookPageState extends State<BookPage> with SingleTickerProviderStateMixin
                       }
                     },
                     onSubmitted: (text) {
+                      bookProvider.resetFilterData();
+                      if (text.trim().isEmpty) {
+                        orderType == 'B2B' ? _refreshOrders('B2B') : _refreshOrders('B2C');
+                        return;
+                      }
+
                       if (orderType == 'B2B') {
                         Provider.of<BookProvider>(context, listen: false).searchB2BOrders(text, selectedSearchType);
+                        return;
                       } else {
                         Provider.of<BookProvider>(context, listen: false).searchB2COrders(text, selectedSearchType);
+                        return;
                       }
                     },
                   ),
@@ -369,8 +375,6 @@ class _BookPageState extends State<BookPage> with SingleTickerProviderStateMixin
     );
   }
 
-  DateTime? picked;
-
   Widget _buildConfirmButtons(String orderType) {
     final bookProvider = Provider.of<BookProvider>(context, listen: false);
     return Align(
@@ -383,17 +387,17 @@ class _BookPageState extends State<BookPage> with SingleTickerProviderStateMixin
             Column(
               children: [
                 Text(
-                  _selectedDate,
+                  bookProvider.selectedDate,
                   style: TextStyle(
                     fontSize: 11,
-                    color: _selectedDate == 'Select Date' ? Colors.grey : AppColors.primaryBlue,
+                    color: bookProvider.selectedDate == 'Select Date' ? Colors.grey : AppColors.primaryBlue,
                   ),
                 ),
                 Tooltip(
                   message: 'Filter by Date',
                   child: IconButton(
                     onPressed: () async {
-                      picked = await showDatePicker(
+                      bookProvider.picked = await showDatePicker(
                         context: context,
                         initialDate: DateTime.now(),
                         firstDate: DateTime(2020),
@@ -413,15 +417,13 @@ class _BookPageState extends State<BookPage> with SingleTickerProviderStateMixin
                         },
                       );
 
-                      Logger().e('picked: $picked');
-
-                      if (picked != null) {
-                        String formattedDate = DateFormat('dd-MM-yyyy').format(picked!);
+                      if (bookProvider.picked != null) {
+                        String formattedDate = DateFormat('dd-MM-yyyy').format(bookProvider.picked!);
                         setState(() {
-                          _selectedDate = formattedDate;
+                          bookProvider.selectedDate = formattedDate;
                         });
 
-                        bookProvider.fetchOrders(orderType, bookProvider.currentPageB2B, date: picked, market: selectedCourier);
+                        bookProvider.fetchOrders(orderType, bookProvider.currentPageB2B);
                       }
                     },
                     icon: const Icon(
@@ -437,7 +439,7 @@ class _BookPageState extends State<BookPage> with SingleTickerProviderStateMixin
             Column(
               children: [
                 Text(
-                  selectedCourier,
+                  bookProvider.selectedCourier,
                 ),
                 Consumer<MarketplaceProvider>(
                   builder: (context, provider, child) {
@@ -445,9 +447,9 @@ class _BookPageState extends State<BookPage> with SingleTickerProviderStateMixin
                       tooltip: 'Filter by Marketplace',
                       onSelected: (String value) {
                         setState(() {
-                          selectedCourier = value;
+                          bookProvider.selectedCourier = value;
                         });
-                        bookProvider.fetchOrders(orderType, bookProvider.currentPageB2B, date: picked, market: selectedCourier);
+                        bookProvider.fetchOrders(orderType, bookProvider.currentPageB2B);
                       },
                       itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
                         ...provider.marketplaces.map((marketplace) => PopupMenuItem<String>(
@@ -661,10 +663,8 @@ class _BookPageState extends State<BookPage> with SingleTickerProviderStateMixin
               onPressed: bookProvider.isRefreshingOrders
                   ? null
                   : () async {
-                      setState(() {
-                        selectedCourier = 'All';
-                        _selectedDate = 'Select Date';
-                      });
+                      bookProvider.b2bSearchController.clear();
+                      bookProvider.b2cSearchController.clear();
                       _refreshOrders(orderType);
                     },
               child: bookProvider.isRefreshingOrders

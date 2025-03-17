@@ -22,8 +22,10 @@ class OrdersProvider with ChangeNotifier {
   List<bool> _selectedFailedOrders = [];
   List<Order> _readyOrders = [];
   List<Order> _failedOrders = [];
-  int totalFailedPages = 1;
-  int totalReadyPages = 1;
+  int _currentPageReady = 1;
+  int _currentPageFailed = 1;
+  int _totalFailedPages = 1;
+  int _totalReadyPages = 1;
   String? _selectedCourier;
   String? _selectedPayment;
   String? _selectedFilter;
@@ -37,16 +39,22 @@ class OrdersProvider with ChangeNotifier {
   String _progressMessage = '';
   IO.Socket? _socket;
   final ValueNotifier<double> progressNotifier = ValueNotifier<double>(0);
+  String selectedReadyDate = 'Select Date';
+  String selectedFailedDate = 'Select Date';
+  String selectedReadyCourier = 'All';
+  String selectedFailedCourier = 'All';
+  DateTime? readyPicked, failedPicked;
+  late TextEditingController searchControllerReady;
+  late TextEditingController searchControllerFailed;
 
   String get progressMessage => _progressMessage;
 
   List<Order> get readyOrders => _readyOrders;
   List<Order> get failedOrders => _failedOrders;
-
-  int currentPage = 1;
-  int totalPages = 1;
-  int currentPageReady = 1;
-  int currentPageFailed = 1;
+  int get currentPageReady => _currentPageReady;
+  int get totalReadyPages => _totalReadyPages;
+  int get currentPageFailed => _currentPageFailed;
+  int get totalFailedPages => _totalFailedPages;
 
   bool _isReadyLoading = false;
   bool _isFailedLoading = false;
@@ -74,6 +82,38 @@ class OrdersProvider with ChangeNotifier {
 
   bool _isCloning = false;
   bool get isCloning => _isCloning;
+
+  void resetReadyData() {
+    // searchControllerReady.clear();
+    selectedReadyDate = 'Select Date';
+    selectedReadyCourier = 'All';
+    readyPicked = null;
+    notifyListeners();
+  }
+
+  void resetFailedData() {
+    // searchControllerFailed.clear();
+    selectedFailedDate = 'Select Date';
+    selectedFailedCourier = 'All';
+    failedPicked = null;
+    notifyListeners();
+  }
+
+  void resetReady() {
+    _readyOrders = [];
+    _selectedReadyOrders = [];
+    _currentPageReady = 1;
+    _totalReadyPages = 1;
+    notifyListeners();
+  }
+
+  void resetFailed() {
+    _failedOrders = [];
+    _selectedFailedOrders = [];
+    _currentPageFailed = 1;
+    _totalFailedPages = 1;
+    notifyListeners();
+  }
 
   void setCloning(bool value) {
     _isCloning = value;
@@ -194,7 +234,7 @@ class OrdersProvider with ChangeNotifier {
     if (token == null || token.isEmpty) {
       setReadyLoading(true);
       setFailedLoading(true);
-      // print('Token is missing. Please log in again.');
+
       return;
     }
 
@@ -241,7 +281,6 @@ class OrdersProvider with ChangeNotifier {
     final token = await _getToken();
 
     if (token == null || token.isEmpty) {
-      // print('Token is missing. Please log in again.');
       return false;
     }
 
@@ -278,11 +317,14 @@ class OrdersProvider with ChangeNotifier {
     }
   }
 
-  Future<void> fetchFailedOrders({int page = 1, DateTime? date, String? market}) async {
+  Future<void> fetchFailedOrders({int page = 1}) async {
     log("called");
 
     if (page < 1 || page > totalFailedPages) {
-      // print('Invalid page number for failed orders: $page');
+      return;
+    }
+    if(searchControllerFailed.text.trim().isNotEmpty) {
+      searchFailedOrders(searchControllerFailed.text.trim());
       return;
     }
     setFailedLoading(true);
@@ -292,20 +334,20 @@ class OrdersProvider with ChangeNotifier {
 
     var failedOrdersUrl = '${await Constants.getBaseUrl()}/orders?warehouse=$warehouseId&orderStatus=0&page=$page';
 
-    if (date != null) {
-      String formattedDate = DateFormat('yyyy-MM-dd').format(date);
+    if (failedPicked != null) {
+      String formattedDate = DateFormat('yyyy-MM-dd').format(failedPicked!);
       failedOrdersUrl += '&date=$formattedDate';
     }
 
-    if (market != 'All' && market != null) {
-      failedOrdersUrl += '&marketplace=$market';
+    if (selectedFailedCourier != 'All') {
+      failedOrdersUrl += '&marketplace=$selectedFailedCourier';
     }
 
     final token = await _getToken();
 
     if (token == null || token.isEmpty) {
       setFailedLoading(false);
-      // print('Token is missing. Please log in again.');
+
       return;
     }
 
@@ -322,45 +364,49 @@ class OrdersProvider with ChangeNotifier {
         final jsonData = json.decode(responseFailed.body);
 
         _failedOrders = (jsonData['orders'] as List).map((order) => Order.fromJson(order)).toList();
-
-        totalFailedPages = (jsonData['totalPages'] as int?) ?? 1;
-
-        currentPageFailed = page;
+        _totalFailedPages = (jsonData['totalPages'] as int?) ?? 1;
+        _currentPageFailed = page;
 
         resetSelections();
         _selectedFailedOrders = List<bool>.filled(failedOrders.length, false);
         _failedOrders = failedOrders;
         notifyListeners();
       } else {
+        resetFailed();
         log('Failed to load failed orders: ${responseFailed.body}');
       }
     } catch (e) {
-      // print('Error fetching failed orders: $e');
+      resetFailed();
+      log('Error fetching failed orders: $e');
     } finally {
       setFailedLoading(false);
     }
   }
 
-  Future<void> fetchReadyOrders({int page = 1, DateTime? date, String? market}) async {
+  Future<void> fetchReadyOrders({int page = 1}) async {
     log('fetchReadyOrders');
     if (page < 1 || page > totalReadyPages) {
-      // print('Invalid page number for ready orders: $page');
       return;
     }
+    if(searchControllerReady.text.trim().isNotEmpty) {
+      searchReadyToConfirmOrders(searchControllerReady.text.trim());
+      return;
+    }
+
     setReadyLoading(true);
 
     final prefs = await SharedPreferences.getInstance();
     final warehouseId = prefs.getString('warehouseId') ?? '';
 
-    var readyOrdersUrl = '${await Constants.getBaseUrl()}/orders?warehouse=$warehouseId&orderStatus=1&isOutBound=true&page=$page';
+    var readyOrdersUrl = '${await Constants.getBaseUrl()}/orders?warehouse=$warehouseId&orderStatus=1&page=$page';
 
-    if (date != null) {
-      String formattedDate = DateFormat('yyyy-MM-dd').format(date);
+    if (readyPicked != null) {
+      String formattedDate = DateFormat('yyyy-MM-dd').format(readyPicked!);
       readyOrdersUrl += '&date=$formattedDate';
     }
 
-    if (market != 'All' && market != null) {
-      readyOrdersUrl += '&marketplace=$market';
+    if (selectedReadyCourier != 'All') {
+      readyOrdersUrl += '&marketplace=$selectedReadyCourier';
     }
 
     log("readyOrdersUrl: $readyOrdersUrl");
@@ -369,7 +415,7 @@ class OrdersProvider with ChangeNotifier {
 
     if (token == null || token.isEmpty) {
       setReadyLoading(false);
-      // print('Token is missing. Please log in again.');
+
       return;
     }
 
@@ -382,17 +428,19 @@ class OrdersProvider with ChangeNotifier {
       if (responseReady.statusCode == 200) {
         final jsonData = json.decode(responseReady.body);
         _readyOrders = (jsonData['orders'] as List).map((order) => Order.fromJson(order)).toList();
-        totalReadyPages = jsonData['totalPages'] ?? 1;
-        currentPageReady = page;
+        _totalReadyPages = jsonData['totalPages'] ?? 1;
+        _currentPageReady = page;
 
         resetSelections();
         _selectedReadyOrders = List<bool>.filled(readyOrders.length, false);
 
         notifyListeners();
       } else {
+        resetReady();
         log('Failed to load ready orders: ${responseReady.body}');
       }
     } catch (e, s) {
+      resetReady();
       log('\nError fetching ready orders: $e\n\n$s\n\n');
     } finally {
       setReadyLoading(false);
@@ -425,9 +473,6 @@ class OrdersProvider with ChangeNotifier {
         headers: headers,
         body: body,
       );
-
-      // print('Response status: ${response.statusCode}');
-      // print('Response body: ${response.body}');
 
       final responseData = json.decode(response.body);
 
@@ -508,7 +553,6 @@ class OrdersProvider with ChangeNotifier {
     String baseUrl = await Constants.getBaseUrl();
     String confirmOrderUrl = '$baseUrl/orders/confirm';
     final String? token = await _getToken();
-    // setConfirmStatus(true);
 
     if (token == null) {
       return 'No auth token found';
@@ -530,9 +574,6 @@ class OrdersProvider with ChangeNotifier {
         body: body,
       );
 
-      // print('Response status: ${response.statusCode}');
-      // print('Response body: ${response.body}');
-
       final responseData = json.decode(response.body);
 
       if (response.statusCode == 200) {
@@ -545,7 +586,6 @@ class OrdersProvider with ChangeNotifier {
       Logger().e('Error during API request: $error');
       return 'An error occurred: $error';
     } finally {
-      // setConfirmStatus(false);
       notifyListeners();
     }
   }
@@ -577,14 +617,11 @@ class OrdersProvider with ChangeNotifier {
         body: body,
       );
 
-      // print('Response status: ${response.statusCode}');
-
       final responseData = json.decode(response.body);
 
       if (response.statusCode == 200) {
         await fetchReadyOrders();
         resetSelections();
-        setCancelStatus(false);
         notifyListeners();
 
         return responseData['message'] ?? 'Orders cancelled successfully';
@@ -592,10 +629,11 @@ class OrdersProvider with ChangeNotifier {
         return responseData['message'] ?? 'Failed to cancel orders';
       }
     } catch (error) {
-      setCancelStatus(false);
       notifyListeners();
-      // print('Error during API request: $error');
+
       return 'An error occurred: $error';
+    } finally {
+      setCancelStatus(false);
     }
   }
 
@@ -763,8 +801,7 @@ class OrdersProvider with ChangeNotifier {
     final prefs = await SharedPreferences.getInstance();
     final warehouseId = prefs.getString('warehouseId') ?? '';
 
-    final url =
-        Uri.parse('${await Constants.getBaseUrl()}/orders?warehouse=$warehouseId&orderStatus=1&isOutBound=true&order_id=$encodedOrderId');
+    final url = Uri.parse('${await Constants.getBaseUrl()}/orders?warehouse=$warehouseId&orderStatus=1&order_id=$encodedOrderId');
     final token = await _getToken();
     if (token == null) return;
 
@@ -822,7 +859,6 @@ class OrdersProvider with ChangeNotifier {
       if (response.statusCode == 200) {
         final res = jsonDecode(response.body);
 
-        // _failedOrders = [Order.fromJson(res['orders'][0])];
         _failedOrders = [Order.fromJson(res)];
       } else {
         _failedOrders = [];
