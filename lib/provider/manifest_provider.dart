@@ -158,11 +158,13 @@ class ManifestProvider with ChangeNotifier {
         print('Total Orders Fetched from Page $_currentPage: ${orders.length}');
       } else {
         _orders = [];
+        _currentPage = 1;
         _totalPages = 1;
       }
     } catch (e, s) {
       log('error aaya hai: $e $s');
       _orders = [];
+      _currentPage = 1;
       _totalPages = 1;
     } finally {
       _isLoading = false;
@@ -205,12 +207,14 @@ class ManifestProvider with ChangeNotifier {
         log('Total Orders Fetched from Page $_currentPage: ${manifests.length}');
       } else {
         _manifests = [];
+        _currentPage = 1;
         _totalPages = 1;
       }
     } catch (e, s) {
       log("catch data $e $s");
 
       _manifests = [];
+      _currentPage = 1;
       _totalPages = 1;
     } finally {
       _isLoading = false;
@@ -242,23 +246,25 @@ class ManifestProvider with ChangeNotifier {
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
 
-        List<Manifest> manifests = (data['data']['manifest'] as List).map((manifest) => Manifest.fromJson(manifest)).toList();
+        List<Manifest> manifests = (data['data']?['manifest'] ?? []).map((manifest) => Manifest.fromJson(manifest)).toList();
 
         log('manifests hai" $manifests');
 
-        _totalPages = data['data']['totalPages'];
-        _currentPage = data['data']['currentPage'];
+        _totalPages = data['data']?['totalPages'] ?? 1;
+        _currentPage = data['data']?['currentPage'] ?? 1;
         _manifests = manifests;
 
         log('Total Orders Fetched from Page $_currentPage: ${manifests.length}');
       } else {
         _manifests = [];
+        _currentPage = 1;
         _totalPages = 1;
       }
     } catch (e, s) {
       log("catch data $e $s");
 
       _manifests = [];
+      _currentPage = 1;
       _totalPages = 1;
     } finally {
       _isLoading = false;
@@ -409,10 +415,12 @@ class ManifestProvider with ChangeNotifier {
         print('Total Orders Fetched from Page $_currentPage: ${orders.length}');
       } else {
         _orders = [];
+        _currentPage = 1;
         _totalPages = 1;
       }
     } catch (e) {
       _orders = [];
+      _currentPage = 1;
       _totalPages = 1;
     } finally {
       _isLoading = false;
@@ -464,22 +472,27 @@ class ManifestProvider with ChangeNotifier {
         final jsonData = json.decode(response.body);
         print('Response data: $jsonData');
 
-        List<Order> orders = [];
+        // List<Order> orders = [];
         if (jsonData != null) {
-          orders.add(Order.fromJson(jsonData));
+          _orders = (jsonData['orders'] as List).map((order) => Order.fromJson(order)).toList();
+          // orders.add(Order.fromJson(jsonData));
         } else {
           print('No data found in response.');
         }
 
-        _orders = orders;
+        // _orders = orders;
         print('Orders fetched: ${orders.length}');
       } else {
         print('Failed to load orders: ${response.statusCode}');
         _orders = [];
+        _currentPage = 1;
+        _totalPages = 1;
       }
     } catch (error) {
       print('Error searching failed orders: $error');
       _orders = [];
+      _currentPage = 1;
+      _totalPages = 1;
     } finally {
       _isLoading = false;
       notifyListeners();

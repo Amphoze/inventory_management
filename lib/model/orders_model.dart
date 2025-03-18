@@ -85,6 +85,8 @@ class Order {
   final String? warehouseName;
   final bool? isHold;
   String? selectedCourier;
+  String? mistakeUser;
+  bool? mistakeStatus;
   String? selectedCourierId;
 
   Order({
@@ -92,6 +94,8 @@ class Order {
     this.merged,
     this.picklistId = '',
     this.rebookedBy,
+    this.mistakeUser,
+    this.mistakeStatus,
     this.isHold,
     this.selectedCourier = '',
     this.selectedCourierId = '',
@@ -239,6 +243,8 @@ class Order {
       warehouseName: json['warehouse']?['warehouse_id']?['name'] ?? '',
       isHold: json['warehouse']?['isHold'] ?? false,
       messages: json['messages'] ?? {},
+      mistakeUser: (json['isMistake'] as List?)?.isNotEmpty == true ? (json['isMistake'].last['user'] ?? '') : null,
+      mistakeStatus: (json['isMistake'] as List?)?.isNotEmpty == true ? (json['isMistake'].last['status'] ?? false) : null,
       outBoundBy: json['isOutBound'] ?? {},
       confirmedBy: json['confirmedBy'] ?? {},
       baApprovedBy: json['baApprovedBy'] ?? {},

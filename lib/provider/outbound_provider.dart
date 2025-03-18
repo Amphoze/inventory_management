@@ -30,7 +30,6 @@ class OutboundProvider with ChangeNotifier {
   int? allCount;
   late TextEditingController searchController;
 
-
   String selectedDate = 'Select Date';
   String selectedCourier = 'All';
   DateTime? picked;
@@ -55,7 +54,14 @@ class OutboundProvider with ChangeNotifier {
   bool isCancel = false;
   bool isUpdating = false;
 
-  void resetOutbound() {
+  void resetOrderData() {
+    _outboundOrders = [];
+    _currentPageReady = 1;
+    _totalReadyPages = 1;
+    notifyListeners();
+  }
+
+  void resetFilter() {
     selectedCourier = 'All';
     selectedDate = 'Select Date';
     picked = null;
@@ -121,7 +127,6 @@ class OutboundProvider with ChangeNotifier {
     _selectedCustomerType = customerType;
     notifyListeners();
   }
-
 
   void resetSelections() {
     allSelectedReady = false;
@@ -298,16 +303,12 @@ class OutboundProvider with ChangeNotifier {
         _selectedReadyOrders = List<bool>.filled(outboundOrders.length, false);
         // outboundOrders = outboundOrders;
       } else {
-        _outboundOrders = [];
-        _currentPageReady = 1;
-        _totalReadyPages = 1;
+        resetOrderData();
         log('Failed to load ready orders: ${responseReady.body}');
         throw Exception('Failed to load ready orders: ${responseReady.body}');
       }
     } catch (e) {
-      _outboundOrders = [];
-      _currentPageReady = 1;
-      _totalReadyPages = 1;
+      resetOrderData();
       log('Error fetching ready orders: $e');
     } finally {
       isLoading = false;
@@ -449,7 +450,8 @@ class OutboundProvider with ChangeNotifier {
 
 // Update status for ready-to-confirm orders
   Future<void> updateOutboundOrders(BuildContext context) async {
-    final List<String> readyOrderIds = outboundOrders.asMap().entries.where((entry) => _selectedReadyOrders[entry.key]).map((entry) => entry.value.orderId).toList();
+    final List<String> readyOrderIds =
+        outboundOrders.asMap().entries.where((entry) => _selectedReadyOrders[entry.key]).map((entry) => entry.value.orderId).toList();
 
     if (readyOrderIds.isEmpty) {
       _showSnackbar(context, 'No orders selected to update.');
@@ -578,9 +580,8 @@ class OutboundProvider with ChangeNotifier {
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        _outboundOrders = [
-          Order.fromJson(data)
-        ];
+        _outboundOrders = (data['orders'] as List).map((order) => Order.fromJson(order)).toList();
+        // _outboundOrders = [Order.fromJson(data)];
       } else {
         _outboundOrders = [];
       }
@@ -629,7 +630,6 @@ class OutboundProvider with ChangeNotifier {
 
         // Use dispatchOrders and rtoOrders as needed
       } else {
-        // outboundOrders = [];
         dispatchCount = null;
         rtoCount = null;
       }
@@ -676,12 +676,10 @@ class OutboundProvider with ChangeNotifier {
         // rtoCount = await getRtoOrders(phone);
         log('readyOrders: $outboundOrders');
       } else {
-        _outboundOrders = [];
-      }
+        resetOrderData();      }
     } catch (e) {
       log('Search orders error: $e');
-      _outboundOrders = [];
-    } finally {
+      resetOrderData();    } finally {
       isLoading = false;
       notifyListeners();
     }

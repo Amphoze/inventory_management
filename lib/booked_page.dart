@@ -929,6 +929,7 @@ class _BookedPageState extends State<BookedPage> with SingleTickerProviderStateM
                   RadioListTile<String>(
                     contentPadding: const EdgeInsets.all(0),
                     title: const Text('Website', style: TextStyle(fontSize: 16)),
+                    subtitle: const Text('W1/W2/W3'),
                     value: 'website',
                     groupValue: selectedMarketplace,
                     onChanged: (value) {
@@ -940,6 +941,7 @@ class _BookedPageState extends State<BookedPage> with SingleTickerProviderStateM
                   RadioListTile<String>(
                     contentPadding: const EdgeInsets.all(0),
                     title: const Text('Offline', style: TextStyle(fontSize: 16)),
+                    subtitle: const Text('G1/G2/G3'),
                     value: 'offline',
                     groupValue: selectedMarketplace,
                     onChanged: (value) {
@@ -951,6 +953,7 @@ class _BookedPageState extends State<BookedPage> with SingleTickerProviderStateM
                   RadioListTile<String>(
                     contentPadding: const EdgeInsets.all(0),
                     title: const Text('Ecom', style: TextStyle(fontSize: 16)),
+                    subtitle: const Text('E1/E2/E3'),
                     value: 'ecom',
                     groupValue: selectedMarketplace,
                     onChanged: (value) {

@@ -36,6 +36,13 @@ class BaApproveProvider with ChangeNotifier {
   bool isRefreshingOrders = false;
   bool isCancel = false;
 
+  void resetOrderData() {
+    _orders = [];
+    _currentPage = 1;
+    _totalPages = 1;
+    notifyListeners();
+  }
+
   void setCancelStatus(bool status) {
     isCancel = status;
     notifyListeners();
@@ -200,15 +207,11 @@ class BaApproveProvider with ChangeNotifier {
         // Print the total number of orders fetched from the current page
         print('Total Orders Fetched from Page $_currentPage: ${orders.length}');
       } else {
-        // Handle non-success responses
-        _orders = [];
-        _totalPages = 1; // Reset total pages if there’s an error
+        resetOrderData();
       }
     } catch (e) {
       log('Error fetching orders: $e');
-      // Handle errors
-      _orders = [];
-      _totalPages = 1; // Reset total pages if there’s an error
+      resetOrderData();
     } finally {
       _isLoading = false;
       setRefreshingOrders(false);
@@ -261,24 +264,24 @@ class BaApproveProvider with ChangeNotifier {
       if (response.statusCode == 200) {
         final jsonData = json.decode(response.body);
 
-        List<Order> orders = [];
-        // print('Response data: $jsonData');
-        if (jsonData != null) {
-          orders.add(Order.fromJson(jsonData));
-          print('Response data: $jsonData');
-        } else {
-          print('No data found in response.');
-        }
+        // List<Order> orders = [];
+        // // print('Response data: $jsonData');
+        // if (jsonData != null) {
+        //   orders.add(Order.fromJson(jsonData));
+        //   print('Response data: $jsonData');
+        // } else {
+        //   print('No data found in response.');
+        // }
 
-        _orders = orders;
+        _orders = (jsonData['orders'] as List).map((order) => Order.fromJson(order)).toList();
         print('Orders fetched: ${orders.length}');
       } else {
         print('Failed to load orders: ${response.statusCode}');
-        _orders = [];
+        resetOrderData();
       }
     } catch (error) {
       print('Error searching failed orders: $error');
-      _orders = [];
+      resetOrderData();
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -381,17 +384,13 @@ class BaApproveProvider with ChangeNotifier {
         _orders = orders;
         _currentPage = page; // Track current page for B2B
         _totalPages = jsonResponse['totalPages']; // Assuming API returns total pages
-      } else if (response.statusCode == 401) {
-        print('Unauthorized access - Token might be expired or invalid.');
-      } else if (response.statusCode == 404) {
-        _orders = [];
-        notifyListeners();
-        print('Orders not found - Check the filter type.');
       } else {
+        resetOrderData();
         throw Exception('Failed to load orders: ${response.statusCode}');
       }
     } catch (e) {
       print('Error fetching orders: $e');
+      resetOrderData();
     } finally {
       _isLoading = false;
       notifyListeners();

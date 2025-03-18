@@ -1,11 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:inventory_management/Custom-Files/loading_indicator.dart';
 import 'package:inventory_management/Widgets/order_combo_card.dart';
 import 'package:inventory_management/model/orders_model.dart';
+import 'package:inventory_management/provider/book_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:inventory_management/Custom-Files/colors.dart';
 import 'package:inventory_management/provider/packer_provider.dart';
 import 'package:inventory_management/Custom-Files/custom_pagination.dart';
+
+import 'Custom-Files/utils.dart';
 
 class PackerPage extends StatefulWidget {
   const PackerPage({super.key});
@@ -16,6 +20,11 @@ class PackerPage extends StatefulWidget {
 
 class _PackerPageState extends State<PackerPage> {
   final TextEditingController _searchController = TextEditingController();
+  final TextEditingController _dateController = TextEditingController();
+  final DateFormat _dateFormat = DateFormat('yyyy-MM-dd');
+  String selectedPicklist = '';
+  List<String> picklistIds = ['W1', 'W2', 'W3', 'G1', 'G2', 'G3', 'E1', 'E2', 'E3'];
+  bool isDownloading = false;
 
   @override
   void initState() {
@@ -185,7 +194,121 @@ class _PackerPageState extends State<PackerPage> {
                     //           style: TextStyle(color: Colors.white),
                     //         ),
                     // ),
-                    // const SizedBox(width: 8),
+                    ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primaryBlue,
+                      ),
+                      onPressed: () {
+                        showDialog(
+                          context: context,
+                          builder: (BuildContext context) {
+                            return StatefulBuilder(builder: (BuildContext context, StateSetter dialogSetState) {
+                              return AlertDialog(
+                                title: const Text('Download Packlist'),
+                                content: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    TextFormField(
+                                      controller: _dateController,
+                                      decoration: const InputDecoration(
+                                        labelText: "Select Date",
+                                        suffixIcon: Icon(Icons.calendar_today),
+                                        border: OutlineInputBorder(),
+                                      ),
+                                      readOnly: true, // Prevent manual input
+                                      onTap: () async {
+                                        DateTime? picked = await showDatePicker(
+                                          context: context,
+                                          initialDate: DateTime.now(),
+                                          firstDate: DateTime(2000),
+                                          lastDate: DateTime.now(),
+                                        );
+
+                                        if (picked != null) {
+                                          dialogSetState(() {
+                                            _dateController.text = _dateFormat.format(picked);
+                                          });
+                                        }
+                                      },
+                                    ),
+                                    const SizedBox(height: 8),
+                                    DropdownButton(
+                                      value: picklistIds.contains(selectedPicklist)
+                                          ? selectedPicklist
+                                          : null, // Only set value if it exists in the list
+                                      isExpanded: true,
+                                      hint: const Text('Select Picklist ID'),
+                                      items: picklistIds.map((id) {
+                                        return DropdownMenuItem<String>(
+                                          value: id,
+                                          child: Text(id),
+                                        );
+                                      }).toList(),
+                                      onChanged: (String? newValue) {
+                                        dialogSetState(() {
+                                          // Update dialog state
+                                          if (newValue != null) {
+                                            selectedPicklist = newValue;
+                                          }
+                                        });
+                                      },
+                                    )
+                                  ],
+                                ),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () => Navigator.pop(context),
+                                    style: TextButton.styleFrom(
+                                      foregroundColor: AppColors.primaryBlue,
+                                    ),
+                                    child: const Text('Cancel'),
+                                  ),
+                                  ElevatedButton(
+                                    onPressed: () async {
+                                      if (selectedPicklist.isEmpty) return;
+
+                                      dialogSetState(() {
+                                        isDownloading = true;
+                                      });
+
+                                      showDialog(
+                                        context: context,
+                                        barrierDismissible: false,
+                                        builder: (BuildContext context) {
+                                          return const AlertDialog(
+                                            content: Row(
+                                              children: [
+                                                CircularProgressIndicator(),
+                                                SizedBox(width: 16),
+                                                Text('Downloading'),
+                                              ],
+                                            ),
+                                          );
+                                        },
+                                      );
+
+                                      final res = await context.read<BookProvider>().generatePacklist(context, _dateController.text, selectedPicklist);
+
+                                      Utils.showSnackBar(context, res['message']);
+
+                                      Navigator.pop(context);
+                                      Navigator.pop(context);
+
+                                      dialogSetState(() {
+                                        isDownloading = false;
+                                      });
+                                    },
+                                    child: const Text('Download'),
+                                  ),
+                                ],
+                              );
+                            });
+                          },
+                        );
+                      },
+                      child: const Text('Download Packlist'),
+                    ),
+                    const SizedBox(width: 8),
                     // Refresh Button
                     ElevatedButton(
                       style: ElevatedButton.styleFrom(

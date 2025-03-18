@@ -137,11 +137,13 @@ class PackerProvider with ChangeNotifier {
       } else {
         // Handle non-success responses
         _orders = [];
+        _currentPage = 1;
         _totalPages = 1; // Reset total pages if there’s an error
       }
     } catch (e) {
       // Handle errors
       _orders = [];
+      _currentPage = 1;
       _totalPages = 1; // Reset total pages if there’s an error
     } finally {
       _isLoading = false;
@@ -198,22 +200,27 @@ class PackerProvider with ChangeNotifier {
         final jsonData = json.decode(response.body);
         print('Response data: $jsonData');
 
-        List<Order> orders = [];
+        // List<Order> orders = [];
         if (jsonData != null) {
-          orders.add(Order.fromJson(jsonData));
+          _orders = (jsonData['orders'] as List).map((order) => Order.fromJson(order)).toList();
+          // orders.add(Order.fromJson(jsonData));
         } else {
           print('No data found in response.');
         }
-
-        _orders = orders;
+        //
+        // _orders = orders;
         print('Orders fetched: ${orders.length}');
       } else {
         print('Failed to load orders: ${response.statusCode}');
         _orders = [];
+        _currentPage = 1;
+        _totalPages = 1;
       }
     } catch (error) {
       print('Error searching failed orders: $error');
       _orders = [];
+      _currentPage = 1;
+      _totalPages = 1;
     } finally {
       _isLoading = false;
       notifyListeners();

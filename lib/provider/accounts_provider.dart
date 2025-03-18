@@ -353,9 +353,9 @@ class AccountsProvider with ChangeNotifier {
 
         if (jsonData != null) {
           // if (searchType == "Order ID") {
-          _orders = [Order.fromJson(jsonData)];
+          // _orders = [Order.fromJson(jsonData)];
           // } else {
-          // _orders = (jsonData['orders'] as List).map((orderJson) => Order.fromJson(orderJson)).toList();
+          _orders = (jsonData['orders'] as List).map((orderJson) => Order.fromJson(orderJson)).toList();
           // }
           // } else {
           //   log('No data found in response.');
@@ -575,9 +575,9 @@ class AccountsProvider with ChangeNotifier {
         final data = jsonDecode(response.body);
 
         // if (searchType == "Order ID") {
-        _ordersBooked = [Order.fromJson(data)];
+        // _ordersBooked = [Order.fromJson(data)];
         // } else {
-        //   _ordersBooked = (data['orders'] as List).map((orderJson) => Order.fromJson(orderJson)).toList();
+        _ordersBooked = (data['orders'] as List).map((orderJson) => Order.fromJson(orderJson)).toList();
         // }
 
         log('Orders found: $_ordersBooked');

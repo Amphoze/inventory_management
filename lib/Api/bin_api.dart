@@ -109,7 +109,7 @@ class BinApi with ChangeNotifier {
     }
   }
 
-  Future<void> fetchBinsByProduct(BuildContext context, String query) async {
+  Future<void> seearchBinsByProduct(BuildContext context, String query) async {
     String baseUrl = await Constants.getBaseUrl();
     String url = '$baseUrl/bin';
     setBinsLoadingStatus(true);
@@ -229,7 +229,7 @@ class BinApi with ChangeNotifier {
     final warehouseId = pref.getString('warehouseId');
 
     String baseUrl = await Constants.getBaseUrl();
-    final url = Uri.parse('$baseUrl/inventory/bin?binName=$binName&warehouseId=$warehouseId&page=$_currentPage');
+    final url = Uri.parse('$baseUrl/inventory/bin?warehouseId=$warehouseId&binName=$binName&page=$_currentPage');
 
     log('url: $url');
 

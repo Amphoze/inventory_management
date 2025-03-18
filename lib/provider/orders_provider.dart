@@ -83,15 +83,14 @@ class OrdersProvider with ChangeNotifier {
   bool _isCloning = false;
   bool get isCloning => _isCloning;
 
-  void resetReadyData() {
-    // searchControllerReady.clear();
+  void resetReadyFilterData() {
     selectedReadyDate = 'Select Date';
     selectedReadyCourier = 'All';
     readyPicked = null;
     notifyListeners();
   }
 
-  void resetFailedData() {
+  void resetFailedFilterData() {
     // searchControllerFailed.clear();
     selectedFailedDate = 'Select Date';
     selectedFailedCourier = 'All';
@@ -369,7 +368,7 @@ class OrdersProvider with ChangeNotifier {
 
         resetSelections();
         _selectedFailedOrders = List<bool>.filled(failedOrders.length, false);
-        _failedOrders = failedOrders;
+        // _failedOrders = failedOrders;
         notifyListeners();
       } else {
         resetFailed();
@@ -821,14 +820,15 @@ class OrdersProvider with ChangeNotifier {
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         log('data: $data');
-        _readyOrders = [Order.fromJson(data)];
+        _readyOrders = (data['orders'] as List).map((order) => Order.fromJson(order)).toList();
+        // _readyOrders = [Order.fromJson(data)];
         log('selectedReadyOrders: $selectedReadyOrders');
       } else {
-        _readyOrders = [];
+        resetReady();
       }
     } catch (e) {
       log('Search ready orders error: $e');
-      _readyOrders = [];
+      resetReady();
     } finally {
       setReadyLoading(false);
     }
@@ -859,13 +859,14 @@ class OrdersProvider with ChangeNotifier {
       if (response.statusCode == 200) {
         final res = jsonDecode(response.body);
 
-        _failedOrders = [Order.fromJson(res)];
+        _failedOrders = (res['orders'] as List).map((order) => Order.fromJson(order)).toList();
+        // _failedOrders = [Order.fromJson(res)];
       } else {
-        _failedOrders = [];
+        resetFailed();
       }
     } catch (e) {
       Logger().e('Search failed orders error: $e');
-      _failedOrders = [];
+      resetFailed();
     } finally {
       setFailedLoading(false);
     }

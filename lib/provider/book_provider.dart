@@ -698,13 +698,18 @@ class BookProvider with ChangeNotifier {
         final data = jsonDecode(response.body);
         print(response.body);
 
-        _ordersB2B = [Order.fromJson(data)];
+        _ordersB2B = (data['orders'] as List).map((order) => Order.fromJson(order)).toList();
+        // _ordersB2B = [Order.fromJson(data)];
         print(response.body);
       } else {
         _ordersB2B = [];
+        currentPageB2B = 1;
+        totalPagesB2B = 0;
       }
     } catch (e) {
       _ordersB2B = [];
+      currentPageB2B = 1;
+      totalPagesB2B = 0;
     } finally {
       isLoadingB2B = false;
       notifyListeners();
@@ -745,13 +750,18 @@ class BookProvider with ChangeNotifier {
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
 
-        _ordersB2C = [Order.fromJson(data)];
+        _ordersB2C = (data['orders'] as List).map((order) => Order.fromJson(order)).toList();
+        // _ordersB2C = [Order.fromJson(data)];
         log('_ordersB2C: $ordersB2C');
       } else {
         _ordersB2C = [];
+        currentPageB2C = 1;
+        totalPagesB2C = 0;
       }
     } catch (e) {
       _ordersB2C = [];
+      currentPageB2C = 1;
+      totalPagesB2C = 0;
     } finally {
       isLoadingB2C = false;
       notifyListeners();
@@ -791,7 +801,8 @@ class BookProvider with ChangeNotifier {
         final data = jsonDecode(response.body);
 
         // if (searchType == 'Order ID') {
-        _ordersBooked = [Order.fromJson(data)];
+        _ordersBooked = (data['orders'] as List).map((order) => Order.fromJson(order)).toList();
+        // _ordersBooked = [Order.fromJson(data)];
         // } else {
         //   _ordersBooked = [Order.fromJson(data['orders'][0])];
         // }
@@ -799,10 +810,14 @@ class BookProvider with ChangeNotifier {
         log('_ordersBooked: $ordersBooked');
       } else {
         _ordersBooked = [];
+        currentPageBooked = 1;
+        totalPagesBooked = 0;
       }
     } catch (e) {
       log('error: $e');
       _ordersBooked = [];
+      currentPageBooked = 1;
+      totalPagesBooked = 0;
     } finally {
       isLoadingBooked = false;
       notifyListeners();

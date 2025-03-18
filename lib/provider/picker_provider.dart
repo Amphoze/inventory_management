@@ -16,7 +16,8 @@ import 'package:pdf/widgets.dart' as pw;
 import '../model/picker_model.dart';
 
 class PickerProvider with ChangeNotifier {
-  bool _isLoading = false;
+  bool _isPicklistLoading = false;
+  bool _isOrderLoading = false;
   bool _selectAll = false;
   List<bool> _selectedProducts = [];
   List<Order> _orders = [];
@@ -30,7 +31,8 @@ class PickerProvider with ChangeNotifier {
   bool get selectAll => _selectAll;
   List<bool> get selectedProducts => _selectedProducts;
   List<Order> get orders => _orders;
-  bool get isLoading => _isLoading;
+  bool get isPicklistLoading => _isPicklistLoading;
+  bool get isOrderLoading => _isOrderLoading;
   int get currentPage => _currentPage;
   int get totalPages => _totalPages;
   PageController get pageController => _pageController;
@@ -44,8 +46,13 @@ class PickerProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  void setLoading(bool value) {
-    _isLoading  = value;
+  void setPicklistLoading(bool value) {
+    _isPicklistLoading  = value;
+    notifyListeners();
+  }
+
+  void setOrderLoading(bool value) {
+    _isOrderLoading = value;
     notifyListeners();
   }
 
@@ -106,7 +113,7 @@ class PickerProvider with ChangeNotifier {
   }
 
   Future<void> fetchOrdersWithStatus4() async {
-    setLoading(true);
+    setPicklistLoading(true);
 
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('authToken') ?? '';
@@ -130,14 +137,16 @@ class PickerProvider with ChangeNotifier {
         log("${_picklists.length}");
       } else {
         _picklists = [];
+        _currentPage = 1;
         _totalPages = 1;
       }
     } catch (e, s) {
       log('picker error: $e $s');
       _picklists = [];
+      _currentPage = 1;
       _totalPages = 1;
     } finally {
-      setLoading(false);
+      setPicklistLoading(false);
       notifyListeners();
     }
   }
@@ -148,8 +157,7 @@ class PickerProvider with ChangeNotifier {
       return _orders;
     }
 
-    _isLoading = true;
-    notifyListeners();
+    setOrderLoading(true);
 
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('authToken') ?? '';
@@ -173,21 +181,25 @@ class PickerProvider with ChangeNotifier {
       if (response.statusCode == 200) {
         final jsonData = json.decode(response.body);
 
-        List<Order> orders = [];
+        // List<Order> orders = [];
 
         if (jsonData != null) {
+          // _orders = (jsonData['orders'] as List).map((order) => Order.fromJson(order)).toList();
           orders.add(Order.fromJson(jsonData));
-        } else {}
+        }
 
-        _orders = orders;
       } else {
         _orders = [];
+        _currentPage = 1;
+        _totalPages = 1;
       }
     } catch (error, s) {
       log('Error occurred: $error $s');
       _orders = [];
+      _currentPage = 1;
+      _totalPages = 1;
     } finally {
-      _isLoading = false;
+      setOrderLoading(false);
       notifyListeners();
     }
 

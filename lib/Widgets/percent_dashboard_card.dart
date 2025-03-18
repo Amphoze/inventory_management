@@ -514,7 +514,7 @@ class _PercentDashboardCardState extends State<PercentDashboardCard> {
                               ),
                             ),
                 ),
-                Divider(height: 8, color: AppColors.grey.withValues(alpha: 0.1)),
+                // Divider(height: 8, color: AppColors.grey.withValues(alpha: 0.1)),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [

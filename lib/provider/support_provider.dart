@@ -20,28 +20,34 @@ class SupportProvider with ChangeNotifier {
   final PageController _pageController = PageController();
   final TextEditingController _textEditingController = TextEditingController();
   Timer? _debounce;
+  String? _orderId = '';
+  String? _currentUserEmail = '';
+  String? _currentUserRole = '';
+
+  String? get orderId => _orderId;
+  String? get currentUserEmail => _currentUserEmail;
+  String? get currentUserRole => _currentUserRole;
 
   bool get selectAll => _selectAll;
-
   List<bool> get selectedProducts => _selectedProducts;
-
   List<Order> get orders => _orders;
-
   bool get isLoading => _isLoading;
-
   int get currentPage => _currentPage;
-
   int get totalPages => _totalPages;
-
   PageController get pageController => _pageController;
-
   TextEditingController get textEditingController => _textEditingController;
-
   int get selectedCount => _selectedProducts.where((isSelected) => isSelected).length;
 
   bool isUpdatingOrder = false;
   bool isRefreshingOrders = false;
   bool isCancel = false;
+
+  void setChatData(String orderId, String currentUserEmail, String currentUserRole) {
+    _orderId = orderId;
+    _currentUserEmail = currentUserEmail;
+    _currentUserRole = currentUserRole;
+    notifyListeners();
+  }
 
   void setCancelStatus(bool status) {
     isCancel = status;

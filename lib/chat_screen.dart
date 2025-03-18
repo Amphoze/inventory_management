@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:inventory_management/provider/chat_provider.dart';
+import 'package:inventory_management/provider/support_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 
@@ -34,15 +35,15 @@ class Message {
 }
 
 class ChatScreen extends StatefulWidget {
-  final String orderId;
-  final String currentUserEmail;
-  final String currentUserRole;
+  // final String orderId;
+  // final String currentUserEmail;
+  // final String currentUserRole;
 
   const ChatScreen({
     Key? key,
-    required this.orderId,
-    required this.currentUserEmail,
-    required this.currentUserRole,
+    // required this.orderId,
+    // required this.currentUserEmail,
+    // required this.currentUserRole,
   }) : super(key: key);
 
   @override
@@ -54,16 +55,17 @@ class ChatScreenState extends State<ChatScreen> {
   final ScrollController _scrollController = ScrollController();
   bool _showScrollToBottom = false;
   List<Message> _localMessages = [];
-  late ChatProvider pro;
+  late ChatProvider chatProvider;
+  late SupportProvider supportProvider;
   String? userName;
 
   @override
   void initState() {
-    super.initState();
-    userName = widget.currentUserEmail.split('@')[0];
-    pro = Provider.of<ChatProvider>(context, listen: false);
+    chatProvider = Provider.of<ChatProvider>(context, listen: false);
+    supportProvider = Provider.of<SupportProvider>(context, listen: false);
+    userName = supportProvider.currentUserEmail?.split('@')[0] ?? '';
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      initializeChat(widget.orderId, widget.currentUserEmail, widget.currentUserRole);
+      initializeChat(supportProvider.orderId ?? '', supportProvider.currentUserEmail ?? '', supportProvider.currentUserRole ?? '');
     });
 
     _scrollController.addListener(() {
@@ -71,6 +73,7 @@ class ChatScreenState extends State<ChatScreen> {
         _showScrollToBottom = _scrollController.offset > 100;
       });
     });
+    super.initState();
   }
 
   @override
@@ -81,7 +84,7 @@ class ChatScreenState extends State<ChatScreen> {
   }
 
   void initializeChat(String orderId, String userEmail, String userRole) {
-    pro.initializeChat(orderId, userEmail, userRole);
+    chatProvider.initializeChat(orderId, userEmail, userRole);
   }
 
   void _scrollToBottom() {
@@ -98,10 +101,10 @@ class ChatScreenState extends State<ChatScreen> {
 
     final pendingMessage = Message(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
-      sender: widget.currentUserEmail,
+      sender: supportProvider.currentUserEmail ?? '',
       text: text,
       timestamp: DateTime.now(),
-      userRole: widget.currentUserRole,
+      userRole: supportProvider.currentUserRole ?? '',
       isPending: true,
     );
 
@@ -172,80 +175,100 @@ class ChatScreenState extends State<ChatScreen> {
   }
 
   @override
+  // Widget build(BuildContext context) {
+  //   return SelectionArea(
+  //     child: Scaffold(
+  //       appBar: AppBar(
+  //         elevation: 2,
+  //         backgroundColor: AppColors.primaryBlue,
+  //         leadingWidth: 40,
+  //         leading: BackButton(
+  //           color: Colors.white,
+  //           onPressed: () => Navigator.of(context).pop(),
+  //         ),
+  //         title: Column(
+  //           crossAxisAlignment: CrossAxisAlignment.start,
+  //           children: [
+  //             Text(
+  //               supportProvider.orderId,
+  //               style: const TextStyle(
+  //                 color: Colors.white,
+  //                 fontWeight: FontWeight.w600,
+  //                 fontSize: 18,
+  //               ),
+  //             ),
+  //             Row(
+  //               children: [
+  //                 Container(
+  //                   width: 8,
+  //                   height: 8,
+  //                   margin: const EdgeInsets.only(right: 6),
+  //                   decoration: const BoxDecoration(
+  //                     color: Colors.greenAccent,
+  //                     shape: BoxShape.circle,
+  //                   ),
+  //                 ),
+  //                 Text(
+  //                   "$userName • ${supportProvider.currentUserRole}",
+  //                   style: const TextStyle(
+  //                     color: Colors.white70,
+  //                     fontSize: 13,
+  //                     fontWeight: FontWeight.normal,
+  //                   ),
+  //                 ),
+  //               ],
+  //             ),
+  //           ],
+  //         ),
+  //       ),
+  //       body: Container(
+  //         color: Colors.grey[50],
+  //         child: Column(
+  //           children: [
+  //             _chatHeader(),
+  //             Expanded(
+  //               child: GestureDetector(
+  //                 onTap: () => FocusScope.of(context).unfocus(),
+  //                 child: _buildMessageList(),
+  //               ),
+  //             ),
+  //             _buildMessageInput(),
+  //           ],
+  //         ),
+  //       ),
+  //       floatingActionButtonLocation: FloatingActionButtonLocation.miniEndFloat,
+  //       floatingActionButton: AnimatedOpacity(
+  //         opacity: _showScrollToBottom ? 1.0 : 0.0,
+  //         duration: const Duration(milliseconds: 200),
+  //         child: _showScrollToBottom
+  //             ? FloatingActionButton(
+  //                 tooltip: 'Scroll to bottom',
+  //                 backgroundColor: Colors.white,
+  //                 elevation: 4,
+  //                 onPressed: _scrollToBottom,
+  //                 child: const Icon(Icons.keyboard_arrow_down, color: AppColors.primaryBlue),
+  //               )
+  //             : null,
+  //       ),
+  //     ),
+  //   );
+  // }
+
   Widget build(BuildContext context) {
-    return SelectionArea(
-      child: Scaffold(
-        appBar: AppBar(
-          elevation: 2,
-          backgroundColor: AppColors.primaryBlue,
-          leadingWidth: 40,
-          leading: BackButton(
-            color: Colors.white,
-            onPressed: () => Navigator.of(context).pop(),
-          ),
-          title: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                widget.orderId,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w600,
-                  fontSize: 18,
-                ),
+    return Drawer(
+      width: MediaQuery.of(context).size.width * 0.4,
+      child: SelectionArea(
+        child: Column(
+          children: [
+            _chatHeader(),
+            Expanded(
+              child: GestureDetector(
+                onTap: () => FocusScope.of(context).unfocus(),
+                child: _buildMessageList(),
               ),
-              Row(
-                children: [
-                  Container(
-                    width: 8,
-                    height: 8,
-                    margin: const EdgeInsets.only(right: 6),
-                    decoration: const BoxDecoration(
-                      color: Colors.greenAccent,
-                      shape: BoxShape.circle,
-                    ),
-                  ),
-                  Text(
-                    "$userName • ${widget.currentUserRole}",
-                    style: const TextStyle(
-                      color: Colors.white70,
-                      fontSize: 13,
-                      fontWeight: FontWeight.normal,
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-        body: Container(
-          color: Colors.grey[50],
-          child: Column(
-            children: [
-              _chatHeader(),
-              Expanded(
-                child: GestureDetector(
-                  onTap: () => FocusScope.of(context).unfocus(),
-                  child: _buildMessageList(),
-                ),
-              ),
-              _buildMessageInput(),
-            ],
-          ),
-        ),
-        floatingActionButtonLocation: FloatingActionButtonLocation.miniEndFloat,
-        floatingActionButton: AnimatedOpacity(
-          opacity: _showScrollToBottom ? 1.0 : 0.0,
-          duration: const Duration(milliseconds: 200),
-          child: _showScrollToBottom
-              ? FloatingActionButton(
-                  tooltip: 'Scroll to bottom',
-                  backgroundColor: Colors.white,
-                  elevation: 4,
-                  onPressed: _scrollToBottom,
-                  child: const Icon(Icons.keyboard_arrow_down, color: AppColors.primaryBlue),
-                )
-              : null,
+            ),
+            _buildMessageInput(),
+          ],
         ),
       ),
     );
@@ -255,7 +278,7 @@ class ChatScreenState extends State<ChatScreen> {
     return StreamBuilder<QuerySnapshot>(
       stream: FirebaseFirestore.instance
           .collection('orders')
-          .doc(widget.orderId)
+          .doc(supportProvider.orderId)
           .collection('messages')
           .orderBy('timestamp', descending: true)
           .snapshots(),
@@ -336,7 +359,7 @@ class ChatScreenState extends State<ChatScreen> {
           itemCount: allMessages.length,
           itemBuilder: (context, index) {
             final message = allMessages[index];
-            final bool isMe = message.sender == widget.currentUserEmail;
+            final bool isMe = message.sender == supportProvider.currentUserEmail;
             final DateTime istTime = message.timestamp.toLocal().add(const Duration(hours: 5, minutes: 30));
             final String time = DateFormat('hh:mm a').format(istTime);
             final String username = message.sender.split('@')[0];

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:inventory_management/Custom-Files/add_bin_button.dart';
 import 'package:inventory_management/Custom-Files/colors.dart';
+import 'package:inventory_management/Custom-Files/update_bin_button.dart';
 import 'package:inventory_management/edit_product.dart';
 import 'package:logger/logger.dart';
 import 'package:provider/provider.dart';
@@ -98,23 +100,32 @@ class ProductMasterCard extends StatelessWidget {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  _buildTitle(product.displayName),
-                  ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primaryBlue,
-                      textStyle: const TextStyle(color: Colors.white),
-                    ),
-                    onPressed: () async {
-                      final res = await Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (context) => EditProductPage(product: product)),
-                      );
-                      Logger().e('pop result is: $res');
-                      if (res != null && res == true) {
-                        context.read<ProductMasterProvider>().refreshPage(context);
-                      }
-                    },
-                    child: const Text('Edit Product'),
+                  Expanded(child: _buildTitle(product.displayName)),
+                  const Spacer(),
+                  Row(
+                    children: [
+                      UpdateBinButton(productSku: product.sku),
+                      const SizedBox(width: 8),
+                      AddBinButton(productSku: product.sku),
+                      const SizedBox(width: 8),
+                      ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primaryBlue,
+                          textStyle: const TextStyle(color: Colors.white),
+                        ),
+                        onPressed: () async {
+                          final res = await Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (context) => EditProductPage(product: product)),
+                          );
+                          Logger().e('pop result is: $res');
+                          if (res != null && res == true) {
+                            context.read<ProductMasterProvider>().refreshPage(context);
+                          }
+                        },
+                        child: const Text('Edit Product'),
+                      ),
+                    ],
                   ),
                 ],
               ),
@@ -174,14 +185,17 @@ class ProductMasterCard extends StatelessWidget {
   Widget _buildTitle(String title) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 4),
-      child: Text(
-        title,
-        overflow: TextOverflow.ellipsis,
-        maxLines: 1,
-        style: const TextStyle(
-          fontSize: 20,
-          fontWeight: FontWeight.bold,
-          color: AppColors.primaryBlue,
+      child: Tooltip(
+        message: title,
+        child: Text(
+          title,
+          overflow: TextOverflow.ellipsis,
+          maxLines: 1,
+          style: const TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+            color: AppColors.primaryBlue,
+          ),
         ),
       ),
     );

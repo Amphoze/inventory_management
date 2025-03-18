@@ -141,12 +141,14 @@ class DispatchedProvider with ChangeNotifier {
         // Handle non-success responses
 
         orders0 = [];
+        currentPage = 1;
         totalPages = 1; // Reset total pages if there’s an error
       }
     } catch (e) {
       // Handle errors
       log(e.toString());
       orders0 = [];
+      currentPage = 1;
       totalPages = 1; // Reset total pages if there’s an error
     } finally {
       isLoading = false;
@@ -315,6 +317,7 @@ class DispatchedProvider with ChangeNotifier {
         List<Order> orders = [];
         if (jsonData != null) {
           orders.add(Order.fromJson(jsonData));
+          // orders.add(Order.fromJson(jsonData));
         } else {
           print('No data found in response.');
         }
@@ -324,10 +327,14 @@ class DispatchedProvider with ChangeNotifier {
       } else {
         print('Failed to load orders: ${response.statusCode}');
         orders0 = [];
+        currentPage = 1;
+        totalPages = 1;
       }
     } catch (error) {
       print('Error searching failed orders: $error');
       orders0 = [];
+      currentPage = 1;
+      totalPages = 1;
     } finally {
       isLoading = false;
       notifyListeners();

@@ -573,7 +573,7 @@ class TransferOrderProvider with ChangeNotifier {
         'country': shippingCountryController.text,
         // 'country_code': shippingCountryCodeController.text,
       },
-      // 'payment_mode': paymentModeController.text,
+      'payment_mode': "PrePaid",
       // 'currency_code': currencyCodeController.text,
       'items': itemsList,
       'total_amt': double.tryParse(totalAmtController.text) ?? 0,

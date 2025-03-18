@@ -396,7 +396,7 @@ class _OutboundPageState extends State<OutboundPage> with TickerProviderStateMix
                       ),
                       onPressed: () {
                         pro.searchController.clear();
-                        pro.resetOutbound();
+                        pro.resetFilter();
                         pro.fetchOrders();
                         pro.resetSelections();
                         pro.clearSearchResults();
@@ -431,7 +431,7 @@ class _OutboundPageState extends State<OutboundPage> with TickerProviderStateMix
                               ),
                               style: const TextStyle(color: AppColors.black),
                               onSubmitted: (value) async {
-                                pro.resetOutbound();
+                                pro.resetFilter();
 
                                 if (value.startsWith(RegExp(r'^[0-9]'))) {
                                   await pro.searchOrdersByPhone(value);
@@ -444,6 +444,7 @@ class _OutboundPageState extends State<OutboundPage> with TickerProviderStateMix
                               onChanged: (value) {
                                 if (value.isEmpty) {
                                   pro.clearSearchResults();
+                                  pro.fetchOrders();
                                 }
                               },
                             ),

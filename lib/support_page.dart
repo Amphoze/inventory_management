@@ -35,17 +35,7 @@ class _SupportPageState extends State<SupportPage> {
   String? email;
   String? role;
 
-  @override
-  void initState() {
-    super.initState();
-    provider = Provider.of(context, listen: false);
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      Provider.of<SupportProvider>(context, listen: false).fetchSupportOrders();
-      getEmail();
-    });
-  }
-
-  void getEmail() async {
+  void getUserData() async {
     final prefs = await SharedPreferences.getInstance();
     email = prefs.getString('email') ?? '';
     role = prefs.getString('userPrimaryRole');
@@ -63,6 +53,16 @@ class _SupportPageState extends State<SupportPage> {
     final date = DateFormat('yyyy-MM-dd').format(dateTime);
     final time = DateFormat('hh:mm:ss a').format(dateTime);
     return " ($date, $time)";
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    provider = Provider.of(context, listen: false);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Provider.of<SupportProvider>(context, listen: false).fetchSupportOrders();
+      getUserData();
+    });
   }
 
   @override
@@ -85,6 +85,7 @@ class _SupportPageState extends State<SupportPage> {
     return Consumer<SupportProvider>(
       builder: (context, pro, child) {
         return Scaffold(
+          endDrawer: const ChatScreen(),
           backgroundColor: AppColors.white,
           body: Column(
             children: [
@@ -517,14 +518,10 @@ class _SupportPageState extends State<SupportPage> {
                                           IconButton(
                                             tooltip: 'Support Chat',
                                             icon: const Icon(Icons.message),
-                                            onPressed: () => Navigator.push(
-                                                context,
-                                                MaterialPageRoute(
-                                                    builder: (context) => ChatScreen(
-                                                          orderId: order.orderId,
-                                                          currentUserEmail: email ?? '',
-                                                          currentUserRole: role ?? '',
-                                                        ))),
+                                            onPressed: () {
+                                              pro.setChatData(order.orderId, email!, role!);
+                                              Scaffold.of(context).openEndDrawer();
+                                            },
                                           ),
                                         ],
                                       ),

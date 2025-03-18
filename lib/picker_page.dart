@@ -2,7 +2,7 @@ import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:inventory_management/Custom-Files/utils.dart';
-import 'package:inventory_management/Widgets/order_combo_card.dart';
+import 'package:inventory_management/model/orders_model.dart';
 import 'package:inventory_management/model/picker_model.dart';
 import 'package:provider/provider.dart';
 import 'package:inventory_management/Custom-Files/colors.dart';
@@ -48,13 +48,6 @@ class _PickerPageState extends State<PickerPage> {
     });
     Provider.of<PickerProvider>(context, listen: false).textEditingController.clear();
   }
-
-  // void _onSearchButtonPressed() {
-  //   final query = _searchController.text.trim();
-  //   if (query.isNotEmpty) {
-  //     Provider.of<PickerProvider>(context, listen: false).onSearchChanged(query);
-  //   }
-  // }
 
   void _showOrderIdsDialog(Picklist picklist) {
     showDialog(
@@ -349,12 +342,12 @@ class _PickerPageState extends State<PickerPage> {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.primaryBlue,
                     ),
-                    onPressed: pickerProvider.isLoading
+                    onPressed: pickerProvider.isPicklistLoading
                         ? null
                         : () async {
                             pickerProvider.fetchOrdersWithStatus4();
                           },
-                    child: pickerProvider.isLoading
+                    child: pickerProvider.isPicklistLoading
                         ? const SizedBox(
                             width: 16,
                             height: 16,
@@ -373,48 +366,76 @@ class _PickerPageState extends State<PickerPage> {
             ),
             const SizedBox(height: 8),
             _buildTableHeader(pickerProvider.picklists.length, pickerProvider),
-            Expanded(
-              child: Stack(
-                children: [
-                  if (pickerProvider.isLoading)
-                    const Center(
-                      child: LoadingAnimation(
-                        icon: Icons.local_shipping,
-                        beginColor: Color.fromRGBO(189, 189, 189, 1),
-                        endColor: AppColors.primaryBlue,
-                        size: 80.0,
-                      ),
-                    )
-                  else if (pickerProvider.picklists.isEmpty)
-                    const Center(
-                      child: Text(
-                        'No Orders Found',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.grey,
+            if (_searchController.text.trim().isEmpty)
+              Expanded(
+                child: (pickerProvider.isPicklistLoading)
+                    ? const Center(
+                        child: LoadingAnimation(
+                          icon: Icons.local_shipping,
+                          beginColor: Color.fromRGBO(189, 189, 189, 1),
+                          endColor: AppColors.primaryBlue,
+                          size: 80.0,
                         ),
-                      ),
-                    )
-                  else
-                    ListView.builder(
-                      itemCount: pickerProvider.picklists.length,
-                      itemBuilder: (context, index) {
-                        final picklist = pickerProvider.picklists[index];
-                        return Column(
-                          children: [
-                            // if (_searchController.text.trim().isNotEmpty)
-                            //   OrderComboCard(toShowBy: true, order: pickerProvider.orders[0], toShowOrderDetails: false)
-                            // else
-                            _buildPicklistCard(picklist),
-                            const Divider(thickness: 1, color: Colors.grey),
-                          ],
-                        );
-                      },
-                    ),
-                ],
+                      )
+                    : (pickerProvider.picklists.isEmpty)
+                        ? const Center(
+                            child: Text(
+                              'No Orders Found',
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.grey,
+                              ),
+                            ),
+                          )
+                        : ListView.builder(
+                            itemCount: pickerProvider.picklists.length,
+                            itemBuilder: (context, index) {
+                              final picklist = pickerProvider.picklists[index];
+                              return Column(
+                                children: [
+                                  _buildPicklistCard(picklist),
+                                  const Divider(thickness: 1, color: Colors.grey),
+                                ],
+                              );
+                            },
+                          ),
+              )
+            else
+              Expanded(
+                child: (pickerProvider.isOrderLoading)
+                    ? const Center(
+                        child: LoadingAnimation(
+                          icon: Icons.local_shipping,
+                          beginColor: Color.fromRGBO(189, 189, 189, 1),
+                          endColor: AppColors.primaryBlue,
+                          size: 80.0,
+                        ),
+                      )
+                    : (pickerProvider.orders.isEmpty)
+                        ? const Center(
+                            child: Text(
+                              'No Orders Found',
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.grey,
+                              ),
+                            ),
+                          )
+                        : ListView.builder(
+                            itemCount: pickerProvider.orders.length,
+                            itemBuilder: (context, index) {
+                              final order = pickerProvider.orders[index];
+                              return Column(
+                                children: [
+                                  _buildPickerOrderCard(order),
+                                  const Divider(thickness: 1, color: Colors.grey),
+                                ],
+                              );
+                            },
+                          ),
               ),
-            ),
             CustomPaginationFooter(
               currentPage: pickerProvider.currentPage,
               totalPages: pickerProvider.totalPages,
@@ -712,6 +733,246 @@ class _PickerPageState extends State<PickerPage> {
                         TextSpan(
                           text: DateFormat('yyyy-MM-dd, hh:mm a').format(
                             DateTime.parse(picklist.createdAt).toLocal(),
+                          ),
+                          style: const TextStyle(
+                            fontWeight: FontWeight.normal,
+                          ),
+                        ),
+                      ],
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                      )),
+                ),
+                // if (picklist['messages']!['confirmerMessage'].toString().isNotEmpty) ...[
+                //   Utils().showMessage(context, 'Confirmer Remark', picklist['messages']!['confirmerMessage'].toString())
+                // ],
+                // if (picklist['messages'] != null &&
+                //     picklist['messages']!['accountMessage'] != null &&
+                //     picklist['messages']!['accountMessage'].toString().isNotEmpty) ...[
+                //   Utils().showMessage(context, 'Account Remark', picklist['messages']!['accountMessage'].toString()),
+                // ],
+                // if (picklist['messages'] != null &&
+                //     picklist['messages']!['bookerMessage'] != null &&
+                //     picklist['messages']!['bookerMessage'].toString().isNotEmpty) ...[
+                //   Utils().showMessage(context, 'Booker Remark', picklist['messages']!['bookerMessage'].toString())
+                // ],
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPickerOrderCard(Order order) {
+    final items = order.items;
+
+    return Card(
+      color: AppColors.white,
+      elevation: 4,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text.rich(
+              TextSpan(
+                  text: "Order ID: ",
+                  children: [
+                    TextSpan(
+                      text: order.orderId,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.normal,
+                      ),
+                    ),
+                  ],
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    overflow: TextOverflow.ellipsis,
+                  )),
+              maxLines: 3,
+            ),
+            const SizedBox(height: 8),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Expanded(
+                  flex: 15,
+                  child: SizedBox(
+                    child: ListView.builder(
+                      shrinkWrap: true,
+                      itemCount: items.length,
+                      itemBuilder: (context, index) {
+                        return Container(
+                          decoration: BoxDecoration(
+                            color: AppColors.lightGrey,
+                            borderRadius: BorderRadius.circular(10),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.08),
+                                offset: const Offset(0, 1),
+                                blurRadius: 3,
+                              ),
+                            ],
+                          ),
+                          margin: const EdgeInsets.symmetric(vertical: 4.0),
+                          child: Padding(
+                            padding: const EdgeInsets.all(10.0),
+                            child: Column(
+                              children: [
+                                Row(
+                                  crossAxisAlignment: CrossAxisAlignment.center,
+                                  children: [
+                                    ClipRRect(
+                                      borderRadius: BorderRadius.circular(6),
+                                      child: SizedBox(
+                                        width: 60,
+                                        height: 60,
+                                        child: (items[index].product?.shopifyImage?.isNotEmpty ?? false)
+                                            ? Image.network(
+                                                items[index].product!.shopifyImage!,
+                                              )
+                                            : const Icon(
+                                                Icons.image_not_supported,
+                                                size: 40,
+                                                color: AppColors.grey,
+                                              ),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8.0),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            items[index].product?.displayName ?? '',
+                                            style: const TextStyle(
+                                              fontWeight: FontWeight.w600,
+                                              fontSize: 14,
+                                              color: Colors.black87,
+                                            ),
+                                            maxLines: 2,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                          const SizedBox(height: 6.0),
+                                          Row(
+                                            mainAxisAlignment: MainAxisAlignment.start,
+                                            children: [
+                                              RichText(
+                                                text: TextSpan(
+                                                  children: [
+                                                    const TextSpan(
+                                                      text: 'SKU: ',
+                                                      style: TextStyle(
+                                                        color: Colors.blueAccent,
+                                                        fontWeight: FontWeight.bold,
+                                                        fontSize: 13,
+                                                      ),
+                                                    ),
+                                                    TextSpan(
+                                                      text: items[index].product?.sku ?? '',
+                                                      style: const TextStyle(
+                                                        color: Colors.black87,
+                                                        fontWeight: FontWeight.w500,
+                                                        fontSize: 13,
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                              const SizedBox(width: 20),
+                                              RichText(
+                                                text: TextSpan(
+                                                  children: [
+                                                    const TextSpan(
+                                                      text: 'Amount: ',
+                                                      style: TextStyle(
+                                                        color: Colors.blueAccent,
+                                                        fontWeight: FontWeight.bold,
+                                                        fontSize: 13,
+                                                      ),
+                                                    ),
+                                                    TextSpan(
+                                                      text: items[index].product?.mrp.toString() ?? '',
+                                                      style: const TextStyle(
+                                                        color: Colors.black87,
+                                                        fontWeight: FontWeight.w500,
+                                                        fontSize: 13,
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    const Spacer(),
+                                    const Text(
+                                      "X",
+                                      style: TextStyle(
+                                        fontSize: 20,
+                                      ),
+                                    ),
+                                    const Spacer(),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(vertical: 2.0, horizontal: 2.0),
+                                      child: Center(
+                                        child: Text(
+                                          "${items[index].qty}",
+                                          style: const TextStyle(
+                                            fontSize: 20,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(
+                                      width: 60,
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(
+                                  height: 8,
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 4),
+                buildCell(
+                  Text(
+                    order.picklistId,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                      color: Colors.blueAccent,
+                    ),
+                  ),
+                  flex: 3,
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                if(order.createdAt != null)
+                Text.rich(
+                  TextSpan(
+                      text: "Created on: ",
+                      children: [
+                        TextSpan(
+                          text: DateFormat('yyyy-MM-dd, hh:mm a').format(
+                            order.createdAt!.toLocal(),
                           ),
                           style: const TextStyle(
                             fontWeight: FontWeight.normal,
