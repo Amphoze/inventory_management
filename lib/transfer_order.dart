@@ -61,9 +61,9 @@ class _TransferOrderPageState extends State<TransferOrderPage> {
         final res = await provider.saveOrder();
       if(res['success'] == true) {
         Utils.showSnackBar(context, 'Order Transferred successfully!', color: Colors.green);
-        Utils.showInfoDialog(context, 'Order ID: ${res['message']}!', true);
+        Utils.showInfoDialog(context, 'Order ID: ${res['message'] ?? ''}!', true);
       } else {
-        Utils.showSnackBar(context, 'Error transferring order: ${res['message']}', color: Colors.red);
+        Utils.showSnackBar(context, 'Error transferring order: ${res['error'] ?? ''}', details: res['details'] ?? '', color: Colors.red);
       }
     }
   }

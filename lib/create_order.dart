@@ -46,10 +46,11 @@ class _CreateOrderPageState extends State<CreateOrderPage> {
     if (_formKey.currentState!.validate()) {
       final result = await provider.saveOrder();
       if (result['success'] == true) {
-        Utils.showSnackBar(context, result['response']?['message'] ?? 'Order Created Successfully', color: Colors.green);
+        Utils.showSnackBar(context, result['message'] ?? 'Order Created Successfully', color: Colors.green);
         _formKey.currentState!.reset();
       } else {
-        Utils.showSnackBar(context, result['response']?['error'] ?? "An error occurred", details: result['response']?['details'] ?? "Unknown error", color: Colors.red);
+        Utils.showSnackBar(context, result['message'] ?? "An error occurred",
+            details: result['details'] ?? "Unknown error", color: Colors.red);
       }
     }
   }
@@ -618,6 +619,25 @@ class _CreateOrderPageState extends State<CreateOrderPage> {
                   children: [
                     Expanded(
                       child: _buildTextField(
+                        controller: provider.shippingPincodeController,
+                        label: 'Pincode',
+                        icon: Icons.code,
+                        validator: (value) => (value?.isEmpty ?? false) ? 'Required' : null,
+                        onChanged: (value) {
+                          if (value.isEmpty) {
+                            context.read<CreateOrderProvider>().clearLocationDetails(isBilling: false);
+                          }
+                          if (value.length == 6) {
+                            context.read<CreateOrderProvider>().getLocationDetails(context: context, pincode: value, isBilling: false);
+                          }
+                        },
+                        maxLength: 6,
+                        isNumber: true,
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: _buildTextField(
                         controller: provider.shippingCityController,
                         label: 'City',
                         icon: Icons.location_city,
@@ -640,25 +660,6 @@ class _CreateOrderPageState extends State<CreateOrderPage> {
                         label: 'Country',
                         icon: Icons.public,
                         validator: (value) => (value?.isEmpty ?? false) ? 'Required' : null,
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: _buildTextField(
-                        controller: provider.shippingPincodeController,
-                        label: 'Pincode',
-                        icon: Icons.code,
-                        validator: (value) => (value?.isEmpty ?? false) ? 'Required' : null,
-                        onChanged: (value) {
-                          if (value.isEmpty) {
-                            context.read<CreateOrderProvider>().clearLocationDetails(isBilling: false);
-                          }
-                          if (value.length == 6) {
-                            context.read<CreateOrderProvider>().getLocationDetails(context: context, pincode: value, isBilling: false);
-                          }
-                        },
-                        maxLength: 6,
-                        isNumber: true,
                       ),
                     ),
                   ],

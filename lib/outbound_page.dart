@@ -37,12 +37,12 @@ class _OutboundPageState extends State<OutboundPage> with TickerProviderStateMix
   @override
   void initState() {
     super.initState();
+    provider = context.read<OutboundProvider>();
     // _tabController = TabController(length: 2, vsync: this);
     // _searchController = TextEditingController();
     provider.searchController = TextEditingController();
     // _searchControllerFailed = TextEditingController();
 
-    provider = context.read<OutboundProvider>();
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _reloadOrders();
@@ -626,7 +626,7 @@ class _OutboundPageState extends State<OutboundPage> with TickerProviderStateMix
                                                     ),
                                                   );
                                                   if (result == true) {
-                                                    final readySearched = provider.searchController.text;
+                                                    final readySearched = provider.searchController.text.trim();
 
                                                     // Ready
                                                     if (readySearched.isNotEmpty) {

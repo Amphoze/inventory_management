@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:inventory_management/Custom-Files/colors.dart';
+import 'package:inventory_management/Custom-Files/utils.dart';
 import 'package:inventory_management/Widgets/big_combo_card.dart';
 import 'package:inventory_management/Widgets/combo_card.dart';
 import 'package:inventory_management/Widgets/product_card.dart';
@@ -723,9 +724,10 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
 
         Navigator.pop(context, true);
       } catch (error) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Failed to update order.')),
-        );
+        // ScaffoldMessenger.of(context).showSnackBar(
+        //   const SnackBar(content: Text('Failed to update order.')),
+        // );
+        Utils.showSnackBar(context, "Error: $error", color: Colors.red);
       } finally {
         setState(() {
           _isSavingOrder = false;

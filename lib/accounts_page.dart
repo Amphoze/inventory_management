@@ -60,9 +60,10 @@ class _AccountsPageState extends State<AccountsPage> {
 
   @override
   void dispose() {
-    accountsProvider.accountsSearch.dispose();
     remarkController.dispose();
-    accountsProvider.resetFilterData();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      accountsProvider.resetFilterData();
+    });
     super.dispose();
   }
 

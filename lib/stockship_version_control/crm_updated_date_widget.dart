@@ -33,13 +33,13 @@ class CrmUpdatedDateWidget extends StatelessWidget {
           child: InkWell(
             borderRadius: BorderRadius.circular(8),
             onTap: () async {
-              final prefs = await SharedPreferences.getInstance();
-              if ((prefs.getBool('_isSuperAdminAssigned') ?? false) || (prefs.getBool('_isAdminAssigned') ?? false)) {
-                showDialog(
-                  context: context,
-                  builder: (context) => const CrmDeveloperNotesDialog(),
-                );
-              }
+              // final prefs = await SharedPreferences.getInstance();
+              // if ((prefs.getBool('_isSuperAdminAssigned') ?? false) || (prefs.getBool('_isAdminAssigned') ?? false)) {
+              //   showDialog(
+              //     context: context,
+              //     builder: (context) => const CrmDeveloperNotesDialog(),
+              //   );
+              // }
             },
             child: StreamBuilder<QuerySnapshot>(
               stream: FirebaseFirestore.instance.collectionGroup('ReleaseNotes').snapshots(),

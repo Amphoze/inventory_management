@@ -1,8 +1,6 @@
 import 'dart:developer';
-import 'dart:math';
-
 import 'package:flutter/material.dart';
-import 'package:http/http.dart';
+// import 'package:http/http.dart';
 import 'package:intl/intl.dart';
 import 'package:inventory_management/Custom-Files/colors.dart';
 import 'package:inventory_management/Custom-Files/custom_pagination.dart';
@@ -57,6 +55,7 @@ class _OrdersNewPageState extends State<OrdersNewPage> with TickerProviderStateM
         // _searchController.clear();
         provider.searchControllerReady.clear();
         provider.searchControllerFailed.clear();
+        _reloadOrders();
       }
     });
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -696,7 +695,10 @@ class _OrdersNewPageState extends State<OrdersNewPage> with TickerProviderStateM
                                                   ),
                                                 );
                                                 if (result == true) {
-                                                  final readySearched = provider.searchControllerReady.text;
+                                                  final readySearched = provider.searchControllerReady.text.trim();
+
+                                                  log('readySearched: $readySearched');
+                                                  log('result: $result');
 
                                                   if (readySearched.isNotEmpty) {
                                                     ordersProvider.searchReadyToConfirmOrders(readySearched);

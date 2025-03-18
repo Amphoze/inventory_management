@@ -23,21 +23,13 @@ class BaApproveProvider with ChangeNotifier {
   final TextEditingController searchController = TextEditingController();
 
   bool get selectAll => _selectAll;
-
   List<bool> get selectedProducts => _selectedProducts;
-
   List<Order> get orders => _orders;
-
   bool get isLoading => _isLoading;
-
   int get currentPage => _currentPage;
-
   int get totalPages => _totalPages;
-
   PageController get pageController => _pageController;
-
   TextEditingController get textEditingController => _textEditingController;
-
   int get selectedCount => _selectedProducts.where((isSelected) => isSelected).length;
 
   bool isUpdatingOrder = false;
@@ -165,10 +157,10 @@ class BaApproveProvider with ChangeNotifier {
   }
 
   Future<void> fetchOrdersWithStatus2({DateTime? date, String? market}) async {
-    if(searchController.text.trim().isNotEmpty) {
-      searchOrders(searchController.text.trim());
-      return;
-    }
+    // if(searchController.text.trim().isNotEmpty) {
+    //   searchOrders(searchController.text.trim());
+    //   return;
+    // }
     _isLoading = true;
     setRefreshingOrders(true);
     notifyListeners();

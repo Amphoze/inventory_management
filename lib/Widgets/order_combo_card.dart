@@ -140,6 +140,8 @@ class _OrderComboCardState extends State<OrderComboCard> {
                           if (result != null && result is bool && result) {
                             final pro = Provider.of<BookProvider>(context, listen: false);
                             pro.fetchPaginatedOrdersB2C(pro.currentPageB2C);
+                            pro.fetchPaginatedOrdersB2B(pro.currentPageB2C);
+                            context.read<AccountsProvider>().fetchOrdersWithStatus2();
                           }
                         },
                         icon: const Icon(Icons.edit_note),

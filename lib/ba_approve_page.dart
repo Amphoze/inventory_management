@@ -34,11 +34,12 @@ class _BaApprovePageState extends State<BaApprovePage> {
 
   @override
   void initState() {
-    super.initState();
+    baApproveProvider = Provider.of<BaApproveProvider>(context, listen: false);
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      Provider.of<BaApproveProvider>(context, listen: false).fetchOrdersWithStatus2(date: picked, market: selectedCourier);
+      baApproveProvider.fetchOrdersWithStatus2(date: picked, market: selectedCourier);
       context.read<MarketplaceProvider>().fetchMarketplaces();
     });
+    super.initState();
   }
 
   void _onSearchButtonPressed() {
@@ -57,7 +58,7 @@ class _BaApprovePageState extends State<BaApprovePage> {
 
   @override
   void dispose() {
-    baApproveProvider.searchController.dispose();
+    // baApproveProvider.searchController.dispose();
     remarkController.dispose();
     super.dispose();
   }
@@ -525,7 +526,7 @@ class _BaApprovePageState extends State<BaApprovePage> {
                                             ),
                                           );
                                           if (result == true) {
-                                            final searched = baApproveProvider.searchController.text;
+                                            final searched = baApproveProvider.searchController.text.trim();
 
                                             // Ready
                                             if (searched.isNotEmpty) {

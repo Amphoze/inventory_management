@@ -272,11 +272,13 @@ class TransferOrderProvider with ChangeNotifier {
         if (shippingAddress != null) {
           final phoneNumber = shippingAddress['phoneNumber'];
           final zipCode = shippingAddress['zipCode'];
-          shippingPhoneController.text = phoneNumber?.toString() ?? '';
+          shippingAddress1Controller.text = shippingAddress['addressLine1'] as String? ?? '';
+          shippingAddress2Controller.text = shippingAddress['addressLine2'] as String? ?? '';
+          shippingCountryController.text = shippingAddress['country'] as String? ?? '';
+          shippingStateController.text = shippingAddress['state'] as String? ?? '';
           shippingCityController.text = shippingAddress['city'] as String? ?? '';
           shippingPincodeController.text = zipCode?.toString() ?? '';
-          shippingStateController.text = shippingAddress['state'] as String? ?? '';
-          shippingCountryController.text = shippingAddress['country'] as String? ?? '';
+          shippingPhoneController.text = phoneNumber?.toString() ?? '';
         }
       }
     }
@@ -543,7 +545,7 @@ class TransferOrderProvider with ChangeNotifier {
         // 'first_name': customerFirstNameController.text,
         // 'last_name': customerLastNameController.text,
         // 'email': customerEmailController.text, // Uncomment
-        'phone': customerPhoneController.text, // Keep as string
+        'phone': shippingPhoneController.text, // Keep as string
       },
       'billing_addr': {
         // 'first_name': billingFirstNameController.text,
@@ -564,7 +566,7 @@ class TransferOrderProvider with ChangeNotifier {
         // 'email': shippingEmailController.text,
         'address1': shippingAddress1Controller.text, // Uncomment
         'address2': shippingAddress2Controller.text, // Uncomment
-        'phone': shippingPhoneController.text, // Keep as string
+        // 'phone': shippingPhoneController.text, // Keep as string
         'city': shippingCityController.text,
         'pincode': shippingPincodeController.text, // Keep as string
         'state': shippingStateController.text,
@@ -612,7 +614,7 @@ class TransferOrderProvider with ChangeNotifier {
         return {"success": true, "message": res['order_id']};
       } else {
         Logger().e('Failed to save order: ${response.statusCode} - ${response.body}');
-        throw Exception('Failed to save order');
+        return {"success": false, "error": res['error'], "details": res['details']};
       }
     } catch (e) {
       Logger().e('Error saving order: $e');

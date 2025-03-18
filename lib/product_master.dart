@@ -39,8 +39,8 @@ class _ProductMasterPageState extends State<ProductMasterPage> {
                   const SizedBox(height: 16),
                   Expanded(
                     child: Consumer<ProductMasterProvider>(
-                      builder: (context, provider, _) =>
-                          !provider.showCreateProduct ? _buildProductList(context, provider) : const CreateProduct(),
+                      builder: (context, provider, child) =>
+                          !provider.showCreateProduct ? _buildProductList(context) : const CreateProduct(),
                     ),
                   ),
                 ],
@@ -103,7 +103,7 @@ class _ProductMasterPageState extends State<ProductMasterPage> {
               ),
               onChanged: (value) {
                 if(value.trim().isEmpty) {
-                  provider.loadMoreProducts();
+                  provider.refreshPage(context);
                 }
               },
               onSubmitted: (_) => provider.performSearch(context),
@@ -116,7 +116,7 @@ class _ProductMasterPageState extends State<ProductMasterPage> {
           ),
           const SizedBox(width: 8),
           ElevatedButton(
-            onPressed: provider.refreshPage,
+            onPressed: () => provider.refreshPage(context),
             child: const Icon(
               Icons.refresh,
               color: Colors.white,
@@ -127,39 +127,43 @@ class _ProductMasterPageState extends State<ProductMasterPage> {
     );
   }
 
-  Widget _buildProductList(BuildContext context, ProductMasterProvider provider) {
-    return NotificationListener<ScrollNotification>(
-      onNotification: (ScrollNotification scrollInfo) {
-        if (!provider.isLoading && scrollInfo.metrics.pixels == scrollInfo.metrics.maxScrollExtent) {
-          provider.loadMoreProducts(context);
-        }
-        return false;
-      },
-      child: provider.products.isEmpty
-          ? const Center(
-              child: LoadingAnimation(
-                icon: Icons.production_quantity_limits_rounded,
-                beginColor: Color.fromRGBO(189, 189, 189, 1),
-                endColor: AppColors.primaryBlue,
-                size: 80.0,
-              ),
-            )
-          : ListView.builder(
-              itemCount: provider.products.length + (provider.hasMore ? 1 : 0),
-              itemBuilder: (context, index) {
-                if (index == provider.products.length) {
-                  return const Center(
-                    child: LoadingAnimation(
-                      icon: Icons.production_quantity_limits_rounded,
-                      beginColor: Color.fromRGBO(189, 189, 189, 1),
-                      endColor: AppColors.primaryBlue,
-                      size: 80.0,
-                    ),
-                  );
-                }
-                return ProductMasterCard(product: provider.products[index]);
-              },
-            ),
+  Widget _buildProductList(BuildContext context) {
+    return Consumer<ProductMasterProvider>(
+      builder: (context, provider, child) {
+        return NotificationListener<ScrollNotification>(
+          onNotification: (ScrollNotification scrollInfo) {
+            if (!provider.isLoading && scrollInfo.metrics.pixels == scrollInfo.metrics.maxScrollExtent) {
+              provider.loadMoreProducts(context);
+            }
+            return false;
+          },
+          child: provider.products.isEmpty
+              ? const Center(
+                  child: LoadingAnimation(
+                    icon: Icons.production_quantity_limits_rounded,
+                    beginColor: Color.fromRGBO(189, 189, 189, 1),
+                    endColor: AppColors.primaryBlue,
+                    size: 80.0,
+                  ),
+                )
+              : ListView.builder(
+                  itemCount: provider.products.length + (provider.hasMore ? 1 : 0),
+                  itemBuilder: (context, index) {
+                    if (index == provider.products.length) {
+                      return const Center(
+                        child: LoadingAnimation(
+                          icon: Icons.production_quantity_limits_rounded,
+                          beginColor: Color.fromRGBO(189, 189, 189, 1),
+                          endColor: AppColors.primaryBlue,
+                          size: 80.0,
+                        ),
+                      );
+                    }
+                    return ProductMasterCard(product: provider.products[index]);
+                  },
+                ),
+        );
+      }
     );
   }
 }

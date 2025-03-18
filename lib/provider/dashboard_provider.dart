@@ -43,6 +43,7 @@ class DashboardProvider with ChangeNotifier {
       final futures = [
         fetchDashboardData(formattedDate),
         fetchDoneData(formattedDate),
+        // fetchPercentageData()
       ];
 
       // Wait for all futures to complete
@@ -164,12 +165,30 @@ class DashboardProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> fetchPercentageData(
-    String dateRange,
-    String marketplace,
-    List<String> options
-  ) async {
+  Future<void> fetchPercentageData({String? dateRange, String? marketplace, List<String>? options}) async {
     setPercentLoading(true);
+
+    if (dateRange == null && marketplace == null && options == null) {
+      final today = DateTime.now();
+      final fifteenDaysAgo = today.subtract(const Duration(days: 15));
+      final formattedStartDate = DateFormat('yyyy-MM-dd').format(fifteenDaysAgo);
+      final formattedEndDate = DateFormat('yyyy-MM-dd').format(today);
+      dateRange = '$formattedStartDate,$formattedEndDate';
+
+      marketplace = 'all';
+
+      options = [
+        'failed', 'confirmed', 'readytoinvoice', 'readytobook', 'readytopick',
+        'readytopack', 'checkweight', 'readytorack', 'readytomanifest', 'dispatch',
+        'cancelled', 'rto', 'merged', 'split', 'intransit', 'delivered', 'rto_intransit'
+      ];
+    }
+
+    log('date range: $dateRange'); // Corrected to formatted date
+
+
+    log('marketplace: $marketplace');
+    log('options: $options');
 
     final token = await _getToken();
     log('token is: $token');

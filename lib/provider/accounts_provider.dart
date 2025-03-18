@@ -241,10 +241,10 @@ class AccountsProvider with ChangeNotifier {
   }
 
   Future<void> fetchOrdersWithStatus2() async {
-    if (accountsSearch.text.trim().isNotEmpty) {
-      searchOrders(accountsSearch.text.trim(), selectedSearchType);
-      return;
-    }
+    // if (accountsSearch.text.trim().isNotEmpty) {
+    //   searchOrders(accountsSearch.text.trim(), selectedSearchType);
+    //   return;
+    // }
 
     setLoading(true);
 
@@ -484,9 +484,9 @@ class AccountsProvider with ChangeNotifier {
   }
 
   Future<void> fetchInvoicedOrders(int page) async {
-    if(invoiceSearch.text.trim().isNotEmpty) {
-      searchInvoicedOrders(invoiceSearch.text.trim(), selectedSearchType);
-    }
+    // if(invoiceSearch.text.trim().isNotEmpty) {
+    //   searchInvoicedOrders(invoiceSearch.text.trim(), selectedSearchType);
+    // }
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('authToken') ?? '';
     final warehouseId = prefs.getString('warehouseId') ?? '';

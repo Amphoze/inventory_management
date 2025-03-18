@@ -70,7 +70,9 @@ class _BookPageState extends State<BookPage> with SingleTickerProviderStateMixin
     // bookProvider.b2cSearchController.dispose();
     b2bPageController.dispose();
     b2cPageController.dispose();
-    bookProvider.resetFilterData();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      bookProvider.resetFilterData();
+    });
     super.dispose();
   }
 

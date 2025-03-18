@@ -323,10 +323,10 @@ class OrdersProvider with ChangeNotifier {
     if (page < 1 || page > totalFailedPages) {
       return;
     }
-    if(searchControllerFailed.text.trim().isNotEmpty) {
-      searchFailedOrders(searchControllerFailed.text.trim());
-      return;
-    }
+    // if(searchControllerFailed.text.trim().isNotEmpty) {
+    //   searchFailedOrders(searchControllerFailed.text.trim());
+    //   return;
+    // }
     setFailedLoading(true);
 
     final prefs = await SharedPreferences.getInstance();
@@ -388,10 +388,10 @@ class OrdersProvider with ChangeNotifier {
     if (page < 1 || page > totalReadyPages) {
       return;
     }
-    if(searchControllerReady.text.trim().isNotEmpty) {
-      searchReadyToConfirmOrders(searchControllerReady.text.trim());
-      return;
-    }
+    // if(searchControllerReady.text.trim().isNotEmpty) {
+    //   searchReadyToConfirmOrders(searchControllerReady.text.trim());
+    //   return;
+    // }
 
     setReadyLoading(true);
 

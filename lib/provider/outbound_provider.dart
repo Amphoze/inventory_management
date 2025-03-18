@@ -240,10 +240,10 @@ class OutboundProvider with ChangeNotifier {
       return;
     }
 
-    if(searchController.text.trim().isNotEmpty) {
-      searchOrdersByID(searchController.text.trim());
-      return;
-    }
+    // if(searchController.text.trim().isNotEmpty) {
+    //   searchOrdersByID(searchController.text.trim());
+    //   return;
+    // }
 
     isLoading = true;
     notifyListeners();

@@ -42,19 +42,21 @@ class _InvoicedOrdersState extends State<InvoicedOrders> with SingleTickerProvid
 
   @override
   void initState() {
-    super.initState();
+    provider = context.read<AccountsProvider>();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       provider.fetchInvoicedOrders(provider.currentPage);
       context.read<MarketplaceProvider>().fetchMarketplaces();
       _fetchUserRole();
     });
+    super.initState();
   }
 
   @override
   void dispose() {
-    provider.invoiceSearch.dispose();
     _pageController.dispose();
-    provider.resetFilterData();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      provider.resetFilterData();
+    });
     super.dispose();
   }
 

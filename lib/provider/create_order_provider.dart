@@ -627,14 +627,14 @@ class CreateOrderProvider with ChangeNotifier {
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         Logger().i('Order saved successfully: $res}');
-        return {"success": true, "response": res};
+        return {"success": true, "message": res['message']};
       } else {
         Logger().e('Failed to save order: ${response.statusCode} - ${response.body}');
-        return {"success": false, "response": res};
+        return {"success": false, "message": res['error'], "details": res['details']};
       }
     } catch (e) {
       Logger().e('Error saving order: $e');
-      return {"success": false, "response": 'Error saving order: $e'};
+      return {"success": false, "message": 'Error saving order: $e'};
     } finally {
       isSavingOrder = false;
       notifyListeners();

@@ -63,7 +63,9 @@ class _BookedPageState extends State<BookedPage> with SingleTickerProviderStateM
   void dispose() {
     _searchController.dispose();
     _pageController.dispose();
-    bookProvider.resetFilterData();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      bookProvider.resetFilterData();
+    });
     super.dispose();
   }
 

@@ -111,7 +111,7 @@ class ProductMasterCard extends StatelessWidget {
                       );
                       Logger().e('pop result is: $res');
                       if (res != null && res == true) {
-                        context.read<ProductMasterProvider>().refreshPage();
+                        context.read<ProductMasterProvider>().refreshPage(context);
                       }
                     },
                     child: const Text('Edit Product'),

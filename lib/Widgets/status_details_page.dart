@@ -59,9 +59,9 @@ class _StatusDetailsPageState extends State<StatusDetailsPage> {
     selectedStatuses = List.from(widget.selectedStatuses);
 
     // Fetch data on initial load
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _fetchData(context);
-    });
+    // WidgetsBinding.instance.addPostFrameCallback((_) {
+    //   _fetchData(context);
+    // });
   }
 
   void _fetchData(BuildContext context) {
@@ -75,9 +75,9 @@ class _StatusDetailsPageState extends State<StatusDetailsPage> {
       }).toList();
 
       Provider.of<DashboardProvider>(context, listen: false).fetchPercentageData(
-        dateRange,
-        selectedSource!,
-        statusKeys,
+        dateRange: dateRange,
+        marketplace: selectedSource!,
+        options: statusKeys,
       );
     }
   }
@@ -104,107 +104,110 @@ class _StatusDetailsPageState extends State<StatusDetailsPage> {
           contentPadding: const EdgeInsets.all(16.0),
           content: StatefulBuilder(
             builder: (BuildContext context, StateSetter setDialogState) {
-              return SingleChildScrollView(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Date selection row
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Padding(
-                            padding: const EdgeInsets.only(right: 4.0, bottom: 8.0),
-                            child: _buildDateField(
-                              'Start Date',
-                              tempStartDate,
-                              (date) => setDialogState(() => tempStartDate = date),
+              return SizedBox(
+                width: MediaQuery.of(context).size.width * 0.5,
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Date selection row
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Padding(
+                              padding: const EdgeInsets.only(right: 4.0, bottom: 8.0),
+                              child: _buildDateField(
+                                'Start Date',
+                                tempStartDate,
+                                (date) => setDialogState(() => tempStartDate = date),
+                              ),
                             ),
                           ),
-                        ),
-                        Expanded(
-                          child: Padding(
-                            padding: const EdgeInsets.only(left: 4.0, bottom: 8.0),
-                            child: _buildDateField(
-                              'End Date',
-                              tempEndDate,
-                              (date) => setDialogState(() => tempEndDate = date),
+                          Expanded(
+                            child: Padding(
+                              padding: const EdgeInsets.only(left: 4.0, bottom: 8.0),
+                              child: _buildDateField(
+                                'End Date',
+                                tempEndDate,
+                                (date) => setDialogState(() => tempEndDate = date),
+                              ),
                             ),
                           ),
-                        ),
-                      ],
-                    ),
-
-                    // Status selection
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 8.0),
-                      child: DropdownSearch<String>.multiSelection(
-                        items: ['All', ...orderStatusMap.values],
-                        dropdownDecoratorProps: const DropDownDecoratorProps(
-                          dropdownSearchDecoration: InputDecoration(
-                            labelText: "Select Status",
-                            contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                            border: OutlineInputBorder(),
-                          ),
-                        ),
-                        onChanged: (List<String> values) {
-                          setDialogState(() {
-                            if (values.contains('All')) {
-                              tempStatuses = orderStatusMap.values.toList();
-                            } else {
-                              tempStatuses = values.where((item) => item != 'All').toList();
-                            }
-                          });
-                        },
-                        selectedItems: tempStatuses,
-                        popupProps: PopupPropsMultiSelection.menu(
-                          showSearchBox: true,
-                          searchFieldProps: TextFieldProps(
-                            decoration: InputDecoration(
-                              labelText: "Search Status",
-                              contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                            ),
-                          ),
-                        ),
+                        ],
                       ),
-                    ),
 
-                    // Marketplace selection
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 8.0),
-                      child: Consumer<MarketplaceProvider>(
-                        builder: (context, pro, child) {
-                          return DropdownButtonFormField<String>(
-                            value: tempSource,
-                            decoration: const InputDecoration(
-                              labelText: 'Marketplace',
+                      // Status selection
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 8.0),
+                        child: DropdownSearch<String>.multiSelection(
+                          items: ['All', ...orderStatusMap.values],
+                          dropdownDecoratorProps: const DropDownDecoratorProps(
+                            dropdownSearchDecoration: InputDecoration(
+                              labelText: "Select Status",
                               contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                               border: OutlineInputBorder(),
                             ),
-                            style: const TextStyle(fontSize: 14, color: Colors.black87),
-                            icon: const Icon(Icons.arrow_drop_down, color: AppColors.primaryBlue),
-                            isExpanded: true,
-                            items: [
-                              DropdownMenuItem<String>(
-                                value: 'all',
-                                child: Text('All', style: const TextStyle(fontSize: 14)),
+                          ),
+                          onChanged: (List<String> values) {
+                            setDialogState(() {
+                              if (values.contains('All')) {
+                                tempStatuses = orderStatusMap.values.toList();
+                              } else {
+                                tempStatuses = values.where((item) => item != 'All').toList();
+                              }
+                            });
+                          },
+                          selectedItems: tempStatuses,
+                          popupProps: PopupPropsMultiSelection.menu(
+                            showSearchBox: true,
+                            searchFieldProps: TextFieldProps(
+                              decoration: InputDecoration(
+                                labelText: "Search Status",
+                                contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
                               ),
-                              ...pro.marketplaces.map((market) {
-                                return DropdownMenuItem<String>(
-                                  value: market.name,
-                                  child: Text(market.name, style: const TextStyle(fontSize: 14)),
-                                );
-                              }).toList(),
-                            ],
-                            onChanged: (newValue) {
-                              setDialogState(() => tempSource = newValue);
-                            },
-                          );
-                        },
+                            ),
+                          ),
+                        ),
                       ),
-                    ),
-                  ],
+
+                      // Marketplace selection
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 8.0),
+                        child: Consumer<MarketplaceProvider>(
+                          builder: (context, pro, child) {
+                            return DropdownButtonFormField<String>(
+                              value: tempSource,
+                              decoration: const InputDecoration(
+                                labelText: 'Marketplace',
+                                contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                border: OutlineInputBorder(),
+                              ),
+                              style: const TextStyle(fontSize: 14, color: Colors.black87),
+                              icon: const Icon(Icons.arrow_drop_down, color: AppColors.primaryBlue),
+                              isExpanded: true,
+                              items: [
+                                DropdownMenuItem<String>(
+                                  value: 'all',
+                                  child: Text('All', style: const TextStyle(fontSize: 14)),
+                                ),
+                                ...pro.marketplaces.map((market) {
+                                  return DropdownMenuItem<String>(
+                                    value: market.name,
+                                    child: Text(market.name, style: const TextStyle(fontSize: 14)),
+                                  );
+                                }).toList(),
+                              ],
+                              onChanged: (newValue) {
+                                setDialogState(() => tempSource = newValue);
+                              },
+                            );
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               );
             },
@@ -280,18 +283,6 @@ class _StatusDetailsPageState extends State<StatusDetailsPage> {
         title: const Text('Order Status Details', style: TextStyle(fontSize: 18, color: Colors.white)),
         backgroundColor: AppColors.primaryBlue,
         elevation: 2,
-        // actions: [
-        //   IconButton(
-        //     icon: const Icon(Icons.filter_list, color: Colors.white),
-        //     tooltip: 'Set Filters',
-        //     onPressed: () => _showSettingsDialog(context),
-        //   ),
-        //   IconButton(
-        //     icon: const Icon(Icons.refresh, color: Colors.white),
-        //     tooltip: 'Refresh Data',
-        //     onPressed: () => _fetchData(context),
-        //   ),
-        // ],
       ),
       body: Consumer<DashboardProvider>(
         builder: (context, provider, child) {
@@ -317,13 +308,19 @@ class _StatusDetailsPageState extends State<StatusDetailsPage> {
                       padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 10.0),
                       child: Row(
                         children: [
-                          Container(
-                            padding: const EdgeInsets.all(8),
-                            decoration: BoxDecoration(
-                              color: AppColors.primaryBlue.withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(8),
+                          Tooltip(
+                            message: 'Apply filters',
+                            child: InkWell(
+                              onTap: () => _showSettingsDialog(context),
+                              child: Container(
+                                padding: const EdgeInsets.all(8),
+                                decoration: BoxDecoration(
+                                  color: AppColors.primaryBlue.withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: const Icon(Icons.filter_alt, color: AppColors.primaryBlue, size: 18),
+                              ),
                             ),
-                            child: const Icon(Icons.filter_alt, color: AppColors.primaryBlue, size: 18),
                           ),
                           const SizedBox(width: 12),
                           Expanded(
@@ -375,21 +372,20 @@ class _StatusDetailsPageState extends State<StatusDetailsPage> {
                               ],
                             ),
                           ),
-                          Material(
-                            color: Colors.transparent,
-                            child: InkWell(
-                              onTap: () => _showSettingsDialog(context),
-                              borderRadius: BorderRadius.circular(20),
-                              child: Container(
-                                padding: const EdgeInsets.all(8),
-                                decoration: BoxDecoration(
-                                  color: AppColors.primaryBlue.withOpacity(0.1),
-                                  borderRadius: BorderRadius.circular(20),
-                                ),
-                                child: const Icon(Icons.tune, size: 18, color: AppColors.primaryBlue),
-                              ),
-                            ),
-                          ),
+                          // Material(
+                          //   color: Colors.transparent,
+                          //   child: InkWell(
+                          //     borderRadius: BorderRadius.circular(20),
+                          //     child: Container(
+                          //       padding: const EdgeInsets.all(8),
+                          //       decoration: BoxDecoration(
+                          //         color: AppColors.primaryBlue.withOpacity(0.1),
+                          //         borderRadius: BorderRadius.circular(20),
+                          //       ),
+                          //       child: const Icon(Icons.tune, size: 18, color: AppColors.primaryBlue),
+                          //     ),
+                          //   ),
+                          // ),
                         ],
                       ),
                     ),
@@ -493,14 +489,14 @@ class _StatusDetailsPageState extends State<StatusDetailsPage> {
                                                       ? Icons.arrow_downward
                                                       : Icons.remove,
                                               size: 14,
-                                              color: changeColor,
+                                              color: _getStatusColor(statusKey),
                                             ),
                                             Text(
                                               '${parsedPercentage.abs().toStringAsFixed(1)}%',
                                               style: TextStyle(
                                                 fontSize: 14,
                                                 fontWeight: FontWeight.w500,
-                                                color: changeColor,
+                                                color: _getStatusColor(statusKey),
                                               ),
                                             ),
                                           ],
@@ -530,11 +526,25 @@ class _StatusDetailsPageState extends State<StatusDetailsPage> {
           );
         },
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => _fetchData(context),
-        backgroundColor: AppColors.primaryBlue,
-        mini: true,
-        child: const Icon(Icons.refresh, color: Colors.white),
+      floatingActionButton: Column(
+        mainAxisAlignment: MainAxisAlignment.end,
+        children: [
+          FloatingActionButton(
+            heroTag: 'filter',
+            onPressed: () => _showSettingsDialog(context),
+            backgroundColor: AppColors.primaryBlue,
+            mini: true,
+            child: const Icon(Icons.filter_alt, color: Colors.white),
+          ),
+          const SizedBox(height: 12),
+          FloatingActionButton(
+            heroTag: 'refresh',
+            onPressed: () => _fetchData(context),
+            backgroundColor: AppColors.primaryBlue,
+            mini: true,
+            child: const Icon(Icons.refresh, color: Colors.white),
+          ),
+        ],
       ),
     );
   }

@@ -47,7 +47,7 @@ class ProductMasterProvider with ChangeNotifier {
       final response = await authProvider!.getAllProducts(
           page: _currentPage, itemsPerPage: _itemsPerPage);
 
-      if (response['success']) {
+      if (response['success'] == true) {
         final List<dynamic> productData = response['data'];
         final newProducts = productData.map((data) => Product.fromJson(data)).toList();
 
@@ -116,12 +116,12 @@ class ProductMasterProvider with ChangeNotifier {
     }
   }
 
-  void refreshPage() {
+  void refreshPage(BuildContext context) {
     _products.clear();
     _searchbarController.clear();
     _currentPage = 1; // Reset page
     _hasMore = true;
-    loadMoreProducts();
+    loadMoreProducts(context);
   }
 
   void _handleError(BuildContext context, String? message) {
