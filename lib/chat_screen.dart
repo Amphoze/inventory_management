@@ -213,7 +213,8 @@ class ChatScreenState extends State<ChatScreen> {
                 ),
               ),
               Text(
-                "$userName • ${supportProvider.currentUserRole}",
+                "$userName",
+                // "$userName • ${supportProvider.currentUserRole}",
                 style: const TextStyle(
                   color: Colors.white70,
                   fontSize: 13,

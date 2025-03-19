@@ -801,7 +801,7 @@ class _DashboardPageState extends State<DashboardPage> {
               icon: Icons.support_agent,
               text: 'Support',
               isSelected: selectedDrawerItem == 'Support',
-              onTap: () => isCreateOrder == true || isSuperAdmin == true || isAdmin == true
+              onTap: () => isSupport == true || isSuperAdmin == true || isAdmin == true
                   ? _onDrawerItemTapped('Support', isSmallScreen)
                   : ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(content: Text("You are not authorized to view this page.")),
