@@ -177,7 +177,7 @@ class _CreateOrderPageState extends State<CreateOrderPage> {
                 _buildDropdown(
                   value: provider.selectedPayment,
                   label: 'Payment Mode',
-                  items: const ['Partial Payment', 'Prepaid', 'COD'],
+                  items: const ['Partial Payment', 'PrePaid', 'COD'],
                   onChanged: provider.selectPayment,
                   validator: (value) {
                     if (value == null || value.isEmpty) {

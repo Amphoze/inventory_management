@@ -28,49 +28,49 @@ class _UpdateBinButtonState extends State<UpdateBinButton> {
   List<String> bins = [];
   bool isLoadingBins = false;
 
-  // Future<void> _fetchBins(String warehouseId) async {
-  //   setState(() => isLoadingBins = true);
-  //   String baseUrl = await Constants.getBaseUrl();
-  //   final url = Uri.parse('$baseUrl/bin/$warehouseId');
-  //
-  //   try {
-  //     final token = await Provider.of<AuthProvider>(context, listen: false).getToken();
-  //     final response = await http.get(
-  //       url,
-  //       headers: {
-  //         'Content-Type': 'application/json',
-  //         'Authorization': 'Bearer $token',
-  //       },
-  //     );
-  //
-  //     print('Bins API Response: ${response.body}');
-  //     final res = json.decode(response.body);
-  //     if (response.statusCode == 200 && res.containsKey('bins')) {
-  //       setState(() {
-  //         bins = List<String>.from(res['bins'].map((bin) => bin['binName'].toString()));
-  //         _binNameController.clear();
-  //         print('Fetched bins: $bins');
-  //       });
-  //     } else {
-  //       print('No bins key in response');
-  //       setState(() => bins = []);
-  //     }
-  //   } catch (error) {
-  //     print('Error fetching bins: $error');
-  //     // Show SnackBar after dialog is closed
-  //     if (mounted) {
-  //       Navigator.of(context).pop(); // Close any open dialog
-  //       ScaffoldMessenger.of(context).showSnackBar(
-  //         SnackBar(
-  //           content: Text('Failed to fetch bins: $error'),
-  //           backgroundColor: Colors.red,
-  //         ),
-  //       );
-  //     }
-  //   } finally {
-  //     setState(() => isLoadingBins = false);
-  //   }
-  // }
+  Future<void> _fetchBins(String warehouseId) async {
+    setState(() => isLoadingBins = true);
+    String baseUrl = await Constants.getBaseUrl();
+    final url = Uri.parse('$baseUrl/bin/$warehouseId');
+
+    try {
+      final token = await Provider.of<AuthProvider>(context, listen: false).getToken();
+      final response = await http.get(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      print('Bins API Response: ${response.body}');
+      final res = json.decode(response.body);
+      if (response.statusCode == 200 && res.containsKey('bins')) {
+        setState(() {
+          bins = List<String>.from(res['bins'].map((bin) => bin['binName'].toString()));
+          _binNameController.clear();
+          print('Fetched bins: $bins');
+        });
+      } else {
+        print('No bins key in response');
+        setState(() => bins = []);
+      }
+    } catch (error) {
+      print('Error fetching bins: $error');
+      // Show SnackBar after dialog is closed
+      if (mounted) {
+        Navigator.of(context).pop(); // Close any open dialog
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to fetch bins: $error'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      setState(() => isLoadingBins = false);
+    }
+  }
 
   Future<void> _submitBinData(BuildContext dialogContext) async {
     if (_formKey.currentState!.validate()) {
@@ -86,7 +86,7 @@ class _UpdateBinButtonState extends State<UpdateBinButton> {
               children: [
                 CircularProgressIndicator(),
                 SizedBox(width: 20),
-                Text('Updating Bin...'),
+                Text('Adding Bin...'),
               ],
             ),
           ),
@@ -100,7 +100,7 @@ class _UpdateBinButtonState extends State<UpdateBinButton> {
         'binQty': int.parse(_binQtyController.text),
       });
 
-      log('Update bin body: $body');
+      log('update bin body: $body');
 
       try {
         final response = await http.post(
@@ -114,17 +114,17 @@ class _UpdateBinButtonState extends State<UpdateBinButton> {
 
         final responseData = json.decode(response.body);
 
-        log('Update bin response: $responseData');
+        log('update bin response: $responseData');
 
         // Close loading dialog
         Navigator.of(dialogContext).pop();
-        // Close Update bin dialog
+        // Close add bin dialog
         Navigator.of(dialogContext).pop(true);
 
         // Show SnackBar after all dialogs are closed
         if (mounted) {
           if (response.statusCode == 201 || response.statusCode == 200) {
-            // await _fetchBins(_warehouseIdController.text);
+            await _fetchBins(_warehouseIdController.text);
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
                 content: Text('Bin added successfully'),
@@ -134,7 +134,7 @@ class _UpdateBinButtonState extends State<UpdateBinButton> {
           } else {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text('Failed to Update bin: ${responseData['error'] ?? 'Unknown error'}'),
+                content: Text('Failed to update bin: ${responseData['error'] ?? 'Unknown error'}'),
                 backgroundColor: Colors.red,
               ),
             );
@@ -143,7 +143,7 @@ class _UpdateBinButtonState extends State<UpdateBinButton> {
       } catch (e) {
         // Close loading dialog
         Navigator.of(dialogContext).pop();
-        // Close Update bin dialog
+        // Close add bin dialog
         Navigator.of(dialogContext).pop(false);
 
         // Show error SnackBar after all dialogs are closed
@@ -193,9 +193,9 @@ class _UpdateBinButtonState extends State<UpdateBinButton> {
                                   warehouse = value;
                                   _warehouseIdController.text = tempWarehouse['_id'].toString();
                                 });
-                                // await _fetchBins(tempWarehouse['_id'].toString()).then((_) {
-                                //   dialogSetState(() {});
-                                // });
+                                await _fetchBins(tempWarehouse['_id'].toString()).then((_) {
+                                  dialogSetState(() {});
+                                });
                               }
                             },
                             validator: (value) => value == null ? 'Please select a warehouse' : null,
@@ -203,31 +203,23 @@ class _UpdateBinButtonState extends State<UpdateBinButton> {
                         },
                       ),
                       const SizedBox(height: 8),
-                      // isLoadingBins
-                      //     ? const CircularProgressIndicator()
-                      //     : _buildDropdown(
-                      //   value: bins.isNotEmpty && bins.contains(_binNameController.text)
-                      //       ? _binNameController.text
-                      //       : null,
-                      //   label: 'Bin Name',
-                      //   items: bins.isEmpty ? ['No bins available'] : bins,
-                      //   onChanged: bins.isEmpty
-                      //       ? null
-                      //       : (value) {
-                      //     dialogSetState(() {
-                      //       _binNameController.text = value ?? '';
-                      //     });
-                      //   },
-                      //   validator: (value) =>
-                      //   value == null || value.isEmpty ? 'Please select a bin' : null,
-                      // ),
-                      TextFormField(
-                        controller: _binNameController,
-                        decoration: const InputDecoration(labelText: 'Bin Name'),
-                        validator: (value) {
-                          if (value == null || value.isEmpty) return 'Please enter Bin Name';
-                          return null;
+                      isLoadingBins
+                          ? const CircularProgressIndicator()
+                          : _buildDropdown(
+                        value: bins.isNotEmpty && bins.contains(_binNameController.text)
+                            ? _binNameController.text
+                            : null,
+                        label: 'Bin Name',
+                        items: bins.isEmpty ? ['No bins available'] : bins,
+                        onChanged: bins.isEmpty
+                            ? null
+                            : (value) {
+                          dialogSetState(() {
+                            _binNameController.text = value ?? '';
+                          });
                         },
+                        validator: (value) =>
+                        value == null || value.isEmpty ? 'Please select a bin' : null,
                       ),
                       const SizedBox(height: 8),
                       TextFormField(

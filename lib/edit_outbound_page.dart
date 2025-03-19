@@ -161,15 +161,13 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
     super.initState();
     getProductsAndCombos();
     _scrollController = ScrollController();
-    _ordersProvider = OrdersProvider();
+    _ordersProvider = context.read<OrdersProvider>();
 
     _orderIdController = TextEditingController(text: widget.order.orderId);
     _idController = TextEditingController(text: widget.order.id);
     _orderStatusController = TextEditingController(text: widget.order.orderStatus.toString());
     _dateController = TextEditingController(text: widget.order.date != null ? _ordersProvider.formatDate(widget.order.date!) : '');
     _paymentModeController = TextEditingController(text: widget.order.paymentMode ?? '');
-
-    _ordersProvider.setInitialPaymentMode(_paymentModeController.text);
 
     _currencyCodeController = TextEditingController(text: widget.order.currencyCode ?? '');
     _skuTrackingIdController = TextEditingController(text: widget.order.skuTrackingId ?? '');
@@ -185,18 +183,19 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
     _taxPercentController = TextEditingController(text: widget.order.taxPercent.toStringAsFixed(2) ?? '');
     _courierNameController = TextEditingController(text: widget.order.courierName ?? '');
 
-    _ordersProvider.setInitialCourier(_courierNameController.text);
-
     _orderTypeController = TextEditingController(text: widget.order.orderType ?? '');
     _customerTypeController = TextEditingController(text: widget.order.customer!.customerType ?? '');
 
     _marketplaceController = TextEditingController(text: widget.order.marketplace?.name.toString() ?? '');
 
-    _ordersProvider.setInitialMarketplace(_marketplaceController.text);
-
     _filterController = TextEditingController(text: widget.order.filter ?? '');
 
-    _ordersProvider.setInitialFilter(_filterController.text);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _ordersProvider.setInitialMarketplace(_marketplaceController.text);
+      _ordersProvider.setInitialPaymentMode(_paymentModeController.text);
+      _ordersProvider.setInitialCourier(_courierNameController.text);
+      _ordersProvider.setInitialFilter(_filterController.text);
+    });
 
     _freightChargeDelhiveryController = TextEditingController(text: widget.order.freightCharge?.delhivery?.toString() ?? '');
     _freightChargeShiprocketController = TextEditingController(text: widget.order.freightCharge?.shiprocket?.toString() ?? '');
@@ -1047,6 +1046,8 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
 
   @override
   Widget build(BuildContext context) {
+    String? selectedPayment = _ordersProvider.selectedPayment;
+    Logger().e('selectedPayment: $selectedPayment');
     return Form(
       key: _formKey,
       child: Scaffold(
@@ -1346,145 +1347,154 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
                     ),
                     const SizedBox(width: 16),
                     Expanded(
-                      child: Card(
-                        elevation: 2,
-                        color: Colors.white,
-                        child: ExpansionTile(
-                          initiallyExpanded: true,
-                          title: _buildHeading("Payment Details"),
-                          children: [
-                            Padding(
-                              padding: const EdgeInsets.all(16.0),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Consumer<OrdersProvider>(
-                                    builder: (context, ordersProvider, child) {
-                                      final String? selectedPayment = ordersProvider.selectedPayment;
-                                      final bool isCustomPayment = selectedPayment != null &&
-                                          selectedPayment.isNotEmpty &&
-                                          selectedPayment != 'PrePaid' &&
-                                          selectedPayment != 'COD';
+                      child: Consumer<OrdersProvider>(builder: (context, ordersProvider, child) {
+                        final bool isCustomPayment = selectedPayment != null &&
+                            selectedPayment.isNotEmpty &&
+                            selectedPayment != 'PrePaid' &&
+                            selectedPayment != 'COD';
 
-                                      final List<DropdownMenuItem<String>> item = [
-                                        const DropdownMenuItem<String>(
-                                          value: 'PrePaid',
-                                          child: Text('PrePaid'),
+                        final List<DropdownMenuItem<String>> item = [
+                          const DropdownMenuItem<String>(
+                            value: 'COD',
+                            child: Text('COD'),
+                          ),
+                          const DropdownMenuItem<String>(
+                            value: 'PrePaid',
+                            child: Text('PrePaid'),
+                          ),
+                          // const DropdownMenuItem<String>(
+                          //   value: 'Partial Payment',
+                          //   child: Text('Partial Payment'),
+                          // ),
+                        ];
+
+                        if (isCustomPayment) {
+                          item.add(DropdownMenuItem<String>(
+                            value: selectedPayment,
+                            child: Text(selectedPayment),
+                          ));
+                        }
+                        return Card(
+                          elevation: 2,
+                          color: Colors.white,
+                          child: ExpansionTile(
+                            initiallyExpanded: true,
+                            title: _buildHeading("Payment Details"),
+                            children: [
+                              Padding(
+                                padding: const EdgeInsets.all(16.0),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    DropdownButtonFormField<String>(
+                                      value: selectedPayment,
+                                      decoration: InputDecoration(
+                                        labelText: 'Payment Mode',
+                                        labelStyle: TextStyle(
+                                          fontWeight: FontWeight.w500,
+                                          color: Colors.grey.withValues(alpha: 0.7),
+                                          fontSize: 14,
                                         ),
-                                        const DropdownMenuItem<String>(
-                                          value: 'COD',
-                                          child: Text('COD'),
-                                        ),
-                                      ];
-
-                                      if (isCustomPayment) {
-                                        item.add(DropdownMenuItem<String>(
-                                          value: selectedPayment,
-                                          child: Text(selectedPayment),
-                                        ));
-                                      }
-
-                                      return DropdownButtonFormField<String>(
-                                        value: selectedPayment,
-                                        decoration: InputDecoration(
-                                          labelText: 'Payment Mode',
-                                          labelStyle: TextStyle(
-                                            fontWeight: FontWeight.w500,
-                                            color: Colors.grey.withValues(alpha: 0.7),
-                                            fontSize: 14,
-                                          ),
-                                          prefixIcon: Icon(Icons.payment, color: Colors.grey[700]),
-                                          border: OutlineInputBorder(
-                                            borderRadius: BorderRadius.circular(10),
-                                            borderSide: BorderSide(
-                                              color: Colors.grey[400]!,
-                                              width: 1.2,
-                                            ),
-                                          ),
-                                          enabledBorder: OutlineInputBorder(
-                                            borderRadius: BorderRadius.circular(10),
-                                            borderSide: BorderSide(
-                                              color: Colors.grey[400]!,
-                                              width: 1.2,
-                                            ),
-                                          ),
-                                          focusedBorder: OutlineInputBorder(
-                                            borderRadius: BorderRadius.circular(10),
-                                            borderSide: const BorderSide(
-                                              color: AppColors.green,
-                                              width: 1.5,
-                                            ),
-                                          ),
-                                          contentPadding: const EdgeInsets.symmetric(
-                                            vertical: 15,
-                                            horizontal: 12,
+                                        prefixIcon: Icon(Icons.payment, color: Colors.grey[700]),
+                                        border: OutlineInputBorder(
+                                          borderRadius: BorderRadius.circular(10),
+                                          borderSide: BorderSide(
+                                            color: Colors.grey[400]!,
+                                            width: 1.2,
                                           ),
                                         ),
-                                        dropdownColor: Colors.white,
-                                        hint: const Text('Select Payment Mode'),
-                                        items: item,
-                                        onChanged: (value) {
-                                          if (value != null) {
-                                            ordersProvider.selectPayment(value);
+                                        enabledBorder: OutlineInputBorder(
+                                          borderRadius: BorderRadius.circular(10),
+                                          borderSide: BorderSide(
+                                            color: Colors.grey[400]!,
+                                            width: 1.2,
+                                          ),
+                                        ),
+                                        focusedBorder: OutlineInputBorder(
+                                          borderRadius: BorderRadius.circular(10),
+                                          borderSide: const BorderSide(
+                                            color: AppColors.primaryBlue,
+                                            width: 1.5,
+                                          ),
+                                        ),
+                                        contentPadding: const EdgeInsets.symmetric(
+                                          vertical: 15,
+                                          horizontal: 12,
+                                        ),
+                                      ),
+                                      dropdownColor: Colors.white,
+                                      hint: const Text('Select Payment Mode'),
+                                      items: item,
+                                      onChanged: (value) {
+                                        if (value != null && value.isNotEmpty) {
+                                          ordersProvider.selectPayment(value);
+                                          setState(() {
                                             _paymentModeController.text = value;
-                                          }
-                                        },
-                                      );
-                                    },
-                                  ),
-                                  const SizedBox(height: 10),
-                                  _buildTextField(
-                                    controller: _currencyCodeController,
-                                    label: "Currency Code",
-                                    icon: Icons.currency_bitcoin,
-                                  ),
-                                  const SizedBox(height: 10),
-                                  _buildTextField(
-                                    controller: _currencyController,
-                                    label: 'Currency',
-                                    icon: Icons.monetization_on,
-                                  ),
-                                  const SizedBox(height: 10),
-                                  _buildTextField(
-                                    controller: _paymentBankController,
-                                    label: 'Payment Bank',
-                                    icon: Icons.account_balance,
-                                  ),
-                                  const SizedBox(height: 10),
-                                  GestureDetector(
-                                    onTap: () => _selectPaymentDateTime(context),
-                                    child: AbsorbPointer(
-                                      child: _buildTextField(
-                                        controller: _paymentDateTimeController,
-                                        label: "Payment Date and Time",
-                                        icon: Icons.access_time,
+                                            _prepaidAmountController.text = _totalAmtController.text;
+                                          });
+                                          log('selectedPayment value: $value');
+                                          log('selectedPayment: ${ordersProvider.selectedPayment}');
+                                        }
+                                      },
+                                    ),
+                                    const SizedBox(height: 10),
+                                    _buildTextField(
+                                      controller: _currencyCodeController,
+                                      label: "Currency Code",
+                                      icon: Icons.currency_bitcoin,
+                                    ),
+                                    const SizedBox(height: 10),
+                                    _buildTextField(
+                                      controller: _currencyController,
+                                      label: 'Currency',
+                                      icon: Icons.monetization_on,
+                                    ),
+                                    const SizedBox(height: 10),
+                                    _buildTextField(
+                                      controller: _paymentBankController,
+                                      label: 'Payment Bank',
+                                      icon: Icons.account_balance,
+                                    ),
+                                    const SizedBox(height: 10),
+                                    GestureDetector(
+                                      onTap: () => _selectPaymentDateTime(context),
+                                      child: AbsorbPointer(
+                                        child: _buildTextField(
+                                          controller: _paymentDateTimeController,
+                                          label: "Payment Date and Time",
+                                          icon: Icons.access_time,
+                                        ),
                                       ),
                                     ),
-                                  ),
-                                  const SizedBox(height: 10),
-                                  _buildTextField(
-                                    controller: _codAmountController,
-                                    label: 'COD Amount',
-                                    icon: Icons.money,
-                                  ),
-                                  const SizedBox(height: 10),
-                                  _buildTextField(
-                                    controller: _prepaidAmountController,
-                                    label: 'Prepaid Amount',
-                                    icon: Icons.credit_card,
-                                  ),
-                                  const SizedBox(height: 10),
-                                  _buildTextField(
-                                    controller: _totalAmtController,
-                                    label: 'Total Amount',
-                                    icon: Icons.currency_rupee,
-                                  ),
-                                ],
+                                    if (_ordersProvider.selectedPayment != 'PrePaid') ...[
+                                      const SizedBox(height: 10),
+                                      _buildTextField(
+                                        controller: _codAmountController,
+                                        label: 'COD Amount',
+                                        icon: Icons.money,
+                                      ),
+                                    ],
+                                    if (_ordersProvider.selectedPayment != 'COD') ...[
+                                      const SizedBox(height: 10),
+                                      _buildTextField(
+                                        controller: _prepaidAmountController,
+                                        label: 'Prepaid Amount',
+                                        icon: Icons.credit_card,
+                                      ),
+                                    ],
+                                    const SizedBox(height: 10),
+                                    _buildTextField(
+                                      controller: _totalAmtController,
+                                      label: 'Total Amount',
+                                      icon: Icons.currency_rupee,
+                                    ),
+                                  ],
+                                ),
                               ),
-                            ),
-                          ],
-                        ),
-                      ),
+                            ],
+                          ),
+                        );
+                      }),
                     ),
                   ],
                 ),
@@ -2321,7 +2331,7 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
                             ),
                             const SizedBox(width: 16),
                             ElevatedButton(
-                              onPressed: () => _deleteProduct(index, id!),
+                              onPressed: () => _deleteProduct(index, id),
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: Colors.red,
                                 padding: const EdgeInsets.symmetric(
@@ -2675,6 +2685,52 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
     );
   }
 
+  // Helper function to calculate total
+  double _calculateTotal() {
+    double total = 0;
+    final controllerPairs = [
+      [_productQuantityControllers, _productRateControllers],
+      [_addedProductQuantityControllers, _addedProductRateControllers],
+      [_comboQuantityControllers, _comboRateControllers],
+      [_addedComboQuantityControllers, _addedComboRateControllers],
+    ];
+
+    for (final pair in controllerPairs) {
+      for (var i = 0; i < pair[0].length; i++) {
+        final qty = int.tryParse(pair[0][i].text) ?? 0;
+        final rate = double.tryParse(pair[1][i].text) ?? 0;
+        total += qty * rate;
+      }
+    }
+    return total;
+  }
+
+// Updated helper function to update totals with discount and payment type logic
+  void _updateTotals(String value) {
+    if (value.isNotEmpty) {
+      final total = _calculateTotal();
+      final discountPercent = double.tryParse(_discountPercentController.text) ?? 0;
+      final double finalTotal = discountPercent != 0 ? total - (total * (discountPercent / 100)) : total;
+
+      // Update total amount
+      _totalAmtController.text = finalTotal.toStringAsFixed(2);
+      final selectedPayment = _ordersProvider.selectedPayment;
+
+      // Update based on selected payment type
+      if (selectedPayment == 'COD') {
+        _codAmountController.text = finalTotal.toStringAsFixed(2);
+      } else if (selectedPayment == 'PrePaid') {
+        _prepaidAmountController.text = finalTotal.toStringAsFixed(2);
+      }
+
+      // Update discount amount if applicable
+      if (discountPercent != 0) {
+        final discountAmount = total * (discountPercent / 100);
+        _discountAmountController.text = discountAmount.toStringAsFixed(2);
+      }
+    }
+  }
+
   Widget _buildDiscountTextField({
     required TextEditingController controller,
     required String label,
@@ -2701,21 +2757,19 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
                 color: isFocused || !isEmpty ? AppColors.primaryBlue : Colors.grey.withValues(alpha: 0.7),
                 fontSize: 14,
               ),
-              prefixIcon: Icon(icon, color: isFocused ? AppColors.primaryBlue : Colors.grey[700]),
+              prefixIcon: Icon(
+                icon,
+                color: isFocused ? AppColors.primaryBlue : Colors.grey[700],
+              ),
               suffixIcon: isEmpty
                   ? null
                   : IconButton(
                       icon: Icon(Icons.clear, color: Colors.grey[600]),
-                      onPressed: () {
-                        controller.clear();
-                      },
+                      onPressed: controller.clear,
                     ),
               enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(10),
-                borderSide: BorderSide(
-                  color: Colors.grey[400]!,
-                  width: 1.2,
-                ),
+                borderSide: BorderSide(color: Colors.grey[400]!, width: 1.2),
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(10),
@@ -2726,10 +2780,7 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
               ),
               disabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(10),
-                borderSide: BorderSide(
-                  color: Colors.grey[300]!,
-                  width: 1,
-                ),
+                borderSide: BorderSide(color: Colors.grey[300]!, width: 1),
               ),
               filled: true,
               fillColor: enabled ? Colors.white : Colors.grey[200],
@@ -2738,47 +2789,7 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
                 horizontal: 12,
               ),
             ),
-            onFieldSubmitted: (value) {
-              setState(() {
-                if (value.isNotEmpty) {
-                  double total = 0;
-                  for (var i = 0; i < _productQuantityControllers.length; i++) {
-                    final qty = int.parse(_productQuantityControllers[i].text);
-                    final rate = double.parse(_productRateControllers[i].text);
-                    final double amount = qty * rate;
-                    total += amount;
-                  }
-                  for (var i = 0; i < _addedProductQuantityControllers.length; i++) {
-                    final qty = int.parse(_addedProductQuantityControllers[i].text);
-                    final rate = double.parse(_addedProductRateControllers[i].text);
-                    final double amount = qty * rate;
-                    total += amount;
-                  }
-                  for (var i = 0; i < _comboQuantityControllers.length; i++) {
-                    final qty = int.parse(_comboQuantityControllers[i].text);
-                    final rate = double.parse(_comboRateControllers[i].text);
-                    final double amount = qty * rate;
-                    total += amount;
-                  }
-                  for (var i = 0; i < _addedComboQuantityControllers.length; i++) {
-                    final qty = int.parse(_addedComboQuantityControllers[i].text);
-                    final rate = double.parse(_addedComboRateControllers[i].text);
-                    final double amount = qty * rate;
-                    total += amount;
-                  }
-
-                  final double discountPercent = double.parse(_discountPercentController.text);
-
-                  if (discountPercent != 0) {
-                    final double discountAmount = total * (discountPercent / 100);
-                    final double newTotal = total - discountAmount;
-                    _discountAmountController.text = discountAmount.toStringAsFixed(2);
-                    _totalAmtController.text = newTotal.toStringAsFixed(2);
-                    _codAmountController.text = newTotal.toStringAsFixed(2);
-                  }
-                }
-              });
-            },
+            onFieldSubmitted: (value) => setState(() => _updateTotals(value)),
           );
         },
       ),
@@ -2828,18 +2839,12 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
                           color: Colors.grey[600],
                           size: 16,
                         ),
-                        onPressed: () => controller.clear(),
-                        constraints: const BoxConstraints(
-                          minWidth: 32,
-                          minHeight: 32,
-                        ),
+                        onPressed: controller.clear,
+                        constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
                       ),
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
-                  borderSide: BorderSide(
-                    color: Colors.grey[400]!,
-                    width: 1.0,
-                  ),
+                  borderSide: BorderSide(color: Colors.grey[400]!, width: 1.0),
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
@@ -2850,62 +2855,13 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
                 ),
                 disabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
-                  borderSide: BorderSide(
-                    color: Colors.grey[300]!,
-                    width: 1.0,
-                  ),
+                  borderSide: BorderSide(color: Colors.grey[300]!, width: 1.0),
                 ),
                 filled: true,
                 fillColor: enabled ? Colors.white : Colors.grey[200],
-                contentPadding: const EdgeInsets.symmetric(
-                  vertical: 0,
-                  horizontal: 4,
-                ),
+                contentPadding: const EdgeInsets.symmetric(vertical: 0, horizontal: 4),
               ),
-              onFieldSubmitted: (value) {
-                setState(() {
-                  if (value.isNotEmpty) {
-                    double total = 0;
-                    for (var i = 0; i < _productQuantityControllers.length; i++) {
-                      final qty = int.parse(_productQuantityControllers[i].text);
-                      final rate = double.parse(_productRateControllers[i].text);
-                      final double amount = qty * rate;
-                      total += amount;
-                    }
-                    for (var i = 0; i < _addedProductQuantityControllers.length; i++) {
-                      final qty = int.parse(_addedProductQuantityControllers[i].text);
-                      final rate = double.parse(_addedProductRateControllers[i].text);
-                      final double amount = qty * rate;
-                      total += amount;
-                    }
-                    for (var i = 0; i < _comboQuantityControllers.length; i++) {
-                      final qty = int.parse(_comboQuantityControllers[i].text);
-                      final rate = double.parse(_comboRateControllers[i].text);
-                      final double amount = qty * rate;
-                      total += amount;
-                    }
-                    for (var i = 0; i < _addedComboQuantityControllers.length; i++) {
-                      final qty = int.parse(_addedComboQuantityControllers[i].text);
-                      final rate = double.parse(_addedComboRateControllers[i].text);
-                      final double amount = qty * rate;
-                      total += amount;
-                    }
-                    _totalAmtController.text = total.toStringAsFixed(2);
-                    _codAmountController.text = total.toStringAsFixed(2);
-
-                    final double discountPercent = double.parse(_discountPercentController.text);
-                    final double totalAmount = double.parse(_totalAmtController.text);
-
-                    if (discountPercent != 0) {
-                      final double discountAmount = totalAmount * (discountPercent / 100);
-                      final double newTotal = totalAmount - discountAmount;
-                      _discountAmountController.text = discountAmount.toStringAsFixed(2);
-                      _totalAmtController.text = newTotal.toStringAsFixed(2);
-                      _codAmountController.text = newTotal.toStringAsFixed(2);
-                    }
-                  }
-                });
-              },
+              onFieldSubmitted: (value) => setState(() => _updateTotals(value)),
             ),
           );
         },
@@ -2956,18 +2912,12 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
                           color: Colors.grey[600],
                           size: 16,
                         ),
-                        onPressed: () => controller.clear(),
-                        constraints: const BoxConstraints(
-                          minWidth: 32,
-                          minHeight: 32,
-                        ),
+                        onPressed: controller.clear,
+                        constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
                       ),
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
-                  borderSide: BorderSide(
-                    color: Colors.grey[400]!,
-                    width: 1.0,
-                  ),
+                  borderSide: BorderSide(color: Colors.grey[400]!, width: 1.0),
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
@@ -2978,62 +2928,13 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
                 ),
                 disabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
-                  borderSide: BorderSide(
-                    color: Colors.grey[300]!,
-                    width: 1.0,
-                  ),
+                  borderSide: BorderSide(color: Colors.grey[300]!, width: 1.0),
                 ),
                 filled: true,
                 fillColor: enabled ? Colors.white : Colors.grey[200],
-                contentPadding: const EdgeInsets.symmetric(
-                  vertical: 0,
-                  horizontal: 4,
-                ),
+                contentPadding: const EdgeInsets.symmetric(vertical: 0, horizontal: 4),
               ),
-              onFieldSubmitted: (value) {
-                setState(() {
-                  if (value.isNotEmpty) {
-                    double total = 0;
-                    for (var i = 0; i < _productQuantityControllers.length; i++) {
-                      final qty = int.parse(_productQuantityControllers[i].text);
-                      final rate = double.parse(_productRateControllers[i].text);
-                      final double amount = qty * rate;
-                      total += amount;
-                    }
-                    for (var i = 0; i < _addedProductQuantityControllers.length; i++) {
-                      final qty = int.parse(_addedProductQuantityControllers[i].text);
-                      final rate = double.parse(_addedProductRateControllers[i].text);
-                      final double amount = qty * rate;
-                      total += amount;
-                    }
-                    for (var i = 0; i < _comboQuantityControllers.length; i++) {
-                      final qty = int.parse(_comboQuantityControllers[i].text);
-                      final rate = double.parse(_comboRateControllers[i].text);
-                      final double amount = qty * rate;
-                      total += amount;
-                    }
-                    for (var i = 0; i < _addedComboQuantityControllers.length; i++) {
-                      final qty = int.parse(_addedComboQuantityControllers[i].text);
-                      final rate = double.parse(_addedComboRateControllers[i].text);
-                      final double amount = qty * rate;
-                      total += amount;
-                    }
-                    _totalAmtController.text = total.toStringAsFixed(2);
-                    _codAmountController.text = total.toStringAsFixed(2);
-
-                    final double discountPercent = double.parse(_discountPercentController.text);
-                    final double totalAmount = double.parse(_totalAmtController.text);
-
-                    if (discountPercent != 0) {
-                      final double discountAmount = totalAmount * (discountPercent / 100);
-                      final double newTotal = totalAmount - discountAmount;
-                      _discountAmountController.text = discountAmount.toStringAsFixed(2);
-                      _totalAmtController.text = newTotal.toStringAsFixed(2);
-                      _codAmountController.text = newTotal.toStringAsFixed(2);
-                    }
-                  }
-                });
-              },
+              onFieldSubmitted: (value) => setState(() => _updateTotals(value)),
             ),
           );
         },

@@ -35,6 +35,7 @@ class _BaApprovePageState extends State<BaApprovePage> {
   @override
   void initState() {
     baApproveProvider = Provider.of<BaApproveProvider>(context, listen: false);
+    baApproveProvider.searchController.clear();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       baApproveProvider.fetchOrdersWithStatus2(date: picked, market: selectedCourier);
       context.read<MarketplaceProvider>().fetchMarketplaces();
@@ -195,6 +196,24 @@ class _BaApprovePageState extends State<BaApprovePage> {
                                 ),
                               ),
                             ),
+                            if (_selectedDate != 'Select Date')
+                              Tooltip(
+                                message: 'Clear selected Date',
+                                child: InkWell(
+                                  onTap: () async {
+                                    setState(() {
+                                      _selectedDate = 'Select Date';
+                                      picked = null;
+                                    });
+                                    baApproveProvider.fetchOrdersWithStatus2();
+                                  },
+                                  child: const Icon(
+                                    Icons.clear,
+                                    size: 12,
+                                    color: AppColors.primaryBlue,
+                                  ),
+                                ),
+                              ),
                           ],
                         ),
                         const SizedBox(width: 8),

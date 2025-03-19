@@ -9,7 +9,7 @@ class Constants {
 
     // return 'http://192.168.29.203:3001'; // mine
 
-    // return 'http://192.168.29.148:3001';
+    // return 'http://192.168.29.153:3001';
 
     // return 'http://192.168.29.117:3001';
 

@@ -15,6 +15,7 @@ import 'package:pdf/widgets.dart' as pw;
 
 class BookProvider with ChangeNotifier {
   final TextEditingController searchController = TextEditingController();
+  final GlobalKey<ScaffoldState> scaffoldKey = GlobalKey<ScaffoldState>();
 
   List<bool> selectedB2BItems = List.generate(40, (index) => false);
   List<bool> selectedB2CItems = List.generate(40, (index) => false);
@@ -57,6 +58,7 @@ class BookProvider with ChangeNotifier {
   String selectedDate = 'Select Date';
   DateTime? picked;
   String selectedCourier = 'All';
+  String searchType = 'Order ID';
 
   final TextEditingController b2bSearchController = TextEditingController();
   final TextEditingController b2cSearchController = TextEditingController();
@@ -665,7 +667,7 @@ class BookProvider with ChangeNotifier {
     }
   }
 
-  Future<void> searchB2BOrders(String query, String searchType) async {
+  Future<void> searchB2BOrders(String query) async {
     String encodedOrderId = Uri.encodeComponent(query);
 
     final prefs = await SharedPreferences.getInstance();
@@ -716,7 +718,7 @@ class BookProvider with ChangeNotifier {
     }
   }
 
-  Future<void> searchB2COrders(String query, String searchType) async {
+  Future<void> searchB2COrders(String query) async {
     String encodedOrderId = Uri.encodeComponent(query);
 
     final prefs = await SharedPreferences.getInstance();
@@ -1137,6 +1139,21 @@ class BookProvider with ChangeNotifier {
       }
     }
 
+    // Define colors
+    final whiteColor = PdfColors.white;
+    final lightGrey = PdfColors.grey300;
+
+    // Track unique OrderIds and assign colors
+    Map<String, PdfColor> orderIdColors = {};
+    int orderIndex = 0;
+    for (var row in rows) {
+      String orderId = row[0];
+      if (!orderIdColors.containsKey(orderId)) {
+        orderIdColors[orderId] = (orderIndex % 2 == 0) ? whiteColor : lightGrey;
+        orderIndex++;
+      }
+    }
+
     pdf.addPage(
       pw.MultiPage(
         pageFormat: PdfPageFormat.a4.landscape,
@@ -1168,31 +1185,11 @@ class BookProvider with ChangeNotifier {
               ),
             ),
             pw.SizedBox(height: 20),
-            pw.TableHelper.fromTextArray(
-              headers: headers,
-              data: rows,
+            pw.Table(
               border: pw.TableBorder.all(
                 width: 0.5,
                 color: PdfColors.grey800,
               ),
-              headerDecoration: const pw.BoxDecoration(
-                color: PdfColors.blueGrey100,
-              ),
-              headerStyle: pw.TextStyle(
-                fontSize: 10,
-                fontWeight: pw.FontWeight.bold,
-                color: PdfColors.black,
-              ),
-              cellStyle: const pw.TextStyle(
-                fontSize: 10,
-                color: PdfColors.black,
-              ),
-              cellAlignments: {
-                3: pw.Alignment.centerRight,
-                4: pw.Alignment.centerRight,
-                for (int i = 0; i < headers.length; i++)
-                  if (i != 3 && i != 4) i: pw.Alignment.centerLeft,
-              },
               columnWidths: const {
                 0: pw.FlexColumnWidth(0.8),
                 1: pw.FlexColumnWidth(0.8),
@@ -1205,7 +1202,60 @@ class BookProvider with ChangeNotifier {
                 8: pw.FlexColumnWidth(0.8),
                 9: pw.FlexColumnWidth(0.8),
               },
-              cellPadding: const pw.EdgeInsets.all(2),
+              children: [
+                // Header row
+                pw.TableRow(
+                  decoration: const pw.BoxDecoration(
+                    color: PdfColors.blueGrey100,
+                  ),
+                  children: headers
+                      .map(
+                        (header) => pw.Padding(
+                      padding: const pw.EdgeInsets.all(2),
+                      child: pw.Text(
+                        header,
+                        style: pw.TextStyle(
+                          fontSize: 10,
+                          fontWeight: pw.FontWeight.bold,
+                          color: PdfColors.black,
+                        ),
+                        textAlign: pw.TextAlign.center,
+                      ),
+                    ),
+                  )
+                      .toList(),
+                ),
+                // Data rows with colors based on OrderId
+                ...rows.map((row) {
+                  String orderId = row[0];
+                  PdfColor rowColor = orderIdColors[orderId] ?? whiteColor;
+
+                  return pw.TableRow(
+                    decoration: pw.BoxDecoration(
+                      color: rowColor,
+                    ),
+                    children: row
+                        .asMap()
+                        .entries
+                        .map(
+                          (cell) => pw.Padding(
+                        padding: const pw.EdgeInsets.all(2),
+                        child: pw.Text(
+                          cell.value,
+                          style: const pw.TextStyle(
+                            fontSize: 10,
+                            color: PdfColors.black,
+                          ),
+                          textAlign: cell.key == 3 || cell.key == 4
+                              ? pw.TextAlign.right
+                              : pw.TextAlign.left,
+                        ),
+                      ),
+                    )
+                        .toList(),
+                  );
+                }).toList(),
+              ],
             ),
           ];
         },

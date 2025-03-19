@@ -305,8 +305,8 @@ class _DispatchedOrdersState extends State<DispatchedOrders> {
 
   Widget _buildOrderCard(
       Order order, int index, DispatchedProvider dispatchProvider) {
-    String? selectedStatus;
-    bool isSaved = order.trackingStatus != '';
+    // String? selectedStatus;
+    // bool isSaved = order.trackingStatus != '';
 
     return Padding(
       padding: const EdgeInsets.symmetric(

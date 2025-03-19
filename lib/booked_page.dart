@@ -52,6 +52,7 @@ class _BookedPageState extends State<BookedPage> with SingleTickerProviderStateM
     bookProvider = Provider.of<BookProvider>(context, listen: false);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final bookProvider = Provider.of<BookProvider>(context, listen: false);
+      bookProvider.resetFilterData();
       bookProvider.fetchBookedOrders(bookProvider.currentPageBooked);
       context.read<MarketplaceProvider>().fetchMarketplaces();
       _fetchUserRole();
@@ -63,9 +64,6 @@ class _BookedPageState extends State<BookedPage> with SingleTickerProviderStateM
   void dispose() {
     _searchController.dispose();
     _pageController.dispose();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      bookProvider.resetFilterData();
-    });
     super.dispose();
   }
 
@@ -356,6 +354,24 @@ class _BookedPageState extends State<BookedPage> with SingleTickerProviderStateM
                     ),
                   ),
                 ),
+                if (bookProvider.selectedDate != 'Select Date')
+                  Tooltip(
+                    message: 'Clear selected Date',
+                    child: InkWell(
+                      onTap: () async {
+                        setState(() {
+                          bookProvider.selectedDate = 'Select Date';
+                          bookProvider.picked = null;
+                        });
+                        bookProvider.fetchBookedOrders(bookProvider.currentPageBooked);
+                      },
+                      child: const Icon(
+                        Icons.clear,
+                        size: 12,
+                        color: AppColors.primaryBlue,
+                      ),
+                    ),
+                  ),
               ],
             ),
             const SizedBox(width: 8),

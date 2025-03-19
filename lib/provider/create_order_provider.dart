@@ -250,11 +250,6 @@ class CreateOrderProvider with ChangeNotifier {
     return null;
   }
 
-  void updateDate(String date) {
-    // dateController.text = date;
-    notifyListeners();
-  }
-
   void selectMarketplace(String? value) {
     selectedMarketplace = value;
     marketplaceController.text = value ?? '';

@@ -44,8 +44,10 @@ class _AccountsPageState extends State<AccountsPage> {
   void initState() {
     super.initState();
     accountsProvider = context.read<AccountsProvider>();
+    accountsProvider.accountsSearch.clear();
     _fetchUserRole();
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      accountsProvider.resetFilterData();
       Provider.of<AccountsProvider>(context, listen: false).fetchOrdersWithStatus2();
       context.read<MarketplaceProvider>().fetchMarketplaces();
     });
@@ -61,9 +63,6 @@ class _AccountsPageState extends State<AccountsPage> {
   @override
   void dispose() {
     remarkController.dispose();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      accountsProvider.resetFilterData();
-    });
     super.dispose();
   }
 
@@ -254,6 +253,24 @@ class _AccountsPageState extends State<AccountsPage> {
                                 ),
                               ),
                             ),
+                            if (accountsProvider.selectedDate != 'Select Date')
+                              Tooltip(
+                                message: 'Clear selected Date',
+                                child: InkWell(
+                                  onTap: () async {
+                                    setState(() {
+                                      accountsProvider.selectedDate = 'Select Date';
+                                      accountsProvider.picked = null;
+                                    });
+                                    accountsProvider.fetchOrdersWithStatus2();
+                                  },
+                                  child: const Icon(
+                                    Icons.clear,
+                                    size: 12,
+                                    color: AppColors.primaryBlue,
+                                  ),
+                                ),
+                              ),
                           ],
                         ),
                         const SizedBox(width: 8),

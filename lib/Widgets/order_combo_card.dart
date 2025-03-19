@@ -12,8 +12,10 @@ import 'package:inventory_management/provider/book_provider.dart';
 import 'package:inventory_management/provider/location_provider.dart';
 import 'package:inventory_management/provider/packer_provider.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../provider/orders_provider.dart';
+import '../provider/support_provider.dart';
 
 class OrderComboCard extends StatefulWidget {
   final Order order;
@@ -57,6 +59,14 @@ class OrderComboCard extends StatefulWidget {
 class _OrderComboCardState extends State<OrderComboCard> {
   final bookRemark = TextEditingController();
   final accountsRemark = TextEditingController();
+  String? email;
+  String? role;
+
+  void getUserData() async {
+    final prefs = await SharedPreferences.getInstance();
+    email = prefs.getString('email') ?? '';
+    role = prefs.getString('userPrimaryRole');
+  }
 
   bool showBy(bool val) {
     return (val && widget.toShowBy);
@@ -70,6 +80,12 @@ class _OrderComboCardState extends State<OrderComboCard> {
   }
 
   String status = '1';
+
+  @override
+  void initState() {
+    getUserData();
+    super.initState();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -211,7 +227,16 @@ class _OrderComboCardState extends State<OrderComboCard> {
                                             final res = await pro.editWarehouse(widget.order.orderId, selectedWarehouse.trim());
                                             log('edit warehouse result: $res');
                                             if (res == true) {
-                                              pro.fetchPaginatedOrdersB2C(pro.currentPageB2C);
+                                              final b2b = pro.b2bSearchController.text.trim();
+                                              final b2c = pro.b2cSearchController.text.trim();
+                                              if (b2b.isNotEmpty) {
+                                                pro.searchB2BOrders(b2b);
+                                              } else if (b2c.isNotEmpty) {
+                                                pro.searchB2COrders(b2c);
+                                              } else {
+                                                pro.fetchPaginatedOrdersB2C(pro.currentPageB2C);
+                                                pro.fetchPaginatedOrdersB2B(pro.currentPageB2B);
+                                              }
                                             } else {
                                               if (context.mounted) {
                                                 ScaffoldMessenger.of(context).showSnackBar(
@@ -307,6 +332,190 @@ class _OrderComboCardState extends State<OrderComboCard> {
                           );
                         },
                       ),
+                    if (widget.isBookPage) ...[
+                      const SizedBox(width: 8),
+                      IconButton(
+                        tooltip: 'Report Bug',
+                        onPressed: () {
+                          TextEditingController messageController = TextEditingController();
+                          context.read<SupportProvider>().setUserData(widget.order.orderId, email!, role!);
+                          showDialog(
+                            context: context,
+                            builder: (context) {
+                              return AlertDialog(
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                                titlePadding: EdgeInsets.zero,
+                                title: Container(
+                                  padding: const EdgeInsets.all(20),
+                                  decoration: BoxDecoration(
+                                    color: Theme.of(context).primaryColor,
+                                    borderRadius: const BorderRadius.only(
+                                      topLeft: Radius.circular(16),
+                                      topRight: Radius.circular(16),
+                                    ),
+                                  ),
+                                  child: const Row(
+                                    children: [
+                                      Icon(Icons.support_agent, color: Colors.white, size: 24),
+                                      SizedBox(width: 12),
+                                      Text(
+                                        'Connect with Support',
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 20,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                content: Container(
+                                  width: MediaQuery.of(context).size.width * 0.4,
+                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 16),
+                                  child: Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      const Text(
+                                        'Order Details',
+                                        style: TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.w600,
+                                          color: Colors.grey,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 12),
+                                      TextField(
+                                        controller: TextEditingController(text: widget.order.orderId),
+                                        readOnly: true,
+                                        decoration: InputDecoration(
+                                          labelText: 'Order ID',
+                                          prefixIcon: const Icon(Icons.shopping_cart_outlined),
+                                          filled: true,
+                                          fillColor: Colors.grey.shade100,
+                                          border: OutlineInputBorder(
+                                            borderRadius: BorderRadius.circular(12),
+                                            borderSide: BorderSide(color: Colors.grey.shade300),
+                                          ),
+                                          enabledBorder: OutlineInputBorder(
+                                            borderRadius: BorderRadius.circular(12),
+                                            borderSide: BorderSide(color: Colors.grey.shade300),
+                                          ),
+                                          focusedBorder: OutlineInputBorder(
+                                            borderRadius: BorderRadius.circular(12),
+                                            borderSide: BorderSide(color: Theme.of(context).primaryColor),
+                                          ),
+                                        ),
+                                      ),
+                                      const SizedBox(height: 24),
+                                      const Text(
+                                        'Your Message',
+                                        style: TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.w600,
+                                          color: Colors.grey,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 12),
+                                      TextField(
+                                        controller: messageController,
+                                        maxLines: 4,
+                                        decoration: InputDecoration(
+                                          hintText: 'Please describe your issue...',
+                                          prefixIcon: const Padding(
+                                            padding: EdgeInsets.only(bottom: 84),
+                                            child: Icon(Icons.message_outlined),
+                                          ),
+                                          filled: true,
+                                          fillColor: Colors.white,
+                                          border: OutlineInputBorder(
+                                            borderRadius: BorderRadius.circular(12),
+                                            borderSide: BorderSide(color: Colors.grey.shade300),
+                                          ),
+                                          enabledBorder: OutlineInputBorder(
+                                            borderRadius: BorderRadius.circular(12),
+                                            borderSide: BorderSide(color: Colors.grey.shade300),
+                                          ),
+                                          focusedBorder: OutlineInputBorder(
+                                            borderRadius: BorderRadius.circular(12),
+                                            borderSide: BorderSide(color: Theme.of(context).primaryColor),
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                actions: [
+                                  TextButton.icon(
+                                    onPressed: () => Navigator.pop(context),
+                                    // icon: const Icon(Icons.close),
+                                    label: const Text('Cancel'),
+                                    style: TextButton.styleFrom(
+                                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                                    ),
+                                  ),
+                                  // const SizedBox(width: 12),
+                                  ElevatedButton.icon(
+                                    onPressed: () async {
+                                      showDialog(
+                                        context: context,
+                                        barrierDismissible: false,
+                                        builder: (context) {
+                                          return const AlertDialog(
+                                            content: Row(
+                                              children: [
+                                                CircularProgressIndicator(),
+                                                SizedBox(width: 20),
+                                                Text('Processing...'),
+                                              ],
+                                            ),
+                                          );
+                                        },
+                                      );
+                                      bool result = await context
+                                          .read<OrdersProvider>()
+                                          .connectWithSupport(context, widget.order.orderId, messageController.text);
+
+                                      Navigator.pop(context);
+                                      Navigator.pop(context);
+
+                                      if (result) {
+                                        await context.read<BookProvider>().fetchPaginatedOrdersB2C(1);
+                                        await context.read<BookProvider>().fetchPaginatedOrdersB2B(1);
+                                      }
+                                      // _showResultDialog(context, result);
+                                    },
+                                    // icon: const Icon(Icons.send),
+                                    label: const Text('Report'),
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: Theme.of(context).primaryColor,
+                                      foregroundColor: Colors.white,
+                                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              );
+                            },
+                          );
+                        },
+                        icon: const Icon(Icons.bug_report_outlined),
+                      ),
+                      const SizedBox(width: 8),
+                      if (widget.order.mistakeStatus ?? false) ...[
+                        const SizedBox(width: 8),
+                        IconButton(
+                          tooltip: 'Support Chat',
+                          icon: const Icon(Icons.message),
+                          onPressed: () {
+                            context.read<SupportProvider>().setUserData(widget.order.orderId, email!, role!);
+                            context.read<BookProvider>().scaffoldKey.currentState?.openEndDrawer();
+                          },
+                        ),
+                      ]
+                    ]
                   ],
                 ),
               ],
@@ -536,112 +745,114 @@ class _OrderComboCardState extends State<OrderComboCard> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    if (widget.isBookedPage && (widget.order.rebookedBy?['status'] ?? false)) ...[
-                      Container(
-                        margin: const EdgeInsets.symmetric(vertical: 8),
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [Colors.blue.shade50, Colors.blue.shade100],
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      if (widget.isBookedPage && (widget.order.rebookedBy?['status'] ?? false)) ...[
+                        Container(
+                          margin: const EdgeInsets.symmetric(vertical: 8),
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [Colors.blue.shade50, Colors.blue.shade100],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            ),
+                            border: Border.all(color: Colors.blue.shade400, width: 1.5),
+                            borderRadius: BorderRadius.circular(12),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.blue.withValues(alpha: 0.15),
+                                spreadRadius: 2,
+                                blurRadius: 6,
+                                offset: const Offset(0, 3),
+                              ),
+                            ],
                           ),
-                          border: Border.all(color: Colors.blue.shade400, width: 1.5),
-                          borderRadius: BorderRadius.circular(12),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.blue.withValues(alpha: 0.15),
-                              spreadRadius: 2,
-                              blurRadius: 6,
-                              offset: const Offset(0, 3),
-                            ),
-                          ],
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.all(8),
-                              decoration: BoxDecoration(
-                                color: Colors.blue.shade500,
-                                shape: BoxShape.circle,
-                              ),
-                              child: const Icon(
-                                Icons.sync,
-                                size: 20,
-                                color: Colors.white,
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Text(
-                                  'Order Rebooked',
-                                  style: TextStyle(
-                                    color: Colors.blue.shade900,
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w600,
-                                  ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(8),
+                                decoration: BoxDecoration(
+                                  color: Colors.blue.shade500,
+                                  shape: BoxShape.circle,
                                 ),
-                                const SizedBox(height: 4),
-                                Row(
-                                  children: [
-                                    Text(
-                                      'New Order ID: ',
-                                      style: TextStyle(
-                                        color: Colors.blue.shade700,
-                                        fontSize: 13,
-                                      ),
+                                child: const Icon(
+                                  Icons.sync,
+                                  size: 20,
+                                  color: Colors.white,
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(
+                                    'Order Rebooked',
+                                    style: TextStyle(
+                                      color: Colors.blue.shade900,
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w600,
                                     ),
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 8,
-                                        vertical: 2,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        color: Colors.blue.shade50,
-                                        border: Border.all(color: Colors.blue.shade300),
-                                        borderRadius: BorderRadius.circular(4),
-                                      ),
-                                      child: Text(
-                                        '${widget.order.rebookedBy!['neworder_id']}',
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Row(
+                                    children: [
+                                      Text(
+                                        'New Order ID: ',
                                         style: TextStyle(
-                                          color: Colors.blue.shade900,
-                                          fontWeight: FontWeight.bold,
+                                          color: Colors.blue.shade700,
                                           fontSize: 13,
                                         ),
                                       ),
-                                    ),
-                                  ],
-                                ),
-                              ],
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 8,
+                                          vertical: 2,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: Colors.blue.shade50,
+                                          border: Border.all(color: Colors.blue.shade300),
+                                          borderRadius: BorderRadius.circular(4),
+                                        ),
+                                        child: Text(
+                                          '${widget.order.rebookedBy!['neworder_id']}',
+                                          style: TextStyle(
+                                            color: Colors.blue.shade900,
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 13,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                      ],
+                      Text.rich(
+                        TextSpan(
+                          text: "Warehouse Name: ",
+                          children: [
+                            TextSpan(
+                              text: widget.order.warehouseName,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.normal,
+                              ),
                             ),
                           ],
+                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
                         ),
                       ),
-                      const SizedBox(height: 8),
                     ],
-                    Text.rich(
-                      TextSpan(
-                        text: "Warehouse Name: ",
-                        children: [
-                          TextSpan(
-                            text: widget.order.warehouseName,
-                            style: const TextStyle(
-                              fontWeight: FontWeight.normal,
-                            ),
-                          ),
-                        ],
-                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
-                      ),
-                    ),
-                  ],
+                  ),
                 ),
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.end,
@@ -1143,23 +1354,21 @@ class _OrderComboCardState extends State<OrderComboCard> {
                     ],
                   ),
                 ),
-                Expanded(
-                  child: Text.rich(
-                    TextSpan(
-                        text: "Updated on: ",
-                        children: [
-                          TextSpan(
-                              text: widget.order.updatedAt != null
-                                  ? DateFormat('yyyy-MM-dd, hh:mm a').format(
-                                      DateTime.parse("${widget.order.updatedAt}"),
-                                    )
-                                  : '',
-                              style: const TextStyle(
-                                fontWeight: FontWeight.normal,
-                              )),
-                        ],
-                        style: const TextStyle(fontWeight: FontWeight.bold, overflow: TextOverflow.ellipsis)),
-                  ),
+                Text.rich(
+                  TextSpan(
+                      text: "Updated on: ",
+                      children: [
+                        TextSpan(
+                            text: widget.order.updatedAt != null
+                                ? DateFormat('yyyy-MM-dd, hh:mm a').format(
+                                    DateTime.parse("${widget.order.updatedAt}"),
+                                  )
+                                : '',
+                            style: const TextStyle(
+                              fontWeight: FontWeight.normal,
+                            )),
+                      ],
+                      style: const TextStyle(fontWeight: FontWeight.bold, overflow: TextOverflow.ellipsis)),
                 ),
               ],
             ),

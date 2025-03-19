@@ -248,92 +248,95 @@ class _MarketplacePageState extends State<MarketplacePage> {
                               const SizedBox(height: 8),
 
                               // Products within the marketplace
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.start,
-                                children: marketplace.skuMap.map((skuMap) {
-                                  final product = skuMap.product;
+                              SingleChildScrollView(
+                                scrollDirection: Axis.horizontal,
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.start,
+                                  children: marketplace.skuMap.map((skuMap) {
+                                    final product = skuMap.product;
 
-                                  // Fetch the product image if it exists
-                                  final imageUrl =
-                                      (product?.images as List<dynamic>?)
-                                                  ?.isNotEmpty ==
-                                              true
-                                          ? product!.images![0]
-                                          : null;
+                                    // Fetch the product image if it exists
+                                    final imageUrl =
+                                        (product?.images as List<dynamic>?)
+                                                    ?.isNotEmpty ==
+                                                true
+                                            ? product!.images![0]
+                                            : null;
 
-                                  return Padding(
-                                    padding: const EdgeInsets.only(right: 12.0),
-                                    child: Card(
-                                      elevation: 3,
-                                      margin: const EdgeInsets.only(top: 8),
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(12),
-                                      ),
-                                      child: Padding(
-                                        padding: const EdgeInsets.all(12.0),
-                                        child: Row(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            // Display product image or a placeholder icon if no image is found
-                                            imageUrl != null
-                                                ? Image.network(
-                                                    imageUrl,
-                                                    width: 80,
-                                                    height: 80,
-                                                    fit: BoxFit.cover,
-                                                    errorBuilder: (context,
-                                                            error,
-                                                            stackTrace) =>
-                                                        const Icon(Icons.image,
-                                                            size: 80,
-                                                            color: Colors.grey),
-                                                  )
-                                                : const Icon(Icons.image,
-                                                    size: 80,
-                                                    color: Colors.grey),
+                                    return Padding(
+                                      padding: const EdgeInsets.only(right: 12.0),
+                                      child: Card(
+                                        elevation: 3,
+                                        margin: const EdgeInsets.only(top: 8),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(12),
+                                        ),
+                                        child: Padding(
+                                          padding: const EdgeInsets.all(12.0),
+                                          child: Row(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              // Display product image or a placeholder icon if no image is found
+                                              imageUrl != null
+                                                  ? Image.network(
+                                                      imageUrl,
+                                                      width: 80,
+                                                      height: 80,
+                                                      fit: BoxFit.cover,
+                                                      errorBuilder: (context,
+                                                              error,
+                                                              stackTrace) =>
+                                                          const Icon(Icons.image,
+                                                              size: 80,
+                                                              color: Colors.grey),
+                                                    )
+                                                  : const Icon(Icons.image,
+                                                      size: 80,
+                                                      color: Colors.grey),
 
-                                            const SizedBox(width: 12),
-                                            Column(
-                                              crossAxisAlignment:
-                                                  CrossAxisAlignment.start,
-                                              children: [
-                                                Text(
-                                                  'SKU: ${skuMap.mktpSku}',
-                                                  style: const TextStyle(
-                                                    fontSize: 16,
-                                                    fontWeight: FontWeight.bold,
-                                                    color: Colors.black87,
+                                              const SizedBox(width: 12),
+                                              Column(
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.start,
+                                                children: [
+                                                  Text(
+                                                    'SKU: ${skuMap.mktpSku}',
+                                                    style: const TextStyle(
+                                                      fontSize: 16,
+                                                      fontWeight: FontWeight.bold,
+                                                      color: Colors.black87,
+                                                    ),
                                                   ),
-                                                ),
-                                                const SizedBox(height: 8),
-                                                Text(
-                                                  'Product Name: ${product?.displayName ?? 'Unknown'}',
-                                                  style: TextStyle(
-                                                    fontSize: 16,
-                                                    color: product != null
-                                                        ? Colors.black87
-                                                        : Colors.grey,
+                                                  const SizedBox(height: 8),
+                                                  Text(
+                                                    'Product Name: ${product?.displayName ?? 'Unknown'}',
+                                                    style: TextStyle(
+                                                      fontSize: 16,
+                                                      color: product != null
+                                                          ? Colors.black87
+                                                          : Colors.grey,
+                                                    ),
                                                   ),
-                                                ),
-                                                const SizedBox(height: 4),
-                                                Text(
-                                                  'Product SKU: ${product?.sku ?? 'N/A'}',
-                                                  style: TextStyle(
-                                                    fontSize: 14,
-                                                    color: product != null
-                                                        ? Colors.black54
-                                                        : Colors.grey,
+                                                  const SizedBox(height: 4),
+                                                  Text(
+                                                    'Product SKU: ${product?.sku ?? 'N/A'}',
+                                                    style: TextStyle(
+                                                      fontSize: 14,
+                                                      color: product != null
+                                                          ? Colors.black54
+                                                          : Colors.grey,
+                                                    ),
                                                   ),
-                                                ),
-                                              ],
-                                            ),
-                                          ],
+                                                ],
+                                              ),
+                                            ],
+                                          ),
                                         ),
                                       ),
-                                    ),
-                                  );
-                                }).toList(),
+                                    );
+                                  }).toList(),
+                                ),
                               ),
                               const SizedBox(
                                 width: 8,

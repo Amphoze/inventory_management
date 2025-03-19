@@ -7,6 +7,7 @@ import 'package:inventory_management/Custom-Files/custom_pagination.dart';
 import 'package:inventory_management/Custom-Files/loading_indicator.dart';
 import 'package:inventory_management/Custom-Files/utils.dart';
 import 'package:inventory_management/Widgets/order_combo_card.dart';
+import 'package:inventory_management/chat_screen.dart';
 import 'package:inventory_management/provider/location_provider.dart';
 import 'package:inventory_management/provider/marketplace_provider.dart';
 import 'package:logger/logger.dart';
@@ -44,17 +45,21 @@ class _BookPageState extends State<BookPage> with SingleTickerProviderStateMixin
   void initState() {
     super.initState();
     bookProvider = Provider.of<BookProvider>(context, listen: false);
+    bookProvider.b2bSearchController.clear();
+    bookProvider.b2cSearchController.clear();
     _tabController = TabController(length: 2, vsync: this);
     _tabController.addListener(() {
       if (_tabController.indexIsChanging) {
         _refreshOrders("B2B");
         _refreshOrders("B2C");
+        bookProvider.resetFilterData();
         bookProvider.b2bSearchController.clear();
         bookProvider.b2cSearchController.clear();
       }
     });
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final bookProvider = Provider.of<BookProvider>(context, listen: false);
+      bookProvider.resetFilterData();
       bookProvider.fetchOrders('B2B', bookProvider.currentPageB2B);
       bookProvider.fetchOrders('B2C', bookProvider.currentPageB2C);
       context.read<MarketplaceProvider>().fetchMarketplaces();
@@ -70,9 +75,6 @@ class _BookPageState extends State<BookPage> with SingleTickerProviderStateMixin
     // bookProvider.b2cSearchController.dispose();
     b2bPageController.dispose();
     b2cPageController.dispose();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      bookProvider.resetFilterData();
-    });
     super.dispose();
   }
 
@@ -80,6 +82,8 @@ class _BookPageState extends State<BookPage> with SingleTickerProviderStateMixin
   Widget build(BuildContext context) {
     return Consumer<BookProvider>(builder: (context, pro, child) {
       return Scaffold(
+        key: pro.scaffoldKey,
+        endDrawer: const ChatScreen(),
         backgroundColor: Colors.white,
         appBar: AppBar(
           backgroundColor: Colors.white,
@@ -132,7 +136,7 @@ class _BookPageState extends State<BookPage> with SingleTickerProviderStateMixin
     );
   }
 
-  String selectedSearchType = 'Order ID';
+  // String selectedSearchType = 'Order ID';
 
   Widget _searchBar(String orderType) {
     final TextEditingController controller = orderType == 'B2B' ? bookProvider.b2bSearchController : bookProvider.b2cSearchController;
@@ -146,7 +150,7 @@ class _BookPageState extends State<BookPage> with SingleTickerProviderStateMixin
             height: 40,
             margin: const EdgeInsets.only(right: 16),
             child: DropdownButtonFormField<String>(
-              value: selectedSearchType,
+              value: bookProvider.searchType,
               decoration: const InputDecoration(
                 border: OutlineInputBorder(),
                 contentPadding: EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
@@ -158,7 +162,7 @@ class _BookPageState extends State<BookPage> with SingleTickerProviderStateMixin
               onChanged: (value) {
                 log(value!);
                 setState(() {
-                  selectedSearchType = value;
+                  bookProvider.searchType = value;
                 });
               },
             ),
@@ -194,9 +198,9 @@ class _BookPageState extends State<BookPage> with SingleTickerProviderStateMixin
                         orderType == 'B2B' ? _refreshOrders('B2B') : _refreshOrders('B2C');
                       } else {
                         if (orderType == 'B2B') {
-                          Provider.of<BookProvider>(context, listen: false).searchB2BOrders(text, selectedSearchType);
+                          Provider.of<BookProvider>(context, listen: false).searchB2BOrders(text);
                         } else {
-                          Provider.of<BookProvider>(context, listen: false).searchB2COrders(text, selectedSearchType);
+                          Provider.of<BookProvider>(context, listen: false).searchB2COrders(text);
                         }
                       }
                     },
@@ -208,10 +212,10 @@ class _BookPageState extends State<BookPage> with SingleTickerProviderStateMixin
                       }
 
                       if (orderType == 'B2B') {
-                        Provider.of<BookProvider>(context, listen: false).searchB2BOrders(text, selectedSearchType);
+                        Provider.of<BookProvider>(context, listen: false).searchB2BOrders(text);
                         return;
                       } else {
-                        Provider.of<BookProvider>(context, listen: false).searchB2COrders(text, selectedSearchType);
+                        Provider.of<BookProvider>(context, listen: false).searchB2COrders(text);
                         return;
                       }
                     },
@@ -379,6 +383,7 @@ class _BookPageState extends State<BookPage> with SingleTickerProviderStateMixin
 
   Widget _buildConfirmButtons(String orderType) {
     final bookProvider = Provider.of<BookProvider>(context, listen: false);
+    final page = orderType == 'B2B' ? bookProvider.currentPageB2B : bookProvider.currentPageB2C;
     return Align(
       alignment: Alignment.topRight,
       child: Padding(
@@ -425,7 +430,7 @@ class _BookPageState extends State<BookPage> with SingleTickerProviderStateMixin
                           bookProvider.selectedDate = formattedDate;
                         });
 
-                        bookProvider.fetchOrders(orderType, bookProvider.currentPageB2B);
+                        bookProvider.fetchOrders(orderType, page);
                       }
                     },
                     icon: const Icon(
@@ -435,6 +440,24 @@ class _BookPageState extends State<BookPage> with SingleTickerProviderStateMixin
                     ),
                   ),
                 ),
+                if (bookProvider.selectedDate != 'Select Date')
+                  Tooltip(
+                    message: 'Clear selected Date',
+                    child: InkWell(
+                      onTap: () async {
+                        setState(() {
+                          bookProvider.selectedDate = 'Select Date';
+                          bookProvider.picked = null;
+                        });
+                        bookProvider.fetchOrders(orderType, page);
+                      },
+                      child: const Icon(
+                        Icons.clear,
+                        size: 12,
+                        color: AppColors.primaryBlue,
+                      ),
+                    ),
+                  ),
               ],
             ),
             const SizedBox(width: 8),
@@ -451,7 +474,7 @@ class _BookPageState extends State<BookPage> with SingleTickerProviderStateMixin
                         setState(() {
                           bookProvider.selectedCourier = value;
                         });
-                        bookProvider.fetchOrders(orderType, bookProvider.currentPageB2B);
+                        bookProvider.fetchOrders(orderType, page);
                       },
                       itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
                         ...provider.marketplaces.map((marketplace) => PopupMenuItem<String>(

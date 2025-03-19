@@ -38,11 +38,11 @@ class _OutboundPageState extends State<OutboundPage> with TickerProviderStateMix
   void initState() {
     super.initState();
     provider = context.read<OutboundProvider>();
+    provider.resetFilter();
     // _tabController = TabController(length: 2, vsync: this);
     // _searchController = TextEditingController();
     provider.searchController = TextEditingController();
     // _searchControllerFailed = TextEditingController();
-
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _reloadOrders();
@@ -218,6 +218,24 @@ class _OutboundPageState extends State<OutboundPage> with TickerProviderStateMix
                             ),
                           ),
                         ),
+                        if (pro.selectedDate != 'Select Date')
+                          Tooltip(
+                            message: 'Clear selected Date',
+                            child: InkWell(
+                              onTap: () async {
+                                setState(() {
+                                  pro.selectedDate = 'Select Date';
+                                  pro.picked = null;
+                                });
+                                pro.fetchOrders(page: pro.currentPageReady);
+                              },
+                              child: const Icon(
+                                Icons.clear,
+                                size: 12,
+                                color: AppColors.primaryBlue,
+                              ),
+                            ),
+                          ),
                       ],
                     ),
                     const SizedBox(width: 8),

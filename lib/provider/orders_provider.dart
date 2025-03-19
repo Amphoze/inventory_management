@@ -8,10 +8,12 @@ import 'package:inventory_management/Custom-Files/utils.dart';
 import 'package:inventory_management/constants/constants.dart';
 import 'package:inventory_management/model/orders_model.dart';
 import 'package:logger/logger.dart';
+import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:socket_io_client/socket_io_client.dart' as IO;
 
 import '../Api/auth_provider.dart';
+import 'chat_provider.dart';
 
 class OrdersProvider with ChangeNotifier {
   bool allSelectedReady = false;
@@ -164,13 +166,13 @@ class OrdersProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  void selectPayment(String? paymentMode) {
+  void selectPayment(String paymentMode) {
     _selectedPayment = paymentMode;
     notifyListeners();
   }
 
-  void setInitialPaymentMode(String? paymentMode) {
-    _selectedPayment = (paymentMode == null || paymentMode.isEmpty) ? null : paymentMode;
+  void setInitialPaymentMode(String paymentMode) {
+    _selectedPayment = paymentMode ?? '';
     notifyListeners();
   }
 
@@ -576,7 +578,7 @@ class OrdersProvider with ChangeNotifier {
       final responseData = json.decode(response.body);
 
       if (response.statusCode == 200) {
-        Utils.showSnackBar(context, responseData['message']);
+        // Utils.showSnackBar(context, responseData['message']);
         return responseData['message'] + "$orderIds" ?? 'Orders Confirmed successfully';
       } else {
         return responseData['errors'][0]['errors'][0] ?? 'Failed to confirm orders';
@@ -872,7 +874,7 @@ class OrdersProvider with ChangeNotifier {
     }
   }
 
-  Future<bool> connectWithSupport(String orderId, String message) async {
+  Future<bool> connectWithSupport(BuildContext context, String orderId, String message) async {
     final token = await _getToken();
     try {
       var response = await http.post(
@@ -892,6 +894,10 @@ class OrdersProvider with ChangeNotifier {
       log('connect body: $responseData');
 
       if (response.statusCode == 200) {
+        await Provider.of<ChatProvider>(context, listen: false).sendMessageForOrder(
+          orderId: orderId,
+          message: message,
+        );
         return true;
       } else {
         return false;

@@ -35,6 +35,10 @@ class _AllOrdersPageState extends State<AllOrdersPage> with SingleTickerProvider
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      selectedCourier = 'All';
+      selectedStatus = 'All';
+      _selectedDate = 'Select Date';
+      picked = null;
       final allOrdersProvider = Provider.of<AllOrdersProvider>(context, listen: false);
       allOrdersProvider.fetchAllOrders(page: allOrdersProvider.currentPage);
       context.read<MarketplaceProvider>().fetchMarketplaces();
@@ -362,6 +366,24 @@ class _AllOrdersPageState extends State<AllOrdersPage> with SingleTickerProvider
                   },
                   icon: const Icon(Icons.date_range),
                 ),
+                if (_selectedDate != 'Select Date')
+                  Tooltip(
+                    message: 'Clear selected Date',
+                    child: InkWell(
+                      onTap: () async {
+                        setState(() {
+                          _selectedDate = 'Select Date';
+                          picked = null;
+                        });
+                        allOrdersProvider.fetchAllOrders();
+                      },
+                      child: const Icon(
+                        Icons.clear,
+                        size: 12,
+                        color: AppColors.primaryBlue,
+                      ),
+                    ),
+                  ),
               ],
             ),
             const SizedBox(width: 16),

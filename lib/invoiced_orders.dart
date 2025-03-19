@@ -43,7 +43,9 @@ class _InvoicedOrdersState extends State<InvoicedOrders> with SingleTickerProvid
   @override
   void initState() {
     provider = context.read<AccountsProvider>();
+    provider.invoiceSearch.clear();
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      provider.resetFilterData();
       provider.fetchInvoicedOrders(provider.currentPage);
       context.read<MarketplaceProvider>().fetchMarketplaces();
       _fetchUserRole();
@@ -400,6 +402,24 @@ class _InvoicedOrdersState extends State<InvoicedOrders> with SingleTickerProvid
                     ),
                   ),
                 ),
+                if (accountsProvider.selectedDate != 'Select Date')
+                  Tooltip(
+                    message: 'Clear selected Date',
+                    child: InkWell(
+                      onTap: () async {
+                        setState(() {
+                          accountsProvider.selectedDate = 'Select Date';
+                          accountsProvider.picked = null;
+                        });
+                        accountsProvider.fetchInvoicedOrders(accountsProvider.currentPageBooked);
+                      },
+                      child: const Icon(
+                        Icons.clear,
+                        size: 12,
+                        color: AppColors.primaryBlue,
+                      ),
+                    ),
+                  ),
               ],
             ),
             const SizedBox(width: 8),

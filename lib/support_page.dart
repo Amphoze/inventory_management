@@ -486,7 +486,7 @@ class _SupportPageState extends State<SupportPage> {
                                                           );
                                                           bool result = await context
                                                               .read<SupportProvider>()
-                                                              .support(order.orderId, messageController.text);
+                                                              .support(context, order.orderId, messageController.text);
 
                                                           log('result: $result');
 
@@ -519,7 +519,7 @@ class _SupportPageState extends State<SupportPage> {
                                             tooltip: 'Support Chat',
                                             icon: const Icon(Icons.message),
                                             onPressed: () {
-                                              pro.setChatData(order.orderId, email!, role!);
+                                              pro.setUserData(order.orderId, email!, role!);
                                               Scaffold.of(context).openEndDrawer();
                                             },
                                           ),

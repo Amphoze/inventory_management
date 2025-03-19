@@ -6,7 +6,6 @@ import 'package:inventory_management/bin_products.dart';
 import 'package:inventory_management/create_bin_page.dart';
 import 'package:inventory_management/provider/location_provider.dart';
 import 'package:provider/provider.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 class BinMasterPage extends StatefulWidget {
   const BinMasterPage({super.key});
@@ -18,18 +17,12 @@ class BinMasterPage extends StatefulWidget {
 class _BinMasterPageState extends State<BinMasterPage> {
   String? selectedBin;
   final _searchController = TextEditingController();
-  // String? warehouse;
 
   void selectBin(String? binName) {
     setState(() {
       selectedBin = binName;
     });
   }
-
-  // Future<void> getWarehouse() async {
-  //   final pref = await SharedPreferences.getInstance();
-  //   warehouse = pref.getString('warehouseName') ?? '';
-  // }
 
   @override
   void initState() {
@@ -80,47 +73,6 @@ class _BinMasterPageState extends State<BinMasterPage> {
                     ),
                   ),
                   const Spacer(),
-                  // ChipTheme(
-                  //   data: ChipThemeData(
-                  //     backgroundColor: Colors.blue.shade50,
-                  //     labelStyle: TextStyle(color: Colors.blue.shade800),
-                  //     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                  //     shape: RoundedRectangleBorder(
-                  //       borderRadius: BorderRadius.circular(16),
-                  //       side: BorderSide(color: Colors.blue.shade200),
-                  //     ),
-                  //   ),
-                  //   child: Chip(
-                  //     avatar: const Icon(
-                  //       Icons.warehouse_rounded,
-                  //       size: 16,
-                  //       color: Colors.blue,
-                  //     ),
-                  //     label: RichText(
-                  //       text: TextSpan(
-                  //         text: 'Warehouse: ',
-                  //         style: TextStyle(
-                  //           fontWeight: FontWeight.bold,
-                  //           fontFamily: 'Poppins',
-                  //           fontSize: 14,
-                  //           color: Colors.blue.shade900,
-                  //         ),
-                  //         children: [
-                  //           TextSpan(
-                  //             text: warehouse,
-                  //             style: TextStyle(
-                  //               fontWeight: FontWeight.normal,
-                  //               color: Colors.blue.shade800,
-                  //             ),
-                  //           ),
-                  //         ],
-                  //       ),
-                  //     ),
-                  //     padding: const EdgeInsets.all(4),
-                  //     elevation: 1,
-                  //   ),
-                  // ),
-                  // const SizedBox(width: 8),
                   IconButton(
                     tooltip: 'Refresh Bins',
                     onPressed: () {

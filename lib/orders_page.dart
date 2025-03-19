@@ -64,6 +64,8 @@ class _OrdersNewPageState extends State<OrdersNewPage> with TickerProviderStateM
       }
     });
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      provider.resetReadyFilterData();
+      provider.resetFailedFilterData();
       getUserData();
       provider.initializeSocket(context);
       _reloadOrders();
@@ -206,46 +208,62 @@ class _OrdersNewPageState extends State<OrdersNewPage> with TickerProviderStateM
                             color: ordersProvider.selectedReadyDate == 'Select Date' ? Colors.grey : AppColors.primaryBlue,
                           ),
                         ),
-                        Tooltip(
-                          message: 'Filter by Date',
-                          child: IconButton(
-                            onPressed: () async {
-                              ordersProvider.readyPicked = await showDatePicker(
-                                context: context,
-                                initialDate: DateTime.now(),
-                                firstDate: DateTime(2020),
-                                lastDate: DateTime.now(),
-                                builder: (context, child) {
-                                  return Theme(
-                                    data: Theme.of(context).copyWith(
-                                      colorScheme: const ColorScheme.light(
-                                        primary: AppColors.primaryBlue,
-                                        onPrimary: Colors.white,
-                                        surface: Colors.white,
-                                        onSurface: Colors.black,
-                                      ),
+                        IconButton(
+                          tooltip: 'Filter by Date',
+                          onPressed: () async {
+                            ordersProvider.readyPicked = await showDatePicker(
+                              context: context,
+                              initialDate: DateTime.now(),
+                              firstDate: DateTime(2020),
+                              lastDate: DateTime.now(),
+                              builder: (context, child) {
+                                return Theme(
+                                  data: Theme.of(context).copyWith(
+                                    colorScheme: const ColorScheme.light(
+                                      primary: AppColors.primaryBlue,
+                                      onPrimary: Colors.white,
+                                      surface: Colors.white,
+                                      onSurface: Colors.black,
                                     ),
-                                    child: child!,
-                                  );
-                                },
-                              );
+                                  ),
+                                  child: child!,
+                                );
+                              },
+                            );
 
-                              String formattedDate = DateFormat('dd-MM-yyyy').format(ordersProvider.readyPicked!);
-                              setState(() {
-                                ordersProvider.selectedReadyDate = formattedDate;
-                              });
+                            String formattedDate = DateFormat('dd-MM-yyyy').format(ordersProvider.readyPicked!);
+                            setState(() {
+                              ordersProvider.selectedReadyDate = formattedDate;
+                            });
 
-                              ordersProvider.fetchReadyOrders(page: ordersProvider.currentPageReady);
+                            ordersProvider.fetchReadyOrders(page: ordersProvider.currentPageReady);
 
-                              Logger().e('picked: ${ordersProvider.readyPicked}');
-                            },
-                            icon: const Icon(
-                              Icons.calendar_today,
-                              size: 30,
-                              color: AppColors.primaryBlue,
-                            ),
+                            Logger().e('picked: ${ordersProvider.readyPicked}');
+                          },
+                          icon: const Icon(
+                            Icons.calendar_today,
+                            size: 30,
+                            color: AppColors.primaryBlue,
                           ),
                         ),
+                        if (ordersProvider.selectedReadyDate != 'Select Date')
+                          Tooltip(
+                            message: 'Clear selected Date',
+                            child: InkWell(
+                              onTap: () async {
+                                setState(() {
+                                  ordersProvider.selectedReadyDate = 'Select Date';
+                                  ordersProvider.readyPicked = null;
+                                });
+                                ordersProvider.fetchReadyOrders(page: ordersProvider.currentPageReady);
+                              },
+                              child: const Icon(
+                                Icons.clear,
+                                size: 12,
+                                color: AppColors.primaryBlue,
+                              ),
+                            ),
+                          ),
                       ],
                     ),
                     const SizedBox(width: 8),
@@ -791,7 +809,12 @@ class _OrdersNewPageState extends State<OrdersNewPage> with TickerProviderStateM
                                                                       final res =
                                                                           await pro.editWarehouse(order.orderId, selectedWarehouse.trim());
                                                                       if (res == true) {
-                                                                        ordersProvider.fetchReadyOrders();
+                                                                        if (ordersProvider.searchControllerReady.text.trim().isNotEmpty) {
+                                                                          ordersProvider.searchReadyToConfirmOrders(
+                                                                              ordersProvider.searchControllerReady.text.trim());
+                                                                        } else {
+                                                                          ordersProvider.fetchReadyOrders();
+                                                                        }
                                                                       } else {
                                                                         if (context.mounted) {
                                                                           ScaffoldMessenger.of(context).showSnackBar(
@@ -834,7 +857,7 @@ class _OrdersNewPageState extends State<OrdersNewPage> with TickerProviderStateM
                                                                 crossAxisAlignment: CrossAxisAlignment.start,
                                                                 children: [
                                                                   ...remainingItems.map(
-                                                                        (item) => Row(
+                                                                    (item) => Row(
                                                                       children: [
                                                                         Checkbox(
                                                                           value: selectedItems.contains(item.sku),
@@ -853,7 +876,7 @@ class _OrdersNewPageState extends State<OrdersNewPage> with TickerProviderStateM
                                                                     ),
                                                                   ),
                                                                   ...comboItemGroups.map(
-                                                                        (item) => Row(
+                                                                    (item) => Row(
                                                                       children: [
                                                                         Checkbox(
                                                                           value: selectedItems.contains(item[0].sku),
@@ -940,6 +963,7 @@ class _OrdersNewPageState extends State<OrdersNewPage> with TickerProviderStateM
                                                   tooltip: 'Report Bug',
                                                   onPressed: () {
                                                     TextEditingController messageController = TextEditingController();
+                                                    context.read<SupportProvider>().setUserData(order.orderId, email!, role!);
                                                     showDialog(
                                                       context: context,
                                                       builder: (context) {
@@ -1075,7 +1099,7 @@ class _OrdersNewPageState extends State<OrdersNewPage> with TickerProviderStateM
                                                                 );
                                                                 bool result = await context
                                                                     .read<OrdersProvider>()
-                                                                    .connectWithSupport(order.orderId, messageController.text);
+                                                                    .connectWithSupport(context, order.orderId, messageController.text);
 
                                                                 Navigator.pop(context);
                                                                 Navigator.pop(context);
@@ -1103,15 +1127,17 @@ class _OrdersNewPageState extends State<OrdersNewPage> with TickerProviderStateM
                                                   },
                                                   icon: const Icon(Icons.bug_report_outlined),
                                                 ),
-                                                // const SizedBox(width: 8),
-                                                // IconButton(
-                                                //   tooltip: 'Support Chat',
-                                                //   icon: const Icon(Icons.message),
-                                                //   onPressed: () {
-                                                //     context.read<SupportProvider>().setChatData(order.orderId, email!, role!);
-                                                //     Scaffold.of(context).openEndDrawer();
-                                                //   },
-                                                // ),
+                                                if (order.mistakeStatus ?? false) ...[
+                                                  const SizedBox(width: 8),
+                                                  IconButton(
+                                                    tooltip: 'Support Chat',
+                                                    icon: const Icon(Icons.message),
+                                                    onPressed: () {
+                                                      context.read<SupportProvider>().setUserData(order.orderId, email!, role!);
+                                                      Scaffold.of(context).openEndDrawer();
+                                                    },
+                                                  ),
+                                                ]
                                               ],
                                             ),
                                           ],
@@ -1470,6 +1496,24 @@ class _OrdersNewPageState extends State<OrdersNewPage> with TickerProviderStateM
                             ),
                           ),
                         ),
+                        if (ordersProvider.selectedFailedDate != 'Select Date')
+                          Tooltip(
+                            message: 'Clear selected Date',
+                            child: InkWell(
+                              onTap: () async {
+                                setState(() {
+                                  ordersProvider.selectedFailedDate = 'Select Date';
+                                  ordersProvider.failedPicked = null;
+                                });
+                                ordersProvider.fetchReadyOrders(page: ordersProvider.currentPageFailed);
+                              },
+                              child: const Icon(
+                                Icons.clear,
+                                size: 12,
+                                color: AppColors.primaryBlue,
+                              ),
+                            ),
+                          ),
                       ],
                     ),
                     const SizedBox(width: 8),
@@ -2399,7 +2443,7 @@ class _OrdersNewPageState extends State<OrdersNewPage> with TickerProviderStateM
                     );
                   },
                 );
-                bool result = await context.read<OrdersProvider>().connectWithSupport(orderId, messageController.text);
+                bool result = await context.read<OrdersProvider>().connectWithSupport(context, orderId, messageController.text);
 
                 Navigator.pop(context);
                 Navigator.pop(context);

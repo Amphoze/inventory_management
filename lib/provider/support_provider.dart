@@ -7,7 +7,10 @@ import 'package:http/http.dart' as http;
 import 'package:inventory_management/constants/constants.dart';
 import 'package:inventory_management/model/orders_model.dart';
 import 'package:logger/logger.dart';
+import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+import 'chat_provider.dart';
 
 class SupportProvider with ChangeNotifier {
   bool _isLoading = false;
@@ -42,7 +45,7 @@ class SupportProvider with ChangeNotifier {
   bool isRefreshingOrders = false;
   bool isCancel = false;
 
-  void setChatData(String orderId, String currentUserEmail, String currentUserRole) {
+  void setUserData(String orderId, String currentUserEmail, String currentUserRole) {
     _orderId = orderId;
     _currentUserEmail = currentUserEmail;
     _currentUserRole = currentUserRole;
@@ -242,15 +245,13 @@ class SupportProvider with ChangeNotifier {
 
   //////////////////////////////////////////////////////////////////////////////////////////////
 
-  Future<bool> support(String orderId, String message) async {
+  Future<bool> support(BuildContext context, String orderId, String message) async {
     final token = await _getToken();
     try {
       var response = await http.post(
         Uri.parse('${await Constants.getBaseUrl()}/orders/support'),
         body: jsonEncode({
-          'orderIds': [
-            orderId
-          ],
+          'orderIds': [orderId],
           'message': message,
         }),
         headers: {
@@ -261,9 +262,13 @@ class SupportProvider with ChangeNotifier {
 
       final responseData = json.decode(response.body);
 
-      log('support body: $responseData');
+      // log('support body: $responseData');
 
       if (response.statusCode == 200) {
+        await Provider.of<ChatProvider>(context, listen: false).sendMessageForOrder(
+          orderId: orderId,
+          message: message,
+        );
         return true; // Success
       } else {
         return false; // API failure

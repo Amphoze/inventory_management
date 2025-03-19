@@ -244,7 +244,7 @@ class Order {
       isHold: json['warehouse']?['isHold'] ?? false,
       messages: json['messages'] ?? {},
       mistakeUser: (json['isMistake'] as List?)?.isNotEmpty == true ? (json['isMistake'].last['user'] ?? '') : null,
-      mistakeStatus: (json['isMistake'] as List?)?.isNotEmpty == true ? (json['isMistake'].last['status'] ?? false) : null,
+      mistakeStatus: (json['isMistake'] as List?)?.any((e) => e['status'] == true) == true ? true : null,
       outBoundBy: json['isOutBound'] ?? {},
       confirmedBy: json['confirmedBy'] ?? {},
       baApprovedBy: json['baApprovedBy'] ?? {},

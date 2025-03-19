@@ -45,12 +45,6 @@ class ChatProvider extends ChangeNotifier {
         .listen((snapshot) {
       if (snapshot.docs.isNotEmpty) {
         var data = snapshot.docs.first.data();
-        if (data['sender'] != _currentUserEmail) {
-          // NotificationService.showBrowserNotification(
-          //   data['sender'],
-          //   data['text'],
-          // );
-        }
       }
     });
   }
@@ -75,6 +69,35 @@ class ChatProvider extends ChangeNotifier {
     } catch (e) {
       log("Error sending message: $e");
       rethrow; // Rethrow to handle error in UI
+    }
+
+    notifyListeners();
+  }
+
+  Future<void> sendMessageForOrder({
+    required String orderId,
+    required String message,
+    String? senderEmail,
+    String? userRole,
+  }) async {
+    if (message.trim().isEmpty) return;
+
+    final body = {
+      'sender': senderEmail ?? _currentUserEmail,
+      'text': message.trim(),
+      'timestamp': FieldValue.serverTimestamp(),
+      'readBy': {senderEmail ?? _currentUserEmail: true},
+      'userRole': userRole ?? _currentUserRole,
+    };
+
+    log('message body for order $orderId: $body');
+
+    try {
+      await _firestore.collection('orders').doc(orderId).collection('messages').add(body);
+      log("Message sent successfully for order $orderId!");
+    } catch (e) {
+      log("Error sending message for order $orderId: $e");
+      rethrow;
     }
 
     notifyListeners();

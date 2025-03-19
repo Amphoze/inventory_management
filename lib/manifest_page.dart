@@ -28,6 +28,9 @@ class _ManifestPageState extends State<ManifestPage> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       Provider.of<ManifestProvider>(context, listen: false).fetchOrdersWithStatus8(date: picked, courier: selectedCourier);
+      _selectedDate = 'Select Date';
+      selectedCourier = 'All';
+      picked = null;
     });
     Provider.of<ManifestProvider>(context, listen: false).textEditingController.clear();
   }
@@ -156,6 +159,24 @@ class _ManifestPageState extends State<ManifestPage> {
                             ),
                           ),
                         ),
+                        if (_selectedDate != 'Select Date')
+                          Tooltip(
+                            message: 'Clear selected Date',
+                            child: InkWell(
+                              onTap: () async {
+                                setState(() {
+                                  _selectedDate = 'Select Date';
+                                  picked = null;
+                                });
+                                manifestProvider.fetchOrdersWithStatus8();
+                              },
+                              child: const Icon(
+                                Icons.clear,
+                                size: 12,
+                                color: AppColors.primaryBlue,
+                              ),
+                            ),
+                          ),
                       ],
                     ),
                     const SizedBox(width: 8),

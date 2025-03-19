@@ -35,15 +35,8 @@ class Message {
 }
 
 class ChatScreen extends StatefulWidget {
-  // final String orderId;
-  // final String currentUserEmail;
-  // final String currentUserRole;
-
   const ChatScreen({
     Key? key,
-    // required this.orderId,
-    // required this.currentUserEmail,
-    // required this.currentUserRole,
   }) : super(key: key);
 
   @override
@@ -53,8 +46,8 @@ class ChatScreen extends StatefulWidget {
 class ChatScreenState extends State<ChatScreen> {
   final TextEditingController _messageController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
-  bool _showScrollToBottom = false;
-  List<Message> _localMessages = [];
+  bool showScrollToBottom = false;
+  final List<Message> _localMessages = [];
   late ChatProvider chatProvider;
   late SupportProvider supportProvider;
   String? userName;
@@ -65,12 +58,13 @@ class ChatScreenState extends State<ChatScreen> {
     supportProvider = Provider.of<SupportProvider>(context, listen: false);
     userName = supportProvider.currentUserEmail?.split('@')[0] ?? '';
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      initializeChat(supportProvider.orderId ?? '', supportProvider.currentUserEmail ?? '', supportProvider.currentUserRole ?? '');
+      chatProvider.initializeChat(
+          supportProvider.orderId ?? '', supportProvider.currentUserEmail ?? '', supportProvider.currentUserRole ?? '');
     });
 
     _scrollController.addListener(() {
       setState(() {
-        _showScrollToBottom = _scrollController.offset > 100;
+        showScrollToBottom = _scrollController.offset > 100;
       });
     });
     super.initState();
@@ -81,10 +75,6 @@ class ChatScreenState extends State<ChatScreen> {
     _messageController.dispose();
     _scrollController.dispose();
     super.dispose();
-  }
-
-  void initializeChat(String orderId, String userEmail, String userRole) {
-    chatProvider.initializeChat(orderId, userEmail, userRole);
   }
 
   void _scrollToBottom() {
@@ -175,91 +165,13 @@ class ChatScreenState extends State<ChatScreen> {
   }
 
   @override
-  // Widget build(BuildContext context) {
-  //   return SelectionArea(
-  //     child: Scaffold(
-  //       appBar: AppBar(
-  //         elevation: 2,
-  //         backgroundColor: AppColors.primaryBlue,
-  //         leadingWidth: 40,
-  //         leading: BackButton(
-  //           color: Colors.white,
-  //           onPressed: () => Navigator.of(context).pop(),
-  //         ),
-  //         title: Column(
-  //           crossAxisAlignment: CrossAxisAlignment.start,
-  //           children: [
-  //             Text(
-  //               supportProvider.orderId,
-  //               style: const TextStyle(
-  //                 color: Colors.white,
-  //                 fontWeight: FontWeight.w600,
-  //                 fontSize: 18,
-  //               ),
-  //             ),
-  //             Row(
-  //               children: [
-  //                 Container(
-  //                   width: 8,
-  //                   height: 8,
-  //                   margin: const EdgeInsets.only(right: 6),
-  //                   decoration: const BoxDecoration(
-  //                     color: Colors.greenAccent,
-  //                     shape: BoxShape.circle,
-  //                   ),
-  //                 ),
-  //                 Text(
-  //                   "$userName • ${supportProvider.currentUserRole}",
-  //                   style: const TextStyle(
-  //                     color: Colors.white70,
-  //                     fontSize: 13,
-  //                     fontWeight: FontWeight.normal,
-  //                   ),
-  //                 ),
-  //               ],
-  //             ),
-  //           ],
-  //         ),
-  //       ),
-  //       body: Container(
-  //         color: Colors.grey[50],
-  //         child: Column(
-  //           children: [
-  //             _chatHeader(),
-  //             Expanded(
-  //               child: GestureDetector(
-  //                 onTap: () => FocusScope.of(context).unfocus(),
-  //                 child: _buildMessageList(),
-  //               ),
-  //             ),
-  //             _buildMessageInput(),
-  //           ],
-  //         ),
-  //       ),
-  //       floatingActionButtonLocation: FloatingActionButtonLocation.miniEndFloat,
-  //       floatingActionButton: AnimatedOpacity(
-  //         opacity: _showScrollToBottom ? 1.0 : 0.0,
-  //         duration: const Duration(milliseconds: 200),
-  //         child: _showScrollToBottom
-  //             ? FloatingActionButton(
-  //                 tooltip: 'Scroll to bottom',
-  //                 backgroundColor: Colors.white,
-  //                 elevation: 4,
-  //                 onPressed: _scrollToBottom,
-  //                 child: const Icon(Icons.keyboard_arrow_down, color: AppColors.primaryBlue),
-  //               )
-  //             : null,
-  //       ),
-  //     ),
-  //   );
-  // }
-
   Widget build(BuildContext context) {
     return Drawer(
       width: MediaQuery.of(context).size.width * 0.4,
       child: SelectionArea(
         child: Column(
           children: [
+            _buildGeneralDetails(),
             _chatHeader(),
             Expanded(
               child: GestureDetector(
@@ -270,6 +182,47 @@ class ChatScreenState extends State<ChatScreen> {
             _buildMessageInput(),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildGeneralDetails() {
+    return Container(
+      color: AppColors.primaryBlue,
+      padding: const EdgeInsets.all(8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            supportProvider.orderId ?? '',
+            style: const TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.w600,
+              fontSize: 18,
+            ),
+          ),
+          Row(
+            children: [
+              Container(
+                width: 8,
+                height: 8,
+                margin: const EdgeInsets.only(right: 6),
+                decoration: const BoxDecoration(
+                  color: Colors.greenAccent,
+                  shape: BoxShape.circle,
+                ),
+              ),
+              Text(
+                "$userName • ${supportProvider.currentUserRole}",
+                style: const TextStyle(
+                  color: Colors.white70,
+                  fontSize: 13,
+                  fontWeight: FontWeight.normal,
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }
@@ -288,7 +241,7 @@ class ChatScreenState extends State<ChatScreen> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                CircularProgressIndicator(
+                const CircularProgressIndicator(
                   valueColor: AlwaysStoppedAnimation<Color>(AppColors.primaryBlue),
                   strokeWidth: 3,
                 ),
@@ -355,7 +308,7 @@ class ChatScreenState extends State<ChatScreen> {
         return ListView.builder(
           controller: _scrollController,
           reverse: true,
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
           itemCount: allMessages.length,
           itemBuilder: (context, index) {
             final message = allMessages[index];
@@ -365,7 +318,7 @@ class ChatScreenState extends State<ChatScreen> {
             final String username = message.sender.split('@')[0];
 
             return Padding(
-              padding: const EdgeInsets.only(bottom: 16),
+              padding: const EdgeInsets.only(bottom: 8),
               child: Column(
                 crossAxisAlignment: isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
                 children: [
@@ -382,17 +335,17 @@ class ChatScreenState extends State<ChatScreen> {
                             fontWeight: FontWeight.w500,
                           ),
                         ),
-                        const Text(
-                          ' • ',
-                          style: TextStyle(color: Colors.grey),
-                        ),
-                        Text(
-                          message.userRole,
-                          style: TextStyle(
-                            color: Colors.grey[600],
-                            fontSize: 12,
-                          ),
-                        ),
+                        // const Text(
+                        //   ' • ',
+                        //   style: TextStyle(color: Colors.grey),
+                        // ),
+                        // Text(
+                        //   message.userRole,
+                        //   style: TextStyle(
+                        //     color: Colors.grey[600],
+                        //     fontSize: 12,
+                        //   ),
+                        // ),
                       ],
                     ),
                   ),
@@ -559,78 +512,103 @@ class ChatScreenState extends State<ChatScreen> {
 
   Widget _chatHeader() {
     return Container(
-      padding: const EdgeInsets.all(16),
-      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      padding: const EdgeInsets.all(5),
+      margin: const EdgeInsets.all(5),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [Colors.blue.shade50, Colors.blue.shade100],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.blue.shade200, width: 1),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 5,
-            offset: const Offset(0, 2),
-          ),
-        ],
+        color: Colors.orange.shade50,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.orange.shade200),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Row(
         children: [
-          Row(
-            children: [
-              Icon(Icons.support_agent, color: Colors.blue.shade700, size: 24),
-              const SizedBox(width: 8),
-              Text(
-                "Order Support Chat",
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.blue.shade900,
-                  letterSpacing: 0.2,
-                ),
+          Icon(Icons.info_outline, size: 16, color: Colors.orange.shade800),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              "This chat is monitored by administrators. Please keep the discussion focused on order-related issues only.",
+              style: TextStyle(
+                fontSize: 12,
+                color: Colors.orange.shade900,
+                height: 1.3,
               ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Text(
-            "Use this chat to discuss and resolve order-related issues.",
-            style: TextStyle(
-              fontSize: 14,
-              height: 1.4,
-              color: Colors.grey.shade800,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: Colors.orange.shade50,
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: Colors.orange.shade200),
-            ),
-            child: Row(
-              children: [
-                Icon(Icons.info_outline, size: 16, color: Colors.orange.shade800),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    "This chat is monitored by administrators. Please keep the discussion focused on order-related issues only.",
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Colors.orange.shade900,
-                      height: 1.3,
-                    ),
-                  ),
-                ),
-              ],
             ),
           ),
         ],
       ),
     );
+    // return Container(
+    //   padding: const EdgeInsets.all(8),
+    //   margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+    //   decoration: BoxDecoration(
+    //     gradient: LinearGradient(
+    //       colors: [Colors.blue.shade50, Colors.blue.shade100],
+    //       begin: Alignment.topLeft,
+    //       end: Alignment.bottomRight,
+    //     ),
+    //     borderRadius: BorderRadius.circular(12),
+    //     border: Border.all(color: Colors.blue.shade200, width: 1),
+    //     boxShadow: [
+    //       BoxShadow(
+    //         color: Colors.black.withValues(alpha: 0.05),
+    //         blurRadius: 5,
+    //         offset: const Offset(0, 2),
+    //       ),
+    //     ],
+    //   ),
+    //   child: Column(
+    //     crossAxisAlignment: CrossAxisAlignment.start,
+    //     children: [
+    //       Row(
+    //         children: [
+    //           Icon(Icons.support_agent, color: Colors.blue.shade700, size: 24),
+    //           const SizedBox(width: 8),
+    //           Text(
+    //             "Order Support Chat",
+    //             style: TextStyle(
+    //               fontSize: 18,
+    //               fontWeight: FontWeight.bold,
+    //               color: Colors.blue.shade900,
+    //               letterSpacing: 0.2,
+    //             ),
+    //           ),
+    //         ],
+    //       ),
+    //       const SizedBox(height: 8),
+    //       Text(
+    //         "Use this chat to discuss and resolve order-related issues.",
+    //         style: TextStyle(
+    //           fontSize: 14,
+    //           height: 1.4,
+    //           color: Colors.grey.shade800,
+    //         ),
+    //       ),
+    //       const SizedBox(height: 8),
+    //       Container(
+    //         padding: const EdgeInsets.all(5),
+    //         decoration: BoxDecoration(
+    //           color: Colors.orange.shade50,
+    //           borderRadius: BorderRadius.circular(8),
+    //           border: Border.all(color: Colors.orange.shade200),
+    //         ),
+    //         child: Row(
+    //           children: [
+    //             Icon(Icons.info_outline, size: 16, color: Colors.orange.shade800),
+    //             const SizedBox(width: 8),
+    //             Expanded(
+    //               child: Text(
+    //                 "This chat is monitored by administrators. Please keep the discussion focused on order-related issues only.",
+    //                 style: TextStyle(
+    //                   fontSize: 12,
+    //                   color: Colors.orange.shade900,
+    //                   height: 1.3,
+    //                 ),
+    //               ),
+    //             ),
+    //           ],
+    //         ),
+    //       ),
+    //     ],
+    //   ),
+    // );
   }
 }

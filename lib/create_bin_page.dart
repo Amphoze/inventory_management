@@ -1,5 +1,4 @@
 import 'dart:developer';
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'dart:convert';
@@ -8,7 +7,6 @@ import 'package:inventory_management/Api/bin_api.dart';
 import 'package:inventory_management/provider/location_provider.dart';
 import 'package:logger/logger.dart';
 import 'package:provider/provider.dart';
-
 import 'Api/auth_provider.dart';
 import 'Custom-Files/colors.dart';
 import 'Custom-Files/utils.dart';
@@ -23,7 +21,6 @@ class CreateBinPage extends StatefulWidget {
 
 class _CreateBinPageState extends State<CreateBinPage> {
   final _formKey = GlobalKey<FormState>();
-
   final TextEditingController _binNameController = TextEditingController();
   final TextEditingController _subBinNameController = TextEditingController();
   final TextEditingController _binDescriptionController = TextEditingController();
@@ -42,19 +39,14 @@ class _CreateBinPageState extends State<CreateBinPage> {
   }
 
   Future<void> _createBin() async {
-    if (!_formKey.currentState!.validate()) {
-      return;
-    }
+    if (!_formKey.currentState!.validate()) return;
 
-    setState(() {
-      _isLoading = true;
-    });
+    setState(() => _isLoading = true);
 
     try {
       final baseUrl = await Constants.getBaseUrl();
       final url = '$baseUrl/bin';
       Logger().d('Create bin URL: $url');
-
       final token = await AuthProvider().getToken();
 
       final response = await http.post(
@@ -73,49 +65,30 @@ class _CreateBinPageState extends State<CreateBinPage> {
       );
 
       log("Create bin response status: ${response.statusCode}");
-
-      setState(() {
-        _isLoading = false;
-      });
+      setState(() => _isLoading = false);
 
       if (response.statusCode == 200 || response.statusCode == 201) {
-        final data = json.decode(response.body);
-        log("Create bin response data: $data");
-
         _resetForm();
-
         Navigator.pop(context);
-
         context.read<BinApi>().fetchBins(context);
-
-        Utils.showSnackBar(context, 'Bin "${_binNameController.text}" created successfully!', color: Colors.green);
+        Utils.showSnackBar(context, 'Bin "${_binNameController.text}" created!', color: Colors.green);
       } else {
         final errorData = json.decode(response.body);
-        final errorMessage = errorData['message'] ?? 'Unknown error occurred';
-
-        Utils.showSnackBar(context, 'Failed to create bin: $errorMessage', color: Colors.red);
-
-        log('Failed to create bin: ${response.statusCode}, $errorMessage');
+        Utils.showSnackBar(context, 'Failed: ${errorData['message'] ?? 'Unknown error'}', color: Colors.red);
       }
     } catch (e) {
       log('Error creating bin: $e');
-
-      setState(() {
-        _isLoading = false;
-      });
-
-      Utils.showSnackBar(context, 'Error: ${e.toString()}', color: Colors.red);
+      setState(() => _isLoading = false);
+      Utils.showSnackBar(context, 'Error: $e', color: Colors.red);
     }
   }
 
   void _resetForm() {
     _binNameController.clear();
-    _binDescriptionController.clear();
     _subBinNameController.clear();
+    _binDescriptionController.clear();
     _binCapacityController.clear();
-    setState(() {
-      _selectedWarehouse = 'Gilehri Warehouse';
-    });
+    setState(() => _selectedWarehouse = 'Gilehri Warehouse');
   }
 
   @override
@@ -123,117 +96,98 @@ class _CreateBinPageState extends State<CreateBinPage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Create Bin'),
-        elevation: 0,
+        elevation: 1,
+        shadowColor: Colors.grey.shade300,
+        backgroundColor: Colors.white,
       ),
-      body: Container(
-        child: SafeArea(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(16.0),
-            child: Form(
-              key: _formKey,
+      body: Center(
+        child: Container(
+          width: MediaQuery.of(context).size.width * 0.5, // Fixed width for web compactness
+          margin: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.grey.shade200,
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Form(
+            key: _formKey,
+            child: SingleChildScrollView(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const SizedBox(height: 16),
                   const Text(
-                    'Create New Storage Bin',
+                    'Create New Bin',
                     style: TextStyle(
-                      fontSize: 24,
+                      fontSize: 20,
                       fontWeight: FontWeight.bold,
                       color: AppColors.primaryBlue,
                     ),
                   ),
-                  const SizedBox(height: 8),
-                  const Text(
-                    'Add a new bin to your warehouse inventory system.',
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: Colors.black54,
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-                  _buildSectionTitle('Bin Name'),
-                  TextFormField(
+                  const SizedBox(height: 16),
+                  _buildTextField(
                     controller: _binNameController,
-                    decoration: _buildInputDecoration('Enter bin name', Icons.inventory),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Bin name is required';
-                      }
-                      if (value.length < 3) {
-                        return 'Bin name must be at least 3 characters';
-                      }
-                      return null;
-                    },
+                    label: 'Bin Name',
+                    icon: Icons.inventory,
+                    validator: (value) =>
+                    value!.isEmpty ? 'Required' : (value.length < 3 ? 'Min 3 chars' : null),
                   ),
-                  const SizedBox(height: 24),
-                  _buildSectionTitle('Sub-bin Name'),
-                  TextFormField(
+                  const SizedBox(height: 12),
+                  _buildTextField(
                     controller: _subBinNameController,
-                    decoration: _buildInputDecoration('Enter sub-bin name', Icons.inventory),
-                    // validator: (value) {
-                    //   if (value == null || value.isEmpty) {
-                    //     return 'Sub-Bin name is required';
-                    //   }
-                    //   if (value.length < 3) {
-                    //     return 'Bin name must be at least 3 characters';
-                    //   }
-                    //   return null;
-                    // },
+                    label: 'Sub-bin Name',
+                    icon: Icons.inventory,
                   ),
-                  const SizedBox(height: 20),
-                  _buildSectionTitle('Bin Capacity'),
-                  TextFormField(
+                  const SizedBox(height: 12),
+                  _buildTextField(
                     controller: _binCapacityController,
-                    decoration: _buildInputDecoration('Enter capacity (units)', Icons.dashboard),
+                    label: 'Bin Capacity',
+                    icon: Icons.dashboard,
                     keyboardType: TextInputType.number,
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Bin capacity is required';
-                      }
-                      if (int.tryParse(value) == null) {
-                        return 'Invalid capacity';
-                      }
-                      return null;
-                    },
                     inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                    validator: (value) =>
+                    value!.isEmpty ? 'Required' : (int.tryParse(value) == null ? 'Invalid' : null),
                   ),
-                  const SizedBox(height: 20),
-                  _buildSectionTitle('Warehouse'),
+                  const SizedBox(height: 12),
                   _buildWarehouseDropdown(),
-                  const SizedBox(height: 20),
-                  _buildSectionTitle('Bin Description'),
-                  TextFormField(
+                  const SizedBox(height: 12),
+                  _buildTextField(
                     controller: _binDescriptionController,
-                    decoration: _buildInputDecoration('Enter bin description', Icons.description),
-                    maxLines: 3,
+                    label: 'Bin Description',
+                    icon: Icons.description,
+                    maxLines: 2,
                   ),
-                  const SizedBox(height: 32),
+                  const SizedBox(height: 20),
                   SizedBox(
                     width: double.infinity,
-                    height: 50,
+                    height: 45,
                     child: ElevatedButton(
                       onPressed: _isLoading ? null : _createBin,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.primaryBlue,
                         foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                         elevation: 2,
+                        shadowColor: Colors.grey.shade300,
                       ),
                       child: _isLoading
-                          ? const CircularProgressIndicator(color: Colors.white)
+                          ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                      )
                           : const Text(
-                              'CREATE BIN',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
+                        'Create Bin',
+                        style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                      ),
                     ),
                   ),
-                  const SizedBox(height: 20),
                 ],
               ),
             ),
@@ -243,79 +197,92 @@ class _CreateBinPageState extends State<CreateBinPage> {
     );
   }
 
-  Widget _buildSectionTitle(String title) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8.0),
-      child: Text(
-        title,
-        style: const TextStyle(
-          fontSize: 16,
-          fontWeight: FontWeight.bold,
-          color: AppColors.primaryBlue,
+  Widget _buildTextField({
+    required TextEditingController controller,
+    required String label,
+    required IconData icon,
+    TextInputType? keyboardType,
+    List<TextInputFormatter>? inputFormatters,
+    String? Function(String?)? validator,
+    int maxLines = 1,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.primaryBlue),
         ),
-      ),
-    );
-  }
-
-  InputDecoration _buildInputDecoration(String hint, IconData icon) {
-    return InputDecoration(
-      hintText: hint,
-      prefixIcon: Icon(icon, color: AppColors.primaryBlue),
-      filled: true,
-      fillColor: Colors.white,
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(8),
-        borderSide: BorderSide(color: Colors.grey.shade300),
-      ),
-      enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(8),
-        borderSide: BorderSide(color: Colors.grey.shade300),
-      ),
-      focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(8),
-        borderSide: const BorderSide(color: AppColors.primaryBlue, width: 2),
-      ),
-      errorBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(8),
-        borderSide: BorderSide(color: Colors.red.shade300),
-      ),
-      contentPadding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+        const SizedBox(height: 4),
+        TextFormField(
+          controller: controller,
+          decoration: InputDecoration(
+            prefixIcon: Icon(icon, color: AppColors.primaryBlue, size: 20),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: BorderSide(color: Colors.grey.shade300),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: BorderSide(color: Colors.grey.shade300),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: const BorderSide(color: AppColors.primaryBlue, width: 1.5),
+            ),
+            errorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: BorderSide(color: Colors.red.shade300),
+            ),
+            contentPadding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
+            isDense: true,
+          ),
+          keyboardType: keyboardType,
+          inputFormatters: inputFormatters,
+          validator: validator,
+          maxLines: maxLines,
+          style: const TextStyle(fontSize: 14),
+        ),
+      ],
     );
   }
 
   Widget _buildWarehouseDropdown() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.grey.shade300),
-      ),
-      child: Consumer<LocationProvider>(builder: (context, pro, child) {
-        return DropdownButtonHideUnderline(
-          child: DropdownButton<String>(
-            value: _selectedWarehouse,
-            isExpanded: true,
-            icon: const Icon(Icons.arrow_drop_down, color: AppColors.primaryBlue),
-            iconSize: 24,
-            elevation: 16,
-            style: const TextStyle(color: Colors.black87, fontSize: 16),
-            onChanged: (String? newValue) {
-              if (newValue != null) {
-                setState(() {
-                  _selectedWarehouse = newValue;
-                });
-              }
-            },
-            items: pro.warehouses.map<DropdownMenuItem<String>>((dynamic warehouse) {
-              return DropdownMenuItem<String>(
-                value: warehouse['name'],
-                child: Text(warehouse['name']),
-              );
-            }).toList(),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Warehouse',
+          style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.primaryBlue),
+        ),
+        const SizedBox(height: 4),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: Colors.grey.shade300),
           ),
-        );
-      }),
+          child: Consumer<LocationProvider>(
+            builder: (context, pro, child) => DropdownButtonHideUnderline(
+              child: DropdownButton<String>(
+                value: _selectedWarehouse,
+                isExpanded: true,
+                icon: const Icon(Icons.arrow_drop_down, color: AppColors.primaryBlue, size: 20),
+                style: const TextStyle(color: Colors.black87, fontSize: 14),
+                onChanged: (String? newValue) {
+                  if (newValue != null) setState(() => _selectedWarehouse = newValue);
+                },
+                items: pro.warehouses.map<DropdownMenuItem<String>>((dynamic warehouse) {
+                  return DropdownMenuItem<String>(
+                    value: warehouse['name'],
+                    child: Text(warehouse['name']),
+                  );
+                }).toList(),
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
