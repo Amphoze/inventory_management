@@ -298,7 +298,7 @@ class _StatusDetailsPageState extends State<StatusDetailsPage> {
                   child: Container(
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
-                        colors: [Colors.white, AppColors.primaryBlue.withOpacity(0.05)],
+                        colors: [Colors.white, AppColors.primaryBlue.withValues(alpha: 0.05)],
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                       ),
@@ -315,7 +315,7 @@ class _StatusDetailsPageState extends State<StatusDetailsPage> {
                               child: Container(
                                 padding: const EdgeInsets.all(8),
                                 decoration: BoxDecoration(
-                                  color: AppColors.primaryBlue.withOpacity(0.1),
+                                  color: AppColors.primaryBlue.withValues(alpha: 0.1),
                                   borderRadius: BorderRadius.circular(8),
                                 ),
                                 child: const Icon(Icons.filter_alt, color: AppColors.primaryBlue, size: 18),
@@ -350,7 +350,7 @@ class _StatusDetailsPageState extends State<StatusDetailsPage> {
                                     Container(
                                       height: 12,
                                       width: 1,
-                                      color: Colors.grey.withOpacity(0.5),
+                                      color: Colors.grey.withValues(alpha: 0.5),
                                     ),
                                     const SizedBox(width: 8),
                                     const Icon(Icons.list_alt, size: 14, color: Colors.grey),
@@ -379,7 +379,7 @@ class _StatusDetailsPageState extends State<StatusDetailsPage> {
                           //     child: Container(
                           //       padding: const EdgeInsets.all(8),
                           //       decoration: BoxDecoration(
-                          //         color: AppColors.primaryBlue.withOpacity(0.1),
+                          //         color: AppColors.primaryBlue.withValues(alpha: 0.1),
                           //         borderRadius: BorderRadius.circular(20),
                           //       ),
                           //       child: const Icon(Icons.tune, size: 18, color: AppColors.primaryBlue),
@@ -395,27 +395,14 @@ class _StatusDetailsPageState extends State<StatusDetailsPage> {
 
                 // Status Summary
                 const Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 4.0),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text(
-                        'Status Summary',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black87,
-                        ),
-                      ),
-                      // Text(
-                      //   'Total: ${provider.statusTotals.values.fold(0, (sum, count) => sum + count)}',
-                      //   style: const TextStyle(
-                      //     fontSize: 14,
-                      //     fontWeight: FontWeight.w500,
-                      //     color: AppColors.primaryBlue,
-                      //   ),
-                      // ),
-                    ],
+                  padding: EdgeInsets.symmetric(vertical: 8.0, horizontal: 4.0),
+                  child: Text(
+                    'Status Summary',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black87,
+                    ),
                   ),
                 ),
 
@@ -435,8 +422,8 @@ class _StatusDetailsPageState extends State<StatusDetailsPage> {
                             String statusKey = provider.statusTotals.keys.elementAt(index);
                             int total = provider.statusTotals[statusKey] ?? 0;
                             String percentage = provider.statusPercentages[statusKey] ?? "0";
-                            double parsedPercentage = double.tryParse(percentage) ?? 0;
-                            Color changeColor = parsedPercentage >= 0 ? Colors.green : Colors.red;
+                            int parsedPercentage = double.tryParse(percentage)?.round() ?? 0;
+                            // Color changeColor = parsedPercentage >= 0 ? Colors.green : Colors.red;
                             String displayName = orderStatusMap[statusKey] ?? statusKey.toUpperCase();
 
                             return Card(
@@ -445,10 +432,10 @@ class _StatusDetailsPageState extends State<StatusDetailsPage> {
                                 borderRadius: BorderRadius.circular(8),
                                 side: BorderSide(
                                   color: parsedPercentage > 0
-                                      ? Colors.green.withOpacity(0.3)
+                                      ? Colors.green.withValues(alpha: 0.3)
                                       : parsedPercentage < 0
-                                          ? Colors.red.withOpacity(0.3)
-                                          : Colors.grey.withOpacity(0.2),
+                                          ? Colors.red.withValues(alpha: 0.3)
+                                          : Colors.grey.withValues(alpha: 0.2),
                                   width: 1,
                                 ),
                               ),
@@ -509,7 +496,7 @@ class _StatusDetailsPageState extends State<StatusDetailsPage> {
                                     //   borderRadius: BorderRadius.circular(4),
                                     //   child: LinearProgressIndicator(
                                     //     value: total / (provider.statusTotals.values.fold(0, (sum, count) => sum + count) * 1.2),
-                                    //     backgroundColor: Colors.grey.withOpacity(0.2),
+                                    //     backgroundColor: Colors.grey.withValues(alpha: 0.2),
                                     //     color: _getStatusColor(statusKey),
                                     //     minHeight: 4,
                                     //   ),

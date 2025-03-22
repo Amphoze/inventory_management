@@ -239,6 +239,7 @@ class OutboundProvider with ChangeNotifier {
   }
 
   Future<void> fetchOrders({int page = 1}) async {
+    searchController.clear();
     dispatchCount = rtoCount = allCount = null;
     if (page < 1 || page > totalReadyPages) {
       print('Invalid page number for ready orders: $page');
@@ -554,7 +555,7 @@ class OutboundProvider with ChangeNotifier {
   }
 
   Future<void> searchOrdersByID(String orderId) async {
-    String encodedOrderId = Uri.encodeComponent(orderId);
+    String encodedOrderId = Uri.encodeComponent(orderId.trim());
 
     final prefs = await SharedPreferences.getInstance();
     final warehouseId = prefs.getString('warehouseId') ?? '';
@@ -649,7 +650,7 @@ class OutboundProvider with ChangeNotifier {
     final prefs = await SharedPreferences.getInstance();
     final warehouseId = prefs.getString('warehouseId') ?? '';
 
-    String url = '${await Constants.getBaseUrl()}/orders?marketplace=Shopify,Woocommerce&isOutBound=false&phone=$phone';
+    String url = '${await Constants.getBaseUrl()}/orders?marketplace=Shopify,Woocommerce&isOutBound=false&phone=${phone.trim()}';
     final token = await _getToken();
     if (token == null) return;
 

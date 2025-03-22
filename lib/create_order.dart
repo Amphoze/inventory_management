@@ -174,49 +174,66 @@ class _CreateOrderPageState extends State<CreateOrderPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _buildDropdown(
-                  value: provider.selectedPayment,
-                  label: 'Payment Mode',
-                  items: const ['Partial Payment', 'PrePaid', 'COD'],
-                  onChanged: provider.selectPayment,
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Required';
-                    }
-                    return null;
-                  },
+                Row(
+                  children: [
+                    Expanded(
+                      child: _buildDropdown(
+                        value: provider.selectedPayment,
+                        label: 'Payment Mode',
+                        items: const ['Partial Payment', 'PrePaid', 'COD'],
+                        onChanged: provider.selectPayment,
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Required';
+                          }
+                          return null;
+                        },
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: _buildTextField(
+                        controller: provider.currencyCodeController,
+                        label: "Currency Code",
+                        icon: Icons.currency_bitcoin,
+                        validator: (value) => (value?.isEmpty ?? false) ? 'Required' : null,
+                      ),
+                    ),
+                  ],
                 ),
                 const SizedBox(height: 10),
-                _buildTextField(
-                  controller: provider.currencyCodeController,
-                  label: "Currency Code",
-                  icon: Icons.currency_bitcoin,
-                  validator: (value) => (value?.isEmpty ?? false) ? 'Required' : null,
-                ),
-                const SizedBox(height: 10),
-                _buildTextField(
-                  controller: provider.codAmountController,
-                  label: 'COD Amount',
-                  icon: Icons.money,
-                  enabled: false,
-                  validator: (value) => (value?.isEmpty ?? false) ? 'Required' : null,
-                ),
-                const SizedBox(height: 10),
-                provider.selectedPayment != 'COD'
-                    ? _buildTextField(
+                Row(
+                  children: [
+                    Expanded(
+                      child: _buildTextField(
+                        controller: provider.codAmountController,
+                        label: 'COD Amount',
+                        icon: Icons.money,
+                        enabled: false,
+                        validator: (value) => (value?.isEmpty ?? false) ? 'Required' : null,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    // if (provider.selectedPayment != 'COD')
+                    Expanded(
+                      child: _buildTextField(
                         controller: provider.prepaidAmountController,
                         label: 'Prepaid Amount',
                         icon: Icons.credit_card,
                         validator: (value) => (value?.isEmpty ?? false) ? 'Required' : null,
-                      )
-                    : const SizedBox(),
-                const SizedBox(height: 10),
-                _buildTextField(
-                  controller: provider.totalAmtController,
-                  label: 'Total Amount',
-                  enabled: false,
-                  icon: Icons.currency_rupee,
-                  validator: (value) => (value?.isEmpty ?? false) ? 'Required' : null,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: _buildTextField(
+                        controller: provider.totalAmtController,
+                        label: 'Total Amount',
+                        enabled: false,
+                        icon: Icons.currency_rupee,
+                        validator: (value) => (value?.isEmpty ?? false) ? 'Required' : null,
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
@@ -239,14 +256,16 @@ class _CreateOrderPageState extends State<CreateOrderPage> {
               children: [
                 _buildHeading("Discount Information"),
                 const SizedBox(height: 10),
-                _buildTextField(
-                  controller: provider.discountCodeController,
-                  label: 'Discount Code',
-                  icon: Icons.discount,
-                ),
-                const SizedBox(height: 10),
                 Row(
                   children: [
+                    Expanded(
+                      child: _buildTextField(
+                        controller: provider.discountCodeController,
+                        label: 'Discount Code',
+                        icon: Icons.discount,
+                      ),
+                    ),
+                    const SizedBox(width: 10),
                     Expanded(
                       child: _buildTextField(
                         controller: provider.discountPercentController,
@@ -469,11 +488,11 @@ class _CreateOrderPageState extends State<CreateOrderPage> {
                           if (value.isEmpty) {
                             context.read<CreateOrderProvider>().clearLocationDetails(isBilling: true);
                           }
-                          if (value.length == 6) {
-                            context.read<CreateOrderProvider>().getLocationDetails(context: context, pincode: value, isBilling: true);
-                          }
+                          // if (value.length == 6) {
+                          context.read<CreateOrderProvider>().getLocationDetails(context: context, pincode: value, isBilling: true);
+                          // }
                         },
-                        maxLength: 6,
+                        // maxLength: 6,
                         isNumber: true,
                       ),
                     ),
@@ -627,11 +646,11 @@ class _CreateOrderPageState extends State<CreateOrderPage> {
                           if (value.isEmpty) {
                             context.read<CreateOrderProvider>().clearLocationDetails(isBilling: false);
                           }
-                          if (value.length == 6) {
+                          // if (value.length == 6) {
                             context.read<CreateOrderProvider>().getLocationDetails(context: context, pincode: value, isBilling: false);
-                          }
+                          // }
                         },
-                        maxLength: 6,
+                        // maxLength: 6,
                         isNumber: true,
                       ),
                     ),
@@ -999,16 +1018,12 @@ class _CreateOrderPageState extends State<CreateOrderPage> {
       keyboardType: TextInputType.phone,
       inputFormatters: [
         FilteringTextInputFormatter.digitsOnly,
-        LengthLimitingTextInputFormatter(10),
+        // LengthLimitingTextInputFormatter(10),
       ],
       validator: validator ??
           (value) {
-            if (value != null) {
-              if (value.isEmpty) {
-                return 'Required';
-              } else if (value.length != 10) {
-                return 'Invalid phone number';
-              }
+            if (value != null && value.isNotEmpty) {
+              return 'Required';
             }
             return null;
           },

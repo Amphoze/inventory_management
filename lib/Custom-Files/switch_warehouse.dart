@@ -104,7 +104,7 @@ class _SwitchWarehouseState extends State<SwitchWarehouse> {
                           margin: const EdgeInsets.only(bottom: 8),
                           padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
                           decoration: BoxDecoration(
-                            color: isSelected ? Colors.blue.withOpacity(0.1) : Colors.white,
+                            color: isSelected ? Colors.blue.withValues(alpha: 0.1) : Colors.white,
                             borderRadius: BorderRadius.circular(8),
                             border: Border.all(
                               color: isSelected ? Colors.blue : Colors.grey.shade200,
@@ -206,7 +206,7 @@ class _SwitchWarehouseState extends State<SwitchWarehouse> {
                   borderRadius: BorderRadius.circular(8),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.05),
+                      color: Colors.black.withValues(alpha: 0.05),
                       blurRadius: 4,
                       offset: const Offset(0, 2),
                     ),

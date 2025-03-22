@@ -681,7 +681,7 @@ class _InventoryDataTableState extends State<InventoryDataTable> {
 
   void _showDetailsDialog(
       BuildContext context, Map<String, dynamic> data) async {
-    List<dynamic> inventoryLogs = data['inventoryLogs'] ?? [];
+    List<dynamic> inventoryLogs = (data['inventoryLogs'] as List?)?.reversed.toList() ?? [];
 
     showDialog(
       context: context,
@@ -1423,7 +1423,9 @@ class _OuterboxDataTableState extends State<OuterboxDataTable> {
 
   void _showDetailsDialog(
       BuildContext context, Map<String, dynamic> data) async {
-    List<dynamic> logs = data['LOGS'] ?? [];
+    // List<dynamic> logs = data['LOGS'] ?? [];
+    List<dynamic> logs = (data['LOGS'] as List?)?.reversed.toList() ?? [];
+
 
     showDialog(
       context: context,

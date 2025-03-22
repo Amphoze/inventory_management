@@ -1466,22 +1466,20 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
                                         ),
                                       ),
                                     ),
-                                    if (_ordersProvider.selectedPayment != 'PrePaid') ...[
-                                      const SizedBox(height: 10),
-                                      _buildTextField(
-                                        controller: _codAmountController,
-                                        label: 'COD Amount',
-                                        icon: Icons.money,
-                                      ),
-                                    ],
-                                    if (_ordersProvider.selectedPayment != 'COD') ...[
-                                      const SizedBox(height: 10),
-                                      _buildTextField(
-                                        controller: _prepaidAmountController,
-                                        label: 'Prepaid Amount',
-                                        icon: Icons.credit_card,
-                                      ),
-                                    ],
+                                    // if (_ordersProvider.selectedPayment != 'PrePaid') ...[],
+                                    const SizedBox(height: 10),
+                                    _buildTextField(
+                                      controller: _codAmountController,
+                                      label: 'COD Amount',
+                                      icon: Icons.money,
+                                    ),
+                                    // if (_ordersProvider.selectedPayment != 'COD') ...[],
+                                    const SizedBox(height: 10),
+                                    _buildTextField(
+                                      controller: _prepaidAmountController,
+                                      label: 'Prepaid Amount',
+                                      icon: Icons.credit_card,
+                                    ),
                                     const SizedBox(height: 10),
                                     _buildTextField(
                                       controller: _totalAmtController,
@@ -2714,14 +2712,15 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
 
       // Update total amount
       _totalAmtController.text = finalTotal.toStringAsFixed(2);
-      final selectedPayment = _ordersProvider.selectedPayment;
-
-      // Update based on selected payment type
-      if (selectedPayment == 'COD') {
-        _codAmountController.text = finalTotal.toStringAsFixed(2);
-      } else if (selectedPayment == 'PrePaid') {
-        _prepaidAmountController.text = finalTotal.toStringAsFixed(2);
-      }
+      _codAmountController.text = finalTotal.toStringAsFixed(2);
+      // final selectedPayment = _ordersProvider.selectedPayment;
+      //
+      // // Update based on selected payment type
+      // if (selectedPayment == 'COD') {
+      //   _codAmountController.text = finalTotal.toStringAsFixed(2);
+      // } else if (selectedPayment == 'PrePaid') {
+      //   _prepaidAmountController.text = finalTotal.toStringAsFixed(2);
+      // }
 
       // Update discount amount if applicable
       if (discountPercent != 0) {

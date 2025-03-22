@@ -241,6 +241,7 @@ class AccountsProvider with ChangeNotifier {
   }
 
   Future<void> fetchOrdersWithStatus2() async {
+    accountsSearch.clear();
     // if (accountsSearch.text.trim().isNotEmpty) {
     //   searchOrders(accountsSearch.text.trim(), selectedSearchType);
     //   return;
@@ -301,16 +302,16 @@ class AccountsProvider with ChangeNotifier {
     }
   }
 
-  void onSearchChanged(String query) {
-    if (_debounce?.isActive ?? false) _debounce!.cancel();
-    _debounce = Timer(const Duration(milliseconds: 500), () {
-      if (query.isEmpty) {
-        fetchOrdersWithStatus2();
-      } else {
-        searchOrders(query, 'Order ID');
-      }
-    });
-  }
+  // void onSearchChanged(String query) {
+  //   if (_debounce?.isActive ?? false) _debounce!.cancel();
+  //   _debounce = Timer(const Duration(milliseconds: 500), () {
+  //     if (query.isEmpty) {
+  //       fetchOrdersWithStatus2();
+  //     } else {
+  //       searchOrders(query, 'Order ID');
+  //     }
+  //   });
+  // }
 
   Future<List<Order>> searchOrders(String query, String searchType) async {
     if (query.isEmpty) {
@@ -325,7 +326,7 @@ class AccountsProvider with ChangeNotifier {
     final token = prefs.getString('authToken') ?? '';
     final warehouseId = prefs.getString('warehouseId') ?? '';
 
-    String encodedOrderId = Uri.encodeComponent(query);
+    String encodedOrderId = Uri.encodeComponent(query.trim());
 
     String url = '${await Constants.getBaseUrl()}/orders?warehouse=$warehouseId&orderStatus=2';
 
@@ -484,6 +485,7 @@ class AccountsProvider with ChangeNotifier {
   }
 
   Future<void> fetchInvoicedOrders(int page) async {
+    invoiceSearch.clear();
     // if(invoiceSearch.text.trim().isNotEmpty) {
     //   searchInvoicedOrders(invoiceSearch.text.trim(), selectedSearchType);
     // }

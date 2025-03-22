@@ -134,7 +134,7 @@ class _AccountsPageState extends State<AccountsPage> {
                               },
                               onSubmitted: (query) {
                                 accountsProvider.resetFilterData();
-                                if (query.isNotEmpty) {
+                                if (query.trim().isNotEmpty) {
                                   accountsProvider.searchOrders(query, accountsProvider.selectedSearchType);
                                 } else {
                                   accountsProvider.fetchOrdersWithStatus2();
@@ -146,12 +146,12 @@ class _AccountsPageState extends State<AccountsPage> {
                             ),
                           ),
                           if (accountsProvider.accountsSearch.text.isNotEmpty)
-                            IconButton(
-                              icon: Icon(
+                            InkWell(
+                              child: Icon(
                                 Icons.close,
                                 color: Colors.grey.shade600,
                               ),
-                              onPressed: () {
+                              onTap: () {
                                 setState(() {
                                   accountsProvider.accountsSearch.clear();
                                 });

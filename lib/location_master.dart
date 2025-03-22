@@ -44,33 +44,33 @@ class _LocationMasterState extends State<LocationMaster> {
     }
   }
 
-  // Future<void> _deleteWarehouse(
-  //     BuildContext context, String warehouseId) async {
-  //   final locationProvider =
-  //       Provider.of<LocationProvider>(context, listen: false);
+  Future<void> _deleteWarehouse(
+      BuildContext context, String warehouseId) async {
+    final locationProvider =
+        Provider.of<LocationProvider>(context, listen: false);
 
-  //   locationProvider.setLoading(true);
-  //   bool isDeleted =
-  //       await locationProvider.deleteWarehouse(context, warehouseId);
+    locationProvider.setLoading(true);
+    bool isDeleted =
+        await locationProvider.deleteWarehouse(context, warehouseId);
 
-  //   if (isDeleted) {
-  //     ScaffoldMessenger.of(context).showSnackBar(
-  //       const SnackBar(
-  //         content: Text('Warehouse deleted successfully'),
-  //         backgroundColor: AppColors.primaryGreen,
-  //       ),
-  //     );
-  //     _refreshData();
-  //   } else {
-  //     ScaffoldMessenger.of(context).showSnackBar(
-  //       const SnackBar(
-  //         content: Text('Failed to delete warehouse'),
-  //         backgroundColor: AppColors.cardsred,
-  //       ),
-  //     );
-  //   }
-  //   locationProvider.setLoading(false);
-  // }
+    if (isDeleted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Warehouse deleted successfully'),
+          backgroundColor: AppColors.primaryGreen,
+        ),
+      );
+      _refreshData();
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Failed to delete warehouse'),
+          backgroundColor: AppColors.cardsred,
+        ),
+      );
+    }
+    locationProvider.setLoading(false);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -285,10 +285,10 @@ class _LocationMasterState extends State<LocationMaster> {
                 setState(() {});
               },
             ),
-            // IconButton(
-            //   icon: const Icon(Icons.delete, color: AppColors.cardsred),
-            //   onPressed: () => _deleteWarehouse(context, warehouse['_id']),
-            // ),
+            IconButton(
+              icon: const Icon(Icons.delete, color: AppColors.cardsred),
+              onPressed: () => _deleteWarehouse(context, warehouse['_id']),
+            ),
           ],
         ),
       };

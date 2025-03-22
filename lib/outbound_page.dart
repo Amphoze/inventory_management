@@ -38,7 +38,6 @@ class _OutboundPageState extends State<OutboundPage> with TickerProviderStateMix
   void initState() {
     super.initState();
     provider = context.read<OutboundProvider>();
-    provider.resetFilter();
     // _tabController = TabController(length: 2, vsync: this);
     // _searchController = TextEditingController();
     provider.searchController = TextEditingController();
@@ -46,6 +45,7 @@ class _OutboundPageState extends State<OutboundPage> with TickerProviderStateMix
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _reloadOrders();
+      provider.resetFilter();
     });
     // _searchController.clear();
     provider.searchController.clear();
@@ -468,12 +468,12 @@ class _OutboundPageState extends State<OutboundPage> with TickerProviderStateMix
                             ),
                           ),
                           if (provider.searchController.text.isNotEmpty)
-                            IconButton(
-                              icon: Icon(
+                            InkWell(
+                              child: Icon(
                                 Icons.close,
                                 color: Colors.grey.shade600,
                               ),
-                              onPressed: () {
+                              onTap: () {
                                 provider.searchController.clear();
                                 pro.fetchOrders();
                                 pro.clearSearchResults();

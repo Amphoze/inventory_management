@@ -19,7 +19,6 @@ class AllOrdersPage extends StatefulWidget {
 }
 
 class _AllOrdersPageState extends State<AllOrdersPage> with SingleTickerProviderStateMixin {
-  final TextEditingController _searchController = TextEditingController();
   final TextEditingController _pageController = TextEditingController();
   List<Map<String, String>> statuses = [];
   bool areOrdersFetched = false;
@@ -27,6 +26,7 @@ class _AllOrdersPageState extends State<AllOrdersPage> with SingleTickerProvider
   String selectedStatus = 'All';
   DateTime? picked;
   String _selectedDate = 'Select Date';
+  late AllOrdersProvider allOrdersProvider;
 
   final Map<String, ValueNotifier<String?>> delhiveryTrackingStatuses = {};
   final Map<String, ValueNotifier<String?>> shiprocketTrackingStatuses = {};
@@ -34,12 +34,13 @@ class _AllOrdersPageState extends State<AllOrdersPage> with SingleTickerProvider
   @override
   void initState() {
     super.initState();
+    allOrdersProvider = Provider.of<AllOrdersProvider>(context, listen: false);
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
       selectedCourier = 'All';
       selectedStatus = 'All';
       _selectedDate = 'Select Date';
       picked = null;
-      final allOrdersProvider = Provider.of<AllOrdersProvider>(context, listen: false);
       allOrdersProvider.fetchAllOrders(page: allOrdersProvider.currentPage);
       context.read<MarketplaceProvider>().fetchMarketplaces();
       fetchStatuses();
@@ -47,7 +48,6 @@ class _AllOrdersPageState extends State<AllOrdersPage> with SingleTickerProvider
   }
 
   void fetchStatuses() async {
-    final allOrdersProvider = Provider.of<AllOrdersProvider>(context, listen: false);
     List<Map<String, String>> fetchedStatuses = await allOrdersProvider.getTrackingStatuses();
     log('fetchedStatuses: $fetchedStatuses');
 
@@ -60,7 +60,7 @@ class _AllOrdersPageState extends State<AllOrdersPage> with SingleTickerProvider
 
   @override
   void dispose() {
-    _searchController.dispose();
+    // allOrdersProvider.searchController.dispose();
     _pageController.dispose();
     for (var notifier in delhiveryTrackingStatuses.values) {
       notifier.dispose();
@@ -118,7 +118,6 @@ class _AllOrdersPageState extends State<AllOrdersPage> with SingleTickerProvider
   }
 
   Widget _searchBar() {
-    final TextEditingController controller = _searchController;
     return Padding(
       padding: const EdgeInsets.all(8.0),
       child: Container(
@@ -135,7 +134,7 @@ class _AllOrdersPageState extends State<AllOrdersPage> with SingleTickerProvider
           children: [
             Expanded(
               child: TextField(
-                controller: controller,
+                controller: allOrdersProvider.searchController,
                 decoration: const InputDecoration(
                   hintText: 'Search Orders',
                   hintStyle: TextStyle(
@@ -167,19 +166,19 @@ class _AllOrdersPageState extends State<AllOrdersPage> with SingleTickerProvider
                   if (text.trim().isEmpty) {
                     context.read<AllOrdersProvider>().fetchAllOrders();
                   } else {
-                    Provider.of<AllOrdersProvider>(context, listen: false).searchOrders(text);
+                    Provider.of<AllOrdersProvider>(context, listen: false).searchOrders(text.trim());
                   }
                 },
               ),
             ),
-            if (controller.text.isNotEmpty)
-              IconButton(
-                icon: Icon(
+            if (allOrdersProvider.searchController.text.isNotEmpty)
+              InkWell(
+                child: Icon(
                   Icons.close,
                   color: Colors.grey.shade600,
                 ),
-                onPressed: () {
-                  controller.clear();
+                onTap: () {
+                  allOrdersProvider.searchController.clear();
                   setState(() {
                     _selectedDate = 'Select Date';
                     picked = null;

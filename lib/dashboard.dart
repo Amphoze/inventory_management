@@ -37,7 +37,7 @@ import 'package:inventory_management/manage_inventory.dart';
 import 'package:inventory_management/manage_label_page.dart';
 import 'package:inventory_management/manage_outerbox.dart';
 import 'package:inventory_management/manifest_page.dart';
-import 'package:inventory_management/manifest_section.dart';
+import 'package:inventory_management/manifested_orders.dart';
 import 'package:inventory_management/marketplace_page.dart';
 import 'package:inventory_management/merge_orders_by_csv.dart';
 import 'package:inventory_management/orders_page.dart';
@@ -71,6 +71,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'Custom-Files/colors.dart';
 import 'Custom-Files/switch_warehouse.dart';
+import 'check_orders/check_orders_page.dart';
 
 class DashboardPage extends StatefulWidget {
   final String warehouseId;
@@ -533,6 +534,7 @@ class _DashboardPageState extends State<DashboardPage> {
           "RTO",
           "All Orders",
           "Return Entry"
+              "Supervisor"
         ].contains(selectedDrawerItem)
             ? Colors.blue.withValues(alpha: 0.2)
             : AppColors.white,
@@ -555,7 +557,8 @@ class _DashboardPageState extends State<DashboardPage> {
           "Cancelled",
           "RTO",
           "All Orders",
-          "Return Entry"
+          "Return Entry",
+          "Supervisor"
         ].contains(selectedDrawerItem),
         title: Text(
           'Orders',
@@ -862,6 +865,18 @@ class _DashboardPageState extends State<DashboardPage> {
               text: 'Return Entry',
               isSelected: selectedDrawerItem == 'Return Entry',
               onTap: () => _onDrawerItemTapped('Return Entry', isSmallScreen),
+              isIndented: true,
+              iconSize: 20,
+              fontSize: 14,
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.only(left: 10.0),
+            child: _buildDrawerItem(
+              icon: Icons.supervisor_account,
+              text: 'Supervisor',
+              isSelected: selectedDrawerItem == 'Supervisor',
+              onTap: () => _onDrawerItemTapped('Supervisor', isSmallScreen),
               isIndented: true,
               iconSize: 20,
               fontSize: 14,
@@ -1565,7 +1580,7 @@ class _DashboardPageState extends State<DashboardPage> {
       case 'Manifest Page':
         return const ManifestPage();
       case 'Manifested Orders':
-        return const ManifestSection();
+        return const ManifestedOrders();
       case 'Dispatched':
         return const DispatchedOrders();
       case 'Support':
@@ -1578,6 +1593,8 @@ class _DashboardPageState extends State<DashboardPage> {
         return const AllOrdersPage();
       case 'Return Entry':
         return const ReturnEntry();
+      case 'Supervisor':
+        return const CheckOrdersPage();
       case 'Product Master':
         return const ProductMasterPage();
       case 'Create Label Page':

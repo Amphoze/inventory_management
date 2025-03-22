@@ -246,6 +246,8 @@ class BookProvider with ChangeNotifier {
   }
 
   Future<void> fetchOrders(String type, int page) async {
+    b2bSearchController.clear();
+    b2cSearchController.clear();
     String? token = await _getToken();
     final prefs = await SharedPreferences.getInstance();
     final warehouseId = prefs.getString('warehouseId') ?? '';
@@ -337,6 +339,7 @@ class BookProvider with ChangeNotifier {
   }
 
   Future<void> fetchBookedOrders(int page) async {
+    searchController.clear();
     String? token = await _getToken();
     final prefs = await SharedPreferences.getInstance();
     final warehouseId = prefs.getString('warehouseId') ?? '';
@@ -1211,18 +1214,18 @@ class BookProvider with ChangeNotifier {
                   children: headers
                       .map(
                         (header) => pw.Padding(
-                      padding: const pw.EdgeInsets.all(2),
-                      child: pw.Text(
-                        header,
-                        style: pw.TextStyle(
-                          fontSize: 10,
-                          fontWeight: pw.FontWeight.bold,
-                          color: PdfColors.black,
+                          padding: const pw.EdgeInsets.all(2),
+                          child: pw.Text(
+                            header,
+                            style: pw.TextStyle(
+                              fontSize: 10,
+                              fontWeight: pw.FontWeight.bold,
+                              color: PdfColors.black,
+                            ),
+                            textAlign: pw.TextAlign.center,
+                          ),
                         ),
-                        textAlign: pw.TextAlign.center,
-                      ),
-                    ),
-                  )
+                      )
                       .toList(),
                 ),
                 // Data rows with colors based on OrderId
@@ -1239,19 +1242,17 @@ class BookProvider with ChangeNotifier {
                         .entries
                         .map(
                           (cell) => pw.Padding(
-                        padding: const pw.EdgeInsets.all(2),
-                        child: pw.Text(
-                          cell.value,
-                          style: const pw.TextStyle(
-                            fontSize: 10,
-                            color: PdfColors.black,
+                            padding: const pw.EdgeInsets.all(2),
+                            child: pw.Text(
+                              cell.value,
+                              style: const pw.TextStyle(
+                                fontSize: 10,
+                                color: PdfColors.black,
+                              ),
+                              textAlign: cell.key == 3 || cell.key == 4 ? pw.TextAlign.right : pw.TextAlign.left,
+                            ),
                           ),
-                          textAlign: cell.key == 3 || cell.key == 4
-                              ? pw.TextAlign.right
-                              : pw.TextAlign.left,
-                        ),
-                      ),
-                    )
+                        )
                         .toList(),
                   );
                 }).toList(),

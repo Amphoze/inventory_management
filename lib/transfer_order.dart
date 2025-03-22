@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:inventory_management/Custom-Files/colors.dart';
 import 'package:inventory_management/Widgets/combo_card.dart';
 import 'package:inventory_management/Widgets/product_card.dart';
@@ -326,11 +327,11 @@ class _TransferOrderPageState extends State<TransferOrderPage> {
                           if (value.isEmpty) {
                             context.read<TransferOrderProvider>().clearLocationDetails(isBilling: true);
                           }
-                          if (value.length == 6) {
+                          // if (value.length == 6) {
                             context.read<TransferOrderProvider>().getLocationDetails(context: context, pincode: value, isBilling: true);
-                          }
+                          // }
                         },
-                        maxLength: 6,
+                        // maxLength: 6,
                         isNumber: true,
                       ),
                     ),
@@ -431,11 +432,11 @@ class _TransferOrderPageState extends State<TransferOrderPage> {
                           if (value.isEmpty) {
                             context.read<TransferOrderProvider>().clearLocationDetails(isBilling: false);
                           }
-                          if (value.length == 6) {
+                          // if (value.length == 6) {
                             context.read<TransferOrderProvider>().getLocationDetails(context: context, pincode: value, isBilling: false);
-                          }
+                          // }
                         },
-                        maxLength: 6,
+                        // maxLength: 6,
                         isNumber: true,
                       ),
                     ),
@@ -762,7 +763,10 @@ class _TransferOrderPageState extends State<TransferOrderPage> {
       controller: phoneController,
       enabled: enabled,
       keyboardType: TextInputType.phone,
-      maxLength: 10,
+      inputFormatters: [
+        FilteringTextInputFormatter.digitsOnly,
+      ],
+      // maxLength: 10,
       validator: validator ??
           (value) {
             if (value != null) {

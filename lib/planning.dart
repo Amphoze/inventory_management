@@ -161,7 +161,7 @@ class _PlanningScreenState extends State<PlanningScreen> with SingleTickerProvid
         flexibleSpace: Container(
           decoration: BoxDecoration(
             gradient: LinearGradient(
-              colors: [AppColors.primaryBlue.withOpacity(0.9), AppColors.primaryBlue],
+              colors: [AppColors.primaryBlue.withValues(alpha: 0.9), AppColors.primaryBlue],
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
             ),
@@ -233,7 +233,7 @@ class _PlanningScreenState extends State<PlanningScreen> with SingleTickerProvid
                     backgroundColor: AppColors.primaryBlue,
                     shape: RoundedRectangleBorder(borderRadius: UIConstants.defaultBorderRadius),
                     elevation: 6,
-                    shadowColor: AppColors.primaryBlue.withOpacity(0.4),
+                    shadowColor: AppColors.primaryBlue.withValues(alpha: 0.4),
                   ),
                   child: AnimatedSwitcher(
                     duration: const Duration(milliseconds: 300),
@@ -256,9 +256,9 @@ class _PlanningScreenState extends State<PlanningScreen> with SingleTickerProvid
                     child: Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: AppColors.primaryBlue.withOpacity(0.1),
+                        color: AppColors.primaryBlue.withValues(alpha: 0.1),
                         borderRadius: UIConstants.defaultBorderRadius,
-                        border: Border.all(color: AppColors.primaryBlue.withOpacity(0.3)),
+                        border: Border.all(color: AppColors.primaryBlue.withValues(alpha: 0.3)),
                       ),
                       child: Text(
                         statusMessage,
@@ -319,7 +319,7 @@ class _PlanningScreenState extends State<PlanningScreen> with SingleTickerProvid
         border: OutlineInputBorder(borderRadius: UIConstants.defaultBorderRadius),
         enabledBorder: OutlineInputBorder(
           borderRadius: UIConstants.defaultBorderRadius,
-          borderSide: BorderSide(color: AppColors.primaryBlue.withOpacity(0.5)),
+          borderSide: BorderSide(color: AppColors.primaryBlue.withValues(alpha: 0.5)),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: UIConstants.defaultBorderRadius,

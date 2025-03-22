@@ -232,10 +232,10 @@ class BaApproveProvider with ChangeNotifier {
   }
 
   Future<List<Order>> searchOrders(String query) async {
-    if (query.isEmpty) {
-      await fetchOrdersWithStatus2();
-      return _orders;
-    }
+    // if (query.isEmpty) {
+    //   await fetchOrdersWithStatus2();
+    //   return _orders;
+    // }
 
     _isLoading = true;
     notifyListeners();
@@ -244,7 +244,7 @@ class BaApproveProvider with ChangeNotifier {
     final token = prefs.getString('authToken') ?? '';
     final warehouseId = prefs.getString('warehouseId') ?? '';
 
-    String encodedOrderId = Uri.encodeComponent(query);
+    String encodedOrderId = Uri.encodeComponent(query.trim());
 
     final url = '${await Constants.getBaseUrl()}/orders?warehouse=$warehouseId&orderStatus=2&ba_approve=false&order_id=$encodedOrderId';
 

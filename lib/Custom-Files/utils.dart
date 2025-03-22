@@ -74,4 +74,19 @@ class Utils {
       },
     );
   }
+
+  static Widget richText(String title, String subTitle) {
+    return Text.rich(
+      TextSpan(
+        text: title,
+        children: [
+          TextSpan(
+            text: subTitle,
+            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.normal),
+          ),
+        ],
+      ),
+      style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+    );
+  }
 }

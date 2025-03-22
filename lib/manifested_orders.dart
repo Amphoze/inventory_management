@@ -7,15 +7,15 @@ import 'package:inventory_management/Custom-Files/colors.dart';
 import 'package:inventory_management/provider/manifest_provider.dart';
 import 'package:inventory_management/Custom-Files/custom_pagination.dart';
 
-class ManifestSection extends StatefulWidget {
-  const ManifestSection({super.key});
+class ManifestedOrders extends StatefulWidget {
+  const ManifestedOrders({super.key});
 
   @override
-  State<ManifestSection> createState() => _ManifestSectionState();
+  State<ManifestedOrders> createState() => _ManifestedOrdersState();
 }
 
-class _ManifestSectionState extends State<ManifestSection> {
-  final TextEditingController _searchController = TextEditingController();
+class _ManifestedOrdersState extends State<ManifestedOrders> {
+  late ManifestProvider manifestProvider;
 
   @override
   void initState() {
@@ -27,7 +27,7 @@ class _ManifestSectionState extends State<ManifestSection> {
   }
 
   void _onSearchButtonPressed() {
-    final query = _searchController.text.trim();
+    final query = manifestProvider.manifestedController.text.trim();
     if (query.isNotEmpty) {
       Provider.of<ManifestProvider>(context, listen: false).onSearchChanged(query);
     }
@@ -56,7 +56,7 @@ class _ManifestSectionState extends State<ManifestSection> {
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: TextField(
-                        controller: _searchController,
+                        controller: manifestProvider.manifestedController,
                         style: const TextStyle(color: Colors.black),
                         decoration: const InputDecoration(
                           hintText: 'Search by Manifest ID',
@@ -88,7 +88,7 @@ class _ManifestSectionState extends State<ManifestSection> {
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.primaryBlue,
                       ),
-                      onPressed: _searchController.text.isNotEmpty ? _onSearchButtonPressed : null,
+                      onPressed: manifestProvider.manifestedController.text.isNotEmpty ? _onSearchButtonPressed : null,
                       child: const Text(
                         'Search',
                         style: TextStyle(color: Colors.white),

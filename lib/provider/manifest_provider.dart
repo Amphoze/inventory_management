@@ -11,6 +11,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:intl/intl.dart';
 
 class ManifestProvider with ChangeNotifier {
+  final TextEditingController manifestController = TextEditingController();
+  final TextEditingController manifestedController = TextEditingController();
   bool _isLoading = false;
   bool _selectAll = false;
   List<bool> _selectedProducts = [];
@@ -114,6 +116,7 @@ class ManifestProvider with ChangeNotifier {
   }
 
   Future<void> fetchOrdersWithStatus8({DateTime? date, String? courier = 'All'}) async {
+    manifestController.clear();
     _isLoading = true;
     setRefreshingOrders(true);
     notifyListeners();
@@ -174,6 +177,7 @@ class ManifestProvider with ChangeNotifier {
   }
 
   Future<void> fetchCreatedManifests(int page) async {
+    manifestedController.clear();
     Logger().e('fetchCreatedManifests');
     _isLoading = true;
     setRefreshingOrders(true);

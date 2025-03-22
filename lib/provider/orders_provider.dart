@@ -319,6 +319,7 @@ class OrdersProvider with ChangeNotifier {
   }
 
   Future<void> fetchFailedOrders({int page = 1}) async {
+    searchControllerFailed.clear();
     log("called");
 
     if (page < 1 || page > totalFailedPages) {
@@ -385,6 +386,7 @@ class OrdersProvider with ChangeNotifier {
   }
 
   Future<void> fetchReadyOrders({int page = 1}) async {
+    searchControllerReady.clear();
     log('fetchReadyOrders');
     if (page < 1 || page > totalReadyPages) {
       return;
@@ -399,7 +401,7 @@ class OrdersProvider with ChangeNotifier {
     final prefs = await SharedPreferences.getInstance();
     final warehouseId = prefs.getString('warehouseId') ?? '';
 
-    var readyOrdersUrl = '${await Constants.getBaseUrl()}/orders?warehouse=$warehouseId&orderStatus=1&page=$page';
+    var readyOrdersUrl = '${await Constants.getBaseUrl()}/orders?warehouse=$warehouseId&orderStatus=1&page=$page&find=true';
 
     if (readyPicked != null) {
       String formattedDate = DateFormat('yyyy-MM-dd').format(readyPicked!);
@@ -797,12 +799,12 @@ class OrdersProvider with ChangeNotifier {
   }
 
   Future<void> searchReadyToConfirmOrders(String orderId) async {
-    String encodedOrderId = Uri.encodeComponent(orderId);
+    String encodedOrderId = Uri.encodeComponent(orderId.trim());
 
     final prefs = await SharedPreferences.getInstance();
     final warehouseId = prefs.getString('warehouseId') ?? '';
 
-    final url = Uri.parse('${await Constants.getBaseUrl()}/orders?warehouse=$warehouseId&orderStatus=1&order_id=$encodedOrderId');
+    final url = Uri.parse('${await Constants.getBaseUrl()}/orders?warehouse=$warehouseId&orderStatus=1&order_id=$encodedOrderId&find=true');
     final token = await _getToken();
     if (token == null) return;
 
@@ -837,7 +839,7 @@ class OrdersProvider with ChangeNotifier {
   }
 
   Future<void> searchFailedOrders(String orderId) async {
-    String encodedOrderId = Uri.encodeComponent(orderId);
+    String encodedOrderId = Uri.encodeComponent(orderId.trim());
     final prefs = await SharedPreferences.getInstance();
     final warehouseId = prefs.getString('warehouseId') ?? '';
 

@@ -18,16 +18,16 @@ class ManifestPage extends StatefulWidget {
 }
 
 class _ManifestPageState extends State<ManifestPage> {
-  final TextEditingController _searchController = TextEditingController();
   String _selectedDate = 'Select Date';
   DateTime? picked;
   String selectedCourier = 'All';
+  late ManifestProvider manifestProvider;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      Provider.of<ManifestProvider>(context, listen: false).fetchOrdersWithStatus8(date: picked, courier: selectedCourier);
+      manifestProvider.fetchOrdersWithStatus8(date: picked, courier: selectedCourier);
       _selectedDate = 'Select Date';
       selectedCourier = 'All';
       picked = null;
@@ -36,7 +36,7 @@ class _ManifestPageState extends State<ManifestPage> {
   }
 
   void _onSearchButtonPressed() {
-    final query = _searchController.text.trim();
+    final query = manifestProvider.manifestController.text.trim();
     if (query.isNotEmpty) {
       Provider.of<ManifestProvider>(context, listen: false).onSearchChanged(query);
     }
@@ -65,7 +65,7 @@ class _ManifestPageState extends State<ManifestPage> {
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: TextField(
-                        controller: _searchController,
+                        controller: manifestProvider.manifestController,
                         style: const TextStyle(color: Colors.black),
                         decoration: const InputDecoration(
                           hintText: 'Search by Order ID',
@@ -100,7 +100,7 @@ class _ManifestPageState extends State<ManifestPage> {
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.primaryBlue,
                       ),
-                      onPressed: _searchController.text.isNotEmpty ? _onSearchButtonPressed : null,
+                      onPressed: manifestProvider.manifestController.text.isNotEmpty ? _onSearchButtonPressed : null,
                       child: const Text(
                         'Search',
                         style: TextStyle(color: Colors.white),

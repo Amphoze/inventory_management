@@ -10,6 +10,7 @@ import 'package:logger/logger.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class AllOrdersProvider with ChangeNotifier {
+  final TextEditingController searchController = TextEditingController();
   bool _isLoading = false;
   bool _selectAll = false;
   final List<bool> _selectedProducts = [];
@@ -215,6 +216,7 @@ class AllOrdersProvider with ChangeNotifier {
   }
 
   Future<void> fetchAllOrders({int page = 1, DateTime? date, String? status, String? marketplace}) async {
+    searchController.clear();
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('authToken') ?? '';
     final warehouseId = prefs.getString('warehouseId') ?? '';

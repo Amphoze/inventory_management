@@ -10,6 +10,7 @@ import 'package:inventory_management/Api/label-api.dart';
 import 'package:inventory_management/Api/lable-page-api.dart';
 import 'package:inventory_management/Api/order-page-checkbox-provider.dart';
 import 'package:inventory_management/Api/products-provider.dart';
+import 'package:inventory_management/check_orders/provider/check_orders_provider.dart';
 import 'package:inventory_management/dashboard.dart';
 import 'package:inventory_management/firebase_options.dart';
 import 'package:inventory_management/login_page.dart';
@@ -104,6 +105,7 @@ void main() async {
       ChangeNotifierProvider(create: (context) => ChatProvider()),
       ChangeNotifierProvider(create: (context) => ReturnEntryProvider()),
       ChangeNotifierProvider(create: (context) => RoutingProvider()),
+      ChangeNotifierProvider(create: (context) => CheckOrdersProvider()),
     ],
     child: const MyApp(),
   ));

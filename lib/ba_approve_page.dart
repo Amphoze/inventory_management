@@ -122,8 +122,10 @@ class _BaApprovePageState extends State<BaApprovePage> {
                             _selectedDate = 'Select Date';
                             picked = null;
                           });
-                          if (query.isNotEmpty) {
+                          if (query.trim().isNotEmpty) {
                             baApproveProvider.searchOrders(query);
+                          } else {
+                            baApproveProvider.fetchOrdersWithStatus2();
                           }
                         },
                         onEditingComplete: () {

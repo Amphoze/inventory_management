@@ -365,104 +365,15 @@ class _PercentDashboardCardState extends State<PercentDashboardCard> {
                   ),
                 ),
                 const SizedBox(height: 8),
-                // Expanded(
-                //   child: provider.isPercentLoading
-                //       ? const Center(child: CircularProgressIndicator())
-                //       : statusKeys.isNotEmpty
-                //           ? Row(
-                //               mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                //               children: [
-                //                 IconButton(
-                //                   tooltip: 'Previous Status',
-                //                   icon: const Icon(Icons.arrow_left, size: 20),
-                //                   padding: EdgeInsets.zero,
-                //                   constraints: const BoxConstraints(),
-                //                   onPressed: currentStatusIndex > 0 ? () => setState(() => currentStatusIndex--) : null,
-                //                   color: currentStatusIndex > 0 ? AppColors.primaryBlue : Colors.grey,
-                //                 ),
-                //                 provider.isPercentLoading
-                //                     ? const Center(child: CircularProgressIndicator())
-                //                     : statusKeys.isNotEmpty
-                //                         ? Container(
-                //                             decoration: BoxDecoration(
-                //                               borderRadius: BorderRadius.circular(8.0),
-                //                             ),
-                //                             child: Row(
-                //                               mainAxisAlignment: MainAxisAlignment.center,
-                //                               children: [
-                //                                 Text(
-                //                                   "${orderStatusMap[currentStatus] ?? currentStatus.toUpperCase()}: ",
-                //                                   style: const TextStyle(
-                //                                     fontSize: 20,
-                //                                     fontWeight: FontWeight.w700,
-                //                                     color: Colors.black,
-                //                                   ),
-                //                                   overflow: TextOverflow.ellipsis,
-                //                                 ),
-                //                                 const SizedBox(height: 4),
-                //                                 Row(
-                //                                   mainAxisAlignment: MainAxisAlignment.center,
-                //                                   children: [
-                //                                     Text(
-                //                                       '$currentTotal',
-                //                                       style: const TextStyle(
-                //                                         fontSize: 18,
-                //                                         color: Colors.black,
-                //                                       ),
-                //                                     ),
-                //                                     const SizedBox(width: 6),
-                //                                     Text(
-                //                                       '(${parsedPercentage.toStringAsFixed(2)}%)',
-                //                                       style: TextStyle(
-                //                                         fontSize: 18,
-                //                                         fontWeight: FontWeight.w500,
-                //                                         color: changeColor,
-                //                                       ),
-                //                                     ),
-                //                                   ],
-                //                                 ),
-                //                               ],
-                //                             ),
-                //                           )
-                //                         : const Center(
-                //                             child: Text(
-                //                               'No Status Selected',
-                //                               style: TextStyle(
-                //                                 fontSize: 14,
-                //                                 fontWeight: FontWeight.w500,
-                //                                 color: Colors.grey,
-                //                               ),
-                //                             ),
-                //                           ),
-                //                 IconButton(
-                //                   tooltip: 'Next Status',
-                //                   icon: const Icon(Icons.arrow_right, size: 20),
-                //                   padding: EdgeInsets.zero,
-                //                   constraints: const BoxConstraints(),
-                //                   onPressed:
-                //                       currentStatusIndex < statusKeys.length - 1 ? () => setState(() => currentStatusIndex++) : null,
-                //                   color: currentStatusIndex < statusKeys.length - 1 ? AppColors.primaryBlue : Colors.grey,
-                //                 ),
-                //               ],
-                //             )
-                //           : const Text(
-                //               'Select Statuses to View',
-                //               style: TextStyle(
-                //                 fontSize: 14,
-                //                 fontWeight: FontWeight.w500,
-                //                 color: Colors.grey,
-                //               ),
-                //             ),
-                // ),
                 Expanded(
                   child: provider.isPercentLoading
-                      ? Center(child: CircularProgressIndicator())
+                      ? const Center(child: CircularProgressIndicator())
                       : statusKeys.isNotEmpty
                           ? CarouselSlider(
                               options: CarouselOptions(
                                 height: widget.height * 0.6, // Adjust height as needed
                                 autoPlay: true,
-                                autoPlayInterval: Duration(seconds: 3),
+                                autoPlayInterval: const Duration(seconds: 3),
                                 enlargeCenterPage: true,
                                 viewportFraction: 0.9,
                               ),
@@ -470,10 +381,10 @@ class _PercentDashboardCardState extends State<PercentDashboardCard> {
                                 int currentTotal = provider.statusTotals[status] ?? 0;
                                 String currentPercentage = provider.statusPercentages[status] ?? "0";
                                 double parsedPercentage = double.tryParse(currentPercentage) ?? 0;
-                                Color changeColor = parsedPercentage >= 0 ? Colors.green : Colors.red;
+                                // Color changeColor = parsedPercentage >= 0 ? Colors.green : Colors.red;
 
                                 return Container(
-                                  margin: EdgeInsets.symmetric(horizontal: 5.0),
+                                  margin: const EdgeInsets.symmetric(horizontal: 5.0),
                                   decoration: BoxDecoration(
                                     color: AppColors.white,
                                     borderRadius: BorderRadius.circular(8.0),
@@ -485,7 +396,7 @@ class _PercentDashboardCardState extends State<PercentDashboardCard> {
                                       children: [
                                         Text(
                                           "${orderStatusMap[status] ?? status.toUpperCase()}: ",
-                                          style: TextStyle(
+                                          style: const TextStyle(
                                             fontSize: 18,
                                             fontWeight: FontWeight.w700,
                                             color: Colors.black,
@@ -505,7 +416,7 @@ class _PercentDashboardCardState extends State<PercentDashboardCard> {
                                 );
                               }).toList(),
                             )
-                          : Text(
+                          : const Text(
                               'Select Statuses to View',
                               style: TextStyle(
                                 fontSize: 14,
