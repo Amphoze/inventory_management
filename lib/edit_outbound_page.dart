@@ -43,6 +43,7 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
   List<int> deletedItemsIndices = [];
   bool _isSavingOrder = false;
   String _selectedItemType = 'Product';
+  // String? selectedPayment;
 
   final Map<String, List<Item>> groupedComboItems = {};
 
@@ -72,11 +73,12 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
   late TextEditingController _idController;
   late TextEditingController _orderStatusController;
   late TextEditingController _dateController;
-  late TextEditingController _paymentModeController;
+  // late TextEditingController _paymentModeController;
   late TextEditingController _currencyCodeController;
   late TextEditingController _skuTrackingIdController;
   late TextEditingController _totalWeightController;
   late TextEditingController _totalAmtController;
+  late TextEditingController _originalAmtController;
   late TextEditingController _coinController;
   late TextEditingController _codAmountController;
   late TextEditingController _prepaidAmountController;
@@ -160,6 +162,7 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
   void initState() {
     super.initState();
     getProductsAndCombos();
+
     _scrollController = ScrollController();
     _ordersProvider = context.read<OrdersProvider>();
 
@@ -167,12 +170,13 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
     _idController = TextEditingController(text: widget.order.id);
     _orderStatusController = TextEditingController(text: widget.order.orderStatus.toString());
     _dateController = TextEditingController(text: widget.order.date != null ? _ordersProvider.formatDate(widget.order.date!) : '');
-    _paymentModeController = TextEditingController(text: widget.order.paymentMode ?? '');
-
+    // _paymentModeController = TextEditingController(text: widget.order.paymentMode ?? '');
+    // log('_paymentModeController: ${_paymentModeController.text}');
     _currencyCodeController = TextEditingController(text: widget.order.currencyCode ?? '');
     _skuTrackingIdController = TextEditingController(text: widget.order.skuTrackingId ?? '');
     _totalWeightController = TextEditingController(text: widget.order.totalWeight.toStringAsFixed(2) ?? '');
     _totalAmtController = TextEditingController(text: widget.order.totalAmount?.toString() ?? '');
+    _originalAmtController = TextEditingController(text: widget.order.totalAmount?.toString() ?? '');
     _coinController = TextEditingController(text: widget.order.coin.toString() ?? '');
     _codAmountController = TextEditingController(text: widget.order.codAmount.toString() ?? '');
     _prepaidAmountController = TextEditingController(text: widget.order.prepaidAmount.toString() ?? '');
@@ -182,24 +186,12 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
     _discountAmountController = TextEditingController(text: widget.order.discountAmount.toString() ?? '');
     _taxPercentController = TextEditingController(text: widget.order.taxPercent.toStringAsFixed(2) ?? '');
     _courierNameController = TextEditingController(text: widget.order.courierName ?? '');
-
     _orderTypeController = TextEditingController(text: widget.order.orderType ?? '');
     _customerTypeController = TextEditingController(text: widget.order.customer!.customerType ?? '');
-
     _marketplaceController = TextEditingController(text: widget.order.marketplace?.name.toString() ?? '');
-
     _filterController = TextEditingController(text: widget.order.filter ?? '');
-
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _ordersProvider.setInitialMarketplace(_marketplaceController.text);
-      _ordersProvider.setInitialPaymentMode(_paymentModeController.text);
-      _ordersProvider.setInitialCourier(_courierNameController.text);
-      _ordersProvider.setInitialFilter(_filterController.text);
-    });
-
     _freightChargeDelhiveryController = TextEditingController(text: widget.order.freightCharge?.delhivery?.toString() ?? '');
     _freightChargeShiprocketController = TextEditingController(text: widget.order.freightCharge?.shiprocket?.toString() ?? '');
-
     _agentController = TextEditingController(text: widget.order.agent ?? '');
     _notesController = TextEditingController(text: widget.order.notes ?? '');
     _expectedDeliveryDateController = TextEditingController(
@@ -220,17 +212,14 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
     _lengthController = TextEditingController(text: widget.order.length.toString() ?? '');
     _breadthController = TextEditingController(text: widget.order.breadth.toString() ?? '');
     _heightController = TextEditingController(text: widget.order.height.toString() ?? '');
-
     _awbNumberController = TextEditingController(text: widget.order.awbNumber);
     _trackingStatusController = TextEditingController(text: widget.order.trackingStatus ?? '');
-
     _customerIdController = TextEditingController(text: widget.order.customer?.customerId ?? '');
     _customerFirstNameController = TextEditingController(text: widget.order.customer?.firstName ?? '');
     _customerLastNameController = TextEditingController(text: widget.order.customer?.lastName ?? '');
     _customerEmailController = TextEditingController(text: widget.order.customer?.email ?? '');
     _customerPhoneController = TextEditingController(text: widget.order.customer?.phone?.toString() ?? '');
     _customerGstinController = TextEditingController(text: widget.order.customer?.customerGstin ?? '');
-
     _billingFirstNameController = TextEditingController(text: widget.order.billingAddress?.firstName ?? '');
     _billingLastNameController = TextEditingController(text: widget.order.billingAddress?.lastName ?? '');
     _billingEmailController = TextEditingController(text: widget.order.billingAddress?.email ?? '');
@@ -242,7 +231,6 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
     _billingStateController = TextEditingController(text: widget.order.billingAddress?.state ?? '');
     _billingCountryController = TextEditingController(text: widget.order.billingAddress?.country ?? '');
     _billingCountryCodeController = TextEditingController(text: widget.order.billingAddress?.countryCode ?? '');
-
     _shippingFirstNameController = TextEditingController(text: widget.order.shippingAddress?.firstName ?? '');
     _shippingLastNameController = TextEditingController(text: widget.order.shippingAddress?.lastName ?? '');
     _shippingEmailController = TextEditingController(text: widget.order.shippingAddress?.email ?? '');
@@ -254,6 +242,18 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
     _shippingStateController = TextEditingController(text: widget.order.shippingAddress?.state ?? '');
     _shippingCountryController = TextEditingController(text: widget.order.shippingAddress?.country ?? '');
     _shippingCountryCodeController = TextEditingController(text: widget.order.shippingAddress?.countryCode ?? '');
+
+    log("_prepaidAmountController: ${_prepaidAmountController.text}");
+    log("_discountPercentController: ${_discountPercentController.text}");
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _ordersProvider.setInitialMarketplace(_marketplaceController.text);
+      _ordersProvider.setInitialPaymentMode(widget.order.paymentMode);
+      _ordersProvider.setInitialCourier(_courierNameController.text);
+      _ordersProvider.setInitialFilter(_filterController.text);
+      _ordersProvider.selectOrderType(_orderTypeController.text);
+      _ordersProvider.selectCustomerType(_customerTypeController.text);
+    });
 
     for (var item in remainingItems!) {
       if (item.product != null) {
@@ -283,14 +283,14 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
 
     _initializeControllers();
 
-    log("addedComboList: $addedComboList");
-    log("addedProductList: $addedProductList");
-    log('productList: $productList');
-    log('comboList: $comboList');
-    log("comboFuture: $_combosFuture");
-    log("productFuture: $_productsFuture");
-    log("comboItemGroups: $comboItemGroups");
-    log("remainingItems: $remainingItems");
+    // log("addedComboList: $addedComboList");
+    // log("addedProductList: $addedProductList");
+    // log('productList: $productList');
+    // log('comboList: $comboList');
+    // log("comboFuture: $_combosFuture");
+    // log("productFuture: $_productsFuture");
+    // log("comboItemGroups: $comboItemGroups");
+    // log("remainingItems: $remainingItems");
   }
 
   @override
@@ -300,11 +300,12 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
     _idController.dispose();
     _orderStatusController.dispose();
     _dateController.dispose();
-    _paymentModeController.dispose();
+    // _paymentModeController.dispose();
     _currencyCodeController.dispose();
     _skuTrackingIdController.dispose();
     _totalWeightController.dispose();
     _totalAmtController.dispose();
+    _originalAmtController.dispose();
     _coinController.dispose();
     _codAmountController.dispose();
     _prepaidAmountController.dispose();
@@ -560,6 +561,15 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
   }
 
   Future<void> _saveChanges() async {
+    if (double.parse(_totalAmtController.text) > double.parse(_originalAmtController.text)) {
+      Utils.showSnackBar(context, "Total amount cannot be greater than original amount");
+    }
+
+    if ((_billingStateController.text.trim().length < 3) || (_shippingStateController.text.trim().length < 3)) {
+      Utils.showSnackBar(context, 'State name must be at least 3 characters long');
+      return;
+    }
+
     setState(() {
       _isSavingOrder = true;
     });
@@ -632,7 +642,7 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
     if (_formKey.currentState!.validate()) {
       Map<String, dynamic> updatedData = {
         'date': parseDate(_dateController.text)?.toIso8601String(),
-        'payment_mode': _paymentModeController.text,
+        'payment_mode': _ordersProvider.selectedPayment,
         'currency_code': _currencyCodeController.text,
         'sku_tracking_id': _skuTrackingIdController.text,
         'coin': _coinController.text,
@@ -1046,8 +1056,8 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
 
   @override
   Widget build(BuildContext context) {
-    String? selectedPayment = _ordersProvider.selectedPayment;
-    Logger().e('selectedPayment: $selectedPayment');
+    // selectedPayment = _ordersProvider.selectedPayment;
+    // Logger().e('selectedPayment: $selectedPayment');
     return Form(
       key: _formKey,
       child: Scaffold(
@@ -1125,14 +1135,9 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
                                       final String? selectedOrderType = ordersProvider.selectedOrderType;
 
                                       final List<DropdownMenuItem<String>> orderTypeItems = [
-                                        const DropdownMenuItem<String>(
-                                          value: 'New Buyer',
-                                          child: Text('New Buyer'),
-                                        ),
-                                        const DropdownMenuItem<String>(
-                                          value: 'Repeat Buyer',
-                                          child: Text('Repeat Buyer'),
-                                        ),
+                                        const DropdownMenuItem<String>(value: 'New Order', child: Text('New Order')),
+                                        const DropdownMenuItem<String>(value: 'Replacement Order', child: Text('Replacement Order')),
+                                        const DropdownMenuItem<String>(value: 'Partial Replacement', child: Text('Partial Replacement')),
                                       ];
 
                                       return DropdownButtonFormField<String>(
@@ -1348,10 +1353,9 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
                     const SizedBox(width: 16),
                     Expanded(
                       child: Consumer<OrdersProvider>(builder: (context, ordersProvider, child) {
-                        final bool isCustomPayment = selectedPayment != null &&
-                            selectedPayment.isNotEmpty &&
-                            selectedPayment != 'PrePaid' &&
-                            selectedPayment != 'COD';
+                        final String? selectedPayment = ordersProvider.selectedPayment;
+                        final bool isCustomPayment =
+                            (selectedPayment?.isNotEmpty ?? false) && selectedPayment != 'PrePaid' && selectedPayment != 'COD';
 
                         final List<DropdownMenuItem<String>> item = [
                           const DropdownMenuItem<String>(
@@ -1362,16 +1366,12 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
                             value: 'PrePaid',
                             child: Text('PrePaid'),
                           ),
-                          // const DropdownMenuItem<String>(
-                          //   value: 'Partial Payment',
-                          //   child: Text('Partial Payment'),
-                          // ),
                         ];
 
                         if (isCustomPayment) {
                           item.add(DropdownMenuItem<String>(
                             value: selectedPayment,
-                            child: Text(selectedPayment),
+                            child: Text(selectedPayment ?? ''),
                           ));
                         }
                         return Card(
@@ -1387,12 +1387,12 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     DropdownButtonFormField<String>(
-                                      value: selectedPayment,
+                                      value: _ordersProvider.selectedPayment,
                                       decoration: InputDecoration(
                                         labelText: 'Payment Mode',
                                         labelStyle: TextStyle(
                                           fontWeight: FontWeight.w500,
-                                          color: Colors.grey.withValues(alpha: 0.7),
+                                          color: Colors.grey.withOpacity(0.7),
                                           fontSize: 14,
                                         ),
                                         prefixIcon: Icon(Icons.payment, color: Colors.grey[700]),
@@ -1425,17 +1425,17 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
                                       dropdownColor: Colors.white,
                                       hint: const Text('Select Payment Mode'),
                                       items: item,
-                                      onChanged: (value) {
-                                        if (value != null && value.isNotEmpty) {
-                                          ordersProvider.selectPayment(value);
-                                          setState(() {
-                                            _paymentModeController.text = value;
-                                            _prepaidAmountController.text = _totalAmtController.text;
-                                          });
-                                          log('selectedPayment value: $value');
-                                          log('selectedPayment: ${ordersProvider.selectedPayment}');
-                                        }
-                                      },
+                                      onChanged: (double.tryParse(_codAmountController.text) ?? 0) > 0
+                                          ? null // Disable dropdown if COD amount > 0
+                                          : (value) {
+                                              if (value != null && value.isNotEmpty) {
+                                                setState(() {
+                                                  _ordersProvider.selectPayment(value);
+                                                });
+                                                log('selectedPayment value: $value');
+                                                log('selectedPayment: ${_ordersProvider.selectedPayment}');
+                                              }
+                                            },
                                     ),
                                     const SizedBox(height: 10),
                                     _buildTextField(
@@ -1472,20 +1472,32 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
                                       controller: _codAmountController,
                                       label: 'COD Amount',
                                       icon: Icons.money,
+                                      onFieldSubmitted: (value) => setState(() {}),
                                     ),
                                     // if (_ordersProvider.selectedPayment != 'COD') ...[],
                                     const SizedBox(height: 10),
                                     _buildTextField(
-                                      controller: _prepaidAmountController,
-                                      label: 'Prepaid Amount',
-                                      icon: Icons.credit_card,
-                                    ),
+                                        controller: _prepaidAmountController,
+                                        label: 'Prepaid Amount',
+                                        icon: Icons.credit_card,
+                                        onFieldSubmitted: (value) => setState(() => _updateTotals())),
                                     const SizedBox(height: 10),
                                     _buildTextField(
                                       controller: _totalAmtController,
                                       label: 'Total Amount',
                                       icon: Icons.currency_rupee,
+                                      enabled: false,
                                     ),
+                                    if ((double.tryParse(_prepaidAmountController.text) ?? 0) != 0 ||
+                                        (double.tryParse(_discountPercentController.text) ?? 0) != 0) ...[
+                                      const SizedBox(height: 10),
+                                      _buildTextField(
+                                        controller: _originalAmtController,
+                                        label: 'Original Amount',
+                                        icon: Icons.currency_rupee,
+                                        enabled: false,
+                                      ),
+                                    ]
                                   ],
                                 ),
                               ),
@@ -1912,13 +1924,22 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
                                 Expanded(
                                   child: Consumer<OrdersProvider>(
                                     builder: (context, ordersProvider, child) {
-                                      final String? selectedCustomerType = ordersProvider.selectedCustomerType;
-                                      final List<DropdownMenuItem<String>> customerTypeItems = [
-                                        const DropdownMenuItem<String>(value: 'New Order', child: Text('New Order')),
-                                        const DropdownMenuItem<String>(value: 'Replacement Order', child: Text('Replacement Order')),
-                                        const DropdownMenuItem<String>(value: 'Partial Replacement', child: Text('Partial Replacement')),
-                                      ];
+                                      final String? selectedCustomerType = ordersProvider.selectedCustomerType?.isNotEmpty == true
+                                          ? ordersProvider.selectedCustomerType
+                                          : null;
 
+                                      Logger().e("selectedCustomerType: $selectedCustomerType");
+
+                                      final List<DropdownMenuItem<String>> customerTypeItems = [
+                                        const DropdownMenuItem<String>(
+                                          value: 'New Buyer',
+                                          child: Text('New Buyer'),
+                                        ),
+                                        const DropdownMenuItem<String>(
+                                          value: 'Repeat Buyer',
+                                          child: Text('Repeat Buyer'),
+                                        ),
+                                      ];
                                       return DropdownButtonFormField<String>(
                                         value: selectedCustomerType,
                                         decoration: InputDecoration(
@@ -1959,10 +1980,8 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
                                         hint: const Text('Select Customer Type'),
                                         items: customerTypeItems,
                                         onChanged: (value) {
-                                          if (value != null) {
-                                            ordersProvider.selectCustomerType(value);
-                                            _customerTypeController.text = value;
-                                          }
+                                          ordersProvider.selectCustomerType(value);
+                                          _customerTypeController.text = value.toString();
                                         },
                                       );
                                     },
@@ -2077,10 +2096,11 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
                                 const SizedBox(width: 10),
                                 Expanded(
                                   child: _buildTextField(
-                                    controller: _billingPincodeController,
-                                    label: 'Pincode',
-                                    icon: Icons.code,
-                                  ),
+                                      controller: _billingPincodeController,
+                                      label: 'Pincode',
+                                      icon: Icons.code,
+                                      onFieldSubmitted: (value) =>
+                                          setState(() => getLocationDetails(context: context, pincode: value, isBilling: true))),
                                 ),
                                 const SizedBox(width: 10),
                                 Expanded(
@@ -2201,10 +2221,11 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
                                 const SizedBox(width: 10),
                                 Expanded(
                                   child: _buildTextField(
-                                    controller: _shippingPincodeController,
-                                    label: 'Pincode',
-                                    icon: Icons.code,
-                                  ),
+                                      controller: _shippingPincodeController,
+                                      label: 'Pincode',
+                                      icon: Icons.code,
+                                      onFieldSubmitted: (value) =>
+                                          setState(() => getLocationDetails(context: context, pincode: value, isBilling: false))),
                                 ),
                                 const SizedBox(width: 10),
                                 Expanded(
@@ -2602,15 +2623,15 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
     );
   }
 
-  Widget _buildTextField({
-    required TextEditingController controller,
-    required String label,
-    required IconData icon,
-    bool enabled = true,
-    TextInputType? keyboardType,
-    String? Function(String?)? validator,
-    bool obscureText = false,
-  }) {
+  Widget _buildTextField(
+      {required TextEditingController controller,
+      required String label,
+      required IconData icon,
+      bool enabled = true,
+      TextInputType? keyboardType,
+      String? Function(String?)? validator,
+      bool obscureText = false,
+      void Function(String)? onFieldSubmitted}) {
     return StatefulBuilder(
       builder: (context, setState) {
         return Focus(
@@ -2675,6 +2696,7 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
                   contentPadding: const EdgeInsets.symmetric(vertical: 15, horizontal: 12),
                 ),
                 cursorColor: AppColors.primaryBlue,
+                onFieldSubmitted: onFieldSubmitted,
               );
             },
           ),
@@ -2683,9 +2705,10 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
     );
   }
 
-  // Helper function to calculate total
   double _calculateTotal() {
     double total = 0;
+    int totalQty = 0; // Store total quantity separately
+
     final controllerPairs = [
       [_productQuantityControllers, _productRateControllers],
       [_addedProductQuantityControllers, _addedProductRateControllers],
@@ -2698,35 +2721,120 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
         final qty = int.tryParse(pair[0][i].text) ?? 0;
         final rate = double.tryParse(pair[1][i].text) ?? 0;
         total += qty * rate;
+        totalQty += qty; // Accumulate total quantity
       }
     }
+
+    setState(() {
+      _totalQuantityController.text = totalQty.toString(); // Use totalQty instead of qty
+    });
+
     return total;
   }
 
-// Updated helper function to update totals with discount and payment type logic
-  void _updateTotals(String value) {
-    if (value.isNotEmpty) {
-      final total = _calculateTotal();
-      final discountPercent = double.tryParse(_discountPercentController.text) ?? 0;
-      final double finalTotal = discountPercent != 0 ? total - (total * (discountPercent / 100)) : total;
 
-      // Update total amount
+  // void _updateTotals() {
+  //   final total = _calculateTotal(); // Calculate total from entered quantities & rates
+  //   _originalAmtController.text = total.toStringAsFixed(2);
+  //
+  //   final discountPercent = double.tryParse(_discountPercentController.text) ?? 0;
+  //   double prepaidAmount = double.tryParse(_prepaidAmountController.text) ?? 0;
+  //   double codAmount = double.tryParse(_codAmountController.text) ?? 0;
+  //
+  //   double finalTotal = discountPercent != 0
+  //       ? total - (total * (discountPercent / 100))
+  //       : total;
+  //
+  //   if (selectedPayment == null || selectedPayment!.isEmpty) {
+  //     selectedPayment = "COD";
+  //   }
+  //
+  //   if (selectedPayment == "COD") {
+  //     _codAmountController.text = finalTotal.toStringAsFixed(2);
+  //     _totalAmtController.text = finalTotal.toStringAsFixed(2);
+  //
+  //     // If the user enters a prepaid amount while COD is selected, switch to COD
+  //     if (prepaidAmount > 0) {
+  //       selectedPayment = "COD";
+  //     }
+  //   } else if (selectedPayment == "PrePaid") {
+  //     // Ensure COD amount is 0 before allowing PrePaid selection
+  //     if (codAmount > 0) {
+  //       selectedPayment = "COD"; // Switch back to COD if COD amount exists
+  //     } else {
+  //       _prepaidAmountController.text = finalTotal.toStringAsFixed(2);
+  //       _totalAmtController.text = finalTotal.toStringAsFixed(2);
+  //     }
+  //   }
+  //
+  //   if (discountPercent != 0) {
+  //     final discountAmount = total * (discountPercent / 100);
+  //     _discountAmountController.text = discountAmount.toStringAsFixed(2);
+  //   }
+  // }
+
+  // void _updateTotals() {
+  //   final total = _calculateTotal(); // Calculate total from entered quantities & rates
+  //   _originalAmtController.text = total.toStringAsFixed(2);
+  //   final discountPercent = double.tryParse(_discountPercentController.text) ?? 0;
+  //   final prepaidAmount = double.tryParse(_prepaidAmountController.text) ?? 0;
+  //
+  //   // Apply discount if present
+  //   double finalTotal = discountPercent != 0 ? total - (total * (discountPercent / 100)) : total;
+  //
+  //   // If COD was not modified earlier (means it's equal to total), update it
+  //   double previousCOD = double.tryParse(_codAmountController.text) ?? 0;
+  //   if (previousCOD == 0 || previousCOD == finalTotal) {
+  //     _codAmountController.text = finalTotal.toStringAsFixed(2);
+  //   }
+  //
+  //   // Adjust COD if prepaid is entered and COD is non-zero
+  //   double codAmount = double.tryParse(_codAmountController.text) ?? 0;
+  //   if (prepaidAmount > 0 && codAmount > 0) {
+  //     codAmount = finalTotal - prepaidAmount;
+  //   }
+  //
+  //   // Update fields
+  //   _codAmountController.text = codAmount.toStringAsFixed(2);
+  //   _totalAmtController.text = finalTotal.toStringAsFixed(2);
+  //
+  //   // Update discount amount if applicable
+  //   if (discountPercent != 0) {
+  //     final discountAmount = total * (discountPercent / 100);
+  //     _discountAmountController.text = discountAmount.toStringAsFixed(2);
+  //   }
+  // }
+
+  void _updateTotals() {
+    final total = _calculateTotal(); // Calculate total from entered quantities & rates
+    _originalAmtController.text = total.toStringAsFixed(2);
+
+    final discountPercent = double.tryParse(_discountPercentController.text) ?? 0;
+    final prepaidAmount = double.tryParse(_prepaidAmountController.text) ?? 0;
+    // final codAmount = double.tryParse(_codAmountController.text) ?? 0;
+    String? paymentMode = _ordersProvider.selectedPayment?.toUpperCase() ?? ''; // Get current payment mode
+
+    // Apply discount if present
+    double finalTotal = discountPercent != 0 ? total - (total * (discountPercent / 100)) : total;
+
+    if (paymentMode == "COD") {
+      // COD Mode: Adjust COD considering prepaid
+      double updatedCOD = finalTotal - prepaidAmount;
+      _codAmountController.text = updatedCOD.toStringAsFixed(2);
       _totalAmtController.text = finalTotal.toStringAsFixed(2);
-      _codAmountController.text = finalTotal.toStringAsFixed(2);
-      // final selectedPayment = _ordersProvider.selectedPayment;
-      //
-      // // Update based on selected payment type
-      // if (selectedPayment == 'COD') {
-      //   _codAmountController.text = finalTotal.toStringAsFixed(2);
-      // } else if (selectedPayment == 'PrePaid') {
-      //   _prepaidAmountController.text = finalTotal.toStringAsFixed(2);
-      // }
+    } else if (paymentMode == "PREPAID") {
+      _prepaidAmountController.text = finalTotal.toStringAsFixed(2);
+      _totalAmtController.text = finalTotal.toStringAsFixed(2);
 
-      // Update discount amount if applicable
-      if (discountPercent != 0) {
-        final discountAmount = total * (discountPercent / 100);
-        _discountAmountController.text = discountAmount.toStringAsFixed(2);
-      }
+      // if (codAmount > 0) {
+      //   selectedPayment = "COD";
+      // }
+    }
+
+    // Update discount amount if applicable
+    if (discountPercent != 0) {
+      final discountAmount = total * (discountPercent / 100);
+      _discountAmountController.text = discountAmount.toStringAsFixed(2);
     }
   }
 
@@ -2788,7 +2896,7 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
                 horizontal: 12,
               ),
             ),
-            onFieldSubmitted: (value) => setState(() => _updateTotals(value)),
+            onFieldSubmitted: (value) => setState(() => _updateTotals()),
           );
         },
       ),
@@ -2860,7 +2968,7 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
                 fillColor: enabled ? Colors.white : Colors.grey[200],
                 contentPadding: const EdgeInsets.symmetric(vertical: 0, horizontal: 4),
               ),
-              onFieldSubmitted: (value) => setState(() => _updateTotals(value)),
+              onFieldSubmitted: (value) => setState(() => _updateTotals()),
             ),
           );
         },
@@ -2933,11 +3041,58 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
                 fillColor: enabled ? Colors.white : Colors.grey[200],
                 contentPadding: const EdgeInsets.symmetric(vertical: 0, horizontal: 4),
               ),
-              onFieldSubmitted: (value) => setState(() => _updateTotals(value)),
+              onFieldSubmitted: (value) => setState(() => _updateTotals()),
             ),
           );
         },
       ),
     );
+  }
+
+  Future<void> getLocationDetails({required BuildContext context, required String pincode, required bool isBilling}) async {
+    try {
+      Uri url = Uri.parse('https://api.opencagedata.com/geocode/v1/json?q=$pincode&key=55710109e7c24fbc98c86377005c0612');
+
+      final response = await http.get(url);
+
+      if (response.statusCode == 200) {
+        final data = await jsonDecode(response.body);
+
+        if (data['results'] != null && data['results'].isNotEmpty) {
+          final components = data['results'][0]['components'];
+
+          log('Components - $components');
+
+          String country = components['country'] ?? '';
+          String state = components['state'] ?? '';
+          String city = components['city_district'] ?? components['state_district'] ?? components['_normalized_city'] ?? '';
+          String countryCode = components['country_code'].toString().toUpperCase() ?? '';
+
+          if (isBilling) {
+            _billingCountryController.text = country;
+            _billingStateController.text = state;
+            _billingCityController.text = city;
+            _billingCountryCodeController.text = countryCode;
+          } else {
+            _shippingCountryController.text = country;
+            _shippingStateController.text = state;
+            _shippingCityController.text = city;
+            _shippingCountryCodeController.text = countryCode;
+          }
+        } else {
+          log('No location details found for the provided pincode :- ${response.body}');
+          Utils.showSnackBar(context, 'No location details found for the provided pincode.');
+          return;
+        }
+      } else {
+        log('Failed to load location details :- ${response.body}');
+        Utils.showSnackBar(context, 'Failed to load location details. Please check your internet connection.');
+        return;
+      }
+    } catch (e, stace) {
+      log('Error to fetch location details :- $e\n$stace');
+      Utils.showSnackBar(context, 'Failed to load location details. Please check your internet connection.');
+      return;
+    }
   }
 }

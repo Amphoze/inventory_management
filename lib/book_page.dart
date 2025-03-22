@@ -794,29 +794,17 @@ class _BookPageState extends State<BookPage> with SingleTickerProviderStateMixin
 
     log('Selected Orders: $selectedOrderIds');
 
-    try {
-      String responseMessage = await bookProvider.bookOrders(context, selectedOrderIds, courier);
-      ScaffoldMessenger.of(context).clearSnackBars();
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(responseMessage),
-          backgroundColor: AppColors.green,
-          duration: const Duration(seconds: 5),
-        ),
-      );
+    Map<String, dynamic> res = await bookProvider.bookOrders(context, selectedOrderIds, courier);
+    ScaffoldMessenger.of(context).clearSnackBars();
 
+    if (res['success'] == true) {
+      Utils.showSnackBar(context, res['message'], color: Colors.green);
       await bookProvider.fetchOrders(
         orderType,
         orderType == 'B2B' ? bookProvider.currentPageB2B : bookProvider.currentPageB2C,
       );
-    } catch (e) {
-      ScaffoldMessenger.of(context).removeCurrentSnackBar();
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Failed to book orders with $courier: $e'),
-          backgroundColor: AppColors.cardsred,
-        ),
-      );
+    } else {
+      Utils.showSnackBar(context, res['message'], color: Colors.red);
     }
   }
 

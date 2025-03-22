@@ -1548,7 +1548,7 @@ class _DashboardPageState extends State<DashboardPage> {
       case 'Manage Inventory':
         return const ManageInventoryPage();
       case 'Manage Label':
-        return const ManageLabel();
+        return const ShowLabelPage();
       case 'Manage Inner Packaging':
         return const ManageInner();
       case 'Manage Outerbox':

@@ -85,6 +85,11 @@ class OrdersProvider with ChangeNotifier {
   bool _isCloning = false;
   bool get isCloning => _isCloning;
 
+  OrdersProvider() {
+    searchControllerReady = TextEditingController();
+    searchControllerFailed = TextEditingController();
+  }
+
   void resetReadyFilterData() {
     selectedReadyDate = 'Select Date';
     selectedReadyCourier = 'All';
@@ -268,8 +273,8 @@ class OrdersProvider with ChangeNotifier {
         log('Failed to update order: ${response.body}');
         return;
       }
-    } catch (error) {
-      log('Error updating order: $error');
+    } catch (error, s) {
+      log('Error updating order: $error \n\n$s');
       rethrow;
     } finally {
       setReadyLoading(false);

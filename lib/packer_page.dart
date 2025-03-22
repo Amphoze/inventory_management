@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:inventory_management/Custom-Files/loading_indicator.dart';
@@ -458,6 +460,7 @@ class _PackerPageState extends State<PackerPage> {
 
   Widget _buildOrderCard(
       Order order, int index, PackerProvider packerProvider) {
+    log('_buildOrderCard: ${order.outerPackage}');
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 2.0, horizontal: 8.0),
       child: Row(
@@ -553,7 +556,6 @@ class _PackerPageState extends State<PackerPage> {
             ),
             flex: 2,
           ),
-
           const SizedBox(width: 4),
           buildCell(
             order.isPackerFullyScanned

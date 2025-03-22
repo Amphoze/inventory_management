@@ -278,260 +278,262 @@ class _StatusDetailsPageState extends State<StatusDetailsPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Order Status Details', style: TextStyle(fontSize: 18, color: Colors.white)),
-        backgroundColor: AppColors.primaryBlue,
-        elevation: 2,
-      ),
-      body: Consumer<DashboardProvider>(
-        builder: (context, provider, child) {
-          return Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Compact Filter Summary Card
-                Card(
-                  elevation: 2,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                  child: Container(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [Colors.white, AppColors.primaryBlue.withValues(alpha: 0.05)],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
+    return SelectionArea(
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text('Order Status Details', style: TextStyle(fontSize: 18, color: Colors.white)),
+          backgroundColor: AppColors.primaryBlue,
+          elevation: 2,
+        ),
+        body: Consumer<DashboardProvider>(
+          builder: (context, provider, child) {
+            return Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Compact Filter Summary Card
+                  Card(
+                    elevation: 2,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [Colors.white, AppColors.primaryBlue.withValues(alpha: 0.05)],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
+                        borderRadius: BorderRadius.circular(8),
                       ),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 10.0),
-                      child: Row(
-                        children: [
-                          Tooltip(
-                            message: 'Apply filters',
-                            child: InkWell(
-                              onTap: () => _showSettingsDialog(context),
-                              child: Container(
-                                padding: const EdgeInsets.all(8),
-                                decoration: BoxDecoration(
-                                  color: AppColors.primaryBlue.withValues(alpha: 0.1),
-                                  borderRadius: BorderRadius.circular(8),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 10.0),
+                        child: Row(
+                          children: [
+                            Tooltip(
+                              message: 'Apply filters',
+                              child: InkWell(
+                                onTap: () => _showSettingsDialog(context),
+                                child: Container(
+                                  padding: const EdgeInsets.all(8),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.primaryBlue.withValues(alpha: 0.1),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: const Icon(Icons.filter_alt, color: AppColors.primaryBlue, size: 18),
                                 ),
-                                child: const Icon(Icons.filter_alt, color: AppColors.primaryBlue, size: 18),
                               ),
                             ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
-                                  children: [
-                                    const Icon(Icons.calendar_today, size: 14, color: Colors.grey),
-                                    const SizedBox(width: 4),
-                                    Text(
-                                      '${startDate != null ? DateFormat('dd-MM-yyyy').format(startDate!) : 'N/A'} - ${endDate != null ? DateFormat('dd-MM-yyyy').format(endDate!) : 'N/A'}',
-                                      style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: Colors.black87),
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 4),
-                                Row(
-                                  children: [
-                                    const Icon(Icons.store, size: 14, color: Colors.grey),
-                                    const SizedBox(width: 4),
-                                    Text(
-                                      selectedSource == 'all' ? 'All Marketplaces' : (selectedSource ?? 'N/A'),
-                                      style: const TextStyle(fontSize: 13, color: Colors.black87),
-                                    ),
-                                    const SizedBox(width: 8),
-                                    Container(
-                                      height: 12,
-                                      width: 1,
-                                      color: Colors.grey.withValues(alpha: 0.5),
-                                    ),
-                                    const SizedBox(width: 8),
-                                    const Icon(Icons.list_alt, size: 14, color: Colors.grey),
-                                    const SizedBox(width: 4),
-                                    Expanded(
-                                      child: Text(
-                                        selectedStatuses.isEmpty
-                                            ? 'No Status Selected'
-                                            : selectedStatuses.length == orderStatusMap.length
-                                                ? 'All Statuses'
-                                                : selectedStatuses.join(', '),
-                                        // : _truncateText(selectedStatuses.join(', '), 30),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    children: [
+                                      const Icon(Icons.calendar_today, size: 14, color: Colors.grey),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        '${startDate != null ? DateFormat('dd-MM-yyyy').format(startDate!) : 'N/A'} - ${endDate != null ? DateFormat('dd-MM-yyyy').format(endDate!) : 'N/A'}',
+                                        style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: Colors.black87),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Row(
+                                    children: [
+                                      const Icon(Icons.store, size: 14, color: Colors.grey),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        selectedSource == 'all' ? 'All Marketplaces' : (selectedSource ?? 'N/A'),
                                         style: const TextStyle(fontSize: 13, color: Colors.black87),
-                                        // overflow: TextOverflow.ellipsis,
                                       ),
-                                    ),
-                                  ],
-                                ),
-                              ],
+                                      const SizedBox(width: 8),
+                                      Container(
+                                        height: 12,
+                                        width: 1,
+                                        color: Colors.grey.withValues(alpha: 0.5),
+                                      ),
+                                      const SizedBox(width: 8),
+                                      const Icon(Icons.list_alt, size: 14, color: Colors.grey),
+                                      const SizedBox(width: 4),
+                                      Expanded(
+                                        child: Text(
+                                          selectedStatuses.isEmpty
+                                              ? 'No Status Selected'
+                                              : selectedStatuses.length == orderStatusMap.length
+                                                  ? 'All Statuses'
+                                                  : selectedStatuses.join(', '),
+                                          // : _truncateText(selectedStatuses.join(', '), 30),
+                                          style: const TextStyle(fontSize: 13, color: Colors.black87),
+                                          // overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
                             ),
-                          ),
-                          // Material(
-                          //   color: Colors.transparent,
-                          //   child: InkWell(
-                          //     borderRadius: BorderRadius.circular(20),
-                          //     child: Container(
-                          //       padding: const EdgeInsets.all(8),
-                          //       decoration: BoxDecoration(
-                          //         color: AppColors.primaryBlue.withValues(alpha: 0.1),
-                          //         borderRadius: BorderRadius.circular(20),
-                          //       ),
-                          //       child: const Icon(Icons.tune, size: 18, color: AppColors.primaryBlue),
-                          //     ),
-                          //   ),
-                          // ),
-                        ],
+                            // Material(
+                            //   color: Colors.transparent,
+                            //   child: InkWell(
+                            //     borderRadius: BorderRadius.circular(20),
+                            //     child: Container(
+                            //       padding: const EdgeInsets.all(8),
+                            //       decoration: BoxDecoration(
+                            //         color: AppColors.primaryBlue.withValues(alpha: 0.1),
+                            //         borderRadius: BorderRadius.circular(20),
+                            //       ),
+                            //       child: const Icon(Icons.tune, size: 18, color: AppColors.primaryBlue),
+                            //     ),
+                            //   ),
+                            // ),
+                          ],
+                        ),
                       ),
                     ),
                   ),
-                ),
-                const SizedBox(height: 12),
-
-                // Status Summary
-                const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 8.0, horizontal: 4.0),
-                  child: Text(
-                    'Status Summary',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black87,
+                  const SizedBox(height: 12),
+      
+                  // Status Summary
+                  const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 8.0, horizontal: 4.0),
+                    child: Text(
+                      'Status Summary',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black87,
+                      ),
                     ),
                   ),
-                ),
-
-                // Status Cards Grid
-                Expanded(
-                  child: provider.isPercentLoading
-                      ? const Center(child: CircularProgressIndicator())
-                      : GridView.builder(
-                          gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-                            maxCrossAxisExtent: 200, // Smaller card size
-                            crossAxisSpacing: 12,
-                            mainAxisSpacing: 12,
-                            childAspectRatio: 1.7, // Adjusted for compact cards
-                          ),
-                          itemCount: provider.statusTotals.length,
-                          itemBuilder: (context, index) {
-                            String statusKey = provider.statusTotals.keys.elementAt(index);
-                            int total = provider.statusTotals[statusKey] ?? 0;
-                            String percentage = provider.statusPercentages[statusKey] ?? "0";
-                            int parsedPercentage = double.tryParse(percentage)?.round() ?? 0;
-                            // Color changeColor = parsedPercentage >= 0 ? Colors.green : Colors.red;
-                            String displayName = orderStatusMap[statusKey] ?? statusKey.toUpperCase();
-
-                            return Card(
-                              elevation: 2,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(8),
-                                side: BorderSide(
-                                  color: parsedPercentage > 0
-                                      ? Colors.green.withValues(alpha: 0.3)
-                                      : parsedPercentage < 0
-                                          ? Colors.red.withValues(alpha: 0.3)
-                                          : Colors.grey.withValues(alpha: 0.2),
-                                  width: 1,
+      
+                  // Status Cards Grid
+                  Expanded(
+                    child: provider.isPercentLoading
+                        ? const Center(child: CircularProgressIndicator())
+                        : GridView.builder(
+                            gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+                              maxCrossAxisExtent: 200, // Smaller card size
+                              crossAxisSpacing: 12,
+                              mainAxisSpacing: 12,
+                              childAspectRatio: 1.7, // Adjusted for compact cards
+                            ),
+                            itemCount: provider.statusTotals.length,
+                            itemBuilder: (context, index) {
+                              String statusKey = provider.statusTotals.keys.elementAt(index);
+                              int total = provider.statusTotals[statusKey] ?? 0;
+                              String percentage = provider.statusPercentages[statusKey] ?? "0";
+                              int parsedPercentage = double.tryParse(percentage)?.round() ?? 0;
+                              // Color changeColor = parsedPercentage >= 0 ? Colors.green : Colors.red;
+                              String displayName = orderStatusMap[statusKey] ?? statusKey.toUpperCase();
+      
+                              return Card(
+                                elevation: 2,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                  side: BorderSide(
+                                    color: parsedPercentage > 0
+                                        ? Colors.green.withValues(alpha: 0.3)
+                                        : parsedPercentage < 0
+                                            ? Colors.red.withValues(alpha: 0.3)
+                                            : Colors.grey.withValues(alpha: 0.2),
+                                    width: 1,
+                                  ),
                                 ),
-                              ),
-                              child: Padding(
-                                padding: const EdgeInsets.all(12.0),
-                                child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      displayName,
-                                      style: const TextStyle(
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.w600,
-                                        color: Colors.black87,
-                                      ),
-                                      overflow: TextOverflow.ellipsis,
-                                      maxLines: 1,
-                                    ),
-                                    const SizedBox(height: 4),
-                                    Row(
-                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                      children: [
-                                        Text(
-                                          '$total',
-                                          style: const TextStyle(
-                                            fontSize: 18,
-                                            fontWeight: FontWeight.bold,
-                                            color: Colors.black,
-                                          ),
+                                child: Padding(
+                                  padding: const EdgeInsets.all(12.0),
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        displayName,
+                                        style: const TextStyle(
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.w600,
+                                          color: Colors.black87,
                                         ),
-                                        Row(
-                                          children: [
-                                            Icon(
-                                              parsedPercentage > 0
-                                                  ? Icons.arrow_upward
-                                                  : parsedPercentage < 0
-                                                      ? Icons.arrow_downward
-                                                      : Icons.remove,
-                                              size: 14,
-                                              color: _getStatusColor(statusKey),
+                                        overflow: TextOverflow.ellipsis,
+                                        maxLines: 1,
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Row(
+                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Text(
+                                            '$total',
+                                            style: const TextStyle(
+                                              fontSize: 18,
+                                              fontWeight: FontWeight.bold,
+                                              color: Colors.black,
                                             ),
-                                            Text(
-                                              '${parsedPercentage.abs().toStringAsFixed(1)}%',
-                                              style: TextStyle(
-                                                fontSize: 14,
-                                                fontWeight: FontWeight.w500,
+                                          ),
+                                          Row(
+                                            children: [
+                                              Icon(
+                                                parsedPercentage > 0
+                                                    ? Icons.arrow_upward
+                                                    : parsedPercentage < 0
+                                                        ? Icons.arrow_downward
+                                                        : Icons.remove,
+                                                size: 14,
                                                 color: _getStatusColor(statusKey),
                                               ),
-                                            ),
-                                          ],
-                                        ),
-                                      ],
-                                    ),
-                                    // const SizedBox(height: 4),
-                                    // Progress indicator
-                                    // ClipRRect(
-                                    //   borderRadius: BorderRadius.circular(4),
-                                    //   child: LinearProgressIndicator(
-                                    //     value: total / (provider.statusTotals.values.fold(0, (sum, count) => sum + count) * 1.2),
-                                    //     backgroundColor: Colors.grey.withValues(alpha: 0.2),
-                                    //     color: _getStatusColor(statusKey),
-                                    //     minHeight: 4,
-                                    //   ),
-                                    // ),
-                                  ],
+                                              Text(
+                                                '${parsedPercentage.abs().toStringAsFixed(1)}%',
+                                                style: TextStyle(
+                                                  fontSize: 14,
+                                                  fontWeight: FontWeight.w500,
+                                                  color: _getStatusColor(statusKey),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ],
+                                      ),
+                                      // const SizedBox(height: 4),
+                                      // Progress indicator
+                                      // ClipRRect(
+                                      //   borderRadius: BorderRadius.circular(4),
+                                      //   child: LinearProgressIndicator(
+                                      //     value: total / (provider.statusTotals.values.fold(0, (sum, count) => sum + count) * 1.2),
+                                      //     backgroundColor: Colors.grey.withValues(alpha: 0.2),
+                                      //     color: _getStatusColor(statusKey),
+                                      //     minHeight: 4,
+                                      //   ),
+                                      // ),
+                                    ],
+                                  ),
                                 ),
-                              ),
-                            );
-                          },
-                        ),
-                ),
-              ],
+                              );
+                            },
+                          ),
+                  ),
+                ],
+              ),
+            );
+          },
+        ),
+        floatingActionButton: Column(
+          mainAxisAlignment: MainAxisAlignment.end,
+          children: [
+            FloatingActionButton(
+              heroTag: 'filter',
+              onPressed: () => _showSettingsDialog(context),
+              backgroundColor: AppColors.primaryBlue,
+              mini: true,
+              child: const Icon(Icons.filter_alt, color: Colors.white),
             ),
-          );
-        },
-      ),
-      floatingActionButton: Column(
-        mainAxisAlignment: MainAxisAlignment.end,
-        children: [
-          FloatingActionButton(
-            heroTag: 'filter',
-            onPressed: () => _showSettingsDialog(context),
-            backgroundColor: AppColors.primaryBlue,
-            mini: true,
-            child: const Icon(Icons.filter_alt, color: Colors.white),
-          ),
-          const SizedBox(height: 12),
-          FloatingActionButton(
-            heroTag: 'refresh',
-            onPressed: () => _fetchData(context),
-            backgroundColor: AppColors.primaryBlue,
-            mini: true,
-            child: const Icon(Icons.refresh, color: Colors.white),
-          ),
-        ],
+            const SizedBox(height: 12),
+            FloatingActionButton(
+              heroTag: 'refresh',
+              onPressed: () => _fetchData(context),
+              backgroundColor: AppColors.primaryBlue,
+              mini: true,
+              child: const Icon(Icons.refresh, color: Colors.white),
+            ),
+          ],
+        ),
       ),
     );
   }

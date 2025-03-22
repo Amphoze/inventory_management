@@ -402,7 +402,7 @@ class BookProvider with ChangeNotifier {
     }
   }
 
-  Future<String> bookOrders(BuildContext context, List<Map<String, String>> orderIds, String courier) async {
+  Future<Map<String,dynamic>> bookOrders(BuildContext context, List<Map<String, String>> orderIds, String courier) async {
     log('courier: $courier');
     setLoading(courier, true);
     String baseUrl = await Constants.getBaseUrl();
@@ -411,11 +411,11 @@ class BookProvider with ChangeNotifier {
 
     if (token == null) {
       setLoading(courier, false);
-      return 'No auth token found';
+      return {"success": false, "message": "No token provided"};
     }
 
     log('list: $orderIds');
-    String? res;
+    Map<String,dynamic> res = {};
     if (courier == 'Shiprocket') {
       for (int i = 0; i < orderIds.length; i++) {
         String orderId = orderIds[i]['orderId']!;
@@ -423,7 +423,7 @@ class BookProvider with ChangeNotifier {
 
         res = await bookShiprocketOrder(context, orderId, courierId, courier);
       }
-      return res ?? '';
+      return res;
     }
 
     List<String?> orderIdsList = orderIds.map((orderId) => orderId['orderId']).toList();
@@ -452,24 +452,24 @@ class BookProvider with ChangeNotifier {
 
       if (response.statusCode == 200) {
         clearAllSelections();
-        setLoading(courier, false);
+        // setLoading(courier, false);
 
         notifyListeners();
-        return "${responseData['message'] ?? ''} - (${responseData["serviceResponse"][0]["orderCreationResponse"]["pickup_location"]["name"] ?? ''})";
+        return {"success": true, "message": "${responseData['message'] ?? ''} - (${responseData["serviceResponse"][0]["orderCreationResponse"]["pickup_location"]["name"] ?? ''})"};
       } else {
-        setLoading(courier, false);
+        // setLoading(courier, false);
         return responseData['message'] ?? 'Failed to book orders';
       }
     } catch (error) {
       log('Error during API request: $error');
-      return 'An error occurred: $error';
+      return {"success": false, "message": "'An error occurred: $error'"};
     } finally {
       setLoading(courier, false);
       notifyListeners();
     }
   }
 
-  Future<String> bookShiprocketOrder(BuildContext context, String orderId, String courierId, String courier) async {
+  Future<Map<String, dynamic>> bookShiprocketOrder(BuildContext context, String orderId, String courierId, String courier) async {
     String baseUrl = await Constants.getBaseUrl();
     String bookOrderUrl = '$baseUrl/orders/book';
     final String? token = await _getToken();
@@ -500,22 +500,22 @@ class BookProvider with ChangeNotifier {
 
       if (response.statusCode == 200) {
         clearAllSelections();
-        setLoading(courier, false);
+        // setLoading(courier, false);
 
         notifyListeners();
-        return "${responseData['message'] ?? 'Orders booked successfully'}";
+        return {"success": true, "message": "${responseData['message'] ?? 'Orders booked successfully'}"};
       } else {
-        setLoading(courier, false);
-        return responseData['message'] ?? 'Failed to book orders';
+        // setLoading(courier, false);
+        return {"success": false, "message": "${responseData['message'] ?? 'Error while booking orders'}"};
       }
     } catch (error) {
       log('Error during API request: $error');
-      setLoading(courier, false);
+      // setLoading(courier, false);
+      return {"success": false, "message": "Error: $error"};
     } finally {
       setLoading(courier, false);
       notifyListeners();
     }
-    return '';
   }
 
   Future<String?> _getToken() async {

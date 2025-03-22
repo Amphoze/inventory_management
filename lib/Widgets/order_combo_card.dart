@@ -271,6 +271,67 @@ class _OrderComboCardState extends State<OrderComboCard> {
                       const SizedBox(width: 8),
                     ],
                     if (widget.isSuperAdmin || widget.isAdmin)
+                      // IconButton(
+                      //   tooltip: 'Revert Order',
+                      //   icon: const Icon(Icons.undo),
+                      //   onPressed: () async {
+                      //     showDialog(
+                      //       context: context,
+                      //       builder: (context) {
+                      //         return AlertDialog(
+                      //           title: const Text('Revert Order'),
+                      //           content: Text('Are you sure you want to revert ${widget.order.orderId} to READY TO CONFIRM'),
+                      //           actions: [
+                      //             TextButton(
+                      //               onPressed: () {
+                      //                 Navigator.of(context).pop();
+                      //               },
+                      //               child: const Text('Cancel'),
+                      //             ),
+                      //             TextButton(
+                      //               onPressed: () async {
+                      //                 Navigator.pop(context);
+                      //
+                      //                 showDialog(
+                      //                   barrierDismissible: false,
+                      //                   context: context,
+                      //                   builder: (context) {
+                      //                     return const AlertDialog(
+                      //                       content: Row(
+                      //                         children: [
+                      //                           CircularProgressIndicator(),
+                      //                           SizedBox(width: 8),
+                      //                           Text('Reversing'),
+                      //                         ],
+                      //                       ),
+                      //                     );
+                      //                   },
+                      //                 );
+                      //
+                      //                 try {
+                      //                   final authPro = context.read<AuthProvider>();
+                      //                   final res = await authPro.reverseOrder(widget.order.orderId);
+                      //
+                      //                   Navigator.pop(context);
+                      //
+                      //                   if (res['success'] == true) {
+                      //                     Utils.showInfoDialog(context, "${res['message']}\nNew Order ID: ${res['newOrderId']}", true);
+                      //                   } else {
+                      //                     Utils.showInfoDialog(context, res['message'], false);
+                      //                   }
+                      //                 } catch (e) {
+                      //                   Navigator.pop(context);
+                      //                   Utils.showInfoDialog(context, 'An error occurred: $e', false);
+                      //                 }
+                      //               },
+                      //               child: const Text('Submit'),
+                      //             ),
+                      //           ],
+                      //         );
+                      //       },
+                      //     );
+                      //   },
+                      // ),
                       IconButton(
                         tooltip: 'Revert Order',
                         icon: const Icon(Icons.undo),
@@ -297,7 +358,7 @@ class _OrderComboCardState extends State<OrderComboCard> {
                                         context: context,
                                         builder: (context) {
                                           return const AlertDialog(
-                                            title: Row(
+                                            content: Row(
                                               children: [
                                                 CircularProgressIndicator(),
                                                 SizedBox(width: 8),
@@ -854,252 +915,254 @@ class _OrderComboCardState extends State<OrderComboCard> {
                     ],
                   ),
                 ),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    if (widget.isBookPage || widget.isBookedPage)
-                      ElevatedButton(
-                        onPressed: () {
-                          final pro = context.read<BookProvider>();
-                          setState(() {
-                            bookRemark.text = widget.order.messages?['bookerMessage']?.toString() ?? '';
-                          });
-                          showDialog(
-                            context: context,
-                            builder: (_) {
-                              return Dialog(
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(16),
-                                ),
-                                insetPadding: const EdgeInsets.symmetric(horizontal: 20),
-                                child: Container(
-                                  width: MediaQuery.of(context).size.width * 0.9,
-                                  constraints: const BoxConstraints(maxWidth: 600),
-                                  padding: const EdgeInsets.all(20),
-                                  child: Column(
-                                    mainAxisSize: MainAxisSize.min,
-                                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                                    children: [
-                                      const Text(
-                                        'Remark',
-                                        style: TextStyle(
-                                          fontSize: 24,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                      const SizedBox(height: 20),
-                                      TextField(
-                                        controller: bookRemark,
-                                        maxLines: 10,
-                                        decoration: InputDecoration(
-                                          border: OutlineInputBorder(
-                                            borderRadius: BorderRadius.circular(8),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      if (widget.isBookPage || widget.isBookedPage)
+                        ElevatedButton(
+                          onPressed: () {
+                            final pro = context.read<BookProvider>();
+                            setState(() {
+                              bookRemark.text = widget.order.messages?['bookerMessage']?.toString() ?? '';
+                            });
+                            showDialog(
+                              context: context,
+                              builder: (_) {
+                                return Dialog(
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(16),
+                                  ),
+                                  insetPadding: const EdgeInsets.symmetric(horizontal: 20),
+                                  child: Container(
+                                    width: MediaQuery.of(context).size.width * 0.9,
+                                    constraints: const BoxConstraints(maxWidth: 600),
+                                    padding: const EdgeInsets.all(20),
+                                    child: Column(
+                                      mainAxisSize: MainAxisSize.min,
+                                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                                      children: [
+                                        const Text(
+                                          'Remark',
+                                          style: TextStyle(
+                                            fontSize: 24,
+                                            fontWeight: FontWeight.bold,
                                           ),
-                                          hintText: 'Enter your remark here',
-                                          filled: true,
-                                          fillColor: Colors.grey[50],
-                                          contentPadding: const EdgeInsets.all(16),
                                         ),
-                                      ),
-                                      const SizedBox(height: 24),
-                                      Row(
-                                        mainAxisAlignment: MainAxisAlignment.end,
-                                        children: [
-                                          TextButton(
-                                            onPressed: () => Navigator.of(context).pop(),
-                                            child: const Text(
-                                              'Cancel',
-                                              style: TextStyle(fontSize: 16),
+                                        const SizedBox(height: 20),
+                                        TextField(
+                                          controller: bookRemark,
+                                          maxLines: 10,
+                                          decoration: InputDecoration(
+                                            border: OutlineInputBorder(
+                                              borderRadius: BorderRadius.circular(8),
                                             ),
+                                            hintText: 'Enter your remark here',
+                                            filled: true,
+                                            fillColor: Colors.grey[50],
+                                            contentPadding: const EdgeInsets.all(16),
                                           ),
-                                          const SizedBox(width: 16),
-                                          ElevatedButton(
-                                            onPressed: () async {
-                                              showDialog(
-                                                context: context,
-                                                barrierDismissible: false,
-                                                builder: (_) {
-                                                  return AlertDialog(
-                                                    shape: RoundedRectangleBorder(
-                                                      borderRadius: BorderRadius.circular(16),
-                                                    ),
-                                                    insetPadding: const EdgeInsets.symmetric(horizontal: 20),
-                                                    content: const Row(
-                                                      mainAxisSize: MainAxisSize.min,
-                                                      children: [
-                                                        CircularProgressIndicator(),
-                                                        SizedBox(width: 20),
-                                                        Text(
-                                                          'Submitting Remark',
-                                                          style: TextStyle(fontSize: 16),
-                                                        ),
-                                                      ],
-                                                    ),
-                                                  );
-                                                },
-                                              );
-
-                                              final res = await pro.writeRemark(context, widget.order.id, bookRemark.text);
-
-                                              log('saved :)');
-
-                                              Navigator.pop(context);
-                                              Navigator.pop(context);
-
-                                              res ? await pro.fetchBookedOrders(pro.currentPageBooked) : null;
-                                              res ? await pro.fetchPaginatedOrdersB2B(pro.currentPageB2B) : null;
-                                              res ? await pro.fetchPaginatedOrdersB2C(pro.currentPageB2C) : null;
-                                            },
-                                            style: ElevatedButton.styleFrom(
-                                              padding: const EdgeInsets.symmetric(
-                                                horizontal: 24,
-                                                vertical: 12,
+                                        ),
+                                        const SizedBox(height: 24),
+                                        Row(
+                                          mainAxisAlignment: MainAxisAlignment.end,
+                                          children: [
+                                            TextButton(
+                                              onPressed: () => Navigator.of(context).pop(),
+                                              child: const Text(
+                                                'Cancel',
+                                                style: TextStyle(fontSize: 16),
                                               ),
                                             ),
-                                            child: const Text(
-                                              'Submit',
-                                              style: TextStyle(fontSize: 16),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              );
-                            },
-                          );
-                        },
-                        child: (widget.order.messages?['bookerMessage']?.toString().isNotEmpty ?? false)
-                            ? const Text('Edit Remark')
-                            : const Text('Write Remark'),
-                      ),
-                    if (widget.isAccountSection)
-                      ElevatedButton(
-                        onPressed: () {
-                          final pro = context.read<AccountsProvider>();
-                          setState(() {
-                            accountsRemark.text = widget.order.messages?['accountMessage']?.toString() ?? '';
-                          });
-                          showDialog(
-                            context: context,
-                            builder: (_) {
-                              return Dialog(
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(16),
-                                ),
-                                insetPadding: const EdgeInsets.symmetric(horizontal: 20),
-                                child: Container(
-                                  width: MediaQuery.of(context).size.width * 0.9,
-                                  constraints: const BoxConstraints(maxWidth: 600),
-                                  padding: const EdgeInsets.all(20),
-                                  child: Column(
-                                    mainAxisSize: MainAxisSize.min,
-                                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                                    children: [
-                                      const Text(
-                                        'Remark',
-                                        style: TextStyle(
-                                          fontSize: 24,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                      const SizedBox(height: 20),
-                                      TextField(
-                                        controller: accountsRemark,
-                                        maxLines: 10,
-                                        decoration: InputDecoration(
-                                          border: OutlineInputBorder(
-                                            borderRadius: BorderRadius.circular(8),
-                                          ),
-                                          hintText: 'Enter your remark here',
-                                          filled: true,
-                                          fillColor: Colors.grey[50],
-                                          contentPadding: const EdgeInsets.all(16),
-                                        ),
-                                      ),
-                                      const SizedBox(height: 24),
-                                      Row(
-                                        mainAxisAlignment: MainAxisAlignment.end,
-                                        children: [
-                                          TextButton(
-                                            onPressed: () => Navigator.of(context).pop(),
-                                            child: const Text(
-                                              'Cancel',
-                                              style: TextStyle(fontSize: 16),
-                                            ),
-                                          ),
-                                          const SizedBox(width: 16),
-                                          ElevatedButton(
-                                            onPressed: () async {
-                                              showDialog(
-                                                context: context,
-                                                barrierDismissible: false,
-                                                builder: (_) {
-                                                  return AlertDialog(
-                                                    shape: RoundedRectangleBorder(
-                                                      borderRadius: BorderRadius.circular(16),
-                                                    ),
-                                                    insetPadding: const EdgeInsets.symmetric(horizontal: 20),
-                                                    content: const Row(
-                                                      mainAxisSize: MainAxisSize.min,
-                                                      children: [
-                                                        CircularProgressIndicator(),
-                                                        SizedBox(width: 20),
-                                                        Text(
-                                                          'Submitting Remark',
-                                                          style: TextStyle(fontSize: 16),
-                                                        ),
-                                                      ],
-                                                    ),
-                                                  );
-                                                },
-                                              );
+                                            const SizedBox(width: 16),
+                                            ElevatedButton(
+                                              onPressed: () async {
+                                                showDialog(
+                                                  context: context,
+                                                  barrierDismissible: false,
+                                                  builder: (_) {
+                                                    return AlertDialog(
+                                                      shape: RoundedRectangleBorder(
+                                                        borderRadius: BorderRadius.circular(16),
+                                                      ),
+                                                      insetPadding: const EdgeInsets.symmetric(horizontal: 20),
+                                                      content: const Row(
+                                                        mainAxisSize: MainAxisSize.min,
+                                                        children: [
+                                                          CircularProgressIndicator(),
+                                                          SizedBox(width: 20),
+                                                          Text(
+                                                            'Submitting Remark',
+                                                            style: TextStyle(fontSize: 16),
+                                                          ),
+                                                        ],
+                                                      ),
+                                                    );
+                                                  },
+                                                );
 
-                                              final res = await pro.writeRemark(context, widget.order.id, accountsRemark.text);
+                                                final res = await pro.writeRemark(context, widget.order.id, bookRemark.text);
 
-                                              log('saved :)');
+                                                log('saved :)');
 
-                                              Navigator.pop(context);
-                                              Navigator.pop(context);
+                                                Navigator.pop(context);
+                                                Navigator.pop(context);
 
-                                              res ? await pro.fetchInvoicedOrders(pro.currentPageBooked) : null;
-                                              res ? await pro.fetchOrdersWithStatus2() : null;
-                                            },
-                                            style: ElevatedButton.styleFrom(
-                                              padding: const EdgeInsets.symmetric(
-                                                horizontal: 24,
-                                                vertical: 12,
+                                                res ? await pro.fetchBookedOrders(pro.currentPageBooked) : null;
+                                                res ? await pro.fetchPaginatedOrdersB2B(pro.currentPageB2B) : null;
+                                                res ? await pro.fetchPaginatedOrdersB2C(pro.currentPageB2C) : null;
+                                              },
+                                              style: ElevatedButton.styleFrom(
+                                                padding: const EdgeInsets.symmetric(
+                                                  horizontal: 24,
+                                                  vertical: 12,
+                                                ),
+                                              ),
+                                              child: const Text(
+                                                'Submit',
+                                                style: TextStyle(fontSize: 16),
                                               ),
                                             ),
-                                            child: const Text(
-                                              'Submit',
-                                              style: TextStyle(fontSize: 16),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ],
+                                          ],
+                                        ),
+                                      ],
+                                    ),
                                   ),
-                                ),
-                              );
-                            },
-                          );
-                        },
-                        child: (widget.order.messages?['accountMessage']?.toString().isNotEmpty ?? false)
-                            ? const Text('Edit Remark')
-                            : const Text('Write Remark'),
-                      ),
-                    if (widget.order.messages?['confirmerMessage']?.toString().isNotEmpty ?? false) ...[
-                      Utils().showMessage(context, 'Confirmer Remark', widget.order.messages!['confirmerMessage'].toString())
+                                );
+                              },
+                            );
+                          },
+                          child: (widget.order.messages?['bookerMessage']?.toString().isNotEmpty ?? false)
+                              ? const Text('Edit Remark')
+                              : const Text('Write Remark'),
+                        ),
+                      if (widget.isAccountSection)
+                        ElevatedButton(
+                          onPressed: () {
+                            final pro = context.read<AccountsProvider>();
+                            setState(() {
+                              accountsRemark.text = widget.order.messages?['accountMessage']?.toString() ?? '';
+                            });
+                            showDialog(
+                              context: context,
+                              builder: (_) {
+                                return Dialog(
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(16),
+                                  ),
+                                  insetPadding: const EdgeInsets.symmetric(horizontal: 20),
+                                  child: Container(
+                                    width: MediaQuery.of(context).size.width * 0.9,
+                                    constraints: const BoxConstraints(maxWidth: 600),
+                                    padding: const EdgeInsets.all(20),
+                                    child: Column(
+                                      mainAxisSize: MainAxisSize.min,
+                                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                                      children: [
+                                        const Text(
+                                          'Remark',
+                                          style: TextStyle(
+                                            fontSize: 24,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 20),
+                                        TextField(
+                                          controller: accountsRemark,
+                                          maxLines: 10,
+                                          decoration: InputDecoration(
+                                            border: OutlineInputBorder(
+                                              borderRadius: BorderRadius.circular(8),
+                                            ),
+                                            hintText: 'Enter your remark here',
+                                            filled: true,
+                                            fillColor: Colors.grey[50],
+                                            contentPadding: const EdgeInsets.all(16),
+                                          ),
+                                        ),
+                                        const SizedBox(height: 24),
+                                        Row(
+                                          mainAxisAlignment: MainAxisAlignment.end,
+                                          children: [
+                                            TextButton(
+                                              onPressed: () => Navigator.of(context).pop(),
+                                              child: const Text(
+                                                'Cancel',
+                                                style: TextStyle(fontSize: 16),
+                                              ),
+                                            ),
+                                            const SizedBox(width: 16),
+                                            ElevatedButton(
+                                              onPressed: () async {
+                                                showDialog(
+                                                  context: context,
+                                                  barrierDismissible: false,
+                                                  builder: (_) {
+                                                    return AlertDialog(
+                                                      shape: RoundedRectangleBorder(
+                                                        borderRadius: BorderRadius.circular(16),
+                                                      ),
+                                                      insetPadding: const EdgeInsets.symmetric(horizontal: 20),
+                                                      content: const Row(
+                                                        mainAxisSize: MainAxisSize.min,
+                                                        children: [
+                                                          CircularProgressIndicator(),
+                                                          SizedBox(width: 20),
+                                                          Text(
+                                                            'Submitting Remark',
+                                                            style: TextStyle(fontSize: 16),
+                                                          ),
+                                                        ],
+                                                      ),
+                                                    );
+                                                  },
+                                                );
+
+                                                final res = await pro.writeRemark(context, widget.order.id, accountsRemark.text);
+
+                                                log('saved :)');
+
+                                                Navigator.pop(context);
+                                                Navigator.pop(context);
+
+                                                res ? await pro.fetchInvoicedOrders(pro.currentPageBooked) : null;
+                                                res ? await pro.fetchOrdersWithStatus2() : null;
+                                              },
+                                              style: ElevatedButton.styleFrom(
+                                                padding: const EdgeInsets.symmetric(
+                                                  horizontal: 24,
+                                                  vertical: 12,
+                                                ),
+                                              ),
+                                              child: const Text(
+                                                'Submit',
+                                                style: TextStyle(fontSize: 16),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                );
+                              },
+                            );
+                          },
+                          child: (widget.order.messages?['accountMessage']?.toString().isNotEmpty ?? false)
+                              ? const Text('Edit Remark')
+                              : const Text('Write Remark'),
+                        ),
+                      if (widget.order.messages?['confirmerMessage']?.toString().isNotEmpty ?? false) ...[
+                        Utils().showMessage(context, 'Confirmer Remark', widget.order.messages!['confirmerMessage'].toString())
+                      ],
+                      if (widget.order.messages?['accountMessage']?.toString().isNotEmpty ?? false) ...[
+                        Utils().showMessage(context, 'Account Remark', widget.order.messages!['accountMessage'].toString()),
+                      ],
+                      if (widget.order.messages?['bookerMessage']?.toString().isNotEmpty ?? false) ...[
+                        Utils().showMessage(context, 'Booker Remark', widget.order.messages!['bookerMessage'].toString())
+                      ],
                     ],
-                    if (widget.order.messages?['accountMessage']?.toString().isNotEmpty ?? false) ...[
-                      Utils().showMessage(context, 'Account Remark', widget.order.messages!['accountMessage'].toString()),
-                    ],
-                    if (widget.order.messages?['bookerMessage']?.toString().isNotEmpty ?? false) ...[
-                      Utils().showMessage(context, 'Booker Remark', widget.order.messages!['bookerMessage'].toString())
-                    ],
-                  ],
+                  ),
                 ),
               ],
             ),
@@ -1786,6 +1849,28 @@ class _OrderComboCardState extends State<OrderComboCard> {
                           ],
                         ),
                       ),
+                      // RichText(
+                      //   text: TextSpan(
+                      //     children: [
+                      //       const TextSpan(
+                      //         text: 'Outer Package: ',
+                      //         style: TextStyle(
+                      //           color: Colors.blueAccent,
+                      //           fontWeight: FontWeight.bold,
+                      //           fontSize: 13,
+                      //         ),
+                      //       ),
+                      //       TextSpan(
+                      //         text: item.product?.outerPackage?.outerPackageName ?? '',
+                      //         style: const TextStyle(
+                      //           color: Colors.black87,
+                      //           fontWeight: FontWeight.w500,
+                      //           fontSize: 13,
+                      //         ),
+                      //       ),
+                      //     ],
+                      //   ),
+                      // ),
                     ],
                   ),
                 ],

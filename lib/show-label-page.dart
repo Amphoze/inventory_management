@@ -20,14 +20,14 @@ import 'package:http/http.dart' as http;
 final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
 bool showLabelForm = false;
 
-class ManageLabel extends StatefulWidget {
-  const ManageLabel({super.key});
+class ShowLabelPage extends StatefulWidget {
+  const ShowLabelPage({super.key});
 
   @override
-  State<ManageLabel> createState() => _ManageLabelState();
+  State<ShowLabelPage> createState() => _ShowLabelPageState();
 }
 
-class _ManageLabelState extends State<ManageLabel> {
+class _ShowLabelPageState extends State<ShowLabelPage> {
   LabelPageApi? labelPageProvider;
   //final ScrollController controller = ScrollController();
   final GlobalKey<DropdownSearchState<String>> _dropdownKey = GlobalKey<DropdownSearchState<String>>();
