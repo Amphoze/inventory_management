@@ -8,12 +8,12 @@ class VersionController extends ChangeNotifier {
   FirebaseFirestore firebaseFirestore = FirebaseFirestore.instance;
 
   ///////////////////////////////////////////////////////////////////////
-  /// 1. Increment this currentVersion first.                            ///
+  /// 1. Increment this currentVersion first.                         ///
   /// 2. flutter build web --release                                  ///
   /// 3. firebase deploy                                              ///
-  /// 4. Change version in firebase to this currentVersion.     ///
+  /// 4. Change version in firebase to this currentVersion.           ///
   ///////////////////////////////////////////////////////////////////////
-  String currentVersion = '6.7.6';
+  String currentVersion = '6.7.8';
   String? latestVersion = '';
 
   void setLatest(String value) {

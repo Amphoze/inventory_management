@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:developer';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -10,9 +11,10 @@ import 'package:inventory_management/Custom-Files/custom-dropdown.dart';
 import 'package:inventory_management/Custom-Files/custom-textfield.dart';
 import 'package:inventory_management/Custom-Files/loading_indicator.dart';
 import 'package:inventory_management/Custom-Files/multi-image-picker.dart';
-import 'package:inventory_management/Custom-Files/textfield-in-alert-box.dart';
 import 'package:logger/logger.dart';
 import 'package:provider/provider.dart';
+
+import 'Custom-Files/sub_category_search_field.dart';
 
 class CreateProduct extends StatefulWidget {
   const CreateProduct({super.key});
@@ -71,6 +73,7 @@ class _CreateProductState extends State<CreateProduct> {
   String? selectedBoxName;
   String? selectedGrade;
   String? selectedParentSku;
+  String? selectedSubCategoryName;
 
   @override
   void dispose() {
@@ -144,7 +147,6 @@ class _CreateProductState extends State<CreateProduct> {
       _variantNameController.clear();
       _parentSkuController.clear();
 
-      // Reset selected values
       selectedBrandId = null;
       selectedCategory = null;
       selectedLabelSku = null;
@@ -152,15 +154,11 @@ class _CreateProductState extends State<CreateProduct> {
       selectedParentSku = null;
       selectedGrade = null;
       selectedItemName = null;
+      selectedSubCategoryName = null;
 
-      // Reset active status if needed
       activeStatus = false;
 
-      // Clear any web images if they exist
       webImages?.clear();
-
-      // Reset product category to default if needed
-      // productProvider?.selectedProductCategory = "Create Simple Product";
     });
   }
 
@@ -210,10 +208,7 @@ class _CreateProductState extends State<CreateProduct> {
   }
 
   Widget _buildMainContent(BuildContext context) {
-    return
-        // MediaQuery.of(context).size.width > 1200
-        //     ?
-        Padding(
+    return Padding(
       padding: const EdgeInsets.all(24.0),
       child: Card(
         elevation: 2,
@@ -223,7 +218,6 @@ class _CreateProductState extends State<CreateProduct> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Add header section
             Container(
               padding: const EdgeInsets.all(24),
               decoration: BoxDecoration(
@@ -258,7 +252,6 @@ class _CreateProductState extends State<CreateProduct> {
         ),
       ),
     );
-    // : mobileLayout(context);
   }
 
   Widget formLayout(Widget title, Widget anyWidget, {MainAxisAlignment mainAxisAlignment = MainAxisAlignment.start, double width = 1200}) {
@@ -287,7 +280,7 @@ class _CreateProductState extends State<CreateProduct> {
     );
   }
 
-  Widget fieldTitle(String filTitle, {double height = 51, double width = 173.3, bool show = false}) {
+  Widget fieldTitle(String filTitle, {double height = 51, double width = 173.3, bool required = false}) {
     return SizedBox(
       height: height,
       width: width,
@@ -303,7 +296,7 @@ class _CreateProductState extends State<CreateProduct> {
               letterSpacing: 0.3,
             ),
           ),
-          show
+          required
               ? const Text(
                   ' *',
                   style: TextStyle(color: Colors.red, fontSize: 15),
@@ -338,11 +331,9 @@ class _CreateProductState extends State<CreateProduct> {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 24),
       child: Wrap(
-        // Changed from Row to Wrap
-        spacing: 16, // Horizontal spacing between buttons
-        runSpacing: 16, // Vertical spacing between rows if buttons wrap
+        spacing: 16,
+        runSpacing: 16,
         children: [
-          // Save Button
           SizedBox(
             width: 200,
             height: 45,
@@ -395,7 +386,6 @@ class _CreateProductState extends State<CreateProduct> {
                     ),
             ),
           ),
-          // Reset Button
           SizedBox(
             width: 150,
             height: 45,
@@ -441,7 +431,6 @@ class _CreateProductState extends State<CreateProduct> {
   }
 
   void saveButton() async {
-    // Validate the form first
     if (!_formKey.currentState!.validate()) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -452,7 +441,6 @@ class _CreateProductState extends State<CreateProduct> {
       return;
     }
 
-    // Validate dropdown selections
     if (!_validateDropdowns()) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -463,7 +451,6 @@ class _CreateProductState extends State<CreateProduct> {
       return;
     }
 
-    // Ensure SKU and Parent SKU are the same for 'Variant Product Creation'
     if (productProvider!.selectedProductCategory == 'Variant Product Creation') {
       selectedParentSku = _skuController.text.trim();
     }
@@ -475,14 +462,14 @@ class _CreateProductState extends State<CreateProduct> {
         context: context,
         displayName: _productNameController.text.trim(),
         parentSku:
-            productProvider!.selectedProductCategory == 'Create Simple Product' ? _skuController.text.trim() : selectedParentSku ?? '',
-        sku: _skuController.text.trim(),
+            productProvider!.selectedProductCategory == 'Create Simple Product' ? _skuController.text.trim().replaceAll(RegExp(r'\s+'), '') : selectedParentSku?.replaceAll(RegExp(r'\s+'), '') ?? '',
+        sku: _skuController.text.trim().replaceAll(RegExp(r'\s+'), ''),
         ean: _eanUpcController.text.trim(),
-        brand_id: selectedBrandId ?? '', ///////////////////////////////////////
-        outerPackage_quantity: selectedBoxName ?? '', ///////////////////////////
+        brand_id: selectedBrandId ?? '',
+        outerPackage_quantity: selectedBoxName ?? '',
         description: _descriptionController.text.trim(),
         technicalName: _technicalNameController.text.trim(),
-        label_quantity: selectedLabelSku ?? '', ////////////////////////////
+        label_quantity: selectedLabelSku ?? '',
         tax_rule: _predefinedTaxRuleController.text.trim(),
         length: _lengthController.text.trim(),
         width: _widthController.text.trim(),
@@ -492,16 +479,15 @@ class _CreateProductState extends State<CreateProduct> {
         mrp: _mrpController.text.trim(),
         cost: _costController.text.trim(),
         active: productProvider!.activeStatus,
-        labelSku: selectedLabelSku ?? '', //////////////////////////////////////
-        outerPackage_sku: selectedBoxName ?? '', ////////////////////////////
-        categoryName: selectedCategory ?? '', //////////////////////////////
-        grade: selectedGrade ?? 'A', ///////////////////////////////////////
+        labelSku: selectedLabelSku ?? '',
+        outerPackage_sku: selectedBoxName ?? '',
+        categoryName: selectedCategory ?? '',
+        grade: selectedGrade ?? 'A',
         shopifyImage: _shopifyController.text.trim(),
         variant_name: _variantNameController.text.trim(),
-        itemQty: _itemQtyController.text.trim() ?? '', /////////////////////////////////
+        itemQty: _itemQtyController.text.trim() ?? '',
       );
 
-      // Log the actual values being sent
       log('''
       Sending to API:
       Brand ID: $selectedBrandId
@@ -510,6 +496,8 @@ class _CreateProductState extends State<CreateProduct> {
       Box Name: $selectedBoxName
       ''');
 
+      final responseData = jsonDecode(res.body);
+
       if (res.statusCode == 200 || res.statusCode == 201) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Product created successfully')),
@@ -517,11 +505,11 @@ class _CreateProductState extends State<CreateProduct> {
         clear();
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: ${res.body}')),
+          SnackBar(content: Text('Error: ${responseData['message']}')),
         );
       }
-    } catch (error) {
-      log('Error creating product: $error');
+    } catch (error, s) {
+      log('Error creating product: $error \n\n$s');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error: $error')),
       );
@@ -530,24 +518,12 @@ class _CreateProductState extends State<CreateProduct> {
     }
   }
 
-  // Add new method to validate dropdowns
   bool _validateDropdowns() {
-    // if (selectedBrandId == null) {
-    //   _scrollToField('Brand');
-    //   return false;
-    // }
     if (selectedCategory == null) {
       _scrollToField('Category');
       return false;
     }
-    // if (selectedLabelSku == null) {
-    //   _scrollToField('Label');
-    //   return false;
-    // }
-    // if (selectedBoxName == null) {
-    //   _scrollToField('Size');
-    //   return false;
-    // }
+
     if (productProvider!.selectedProductCategory == 'Variant Product Creation' && selectedParentSku == null) {
       _scrollToField('Parent SKU');
       return false;
@@ -555,7 +531,6 @@ class _CreateProductState extends State<CreateProduct> {
     return true;
   }
 
-  // Helper method to scroll to problematic field
   void _scrollToField(String fieldName) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -565,7 +540,6 @@ class _CreateProductState extends State<CreateProduct> {
     );
   }
 
-  //for web layout
   Widget webLayout(
     BuildContext context,
   ) {
@@ -585,7 +559,7 @@ class _CreateProductState extends State<CreateProduct> {
                 height: 8,
               ),
               formLayout(
-                fieldTitle('Product Name', show: true),
+                fieldTitle('Product Name', required: true),
                 CustomTextField(
                     controller: _productNameController,
                     height: 51,
@@ -601,7 +575,7 @@ class _CreateProductState extends State<CreateProduct> {
               ),
               if (productProvider!.selectedProductCategory == 'Variant Product Creation')
                 formLayout(
-                  fieldTitle('Parent SKU', show: true),
+                  fieldTitle('Parent SKU', required: true),
                   SizedBox(
                     width: 550,
                     child: PaginatedSearchDropdown(
@@ -620,39 +594,23 @@ class _CreateProductState extends State<CreateProduct> {
                 ),
               if (productProvider!.selectedProductCategory == 'Variant Product Creation') const SizedBox(height: 12),
               formLayout(
-                fieldTitle('SKU', show: true, height: 50, width: 110),
+                fieldTitle('SKU', required: true, height: 50, width: 110),
                 SizedBox(
                   child: CustomTextField(
                       controller: _skuController,
                       height: 51,
                       validator: (value) {
+                        // value = value?.trim().replaceAll(RegExp(r'\s+'), '');
                         if (value == null || value.trim().isEmpty) {
                           return 'SKU is required';
-                        }
-                        if (!RegExp(r'^K-\d+$').hasMatch(value)) {
-                          return 'SKU must be of the form K- followed by a number';
                         }
                         return null;
                       }),
                 ),
               ),
               const SizedBox(height: 12),
-
-              // formLayout(
-              //   fieldTitle('Variant Name', height: 50, width: 150),
-              //   CustomTextField(
-              //     controller: _variantNameController,
-              //     height: 51,
-              //     // validator: (value) {
-              //     //   if (value == null || value.trim().isEmpty) {
-              //     //     return 'Variant Name is required';
-              //     //   }
-              //     //   return null;
-              //     // },
-              //   ),
-              // ),
               formLayout(
-                fieldTitle('Item Quantity', show: true),
+                fieldTitle('Item Quantity', required: true),
                 SizedBox(
                   child: CustomTextField(
                     controller: _itemQtyController,
@@ -686,7 +644,7 @@ class _CreateProductState extends State<CreateProduct> {
               ),
               const SizedBox(height: 12),
               formLayout(
-                fieldTitle('Category'),
+                fieldTitle('Category', required: true),
                 Row(
                   children: [
                     SizedBox(
@@ -703,61 +661,25 @@ class _CreateProductState extends State<CreateProduct> {
                         },
                       ),
                     ),
-                    const SizedBox(width: 8),
-                    Container(
-                      margin: const EdgeInsets.only(left: 8),
-                      child: ElevatedButton.icon(
-                        onPressed: () {
-                          CustomAlertBox.diaglogWithOneTextField(context);
-                        },
-                        icon: const Icon(Icons.add, size: 18),
-                        label: const Text(
-                          'New',
-                          style: TextStyle(
-                            fontWeight: FontWeight.w500,
-                            fontSize: 14,
-                          ),
-                        ),
-                        style: ElevatedButton.styleFrom(
-                          foregroundColor: AppColors.primaryBlue,
-                          backgroundColor: Colors.blue.shade50,
-                          elevation: 0,
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 0,
-                          ),
-                          minimumSize: const Size(70, 51),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                            side: BorderSide(
-                              color: Colors.blue.shade100,
-                              width: 1,
-                            ),
-                          ),
-                        ).copyWith(
-                          overlayColor: WidgetStateProperty.resolveWith<Color?>(
-                            (Set<WidgetState> states) {
-                              if (states.contains(WidgetState.hovered)) {
-                                return Colors.blue.shade100;
-                              }
-                              return null;
-                            },
-                          ),
-                        ),
-                      ),
-                    ),
                   ],
                 ),
               ),
               const SizedBox(height: 12),
-
-              // productProvider!.selectedProductCategory ==
-              //         'Variant Product Creation'
-              //     ? formLayout(
-              //         fieldTitle('Variations'),
-              //         variantProductCreation(context),
-              //       )
-              //     : const SizedBox(),
+              formLayout(
+                fieldTitle('Sub-category', required: true),
+                SubCategorySearchableTextField(
+                  isRequired: true,
+                  onSelected: (subCategory) {
+                    if (subCategory != null) {
+                      setState(() {
+                        selectedSubCategoryName = subCategory.name;
+                      });
+                      print('Selected: ${subCategory.name}, ID: ${subCategory.id}, Category: ${subCategory.category}');
+                    }
+                  },
+                ),
+              ),
+              const SizedBox(height: 12),
               productProvider!.selectedProductCategory == 'Variant Product Creation' ? const SizedBox(height: 12) : const SizedBox(),
               productProvider!.selectedProductCategory == 'Variant Product Creation'
                   ? formLayout(
@@ -765,17 +687,10 @@ class _CreateProductState extends State<CreateProduct> {
                       CustomTextField(
                         controller: _technicalNameController,
                         height: 51,
-                        // validator: (value) {
-                        //   if (value == null || value.trim().isEmpty) {
-                        //     return 'Technical name is required';
-                        //   }
-                        //   return null;
-                        // },
                       ),
                     )
                   : const SizedBox(),
               const SizedBox(height: 12),
-              ///////////////////////////////////////////// same as brand field
               formLayout(
                 fieldTitle('Label'),
                 SizedBox(
@@ -801,92 +716,25 @@ class _CreateProductState extends State<CreateProduct> {
                   controller: _descriptionController,
                   height: 100,
                   maxLines: 150,
-                  // validator: (value) {
-                  //   if (value == null || value.trim().isEmpty) {
-                  //     return 'Description is required';
-                  //   }
-                  //   return null;
-                  // },
                 ),
               ),
-
               const SizedBox(height: 12),
-
               formLayout(
                 fieldTitle('Predefined Tax Rule'),
                 CustomTextField(
                   controller: _predefinedTaxRuleController,
                   height: 51,
-                  // validator: (value) {
-                  //   if (value == null || value.trim().isEmpty) {
-                  //     return 'Accounting Item Name is required';
-                  //   }
-                  //   return null;
-                  // },
                 ),
               ),
-              // const SizedBox(height: 12),
               const SizedBox(height: 12),
-              // formLayout(
-              //   fieldTitle('Specifications'),
-              //   Container(
-              //     width: 550,
-              //     height: 250,
-              //     decoration: BoxDecoration(
-              //       border: Border.all(color: Colors.black.withValues(alpha: 0.2)),
-              //       borderRadius: BorderRadius.circular(10),
-              //       color: Colors.white30,
-              //     ),
-              //     child: Column(
-              //       mainAxisAlignment: MainAxisAlignment.center,
-              //       children: [
-              //         formLayout(
-              //             fieldTitle(
-              //               'Size',
-              //               height: 51,
-              //             ),
-              //             CustomTextField(
-              //               controller: _sizeController,
-              //               width: 150,
-              //               validator: (value) {
-              //                 if (value == null || value.trim().isEmpty) {
-              //                   return 'Size is required';
-              //                 }
-              //                 return null;
-              //               },
-              //             ),
-              //             mainAxisAlignment: MainAxisAlignment.center),
-              //         const SizedBox(height: 8.0),
-              //         formLayout(
-              //             fieldTitle(
-              //               'Color',
-              //               height: 51,
-              //             ),
-              //             SizedBox(
-              //               // color: Colors.blueAccent,
-              //               width: 150,
-              //               height: 51,
-              //               child: CustomDropdown(
-              //                 key: colorKey,
-              //                 option: productProvider!.colorDrop,
-              //                 onSelectedChanged: (val) {
-              //                   selectedIndexOfColorDrop = val;
-              //                 },
-              //               ),
-              //             ),
-              //             mainAxisAlignment: MainAxisAlignment.center),
-              //       ],
-              //     ),
-              //   ),
-              // ),
-              // const SizedBox(height: 12),
               formLayout(
                 fieldTitle('MRP'),
                 CustomTextField(
                   controller: _mrpController,
                   height: 51,
+                  keyboardType: TextInputType.number,
                   // validator: (value) {
-                  //   if (value == null || value.trim().isEmpty) {
+                  //   if (_mrpController.text.trim().isEmpty) {
                   //     return 'MRP is required';
                   //   }
                   //   return null;
@@ -898,21 +746,17 @@ class _CreateProductState extends State<CreateProduct> {
                 fieldTitle('Cost'),
                 CustomTextField(
                   controller: _costController,
+                  keyboardType: TextInputType.number,
                   height: 51,
-                  // validator: (value) {
-                  //   if (value == null || value.trim().isEmpty) {
-                  //     return 'Cost is required';
-                  //   }
-                  //   return null;
-                  // },
                 ),
               ),
               const SizedBox(height: 12),
               formLayout(
-                fieldTitle('Net Weight', show: true),
+                fieldTitle('Net Weight', required: true),
                 CustomTextField(
                   controller: _netWeightController,
                   height: 51,
+                  keyboardType: TextInputType.number,
                   validator: (value) {
                     if (value == null || value.trim().isEmpty) {
                       return 'Weight is required';
@@ -923,8 +767,9 @@ class _CreateProductState extends State<CreateProduct> {
               ),
               const SizedBox(height: 12),
               formLayout(
-                fieldTitle('Gross Weight', show: true),
+                fieldTitle('Gross Weight', required: true),
                 CustomTextField(
+                  keyboardType: TextInputType.number,
                   controller: _grossWeightController,
                   height: 51,
                   validator: (value) {
@@ -941,12 +786,6 @@ class _CreateProductState extends State<CreateProduct> {
                 CustomTextField(
                   controller: _shopifyController,
                   height: 51,
-                  // validator: (value) {
-                  //   if (value == null || value.trim().isEmpty) {
-                  //     return 'image is required';
-                  //   }
-                  //   return null;
-                  // },
                 ),
               ),
               const SizedBox(height: 12),
@@ -961,7 +800,6 @@ class _CreateProductState extends State<CreateProduct> {
                         child: CustomTextField(
                           controller: _lengthController,
                           prefix: 'L',
-                          // width: MediaQuery.of(context).size.width * 0.15,
                           unit: 'cm',
                           keyboardType: TextInputType.number,
                         ),
@@ -972,7 +810,6 @@ class _CreateProductState extends State<CreateProduct> {
                       Expanded(
                         child: CustomTextField(
                           controller: _widthController,
-                          // width: MediaQuery.of(context).size.width * 0.15,
                           prefix: 'W',
                           unit: 'cm',
                           keyboardType: TextInputType.number,
@@ -984,7 +821,6 @@ class _CreateProductState extends State<CreateProduct> {
                       Expanded(
                         child: CustomTextField(
                           controller: _depthController,
-                          // width: MediaQuery.of(context).size.width * 0.15,
                           prefix: 'H',
                           unit: 'cm',
                           keyboardType: TextInputType.number,
@@ -1026,69 +862,6 @@ class _CreateProductState extends State<CreateProduct> {
                 ),
               ),
               const SizedBox(height: 12),
-              // formLayout(
-              //   fieldTitle('Custom Fields', show: false),
-              //   Container(
-              //     height: 120,
-              //     width: 550,
-              //     decoration: BoxDecoration(
-              //       border: Border.all(color: Colors.grey[300]!),
-              //       borderRadius: BorderRadius.circular(12),
-              //       color: Colors.grey[50],
-              //     ),
-              //     child: Column(
-              //       crossAxisAlignment: CrossAxisAlignment.start,
-              //       children: [
-              //         Padding(
-              //           padding: const EdgeInsets.all(16.0),
-              //           child: Row(
-              //             mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              //             children: [
-              //               Text(
-              //                 'Add Custom Properties',
-              //                 style: TextStyle(
-              //                   fontSize: 14,
-              //                   color: Colors.grey[700],
-              //                   fontWeight: FontWeight.w500,
-              //                 ),
-              //               ),
-              //               ElevatedButton.icon(
-              //                 onPressed: () {
-              //                   CustomAlertBox.showKeyValueDialog(context);
-              //                 },
-              //                 icon: const Icon(Icons.add, size: 18),
-              //                 label: const Text('Add Field'),
-              //                 style: ElevatedButton.styleFrom(
-              //                   foregroundColor: Colors.white,
-              //                   backgroundColor: AppColors.primaryBlue,
-              //                   padding: const EdgeInsets.symmetric(
-              //                     horizontal: 16,
-              //                     vertical: 8,
-              //                   ),
-              //                   shape: RoundedRectangleBorder(
-              //                     borderRadius: BorderRadius.circular(6),
-              //                   ),
-              //                 ),
-              //               ),
-              //             ],
-              //           ),
-              //         ),
-              //         Expanded(
-              //           child: Center(
-              //             child: Text(
-              //               'No custom fields added yet',
-              //               style: TextStyle(
-              //                 color: Colors.grey[500],
-              //                 fontSize: 14,
-              //               ),
-              //             ),
-              //           ),
-              //         ),
-              //       ],
-              //     ),
-              //   ),
-              // ),
-              // const SizedBox(height: 12),
               formLayout(
                 fieldTitle('Active Status'),
                 SizedBox(
@@ -1153,7 +926,6 @@ class _CreateProductState extends State<CreateProduct> {
   Widget variantProductCreation(BuildContext context) {
     return SizedBox(
       width: MediaQuery.of(context).size.width * 0.64,
-      // color:Colors.amber,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -1171,7 +943,6 @@ class _CreateProductState extends State<CreateProduct> {
                               index == 0 ? const Text('Colors') : const SizedBox(),
                               SizedBox(
                                 width: 130,
-                                // color:Colors.brown,
                                 child: CustomTextField(
                                   controller: productProvider!.color[index],
                                 ),

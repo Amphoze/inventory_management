@@ -678,6 +678,7 @@ class _AccountsPageState extends State<AccountsPage> {
                                     padding: const EdgeInsets.symmetric(horizontal: 8.0),
                                     child: Row(
                                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                      crossAxisAlignment: CrossAxisAlignment.end,
                                       children: [
                                         Expanded(
                                           child: Column(
@@ -871,7 +872,15 @@ class _AccountsPageState extends State<AccountsPage> {
                                                                       Navigator.pop(context);
                                                                       Navigator.pop(context);
 
-                                                                      res ? await pro.fetchOrdersWithStatus2() : null;
+                                                                      final searched = pro.accountsSearch.text.trim();
+                                                                      final type = pro.selectedSearchType;
+
+                                                                      if (res) {
+                                                                        if (searched.isEmpty)
+                                                                          await pro.fetchOrdersWithStatus2();
+                                                                        else
+                                                                          await pro.searchOrders(searched, type);
+                                                                      }
                                                                     },
                                                                     style: ElevatedButton.styleFrom(
                                                                       padding: const EdgeInsets.symmetric(

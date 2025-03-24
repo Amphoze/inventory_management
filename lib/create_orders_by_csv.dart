@@ -183,6 +183,8 @@ class _CreateOrdersByCSVState extends State<CreateOrdersByCSV> {
         allowedExtensions: ['csv'],
       );
 
+      log('_pickAndReadCSV result: $result');
+
       if (result != null) {
         final file = result.files.first;
 
@@ -211,6 +213,7 @@ class _CreateOrdersByCSVState extends State<CreateOrdersByCSV> {
   }
 
   Future<void> _processCSVInChunks(List<int> bytes) async {
+    log('_processCSVInChunks');
     try {
       final csvString = String.fromCharCodes(bytes);
       final rawData = const CsvToListConverter().convert(csvString);
@@ -219,11 +222,15 @@ class _CreateOrdersByCSVState extends State<CreateOrdersByCSV> {
         return row.isNotEmpty && row.any((cell) => cell.toString().trim().isNotEmpty);
       }).toList();
 
+      log('filteredData: $filteredData');
+
+      if (filteredData.isEmpty) throw Exception('No valid data found in the CSV file.');
+
       setState(() {
         _csvData = filteredData;
+        log('_csvData: $_csvData');
         _rowCount = _csvData.isNotEmpty ? _csvData.length - 1 : 0;
         _isCreateEnabled = _rowCount > 0;
-        // _failedOrders = [];
         _isProcessingFile = false;
       });
     } catch (e) {
@@ -398,7 +405,9 @@ class _CreateOrdersByCSVState extends State<CreateOrdersByCSV> {
   }
 
   Widget _buildDataTable() {
+    log('_buildDataTable');
     if (_csvData.isEmpty) return const SizedBox();
+    log('_csvData after: $_csvData');
 
     final headers = _csvData.first;
     final pagedData = _getPagedData();

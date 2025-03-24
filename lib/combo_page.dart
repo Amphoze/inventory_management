@@ -537,10 +537,12 @@ class _ComboPageState extends State<ComboPage> {
                                               Expanded(
                                                 child: Text(
                                                   combo['name'] ?? 'N/A',
+                                                  maxLines: 2,
                                                   style: const TextStyle(
                                                     fontSize: 20,
                                                     fontWeight: FontWeight.bold,
                                                     color: Colors.black87,
+                                                    overflow: TextOverflow.ellipsis
                                                   ),
                                                 ),
                                               ),

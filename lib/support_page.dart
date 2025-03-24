@@ -469,6 +469,11 @@ class _SupportPageState extends State<SupportPage> {
                                                       ),
                                                       ElevatedButton.icon(
                                                         onPressed: () async {
+                                                          if(messageController.text.trim().isEmpty ) {
+                                                            Utils.showSnackBar(context, 'Please enter your message');
+                                                            return;
+                                                          }
+                                                          
                                                           showDialog(
                                                             context: context,
                                                             barrierDismissible: false,

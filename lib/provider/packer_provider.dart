@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:developer';
 import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
 import 'package:inventory_management/constants/constants.dart';
@@ -140,11 +141,12 @@ class PackerProvider with ChangeNotifier {
         _currentPage = 1;
         _totalPages = 1; // Reset total pages if there’s an error
       }
-    } catch (e) {
+    } catch (e, s) {
       // Handle errors
       _orders = [];
       _currentPage = 1;
       _totalPages = 1; // Reset total pages if there’s an error
+      log('packer error: $e \n\n$s');
     } finally {
       _isLoading = false;
       setRefreshingOrders(false);

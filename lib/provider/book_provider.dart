@@ -14,7 +14,6 @@ import 'dart:typed_data';
 import 'package:pdf/widgets.dart' as pw;
 
 class BookProvider with ChangeNotifier {
-  final TextEditingController searchController = TextEditingController();
   final GlobalKey<ScaffoldState> scaffoldKey = GlobalKey<ScaffoldState>();
 
   List<bool> selectedB2BItems = List.generate(40, (index) => false);
@@ -60,6 +59,7 @@ class BookProvider with ChangeNotifier {
   String selectedCourier = 'All';
   String searchType = 'Order ID';
 
+  final TextEditingController searchController = TextEditingController();
   final TextEditingController b2bSearchController = TextEditingController();
   final TextEditingController b2cSearchController = TextEditingController();
 
@@ -458,7 +458,7 @@ class BookProvider with ChangeNotifier {
         return {"success": true, "message": "${responseData['message'] ?? ''} - (${responseData["serviceResponse"][0]["orderCreationResponse"]["pickup_location"]["name"] ?? ''})"};
       } else {
         // setLoading(courier, false);
-        return responseData['message'] ?? 'Failed to book orders';
+        return {"success": false, "message": "${responseData['message'] ?? 'Error while booking orders'}"};
       }
     } catch (error) {
       log('Error during API request: $error');
@@ -671,7 +671,7 @@ class BookProvider with ChangeNotifier {
   }
 
   Future<void> searchB2BOrders(String query) async {
-    String encodedOrderId = Uri.encodeComponent(query);
+    String encodedOrderId = Uri.encodeComponent(query.trim());
 
     final prefs = await SharedPreferences.getInstance();
     final warehouseId = prefs.getString('warehouseId') ?? '';
@@ -722,7 +722,7 @@ class BookProvider with ChangeNotifier {
   }
 
   Future<void> searchB2COrders(String query) async {
-    String encodedOrderId = Uri.encodeComponent(query);
+    String encodedOrderId = Uri.encodeComponent(query.trim());
 
     final prefs = await SharedPreferences.getInstance();
     final warehouseId = prefs.getString('warehouseId') ?? '';
@@ -782,7 +782,7 @@ class BookProvider with ChangeNotifier {
     if (token == null) return;
 
     if (searchType == 'Order ID') {
-      String encodedOrderId = Uri.encodeComponent(query);
+      String encodedOrderId = Uri.encodeComponent(query.trim());
       url += '&order_id=$encodedOrderId';
     } else {
       url += '&awb_number=$query';

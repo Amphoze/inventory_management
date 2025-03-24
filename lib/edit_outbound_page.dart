@@ -250,7 +250,9 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _ordersProvider.setInitialMarketplace(_marketplaceController.text);
-      _ordersProvider.setInitialPaymentMode(double.parse(_codAmountController.text) > 0 ? 'COD' : widget.order.paymentMode);
+      _ordersProvider.setInitialPaymentMode((double.parse(_codAmountController.text) > 0 || widget.order.paymentMode == 'Partial Payment')
+          ? 'COD'
+          : widget.order.paymentMode);
       _ordersProvider.setInitialCourier(_courierNameController.text);
       _ordersProvider.setInitialFilter(_filterController.text);
       _ordersProvider.selectOrderType(_orderTypeController.text);
@@ -563,8 +565,14 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
   }
 
   Future<void> _saveChanges() async {
+    if (double.parse(_codAmountController.text) + double.parse(_prepaidAmountController.text) != double.parse(_totalAmtController.text)) {
+      Utils.showSnackBar(context, "Total amount must be equal to the sum of cod amount and prepaid amount");
+      return;
+    }
+
     if (double.parse(_totalAmtController.text) > double.parse(_originalAmtController.text)) {
       Utils.showSnackBar(context, "Total amount cannot be greater than original amount");
+      return;
     }
 
     if ((_billingStateController.text.trim().length < 3) || (_shippingStateController.text.trim().length < 3)) {
@@ -1436,17 +1444,18 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
                                       dropdownColor: Colors.white,
                                       hint: const Text('Select Payment Mode'),
                                       items: item,
-                                      onChanged: (double.tryParse(_codAmountController.text) ?? 0) > 0
-                                          ? null // Disable dropdown if COD amount > 0
-                                          : (value) {
-                                              if (value != null && value.isNotEmpty) {
-                                                setState(() {
-                                                  _ordersProvider.selectPayment(value);
-                                                });
-                                                // log('selectedPayment value: $value');
-                                                // log('selectedPayment: ${_ordersProvider.selectedPayment}');
-                                              }
-                                            },
+                                      onChanged: null,
+                                      // onChanged: (double.tryParse(_codAmountController.text) ?? 0) > 0
+                                      //     ? null // Disable dropdown if COD amount > 0
+                                      //     : (value) {
+                                      //         if (value != null && value.isNotEmpty) {
+                                      //           setState(() {
+                                      //             _ordersProvider.selectPayment(value);
+                                      //           });
+                                      //           // log('selectedPayment value: $value');
+                                      //           // log('selectedPayment: ${_ordersProvider.selectedPayment}');
+                                      //         }
+                                      //       },
                                     ),
                                     const SizedBox(height: 10),
                                     _buildTextField(
@@ -1483,7 +1492,7 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
                                       controller: _codAmountController,
                                       label: 'COD Amount',
                                       icon: Icons.money,
-                                      onFieldSubmitted: (value) => setState(() => _updateTotals()),
+                                      onFieldSubmitted: (value) => setState(() => _updateCod()),
                                     ),
                                     // if (_ordersProvider.selectedPayment != 'COD') ...[],
                                     const SizedBox(height: 10),
@@ -1491,7 +1500,7 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
                                       controller: _prepaidAmountController,
                                       label: 'Prepaid Amount',
                                       icon: Icons.credit_card,
-                                      onFieldSubmitted: (value) => setState(() => _updateTotals()),
+                                      onFieldSubmitted: (value) => setState(() => _updatePrepaid()),
                                     ),
                                     const SizedBox(height: 10),
                                     _buildTextField(
@@ -1767,10 +1776,10 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
                                         children: [
                                           Expanded(
                                             child: _buildDiscountTextField(
-                                                controller: _discountPercentController,
-                                                label: 'Discount Percent',
-                                                icon: Icons.percent,
-                                                onFieldSubmitted: (value) => _updateTotals),
+                                              controller: _discountPercentController,
+                                              label: 'Discount Percent',
+                                              icon: Icons.percent,
+                                            ),
                                           ),
                                           const SizedBox(width: 10),
                                           Expanded(
@@ -2730,7 +2739,7 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
     // void Function(String)? onChanged, // Callback with debouncing
     int? maxLength,
   }) {
-    Timer? _debounce;
+    // Timer? _debounce;
 
     return StatefulBuilder(
       builder: (context, setState) {
@@ -2801,12 +2810,12 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
                 ),
                 cursorColor: AppColors.primaryBlue,
                 onFieldSubmitted: onFieldSubmitted,
-                onChanged: (value) {
-                  if (_debounce?.isActive ?? false) _debounce!.cancel();
-                  _debounce = Timer(const Duration(milliseconds: 1000), () {
-                    if (onFieldSubmitted != null) () => onFieldSubmitted;
-                  });
-                },
+                // onChanged: (value) {
+                //   if (_debounce?.isActive ?? false) _debounce!.cancel();
+                //   _debounce = Timer(const Duration(milliseconds: 1000), () {
+                //     if (onFieldSubmitted != null) () => onFieldSubmitted;
+                //   });
+                // },
               );
             },
           ),
@@ -2842,109 +2851,72 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
     return total;
   }
 
-  // void _updateTotals() {
-  //   final total = _calculateTotal(); // Calculate total from entered quantities & rates
-  //   _originalAmtController.text = total.toStringAsFixed(2);
-  //
-  //   final discountPercent = double.tryParse(_discountPercentController.text) ?? 0;
-  //   double prepaidAmount = double.tryParse(_prepaidAmountController.text) ?? 0;
-  //   double codAmount = double.tryParse(_codAmountController.text) ?? 0;
-  //
-  //   double finalTotal = discountPercent != 0
-  //       ? total - (total * (discountPercent / 100))
-  //       : total;
-  //
-  //   if (selectedPayment == null || selectedPayment!.isEmpty) {
-  //     selectedPayment = "COD";
-  //   }
-  //
-  //   if (selectedPayment == "COD") {
-  //     _codAmountController.text = finalTotal.toStringAsFixed(2);
-  //     _totalAmtController.text = finalTotal.toStringAsFixed(2);
-  //
-  //     // If the user enters a prepaid amount while COD is selected, switch to COD
-  //     if (prepaidAmount > 0) {
-  //       selectedPayment = "COD";
-  //     }
-  //   } else if (selectedPayment == "PrePaid") {
-  //     // Ensure COD amount is 0 before allowing PrePaid selection
-  //     if (codAmount > 0) {
-  //       selectedPayment = "COD"; // Switch back to COD if COD amount exists
-  //     } else {
-  //       _prepaidAmountController.text = finalTotal.toStringAsFixed(2);
-  //       _totalAmtController.text = finalTotal.toStringAsFixed(2);
-  //     }
-  //   }
-  //
-  //   if (discountPercent != 0) {
-  //     final discountAmount = total * (discountPercent / 100);
-  //     _discountAmountController.text = discountAmount.toStringAsFixed(2);
-  //   }
-  // }
+  void applyDiscount() {
+    final discount = double.parse(_discountPercentController.text);
+    final total = _calculateTotal();
+    final discountAmt = total * (discount / 100);
 
-  // void _updateTotals() {
-  //   final total = _calculateTotal(); // Calculate total from entered quantities & rates
-  //   _originalAmtController.text = total.toStringAsFixed(2);
-  //   final discountPercent = double.tryParse(_discountPercentController.text) ?? 0;
-  //   final prepaidAmount = double.tryParse(_prepaidAmountController.text) ?? 0;
-  //
-  //   // Apply discount if present
-  //   double finalTotal = discountPercent != 0 ? total - (total * (discountPercent / 100)) : total;
-  //
-  //   // If COD was not modified earlier (means it's equal to total), update it
-  //   double previousCOD = double.tryParse(_codAmountController.text) ?? 0;
-  //   if (previousCOD == 0 || previousCOD == finalTotal) {
-  //     _codAmountController.text = finalTotal.toStringAsFixed(2);
-  //   }
-  //
-  //   // Adjust COD if prepaid is entered and COD is non-zero
-  //   double codAmount = double.tryParse(_codAmountController.text) ?? 0;
-  //   if (prepaidAmount > 0 && codAmount > 0) {
-  //     codAmount = finalTotal - prepaidAmount;
-  //   }
-  //
-  //   // Update fields
-  //   _codAmountController.text = codAmount.toStringAsFixed(2);
-  //   _totalAmtController.text = finalTotal.toStringAsFixed(2);
-  //
-  //   // Update discount amount if applicable
-  //   if (discountPercent != 0) {
-  //     final discountAmount = total * (discountPercent / 100);
-  //     _discountAmountController.text = discountAmount.toStringAsFixed(2);
-  //   }
-  // }
+    double discountedTotal = discount != 0 ? total - discountAmt : total;
+    _totalAmtController.text = discountedTotal.toStringAsFixed(2);
+    _discountAmountController.text = discountAmt.toStringAsFixed(2);
+  }
 
-  void _updateTotals() {
-    log('_updateTotals');
-    final total = _calculateTotal(); // Calculate total from entered quantities & rates
+  void _updateOriginal() {
+    final discount = double.parse(_discountPercentController.text);
+    final total = _calculateTotal();
+
+    double discountedTotal = discount != 0 ? total - (total * (discount / 100)) : total;
+    setState(() {
+      _totalAmtController.text = discountedTotal.toStringAsFixed(2);
+      _originalAmtController.text = total.toString(); // Use totalQty instead of qty
+    });
+  }
+
+  void _updateCod() {
+    final discount = double.parse(_discountPercentController.text);
+    final cod = double.parse(_codAmountController.text);
+    final total = _calculateTotal();
+
     _originalAmtController.text = total.toStringAsFixed(2);
+    double discountedTotal = discount != 0 ? total - (total * (discount / 100)) : total;
+    _totalAmtController.text = discountedTotal.toStringAsFixed(2);
 
-    final discountPercent = double.tryParse(_discountPercentController.text) ?? 0;
-    final prepaidAmount = double.tryParse(_prepaidAmountController.text) ?? 0;
-    // final codAmount = double.tryParse(_codAmountController.text) ?? 0;
-    String? paymentMode = _ordersProvider.selectedPayment?.toLowerCase() ?? ''; // Get current payment mode
-
-    // Apply discount if present
-    double finalTotal = discountPercent != 0 ? total - (total * (discountPercent / 100)) : total;
-
-    if (paymentMode == "cod" || paymentMode == 'partial payment') {
-      // COD Mode: Adjust COD considering prepaid
-      double updatedCOD = finalTotal - prepaidAmount;
-      _codAmountController.text = updatedCOD.toStringAsFixed(2);
-      _totalAmtController.text = finalTotal.toStringAsFixed(2);
-    } else if (paymentMode == "prepaid") {
-      _prepaidAmountController.text = finalTotal.toStringAsFixed(2);
-      _totalAmtController.text = finalTotal.toStringAsFixed(2);
-
-      // if (codAmount > 0) {
-      //   selectedPayment = "COD";
-      // }
+    if (cod > discountedTotal || cod < 0) {
+      Utils.showSnackBar(context, 'COD amount cannot be negative or greater than total amount');
+      return;
     }
 
-    // Update discount amount if applicable
-    if (discountPercent != 0) {
-      final discountAmount = total * (discountPercent / 100);
-      _discountAmountController.text = discountAmount.toStringAsFixed(2);
+    _prepaidAmountController.text = (discountedTotal - cod).toStringAsFixed(2);
+
+    if (cod == 0) {
+      _ordersProvider.selectPayment('PrePaid');
+    } else {
+      _ordersProvider.selectPayment('COD');
+    }
+  }
+
+  void _updatePrepaid() {
+    final discount = double.parse(_discountPercentController.text);
+    final prepaid = double.parse(_prepaidAmountController.text);
+    final total = _calculateTotal();
+
+    _originalAmtController.text = total.toStringAsFixed(2);
+
+    double discountedTotal = discount != 0 ? total - (total * (discount / 100)) : total;
+    _totalAmtController.text = discountedTotal.toStringAsFixed(2);
+
+    if (prepaid > discountedTotal || prepaid < 0) {
+      Utils.showSnackBar(context, 'Prepaid amount cannot be negative or greater than total amount');
+      return;
+    }
+
+    _codAmountController.text = (discountedTotal - prepaid).toStringAsFixed(2);
+
+    final cod = double.parse(_codAmountController.text);
+    if (cod == 0) {
+      _ordersProvider.selectPayment('PrePaid');
+    } else {
+      _ordersProvider.selectPayment('COD');
     }
   }
 
@@ -2956,7 +2928,7 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
     // void Function(String)? onChanged, // Debounced onChanged callback
     void Function(String)? onFieldSubmitted, // Field submit callback
   }) {
-    Timer? _debounce;
+    // Timer? _debounce;
 
     return StatefulBuilder(
       builder: (context, setState) {
@@ -3018,18 +2990,15 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
                     horizontal: 12,
                   ),
                 ),
-                onChanged: (value) {
-                  if (_debounce?.isActive ?? false) _debounce!.cancel();
-                  _debounce = Timer(const Duration(milliseconds: 500), () {
-                    log('_buildDiscountTextField');
-                    if (onFieldSubmitted != null) () => onFieldSubmitted;
-                  });
-                },
+                // onChanged: (value) {
+                //   if (_debounce?.isActive ?? false) _debounce!.cancel();
+                //   _debounce = Timer(const Duration(milliseconds: 500), () {
+                //     log('_buildDiscountTextField');
+                //     if (onFieldSubmitted != null) () => onFieldSubmitted;
+                //   });
+                // },
                 onFieldSubmitted: (value) {
-                  if (onFieldSubmitted != null) {
-                    onFieldSubmitted(value);
-                  }
-                  setState(() => _updateTotals());
+                  setState(() => applyDiscount());
                 },
               );
             },
@@ -3047,7 +3016,7 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
     // void Function(String)? onChanged, // Debounced onChanged callback
     // void Function(String)? onFieldSubmitted, // Field submit callback
   }) {
-    Timer? _debounce;
+    // Timer? _debounce;
 
     return StatefulBuilder(
       builder: (context, setState) {
@@ -3110,19 +3079,8 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
                     fillColor: enabled ? Colors.white : Colors.grey[200],
                     contentPadding: const EdgeInsets.symmetric(vertical: 0, horizontal: 4),
                   ),
-                  onChanged: (value) {
-                    if (_debounce?.isActive ?? false) _debounce!.cancel();
-                    _debounce = Timer(const Duration(milliseconds: 500), () {
-                      setState(() => _updateTotals());
-                    });
-                  },
-                  // onChanged: (value) {
-                  //   log('_buildRateTextField');
-                  //   debugPrint('_buildRateTextField');
-                  // },
-                  // onChanged: (value) =>  setState(() => _updateTotals()),
                   onFieldSubmitted: (value) {
-                    setState(() => _updateTotals());
+                    setState(() => _updateOriginal());
                   },
                 ),
               );
@@ -3141,7 +3099,7 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
     // void Function(String)? onChanged, // Debounced onChanged callback
     // void Function(String)? onFieldSubmitted, // Field submit callback
   }) {
-    Timer? _debounce;
+    // Timer? _debounce;
 
     return StatefulBuilder(
       builder: (context, setState) {
@@ -3204,14 +3162,8 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
                     fillColor: enabled ? Colors.white : Colors.grey[200],
                     contentPadding: const EdgeInsets.symmetric(vertical: 0, horizontal: 4),
                   ),
-                  onChanged: (value) {
-                    if (_debounce?.isActive ?? false) _debounce!.cancel();
-                    _debounce = Timer(const Duration(milliseconds: 500), () {
-                      setState(() => _updateTotals());
-                    });
-                  },
                   onFieldSubmitted: (value) {
-                    setState(() => _updateTotals());
+                    setState(() => _updateOriginal());
                   },
                 ),
               );

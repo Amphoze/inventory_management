@@ -84,7 +84,7 @@ class _InvoicedOrdersState extends State<InvoicedOrders> with SingleTickerProvid
   }
 
   Widget _searchBar() {
-    final TextEditingController controller = provider.invoiceSearch;
+    // final TextEditingController controller = provider.invoiceSearch;
 
     return Padding(
       padding: const EdgeInsets.all(8.0),
@@ -129,7 +129,7 @@ class _InvoicedOrdersState extends State<InvoicedOrders> with SingleTickerProvid
               children: [
                 Expanded(
                   child: TextField(
-                    controller: controller,
+                    controller: provider.invoiceSearch,
                     decoration: const InputDecoration(
                       hintText: 'Search Orders',
                       hintStyle: TextStyle(
@@ -156,7 +156,7 @@ class _InvoicedOrdersState extends State<InvoicedOrders> with SingleTickerProvid
                     },
                   ),
                 ),
-                if (controller.text.isNotEmpty)
+                if (provider.invoiceSearch.text.isNotEmpty)
                   InkWell(
                     child: Icon(
                       Icons.close,
@@ -164,7 +164,7 @@ class _InvoicedOrdersState extends State<InvoicedOrders> with SingleTickerProvid
                     ),
                     onTap: () {
                       setState(() {
-                        controller.clear();
+                        provider.invoiceSearch.clear();
                       });
                       _refreshBookedOrders();
                       Provider.of<AccountsProvider>(context, listen: false).clearSearchResults();

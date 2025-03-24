@@ -19,41 +19,40 @@ class CreateOrderProvider with ChangeNotifier {
   String? selectedOrderType;
   String? selectedMarketplace;
   String? selectedFilter;
-  String? selectedPayment;
+  String selectedPayment = 'COD';
   String? selectedCourier;
   bool isBillingSameAsShipping = true;
 
-  // Futures for fetching all products and combos
   Future<List<Product?>>? _productsFuture;
   Future<List<Combo?>>? _combosFuture;
 
-  // Controllers for all fields
   late TextEditingController orderIdController;
   late TextEditingController paymentModeController;
   late TextEditingController currencyCodeController;
-  late TextEditingController coinController; // Not required
+  late TextEditingController coinController;
   late TextEditingController codAmountController;
   late TextEditingController prepaidAmountController;
-  late TextEditingController discountCodeController; // Not required
+  late TextEditingController discountCodeController;
   late TextEditingController discountPercentController;
   late TextEditingController discountAmountController;
-  late TextEditingController taxPercentController; // Not required
+  late TextEditingController taxPercentController;
   late TextEditingController marketplaceController;
   late TextEditingController totalQuantityController;
-  late TextEditingController agentController; // Not required
-  late TextEditingController notesController; // Not required
-  late TextEditingController totalAmtController; // Not required
+  late TextEditingController agentController;
+  late TextEditingController notesController;
+  late TextEditingController totalAmtController;
+  late TextEditingController originalAmtController;
 
   late TextEditingController customerFirstNameController;
   late TextEditingController customerLastNameController;
-  late TextEditingController customerEmailController; // Not required
+  late TextEditingController customerEmailController;
   late TextEditingController customerPhoneController;
 
   late TextEditingController billingFirstNameController;
   late TextEditingController billingLastNameController;
-  late TextEditingController billingEmailController; // Not required
-  late TextEditingController billingAddress1Controller; // Not required
-  late TextEditingController billingAddress2Controller; // Not required
+  late TextEditingController billingEmailController;
+  late TextEditingController billingAddress1Controller;
+  late TextEditingController billingAddress2Controller;
   late TextEditingController billingPhoneController;
   late TextEditingController billingCityController;
   late TextEditingController billingPincodeController;
@@ -64,8 +63,8 @@ class CreateOrderProvider with ChangeNotifier {
   late TextEditingController shippingFirstNameController;
   late TextEditingController shippingLastNameController;
   late TextEditingController shippingEmailController;
-  late TextEditingController shippingAddress1Controller; // Not required
-  late TextEditingController shippingAddress2Controller; // Not required
+  late TextEditingController shippingAddress1Controller;
+  late TextEditingController shippingAddress2Controller;
   late TextEditingController shippingPhoneController;
   late TextEditingController shippingCityController;
   late TextEditingController shippingPincodeController;
@@ -80,36 +79,37 @@ class CreateOrderProvider with ChangeNotifier {
 
   CreateOrderProvider() {
     initializeControllers();
-    _fetchInitialData(); // Fetch initial product/combo data
+    _fetchInitialData();
   }
 
   void initializeControllers() {
     orderIdController = TextEditingController();
     paymentModeController = TextEditingController();
     currencyCodeController = TextEditingController(text: 'INR');
-    coinController = TextEditingController(); // Not required
+    coinController = TextEditingController();
     codAmountController = TextEditingController(text: '0.00');
     prepaidAmountController = TextEditingController();
-    discountCodeController = TextEditingController(); // Not required
+    discountCodeController = TextEditingController();
     discountPercentController = TextEditingController(text: '0');
     discountAmountController = TextEditingController(text: '0.00');
     taxPercentController = TextEditingController();
     marketplaceController = TextEditingController();
     totalQuantityController = TextEditingController();
-    agentController = TextEditingController(); // Not required
-    notesController = TextEditingController(); // Not required
+    agentController = TextEditingController();
+    notesController = TextEditingController();
     totalAmtController = TextEditingController(text: '0.00');
+    originalAmtController = TextEditingController(text: '0.00');
 
     customerFirstNameController = TextEditingController();
     customerLastNameController = TextEditingController();
-    customerEmailController = TextEditingController(); // Not required
+    customerEmailController = TextEditingController();
     customerPhoneController = TextEditingController();
 
     billingFirstNameController = TextEditingController();
     billingLastNameController = TextEditingController();
-    billingEmailController = TextEditingController(); // Not required
-    billingAddress1Controller = TextEditingController(); // Not required
-    billingAddress2Controller = TextEditingController(); // Not required
+    billingEmailController = TextEditingController();
+    billingAddress1Controller = TextEditingController();
+    billingAddress2Controller = TextEditingController();
     billingPhoneController = TextEditingController();
     billingCityController = TextEditingController();
     billingPincodeController = TextEditingController();
@@ -120,8 +120,8 @@ class CreateOrderProvider with ChangeNotifier {
     shippingFirstNameController = TextEditingController();
     shippingLastNameController = TextEditingController();
     shippingEmailController = TextEditingController();
-    shippingAddress1Controller = TextEditingController(); // Not required
-    shippingAddress2Controller = TextEditingController(); // Not required
+    shippingAddress1Controller = TextEditingController();
+    shippingAddress2Controller = TextEditingController();
     shippingPhoneController = TextEditingController();
     shippingCityController = TextEditingController();
     shippingPincodeController = TextEditingController();
@@ -209,7 +209,6 @@ class CreateOrderProvider with ChangeNotifier {
     for (var controller in addedComboRateControllers) controller.dispose();
   }
 
-  // Formatting utilities
   String formatDate(DateTime date) => "${date.day}-${date.month}-${date.year}";
   String formatDateTime(DateTime date) => "${date.day}-${date.month}-${date.year} ${date.hour}:${date.minute}:${date.second}";
 
@@ -256,9 +255,11 @@ class CreateOrderProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  void selectPayment(String? value) {
+  void selectPayment(String value) {
     selectedPayment = value;
-    paymentModeController.text = value ?? '';
+    paymentModeController.text = value;
+    log('selectedPayment: $selectedPayment');
+    log('paymentModeController: ${paymentModeController.text}');
     notifyListeners();
   }
 
@@ -345,21 +346,18 @@ class CreateOrderProvider with ChangeNotifier {
   void updateTotalAmount() {
     double total = 0;
 
-    // Calculate total for individual products
     for (int i = 0; i < addedProductList.length; i++) {
       final qty = int.tryParse(addedProductQuantityControllers[i].text) ?? 0;
       final rate = double.tryParse(addedProductRateControllers[i].text) ?? 0;
       total += qty * rate;
     }
 
-    // Calculate total for combo products
     for (int i = 0; i < addedComboList.length; i++) {
       final qty = int.tryParse(addedComboQuantityControllers[i].text) ?? 0;
       final rate = double.tryParse(addedComboRateControllers[i].text) ?? 0;
       total += qty * rate;
     }
 
-    // Apply discount if any (before calculating prepaid & COD)
     final discountPercent = double.tryParse(discountPercentController.text) ?? 0;
     double discountAmount = 0;
 
@@ -368,15 +366,12 @@ class CreateOrderProvider with ChangeNotifier {
       total -= discountAmount;
     }
 
-    // Assign discount amount to the controller
     discountAmountController.text = discountAmount.toStringAsFixed(2);
 
-    // Assign the discounted total amount
     totalAmtController.text = total.toStringAsFixed(2);
 
-    // Handle Prepaid, Partial, and COD Payments
     final prepaidAmount = double.tryParse(prepaidAmountController.text) ?? 0.0;
-    final codAmount = (total - prepaidAmount).clamp(0, total); // Ensure no negative COD
+    final codAmount = (total - prepaidAmount).clamp(0, total);
 
     codAmountController.text = codAmount.toStringAsFixed(2);
 
@@ -555,18 +550,18 @@ class CreateOrderProvider with ChangeNotifier {
       'customer': {
         'first_name': customerFirstNameController.text,
         'last_name': customerLastNameController.text,
-        'email': customerEmailController.text, // Uncomment
-        'phone': customerPhoneController.text, // Keep as string
+        'email': customerEmailController.text,
+        'phone': customerPhoneController.text,
       },
       'billing_addr': {
         'first_name': billingFirstNameController.text,
         'last_name': billingLastNameController.text,
-        'email': billingEmailController.text, // Uncomment
-        'address1': billingAddress1Controller.text, // Uncomment
-        'address2': billingAddress2Controller.text, // Uncomment
-        'phone': billingPhoneController.text, // Keep as string
+        'email': billingEmailController.text,
+        'address1': billingAddress1Controller.text,
+        'address2': billingAddress2Controller.text,
+        'phone': billingPhoneController.text,
         'city': billingCityController.text,
-        'pincode': billingPincodeController.text, // Keep as string
+        'pincode': billingPincodeController.text,
         'state': billingStateController.text,
         'country': billingCountryController.text,
         'country_code': billingCountryCodeController.text,
@@ -575,11 +570,11 @@ class CreateOrderProvider with ChangeNotifier {
         'first_name': shippingFirstNameController.text,
         'last_name': shippingLastNameController.text,
         'email': shippingEmailController.text,
-        'address1': shippingAddress1Controller.text, // Uncomment
-        'address2': shippingAddress2Controller.text, // Uncomment
-        'phone': shippingPhoneController.text, // Keep as string
+        'address1': shippingAddress1Controller.text,
+        'address2': shippingAddress2Controller.text,
+        'phone': shippingPhoneController.text,
         'city': shippingCityController.text,
-        'pincode': shippingPincodeController.text, // Keep as string
+        'pincode': shippingPincodeController.text,
         'state': shippingStateController.text,
         'country': shippingCountryController.text,
         'country_code': shippingCountryCodeController.text,
@@ -588,18 +583,18 @@ class CreateOrderProvider with ChangeNotifier {
       'currency_code': currencyCodeController.text,
       'items': itemsList,
       'total_amt': double.tryParse(totalAmtController.text) ?? 0,
-      'coin': int.tryParse(coinController.text) ?? 0, // Not required
+      'coin': int.tryParse(coinController.text) ?? 0,
       'cod_amount': double.tryParse(codAmountController.text) ?? 0,
       'prepaid_amount': double.tryParse(prepaidAmountController.text) ?? 0,
-      'discount_code': discountCodeController.text, // Not required
+      'discount_code': discountCodeController.text,
       'discount_percent': double.tryParse(discountPercentController.text) ?? 0,
       'discount_amount': double.tryParse(discountAmountController.text) ?? 0,
-      'tax_percent': double.tryParse(taxPercentController.text) ?? 0, // Not required
+      'tax_percent': double.tryParse(taxPercentController.text) ?? 0,
       'total_quantity': int.tryParse(totalQuantityController.text) ?? 0,
       'marketplace': marketplaceController.text.trim(),
       'source': source,
-      'agent': agentController.text, // Not required
-      'notes': notesController.text, // Not required
+      'agent': agentController.text,
+      'notes': notesController.text,
     };
 
     log('create order data: $orderData');
@@ -654,6 +649,8 @@ class CreateOrderProvider with ChangeNotifier {
     try {
       Uri url = Uri.parse('https://api.opencagedata.com/geocode/v1/json?q=$pincode&key=55710109e7c24fbc98c86377005c0612');
 
+      Utils.showLoadingDialog(context, "Fetching Address");
+
       final response = await http.get(url);
 
       if (response.statusCode == 200) {
@@ -683,18 +680,19 @@ class CreateOrderProvider with ChangeNotifier {
         } else {
           log('No location details found for the provided pincode :- ${response.body}');
           Utils.showSnackBar(context, 'No location details found for the provided pincode.');
-          return;
+          // return;
         }
       } else {
         log('Failed to load location details :- ${response.body}');
         Utils.showSnackBar(context, 'Failed to load location details. Please check your internet connection.');
-        return;
+        // return;
       }
     } catch (e, stace) {
       log('Error to fetch location details :- $e\n$stace');
       Utils.showSnackBar(context, 'Failed to load location details. Please check your internet connection.');
-      return;
+      // return;
     } finally {
+      Navigator.of(context).pop();
       notifyListeners();
     }
   }
@@ -713,6 +711,111 @@ class CreateOrderProvider with ChangeNotifier {
       billingStateController.text = shippingStateController.text;
       billingCountryController.text = shippingCountryController.text;
       billingCountryCodeController.text = shippingCountryCodeController.text;
+    }
+    notifyListeners();
+  }
+
+  double _calculateTotal() {
+    double total = 0;
+    int totalQty = 0; // Store total quantity separately
+
+    final controllerPairs = [
+      [addedProductQuantityControllers, addedProductRateControllers],
+      [addedComboQuantityControllers, addedComboRateControllers],
+    ];
+
+    for (final pair in controllerPairs) {
+      for (var i = 0; i < pair[0].length; i++) {
+        final qty = int.tryParse(pair[0][i].text) ?? 0;
+        final rate = double.tryParse(pair[1][i].text) ?? 0;
+        total += qty * rate;
+        totalQty += qty; // Accumulate total quantity
+      }
+    }
+
+    totalQuantityController.text = totalQty.toString(); // Use totalQty instead of qty
+
+    notifyListeners();
+    return total;
+  }
+
+  void applyDiscount() {
+    final discount = double.parse(discountPercentController.text);
+    final total = _calculateTotal();
+    final discountAmt = total * (discount / 100);
+
+    double discountedTotal = discount != 0 ? total - discountAmt : total;
+    totalAmtController.text = discountedTotal.toStringAsFixed(2);
+    discountAmountController.text = discountAmt.toStringAsFixed(2);
+    notifyListeners();
+  }
+
+  void updateOriginal() {
+    final discount = double.parse(discountPercentController.text);
+    final total = _calculateTotal();
+
+    double discountedTotal = discount != 0 ? total - (total * (discount / 100)) : total;
+
+    totalAmtController.text = discountedTotal.toStringAsFixed(2);
+    originalAmtController.text = total.toString(); // Use totalQty instead of qty
+    notifyListeners();
+  }
+
+  void updateCod(BuildContext context) {
+    try {
+      final discount = double.parse(discountPercentController.text);
+      final cod = double.parse(codAmountController.text);
+      final total = _calculateTotal();
+
+      originalAmtController.text = total.toStringAsFixed(2);
+      double discountedTotal = discount != 0 ? total - (total * (discount / 100)) : total;
+      totalAmtController.text = discountedTotal.toStringAsFixed(2);
+
+      if (cod > discountedTotal || cod < 0) {
+        Utils.showSnackBar(context, 'COD amount cannot be negative or greater than total amount');
+        return;
+      }
+
+      prepaidAmountController.text = (discountedTotal - cod).toStringAsFixed(2);
+
+      if (cod == 0) {
+        selectPayment('PrePaid');
+      } else {
+        selectPayment('COD');
+      }
+    } catch (e, s) {
+      log('Error in updateCod: $e \n\n$s');
+    }
+    notifyListeners();
+  }
+
+  void updatePrepaid(BuildContext context) {
+    final discount = double.parse(discountPercentController.text);
+    final prepaid = double.parse(prepaidAmountController.text);
+    final total = _calculateTotal();
+
+    log('updatePrepaid: $prepaid');
+    log('updatePrepaid total: $total');
+    log('updatePrepaid discount: $discount');
+    // log('updatePrepaid cod: $cod');
+
+    originalAmtController.text = total.toStringAsFixed(2);
+
+    double discountedTotal = discount != 0 ? total - (total * (discount / 100)) : total;
+    totalAmtController.text = discountedTotal.toStringAsFixed(2);
+
+    if (prepaid > discountedTotal || prepaid < 0) {
+      Utils.showSnackBar(context, 'Prepaid amount cannot be negative or greater than total amount');
+      return;
+    }
+
+    codAmountController.text = (discountedTotal - prepaid).toStringAsFixed(2);
+
+    final cod = double.parse(codAmountController.text);
+    if (cod == 0) {
+      selectPayment('PrePaid');
+    } else {
+      selectPayment('COD');
     }
     notifyListeners();
   }

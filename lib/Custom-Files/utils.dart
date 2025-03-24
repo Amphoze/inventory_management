@@ -32,6 +32,7 @@ class Utils {
   static showSnackBar(BuildContext context, String message, {String? details, Color? color}) {
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
       content: Text(message),
+      showCloseIcon: details == null,
       backgroundColor: color,
       action: details != null
           ? SnackBarAction(

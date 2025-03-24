@@ -1,10 +1,12 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:inventory_management/Custom-Files/colors.dart';
 import 'package:inventory_management/Widgets/combo_card.dart';
 import 'package:inventory_management/Widgets/product_card.dart';
 import 'package:inventory_management/Widgets/searchable_dropdown.dart';
-import 'package:inventory_management/provider/create_order_provider.dart'; // Import your updated provider
+import 'package:inventory_management/provider/create_order_provider.dart';
 import 'package:inventory_management/provider/marketplace_provider.dart';
 import 'package:provider/provider.dart';
 import 'Custom-Files/utils.dart';
@@ -38,8 +40,26 @@ class _CreateOrderPageState extends State<CreateOrderPage> {
   }
 
   void _saveOrder(CreateOrderProvider provider) async {
+    provider.setBillingSameAsShipping(provider.isBillingSameAsShipping);
+
     if (provider.addedProductList.isEmpty && provider.addedComboList.isEmpty) {
       Utils.showSnackBar(context, 'Please add items to the order.');
+      return;
+    }
+
+    if (double.parse(provider.codAmountController.text) + double.parse(provider.prepaidAmountController.text) !=
+        double.parse(provider.totalAmtController.text)) {
+      Utils.showSnackBar(context, "Total amount must be equal to the sum of cod amount and prepaid amount");
+      return;
+    }
+
+    if (double.parse(provider.totalAmtController.text) > double.parse(provider.originalAmtController.text)) {
+      Utils.showSnackBar(context, "Total amount cannot be greater than original amount");
+      return;
+    }
+
+    if ((provider.billingStateController.text.trim().length < 3) || (provider.shippingStateController.text.trim().length < 3)) {
+      Utils.showSnackBar(context, 'State name must be at least 3 characters long');
       return;
     }
 
@@ -180,8 +200,9 @@ class _CreateOrderPageState extends State<CreateOrderPage> {
                       child: _buildDropdown(
                         value: provider.selectedPayment,
                         label: 'Payment Mode',
-                        items: const ['Partial Payment', 'PrePaid', 'COD'],
-                        onChanged: provider.selectPayment,
+                        items: const ['PrePaid', 'COD'],
+                        isDisabled: true,
+                        onChanged: (value) => provider.selectPayment,
                         validator: (value) {
                           if (value == null || value.isEmpty) {
                             return 'Required';
@@ -209,7 +230,8 @@ class _CreateOrderPageState extends State<CreateOrderPage> {
                         controller: provider.codAmountController,
                         label: 'COD Amount',
                         icon: Icons.money,
-                        enabled: false,
+                        onSubmitted: (value) => provider.updateCod(context),
+                        // enabled: false,
                         validator: (value) => (value?.isEmpty ?? false) ? 'Required' : null,
                       ),
                     ),
@@ -220,6 +242,8 @@ class _CreateOrderPageState extends State<CreateOrderPage> {
                         controller: provider.prepaidAmountController,
                         label: 'Prepaid Amount',
                         icon: Icons.credit_card,
+                        onSubmitted: (value) => provider.updatePrepaid(context),
+                        // enabled: false,
                         validator: (value) => (value?.isEmpty ?? false) ? 'Required' : null,
                       ),
                     ),
@@ -233,6 +257,19 @@ class _CreateOrderPageState extends State<CreateOrderPage> {
                         validator: (value) => (value?.isEmpty ?? false) ? 'Required' : null,
                       ),
                     ),
+                    if ((double.tryParse(provider.prepaidAmountController.text) ?? 0) != 0 ||
+                        (double.tryParse(provider.discountPercentController.text) ?? 0) != 0) ...[
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: _buildTextField(
+                          controller: provider.originalAmtController,
+                          label: 'Original Amount',
+                          enabled: false,
+                          icon: Icons.currency_rupee,
+                          // validator: (value) => (value?.isEmpty ?? false) ? 'Required' : null,
+                        ),
+                      ),
+                    ]
                   ],
                 ),
               ],
@@ -271,16 +308,13 @@ class _CreateOrderPageState extends State<CreateOrderPage> {
                         controller: provider.discountPercentController,
                         label: 'Discount Percent',
                         icon: Icons.percent,
-                        onSubmitted: (_) => provider.updateTotalAmount(),
+                        onSubmitted: (_) => provider.applyDiscount(),
                       ),
                     ),
                     const SizedBox(width: 10),
                     Expanded(
                       child: _buildTextField(
-                        controller: provider.discountAmountController,
-                        label: 'Discount Amount',
-                        icon: Icons.money_off,
-                      ),
+                          controller: provider.discountAmountController, label: 'Discount Amount', icon: Icons.money_off, enabled: false),
                     ),
                   ],
                 ),
@@ -411,7 +445,7 @@ class _CreateOrderPageState extends State<CreateOrderPage> {
         initiallyExpanded: true,
         title: Row(
           children: [
-            _buildHeading("Billing Address"),
+            _buildHeading("Billing Address "),
             const Text("(Enter the pincode only. We'll fetch the address for you.)", style: TextStyle(color: Colors.red)),
           ],
         ),
@@ -484,7 +518,7 @@ class _CreateOrderPageState extends State<CreateOrderPage> {
                         label: 'Pincode',
                         icon: Icons.code,
                         validator: (value) => (value?.isEmpty ?? false) ? 'Required' : null,
-                        onChanged: (value) {
+                        onSubmitted: (value) {
                           if (value.isEmpty) {
                             context.read<CreateOrderProvider>().clearLocationDetails(isBilling: true);
                           }
@@ -642,12 +676,12 @@ class _CreateOrderPageState extends State<CreateOrderPage> {
                         label: 'Pincode',
                         icon: Icons.code,
                         validator: (value) => (value?.isEmpty ?? false) ? 'Required' : null,
-                        onChanged: (value) {
+                        onSubmitted: (value) {
                           if (value.isEmpty) {
                             context.read<CreateOrderProvider>().clearLocationDetails(isBilling: false);
                           }
                           // if (value.length == 6) {
-                            context.read<CreateOrderProvider>().getLocationDetails(context: context, pincode: value, isBilling: false);
+                          context.read<CreateOrderProvider>().getLocationDetails(context: context, pincode: value, isBilling: false);
                           // }
                         },
                         // maxLength: 6,
@@ -801,7 +835,7 @@ class _CreateOrderPageState extends State<CreateOrderPage> {
                                       controller: provider.addedProductQuantityControllers[index],
                                       label: 'Qty',
                                       icon: Icons.production_quantity_limits,
-                                      onSubmitted: (_) => provider.updateTotalAmount(),
+                                      onSubmitted: (_) => provider.updateOriginal(),
                                     ),
                                   ),
                                   const SizedBox(height: 8),
@@ -811,7 +845,7 @@ class _CreateOrderPageState extends State<CreateOrderPage> {
                                       controller: provider.addedProductRateControllers[index],
                                       label: 'Rate',
                                       icon: Icons.currency_rupee,
-                                      onSubmitted: (_) => provider.updateTotalAmount(),
+                                      onSubmitted: (_) => provider.updateOriginal(),
                                     ),
                                   ),
                                 ],
@@ -876,7 +910,7 @@ class _CreateOrderPageState extends State<CreateOrderPage> {
                                       controller: provider.addedComboQuantityControllers[index],
                                       label: 'Qty',
                                       icon: Icons.production_quantity_limits,
-                                      onSubmitted: (_) => provider.updateTotalAmount(),
+                                      onSubmitted: (_) => provider.updateOriginal(),
                                     ),
                                   ),
                                   const SizedBox(height: 8),
@@ -886,7 +920,7 @@ class _CreateOrderPageState extends State<CreateOrderPage> {
                                       controller: provider.addedComboRateControllers[index],
                                       label: 'Rate',
                                       icon: Icons.currency_rupee,
-                                      onSubmitted: (_) => provider.updateTotalAmount(),
+                                      onSubmitted: (_) => provider.updateOriginal(),
                                     ),
                                   ),
                                 ],
@@ -941,7 +975,7 @@ class _CreateOrderPageState extends State<CreateOrderPage> {
     void Function(String)? onSubmitted,
     void Function(String)? onChanged,
     int? maxLength,
-    bool? isNumber = false,
+    bool isNumber = false,
   }) {
     return TextFormField(
       controller: controller,
@@ -949,7 +983,8 @@ class _CreateOrderPageState extends State<CreateOrderPage> {
       validator: validator,
       onChanged: onChanged,
       maxLength: maxLength,
-      keyboardType: isNumber! ? TextInputType.number : TextInputType.text,
+      keyboardType: isNumber ? TextInputType.number : TextInputType.text,
+      inputFormatters: isNumber ? [FilteringTextInputFormatter.digitsOnly] : [],
       onFieldSubmitted: onSubmitted,
       decoration: InputDecoration(
         label: Text(label, style: TextStyle(color: validator != null ? Colors.red : Colors.grey)),
@@ -977,13 +1012,13 @@ class _CreateOrderPageState extends State<CreateOrderPage> {
     required String? value,
     required String label,
     required List<String> items,
-    required void Function(String?) onChanged,
+    required void Function(String?)? onChanged, // Make it nullable
     String? Function(String?)? validator,
+    bool isDisabled = false, // Add a flag to disable the dropdown
   }) {
     return DropdownButtonFormField<String>(
       value: value,
       decoration: InputDecoration(
-        // labelText: label,
         label: Text(label, style: TextStyle(color: validator != null ? Colors.red : Colors.grey)),
         prefixIcon: Icon(Icons.list, color: Colors.grey[700]),
         border: OutlineInputBorder(
@@ -1000,9 +1035,10 @@ class _CreateOrderPageState extends State<CreateOrderPage> {
         ),
       ),
       items: items.map((item) => DropdownMenuItem(value: item, child: Text(item))).toList(),
-      onChanged: onChanged,
+      onChanged: isDisabled ? null : onChanged, // Disable when isDisabled is true
       validator: validator,
       hint: Text('Select $label'),
+      disabledHint: Text(value ?? 'Select $label'), // Show current value when disabled
     );
   }
 
@@ -1018,11 +1054,12 @@ class _CreateOrderPageState extends State<CreateOrderPage> {
       keyboardType: TextInputType.phone,
       inputFormatters: [
         FilteringTextInputFormatter.digitsOnly,
-        // LengthLimitingTextInputFormatter(10),
+        LengthLimitingTextInputFormatter(13),
       ],
       validator: validator ??
           (value) {
-            if (value != null && value.isNotEmpty) {
+            log('$label value: $value');
+            if (value == null || value.isEmpty) {
               return 'Required';
             }
             return null;

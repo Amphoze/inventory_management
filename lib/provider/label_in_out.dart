@@ -297,7 +297,10 @@ class LabelFormPageState extends State<LabelFormPage> with SingleTickerProviderS
         focusNode: focusNode,
         maxLength: label == 'Vendor Phone' ? 10 : null,
         inputFormatters: [
-          if (label == 'Vendor Phone' || label == 'Cost' || label == 'Quantity') FilteringTextInputFormatter.digitsOnly,
+          if (label == 'Vendor Phone' || label == 'Quantity')
+            FilteringTextInputFormatter.digitsOnly
+          else if (label == 'Cost')
+            FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*')),
         ],
         decoration: InputDecoration(
           labelText: isRequired ? '$label *' : label,
@@ -346,10 +349,10 @@ class LabelFormPageState extends State<LabelFormPage> with SingleTickerProviderS
               borderRadius: BorderRadius.circular(2),
             ),
           ),
-          SizedBox(width: 8),
+          const SizedBox(width: 8),
           Text(
             title,
-            style: TextStyle(
+            style: const TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
               color: AppColors.primaryBlue,
@@ -456,7 +459,13 @@ class LabelFormPageState extends State<LabelFormPage> with SingleTickerProviderS
                 ),
                 if (_tabController.index == 0) ...[
                   _buildDivider(),
-                  _buildSectionTitle('Vendor Details'),
+                  Row(
+                    children: [
+                      _buildSectionTitle('Vendor Details '),
+                      const Text("(Enter the VENDOR NAME only. We'll fetch its other details for you.)",
+                          style: TextStyle(color: Colors.red)),
+                    ],
+                  ),
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [

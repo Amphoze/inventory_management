@@ -351,6 +351,7 @@ class _OrderComboCardState extends State<OrderComboCard> {
                                   ),
                                   TextButton(
                                     onPressed: () async {
+                                      // close confirm dialog
                                       Navigator.pop(context);
 
                                       showDialog(
@@ -370,6 +371,7 @@ class _OrderComboCardState extends State<OrderComboCard> {
                                       );
 
                                       try {
+                                        log('in revert try');
                                         final authPro = context.read<AuthProvider>();
                                         final res = await authPro.reverseOrder(widget.order.orderId);
 
@@ -380,7 +382,8 @@ class _OrderComboCardState extends State<OrderComboCard> {
                                         } else {
                                           Utils.showInfoDialog(context, res['message'], false);
                                         }
-                                      } catch (e) {
+                                      } catch (e, s) {
+                                        log('in revert catch: $e $s');
                                         Navigator.pop(context);
                                         Utils.showInfoDialog(context, 'An error occurred: $e', false);
                                       }
@@ -1008,9 +1011,25 @@ class _OrderComboCardState extends State<OrderComboCard> {
                                                 Navigator.pop(context);
                                                 Navigator.pop(context);
 
-                                                res ? await pro.fetchBookedOrders(pro.currentPageBooked) : null;
-                                                res ? await pro.fetchPaginatedOrdersB2B(pro.currentPageB2B) : null;
-                                                res ? await pro.fetchPaginatedOrdersB2C(pro.currentPageB2C) : null;
+                                                if(res) {
+                                                  final bookedSearch = pro.searchController.text.trim();
+                                                  final b2bSearch = pro.b2bSearchController.text.trim();
+                                                  final b2cSearch = pro.b2cSearchController.text.trim();
+                                                  final searchType = pro.searchType;
+
+                                                  if(bookedSearch.isEmpty) await pro.fetchBookedOrders(pro.currentPageBooked);
+                                                  else await pro.searchBookedOrders(bookedSearch, searchType);
+
+                                                  if(b2bSearch.isEmpty) await pro.fetchPaginatedOrdersB2B(pro.currentPageB2B);
+                                                  else await pro.searchB2BOrders(b2bSearch);
+
+                                                  if(b2cSearch.isEmpty) await pro.fetchPaginatedOrdersB2C(pro.currentPageB2C);
+                                                  else await pro.searchB2COrders(b2cSearch);
+                                                }
+
+                                                // res ? await pro.fetchBookedOrders(pro.currentPageBooked) : null;
+                                                // res ? await pro.fetchPaginatedOrdersB2B(pro.currentPageB2B) : null;
+                                                // res ? await pro.fetchPaginatedOrdersB2C(pro.currentPageB2C) : null;
                                               },
                                               style: ElevatedButton.styleFrom(
                                                 padding: const EdgeInsets.symmetric(
@@ -1124,6 +1143,14 @@ class _OrderComboCardState extends State<OrderComboCard> {
 
                                                 Navigator.pop(context);
                                                 Navigator.pop(context);
+
+                                                if(res) {
+                                                  final invoiceSearch = pro.invoiceSearch.text.trim();
+                                                  final searchType = pro.selectedSearchType;
+
+                                                  if(invoiceSearch.isEmpty) await pro.fetchInvoicedOrders(pro.currentPageBooked);
+                                                  else await pro.searchInvoicedOrders(invoiceSearch, searchType);
+                                                }
 
                                                 res ? await pro.fetchInvoicedOrders(pro.currentPageBooked) : null;
                                                 res ? await pro.fetchOrdersWithStatus2() : null;

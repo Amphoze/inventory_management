@@ -556,7 +556,7 @@ class AccountsProvider with ChangeNotifier {
     String url = '${await Constants.getBaseUrl()}/orders?warehouse=$warehouseId&checkInvoice=true';
 
     if (searchType == "Order ID") {
-      String encodedOrderId = Uri.encodeComponent(query);
+      String encodedOrderId = Uri.encodeComponent(query.trim());
       url += '&order_id=$encodedOrderId';
     } else {
       url += '&transaction_number=$query';

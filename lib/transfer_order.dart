@@ -38,29 +38,24 @@ class _TransferOrderPageState extends State<TransferOrderPage> {
   }
 
   void _saveOrder(TransferOrderProvider provider) async {
+    if (provider.selectedFromWarehouse == null || provider.selectedFromWarehouse!.isEmpty || provider.selectedToWarehouse == null || provider.selectedToWarehouse!.isEmpty) {
+      Utils.showSnackBar(context, 'Please select both source and destination warehouses.');
+      return;
+    }
+
+    if (provider.selectedFromWarehouse == provider.selectedToWarehouse)  {
+      Utils.showSnackBar(context, 'Please select different warehouses.');
+      return;
+    }
+
     if (provider.addedProductList.isEmpty && provider.addedComboList.isEmpty) {
       Utils.showSnackBar(context, 'Please add items to the order.');
       return;
     }
 
-    if (provider.selectedFromWarehouse == null || provider.selectedFromWarehouse!.isEmpty) {
-      Utils.showSnackBar(context, 'Please select source warehouse.');
-      return;
-    }
-
-    if (provider.selectedToWarehouse == null || provider.selectedToWarehouse!.isEmpty) {
-      Utils.showSnackBar(context, 'Please select destination warehouse.');
-      return;
-    }
-
-    if (provider.selectedFromWarehouse == provider.selectedToWarehouse) {
-      Utils.showSnackBar(context, 'Please select different warehouses.');
-      return;
-    }
-
     if (_formKey.currentState!.validate()) {
-        final res = await provider.saveOrder();
-      if(res['success'] == true) {
+      final res = await provider.saveOrder();
+      if (res['success'] == true) {
         Utils.showSnackBar(context, 'Order Transferred successfully!', color: Colors.green);
         Utils.showInfoDialog(context, 'Order ID: ${res['message'] ?? ''}!', true);
       } else {
@@ -185,15 +180,6 @@ class _TransferOrderPageState extends State<TransferOrderPage> {
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Flexible(
-                    //   child: _buildPhoneField(
-                    //     phoneController: provider.customerPhoneController,
-                    //     // countryCodeController: provider.customerCountryCodeController,
-                    //     label: "Customer's Phone",
-                    //     enabled: true,
-                    //   ),
-                    // ),
-                    // const SizedBox(width: 8),
                     Flexible(
                       child: _buildTextField(
                         controller: provider.notesController,
@@ -255,7 +241,12 @@ class _TransferOrderPageState extends State<TransferOrderPage> {
       color: Colors.white,
       child: ExpansionTile(
         initiallyExpanded: true,
-        title: _buildHeading("Billing Address"),
+        title: Row(
+          children: [
+            _buildHeading("Billing Address "),
+            // const Text("(Enter the pincode only. We'll fetch the address for you.)", style: TextStyle(color: Colors.red)),
+          ],
+        ),
         children: [
           Padding(
             padding: const EdgeInsets.all(16.0),
@@ -289,6 +280,22 @@ class _TransferOrderPageState extends State<TransferOrderPage> {
                   children: [
                     Expanded(
                       child: _buildTextField(
+                        controller: provider.billingPincodeController,
+                        label: 'Pincode/Zipcode',
+                        icon: Icons.code,
+                        validator: (value) => (value?.isEmpty ?? false) ? 'Required' : null,
+                        onSubmitted: (value) {
+                          if (value.isEmpty) {
+                            context.read<TransferOrderProvider>().clearLocationDetails(isBilling: true);
+                          }
+                          context.read<TransferOrderProvider>().getLocationDetails(context: context, pincode: value, isBilling: true);
+                        },
+                        isNumber: true,
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: _buildTextField(
                         controller: provider.billingCityController,
                         label: 'City',
                         icon: Icons.location_city,
@@ -306,7 +313,21 @@ class _TransferOrderPageState extends State<TransferOrderPage> {
                         enabled: !provider.isBillingSameAsShipping,
                       ),
                     ),
-                    const SizedBox(width: 10),
+                    // const SizedBox(width: 10),
+                    // Expanded(
+                    //   child: _buildTextField(
+                    //     controller: provider.billingCountryController,
+                    //     label: 'Country',
+                    //     icon: Icons.public,
+                    //     validator: (value) => (value?.isEmpty ?? false) ? 'Required' : null,
+                    //     enabled: !provider.isBillingSameAsShipping,
+                    //   ),
+                    // ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                Row(
+                  children: [
                     Expanded(
                       child: _buildTextField(
                         controller: provider.billingCountryController,
@@ -317,33 +338,14 @@ class _TransferOrderPageState extends State<TransferOrderPage> {
                       ),
                     ),
                     const SizedBox(width: 10),
-                    Expanded(
-                      child: _buildTextField(
-                        controller: provider.billingPincodeController,
-                        label: 'Pincode/Zipcode',
-                        icon: Icons.code,
-                        validator: (value) => (value?.isEmpty ?? false) ? 'Required' : null,
-                        onChanged: (value) {
-                          if (value.isEmpty) {
-                            context.read<TransferOrderProvider>().clearLocationDetails(isBilling: true);
-                          }
-                          // if (value.length == 6) {
-                            context.read<TransferOrderProvider>().getLocationDetails(context: context, pincode: value, isBilling: true);
-                          // }
-                        },
-                        // maxLength: 6,
-                        isNumber: true,
+                    Flexible(
+                      child: _buildPhoneField(
+                        phoneController: provider.billingPhoneController,
+                        label: 'Phone',
+                        enabled: !provider.isBillingSameAsShipping,
                       ),
                     ),
                   ],
-                ),
-                const SizedBox(height: 10),
-                Flexible(
-                  child: _buildPhoneField(
-                    phoneController: provider.billingPhoneController,
-                    label: 'Phone',
-                    enabled: !provider.isBillingSameAsShipping,
-                  ),
                 ),
               ],
             ),
@@ -359,7 +361,12 @@ class _TransferOrderPageState extends State<TransferOrderPage> {
       color: Colors.white,
       child: ExpansionTile(
         initiallyExpanded: true,
-        title: _buildHeading("Shipping Address"),
+        title: Row(
+          children: [
+            _buildHeading("Shipping Address "),
+            // const Text("(Enter the pincode only. We'll fetch the address for you.)", style: TextStyle(color: Colors.red)),
+          ],
+        ),
         children: [
           Padding(
             padding: const EdgeInsets.all(16.0),
@@ -397,6 +404,22 @@ class _TransferOrderPageState extends State<TransferOrderPage> {
                   children: [
                     Expanded(
                       child: _buildTextField(
+                        controller: provider.shippingPincodeController,
+                        label: 'Pincode',
+                        icon: Icons.code,
+                        validator: (value) => (value?.isEmpty ?? false) ? 'Required' : null,
+                        onSubmitted: (value) {
+                          if (value.isEmpty) {
+                            context.read<TransferOrderProvider>().clearLocationDetails(isBilling: false);
+                          }
+                          context.read<TransferOrderProvider>().getLocationDetails(context: context, pincode: value, isBilling: false);
+                        },
+                        isNumber: true,
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: _buildTextField(
                         controller: provider.shippingCityController,
                         label: 'City',
                         icon: Icons.location_city,
@@ -412,7 +435,11 @@ class _TransferOrderPageState extends State<TransferOrderPage> {
                         validator: (value) => (value?.isEmpty ?? false) ? 'Required' : null,
                       ),
                     ),
-                    const SizedBox(width: 10),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                Row(
+                  children: [
                     Expanded(
                       child: _buildTextField(
                         controller: provider.shippingCountryController,
@@ -422,29 +449,6 @@ class _TransferOrderPageState extends State<TransferOrderPage> {
                       ),
                     ),
                     const SizedBox(width: 10),
-                    Expanded(
-                      child: _buildTextField(
-                        controller: provider.shippingPincodeController,
-                        label: 'Pincode',
-                        icon: Icons.code,
-                        validator: (value) => (value?.isEmpty ?? false) ? 'Required' : null,
-                        onChanged: (value) {
-                          if (value.isEmpty) {
-                            context.read<TransferOrderProvider>().clearLocationDetails(isBilling: false);
-                          }
-                          // if (value.length == 6) {
-                            context.read<TransferOrderProvider>().getLocationDetails(context: context, pincode: value, isBilling: false);
-                          // }
-                        },
-                        // maxLength: 6,
-                        isNumber: true,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 10),
-                Row(
-                  children: [
                     Expanded(
                       child: _buildPhoneField(phoneController: provider.shippingPhoneController, label: 'Phone'),
                     ),
@@ -754,7 +758,6 @@ class _TransferOrderPageState extends State<TransferOrderPage> {
 
   Widget _buildPhoneField({
     required TextEditingController phoneController,
-    // required TextEditingController countryCodeController,
     required String label,
     bool enabled = true,
     String? Function(String?)? validator,
@@ -766,7 +769,6 @@ class _TransferOrderPageState extends State<TransferOrderPage> {
       inputFormatters: [
         FilteringTextInputFormatter.digitsOnly,
       ],
-      // maxLength: 10,
       validator: validator ??
           (value) {
             if (value != null) {

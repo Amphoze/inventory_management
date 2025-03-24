@@ -32,19 +32,15 @@ class _PackerPageState extends State<PackerPage> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      Provider.of<PackerProvider>(context, listen: false)
-          .fetchOrdersWithStatus5();
+      Provider.of<PackerProvider>(context, listen: false).fetchOrdersWithStatus5();
     });
-    Provider.of<PackerProvider>(context, listen: false)
-        .textEditingController
-        .clear();
+    Provider.of<PackerProvider>(context, listen: false).textEditingController.clear();
   }
 
   void _onSearchButtonPressed() {
     final query = _searchController.text.trim();
     if (query.isNotEmpty) {
-      Provider.of<PackerProvider>(context, listen: false)
-          .onSearchChanged(query);
+      Provider.of<PackerProvider>(context, listen: false).onSearchChanged(query);
     }
   }
 
@@ -102,8 +98,7 @@ class _PackerPageState extends State<PackerPage> {
                         },
                         onEditingComplete: () {
                           // Mark it as not focused when done
-                          FocusScope.of(context)
-                              .unfocus(); // Dismiss the keyboard
+                          FocusScope.of(context).unfocus(); // Dismiss the keyboard
                         },
                       ),
                     ),
@@ -113,9 +108,7 @@ class _PackerPageState extends State<PackerPage> {
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.primaryBlue,
                       ),
-                      onPressed: _searchController.text.isNotEmpty
-                          ? _onSearchButtonPressed
-                          : null,
+                      onPressed: _searchController.text.isNotEmpty ? _onSearchButtonPressed : null,
                       child: const Text(
                         'Search',
                         style: TextStyle(color: Colors.white),
@@ -289,7 +282,9 @@ class _PackerPageState extends State<PackerPage> {
                                         },
                                       );
 
-                                      final res = await context.read<BookProvider>().generatePacklist(context, _dateController.text, selectedPicklist);
+                                      final res = await context
+                                          .read<BookProvider>()
+                                          .generatePacklist(context, _dateController.text, selectedPicklist);
 
                                       Utils.showSnackBar(context, res['message']);
 
@@ -380,8 +375,7 @@ class _PackerPageState extends State<PackerPage> {
                 ),
               ),
               CustomPaginationFooter(
-                currentPage:
-                    packerProvider.currentPage, // Ensure correct currentPage
+                currentPage: packerProvider.currentPage, // Ensure correct currentPage
                 totalPages: packerProvider.totalPages,
                 buttonSize: 30,
                 pageController: packerProvider.textEditingController,
@@ -393,15 +387,13 @@ class _PackerPageState extends State<PackerPage> {
                 },
                 onNextPage: () {
                   if (packerProvider.currentPage < packerProvider.totalPages) {
-                    print(
-                        'Navigating to page: ${packerProvider.currentPage + 1}');
+                    print('Navigating to page: ${packerProvider.currentPage + 1}');
                     packerProvider.goToPage(packerProvider.currentPage + 1);
                   }
                 },
                 onPreviousPage: () {
                   if (packerProvider.currentPage > 1) {
-                    print(
-                        'Navigating to page: ${packerProvider.currentPage - 1}');
+                    print('Navigating to page: ${packerProvider.currentPage - 1}');
                     packerProvider.goToPage(packerProvider.currentPage - 1);
                   }
                 },
@@ -409,11 +401,8 @@ class _PackerPageState extends State<PackerPage> {
                   packerProvider.goToPage(page);
                 },
                 onJumpToPage: () {
-                  final page =
-                      int.tryParse(packerProvider.textEditingController.text);
-                  if (page != null &&
-                      page > 0 &&
-                      page <= packerProvider.totalPages) {
+                  final page = int.tryParse(packerProvider.textEditingController.text);
+                  if (page != null && page > 0 && page <= packerProvider.totalPages) {
                     packerProvider.goToPage(page);
                   }
                 },
@@ -431,12 +420,12 @@ class _PackerPageState extends State<PackerPage> {
       padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
       child: Row(
         children: [
-          buildHeader('ORDERS', flex: 9),
-          buildHeader('CUSTOMER', flex: 3),
-          buildHeader('DATE', flex: 3),
-          buildHeader('TOTAL', flex: 2),
-          buildHeader('PACKAGE NAME', flex: 2),
-          buildHeader('CONFIRM', flex: 2),
+          buildHeader('Orders', flex: 7),
+          buildHeader('Customer', flex: 2),
+          buildHeader('Date', flex: 2),
+          buildHeader('Total', flex: 1),
+          buildHeader('Package Name', flex: 2),
+          buildHeader('Confirm', flex: 1),
         ],
       ),
     );
@@ -458,16 +447,15 @@ class _PackerPageState extends State<PackerPage> {
     );
   }
 
-  Widget _buildOrderCard(
-      Order order, int index, PackerProvider packerProvider) {
-    log('_buildOrderCard: ${order.outerPackage}');
+  Widget _buildOrderCard(Order order, int index, PackerProvider packerProvider) {
+    // log('_buildOrderCard: ${order.outerPackage}');
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 2.0, horizontal: 8.0),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Expanded(
-            flex: 9,
+            flex: 7,
             child: OrderComboCard(
               toShowBy: false,
               order: order,
@@ -477,6 +465,7 @@ class _PackerPageState extends State<PackerPage> {
           ),
           const SizedBox(width: 4),
           buildCell(
+            flex: 2,
             Column(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
@@ -523,23 +512,22 @@ class _PackerPageState extends State<PackerPage> {
                 ],
               ],
             ),
-            flex: 3,
           ),
           const SizedBox(width: 4),
           buildCell(
+            flex: 2,
             Text(
               packerProvider.formatDate(order.date!),
               style: const TextStyle(fontSize: 16),
             ),
-            flex: 3,
           ),
           const SizedBox(width: 4),
           buildCell(
+            flex: 1,
             Text(
               'Rs.${order.totalAmount!}',
               style: const TextStyle(fontSize: 16),
             ),
-            flex: 2,
           ),
           const SizedBox(width: 4),
           // buildCell(
@@ -550,11 +538,18 @@ class _PackerPageState extends State<PackerPage> {
           //   flex: 2,
           // ),
           buildCell(
-            Text(
-              order.outerPackage.replaceAll('[', '').replaceAll(']', '') ?? '',
-              style: const TextStyle(fontSize: 16),
-            ),
             flex: 2,
+            (order.outerPackages != null && (order.outerPackages?.isNotEmpty ?? false)) ?
+            Column(
+              children: order.outerPackages
+                  !.map(
+                    (e) => Text(
+                      e.outerPackageName ?? '',
+                      style: const TextStyle(fontSize: 16),
+                    ),
+                  )
+                  .toList(),
+            ) : const SizedBox(),
           ),
           const SizedBox(width: 4),
           buildCell(
@@ -565,7 +560,7 @@ class _PackerPageState extends State<PackerPage> {
                     size: 24,
                   )
                 : const SizedBox.shrink(),
-            flex: 2,
+            flex: 1,
           ),
         ],
       ),

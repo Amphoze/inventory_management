@@ -1085,6 +1085,11 @@ class _OrdersNewPageState extends State<OrdersNewPage> with TickerProviderStateM
                                                             // const SizedBox(width: 12),
                                                             ElevatedButton.icon(
                                                               onPressed: () async {
+                                                                if(messageController.text.trim().isEmpty ) {
+                                                                  Utils.showSnackBar(context, 'Please enter your message');
+                                                                  return;
+                                                                }
+
                                                                 showDialog(
                                                                   context: context,
                                                                   barrierDismissible: false,
@@ -1299,7 +1304,15 @@ class _OrdersNewPageState extends State<OrdersNewPage> with TickerProviderStateM
                                                                           Navigator.of(context).pop();
                                                                           Navigator.of(context).pop();
 
-                                                                          res ? await ordersProvider.fetchReadyOrders() : null;
+                                                                          final searched = ordersProvider.searchControllerReady.text.trim();
+
+                                                                          if (res) {
+                                                                            if (searched.isEmpty) {
+                                                                              await ordersProvider.fetchReadyOrders();
+                                                                            } else {
+                                                                              await ordersProvider.searchReadyToConfirmOrders(searched);
+                                                                            }
+                                                                          }
                                                                         },
                                                                         style: ElevatedButton.styleFrom(
                                                                           padding: const EdgeInsets.symmetric(
