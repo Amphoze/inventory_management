@@ -75,6 +75,24 @@ class Utils {
     );
   }
 
+  static showLoadingDialog(BuildContext context, String message) {
+    showDialog(
+      barrierDismissible: false,
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          content: Row(
+            children: [
+              const CircularProgressIndicator(),
+              const SizedBox(width: 8),
+              Text(message),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   static Widget richText(String title, String subTitle) {
     return Text.rich(
       TextSpan(

@@ -500,7 +500,15 @@ class OrdersProvider with ChangeNotifier {
     }
   }
 
+  GlobalKey<ScaffoldMessengerState>? _scaffoldMessengerKey;
+
+  void setScaffoldMessengerKey(GlobalKey<ScaffoldMessengerState> key) {
+    _scaffoldMessengerKey = key;
+  }
+
   void initializeSocket(BuildContext context) async {
+    _progressMessage = '';
+
     if (_socket != null && _socket!.connected) {
       log('Socket already connected. Skipping initialization.');
       return;
@@ -508,53 +516,85 @@ class OrdersProvider with ChangeNotifier {
 
     try {
       final baseUrl = await Constants.getBaseUrl();
-      log('Base URL in _initializeSocket: $baseUrl');
       final email = await AuthProvider().getEmail();
-      log('email: $email');
 
-      _socket ??= IO.io(baseUrl, IO.OptionBuilder().setTransports(['websocket']).disableAutoConnect().setQuery({'email': email}).build());
+      _socket ??= IO.io(
+        baseUrl,
+        IO.OptionBuilder()
+            .setTransports(['websocket'])
+            .disableAutoConnect()
+            .setQuery({'email': email})
+            .build(),
+      );
 
       _socket?.onConnect((_) {
-        debugPrint('Connected to Socket.IO');
-        Utils.showSnackBar(context, 'Connected to server', color: Colors.green);
+        log('Connected to Socket.IO');
+        _showSnackBar('Connected to server', color: Colors.green);
       });
 
-      _socket?.off('csv-file-uploading-err');
       _socket?.on('csv-file-uploading-err', (data) {
         setConfirmStatus(false);
-        debugPrint('Error Data: $data');
         _progressMessage = data['message'];
-        Utils.showSnackBar(context, _progressMessage, color: Colors.red);
+        log('CSV Error: $_progressMessage');
+        _showSnackBar(_progressMessage, color: Colors.red);
       });
 
       _socket?.off('csv-file-uploading');
       _socket?.on('csv-file-uploading', (data) {
         setConfirmStatus(true);
         _progressMessage = data['message'];
-        Logger().e('Data progress: ${data['progress']}');
         if (data['progress'] != null) {
           double newProgress = double.tryParse(data['progress'].toString()) ?? 0;
           progressNotifier.value = newProgress;
         }
       });
 
-      _socket?.off('csv-file-uploaded');
-      _socket?.once('csv-file-uploaded', (data) async {
+      _socket?.on('csv-file-uploaded', (data) async {
         _progressMessage = data['message'];
-        log('CSV file uploaded: $data');
+        log('CSV file uploaded: $data'); // This is working
         setConfirmStatus(false);
-        Utils.showSnackBar(context, _progressMessage, color: Colors.green);
+        _showSnackBar(_progressMessage, color: Colors.green); // Debug this
         resetSelections();
         await fetchReadyOrders();
       });
 
       _socket?.connect();
+      log('Socket connection initiated');
     } catch (e) {
       log('Error in _initializeSocket: $e');
-      Utils.showSnackBar(context, 'Failed to connect to server', color: Colors.red);
+      _showSnackBar('Failed to connect to server', color: Colors.red);
     } finally {
       notifyListeners();
     }
+  }
+
+  void _showSnackBar(String message, {Color? color}) {
+    log('Attempting to show SnackBar: $message');
+    if (_scaffoldMessengerKey == null) {
+      log('Error: ScaffoldMessengerKey is null');
+      return;
+    }
+    if (_scaffoldMessengerKey!.currentState == null) {
+      log('Error: ScaffoldMessengerState is null');
+      return;
+    }
+    log('Showing SnackBar with message: $message');
+    _scaffoldMessengerKey!.currentState!
+      ..removeCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          content: Text(message),
+          backgroundColor: color,
+          duration: const Duration(seconds: 3),
+        ),
+      );
+  }
+
+  @override
+  void dispose() {
+    _socket?.disconnect();
+    _socket?.dispose();
+    super.dispose();
   }
 
   Future<String> confirmOrders(BuildContext context, List<String> orderIds) async {

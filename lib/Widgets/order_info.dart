@@ -62,6 +62,11 @@ class OrderInfo extends StatelessWidget {
                       'Payment Date Time',
                       order.paymentDateTime != null ? pro.formatDateTime(order.paymentDateTime!) : '',
                     ),
+                    buildLabelValueRow(
+                      'Dimensions',
+                      '${order.length.toString() ?? ''} x ${order.breadth.toString() ?? ''} x ${order.height.toString() ?? ''}',
+                    ),
+                    buildLabelValueRow('Tracking Status', order.trackingStatus ?? ''),
                   ],
                 ),
                 const SizedBox(width: 16),
@@ -83,11 +88,6 @@ class OrderInfo extends StatelessWidget {
                 _buildInfoColumn(
                   'Customer Information',
                   [
-                    buildLabelValueRow(
-                      'Dimensions',
-                      '${order.length.toString() ?? ''} x ${order.breadth.toString() ?? ''} x ${order.height.toString() ?? ''}',
-                    ),
-                    buildLabelValueRow('Tracking Status', order.trackingStatus ?? ''),
                     buildLabelValueRow('Customer ID', order.customer?.customerId ?? ''),
                     buildLabelValueRow(
                         'Full Name',

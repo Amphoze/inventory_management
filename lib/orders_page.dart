@@ -30,6 +30,7 @@ class OrdersNewPage extends StatefulWidget {
 
 class _OrdersNewPageState extends State<OrdersNewPage> with TickerProviderStateMixin {
   late TabController _tabController;
+  final _scaffoldMessengerKey = GlobalKey<ScaffoldMessengerState>();
   // late TextEditingController _searchController;
   final TextEditingController _pageController = TextEditingController();
   final TextEditingController pageController = TextEditingController();
@@ -47,6 +48,7 @@ class _OrdersNewPageState extends State<OrdersNewPage> with TickerProviderStateM
   @override
   void initState() {
     provider = Provider.of(context, listen: false);
+    provider.setScaffoldMessengerKey(_scaffoldMessengerKey);
     _tabController = TabController(length: 2, vsync: this);
     // _searchController = TextEditingController();
     provider.searchControllerReady = TextEditingController();
@@ -133,6 +135,7 @@ class _OrdersNewPageState extends State<OrdersNewPage> with TickerProviderStateM
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      key: _scaffoldMessengerKey,
       backgroundColor: Colors.white,
       endDrawer: const ChatScreen(),
       appBar: _buildAppBar(),

@@ -119,7 +119,7 @@ class AllOrdersProvider with ChangeNotifier {
   Future<String> fetchDelhiveryTrackingStatus(String awb) async {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('authToken') ?? '';
-    String delhiveryURL = '${await Constants.getBaseUrl()}/orders/track/?waybill=$awb';
+    String delhiveryURL = '${await Constants.getBaseUrl()}/orders/track?waybill=$awb';
 
     try {
       final response = await http.get(
@@ -136,7 +136,7 @@ class AllOrdersProvider with ChangeNotifier {
       if (response.statusCode == 200) {
         final jsonResponse = jsonDecode(response.body);
 
-        final status = jsonResponse['ShipmentData'][0]['Shipment']['Status']['Status'].toString() ?? '';
+        final status = jsonResponse['ShipmentData']?[0]?['Shipment']?['Status']?['Status']?.toString() ?? '';
 
         return status;
       } else if (response.statusCode == 401) {
@@ -180,6 +180,8 @@ class AllOrdersProvider with ChangeNotifier {
 
   Future<String> fetchShiprocketTrackingStatus(String awb) async {
     String token = await fetchShiprocketToken();
+
+    if(token.isEmpty) return '';
 
     String shipURL = 'https://apiv2.shiprocket.in/v1/external/courier/track/awb/$awb';
 

@@ -1,6 +1,8 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:developer';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:inventory_management/Custom-Files/colors.dart';
 import 'package:inventory_management/Custom-Files/utils.dart';
 import 'package:inventory_management/Widgets/big_combo_card.dart';
@@ -248,7 +250,7 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _ordersProvider.setInitialMarketplace(_marketplaceController.text);
-      _ordersProvider.setInitialPaymentMode(widget.order.paymentMode);
+      _ordersProvider.setInitialPaymentMode(double.parse(_codAmountController.text) > 0 ? 'COD' : widget.order.paymentMode);
       _ordersProvider.setInitialCourier(_courierNameController.text);
       _ordersProvider.setInitialFilter(_filterController.text);
       _ordersProvider.selectOrderType(_orderTypeController.text);
@@ -1062,7 +1064,12 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
       key: _formKey,
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('Edit Order'),
+          title: const Row(
+            children: [
+              Text('Edit Order'),
+              Text("  (Kindly press 'Enter' to submit a field)", style: TextStyle(color: Colors.red)),
+            ],
+          ),
           actions: [
             Padding(
               padding: const EdgeInsets.only(right: 16.0),
@@ -1366,6 +1373,10 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
                             value: 'PrePaid',
                             child: Text('PrePaid'),
                           ),
+                          // const DropdownMenuItem<String>(
+                          //   value: 'COD',
+                          //   child: Text('Partial Payment'),
+                          // ),
                         ];
 
                         if (isCustomPayment) {
@@ -1432,8 +1443,8 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
                                                 setState(() {
                                                   _ordersProvider.selectPayment(value);
                                                 });
-                                                log('selectedPayment value: $value');
-                                                log('selectedPayment: ${_ordersProvider.selectedPayment}');
+                                                // log('selectedPayment value: $value');
+                                                // log('selectedPayment: ${_ordersProvider.selectedPayment}');
                                               }
                                             },
                                     ),
@@ -1468,19 +1479,20 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
                                     ),
                                     // if (_ordersProvider.selectedPayment != 'PrePaid') ...[],
                                     const SizedBox(height: 10),
-                                    _buildTextField(
+                                    _buildNumberTextField(
                                       controller: _codAmountController,
                                       label: 'COD Amount',
                                       icon: Icons.money,
-                                      onFieldSubmitted: (value) => setState(() {}),
+                                      onFieldSubmitted: (value) => setState(() => _updateTotals()),
                                     ),
                                     // if (_ordersProvider.selectedPayment != 'COD') ...[],
                                     const SizedBox(height: 10),
-                                    _buildTextField(
-                                        controller: _prepaidAmountController,
-                                        label: 'Prepaid Amount',
-                                        icon: Icons.credit_card,
-                                        onFieldSubmitted: (value) => setState(() => _updateTotals())),
+                                    _buildNumberTextField(
+                                      controller: _prepaidAmountController,
+                                      label: 'Prepaid Amount',
+                                      icon: Icons.credit_card,
+                                      onFieldSubmitted: (value) => setState(() => _updateTotals()),
+                                    ),
                                     const SizedBox(height: 10),
                                     _buildTextField(
                                       controller: _totalAmtController,
@@ -1649,15 +1661,16 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
                                   Row(
                                     children: [
                                       Expanded(
-                                        child: _buildTextField(
+                                        child: _buildNumberTextField(
                                           controller: _totalQuantityController,
                                           label: 'Total Quantity',
                                           icon: Icons.format_list_numbered,
+                                          enabled: false,
                                         ),
                                       ),
                                       const SizedBox(width: 10),
                                       Expanded(
-                                        child: _buildTextField(
+                                        child: _buildNumberTextField(
                                           controller: _totalWeightController,
                                           label: 'Total Weight (Kg)',
                                           icon: Icons.line_weight,
@@ -1689,7 +1702,7 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
                                   Row(
                                     children: [
                                       Expanded(
-                                        child: _buildTextField(
+                                        child: _buildNumberTextField(
                                           controller: _lengthController,
                                           label: 'Length',
                                           icon: Icons.straighten,
@@ -1697,7 +1710,7 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
                                       ),
                                       const SizedBox(width: 10),
                                       Expanded(
-                                        child: _buildTextField(
+                                        child: _buildNumberTextField(
                                           controller: _breadthController,
                                           label: 'Breadth',
                                           icon: Icons.straighten,
@@ -1705,7 +1718,7 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
                                       ),
                                       const SizedBox(width: 10),
                                       Expanded(
-                                        child: _buildTextField(
+                                        child: _buildNumberTextField(
                                           controller: _heightController,
                                           label: 'Height',
                                           icon: Icons.height,
@@ -1754,14 +1767,14 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
                                         children: [
                                           Expanded(
                                             child: _buildDiscountTextField(
-                                              controller: _discountPercentController,
-                                              label: 'Discount Percent',
-                                              icon: Icons.percent,
-                                            ),
+                                                controller: _discountPercentController,
+                                                label: 'Discount Percent',
+                                                icon: Icons.percent,
+                                                onFieldSubmitted: (value) => _updateTotals),
                                           ),
                                           const SizedBox(width: 10),
                                           Expanded(
-                                            child: _buildTextField(
+                                            child: _buildNumberTextField(
                                               controller: _discountAmountController,
                                               label: 'Discount Amount',
                                               icon: Icons.money_off,
@@ -1791,7 +1804,7 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
                                       Row(
                                         children: [
                                           Expanded(
-                                            child: _buildTextField(
+                                            child: _buildNumberTextField(
                                               controller: _coinController,
                                               label: 'Coin',
                                               icon: Icons.monetization_on,
@@ -1799,7 +1812,7 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
                                           ),
                                           const SizedBox(width: 10),
                                           Expanded(
-                                            child: _buildTextField(
+                                            child: _buildNumberTextField(
                                               controller: _taxPercentController,
                                               label: 'Tax Percent',
                                               icon: Icons.account_balance_wallet,
@@ -1902,7 +1915,7 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
                             Row(
                               children: [
                                 Expanded(
-                                  child: _buildTextField(
+                                  child: _buildNumberTextField(
                                     controller: _customerPhoneController,
                                     label: 'Phone',
                                     icon: Icons.phone,
@@ -2087,7 +2100,7 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
                             Row(
                               children: [
                                 Expanded(
-                                  child: _buildTextField(
+                                  child: _buildNumberTextField(
                                     controller: _billingPhoneController,
                                     label: 'Phone',
                                     icon: Icons.phone,
@@ -2095,7 +2108,7 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
                                 ),
                                 const SizedBox(width: 10),
                                 Expanded(
-                                  child: _buildTextField(
+                                  child: _buildNumberTextField(
                                       controller: _billingPincodeController,
                                       label: 'Pincode',
                                       icon: Icons.code,
@@ -2212,7 +2225,7 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
                             Row(
                               children: [
                                 Expanded(
-                                  child: _buildTextField(
+                                  child: _buildNumberTextField(
                                     controller: _shippingPhoneController,
                                     label: 'Phone',
                                     icon: Icons.phone,
@@ -2220,7 +2233,7 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
                                 ),
                                 const SizedBox(width: 10),
                                 Expanded(
-                                  child: _buildTextField(
+                                  child: _buildNumberTextField(
                                       controller: _shippingPincodeController,
                                       label: 'Pincode',
                                       icon: Icons.code,
@@ -2705,6 +2718,103 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
     );
   }
 
+  Widget _buildNumberTextField({
+    required TextEditingController controller,
+    required String label,
+    required IconData icon,
+    bool enabled = true,
+    TextInputType? keyboardType,
+    String? Function(String?)? validator,
+    bool obscureText = false,
+    void Function(String)? onFieldSubmitted,
+    // void Function(String)? onChanged, // Callback with debouncing
+    int? maxLength,
+  }) {
+    Timer? _debounce;
+
+    return StatefulBuilder(
+      builder: (context, setState) {
+        return Focus(
+          child: Builder(
+            builder: (BuildContext focusContext) {
+              final bool isFocused = Focus.of(focusContext).hasFocus;
+              final bool isEmpty = controller.text.isEmpty;
+
+              return TextFormField(
+                controller: controller,
+                enabled: enabled,
+                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                inputFormatters: [
+                  FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*$')),
+                ],
+                maxLength: maxLength,
+                obscureText: obscureText,
+                validator: validator,
+                style: TextStyle(
+                  color: enabled ? (isFocused ? AppColors.primaryBlue : Colors.black87) : Colors.grey[600],
+                  fontWeight: FontWeight.w600,
+                ),
+                decoration: InputDecoration(
+                  labelText: label,
+                  labelStyle: TextStyle(
+                    fontWeight: FontWeight.w500,
+                    color: isFocused || !isEmpty ? AppColors.primaryBlue : Colors.grey.withOpacity(0.7),
+                    fontSize: 14,
+                  ),
+                  prefixIcon: Icon(
+                    icon,
+                    color: isFocused ? AppColors.primaryBlue : Colors.grey[700],
+                  ),
+                  suffixIcon: isEmpty
+                      ? null
+                      : IconButton(
+                          icon: Icon(Icons.clear, color: Colors.grey[600]),
+                          onPressed: () {
+                            controller.clear();
+                            setState(() {});
+                          },
+                        ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: BorderSide(
+                      color: Colors.grey[400]!,
+                      width: 1.2,
+                    ),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: const BorderSide(
+                      color: AppColors.primaryBlue,
+                      width: 1.5,
+                    ),
+                  ),
+                  disabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: BorderSide(
+                      color: Colors.grey[300]!,
+                      width: 1,
+                    ),
+                  ),
+                  filled: true,
+                  fillColor: enabled ? Colors.white : Colors.grey[200],
+                  contentPadding: const EdgeInsets.symmetric(vertical: 15, horizontal: 12),
+                ),
+                cursorColor: AppColors.primaryBlue,
+                onFieldSubmitted: onFieldSubmitted,
+                onChanged: (value) {
+                  if (_debounce?.isActive ?? false) _debounce!.cancel();
+                  _debounce = Timer(const Duration(milliseconds: 1000), () {
+                    if (onFieldSubmitted != null) () => onFieldSubmitted;
+                  });
+                },
+              );
+            },
+          ),
+        );
+      },
+    );
+  }
+
   double _calculateTotal() {
     double total = 0;
     int totalQty = 0; // Store total quantity separately
@@ -2731,7 +2841,6 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
 
     return total;
   }
-
 
   // void _updateTotals() {
   //   final total = _calculateTotal(); // Calculate total from entered quantities & rates
@@ -2806,23 +2915,24 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
   // }
 
   void _updateTotals() {
+    log('_updateTotals');
     final total = _calculateTotal(); // Calculate total from entered quantities & rates
     _originalAmtController.text = total.toStringAsFixed(2);
 
     final discountPercent = double.tryParse(_discountPercentController.text) ?? 0;
     final prepaidAmount = double.tryParse(_prepaidAmountController.text) ?? 0;
     // final codAmount = double.tryParse(_codAmountController.text) ?? 0;
-    String? paymentMode = _ordersProvider.selectedPayment?.toUpperCase() ?? ''; // Get current payment mode
+    String? paymentMode = _ordersProvider.selectedPayment?.toLowerCase() ?? ''; // Get current payment mode
 
     // Apply discount if present
     double finalTotal = discountPercent != 0 ? total - (total * (discountPercent / 100)) : total;
 
-    if (paymentMode == "COD") {
+    if (paymentMode == "cod" || paymentMode == 'partial payment') {
       // COD Mode: Adjust COD considering prepaid
       double updatedCOD = finalTotal - prepaidAmount;
       _codAmountController.text = updatedCOD.toStringAsFixed(2);
       _totalAmtController.text = finalTotal.toStringAsFixed(2);
-    } else if (paymentMode == "PREPAID") {
+    } else if (paymentMode == "prepaid") {
       _prepaidAmountController.text = finalTotal.toStringAsFixed(2);
       _totalAmtController.text = finalTotal.toStringAsFixed(2);
 
@@ -2843,63 +2953,89 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
     required String label,
     required IconData icon,
     bool enabled = true,
+    // void Function(String)? onChanged, // Debounced onChanged callback
+    void Function(String)? onFieldSubmitted, // Field submit callback
   }) {
-    return Focus(
-      child: Builder(
-        builder: (BuildContext focusContext) {
-          final bool isFocused = Focus.of(focusContext).hasFocus;
-          final bool isEmpty = controller.text.isEmpty;
+    Timer? _debounce;
 
-          return TextFormField(
-            controller: controller,
-            enabled: enabled,
-            style: TextStyle(
-              color: enabled ? AppColors.primaryBlue : Colors.grey[700],
-              fontWeight: FontWeight.w600,
-            ),
-            decoration: InputDecoration(
-              labelText: label,
-              labelStyle: TextStyle(
-                fontWeight: FontWeight.w500,
-                color: isFocused || !isEmpty ? AppColors.primaryBlue : Colors.grey.withValues(alpha: 0.7),
-                fontSize: 14,
-              ),
-              prefixIcon: Icon(
-                icon,
-                color: isFocused ? AppColors.primaryBlue : Colors.grey[700],
-              ),
-              suffixIcon: isEmpty
-                  ? null
-                  : IconButton(
-                      icon: Icon(Icons.clear, color: Colors.grey[600]),
-                      onPressed: controller.clear,
-                    ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(10),
-                borderSide: BorderSide(color: Colors.grey[400]!, width: 1.2),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(10),
-                borderSide: const BorderSide(
-                  color: AppColors.primaryBlue,
-                  width: 1.5,
+    return StatefulBuilder(
+      builder: (context, setState) {
+        return Focus(
+          child: Builder(
+            builder: (BuildContext focusContext) {
+              final bool isFocused = Focus.of(focusContext).hasFocus;
+              final bool isEmpty = controller.text.isEmpty;
+
+              return TextFormField(
+                controller: controller,
+                enabled: enabled,
+                inputFormatters: [
+                  FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*$')),
+                ],
+                style: TextStyle(
+                  color: enabled ? AppColors.primaryBlue : Colors.grey[700],
+                  fontWeight: FontWeight.w600,
                 ),
-              ),
-              disabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(10),
-                borderSide: BorderSide(color: Colors.grey[300]!, width: 1),
-              ),
-              filled: true,
-              fillColor: enabled ? Colors.white : Colors.grey[200],
-              contentPadding: const EdgeInsets.symmetric(
-                vertical: 15,
-                horizontal: 12,
-              ),
-            ),
-            onFieldSubmitted: (value) => setState(() => _updateTotals()),
-          );
-        },
-      ),
+                decoration: InputDecoration(
+                  labelText: label,
+                  labelStyle: TextStyle(
+                    fontWeight: FontWeight.w500,
+                    color: isFocused || !isEmpty ? AppColors.primaryBlue : Colors.grey.withOpacity(0.7),
+                    fontSize: 14,
+                  ),
+                  prefixIcon: Icon(
+                    icon,
+                    color: isFocused ? AppColors.primaryBlue : Colors.grey[700],
+                  ),
+                  suffixIcon: isEmpty
+                      ? null
+                      : IconButton(
+                          icon: Icon(Icons.clear, color: Colors.grey[600]),
+                          onPressed: () {
+                            controller.clear();
+                            setState(() {});
+                          },
+                        ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: BorderSide(color: Colors.grey[400]!, width: 1.2),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: const BorderSide(
+                      color: AppColors.primaryBlue,
+                      width: 1.5,
+                    ),
+                  ),
+                  disabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: BorderSide(color: Colors.grey[300]!, width: 1),
+                  ),
+                  filled: true,
+                  fillColor: enabled ? Colors.white : Colors.grey[200],
+                  contentPadding: const EdgeInsets.symmetric(
+                    vertical: 15,
+                    horizontal: 12,
+                  ),
+                ),
+                onChanged: (value) {
+                  if (_debounce?.isActive ?? false) _debounce!.cancel();
+                  _debounce = Timer(const Duration(milliseconds: 500), () {
+                    log('_buildDiscountTextField');
+                    if (onFieldSubmitted != null) () => onFieldSubmitted;
+                  });
+                },
+                onFieldSubmitted: (value) {
+                  if (onFieldSubmitted != null) {
+                    onFieldSubmitted(value);
+                  }
+                  setState(() => _updateTotals());
+                },
+              );
+            },
+          ),
+        );
+      },
     );
   }
 
@@ -2908,71 +3044,92 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
     required String label,
     required IconData icon,
     bool enabled = true,
+    // void Function(String)? onChanged, // Debounced onChanged callback
+    // void Function(String)? onFieldSubmitted, // Field submit callback
   }) {
-    return Focus(
-      child: Builder(
-        builder: (BuildContext context) {
-          final bool isFocused = Focus.of(context).hasFocus;
-          final bool isEmpty = controller.text.isEmpty;
+    Timer? _debounce;
 
-          return SizedBox(
-            height: 40,
-            child: TextFormField(
-              controller: controller,
-              enabled: enabled,
-              style: TextStyle(
-                color: enabled ? AppColors.primaryBlue : Colors.grey[700],
-                fontWeight: FontWeight.w500,
-                fontSize: 13,
-              ),
-              decoration: InputDecoration(
-                isDense: true,
-                labelText: label,
-                labelStyle: TextStyle(
-                  fontWeight: FontWeight.w500,
-                  color: isFocused || !isEmpty ? AppColors.primaryBlue : Colors.grey.withValues(alpha: 0.7),
-                  fontSize: 12,
-                ),
-                prefixIcon: Icon(
-                  icon,
-                  color: isFocused ? AppColors.primaryBlue : Colors.grey[700],
-                  size: 18,
-                ),
-                suffixIcon: isEmpty
-                    ? null
-                    : IconButton(
-                        icon: Icon(
-                          Icons.clear,
-                          color: Colors.grey[600],
-                          size: 16,
-                        ),
-                        onPressed: controller.clear,
-                        constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
-                      ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  borderSide: BorderSide(color: Colors.grey[400]!, width: 1.0),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  borderSide: const BorderSide(
-                    color: AppColors.primaryBlue,
-                    width: 1.2,
+    return StatefulBuilder(
+      builder: (context, setState) {
+        return Focus(
+          child: Builder(
+            builder: (BuildContext context) {
+              final bool isFocused = Focus.of(context).hasFocus;
+              final bool isEmpty = controller.text.isEmpty;
+
+              return SizedBox(
+                height: 40,
+                child: TextFormField(
+                  controller: controller,
+                  enabled: enabled,
+                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                  style: TextStyle(
+                    color: enabled ? AppColors.primaryBlue : Colors.grey[700],
+                    fontWeight: FontWeight.w500,
+                    fontSize: 13,
                   ),
+                  decoration: InputDecoration(
+                    isDense: true,
+                    labelText: label,
+                    labelStyle: TextStyle(
+                      fontWeight: FontWeight.w500,
+                      color: isFocused || !isEmpty ? AppColors.primaryBlue : Colors.grey.withOpacity(0.7),
+                      fontSize: 12,
+                    ),
+                    prefixIcon: Icon(
+                      icon,
+                      color: isFocused ? AppColors.primaryBlue : Colors.grey[700],
+                      size: 18,
+                    ),
+                    suffixIcon: isEmpty
+                        ? null
+                        : IconButton(
+                            icon: Icon(Icons.clear, color: Colors.grey[600], size: 16),
+                            onPressed: () {
+                              controller.clear();
+                              setState(() {});
+                            },
+                            constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                          ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(color: Colors.grey[400]!, width: 1.0),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: const BorderSide(
+                        color: AppColors.primaryBlue,
+                        width: 1.2,
+                      ),
+                    ),
+                    disabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(color: Colors.grey[300]!, width: 1.0),
+                    ),
+                    filled: true,
+                    fillColor: enabled ? Colors.white : Colors.grey[200],
+                    contentPadding: const EdgeInsets.symmetric(vertical: 0, horizontal: 4),
+                  ),
+                  onChanged: (value) {
+                    if (_debounce?.isActive ?? false) _debounce!.cancel();
+                    _debounce = Timer(const Duration(milliseconds: 500), () {
+                      setState(() => _updateTotals());
+                    });
+                  },
+                  // onChanged: (value) {
+                  //   log('_buildRateTextField');
+                  //   debugPrint('_buildRateTextField');
+                  // },
+                  // onChanged: (value) =>  setState(() => _updateTotals()),
+                  onFieldSubmitted: (value) {
+                    setState(() => _updateTotals());
+                  },
                 ),
-                disabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  borderSide: BorderSide(color: Colors.grey[300]!, width: 1.0),
-                ),
-                filled: true,
-                fillColor: enabled ? Colors.white : Colors.grey[200],
-                contentPadding: const EdgeInsets.symmetric(vertical: 0, horizontal: 4),
-              ),
-              onFieldSubmitted: (value) => setState(() => _updateTotals()),
-            ),
-          );
-        },
-      ),
+              );
+            },
+          ),
+        );
+      },
     );
   }
 
@@ -2981,75 +3138,93 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
     required String label,
     required IconData icon,
     bool enabled = true,
+    // void Function(String)? onChanged, // Debounced onChanged callback
+    // void Function(String)? onFieldSubmitted, // Field submit callback
   }) {
-    return Focus(
-      child: Builder(
-        builder: (BuildContext context) {
-          final bool isFocused = Focus.of(context).hasFocus;
-          final bool isEmpty = controller.text.isEmpty;
+    Timer? _debounce;
 
-          return SizedBox(
-            height: 40,
-            child: TextFormField(
-              controller: controller,
-              enabled: enabled,
-              style: TextStyle(
-                color: enabled ? AppColors.primaryBlue : Colors.grey[700],
-                fontWeight: FontWeight.w500,
-                fontSize: 13,
-              ),
-              decoration: InputDecoration(
-                isDense: true,
-                labelText: label,
-                labelStyle: TextStyle(
-                  fontWeight: FontWeight.w500,
-                  color: isFocused || !isEmpty ? AppColors.primaryBlue : Colors.grey.withValues(alpha: 0.7),
-                  fontSize: 12,
-                ),
-                prefixIcon: Icon(
-                  icon,
-                  color: isFocused ? AppColors.primaryBlue : Colors.grey[700],
-                  size: 18,
-                ),
-                suffixIcon: isEmpty
-                    ? null
-                    : IconButton(
-                        icon: Icon(
-                          Icons.clear,
-                          color: Colors.grey[600],
-                          size: 16,
-                        ),
-                        onPressed: controller.clear,
-                        constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
-                      ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  borderSide: BorderSide(color: Colors.grey[400]!, width: 1.0),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  borderSide: const BorderSide(
-                    color: AppColors.primaryBlue,
-                    width: 1.2,
+    return StatefulBuilder(
+      builder: (context, setState) {
+        return Focus(
+          child: Builder(
+            builder: (BuildContext context) {
+              final bool isFocused = Focus.of(context).hasFocus;
+              final bool isEmpty = controller.text.isEmpty;
+
+              return SizedBox(
+                height: 40,
+                child: TextFormField(
+                  controller: controller,
+                  enabled: enabled,
+                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                  style: TextStyle(
+                    color: enabled ? AppColors.primaryBlue : Colors.grey[700],
+                    fontWeight: FontWeight.w500,
+                    fontSize: 13,
                   ),
+                  decoration: InputDecoration(
+                    isDense: true,
+                    labelText: label,
+                    labelStyle: TextStyle(
+                      fontWeight: FontWeight.w500,
+                      color: isFocused || !isEmpty ? AppColors.primaryBlue : Colors.grey.withOpacity(0.7),
+                      fontSize: 12,
+                    ),
+                    prefixIcon: Icon(
+                      icon,
+                      color: isFocused ? AppColors.primaryBlue : Colors.grey[700],
+                      size: 18,
+                    ),
+                    suffixIcon: isEmpty
+                        ? null
+                        : IconButton(
+                            icon: Icon(Icons.clear, color: Colors.grey[600], size: 16),
+                            onPressed: () {
+                              controller.clear();
+                              setState(() {});
+                            },
+                            constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                          ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(color: Colors.grey[400]!, width: 1.0),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: const BorderSide(
+                        color: AppColors.primaryBlue,
+                        width: 1.2,
+                      ),
+                    ),
+                    disabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(color: Colors.grey[300]!, width: 1.0),
+                    ),
+                    filled: true,
+                    fillColor: enabled ? Colors.white : Colors.grey[200],
+                    contentPadding: const EdgeInsets.symmetric(vertical: 0, horizontal: 4),
+                  ),
+                  onChanged: (value) {
+                    if (_debounce?.isActive ?? false) _debounce!.cancel();
+                    _debounce = Timer(const Duration(milliseconds: 500), () {
+                      setState(() => _updateTotals());
+                    });
+                  },
+                  onFieldSubmitted: (value) {
+                    setState(() => _updateTotals());
+                  },
                 ),
-                disabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  borderSide: BorderSide(color: Colors.grey[300]!, width: 1.0),
-                ),
-                filled: true,
-                fillColor: enabled ? Colors.white : Colors.grey[200],
-                contentPadding: const EdgeInsets.symmetric(vertical: 0, horizontal: 4),
-              ),
-              onFieldSubmitted: (value) => setState(() => _updateTotals()),
-            ),
-          );
-        },
-      ),
+              );
+            },
+          ),
+        );
+      },
     );
   }
 
   Future<void> getLocationDetails({required BuildContext context, required String pincode, required bool isBilling}) async {
+    Utils.showLoadingDialog(context, 'Fetching Address');
+
     try {
       Uri url = Uri.parse('https://api.opencagedata.com/geocode/v1/json?q=$pincode&key=55710109e7c24fbc98c86377005c0612');
 
@@ -3082,16 +3257,19 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
         } else {
           log('No location details found for the provided pincode :- ${response.body}');
           Utils.showSnackBar(context, 'No location details found for the provided pincode.');
-          return;
+          // return;
         }
       } else {
         log('Failed to load location details :- ${response.body}');
         Utils.showSnackBar(context, 'Failed to load location details. Please check your internet connection.');
-        return;
+        // return;
       }
     } catch (e, stace) {
       log('Error to fetch location details :- $e\n$stace');
       Utils.showSnackBar(context, 'Failed to load location details. Please check your internet connection.');
+      // return;
+    } finally {
+      Navigator.pop(context);
       return;
     }
   }
