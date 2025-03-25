@@ -110,7 +110,6 @@ class _BookPageState extends State<BookPage> with SingleTickerProviderStateMixin
 
   void _refreshOrders(String orderType) {
     final bookProvider = Provider.of<BookProvider>(context, listen: false);
-    bookProvider.resetFilterData();
     if (orderType == 'B2B') {
       bookProvider.fetchOrders('B2B', bookProvider.currentPageB2B);
     } else {
@@ -222,12 +221,12 @@ class _BookPageState extends State<BookPage> with SingleTickerProviderStateMixin
                   ),
                 ),
                 if (controller.text.isNotEmpty)
-                  IconButton(
-                    icon: Icon(
+                  InkWell(
+                    child: Icon(
                       Icons.close,
                       color: Colors.grey.shade600,
                     ),
-                    onPressed: () {
+                    onTap: () {
                       controller.clear();
                       _refreshOrders(orderType);
                       Provider.of<BookProvider>(context, listen: false).clearSearchResults();
@@ -681,15 +680,12 @@ class _BookPageState extends State<BookPage> with SingleTickerProviderStateMixin
                           ),
                   ),
             const SizedBox(width: 8),
-
-
             ElevatedButton(
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.orange.shade300,
               ),
-              onPressed: () async {
-                bookProvider.b2bSearchController.clear();
-                bookProvider.b2cSearchController.clear();
+              onPressed: () {
+                bookProvider.resetFilterData();
                 _refreshOrders(orderType);
               },
               child: const Text('Reset Filters'),
@@ -707,34 +703,7 @@ class _BookPageState extends State<BookPage> with SingleTickerProviderStateMixin
                 icon: const Icon(
                   Icons.refresh,
                   color: AppColors.primaryBlue,
-                )
-            ),
-
-            // ElevatedButton(
-            //   style: ElevatedButton.styleFrom(
-            //     backgroundColor: AppColors.primaryBlue,
-            //   ),
-            //   onPressed: bookProvider.isRefreshingOrders
-            //       ? null
-            //       : () async {
-            //           bookProvider.b2bSearchController.clear();
-            //           bookProvider.b2cSearchController.clear();
-            //           _refreshOrders(orderType);
-            //         },
-            //   child: bookProvider.isRefreshingOrders
-            //       ? const SizedBox(
-            //           width: 16,
-            //           height: 16,
-            //           child: CircularProgressIndicator(
-            //             color: Colors.white,
-            //             strokeWidth: 2,
-            //           ),
-            //         )
-            //       : const Text(
-            //           'Refresh',
-            //           style: TextStyle(color: Colors.white),
-            //         ),
-            // ),
+                )),
           ],
         ),
       ),

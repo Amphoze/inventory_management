@@ -95,16 +95,13 @@ class _ManifestedOrdersState extends State<ManifestedOrders> {
                       ),
                     ),
                     const Spacer(),
-                    ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primaryBlue,
-                      ),
+                    IconButton(
                       onPressed: manifestProvider.isRefreshingOrders
                           ? null
                           : () async {
                               manifestProvider.fetchCreatedManifests(manifestProvider.currentPage);
                             },
-                      child: manifestProvider.isRefreshingOrders
+                      icon: manifestProvider.isRefreshingOrders
                           ? const SizedBox(
                               width: 16,
                               height: 16,
@@ -113,10 +110,7 @@ class _ManifestedOrdersState extends State<ManifestedOrders> {
                                 strokeWidth: 2,
                               ),
                             )
-                          : const Text(
-                              'Refresh',
-                              style: TextStyle(color: Colors.white),
-                            ),
+                          : const Icon(Icons.refresh),
                     ),
                   ],
                 ),

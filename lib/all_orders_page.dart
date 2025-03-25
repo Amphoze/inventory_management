@@ -37,10 +37,10 @@ class _AllOrdersPageState extends State<AllOrdersPage> with SingleTickerProvider
     allOrdersProvider = Provider.of<AllOrdersProvider>(context, listen: false);
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      selectedCourier = 'All';
-      selectedStatus = 'All';
-      _selectedDate = 'Select Date';
-      picked = null;
+      // selectedCourier = 'All';
+      // selectedStatus = 'All';
+      // _selectedDate = 'Select Date';
+      // picked = null;
       allOrdersProvider.fetchAllOrders(page: allOrdersProvider.currentPage);
       context.read<MarketplaceProvider>().fetchMarketplaces();
       fetchStatuses();
@@ -108,12 +108,12 @@ class _AllOrdersPageState extends State<AllOrdersPage> with SingleTickerProvider
 
   void _refreshOrders() {
     final allOrdersProvider = Provider.of<AllOrdersProvider>(context, listen: false);
-    setState(() {
-      picked = null;
-      selectedCourier = 'All';
-      selectedStatus = 'All';
-      _selectedDate = 'Select Date';
-    });
+    // setState(() {
+    //   picked = null;
+    //   selectedCourier = 'All';
+    //   selectedStatus = 'All';
+    //   _selectedDate = 'Select Date';
+    // });
     allOrdersProvider.fetchAllOrders(page: allOrdersProvider.currentPage);
   }
 
@@ -122,7 +122,7 @@ class _AllOrdersPageState extends State<AllOrdersPage> with SingleTickerProvider
       padding: const EdgeInsets.all(8.0),
       child: Container(
         width: 200,
-        height: 35,
+        height: 40,
         decoration: BoxDecoration(
           border: Border.all(
             color: AppColors.primaryBlue,
@@ -536,19 +536,33 @@ class _AllOrdersPageState extends State<AllOrdersPage> with SingleTickerProvider
             const SizedBox(width: 8),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primaryBlue,
+                backgroundColor: Colors.orange.shade300,
               ),
+              onPressed: () {
+                setState(() {
+                  selectedCourier = 'All';
+                  _selectedDate = 'Select Date';
+                  selectedStatus = 'All';
+                  picked = null;
+                });
+                _refreshOrders();
+              },
+              child: const Text('Reset Filters'),
+            ),
+            const SizedBox(width: 8),
+            IconButton(
               onPressed: allOrdersProvider.isRefreshingOrders
                   ? null
                   : () async {
-                      setState(() {
-                        selectedCourier = 'All';
-                        _selectedDate = 'Select Date';
-                        picked = null;
-                      });
-                      _refreshOrders();
-                    },
-              child: allOrdersProvider.isRefreshingOrders
+                      log('refresh selectedCourier: $selectedCourier');
+                      log('refresh _selectedDate: $_selectedDate');
+                      log('refresh selectedStatus: $selectedStatus');
+                      log('refresh picked: $picked');
+                      final status = statuses.firstWhere((map) => map.containsKey(selectedStatus), orElse: () => {})[selectedStatus]!;
+
+                      allOrdersProvider.fetchAllOrders(page: allOrdersProvider.currentPage, date: picked, status: status, marketplace: selectedCourier);
+              },
+              icon: allOrdersProvider.isRefreshingOrders
                   ? const SizedBox(
                       width: 16,
                       height: 16,
@@ -557,10 +571,7 @@ class _AllOrdersPageState extends State<AllOrdersPage> with SingleTickerProvider
                         strokeWidth: 2,
                       ),
                     )
-                  : const Text(
-                      'Refresh',
-                      style: TextStyle(color: Colors.white),
-                    ),
+                  : const Icon(Icons.refresh),
             ),
           ],
         ),
