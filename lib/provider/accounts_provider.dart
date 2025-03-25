@@ -456,6 +456,9 @@ class AccountsProvider with ChangeNotifier {
       return false;
     }
 
+    final prefs = SharedPreferences.getInstance();
+    String? email = await prefs.then((prefs) => prefs.getString('email'));
+
     final url = '${await Constants.getBaseUrl()}/orders/$id';
     try {
       final response = await http.put(
@@ -465,7 +468,7 @@ class AccountsProvider with ChangeNotifier {
           'Authorization': 'Bearer $token',
         },
         body: json.encode({
-          "messages": {"accountMessage": msg}
+          "messages": {"accountMessage": msg, "timestamp": DateTime.now().toIso8601String(), "author": email}
         }),
       );
 
