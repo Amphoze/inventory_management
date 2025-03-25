@@ -132,12 +132,6 @@ class CreateOrderProvider with ChangeNotifier {
     _updateItemControllers();
   }
 
-  // void _fetchInitialData() {
-  //   _productsFuture = fetchAllProducts(addedProductList);
-  //   _combosFuture = fetchAllCombos(addedComboList);
-  //   notifyListeners();
-  // }
-
   void _updateItemControllers() {
     addedProductQuantityControllers.clear();
     addedProductRateControllers.clear();
