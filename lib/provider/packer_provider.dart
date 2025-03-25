@@ -1,7 +1,9 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:developer';
 import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
+import 'package:inventory_management/constants/constants.dart';
 import 'package:inventory_management/model/orders_model.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -10,7 +12,7 @@ class PackerProvider with ChangeNotifier {
   bool _selectAll = false;
   List<bool> _selectedProducts = [];
   List<Order> _orders = [];
-  int _currentPage = 1; // Ensure this starts at 1
+  int _currentPage = 1;
   int _totalPages = 1;
   final PageController _pageController = PageController();
   final TextEditingController _textEditingController = TextEditingController();
@@ -26,8 +28,7 @@ class PackerProvider with ChangeNotifier {
   PageController get pageController => _pageController;
   TextEditingController get textEditingController => _textEditingController;
 
-  int get selectedCount =>
-      _selectedProducts.where((isSelected) => isSelected).length;
+  int get selectedCount => _selectedProducts.where((isSelected) => isSelected).length;
 
   bool isRefreshingOrders = false;
 
@@ -38,8 +39,7 @@ class PackerProvider with ChangeNotifier {
 
   void toggleSelectAll(bool value) {
     _selectAll = value;
-    _selectedProducts =
-        List<bool>.generate(_orders.length, (index) => _selectAll);
+    _selectedProducts = List<bool>.generate(_orders.length, (index) => _selectAll);
     notifyListeners();
   }
 
@@ -55,11 +55,9 @@ class PackerProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  Future<String> cancelOrders(
-      BuildContext context, List<String> orderIds) async {
-    const String baseUrl =
-        'https://inventory-management-backend-s37u.onrender.com';
-    const String cancelOrderUrl = '$baseUrl/orders/cancel';
+  Future<String> cancelOrders(BuildContext context, List<String> orderIds) async {
+    String baseUrl = await Constants.getBaseUrl();
+    String cancelOrderUrl = '$baseUrl/orders/cancel';
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('authToken') ?? '';
     setCancelStatus(true);
@@ -96,9 +94,9 @@ class PackerProvider with ChangeNotifier {
         setCancelStatus(false);
         notifyListeners(); // Notify the UI to rebuild
 
-        return responseData['message'] ?? 'Orders confirmed successfully';
+        return responseData['message'] ?? 'Orders cancelled successfully';
       } else {
-        return responseData['message'] ?? 'Failed to confirm orders';
+        return responseData['message'] ?? 'Failed to cancel orders';
       }
     } catch (error) {
       setCancelStatus(false);
@@ -108,7 +106,6 @@ class PackerProvider with ChangeNotifier {
     }
   }
 
-
   Future<void> fetchOrdersWithStatus5() async {
     _isLoading = true;
     setRefreshingOrders(true);
@@ -116,8 +113,9 @@ class PackerProvider with ChangeNotifier {
 
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('authToken') ?? '';
-    const url =
-        'https://inventory-management-backend-s37u.onrender.com/orders?orderStatus=5&page=';
+    final warehouseId = prefs.getString('warehouseId') ?? '';
+
+    String url = '${await Constants.getBaseUrl()}/orders?warehouse=$warehouseId&orderStatus=5&page=';
 
     try {
       final response = await http.get(Uri.parse('$url$_currentPage'), headers: {
@@ -127,9 +125,7 @@ class PackerProvider with ChangeNotifier {
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
-        List<Order> orders = (data['orders'] as List)
-            .map((order) => Order.fromJson(order))
-            .toList();
+        List<Order> orders = (data['orders'] as List).map((order) => Order.fromJson(order)).toList();
 
         _totalPages = data['totalPages']; // Get total pages from response
         _orders = orders; // Set the orders for the current page
@@ -142,12 +138,15 @@ class PackerProvider with ChangeNotifier {
       } else {
         // Handle non-success responses
         _orders = [];
+        _currentPage = 1;
         _totalPages = 1; // Reset total pages if there’s an error
       }
-    } catch (e) {
+    } catch (e, s) {
       // Handle errors
       _orders = [];
+      _currentPage = 1;
       _totalPages = 1; // Reset total pages if there’s an error
+      log('packer error: $e \n\n$s');
     } finally {
       _isLoading = false;
       setRefreshingOrders(false);
@@ -180,9 +179,11 @@ class PackerProvider with ChangeNotifier {
 
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('authToken') ?? '';
+    final warehouseId = prefs.getString('warehouseId') ?? '';
 
-    final url =
-        'https://inventory-management-backend-s37u.onrender.com/orders?orderStatus=5&order_id=$query';
+    String encodedOrderId = Uri.encodeComponent(query);
+
+    final url = '${await Constants.getBaseUrl()}/orders?warehouse=$warehouseId&orderStatus=5&order_id=$encodedOrderId';
 
     print('Searching failed orders with term: $query');
 
@@ -201,22 +202,27 @@ class PackerProvider with ChangeNotifier {
         final jsonData = json.decode(response.body);
         print('Response data: $jsonData');
 
-        List<Order> orders = [];
+        // List<Order> orders = [];
         if (jsonData != null) {
-          orders.add(Order.fromJson(jsonData));
+          _orders = (jsonData['orders'] as List).map((order) => Order.fromJson(order)).toList();
+          // orders.add(Order.fromJson(jsonData));
         } else {
           print('No data found in response.');
         }
-
-        _orders = orders;
+        //
+        // _orders = orders;
         print('Orders fetched: ${orders.length}');
       } else {
         print('Failed to load orders: ${response.statusCode}');
         _orders = [];
+        _currentPage = 1;
+        _totalPages = 1;
       }
     } catch (error) {
       print('Error searching failed orders: $error');
       _orders = [];
+      _currentPage = 1;
+      _totalPages = 1;
     } finally {
       _isLoading = false;
       notifyListeners();

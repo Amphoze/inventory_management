@@ -7,9 +7,9 @@ import 'package:flutter/widgets.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
 import 'package:inventory_management/Api/auth_provider.dart';
-import 'package:inventory_management/model/label-model.dart';
+import 'package:inventory_management/constants/constants.dart';
 
-class LabelPageApi extends ChangeNotifier {
+class LabelPageApi with ChangeNotifier {
   TextEditingController _nameController = TextEditingController();
   TextEditingController _labelSkuController = TextEditingController();
   TextEditingController _imageController = TextEditingController();
@@ -25,9 +25,6 @@ class LabelPageApi extends ChangeNotifier {
 
   // New controller for DropdownSearch
   List<String> _selectedProducts = [];
-
-  final String baseUrl =
-      'https://inventory-management-backend-s37u.onrender.com';
 
   //getter for all controller
   TextEditingController get nameController => _nameController;
@@ -63,8 +60,8 @@ class LabelPageApi extends ChangeNotifier {
     _selectedIndex.clear();
   }
 
-  void buttonTapStatus() {
-    _buttonTap = !buttonTap;
+  void buttonTapStatus(bool value) {
+    _buttonTap = value;
     notifyListeners();
   }
 
@@ -86,23 +83,28 @@ class LabelPageApi extends ChangeNotifier {
 
   //create label
   Future<Map<String, dynamic>> createLabel() async {
+    String baseUrl = await Constants.getBaseUrl();
     log("create label");
     printControllerValues();
-    List<Map<String, String>> productIdMap = [];
-    for (int i = 0; i < _selectedIndex.length; i++) {
-      print("heeeli ${_productDetails[_selectedIndex[i]]['_id'].toString()}");
-      productIdMap.add(
-          {'productId': _productDetails[_selectedIndex[i]]['_id'].toString()});
+
+    if (nameController.text.trim().isEmpty) {
+      return {};
     }
-    print("lenght ${productIdMap.length}");
+    if (labelSkuController.text.trim().isEmpty) {
+      return {};
+    }
     final url = Uri.parse('$baseUrl/label/');
-    LabelModel model = LabelModel(
-        name: _nameController.text,
-        labelSku: _labelSkuController.text,
-        image: _imageController.text,
-        description: _descriptionController.text,
-        products: productIdMap,
-        quantity: int.parse(_quantityController.text));
+    final body = {
+      'name': nameController.text.trim(),
+      'labelSku': labelSkuController.text.trim(),
+      'description': descriptionController.text.trim(),
+      'quantity': quantityController.text.trim(),
+    };
+
+    log('model: $body');
+
+    // log("model is here ${model.toJson()}");
+
     try {
       final token = await AuthProvider().getToken();
       final response = await http.post(
@@ -111,14 +113,14 @@ class LabelPageApi extends ChangeNotifier {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer $token',
         },
-        body: json.encode(model.toJson()),
+        body: json.encode(body),
       );
 
       if (response.statusCode == 201 || response.statusCode == 200) {
-        print("respose body is here ${response.body.toString()}");
+        log("respose body is here ${response.body.toString()}");
         return {"res": "success"};
       } else {
-        print(response.body.toString());
+        log(response.body.toString());
         return {"res": response.body.toString()};
       }
     } catch (e) {
@@ -130,6 +132,7 @@ class LabelPageApi extends ChangeNotifier {
 
   //get product details
   Future getProductDetails() async {
+    String baseUrl = await Constants.getBaseUrl();
     final token = await AuthProvider().getToken();
     var response = await http.get(
       Uri.parse("$baseUrl/products"),

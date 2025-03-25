@@ -1,9 +1,10 @@
+import 'dart:developer';
 
 import 'package:flutter/material.dart';
 import 'package:inventory_management/provider/invoice_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:intl/intl.dart';  // Importing intl package for date formatting
+import 'package:intl/intl.dart'; // Importing intl package for date formatting
 
 import 'Custom-Files/colors.dart';
 import 'Custom-Files/custom_pagination.dart';
@@ -55,9 +56,9 @@ class _InvoicePageState extends State<InvoicePage> {
                         decoration: InputDecoration(
                           hintText: 'Search by invoice no.',
                           prefixIcon: const Icon(Icons.search, color: Colors.grey),
-                          suffixIcon: IconButton(
-                            icon: const Icon(Icons.search),
-                            onPressed: () {
+                          suffixIcon: InkWell(
+                            child: const Icon(Icons.search),
+                            onTap: () {
                               final invoiceNumber = _searchController.text;
                               if (invoiceNumber.isNotEmpty) {
                                 invoiceProvider.searchInvoiceByNumber(invoiceNumber);
@@ -72,8 +73,7 @@ class _InvoicePageState extends State<InvoicePage> {
                           ),
                           filled: true,
                           fillColor: Colors.white,
-                          contentPadding: const EdgeInsets.symmetric(
-                              vertical: 15.0, horizontal: 20.0),
+                          contentPadding: const EdgeInsets.symmetric(vertical: 15.0, horizontal: 20.0),
                           focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(30.0),
                             borderSide: const BorderSide(
@@ -84,13 +84,18 @@ class _InvoicePageState extends State<InvoicePage> {
                           enabledBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(30.0),
                             borderSide: BorderSide(
-                              color: Colors.grey.withOpacity(0.5), // Border color when enabled
+                              color: Colors.grey.withValues(alpha: 0.5), // Border color when enabled
                               width: 1.0,
                             ),
                           ),
                         ),
-                        onChanged: (value) async {
+                        onSubmitted: (value) async {
                           invoiceProvider.searchInvoiceByNumber(value);
+                        },
+                        onChanged: (value) async {
+                          if (value.isEmpty) {
+                            invoiceProvider.fetchInvoices();
+                          }
                         },
                       ),
                     ),
@@ -103,82 +108,87 @@ class _InvoicePageState extends State<InvoicePage> {
             child: invoiceProvider.isLoading
                 ? const Center(child: CircularProgressIndicator())
                 : invoiceProvider.error != null
-                ? Center(child: Text(invoiceProvider.error!))
-                : ListView.builder(
-              itemCount: invoiceProvider.invoices.length,
-              itemBuilder: (context, index) {
-                final invoice = invoiceProvider.invoices[index];
+                    ? Center(child: Text(invoiceProvider.error!))
+                    : invoiceProvider.invoices.isEmpty
+                        ? const Center(child: Text('No invoices found'))
+                        : ListView.builder(
+                            itemCount: invoiceProvider.invoices.length,
+                            itemBuilder: (context, index) {
+                              final invoice = invoiceProvider.invoices[index];
 
-                // Format the createdAt date and time
-                String formattedDate = DateFormat('yyyy-MM-dd').format(invoice.createdAt);
-                String formattedTime = DateFormat('hh:mm a').format(invoice.createdAt);
+                              log('invoice name: ${invoiceProvider.invoices[0].invoiceNumber}');
+                              log('invoice url: ${invoiceProvider.invoices[0].invoiceUrl}');
 
-                return Card(
-                  margin: const EdgeInsets.all(16.0),
-                  elevation: 4,
-                  child: Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              'Invoice Number: ${invoice.invoiceNumber ?? 'N/A'}',
-                              style: const TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            ElevatedButton(
-                              onPressed: () async {
-                                final url = invoice.invoiceUrl;
-                                if (url != null && await canLaunch(url)) {
-                                  await launch(url);
-                                } else {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Text('Could not launch $url'),
-                                    ),
-                                  );
-                                }
-                              },
-                              child: const Text('View'),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 8.0),
-                        Text(
-                          'Created On: $formattedDate at $formattedTime',
-                          style: const TextStyle(
-                            fontSize: 16,
-                            color: Colors.grey,
+                              // Convert to IST (UTC+5:30)
+                              DateTime istDateTime = invoice.createdAt.add(const Duration(hours: 5, minutes: 30));
+
+                              // Format the IST date and time
+                              String formattedDate = DateFormat('yyyy-MM-dd').format(istDateTime);
+                              String formattedTime = DateFormat('hh:mm a').format(istDateTime);
+
+                              return Card(
+                                margin: const EdgeInsets.all(16.0),
+                                elevation: 4,
+                                child: Padding(
+                                  padding: const EdgeInsets.all(16.0),
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Row(
+                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Text(
+                                            'Invoice Number: ${invoice.invoiceNumber ?? 'N/A'}',
+                                            style: const TextStyle(
+                                              fontSize: 18,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                          ElevatedButton(
+                                            onPressed: () async {
+                                              final url = invoice.invoiceUrl;
+                                              if (url != null && await canLaunchUrl(Uri.parse(url))) {
+                                                await launchUrl(Uri.parse(url));
+                                              } else {
+                                                ScaffoldMessenger.of(context).showSnackBar(
+                                                  SnackBar(
+                                                    content: Text('Could not launch $url'),
+                                                  ),
+                                                );
+                                              }
+                                            },
+                                            child: const Text('View'),
+                                          ),
+                                        ],
+                                      ),
+                                      const SizedBox(height: 8.0),
+                                      Text(
+                                        'Created On: $formattedDate at $formattedTime',
+                                        style: const TextStyle(
+                                          fontSize: 16,
+                                          color: Colors.grey,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              );
+                            },
                           ),
-                        ),
-                      ],
-                    ),
-                  ),
-                );
-              },
-            ),
           ),
           // Pagination controls
           CustomPaginationFooter(
             currentPage: invoiceProvider.currentPage,
             totalPages: invoiceProvider.totalPages,
             buttonSize: MediaQuery.of(context).size.width > 600 ? 32 : 24,
-            onFirstPage: ()  => invoiceProvider.goToFirstPage(),
+            onFirstPage: () => invoiceProvider.goToFirstPage(),
             onLastPage: () => invoiceProvider.goToLastPage(),
-            onNextPage: () =>invoiceProvider.nextPage(),
-            onPreviousPage: () =>invoiceProvider.previousPage(),
-            onGoToPage: (int ) => invoiceProvider.goToPage(int),
-            onJumpToPage: () {  },
+            onNextPage: () => invoiceProvider.nextPage(),
+            onPreviousPage: () => invoiceProvider.previousPage(),
+            onGoToPage: (int) => invoiceProvider.goToPage(int),
+            onJumpToPage: () {},
             pageController: _pageController,
-
           ),
-
-
         ],
       ),
     );

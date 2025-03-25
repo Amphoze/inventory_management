@@ -40,7 +40,7 @@ class _LabelUploadState extends State<LabelUpload> {
 
       String? result = await authProvider.createLabel(labelApiData);
 
-      if (result != null && result.contains('successfully')) {
+      if (result!.contains('successfully')) {
         successCount++;
         print('Upload Success: $result');
         print('------------------------------');
@@ -80,12 +80,41 @@ class _LabelUploadState extends State<LabelUpload> {
     );
   }
 
+  void _showLoadingDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      barrierDismissible: false, // Prevent closing the dialog
+      builder: (BuildContext context) {
+        return const AlertDialog(
+          content: Row(
+            children: [
+              CircularProgressIndicator(),
+              SizedBox(width: 10),
+              Text("Do not change or close this tab."),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final labelDataProvider = Provider.of<LabelDataProvider>(context);
     final screenWidth = MediaQuery.of(context).size.width;
     final baseTextSize =
         screenWidth > 1200 ? 16.0 : (screenWidth > 800 ? 15.0 : 14.0);
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (labelDataProvider.isLoadingDataGroups) {
+        _showLoadingDialog(context);
+      } else {
+        // Close the dialog if it's showing
+        if (Navigator.canPop(context)) {
+          Navigator.of(context).pop();
+        }
+      }
+    });
 
     return Scaffold(
       backgroundColor: AppColors.white,
@@ -94,6 +123,11 @@ class _LabelUploadState extends State<LabelUpload> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            const Text(
+              'Upload Labels',
+              style: TextStyle(fontSize: 25, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 8),
             Row(
               children: [
                 ExcelFileUploader(
@@ -129,7 +163,8 @@ class _LabelUploadState extends State<LabelUpload> {
                 ],
                 const SizedBox(width: 16),
                 ElevatedButton(
-                  onPressed: () => AuthProvider().downloadTemplate(context,'label'),
+                  onPressed: () =>
+                      AuthProvider().downloadTemplate(context, 'label'),
                   child: const Text('Download Template'),
                 ),
               ],
@@ -169,7 +204,7 @@ class _LabelUploadState extends State<LabelUpload> {
           border: Border.all(color: AppColors.blueAccent, width: 1.5),
           boxShadow: [
             BoxShadow(
-              color: AppColors.grey.withOpacity(0.1),
+              color: AppColors.grey.withValues(alpha: 0.1),
               spreadRadius: 2,
               blurRadius: 10,
               offset: const Offset(0, 4),

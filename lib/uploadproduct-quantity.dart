@@ -3,6 +3,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:inventory_management/Api/update-quantity-by-sku.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class UploadProductSku extends StatefulWidget {
   const UploadProductSku({super.key});
@@ -13,11 +14,20 @@ class UploadProductSku extends StatefulWidget {
 
 class _UploadProductSkuState extends State<UploadProductSku> {
   Map<String, Map<String, dynamic>> jsonData = {};
+  String? warehouse;
   @override
   void initState() {
     super.initState();
     Provider.of<UpdateQuantityBySku>(context, listen: false)
         .updateJsonData(isfalse: true);
+
+    getWarehouseId();
+  }
+
+  Future<void> getWarehouseId() async {
+    final prefs = await SharedPreferences.getInstance();
+    // _isAuthenticated = prefs.getString('authToken') != null;
+    warehouse = prefs.getString('warehouseId');
   }
 
   @override
@@ -46,7 +56,7 @@ class _UploadProductSkuState extends State<UploadProductSku> {
                         if (i != 0) {
                           jsonData[row[1]!.value.toString()] = {
                             "newTotal": int.parse(row[0]!.value.toString()),
-                            "warehouseId": "66fceb5163c6d5c106cfa809",
+                            "warehouseId": warehouse,
                             "additionalInfo": {"reason": "Excel update"}
                           };
                         } else {

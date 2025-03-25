@@ -1,11 +1,14 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:inventory_management/Custom-Files/colors.dart';
 import 'package:provider/provider.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'Api/auth_provider.dart';
 
 class ResetPasswordPage extends StatefulWidget {
-  const ResetPasswordPage({super.key});
+  const ResetPasswordPage({super.key, required this.email});
+
+  final String email;
 
   @override
   _ResetPasswordPageState createState() => _ResetPasswordPageState();
@@ -49,6 +52,7 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(),
       backgroundColor: Colors.white,
       body: Stack(
         children: [
@@ -183,110 +187,102 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
                                   ),
                                 ),
                                 const SizedBox(height: 20),
-                                Stack(
-                                  alignment: Alignment.center,
-                                  children: [
-                                    ElevatedButton(
-                                      onPressed: _isButtonEnabled
-                                          ? () async {
-                                              if (_formKey.currentState
-                                                      ?.validate() ??
-                                                  false) {
-                                                setState(() {
-                                                  _isLoading = true;
-                                                });
-
-                                                // Retrieve email from SharedPreferences
-                                                final prefs =
-                                                    await SharedPreferences
-                                                        .getInstance();
-                                                final email =
-                                                    prefs.getString('email');
-
-                                                if (email == null) {
-                                                  ScaffoldMessenger.of(context)
-                                                      .showSnackBar(
-                                                    const SnackBar(
-                                                      content: Text(
-                                                          'Email not found'),
-                                                      backgroundColor:
-                                                          Colors.red,
-                                                    ),
-                                                  );
-                                                  setState(() {
-                                                    _isLoading = false;
-                                                  });
-                                                  return;
-                                                }
-
-                                                final authProvider =
-                                                    Provider.of<AuthProvider>(
-                                                        context,
-                                                        listen: false);
-                                                final result =
-                                                    await authProvider
-                                                        .resetPassword(
-                                                  email,
-                                                  _newPasswordController.text
-                                                      .trim(),
-                                                );
-
-                                                setState(() {
-                                                  _isLoading = false;
-                                                });
-
-                                                if (result['success']) {
-                                                  ScaffoldMessenger.of(context)
-                                                      .showSnackBar(
-                                                    SnackBar(
-                                                      content: Text(result[
-                                                              'message'] ??
-                                                          'Password reset successfully'),
-                                                      backgroundColor: AppColors
-                                                          .primaryGreen,
-                                                    ),
-                                                  );
-                                                  Navigator
-                                                      .pushReplacementNamed(
-                                                          context, '/login');
-                                                } else {
-                                                  ScaffoldMessenger.of(context)
-                                                      .showSnackBar(
-                                                    SnackBar(
-                                                      content: Text(result[
-                                                              'message'] ??
-                                                          'Password reset failed'),
-                                                      backgroundColor:
-                                                          Colors.red,
-                                                    ),
-                                                  );
-                                                }
-                                              }
-                                            }
-                                          : null,
-                                      style: ElevatedButton.styleFrom(
-                                        foregroundColor: AppColors.white,
-                                        backgroundColor: AppColors.primaryBlue,
-                                      ),
-                                      child: _isLoading
-                                          ? const SizedBox(
-                                              height: 20,
-                                              width: 20,
-                                              child: CircularProgressIndicator(
-                                                color: AppColors.white,
-                                                strokeWidth: 2.0,
-                                              ),
-                                            )
-                                          : const Text('Reset Password'),
-                                    ),
-                                    if (_isLoading)
-                                      const Positioned.fill(
+                                _isLoading
+                                    ? const Positioned.fill(
                                         child: Center(
                                           child: CircularProgressIndicator(),
                                         ),
+                                      )
+                                    : ElevatedButton(
+                                        onPressed: _isButtonEnabled
+                                            ? () async {
+                                                if (_formKey.currentState
+                                                        ?.validate() ??
+                                                    false) {
+                                                  setState(() {
+                                                    _isLoading = true;
+                                                  });
+
+                                                  // Retrieve email from SharedPreferences
+                                                  // final prefs =
+                                                  //     await SharedPreferences
+                                                  //         .getInstance();
+                                                  final email = widget.email;
+
+                                                  log('Email: $email');
+
+                                                  if (email.isEmpty) {
+                                                    ScaffoldMessenger.of(
+                                                            context)
+                                                        .showSnackBar(
+                                                      const SnackBar(
+                                                        content: Text(
+                                                            'Email not found'),
+                                                        backgroundColor:
+                                                            Colors.red,
+                                                      ),
+                                                    );
+                                                    setState(() {
+                                                      _isLoading = false;
+                                                    });
+                                                    return;
+                                                  }
+
+                                                  final authProvider =
+                                                      Provider.of<AuthProvider>(
+                                                          context,
+                                                          listen: false);
+                                                  final result =
+                                                      await authProvider
+                                                          .resetPassword(
+                                                    email,
+                                                    _newPasswordController.text
+                                                        .trim(),
+                                                  );
+
+                                                  setState(() {
+                                                    _isLoading = false;
+                                                  });
+
+                                                  if (result['success']) {
+                                                    ScaffoldMessenger.of(
+                                                            context)
+                                                        .showSnackBar(
+                                                      SnackBar(
+                                                        content: Text(result[
+                                                                'message'] ??
+                                                            'Password reset successfully'),
+                                                        backgroundColor:
+                                                            AppColors
+                                                                .primaryGreen,
+                                                      ),
+                                                    );
+                                                    Navigator
+                                                        .pushReplacementNamed(
+                                                            context, '/login');
+                                                  } else {
+                                                    ScaffoldMessenger.of(
+                                                            context)
+                                                        .showSnackBar(
+                                                      SnackBar(
+                                                        content: Text(result[
+                                                                'message'] ??
+                                                            'Password reset failed'),
+                                                        backgroundColor:
+                                                            Colors.red,
+                                                      ),
+                                                    );
+                                                  }
+                                                }
+                                              }
+                                            : null,
+                                        style: ElevatedButton.styleFrom(
+                                          foregroundColor: AppColors.white,
+                                          backgroundColor:
+                                              AppColors.primaryBlue,
+                                        ),
+                                        child: const Text('Reset Password'),
                                       ),
-                                  ],
-                                ),
                               ],
                             ),
                           ),
@@ -425,110 +421,107 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
                                         ),
                                       ),
                                       const SizedBox(height: 20),
-                                      Stack(
-                                        alignment: Alignment.center,
-                                        children: [
-                                          ElevatedButton(
-                                            onPressed: _isButtonEnabled
-                                                ? () async {
-                                                    if (_formKey.currentState
-                                                            ?.validate() ??
-                                                        false) {
-                                                      setState(() {
-                                                        _isLoading = true;
-                                                      });
-
-                                                      // Retrieve email from SharedPreferences
-                                                      final prefs =
-                                                          await SharedPreferences
-                                                              .getInstance();
-                                                      final email = prefs
-                                                          .getString('email');
-
-                                                      if (email == null) {
-                                                        ScaffoldMessenger.of(
-                                                                context)
-                                                            .showSnackBar(
-                                                          const SnackBar(
-                                                            content: Text(
-                                                                'Email not found'),
-                                                            backgroundColor:
-                                                                Colors.red,
-                                                          ),
-                                                        );
-                                                        setState(() {
-                                                          _isLoading = false;
-                                                        });
-                                                        return;
-                                                      }
-
-                                                      final authProvider =
-                                                          Provider.of<
-                                                                  AuthProvider>(
-                                                              context,
-                                                              listen: false);
-                                                      final result =
-                                                          await authProvider
-                                                              .resetPassword(
-                                                        email,
-                                                        _newPasswordController
-                                                            .text
-                                                            .trim(),
-                                                      );
-
-                                                      setState(() {
-                                                        _isLoading = false;
-                                                      });
-
-                                                      if (result['success']) {
-                                                        ScaffoldMessenger.of(
-                                                                context)
-                                                            .showSnackBar(
-                                                          SnackBar(
-                                                            content: Text(result[
-                                                                    'message'] ??
-                                                                'Password reset successfully'),
-                                                            backgroundColor:
-                                                                AppColors
-                                                                    .primaryGreen,
-                                                          ),
-                                                        );
-                                                        Navigator
-                                                            .pushReplacementNamed(
-                                                                context,
-                                                                '/login');
-                                                      } else {
-                                                        ScaffoldMessenger.of(
-                                                                context)
-                                                            .showSnackBar(
-                                                          SnackBar(
-                                                            content: Text(result[
-                                                                    'message'] ??
-                                                                'Password reset failed'),
-                                                            backgroundColor:
-                                                                Colors.red,
-                                                          ),
-                                                        );
-                                                      }
-                                                    }
-                                                  }
-                                                : null,
-                                            style: ElevatedButton.styleFrom(
-                                              foregroundColor: AppColors.white,
-                                              backgroundColor:
-                                                  AppColors.primaryBlue,
-                                            ),
-                                            child: const Text('Reset Password'),
-                                          ),
-                                          if (_isLoading)
-                                            const Positioned.fill(
+                                      _isLoading
+                                          ? const Positioned.fill(
                                               child: Center(
                                                 child:
                                                     CircularProgressIndicator(),
                                               ),
+                                            )
+                                          : ElevatedButton(
+                                              onPressed: _isButtonEnabled
+                                                  ? () async {
+                                                      if (_formKey.currentState
+                                                              ?.validate() ??
+                                                          false) {
+                                                        setState(() {
+                                                          _isLoading = true;
+                                                        });
+
+                                                        // Retrieve email from SharedPreferences
+                                                        // final prefs =
+                                                        //     await SharedPreferences
+                                                        //         .getInstance();
+                                                        final email =
+                                                            widget.email;
+
+                                                        if (email.isEmpty) {
+                                                          ScaffoldMessenger.of(
+                                                                  context)
+                                                              .showSnackBar(
+                                                            const SnackBar(
+                                                              content: Text(
+                                                                  'Email not found'),
+                                                              backgroundColor:
+                                                                  Colors.red,
+                                                            ),
+                                                          );
+                                                          setState(() {
+                                                            _isLoading = false;
+                                                          });
+                                                          return;
+                                                        }
+
+                                                        final authProvider =
+                                                            Provider.of<
+                                                                    AuthProvider>(
+                                                                context,
+                                                                listen: false);
+                                                        final result =
+                                                            await authProvider
+                                                                .resetPassword(
+                                                          email,
+                                                          _newPasswordController
+                                                              .text
+                                                              .trim(),
+                                                        );
+
+                                                        setState(() {
+                                                          _isLoading = false;
+                                                        });
+
+                                                        if (result['success']) {
+                                                          ScaffoldMessenger.of(
+                                                                  context)
+                                                              .showSnackBar(
+                                                            SnackBar(
+                                                              content: Text(result[
+                                                                      'message'] ??
+                                                                  'Password reset successfully'),
+                                                              backgroundColor:
+                                                                  AppColors
+                                                                      .primaryGreen,
+                                                            ),
+                                                          );
+                                                          Navigator
+                                                              .pushReplacementNamed(
+                                                                  context,
+                                                                  '/login');
+                                                        } else {
+                                                          ScaffoldMessenger.of(
+                                                                  context)
+                                                              .showSnackBar(
+                                                            SnackBar(
+                                                              content: Text(result[
+                                                                      'message'] ??
+                                                                  'Password reset failed'),
+                                                              backgroundColor:
+                                                                  Colors.red,
+                                                            ),
+                                                          );
+                                                        }
+                                                      }
+                                                    }
+                                                  : null,
+                                              style: ElevatedButton.styleFrom(
+                                                foregroundColor:
+                                                    AppColors.white,
+                                                backgroundColor:
+                                                    AppColors.primaryBlue,
+                                              ),
+                                              child:
+                                                  const Text('Reset Password'),
                                             ),
-                                        ],
-                                      ),
                                     ],
                                   ),
                                 ),

@@ -638,7 +638,7 @@ Widget _buildReadyToConfirmTab() {
 
               Divider(
                 height: 1,
-                color: AppColors.black.withOpacity(0.5),
+                color: AppColors.black.withValues(alpha: 0.5),
               ),
 
               const SizedBox(height: 16),
@@ -647,7 +647,7 @@ Widget _buildReadyToConfirmTab() {
               Container(
                 height: 30,
                 width: double.infinity,
-                color: AppColors.black.withOpacity(0.2),
+                color: AppColors.black.withValues(alpha: 0.2),
                 alignment: Alignment.centerLeft,
                 child: const Padding(
                   padding: EdgeInsets.symmetric(horizontal: 8),
@@ -691,7 +691,7 @@ Widget _buildReadyToConfirmTab() {
               Container(
                 height: 30,
                 width: double.infinity,
-                color: AppColors.black.withOpacity(0.2),
+                color: AppColors.black.withValues(alpha: 0.2),
                 alignment: Alignment.centerLeft,
                 child: const Padding(
                   padding: EdgeInsets.symmetric(horizontal: 8),
@@ -713,7 +713,7 @@ Widget _buildReadyToConfirmTab() {
               Container(
                 height: 30,
                 width: double.infinity,
-                color: AppColors.black.withOpacity(0.2),
+                color: AppColors.black.withValues(alpha: 0.2),
                 alignment: Alignment.centerLeft,
                 child: const Padding(
                   padding: EdgeInsets.symmetric(horizontal: 8),

@@ -56,8 +56,7 @@ class CreateAccountPage extends StatelessWidget {
                                   style: ElevatedButton.styleFrom(
                                     foregroundColor: AppColors.primaryBlue,
                                     backgroundColor: AppColors.white,
-                                    padding: const EdgeInsets.symmetric(
-                                        vertical: 20.0, horizontal: 20.0),
+                                    padding: const EdgeInsets.symmetric(vertical: 20.0, horizontal: 20.0),
                                     shape: RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(8.0),
                                     ),
@@ -73,8 +72,7 @@ class CreateAccountPage extends StatelessWidget {
                         top: 40,
                         left: 20,
                         child: IconButton(
-                          icon: const Icon(Icons.arrow_back,
-                              color: AppColors.white),
+                          icon: const Icon(Icons.arrow_back, color: AppColors.white),
                           onPressed: () {
                             Navigator.pop(context);
                           },
@@ -137,8 +135,7 @@ class CreateAccountPage extends StatelessWidget {
                                   style: ElevatedButton.styleFrom(
                                     foregroundColor: AppColors.primaryBlue,
                                     backgroundColor: AppColors.white,
-                                    padding: const EdgeInsets.symmetric(
-                                        vertical: 20.0, horizontal: 20.0),
+                                    padding: const EdgeInsets.symmetric(vertical: 20.0, horizontal: 20.0),
                                     shape: RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(8.0),
                                     ),
@@ -219,15 +216,7 @@ class CreateAccountFormState extends State<CreateAccountForm> {
 
   void _checkIfOtpCanBeEnabled() {
     setState(() {
-      _isOtpEnabled = _username != null &&
-          _username!.isNotEmpty &&
-          _email != null &&
-          _email!.isNotEmpty &&
-          _password != null &&
-          _password!.isNotEmpty &&
-          _confirmPassword != null &&
-          _password == _confirmPassword &&
-          _isValidEmail(_email!);
+      _isOtpEnabled = _username != null && _username!.isNotEmpty && _email != null && _email!.isNotEmpty && _password != null && _password!.isNotEmpty && _confirmPassword != null && _password == _confirmPassword && _isValidEmail(_email!);
     });
   }
 
@@ -293,8 +282,7 @@ class CreateAccountFormState extends State<CreateAccountForm> {
 
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     try {
-      final result = await authProvider.registerOtp(
-          _email!, _otpController.text, _password!);
+      final result = await authProvider.registerOtp(_email!, _otpController.text, _password!);
 
       if (result['success'] == true) {
         setState(() {
@@ -320,6 +308,7 @@ class CreateAccountFormState extends State<CreateAccountForm> {
   final List<String> roles = [
     'superAdmin',
     'admin',
+    'outbound',
     'confirmer',
     'booker',
     'account',
@@ -328,6 +317,9 @@ class CreateAccountFormState extends State<CreateAccountForm> {
     'checker',
     'racker',
     'manifest',
+    'support',
+    'ggv',
+    'createOrder',
   ];
 
   final List<String> selectedRoles = [];
@@ -335,14 +327,18 @@ class CreateAccountFormState extends State<CreateAccountForm> {
   final Map<String, String> roleDisplayNames = {
     'superAdmin': 'Super Admin',
     'admin': 'Admin',
+    'outbound': 'Outbound',
     'confirmer': 'Confirmer',
-    'booker': 'Booker',
     'account': 'Account',
+    'booker': 'Booker',
     'picker': 'Picker',
     'packer': 'Packer',
     'checker': 'Checker',
     'racker': 'Racker',
     'manifest': 'Manifest',
+    'support': 'Support',
+    'ggv': 'GGV',
+    'createOrder': 'Create Order',
   };
 
   void _showMultiSelectDialog() async {
@@ -423,20 +419,17 @@ class CreateAccountFormState extends State<CreateAccountForm> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     IconButton(
-                      icon: const Icon(FontAwesomeIcons.facebook,
-                          color: AppColors.facebookColor),
+                      icon: const Icon(FontAwesomeIcons.facebook, color: AppColors.facebookColor),
                       onPressed: () {},
                     ),
                     const SizedBox(width: 10),
                     IconButton(
-                      icon: const Icon(FontAwesomeIcons.google,
-                          color: AppColors.googleColor),
+                      icon: const Icon(FontAwesomeIcons.google, color: AppColors.googleColor),
                       onPressed: () {},
                     ),
                     const SizedBox(width: 10),
                     IconButton(
-                      icon: const Icon(FontAwesomeIcons.linkedin,
-                          color: AppColors.linkedinColor),
+                      icon: const Icon(FontAwesomeIcons.linkedin, color: AppColors.linkedinColor),
                       onPressed: () {},
                     ),
                   ],
@@ -471,14 +464,9 @@ class CreateAccountFormState extends State<CreateAccountForm> {
                       border: OutlineInputBorder(),
                     ),
                     child: Text(
-                      selectedRoles.isEmpty
-                          ? "No roles selected"
-                          : selectedRoles
-                              .map((role) => roleDisplayNames[role] ?? role)
-                              .join(', '),
+                      selectedRoles.isEmpty ? "No roles selected" : selectedRoles.map((role) => roleDisplayNames[role] ?? role).join(', '),
                       style: TextStyle(
-                        color:
-                            selectedRoles.isEmpty ? Colors.grey : Colors.black,
+                        color: selectedRoles.isEmpty ? Colors.grey : Colors.black,
                       ),
                     ),
                   ),
@@ -492,12 +480,8 @@ class CreateAccountFormState extends State<CreateAccountForm> {
                     border: const OutlineInputBorder(),
                     suffixIcon: _email != null && _email!.isNotEmpty
                         ? Icon(
-                            _isValidEmail(_email!)
-                                ? Icons.check_circle
-                                : Icons.cancel,
-                            color: _isValidEmail(_email!)
-                                ? Colors.green
-                                : Colors.red,
+                            _isValidEmail(_email!) ? Icons.check_circle : Icons.cancel,
+                            color: _isValidEmail(_email!) ? Colors.green : Colors.red,
                           )
                         : null,
                   ),
@@ -524,9 +508,7 @@ class CreateAccountFormState extends State<CreateAccountForm> {
                     border: const OutlineInputBorder(),
                     suffixIcon: IconButton(
                       icon: Icon(
-                        _obscurePassword
-                            ? Icons.visibility
-                            : Icons.visibility_off,
+                        _obscurePassword ? Icons.visibility : Icons.visibility_off,
                         color: AppColors.grey,
                       ),
                       onPressed: () {
@@ -556,9 +538,7 @@ class CreateAccountFormState extends State<CreateAccountForm> {
                     border: const OutlineInputBorder(),
                     suffixIcon: IconButton(
                       icon: Icon(
-                        _obscureConfirmPassword
-                            ? Icons.visibility
-                            : Icons.visibility_off,
+                        _obscureConfirmPassword ? Icons.visibility : Icons.visibility_off,
                         color: AppColors.grey,
                       ),
                       onPressed: () {
@@ -595,8 +575,7 @@ class CreateAccountFormState extends State<CreateAccountForm> {
                           border: OutlineInputBorder(),
                         ),
                         validator: (value) {
-                          if (_isOtpEnabled &&
-                              (value == null || value.isEmpty)) {
+                          if (_isOtpEnabled && (value == null || value.isEmpty)) {
                             return 'Please enter the OTP';
                           }
                           return null;
@@ -605,13 +584,9 @@ class CreateAccountFormState extends State<CreateAccountForm> {
                     ),
                     const SizedBox(width: 10),
                     ElevatedButton(
-                      onPressed: (_isOtpEnabled && !_isOtpSent) ||
-                              (_isOtpSent && _canResendOtp)
-                          ? _sendOtp
-                          : null,
+                      onPressed: (_isOtpEnabled && !_isOtpSent) || (_isOtpSent && _canResendOtp) ? _sendOtp : null,
                       style: ElevatedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(
-                            vertical: 20.0, horizontal: 20.0),
+                        padding: const EdgeInsets.symmetric(vertical: 20.0, horizontal: 20.0),
                         backgroundColor: AppColors.primaryBlue,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(8.0),
@@ -622,8 +597,8 @@ class CreateAccountFormState extends State<CreateAccountForm> {
                               height: 20,
                               width: 20,
                               child: CircularProgressIndicator(
-                                valueColor: AlwaysStoppedAnimation<Color>(
-                                    AppColors.white),
+                                strokeWidth: 2.0,
+                                valueColor: AlwaysStoppedAnimation<Color>(AppColors.white),
                               ),
                             )
                           : Text(_isOtpSent
@@ -650,8 +625,7 @@ class CreateAccountFormState extends State<CreateAccountForm> {
                         }
                       : null,
                   style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(
-                        vertical: 20.0, horizontal: 40.0),
+                    padding: const EdgeInsets.symmetric(vertical: 20.0, horizontal: 40.0),
                     backgroundColor: AppColors.primaryBlue,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8.0),
@@ -662,8 +636,7 @@ class CreateAccountFormState extends State<CreateAccountForm> {
                           height: 20,
                           width: 20,
                           child: CircularProgressIndicator(
-                            valueColor:
-                                AlwaysStoppedAnimation<Color>(AppColors.white),
+                            valueColor: AlwaysStoppedAnimation<Color>(AppColors.white),
                           ),
                         )
                       : const Text("Sign Up"),

@@ -135,7 +135,7 @@
 //             //                   buildLabelValueRow('Filter', order.filter ?? ''),
 //             //                   buildLabelValueRow(
 //             //                     'Expected Delivery Date',
-//             //                     order.expectedDeliveryDate != null
+//             //                     order.expectedDeliverydate != null || date == 'Select Date'
 //             //                         ? provider
 //             //                             .formatDate(order.expectedDeliveryDate!)
 //             //                         : '',
@@ -368,7 +368,7 @@
 //             //       text: "Updated on: ",
 //             //       children: [
 //             //         TextSpan(
-//             //             text: DateFormat('dd-MM-yyyy\',\' hh:mm a').format(
+//             //             text: DateFormat('yyyy-MM-dd\',\' hh:mm a').format(
 //             //               DateTime.parse("${order.updatedAt}"),
 //             //             ),
 //             //             style: const TextStyle(
@@ -404,7 +404,7 @@
 //                       text: "Updated on: ",
 //                       children: [
 //                         TextSpan(
-//                             text: DateFormat('dd-MM-yyyy\',\' hh:mm a').format(
+//                             text: DateFormat('yyyy-MM-dd\',\' hh:mm a').format(
 //                               DateTime.parse("${order.updatedAt}"),
 //                             ),
 //                             style: const TextStyle(
@@ -432,7 +432,7 @@
 //         boxShadow: [
 //           BoxShadow(
 //             color: Colors.black
-//                 .withOpacity(0.08), // Lighter shadow for smaller card
+//                 .withValues(alpha: 0.08), // Lighter shadow for smaller card
 //             offset: const Offset(0, 1),
 //             blurRadius: 3,
 //           ),

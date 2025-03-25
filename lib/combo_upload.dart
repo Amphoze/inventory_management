@@ -10,6 +10,8 @@ import 'dart:convert';
 import 'package:inventory_management/Api/inventory_api.dart';
 import 'dart:html' as html;
 
+import 'package:inventory_management/constants/constants.dart';
+
 class ComboUpload extends StatefulWidget {
   const ComboUpload({super.key});
 
@@ -83,10 +85,14 @@ class _ComboUploadState extends State<ComboUpload> {
             .split(',')
             .map((product) => {"product": product})
             .toList();
+        log(products.toString());
         final name = _csvData[i][2].toString();
+        log(name);
         final mrp = num.parse(_csvData[i][3].toString());
+        log(mrp.toString());
         final cost = num.parse(_csvData[i][4].toString());
-        log("https://inventory-management-backend-s37u.onrender.com/combo?sku=$comboSku");
+        log(cost.toString());
+        log("${await Constants.getBaseUrl()}/combo?sku=$comboSku");
         log({
           "comboSku": comboSku,
           "name": name,
@@ -96,8 +102,7 @@ class _ComboUploadState extends State<ComboUpload> {
         }.toString());
 
         final response = await http.post(
-          Uri.parse(
-              'https://inventory-management-backend-s37u.onrender.com/combo'),
+          Uri.parse('${await Constants.getBaseUrl()}/combo'),
           headers: {
             'Content-Type': 'application/json',
             'Authorization': 'Bearer $token',
@@ -154,7 +159,7 @@ class _ComboUploadState extends State<ComboUpload> {
   //       });
   //       final sku = _csvData[i][0].toString();
   //       final quantity = num.parse(_csvData[i][1].toString());
-  //       log("https://inventory-management-backend-s37u.onrender.com/combo?sku=$sku");
+  //       log("${await ApiUrls.getBaseUrl()}/combo?sku=$sku");
   //       log({
   //         "newTotal": quantity,
   //         "warehouseId": "66fceb5163c6d5c106cfa809",
@@ -162,7 +167,7 @@ class _ComboUploadState extends State<ComboUpload> {
   //       }.toString());
   //       final response = await http.put(
   //         Uri.parse(
-  //             'https://inventory-management-backend-s37u.onrender.com/combo?sku=$sku'),
+  //             '${await ApiUrls.getBaseUrl()}/combo?sku=$sku'),
   //         headers: {
   //           'Content-Type': 'application/json',
   //           'Authorization': 'Bearer $token',
@@ -201,6 +206,16 @@ class _ComboUploadState extends State<ComboUpload> {
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
+            const Row(
+              mainAxisAlignment: MainAxisAlignment.start,
+              children: [
+                Text(
+                  'Upload Combo',
+                  style: TextStyle(fontSize: 25, fontWeight: FontWeight.bold),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
             Row(
               children: [
                 Expanded(
@@ -211,7 +226,8 @@ class _ComboUploadState extends State<ComboUpload> {
                 ),
                 const SizedBox(width: 16),
                 ElevatedButton(
-                  onPressed: () => AuthProvider().downloadTemplate(context,'combo'),
+                  onPressed: () =>
+                      AuthProvider().downloadTemplate(context, 'combo'),
                   child: const Text('Download Template'),
                 ),
                 const SizedBox(width: 16),
@@ -260,7 +276,7 @@ class _ComboUploadState extends State<ComboUpload> {
                       children: [
                         DataTable(
                           headingRowColor: WidgetStateProperty.all(
-                              AppColors.primaryBlue.withOpacity(0.1)),
+                              AppColors.primaryBlue.withValues(alpha: 0.1)),
                           headingTextStyle: const TextStyle(
                             fontWeight: FontWeight.bold,
                             color: AppColors.primaryBlue,
@@ -335,7 +351,7 @@ class _ComboUploadState extends State<ComboUpload> {
                     scrollDirection: Axis.horizontal,
                     child: DataTable(
                       headingRowColor: WidgetStateProperty.all(
-                          AppColors.primaryBlue.withOpacity(0.1)),
+                          AppColors.primaryBlue.withValues(alpha: 0.1)),
                       headingTextStyle: const TextStyle(
                         fontWeight: FontWeight.bold,
                         color: AppColors.primaryBlue,

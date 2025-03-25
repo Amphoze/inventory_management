@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
+import 'package:inventory_management/constants/constants.dart';
 import 'package:inventory_management/model/orders_model.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -26,8 +27,7 @@ class CheckerProvider with ChangeNotifier {
   PageController get pageController => _pageController;
   TextEditingController get textEditingController => _textEditingController;
 
-  int get selectedCount =>
-      _selectedProducts.where((isSelected) => isSelected).length;
+  int get selectedCount => _selectedProducts.where((isSelected) => isSelected).length;
 
   bool isRefreshingOrders = false;
 
@@ -38,8 +38,7 @@ class CheckerProvider with ChangeNotifier {
 
   void toggleSelectAll(bool value) {
     _selectAll = value;
-    _selectedProducts =
-        List<bool>.generate(_orders.length, (index) => _selectAll);
+    _selectedProducts = List<bool>.generate(_orders.length, (index) => _selectAll);
     notifyListeners();
   }
 
@@ -55,11 +54,9 @@ class CheckerProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  Future<String> cancelOrders(
-      BuildContext context, List<String> orderIds) async {
-    const String baseUrl =
-        'https://inventory-management-backend-s37u.onrender.com';
-    const String cancelOrderUrl = '$baseUrl/orders/cancel';
+  Future<String> cancelOrders(BuildContext context, List<String> orderIds) async {
+    String baseUrl = await Constants.getBaseUrl();
+    String cancelOrderUrl = '$baseUrl/orders/cancel';
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('authToken') ?? '';
     setCancelStatus(true);
@@ -96,9 +93,9 @@ class CheckerProvider with ChangeNotifier {
         setCancelStatus(false);
         notifyListeners(); // Notify the UI to rebuild
 
-        return responseData['message'] ?? 'Orders confirmed successfully';
+        return responseData['message'] ?? 'Orders cancelled successfully';
       } else {
-        return responseData['message'] ?? 'Failed to confirm orders';
+        return responseData['message'] ?? 'Failed to cancel orders';
       }
     } catch (error) {
       setCancelStatus(false);
@@ -108,7 +105,6 @@ class CheckerProvider with ChangeNotifier {
     }
   }
 
-
   Future<void> fetchOrdersWithStatus6() async {
     _isLoading = true;
     setRefreshingOrders(true);
@@ -116,8 +112,9 @@ class CheckerProvider with ChangeNotifier {
 
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('authToken') ?? '';
-    const url =
-        'https://inventory-management-backend-s37u.onrender.com/orders?orderStatus=6&page=';
+    final warehouseId = prefs.getString('warehouseId') ?? '';
+
+    String url = '${await Constants.getBaseUrl()}/orders?warehouse=$warehouseId&orderStatus=6&page=';
 
     try {
       final response = await http.get(Uri.parse('$url$_currentPage'), headers: {
@@ -127,9 +124,7 @@ class CheckerProvider with ChangeNotifier {
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
-        List<Order> orders = (data['orders'] as List)
-            .map((order) => Order.fromJson(order))
-            .toList();
+        List<Order> orders = (data['orders'] as List).map((order) => Order.fromJson(order)).toList();
 
         _totalPages = data['totalPages']; // Get total pages from response
         _orders = orders; // Set the orders for the current page
@@ -180,9 +175,9 @@ class CheckerProvider with ChangeNotifier {
 
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('authToken') ?? '';
+    final warehouseId = prefs.getString('warehouseId') ?? '';
 
-    final url =
-        'https://inventory-management-backend-s37u.onrender.com/orders?orderStatus=6&order_id=$query';
+    final url = '${await Constants.getBaseUrl()}/orders?warehouse=$warehouseId&orderStatus=6&order_id=$query';
 
     print('Searching failed orders with term: $query');
 

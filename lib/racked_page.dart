@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:inventory_management/Custom-Files/loading_indicator.dart';
-import 'package:inventory_management/Widgets/order_card.dart';
+import 'package:inventory_management/Widgets/order_combo_card.dart';
 import 'package:inventory_management/model/orders_model.dart';
 import 'package:provider/provider.dart';
 import 'package:inventory_management/Custom-Files/colors.dart';
@@ -51,56 +51,49 @@ class _RackedPageState extends State<RackedPage> {
                   mainAxisAlignment: MainAxisAlignment.start,
                   children: [
                     // Search TextField
-                    SizedBox(
+                    Container(
+                      height: 35,
                       width: 200,
-                      child: Container(
-                        height: 40,
-                        decoration: BoxDecoration(
-                          border: Border.all(
-                            color: const Color.fromARGB(183, 6, 90, 216),
-                          ),
-                          borderRadius: BorderRadius.circular(8),
+                      decoration: BoxDecoration(
+                        border: Border.all(
+                          color: const Color.fromARGB(183, 6, 90, 216),
                         ),
-                        child: TextField(
-                          controller: _searchController,
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(color: Colors.black),
-                          decoration: const InputDecoration(
-                            hintText: 'Search by Order ID',
-                            hintStyle: TextStyle(color: Colors.black),
-                            border: InputBorder.none,
-                            contentPadding: EdgeInsets.symmetric(vertical: 8.0),
-                            prefixIcon: Icon(
-                              Icons.search,
-                              color: Color.fromARGB(183, 6, 90, 216),
-                            ),
-                          ),
-                          onChanged: (query) {
-                            // Trigger a rebuild to show/hide the search button
-                            setState(() {
-                              // Update search focus
-                            });
-                            if (query.isEmpty) {
-                              // Reset to all orders if search is cleared
-                              rackedProvider.fetchOrdersWithStatus7();
-                            }
-                          },
-                          onTap: () {
-                            setState(() {
-                              // Mark the search field as focused
-                            });
-                          },
-                          onSubmitted: (query) {
-                            if (query.isNotEmpty) {
-                              rackedProvider.searchOrders(query);
-                            }
-                          },
-                          onEditingComplete: () {
-                            // Mark it as not focused when done
-                            FocusScope.of(context)
-                                .unfocus(); // Dismiss the keyboard
-                          },
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: TextField(
+                        controller: _searchController,
+                        style: const TextStyle(color: Colors.black),
+                        decoration: const InputDecoration(
+                          hintText: 'Search by Order ID',
+                          hintStyle: TextStyle(color: Colors.black),
+                          border: InputBorder.none,
+                          contentPadding: EdgeInsets.symmetric(vertical: 12, horizontal: 8),
                         ),
+                        onChanged: (query) {
+                          // Trigger a rebuild to show/hide the search button
+                          setState(() {
+                            // Update search focus
+                          });
+                          if (query.isEmpty) {
+                            // Reset to all orders if search is cleared
+                            rackedProvider.fetchOrdersWithStatus7();
+                          }
+                        },
+                        onTap: () {
+                          setState(() {
+                            // Mark the search field as focused
+                          });
+                        },
+                        onSubmitted: (query) {
+                          if (query.isNotEmpty) {
+                            rackedProvider.searchOrders(query);
+                          }
+                        },
+                        onEditingComplete: () {
+                          // Mark it as not focused when done
+                          FocusScope.of(context)
+                              .unfocus(); // Dismiss the keyboard
+                        },
                       ),
                     ),
                     const SizedBox(width: 8),
@@ -349,7 +342,11 @@ class _RackedPageState extends State<RackedPage> {
         children: [
           Expanded(
             flex: 9,
-            child: OrderCard(order: order),
+            child: OrderComboCard(
+              order: order,
+              toShowBy: false,
+              toShowOrderDetails: false,
+            ),
           ),
           const SizedBox(width: 4),
           buildCell(
@@ -441,11 +438,18 @@ class _RackedPageState extends State<RackedPage> {
     );
   }
 
+  static String maskPhoneNumber(dynamic phone) {
+    if (phone == null) return '';
+    String phoneStr = phone.toString();
+    if (phoneStr.length < 4) return phoneStr;
+    return '${'*' * (phoneStr.length - 4)}${phoneStr.substring(phoneStr.length - 4)}';
+  }
+
   String _getCustomerPhoneNumber(dynamic phoneNumber) {
     if (phoneNumber == null) return 'Unknown';
 
     // Convert to string if it's an int, otherwise return as is
-    return phoneNumber.toString();
+    return maskPhoneNumber(phoneNumber.toString());
   }
 
   String _getCustomerFullName(Customer? customer) {

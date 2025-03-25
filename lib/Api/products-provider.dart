@@ -11,79 +11,99 @@ import 'package:inventory_management/Api/product-page-api.dart';
 // import 'package:inventory_management/Api/auth_provider.dart';
 // import 'package:inventory_management/Api/product-page-api.dart';
 
-class ProductProvider extends ChangeNotifier {
+class ProductProvider with ChangeNotifier {
   int _countVariationField = 1;
   int _alertBoxFieldCount = 1;
   int _dropFailIndex = 0;
-  bool _isloading=false;
-  bool _activeStatus=false;
-  bool _noData=false;
-  String _grade='';
-  bool _saveButtonClick=false;
-  String _selectedProductCategory='Create Simple Product';
+  bool _isloading = true;
+  bool _activeStatus = false;
+  bool _noData = false;
+  String _grade = '';
+  bool _saveButtonClick = false;
+  String _selectedProductCategory = 'Create Simple Product';
   List<TextEditingController> _colors = [TextEditingController()];
   List<TextEditingController> _sizes = [TextEditingController()];
   List<TextEditingController> _eanUpcs = [TextEditingController()];
   List<TextEditingController> _skus = [TextEditingController()];
-  List<TextEditingController> _alertBoxKeyEditingController = [TextEditingController()];
-  List<TextEditingController> _alertBoxPairEditingController = [TextEditingController()];
+  List<TextEditingController> _alertBoxKeyEditingController = [
+    TextEditingController()
+  ];
+  List<TextEditingController> _alertBoxPairEditingController = [
+    TextEditingController()
+  ];
   //list of values for all custom field
-  List<Map<String, dynamic>> _cat=[{"name":"Select option"}];
-  List<Map<String, dynamic>> _brand=[{"name":"Select option"}];
-  List<Map<String, dynamic>> _label=[{"labelSku":"Select option"}];
-  List<Map<String, dynamic>> _boxSize=[{"box_name":"Select option"}];
-  List<Map<String, dynamic>> _parentSku=[{"name":"Select option"}];
-  List<Map<String, dynamic>> _colorDrop=[{"name":"Select option"}];
-  List<File> _file=[];
+  List<Map<String, dynamic>> _cat = [
+    {"name": "Select option"}
+  ];
+  List<Map<String, dynamic>> _brand = [
+    {"name": "Select option"}
+  ];
+  List<Map<String, dynamic>> _label = [
+    {"labelSku": "Select option"}
+  ];
+  List<Map<String, dynamic>> _boxSize = [
+    {"box_name": "Select option"}
+  ];
+  List<Map<String, dynamic>> _parentSku = [
+    {"name": "Select option"}
+  ];
+  List<Map<String, dynamic>> _colorDrop = [
+    {"name": "Select option"}
+  ];
+  List<File> _file = [];
 
   // Getters
   List<TextEditingController> get color => _colors;
   List<TextEditingController> get size => _sizes;
-  List<TextEditingController> get eanUpc=> _eanUpcs;
+  List<TextEditingController> get eanUpc => _eanUpcs;
   List<TextEditingController> get sku => _skus;
-  List<TextEditingController> get alertBoxKeyEditingController => _alertBoxKeyEditingController;
-  List<TextEditingController> get alertBoxPairEditingController =>_alertBoxPairEditingController;
-  int get dropFailIndex =>_dropFailIndex;
+  List<TextEditingController> get alertBoxKeyEditingController =>
+      _alertBoxKeyEditingController;
+  List<TextEditingController> get alertBoxPairEditingController =>
+      _alertBoxPairEditingController;
+  int get dropFailIndex => _dropFailIndex;
 
-  bool get isloading=>_isloading;
-  bool get activeStatus=>_activeStatus;
-  bool get noData=>_noData;
-  bool get saveButtonClick=>_saveButtonClick;
+  bool get isloading => _isloading;
+  bool get activeStatus => _activeStatus;
+  bool get noData => _noData;
+  bool get saveButtonClick => _saveButtonClick;
 
-  String get selectedProductCategory =>_selectedProductCategory;
+  String get selectedProductCategory => _selectedProductCategory;
   int get countVariationFields => _countVariationField;
   int get alertBoxFieldCount => _alertBoxFieldCount;
   String get gradee => _grade;
 
   //get values for all cutom field
-  List<Map<String, dynamic>> get cat=>_cat;
-  List<Map<String, dynamic>> get boxSize=>_boxSize;
-  List<Map<String, dynamic>> get brand=>_brand;
-  List<Map<String, dynamic>> get label=>_label;
-  List<Map<String, dynamic>> get parentSku=>_parentSku;
-  List<Map<String, dynamic>> get colorDrop=>_colorDrop;
-  List<File> get images=>_file;
+  List<Map<String, dynamic>> get cat => _cat;
+  List<Map<String, dynamic>> get boxSize => _boxSize;
+  List<Map<String, dynamic>> get brand => _brand;
+  List<Map<String, dynamic>> get label => _label;
+  List<Map<String, dynamic>> get parentSku => _parentSku;
+  List<Map<String, dynamic>> get colorDrop => _colorDrop;
+  List<File> get images => _file;
 
-  void update(){
-    _noData=!noData;
+  void update() {
+    _noData = !noData;
     notifyListeners();
-    Future.delayed(const Duration(seconds:15)).whenComplete((){
-      _noData=!_noData;
+    Future.delayed(const Duration(seconds: 15)).whenComplete(() {
+      _noData = !_noData;
     });
     // _noData=!noData;
   }
-   void grade(String val){
+
+  void grade(String val) {
     print("i am updating grade  $val");
-    _grade=val;
+    _grade = val;
     // _noData=!noData;
   }
-   void saveButtonClickStatus(){
-    _saveButtonClick=!_saveButtonClick;
+
+  void saveButtonClickStatus() {
+    _saveButtonClick = !_saveButtonClick;
     notifyListeners();
-   
   }
+
   //
-  void failedIndex(){
+  void failedIndex() {
     notifyListeners();
     // _noData=!noData;
   }
@@ -98,52 +118,65 @@ class ProductProvider extends ChangeNotifier {
     print("heelo is ahere$_countVariationField");
     notifyListeners();
   }
-  
-   
-
-  
 
   void addNewTextEditingControllerInAlertBox() {
     _alertBoxKeyEditingController.add(TextEditingController());
     _alertBoxPairEditingController.add(TextEditingController());
     // _eanUpcs.add(TextEditingController());
     // _skus.add(TextEditingController());
-      _alertBoxFieldCount++;
+    _alertBoxFieldCount++;
     // print("heelo is ahere${_countVariationField}");
     notifyListeners();
   }
 
   //get images
-   Future setImage(List<File>img)async{
-      _file=img;
-      notifyListeners();
+  Future setImage(List<File> img) async {
+    _file = img;
+    notifyListeners();
   }
-    //get all custom dropvalue
-   Future getCategories() async {
-  
+
+  //get all custom dropvalue
+  Future<void> getCategories() async {
+    _isloading = false;
     _cat.addAll((await AuthProvider().getAllCategories())['data']
         .cast<Map<String, dynamic>>());
- 
+    _isloading = true;
+    notifyListeners();
+  }
 
+  Future<void> getBrands() async {
+    _isloading = false;
     _brand.addAll((await ProductPageApi().getAllBrandName())['data']
         .cast<Map<String, dynamic>>());
+    _isloading = true;
+    notifyListeners();
+  }
+
+  Future<void> getBoxSizes() async {
     _boxSize.addAll((await ProductPageApi().getBoxSize())['data']);
+    _isloading = true;
+    notifyListeners();
+  }
+
+  Future<void> getLabels() async {
     _label.addAll((await ProductPageApi().getLabel())['data']);
-   _colorDrop.addAll((await ProductPageApi().getColorDrop())['data']);
-    _isloading=true;
-    notifyListeners();
-    // _isloading=false;
-   
-  }
-  void changeActiveStaus(){
-    _activeStatus=!activeStatus;
+    _isloading = true;
     notifyListeners();
   }
 
+  Future<void> getColorDrop() async {
+    _colorDrop.addAll((await ProductPageApi().getColorDrop())['data']);
+    _isloading = true;
+    notifyListeners();
+  }
 
+  void changeActiveStaus() {
+    _activeStatus = !activeStatus;
+    notifyListeners();
+  }
 
-  void updateSelectedProductCategory(String val){
-    _selectedProductCategory=val;
+  void updateSelectedProductCategory(String val) {
+    _selectedProductCategory = val;
     notifyListeners();
   }
 

@@ -12,10 +12,12 @@ class CustomPaginationFooter extends StatelessWidget {
   final VoidCallback onPreviousPage;
   final Function(int) onGoToPage;
   final VoidCallback onJumpToPage;
+  final bool toShowGoToPageField;
 
   const CustomPaginationFooter({
     super.key,
     required this.currentPage,
+    this.toShowGoToPageField = true,
     required this.totalPages,
     required this.buttonSize,
     required this.pageController,
@@ -32,7 +34,6 @@ class CustomPaginationFooter extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         double arrowButtonSize = 20;
-
         return Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
@@ -43,79 +44,73 @@ class CustomPaginationFooter extends StatelessWidget {
                   icon: const Icon(Icons.first_page),
                   onPressed: currentPage > 1 ? onFirstPage : null,
                   iconSize: arrowButtonSize,
-                  color: currentPage > 1 ? AppColors.primaryGreen : Colors.grey,
+                  color: currentPage > 1 ? AppColors.primaryBlue : Colors.grey,
                 ),
                 IconButton(
                   icon: const Icon(Icons.chevron_left),
                   onPressed: currentPage > 1 ? onPreviousPage : null,
                   iconSize: arrowButtonSize,
-                  color: currentPage > 1 ? AppColors.primaryGreen : Colors.grey,
+                  color: currentPage > 1 ? AppColors.primaryBlue : Colors.grey,
                 ),
-                ..._buildPageButtons(currentPage - 1, totalPages,
-                    buttonSize), // Pass currentPage - 1 for zero-based
+                ..._buildPageButtons(currentPage - 1, totalPages, buttonSize), // Pass currentPage - 1 for zero-based
                 IconButton(
                   icon: const Icon(Icons.chevron_right),
                   onPressed: currentPage < totalPages ? onNextPage : null,
                   iconSize: arrowButtonSize,
-                  color: currentPage < totalPages
-                      ? AppColors.primaryGreen
-                      : Colors.grey,
+                  color: currentPage < totalPages ? AppColors.primaryBlue : Colors.grey,
                 ),
                 IconButton(
                   icon: const Icon(Icons.last_page),
                   onPressed: currentPage < totalPages ? onLastPage : null,
                   iconSize: arrowButtonSize,
-                  color: currentPage < totalPages
-                      ? AppColors.primaryGreen
-                      : Colors.grey,
+                  color: currentPage < totalPages ? AppColors.primaryBlue : Colors.grey,
                 ),
               ],
             ),
             // Go to page section on the right
-            Row(
-              children: [
-                SizedBox(
-                  width: 100,
-                  height: 35,
-                  child: TextField(
-                    controller: pageController,
-                    keyboardType: TextInputType.number,
-                    decoration: InputDecoration(
-                      hintText: 'Go to Page',
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
+            if (toShowGoToPageField)
+              Row(
+                children: [
+                  SizedBox(
+                    width: 100,
+                    height: 35,
+                    child: TextField(
+                      controller: pageController,
+                      keyboardType: TextInputType.number,
+                      decoration: InputDecoration(
+                        hintText: 'Go to Page',
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
                       ),
                     ),
                   ),
-                ),
-                Text(
-                  ' / $totalPages',
-                  style: const TextStyle(fontSize: 16),
-                ),
-                const SizedBox(width: 8),
-                ElevatedButton(
-                  onPressed: onJumpToPage,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primaryGreen,
+                  Text(
+                    ' / $totalPages',
+                    style: const TextStyle(fontSize: 16),
                   ),
-                  child: const Text('Go'),
-                ),
-              ],
-            ),
+                  const SizedBox(width: 8),
+                  ElevatedButton(
+                    onPressed: onJumpToPage,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primaryBlue,
+                    ),
+                    child: const Text('Go'),
+                  ),
+                ],
+              ),
           ],
         );
       },
     );
   }
 
-  List<Widget> _buildPageButtons(
-      int currentPage, int totalPages, double buttonSize) {
+  List<Widget> _buildPageButtons(int currentPage, int totalPages, double buttonSize) {
     List<Widget> buttons = [];
 
     // Calculate the range of pages to display
     int startPage = currentPage - 2 < 0 ? 0 : currentPage - 2;
-    int endPage =
-        currentPage + 2 >= totalPages ? totalPages - 1 : currentPage + 2;
+    int endPage = currentPage + 2 >= totalPages ? totalPages - 1 : currentPage + 2;
 
     // Adjust startPage to ensure 5 buttons are shown
     if (endPage - startPage < 4) {
@@ -133,8 +128,7 @@ class CustomPaginationFooter extends StatelessWidget {
             style: ElevatedButton.styleFrom(
               minimumSize: Size(buttonSize * 1.9, buttonSize),
               padding: const EdgeInsets.symmetric(vertical: 4),
-              backgroundColor:
-                  isCurrentPage ? AppColors.primaryGreen : Colors.grey[200],
+              backgroundColor: isCurrentPage ? AppColors.primaryBlue : Colors.grey[200],
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(30),
               ),

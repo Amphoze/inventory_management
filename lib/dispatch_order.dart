@@ -1,13 +1,13 @@
 import 'dart:developer';
 
 import 'package:flutter/material.dart';
+import 'package:inventory_management/Widgets/small_combo_card.dart';
 import 'package:inventory_management/provider/dispatched_provider.dart';
 import 'package:provider/provider.dart';
 
 import 'Custom-Files/colors.dart';
 import 'Custom-Files/custom_pagination.dart';
 import 'Custom-Files/loading_indicator.dart';
-import 'Widgets/order_card.dart';
 import 'model/orders_model.dart';
 
 class DispatchedOrders extends StatefulWidget {
@@ -50,56 +50,49 @@ class _DispatchedOrdersState extends State<DispatchedOrders> {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
-                    SizedBox(
+                    Container(
+                      height: 35,
                       width: 200,
-                      child: Container(
-                        height: 40,
-                        decoration: BoxDecoration(
-                          border: Border.all(
-                            color: const Color.fromARGB(183, 6, 90, 216),
-                          ),
-                          borderRadius: BorderRadius.circular(8),
+                      decoration: BoxDecoration(
+                        border: Border.all(
+                          color: const Color.fromARGB(183, 6, 90, 216),
                         ),
-                        child: TextField(
-                          controller: _searchController,
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(color: Colors.black),
-                          decoration: const InputDecoration(
-                            hintText: 'Search by Order ID',
-                            hintStyle: TextStyle(color: Colors.black),
-                            border: InputBorder.none,
-                            contentPadding: EdgeInsets.symmetric(vertical: 8.0),
-                            prefixIcon: Icon(
-                              Icons.search,
-                              color: Color.fromARGB(183, 6, 90, 216),
-                            ),
-                          ),
-                          onChanged: (query) {
-                            // Trigger a rebuild to show/hide the search button
-                            setState(() {
-                              // Update search focus
-                            });
-                            if (query.isEmpty) {
-                              // Reset to all orders if search is cleared
-                              dispatchProvider.fetchOrdersWithStatus9();
-                            }
-                          },
-                          onTap: () {
-                            setState(() {
-                              // Mark the search field as focused
-                            });
-                          },
-                          onSubmitted: (query) {
-                            if (query.isNotEmpty) {
-                              dispatchProvider.searchOrders(query);
-                            }
-                          },
-                          onEditingComplete: () {
-                            // Mark it as not focused when done
-                            FocusScope.of(context)
-                                .unfocus(); // Dismiss the keyboard
-                          },
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: TextField(
+                        controller: _searchController,
+                        style: const TextStyle(color: Colors.black),
+                        decoration: const InputDecoration(
+                          hintText: 'Search by Order ID',
+                          hintStyle: TextStyle(color: Colors.black),
+                          border: InputBorder.none,
+                          contentPadding: EdgeInsets.symmetric(vertical: 12, horizontal: 8),
                         ),
+                        onChanged: (query) {
+                          // Trigger a rebuild to show/hide the search button
+                          setState(() {
+                            // Update search focus
+                          });
+                          if (query.isEmpty) {
+                            // Reset to all orders if search is cleared
+                            dispatchProvider.fetchOrdersWithStatus9();
+                          }
+                        },
+                        onTap: () {
+                          setState(() {
+                            // Mark the search field as focused
+                          });
+                        },
+                        onSubmitted: (query) {
+                          if (query.isNotEmpty) {
+                            dispatchProvider.searchOrders(query);
+                          }
+                        },
+                        onEditingComplete: () {
+                          // Mark it as not focused when done
+                          FocusScope.of(context)
+                              .unfocus(); // Dismiss the keyboard
+                        },
                       ),
                     ),
                     const SizedBox(width: 8),
@@ -312,8 +305,8 @@ class _DispatchedOrdersState extends State<DispatchedOrders> {
 
   Widget _buildOrderCard(
       Order order, int index, DispatchedProvider dispatchProvider) {
-    String? selectedStatus;
-    bool isSaved = order.trackingStatus != '';
+    // String? selectedStatus;
+    // bool isSaved = order.trackingStatus != '';
 
     return Padding(
       padding: const EdgeInsets.symmetric(
@@ -336,8 +329,8 @@ class _DispatchedOrdersState extends State<DispatchedOrders> {
                   MainAxisAlignment.spaceBetween, // Space between elements
               children: [
                 Expanded(
-                  child:
-                      OrderCard(order: order), // Your existing OrderCard widget
+                  child: SmallComboCard(
+                      order: order), // Your existing OrderCard widget
                 ),
                 const SizedBox(width: 50),
                 SizedBox(
@@ -346,70 +339,73 @@ class _DispatchedOrdersState extends State<DispatchedOrders> {
                       builder: (BuildContext context, StateSetter setState) {
                     return Column(
                       children: [
-                        PopupMenuButton<String>(
-                          tooltip: 'Select tracking status',
-                          onSelected: (String newStatus) {
-                            setState(() {
-                              selectedStatus = newStatus;
-                              order.trackingStatus = newStatus;
-                            });
-                          },
-                          itemBuilder: (BuildContext context) {
-                            return <String>[
-                              "Delivered",
-                              "RTO",
-                              "Disposed Off",
-                              "Rack Up",
-                              "Lost",
-                              "In Transit",
-                              "Damaged",
-                              "Out For Delivery",
-                              "Not Confirmed",
-                              "Cancelled",
-                              "Confirmed",
-                              "Shipped",
-                              "Destroyed",
-                              "Discarded Entry",
-                              "Attempted",
-                              "Hold"
-                            ].map<PopupMenuItem<String>>((String value) {
-                              return PopupMenuItem<String>(
-                                value: value,
-                                child: Text(value),
-                              );
-                            }).toList();
-                          },
-                          child: isSaved == true
-                              ? Text(
-                                  order.trackingStatus!,
-                                )
-                              : Text(
-                                  selectedStatus == null
-                                      ? "Select tracking status"
-                                      : selectedStatus!,
-                                  style: TextStyle(
-                                      color: selectedStatus == null
-                                          ? AppColors.primaryBlue
-                                          : Colors.black),
-                                ),
+                        // PopupMenuButton<String>(
+                        //   tooltip: 'Select tracking status',
+                        //   onSelected: (String newStatus) {
+                        //     setState(() {
+                        //       selectedStatus = newStatus;
+                        //       order.trackingStatus = newStatus;
+                        //     });
+                        //   },
+                        //   itemBuilder: (BuildContext context) {
+                        //     return <String>[
+                        //       "Delivered",
+                        //       "RTO",
+                        //       "Disposed Off",
+                        //       "Rack Up",
+                        //       "Lost",
+                        //       "In Transit",
+                        //       "Damaged",
+                        //       "Out For Delivery",
+                        //       "Not Confirmed",
+                        //       "Cancelled",
+                        //       "Confirmed",
+                        //       "Shipped",
+                        //       "Destroyed",
+                        //       "Discarded Entry",
+                        //       "Attempted",
+                        //       "Hold"
+                        //     ].map<PopupMenuItem<String>>((String value) {
+                        //       return PopupMenuItem<String>(
+                        //         value: value,
+                        //         child: Text(value),
+                        //       );
+                        //     }).toList();
+                        //   },
+                        //   child: isSaved == true
+                        //       ? Text(
+                        //           order.trackingStatus!,
+                        //         )
+                        //       : Text(
+                        //           selectedStatus == null
+                        //               ? "Select tracking status"
+                        //               : selectedStatus!,
+                        //           style: TextStyle(
+                        //               color: selectedStatus == null
+                        //                   ? AppColors.primaryBlue
+                        //                   : Colors.black),
+                        //         ),
+                        // ),
+                        Text(
+                          order.trackingStatus?.toUpperCase() ?? '',
                         ),
-                        const SizedBox(
-                          height: 8,
-                        ),
-                        if (selectedStatus != null)
-                          ElevatedButton(
-                            onPressed: () {
-                              isSaved = true;
-                              if (selectedStatus != null) {
-                                dispatchProvider.updateOrderTrackingStatus(
-                                    context, order.id, selectedStatus!);
-                              }
-                              log("id: ${order.id}");
-                              log("tracking: ${order.trackingStatus}");
-                              log('Saving status: $selectedStatus');
-                            },
-                            child: const Text('Save'),
-                          ),
+                        // const SizedBox(
+                        //   height: 8,
+                        // ),
+                        // if (selectedStatus != null)
+                        //   ElevatedButton(
+                        //     onPressed: () {
+                        //       isSaved = true;
+                        //       if (selectedStatus != null) {
+                        //         dispatchProvider.updateOrderTrackingStatus(
+                        //             context, order.id, selectedStatus!);
+                        //       }
+                        //       log("id: ${order.id}");
+                        //       log("tracking: ${order.trackingStatus}");
+                        //       log('Saving status: $selectedStatus');
+                        //     },
+                        //     child: const Text('Save'),
+                        //   ),
                       ],
                     );
                   }),

@@ -1,5 +1,8 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:inventory_management/Custom-Files/colors.dart';
+import 'package:inventory_management/reset_password.dart';
 import 'Api/auth_provider.dart';
 
 class ForgotPasswordPage extends StatefulWidget {
@@ -18,6 +21,10 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
   bool _isSendingOtp = false;
   bool _isEmailValid = false;
   bool _isEmailEmpty = true;
+  bool _canResendOtp = false;
+  int _remainingSeconds = 60;
+  Timer? _timer;
+  bool _isLoading = false;
 
   final AuthProvider _authProvider = AuthProvider();
 
@@ -39,6 +46,53 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
       _isEmailEmpty = email.isEmpty;
       _isEmailValid = RegExp(r'\S+@\S+\.\S+').hasMatch(email);
     });
+  }
+
+  void _startResendTimer() {
+    _timer?.cancel();
+    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      setState(() {
+        if (_remainingSeconds > 0) {
+          _remainingSeconds--;
+        } else {
+          _canResendOtp = true;
+          timer.cancel();
+        }
+      });
+    });
+  }
+
+  Future<void> _verifyOtp() async {
+    if (_otpController.text.isEmpty) {
+      _showSnackbar('Please enter the OTP', isSuccess: false);
+      return;
+    }
+
+    setState(() {
+      _isLoading = true;
+    });
+
+    final result = await _authProvider.verifyOtp(_emailController.text, _otpController.text);
+
+    setState(() {
+      _isLoading = false;
+    });
+
+    if (result['success']) {
+      setState(() {
+        _isOtpVerified = true;
+      });
+      _showSnackbar('OTP verified successfully!');
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => ResetPasswordPage(
+              email: _emailController.text.trim()),
+        ),
+      );
+    } else {
+      _showSnackbar('Incorrect OTP. Please try again.', isSuccess: false);
+    }
   }
 
   @override
@@ -176,84 +230,71 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                                       ),
                                       const SizedBox(width: 10),
                                       ElevatedButton(
-                                        onPressed: !_isEmailValid ||
-                                                _isEmailEmpty
+                                        onPressed: (!_isEmailValid ||
+                                                    _isEmailEmpty) ||
+                                                (_isOtpSent && !_canResendOtp)
                                             ? null
-                                            : _emailController
-                                                        .text.isNotEmpty &&
-                                                    !_isOtpSent
-                                                ? () async {
-                                                    setState(() {
-                                                      _isSendingOtp = true;
-                                                    });
+                                            : () async {
+                                                setState(() {
+                                                  _isSendingOtp = true;
+                                                  _canResendOtp = false;
+                                                  _remainingSeconds = 60;
+                                                });
 
-                                                    final result =
-                                                        await _authProvider
-                                                            .forgotPassword(
-                                                                _emailController
-                                                                    .text);
+                                                final result =
+                                                    await _authProvider
+                                                        .forgotPassword(
+                                                            _emailController
+                                                                .text);
 
-                                                    _showSnackbar(
-                                                        result['message'],
-                                                        isSuccess:
-                                                            result['success']);
+                                                _showSnackbar(result['message'],
+                                                    isSuccess:
+                                                        result['success']);
 
-                                                    if (result['success']) {
-                                                      setState(() {
-                                                        _isOtpSent = true;
-                                                        _isSendingOtp = false;
-                                                      });
-                                                    } else {
-                                                      setState(() {
-                                                        _isSendingOtp = false;
-                                                      });
-                                                    }
-                                                  }
-                                                : _isOtpSent && !_isOtpVerified
-                                                    ? () async {
-                                                        final result =
-                                                            await _authProvider
-                                                                .verifyOtp(
-                                                          _emailController.text,
-                                                          _otpController.text,
-                                                        );
-
-                                                        _showSnackbar(
-                                                            result['message'],
-                                                            isSuccess: result[
-                                                                'success']);
-
-                                                        if (result['success']) {
-                                                          setState(() {
-                                                            _isOtpVerified =
-                                                                true;
-                                                          });
-                                                        }
-                                                      }
-                                                    : null,
+                                                if (result['success']) {
+                                                  setState(() {
+                                                    _isOtpSent = true;
+                                                  });
+                                                  _startResendTimer();
+                                                }
+                                                setState(() {
+                                                  _isSendingOtp = false;
+                                                });
+                                              },
                                         style: ElevatedButton.styleFrom(
                                           foregroundColor:
                                               AppColors.primaryBlue,
                                           backgroundColor: AppColors.white,
                                         ),
-                                        child: Text(_isSendingOtp
-                                            ? 'Sending...'
-                                            : _isOtpSent
-                                                ? 'Verify'
-                                                : 'Send OTP'),
+                                        child: _isSendingOtp
+                                            ? const SizedBox(
+                                                height: 20,
+                                                width: 20,
+                                                child:
+                                                    CircularProgressIndicator(
+                                                  strokeWidth: 2.0,
+                                                  valueColor:
+                                                      AlwaysStoppedAnimation<
+                                                              Color>(
+                                                          AppColors
+                                                              .primaryBlue),
+                                                ),
+                                              )
+                                            : Text(_isOtpSent
+                                                ? _canResendOtp
+                                                    ? "Resend OTP"
+                                                    : "Resend in ${_remainingSeconds}s"
+                                                : "Send OTP"),
                                       ),
                                     ],
                                   ),
                                 ),
                                 const SizedBox(height: 20),
                                 ElevatedButton(
-                                  onPressed: _isOtpVerified
-                                      ? () {
-                                          if (_formKey.currentState
-                                                  ?.validate() ??
-                                              false) {
-                                            Navigator.pushNamed(
-                                                context, '/reset_password');
+                                  onPressed: _isOtpSent && !_isOtpVerified && !_isLoading
+                                      ? () async {
+                                          if (_formKey.currentState?.validate() ?? false) {
+                                            await _verifyOtp();
                                           }
                                         }
                                       : null,
@@ -261,7 +302,15 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                                     foregroundColor: AppColors.primaryBlue,
                                     backgroundColor: AppColors.white,
                                   ),
-                                  child: const Text('Reset Password'),
+                                  child: _isLoading
+                                      ? const SizedBox(
+                                          height: 20,
+                                          width: 20,
+                                          child: CircularProgressIndicator(
+                                            valueColor: AlwaysStoppedAnimation<Color>(AppColors.primaryBlue),
+                                          ),
+                                        )
+                                      : const Text('Reset Password'),
                                 ),
                               ],
                             ),
@@ -389,94 +438,73 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                                             ),
                                             const SizedBox(width: 10),
                                             ElevatedButton(
-                                              onPressed: !_isEmailValid ||
-                                                      _isEmailEmpty
+                                              onPressed: (!_isEmailValid ||
+                                                          _isEmailEmpty) ||
+                                                      (_isOtpSent &&
+                                                          !_canResendOtp)
                                                   ? null
-                                                  : _emailController.text
-                                                              .isNotEmpty &&
-                                                          !_isOtpSent
-                                                      ? () async {
-                                                          setState(() {
-                                                            _isSendingOtp =
-                                                                true;
-                                                          });
+                                                  : () async {
+                                                      setState(() {
+                                                        _isSendingOtp = true;
+                                                        _canResendOtp = false;
+                                                        _remainingSeconds = 60;
+                                                      });
 
-                                                          final result =
-                                                              await _authProvider
-                                                                  .forgotPassword(
-                                                                      _emailController
-                                                                          .text);
+                                                      final result =
+                                                          await _authProvider
+                                                              .forgotPassword(
+                                                                  _emailController
+                                                                      .text);
 
-                                                          _showSnackbar(
-                                                              result['message'],
-                                                              isSuccess: result[
-                                                                  'success']);
+                                                      _showSnackbar(
+                                                          result['message'],
+                                                          isSuccess: result[
+                                                              'success']);
 
-                                                          if (result[
-                                                              'success']) {
-                                                            setState(() {
-                                                              _isOtpSent = true;
-                                                              _isSendingOtp =
-                                                                  false;
-                                                            });
-                                                          } else {
-                                                            setState(() {
-                                                              _isSendingOtp =
-                                                                  false;
-                                                            });
-                                                          }
-                                                        }
-                                                      : _isOtpSent &&
-                                                              !_isOtpVerified
-                                                          ? () async {
-                                                              final result =
-                                                                  await _authProvider
-                                                                      .verifyOtp(
-                                                                _emailController
-                                                                    .text,
-                                                                _otpController
-                                                                    .text,
-                                                              );
-
-                                                              _showSnackbar(
-                                                                  result[
-                                                                      'message'],
-                                                                  isSuccess: result[
-                                                                      'success']);
-
-                                                              if (result[
-                                                                  'success']) {
-                                                                setState(() {
-                                                                  _isOtpVerified =
-                                                                      true;
-                                                                });
-                                                              }
-                                                            }
-                                                          : null,
+                                                      if (result['success']) {
+                                                        setState(() {
+                                                          _isOtpSent = true;
+                                                        });
+                                                        _startResendTimer();
+                                                      }
+                                                      setState(() {
+                                                        _isSendingOtp = false;
+                                                      });
+                                                    },
                                               style: ElevatedButton.styleFrom(
                                                 foregroundColor:
                                                     AppColors.primaryBlue,
                                                 backgroundColor:
                                                     AppColors.white,
                                               ),
-                                              child: Text(_isSendingOtp
-                                                  ? 'Sending...'
-                                                  : _isOtpSent
-                                                      ? 'Verify'
-                                                      : 'Send OTP'),
+                                              child: _isSendingOtp
+                                                  ? const SizedBox(
+                                                      height: 20,
+                                                      width: 20,
+                                                      child:
+                                                          CircularProgressIndicator(
+                                                        valueColor:
+                                                            AlwaysStoppedAnimation<
+                                                                    Color>(
+                                                                AppColors
+                                                                    .primaryBlue),
+                                                      ),
+                                                    )
+                                                  : Text(_isOtpSent
+                                                      ? _canResendOtp
+                                                          ? "Resend OTP"
+                                                          : "Resend in ${_remainingSeconds}s"
+                                                      : "Send OTP"),
                                             ),
                                           ],
                                         ),
                                       ),
                                       const SizedBox(height: 20),
                                       ElevatedButton(
-                                        onPressed: _isOtpVerified
-                                            ? () {
-                                                if (_formKey.currentState
-                                                        ?.validate() ??
-                                                    false) {
-                                                  Navigator.pushNamed(context,
-                                                      '/reset_password');
+                                        onPressed: _isOtpSent && !_isOtpVerified && !_isLoading
+                                            ? () async {
+                                                if (_formKey.currentState?.validate() ?? false) {
+                                                  await _verifyOtp();
                                                 }
                                               }
                                             : null,
@@ -485,7 +513,15 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                                               AppColors.primaryBlue,
                                           backgroundColor: AppColors.white,
                                         ),
-                                        child: const Text('Reset Password'),
+                                        child: _isLoading
+                                            ? const SizedBox(
+                                                height: 20,
+                                                width: 20,
+                                                child: CircularProgressIndicator(
+                                                  valueColor: AlwaysStoppedAnimation<Color>(AppColors.primaryBlue),
+                                                ),
+                                              )
+                                            : const Text('Reset Password'),
                                       ),
                                     ],
                                   ),
@@ -516,6 +552,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
   void dispose() {
     _emailController.dispose();
     _otpController.dispose();
+    _timer?.cancel();
     super.dispose();
   }
 }

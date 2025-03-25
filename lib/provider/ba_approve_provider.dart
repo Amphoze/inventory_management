@@ -1,12 +1,15 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:developer';
-import 'package:http/http.dart' as http;
+
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'package:intl/intl.dart';
+import 'package:inventory_management/constants/constants.dart';
 import 'package:inventory_management/model/orders_model.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-class BAApproveProvider with ChangeNotifier {
+class BaApproveProvider with ChangeNotifier {
   bool _isLoading = false;
   bool _selectAll = false;
   List<bool> _selectedProducts = [];
@@ -17,23 +20,28 @@ class BAApproveProvider with ChangeNotifier {
   final PageController _pageController = PageController();
   final TextEditingController _textEditingController = TextEditingController();
   Timer? _debounce;
+  final TextEditingController searchController = TextEditingController();
 
   bool get selectAll => _selectAll;
   List<bool> get selectedProducts => _selectedProducts;
   List<Order> get orders => _orders;
   bool get isLoading => _isLoading;
-
   int get currentPage => _currentPage;
   int get totalPages => _totalPages;
   PageController get pageController => _pageController;
   TextEditingController get textEditingController => _textEditingController;
-
-  int get selectedCount =>
-      _selectedProducts.where((isSelected) => isSelected).length;
+  int get selectedCount => _selectedProducts.where((isSelected) => isSelected).length;
 
   bool isUpdatingOrder = false;
   bool isRefreshingOrders = false;
   bool isCancel = false;
+
+  void resetOrderData() {
+    _orders = [];
+    _currentPage = 1;
+    _totalPages = 1;
+    notifyListeners();
+  }
 
   void setCancelStatus(bool status) {
     isCancel = status;
@@ -66,8 +74,7 @@ class BAApproveProvider with ChangeNotifier {
 
   void toggleSelectAll(bool value) {
     _selectAll = value;
-    _selectedProducts =
-        List<bool>.generate(_orders.length, (index) => _selectAll);
+    _selectedProducts = List<bool>.generate(_orders.length, (index) => _selectAll);
     notifyListeners();
   }
 
@@ -98,11 +105,14 @@ class BAApproveProvider with ChangeNotifier {
     return '$day-$month-$year $hour:$minute:$second';
   }
 
-  Future<String> cancelOrders(
-      BuildContext context, List<String> orderIds) async {
-    const String baseUrl =
-        'https://inventory-management-backend-s37u.onrender.com';
-    const String cancelOrderUrl = '$baseUrl/orders/cancel';
+  Future<String> _getToken() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString('authToken') ?? '';
+  }
+
+  Future<String> cancelOrders(BuildContext context, List<String> orderIds) async {
+    String baseUrl = await Constants.getBaseUrl();
+    String cancelOrderUrl = '$baseUrl/orders/cancel';
     // final String? token = await _getToken();
 
     final prefs = await SharedPreferences.getInstance();
@@ -141,9 +151,9 @@ class BAApproveProvider with ChangeNotifier {
         setCancelStatus(false);
         notifyListeners(); // Notify the UI to rebuild
 
-        return responseData['message'] ?? 'Orders confirmed successfully';
+        return responseData['message'] ?? 'Orders cancelled successfully';
       } else {
-        return responseData['message'] ?? 'Failed to confirm orders';
+        return responseData['message'] ?? 'Failed to cancel orders';
       }
     } catch (error) {
       setCancelStatus(false);
@@ -153,27 +163,40 @@ class BAApproveProvider with ChangeNotifier {
     }
   }
 
-  Future<void> fetchOrdersWithStatus2() async {
+  Future<void> fetchOrdersWithStatus2({DateTime? date, String? market}) async {
+    // if(searchController.text.trim().isNotEmpty) {
+    //   searchOrders(searchController.text.trim());
+    //   return;
+    // }
     _isLoading = true;
     setRefreshingOrders(true);
     notifyListeners();
 
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('authToken') ?? '';
-    const url =
-        'https://inventory-management-backend-s37u.onrender.com/orders?orderStatus=2&ba_approve=false&page=';
+    final warehouseId = prefs.getString('warehouseId') ?? '';
+
+    var url = '${await Constants.getBaseUrl()}/orders?warehouse=$warehouseId&orderStatus=2&ba_approve=false&page=$_currentPage';
+
+    if (date != null) {
+      String formattedDate = DateFormat('yyyy-MM-dd').format(date);
+      url += '&date=$formattedDate';
+    }
+    if (market != 'All' && market != null) {
+      url += '&marketplace=$market';
+    }
 
     try {
-      final response = await http.get(Uri.parse('$url$_currentPage'), headers: {
+      final response = await http.get(Uri.parse(url), headers: {
         'Authorization': 'Bearer $token',
         'Content-Type': 'application/json',
       });
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
-        List<Order> orders = (data['orders'] as List)
-            .map((order) => Order.fromJson(order))
-            .toList();
+        List<Order> orders = (data['orders'] as List).map((order) => Order.fromJson(order)).toList();
+
+        log('orders: $orders');
 
         _totalPages = data['totalPages']; // Get total pages from response
         _orders = orders; // Set the orders for the current page
@@ -184,14 +207,11 @@ class BAApproveProvider with ChangeNotifier {
         // Print the total number of orders fetched from the current page
         print('Total Orders Fetched from Page $_currentPage: ${orders.length}');
       } else {
-        // Handle non-success responses
-        _orders = [];
-        _totalPages = 1; // Reset total pages if there’s an error
+        resetOrderData();
       }
     } catch (e) {
-      // Handle errors
-      _orders = [];
-      _totalPages = 1; // Reset total pages if there’s an error
+      log('Error fetching orders: $e');
+      resetOrderData();
     } finally {
       _isLoading = false;
       setRefreshingOrders(false);
@@ -212,19 +232,21 @@ class BAApproveProvider with ChangeNotifier {
   }
 
   Future<List<Order>> searchOrders(String query) async {
-    if (query.isEmpty) {
-      await fetchOrdersWithStatus2();
-      return _orders;
-    }
+    // if (query.isEmpty) {
+    //   await fetchOrdersWithStatus2();
+    //   return _orders;
+    // }
 
     _isLoading = true;
     notifyListeners();
 
     final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString('authToken') ?? ''; // Fetch the token
+    final token = prefs.getString('authToken') ?? '';
+    final warehouseId = prefs.getString('warehouseId') ?? '';
 
-    final url =
-        'https://inventory-management-backend-s37u.onrender.com/orders?orderStatus=2&ba_approve=false&order_id=$query';
+    String encodedOrderId = Uri.encodeComponent(query.trim());
+
+    final url = '${await Constants.getBaseUrl()}/orders?warehouse=$warehouseId&orderStatus=2&ba_approve=false&order_id=$encodedOrderId';
 
     print('Searching orders with term: $query');
 
@@ -242,24 +264,24 @@ class BAApproveProvider with ChangeNotifier {
       if (response.statusCode == 200) {
         final jsonData = json.decode(response.body);
 
-        List<Order> orders = [];
-        // print('Response data: $jsonData');
-        if (jsonData != null) {
-          orders.add(Order.fromJson(jsonData));
-          print('Response data: $jsonData');
-        } else {
-          print('No data found in response.');
-        }
+        // List<Order> orders = [];
+        // // print('Response data: $jsonData');
+        // if (jsonData != null) {
+        //   orders.add(Order.fromJson(jsonData));
+        //   print('Response data: $jsonData');
+        // } else {
+        //   print('No data found in response.');
+        // }
 
-        _orders = orders;
+        _orders = (jsonData['orders'] as List).map((order) => Order.fromJson(order)).toList();
         print('Orders fetched: ${orders.length}');
       } else {
         print('Failed to load orders: ${response.statusCode}');
-        _orders = [];
+        resetOrderData();
       }
     } catch (error) {
       print('Error searching failed orders: $error');
-      _orders = [];
+      resetOrderData();
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -272,24 +294,19 @@ class BAApproveProvider with ChangeNotifier {
   Future<void> statusUpdate(BuildContext context) async {
     setUpdatingOrder(true);
     notifyListeners();
-    final selectedOrderIds = _orders
-        .asMap()
-        .entries
-        .where((entry) => _selectedProducts[entry.key])
-        .map((entry) => entry.value.orderId)
-        .toList();
+    final selectedOrderIds = _orders.asMap().entries.where((entry) => _selectedProducts[entry.key]).map((entry) => entry.value.orderId).toList();
 
     if (selectedOrderIds.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('No orders selected to update')),
       );
+      setUpdatingOrder(false);
       return;
     }
 
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('authToken') ?? '';
-    const url =
-        'https://inventory-management-backend-s37u.onrender.com/orders/ba_approve';
+    String url = '${await Constants.getBaseUrl()}/orders/ba_approve';
 
     try {
       final response = await http.post(
@@ -298,7 +315,9 @@ class BAApproveProvider with ChangeNotifier {
           'Authorization': 'Bearer $token',
           'Content-Type': 'application/json',
         },
-        body: jsonEncode({'orderIds': selectedOrderIds}),
+        body: jsonEncode({
+          'orderIds': selectedOrderIds
+        }),
       );
 
       if (response.statusCode == 200) {
@@ -318,20 +337,24 @@ class BAApproveProvider with ChangeNotifier {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Error while updating orders')),
       );
+    } finally {
+      setUpdatingOrder(false);
+      notifyListeners();
     }
-    setUpdatingOrder(false);
-    notifyListeners();
   }
 
-  Future<void> fetchOrdersByMarketplace(
-      String marketplace, int orderStatus, int page) async {
-    const String baseUrl =
-        'https://inventory-management-backend-s37u.onrender.com/orders';
-    String url =
-        '$baseUrl?orderStatus=$orderStatus&marketplace=$marketplace&page=$page';
-
+  Future<void> fetchOrdersByMarketplace(String marketplace, int orderStatus, int page, {DateTime? date}) async {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('authToken') ?? '';
+    final warehouseId = prefs.getString('warehouseId') ?? '';
+
+    String baseUrl = '${await Constants.getBaseUrl()}/orders';
+    String url = '$baseUrl?warehouse=$warehouseId&orderStatus=$orderStatus&ba_approve=false&marketplace=$marketplace&page=$page';
+
+    if (date != null) {
+      String formattedDate = DateFormat('yyyy-MM-dd').format(date);
+      url += '&date=$formattedDate';
+    }
 
     try {
       _isLoading = true;
@@ -354,27 +377,20 @@ class BAApproveProvider with ChangeNotifier {
 
       if (response.statusCode == 200) {
         final jsonResponse = jsonDecode(response.body);
-        List<Order> orders = (jsonResponse['orders'] as List)
-            .map((orderJson) => Order.fromJson(orderJson))
-            .toList();
+        List<Order> orders = (jsonResponse['orders'] as List).map((orderJson) => Order.fromJson(orderJson)).toList();
 
         log("orders: $orders");
 
         _orders = orders;
         _currentPage = page; // Track current page for B2B
-        _totalPages =
-            jsonResponse['totalPages']; // Assuming API returns total pages
-      } else if (response.statusCode == 401) {
-        print('Unauthorized access - Token might be expired or invalid.');
-      } else if (response.statusCode == 404) {
-        _orders = [];
-        notifyListeners();
-        print('Orders not found - Check the filter type.');
+        _totalPages = jsonResponse['totalPages']; // Assuming API returns total pages
       } else {
+        resetOrderData();
         throw Exception('Failed to load orders: ${response.statusCode}');
       }
     } catch (e) {
       print('Error fetching orders: $e');
+      resetOrderData();
     } finally {
       _isLoading = false;
       notifyListeners();

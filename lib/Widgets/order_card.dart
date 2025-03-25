@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:inventory_management/Custom-Files/colors.dart'; // Adjust the import based on your project structure
-import 'package:inventory_management/edit_order_page.dart';
+import 'package:inventory_management/edit_outbound_page.dart';
 import 'package:inventory_management/model/orders_model.dart';
 import 'package:provider/provider.dart';
 
@@ -17,6 +17,13 @@ class OrderCard extends StatelessWidget {
       required this.order,
       this.isBookPage = false,
       this.checkboxWidget});
+
+  String maskPhoneNumber(dynamic phone) {
+    if (phone == null) return '';
+    String phoneStr = phone.toString();
+    if (phoneStr.length < 4) return phoneStr;
+    return '${'*' * (phoneStr.length - 4)}${phoneStr.substring(phoneStr.length - 4)}';
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -58,7 +65,7 @@ class OrderCard extends StatelessWidget {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => EditOrderPage(
+                          builder: (context) => EditOutboundPage(
                             order: order,
                             isBookPage: true,
                           ),
@@ -126,6 +133,8 @@ class OrderCard extends StatelessWidget {
                                   order.discountAmount.toString() ?? ''),
                               buildLabelValueRow('Discount Scheme',
                                   order.discountScheme ?? ''),
+                              buildLabelValueRow('Discount Percent',
+                                  order.discountPercent.toString() ?? ''),
                               buildLabelValueRow('Agent', order.agent ?? ''),
                               buildLabelValueRow('Notes', order.notes ?? ''),
                               buildLabelValueRow(
@@ -183,6 +192,8 @@ class OrderCard extends StatelessWidget {
                                   '${order.taxPercent.toString() ?? ''}%'),
                               buildLabelValueRow(
                                   'Courier Name', order.courierName ?? ''),
+                              buildLabelValueRow('Customer Type',
+                                  order.customer!.customerType ?? ''),
                               buildLabelValueRow(
                                   'Order Type', order.orderType ?? ''),
                               buildLabelValueRow(
@@ -254,7 +265,9 @@ class OrderCard extends StatelessWidget {
                               ),
                               buildLabelValueRow(
                                 'Phone',
-                                order.customer?.phone?.toString() ?? '',
+                                maskPhoneNumber(
+                                        order.customer?.phone?.toString()) ??
+                                    '',
                               ),
                               buildLabelValueRow(
                                 'GSTIN',
@@ -300,7 +313,8 @@ class OrderCard extends StatelessWidget {
                               ),
                               buildLabelValueRow(
                                   'Phone',
-                                  order.shippingAddress?.phone?.toString() ??
+                                  maskPhoneNumber(order.shippingAddress?.phone
+                                          ?.toString()) ??
                                       ''),
                               buildLabelValueRow(
                                   'Email', order.shippingAddress?.email ?? ''),
@@ -346,7 +360,8 @@ class OrderCard extends StatelessWidget {
                               ),
                               buildLabelValueRow(
                                   'Phone',
-                                  order.billingAddress?.phone?.toString() ??
+                                  maskPhoneNumber(order.billingAddress?.phone
+                                          ?.toString()) ??
                                       ''),
                               buildLabelValueRow(
                                   'Email', order.billingAddress?.email ?? ''),
@@ -361,25 +376,6 @@ class OrderCard extends StatelessWidget {
                 ),
               ),
             ],
-            // Text.rich(
-            //   TextSpan(
-            //       text: "Updated on: ",
-            //       children: [
-            //         TextSpan(
-            //             text: DateFormat('dd-MM-yyyy\',\' hh:mm a').format(
-            //               DateTime.parse("${order.updatedAt}"),
-            //             ),
-            //             style: const TextStyle(
-            //               fontWeight: FontWeight.normal,
-            //             )),
-            //       ],
-            //       style: const TextStyle(
-            //         fontWeight: FontWeight.bold,
-            //       )),
-            // ),
-            // const SizedBox(
-            //   height: 8,
-            // ),
             ListView.builder(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
@@ -402,7 +398,7 @@ class OrderCard extends StatelessWidget {
                       text: "Updated on: ",
                       children: [
                         TextSpan(
-                            text: DateFormat('dd-MM-yyyy\',\' hh:mm a').format(
+                            text: DateFormat('yyyy-MM-dd\',\' hh:mm a').format(
                               DateTime.parse("${order.updatedAt}"),
                             ),
                             style: const TextStyle(
@@ -430,7 +426,7 @@ class OrderCard extends StatelessWidget {
         boxShadow: [
           BoxShadow(
             color: Colors.black
-                .withOpacity(0.08), // Lighter shadow for smaller card
+                .withValues(alpha: 0.08), // Lighter shadow for smaller card
             offset: const Offset(0, 1),
             blurRadius: 3,
           ),

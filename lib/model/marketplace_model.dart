@@ -14,8 +14,8 @@ class SkuMap {
 
   factory SkuMap.fromJson(Map<String, dynamic> json) {
     return SkuMap(
-      mktpSku: json['mktp_sku'],
-      productId: json['product_id'],
+      mktpSku: json['mktp_sku'] ?? '',
+      productId: json['product_id'] ?? '',
       product: json['product'] != null ? Product.fromJson(json['product']) : null, // Assuming you need product details
     );
   }
@@ -43,8 +43,8 @@ class Marketplace {
 
   factory Marketplace.fromJson(Map<String, dynamic> json) {
     return Marketplace(
-      id: json['_id'],
-      name: json['name'],
+      id: json['_id'] ?? '',
+      name: json['name'] ?? '',
       skuMap: (json['sku_map'] as List)
           .map((skuMapJson) => SkuMap.fromJson(skuMapJson))
           .toList(),

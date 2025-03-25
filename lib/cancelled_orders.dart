@@ -48,56 +48,49 @@ class _CancelledOrdersState extends State<CancelledOrders> {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
-                    SizedBox(
+                    Container(
+                      height: 35,
                       width: 200,
-                      child: Container(
-                        height: 40,
-                        decoration: BoxDecoration(
-                          border: Border.all(
-                            color: const Color.fromARGB(183, 6, 90, 216),
-                          ),
-                          borderRadius: BorderRadius.circular(8),
+                      decoration: BoxDecoration(
+                        border: Border.all(
+                          color: const Color.fromARGB(183, 6, 90, 216),
                         ),
-                        child: TextField(
-                          controller: _searchController,
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(color: Colors.black),
-                          decoration: const InputDecoration(
-                            hintText: 'Search by Order ID',
-                            hintStyle: TextStyle(color: Colors.black),
-                            border: InputBorder.none,
-                            contentPadding: EdgeInsets.symmetric(vertical: 8.0),
-                            prefixIcon: Icon(
-                              Icons.search,
-                              color: Color.fromARGB(183, 6, 90, 216),
-                            ),
-                          ),
-                          onChanged: (query) {
-                            // Trigger a rebuild to show/hide the search button
-                            setState(() {
-                              // Update search focus
-                            });
-                            if (query.isEmpty) {
-                              // Reset to all orders if search is cleared
-                              cancelProvider.fetchOrdersWithStatus10();
-                            }
-                          },
-                          onTap: () {
-                            setState(() {
-                              // Mark the search field as focused
-                            });
-                          },
-                          onSubmitted: (query) {
-                            if (query.isNotEmpty) {
-                              cancelProvider.searchOrders(query);
-                            }
-                          },
-                          onEditingComplete: () {
-                            // Mark it as not focused when done
-                            FocusScope.of(context)
-                                .unfocus(); // Dismiss the keyboard
-                          },
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: TextField(
+                        controller: _searchController,
+                        style: const TextStyle(color: Colors.black),
+                        decoration: const InputDecoration(
+                          hintText: 'Search by Order ID',
+                          hintStyle: TextStyle(color: Colors.black),
+                          border: InputBorder.none,
+                          contentPadding: EdgeInsets.symmetric(vertical: 12, horizontal: 8),
                         ),
+                        onChanged: (query) {
+                          // Trigger a rebuild to show/hide the search button
+                          setState(() {
+                            // Update search focus
+                          });
+                          if (query.isEmpty) {
+                            // Reset to all orders if search is cleared
+                            cancelProvider.fetchOrdersWithStatus10();
+                          }
+                        },
+                        onTap: () {
+                          setState(() {
+                            // Mark the search field as focused
+                          });
+                        },
+                        onSubmitted: (query) {
+                          if (query.isNotEmpty) {
+                            cancelProvider.searchOrders(query);
+                          }
+                        },
+                        onEditingComplete: () {
+                          // Mark it as not focused when done
+                          FocusScope.of(context)
+                              .unfocus(); // Dismiss the keyboard
+                        },
                       ),
                     ),
                     const SizedBox(width: 8),

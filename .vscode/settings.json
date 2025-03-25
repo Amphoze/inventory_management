@@ -1,4 +1,17 @@
 {
-    "cmake.sourceDirectory": "D:/first/inventory_management/linux/flutter",
-    "cmake.ignoreCMakeListsMissing": true
+  "cmake.sourceDirectory": "D:/first/inventory_management/linux/flutter",
+  "cmake.ignoreCMakeListsMissing": true,
+  "files.exclude": {
+    ".dart_tool": true,
+    ".firebase": true,
+    ".vscode": true,
+    "android": true,
+    "ios": true,
+    "linux": true,
+    "macos": true,
+    "public": true,
+    "test": true,
+    "web": true,
+    "windows": true
+  }
 }

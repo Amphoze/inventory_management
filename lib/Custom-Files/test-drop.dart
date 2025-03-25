@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:inventory_management/constants/constants.dart';
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -60,7 +61,7 @@ class _SearchableDropdownState extends State<SearchableDropdown> {
     String search = '',
   }) async {
     final url = Uri.parse(
-        'https://inventory-management-backend-s37u.onrender.com/products?page=$page&limit=$itemsPerPage&search=$search');
+        '${await Constants.getBaseUrl()}/products?page=$page&limit=$itemsPerPage&search=$search');
 
     try {
       final prefs = await SharedPreferences.getInstance();

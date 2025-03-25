@@ -1,11 +1,17 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:inventory_management/Custom-Files/loading_indicator.dart';
-import 'package:inventory_management/Widgets/order_card.dart';
+import 'package:inventory_management/Widgets/order_combo_card.dart';
 import 'package:inventory_management/model/orders_model.dart';
+import 'package:inventory_management/provider/book_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:inventory_management/Custom-Files/colors.dart';
 import 'package:inventory_management/provider/packer_provider.dart';
 import 'package:inventory_management/Custom-Files/custom_pagination.dart';
+
+import 'Custom-Files/utils.dart';
 
 class PackerPage extends StatefulWidget {
   const PackerPage({super.key});
@@ -16,24 +22,25 @@ class PackerPage extends StatefulWidget {
 
 class _PackerPageState extends State<PackerPage> {
   final TextEditingController _searchController = TextEditingController();
+  final TextEditingController _dateController = TextEditingController();
+  final DateFormat _dateFormat = DateFormat('yyyy-MM-dd');
+  String selectedPicklist = '';
+  List<String> picklistIds = ['W1', 'W2', 'W3', 'G1', 'G2', 'G3', 'E1', 'E2', 'E3'];
+  bool isDownloading = false;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      Provider.of<PackerProvider>(context, listen: false)
-          .fetchOrdersWithStatus5();
+      Provider.of<PackerProvider>(context, listen: false).fetchOrdersWithStatus5();
     });
-    Provider.of<PackerProvider>(context, listen: false)
-        .textEditingController
-        .clear();
+    Provider.of<PackerProvider>(context, listen: false).textEditingController.clear();
   }
 
   void _onSearchButtonPressed() {
     final query = _searchController.text.trim();
     if (query.isNotEmpty) {
-      Provider.of<PackerProvider>(context, listen: false)
-          .onSearchChanged(query);
+      Provider.of<PackerProvider>(context, listen: false).onSearchChanged(query);
     }
   }
 
@@ -51,56 +58,48 @@ class _PackerPageState extends State<PackerPage> {
                   mainAxisAlignment: MainAxisAlignment.start,
                   children: [
                     // Search TextField
-                    SizedBox(
+                    Container(
+                      height: 35,
                       width: 200,
-                      child: Container(
-                        height: 40,
-                        decoration: BoxDecoration(
-                          border: Border.all(
-                            color: const Color.fromARGB(183, 6, 90, 216),
-                          ),
-                          borderRadius: BorderRadius.circular(8),
+                      decoration: BoxDecoration(
+                        border: Border.all(
+                          color: const Color.fromARGB(183, 6, 90, 216),
                         ),
-                        child: TextField(
-                          controller: _searchController,
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(color: Colors.black),
-                          decoration: const InputDecoration(
-                            hintText: 'Search by Order ID',
-                            hintStyle: TextStyle(color: Colors.black),
-                            border: InputBorder.none,
-                            contentPadding: EdgeInsets.symmetric(vertical: 8.0),
-                            prefixIcon: Icon(
-                              Icons.search,
-                              color: Color.fromARGB(183, 6, 90, 216),
-                            ),
-                          ),
-                          onChanged: (query) {
-                            // Trigger a rebuild to show/hide the search button
-                            setState(() {
-                              // Update search focus
-                            });
-                            if (query.isEmpty) {
-                              // Reset to all orders if search is cleared
-                              packerProvider.fetchOrdersWithStatus5();
-                            }
-                          },
-                          onTap: () {
-                            setState(() {
-                              // Mark the search field as focused
-                            });
-                          },
-                          onSubmitted: (query) {
-                            if (query.isNotEmpty) {
-                              packerProvider.searchOrders(query);
-                            }
-                          },
-                          onEditingComplete: () {
-                            // Mark it as not focused when done
-                            FocusScope.of(context)
-                                .unfocus(); // Dismiss the keyboard
-                          },
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: TextField(
+                        controller: _searchController,
+                        style: const TextStyle(color: Colors.black),
+                        decoration: const InputDecoration(
+                          hintText: 'Search by Order ID',
+                          hintStyle: TextStyle(color: Colors.black),
+                          border: InputBorder.none,
+                          contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 12.0),
                         ),
+                        onChanged: (query) {
+                          // Trigger a rebuild to show/hide the search button
+                          setState(() {
+                            // Update search focus
+                          });
+                          if (query.isEmpty) {
+                            // Reset to all orders if search is cleared
+                            packerProvider.fetchOrdersWithStatus5();
+                          }
+                        },
+                        onTap: () {
+                          setState(() {
+                            // Mark the search field as focused
+                          });
+                        },
+                        onSubmitted: (query) {
+                          if (query.isNotEmpty) {
+                            packerProvider.searchOrders(query);
+                          }
+                        },
+                        onEditingComplete: () {
+                          // Mark it as not focused when done
+                          FocusScope.of(context).unfocus(); // Dismiss the keyboard
+                        },
                       ),
                     ),
                     const SizedBox(width: 8),
@@ -109,9 +108,7 @@ class _PackerPageState extends State<PackerPage> {
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.primaryBlue,
                       ),
-                      onPressed: _searchController.text.isNotEmpty
-                          ? _onSearchButtonPressed
-                          : null,
+                      onPressed: _searchController.text.isNotEmpty ? _onSearchButtonPressed : null,
                       child: const Text(
                         'Search',
                         style: TextStyle(color: Colors.white),
@@ -192,7 +189,123 @@ class _PackerPageState extends State<PackerPage> {
                     //           style: TextStyle(color: Colors.white),
                     //         ),
                     // ),
-                    // const SizedBox(width: 8),
+                    ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primaryBlue,
+                      ),
+                      onPressed: () {
+                        showDialog(
+                          context: context,
+                          builder: (BuildContext context) {
+                            return StatefulBuilder(builder: (BuildContext context, StateSetter dialogSetState) {
+                              return AlertDialog(
+                                title: const Text('Download Packlist'),
+                                content: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    TextFormField(
+                                      controller: _dateController,
+                                      decoration: const InputDecoration(
+                                        labelText: "Select Date",
+                                        suffixIcon: Icon(Icons.calendar_today),
+                                        border: OutlineInputBorder(),
+                                      ),
+                                      readOnly: true, // Prevent manual input
+                                      onTap: () async {
+                                        DateTime? picked = await showDatePicker(
+                                          context: context,
+                                          initialDate: DateTime.now(),
+                                          firstDate: DateTime(2000),
+                                          lastDate: DateTime.now(),
+                                        );
+
+                                        if (picked != null) {
+                                          dialogSetState(() {
+                                            _dateController.text = _dateFormat.format(picked);
+                                          });
+                                        }
+                                      },
+                                    ),
+                                    const SizedBox(height: 8),
+                                    DropdownButton(
+                                      value: picklistIds.contains(selectedPicklist)
+                                          ? selectedPicklist
+                                          : null, // Only set value if it exists in the list
+                                      isExpanded: true,
+                                      hint: const Text('Select Picklist ID'),
+                                      items: picklistIds.map((id) {
+                                        return DropdownMenuItem<String>(
+                                          value: id,
+                                          child: Text(id),
+                                        );
+                                      }).toList(),
+                                      onChanged: (String? newValue) {
+                                        dialogSetState(() {
+                                          // Update dialog state
+                                          if (newValue != null) {
+                                            selectedPicklist = newValue;
+                                          }
+                                        });
+                                      },
+                                    )
+                                  ],
+                                ),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () => Navigator.pop(context),
+                                    style: TextButton.styleFrom(
+                                      foregroundColor: AppColors.primaryBlue,
+                                    ),
+                                    child: const Text('Cancel'),
+                                  ),
+                                  ElevatedButton(
+                                    onPressed: () async {
+                                      if (selectedPicklist.isEmpty) return;
+
+                                      dialogSetState(() {
+                                        isDownloading = true;
+                                      });
+
+                                      showDialog(
+                                        context: context,
+                                        barrierDismissible: false,
+                                        builder: (BuildContext context) {
+                                          return const AlertDialog(
+                                            content: Row(
+                                              children: [
+                                                CircularProgressIndicator(),
+                                                SizedBox(width: 16),
+                                                Text('Downloading'),
+                                              ],
+                                            ),
+                                          );
+                                        },
+                                      );
+
+                                      final res = await context
+                                          .read<BookProvider>()
+                                          .generatePacklist(context, _dateController.text, selectedPicklist);
+
+                                      Utils.showSnackBar(context, res['message']);
+
+                                      Navigator.pop(context);
+                                      Navigator.pop(context);
+
+                                      dialogSetState(() {
+                                        isDownloading = false;
+                                      });
+                                    },
+                                    child: const Text('Download'),
+                                  ),
+                                ],
+                              );
+                            });
+                          },
+                        );
+                      },
+                      child: const Text('Download Packlist'),
+                    ),
+                    const SizedBox(width: 8),
                     // Refresh Button
                     ElevatedButton(
                       style: ElevatedButton.styleFrom(
@@ -262,8 +375,7 @@ class _PackerPageState extends State<PackerPage> {
                 ),
               ),
               CustomPaginationFooter(
-                currentPage:
-                    packerProvider.currentPage, // Ensure correct currentPage
+                currentPage: packerProvider.currentPage, // Ensure correct currentPage
                 totalPages: packerProvider.totalPages,
                 buttonSize: 30,
                 pageController: packerProvider.textEditingController,
@@ -275,15 +387,13 @@ class _PackerPageState extends State<PackerPage> {
                 },
                 onNextPage: () {
                   if (packerProvider.currentPage < packerProvider.totalPages) {
-                    print(
-                        'Navigating to page: ${packerProvider.currentPage + 1}');
+                    print('Navigating to page: ${packerProvider.currentPage + 1}');
                     packerProvider.goToPage(packerProvider.currentPage + 1);
                   }
                 },
                 onPreviousPage: () {
                   if (packerProvider.currentPage > 1) {
-                    print(
-                        'Navigating to page: ${packerProvider.currentPage - 1}');
+                    print('Navigating to page: ${packerProvider.currentPage - 1}');
                     packerProvider.goToPage(packerProvider.currentPage - 1);
                   }
                 },
@@ -291,11 +401,8 @@ class _PackerPageState extends State<PackerPage> {
                   packerProvider.goToPage(page);
                 },
                 onJumpToPage: () {
-                  final page =
-                      int.tryParse(packerProvider.textEditingController.text);
-                  if (page != null &&
-                      page > 0 &&
-                      page <= packerProvider.totalPages) {
+                  final page = int.tryParse(packerProvider.textEditingController.text);
+                  if (page != null && page > 0 && page <= packerProvider.totalPages) {
                     packerProvider.goToPage(page);
                   }
                 },
@@ -313,12 +420,12 @@ class _PackerPageState extends State<PackerPage> {
       padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
       child: Row(
         children: [
-          buildHeader('ORDERS', flex: 9),
-          buildHeader('CUSTOMER', flex: 3),
-          buildHeader('DATE', flex: 3),
-          buildHeader('TOTAL', flex: 2),
-          buildHeader('PACKAGE NAME', flex: 2),
-          buildHeader('CONFIRM', flex: 2),
+          buildHeader('Orders', flex: 7),
+          buildHeader('Customer', flex: 2),
+          buildHeader('Date', flex: 2),
+          buildHeader('Total', flex: 1),
+          buildHeader('Package Name', flex: 2),
+          buildHeader('Confirm', flex: 1),
         ],
       ),
     );
@@ -340,19 +447,25 @@ class _PackerPageState extends State<PackerPage> {
     );
   }
 
-  Widget _buildOrderCard(
-      Order order, int index, PackerProvider packerProvider) {
+  Widget _buildOrderCard(Order order, int index, PackerProvider packerProvider) {
+    // log('_buildOrderCard: ${order.outerPackage}');
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 2.0, horizontal: 8.0),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Expanded(
-            flex: 9,
-            child: OrderCard(order: order),
+            flex: 7,
+            child: OrderComboCard(
+              toShowBy: false,
+              order: order,
+              toShowOrderDetails: false,
+              isPacked: true,
+            ),
           ),
           const SizedBox(width: 4),
           buildCell(
+            flex: 2,
             Column(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
@@ -399,23 +512,22 @@ class _PackerPageState extends State<PackerPage> {
                 ],
               ],
             ),
-            flex: 3,
           ),
           const SizedBox(width: 4),
           buildCell(
+            flex: 2,
             Text(
               packerProvider.formatDate(order.date!),
               style: const TextStyle(fontSize: 16),
             ),
-            flex: 3,
           ),
           const SizedBox(width: 4),
           buildCell(
+            flex: 1,
             Text(
               'Rs.${order.totalAmount!}',
               style: const TextStyle(fontSize: 16),
             ),
-            flex: 2,
           ),
           const SizedBox(width: 4),
           // buildCell(
@@ -426,13 +538,19 @@ class _PackerPageState extends State<PackerPage> {
           //   flex: 2,
           // ),
           buildCell(
-            Text(
-              order.outerPackage.replaceAll('[', '').replaceAll(']', '') ?? '',
-              style: const TextStyle(fontSize: 16),
-            ),
             flex: 2,
+            (order.outerPackages != null && (order.outerPackages?.isNotEmpty ?? false)) ?
+            Column(
+              children: order.outerPackages
+                  !.map(
+                    (e) => Text(
+                      e.outerPackageName ?? '',
+                      style: const TextStyle(fontSize: 16),
+                    ),
+                  )
+                  .toList(),
+            ) : const SizedBox(),
           ),
-
           const SizedBox(width: 4),
           buildCell(
             order.isPackerFullyScanned
@@ -442,18 +560,25 @@ class _PackerPageState extends State<PackerPage> {
                     size: 24,
                   )
                 : const SizedBox.shrink(),
-            flex: 2,
+            flex: 1,
           ),
         ],
       ),
     );
   }
 
+  static String maskPhoneNumber(dynamic phone) {
+    if (phone == null) return '';
+    String phoneStr = phone.toString();
+    if (phoneStr.length < 4) return phoneStr;
+    return '${'*' * (phoneStr.length - 4)}${phoneStr.substring(phoneStr.length - 4)}';
+  }
+
   String _getCustomerPhoneNumber(dynamic phoneNumber) {
     if (phoneNumber == null) return 'Unknown';
 
     // Convert to string if it's an int, otherwise return as is
-    return phoneNumber.toString();
+    return maskPhoneNumber(phoneNumber.toString());
   }
 
   String _getCustomerFullName(Customer? customer) {

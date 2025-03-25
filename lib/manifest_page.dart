@@ -1,6 +1,7 @@
 import 'dart:developer';
 
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:inventory_management/Custom-Files/loading_indicator.dart';
 import 'package:inventory_management/Widgets/order_card.dart';
 import 'package:inventory_management/model/orders_model.dart';
@@ -17,31 +18,32 @@ class ManifestPage extends StatefulWidget {
 }
 
 class _ManifestPageState extends State<ManifestPage> {
-  final TextEditingController _searchController = TextEditingController();
+  String _selectedDate = 'Select Date';
+  DateTime? picked;
+  String selectedCourier = 'All';
+  late ManifestProvider manifestProvider;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      Provider.of<ManifestProvider>(context, listen: false)
-          .fetchOrdersWithStatus8();
+      manifestProvider.fetchOrdersWithStatus8(date: picked, courier: selectedCourier);
+      _selectedDate = 'Select Date';
+      selectedCourier = 'All';
+      picked = null;
     });
-    Provider.of<ManifestProvider>(context, listen: false)
-        .textEditingController
-        .clear();
+    Provider.of<ManifestProvider>(context, listen: false).textEditingController.clear();
   }
 
   void _onSearchButtonPressed() {
-    final query = _searchController.text.trim();
+    final query = manifestProvider.manifestController.text.trim();
     if (query.isNotEmpty) {
-      Provider.of<ManifestProvider>(context, listen: false)
-          .onSearchChanged(query);
+      Provider.of<ManifestProvider>(context, listen: false).onSearchChanged(query);
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    String? selectedCourier = 'All';
     return Consumer<ManifestProvider>(
       builder: (context, manifestProvider, child) {
         return Scaffold(
@@ -53,56 +55,43 @@ class _ManifestPageState extends State<ManifestPage> {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.start,
                   children: [
-                    SizedBox(
+                    Container(
+                      height: 35,
                       width: 200,
-                      child: Container(
-                        height: 40,
-                        decoration: BoxDecoration(
-                          border: Border.all(
-                            color: const Color.fromARGB(183, 6, 90, 216),
-                          ),
-                          borderRadius: BorderRadius.circular(8),
+                      decoration: BoxDecoration(
+                        border: Border.all(
+                          color: const Color.fromARGB(183, 6, 90, 216),
                         ),
-                        child: TextField(
-                          controller: _searchController,
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(color: Colors.black),
-                          decoration: const InputDecoration(
-                            hintText: 'Search by Order ID',
-                            hintStyle: TextStyle(color: Colors.black),
-                            border: InputBorder.none,
-                            contentPadding: EdgeInsets.symmetric(vertical: 8.0),
-                            prefixIcon: Icon(
-                              Icons.search,
-                              color: Color.fromARGB(183, 6, 90, 216),
-                            ),
-                          ),
-                          onChanged: (query) {
-                            // Trigger a rebuild to show/hide the search button
-                            setState(() {
-                              // Update search focus
-                            });
-                            if (query.isEmpty) {
-                              // Reset to all orders if search is cleared
-                              manifestProvider.fetchOrdersWithStatus8();
-                            }
-                          },
-                          onTap: () {
-                            setState(() {
-                              // Mark the search field as focused
-                            });
-                          },
-                          onSubmitted: (query) {
-                            if (query.isNotEmpty) {
-                              manifestProvider.searchOrders(query);
-                            }
-                          },
-                          onEditingComplete: () {
-                            // Mark it as not focused when done
-                            FocusScope.of(context)
-                                .unfocus(); // Dismiss the keyboard
-                          },
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: TextField(
+                        controller: manifestProvider.manifestController,
+                        style: const TextStyle(color: Colors.black),
+                        decoration: const InputDecoration(
+                          hintText: 'Search by Order ID',
+                          hintStyle: TextStyle(color: Colors.black),
+                          border: InputBorder.none,
+                          contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 12.0),
                         ),
+                        onChanged: (query) {
+                          if (query.trim().isEmpty) {
+                            manifestProvider.fetchOrdersWithStatus8();
+                          }
+                        },
+                        onTap: () {
+                          setState(() {
+                            // Mark the search field as focused
+                          });
+                        },
+                        onSubmitted: (query) {
+                          if (query.isNotEmpty) {
+                            manifestProvider.searchOrders(query);
+                          }
+                        },
+                        onEditingComplete: () {
+                          // Mark it as not focused when done
+                          FocusScope.of(context).unfocus(); // Dismiss the keyboard
+                        },
                       ),
                     ),
                     const SizedBox(width: 8),
@@ -111,127 +100,134 @@ class _ManifestPageState extends State<ManifestPage> {
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.primaryBlue,
                       ),
-                      onPressed: _searchController.text.isNotEmpty
-                          ? _onSearchButtonPressed
-                          : null,
+                      onPressed: manifestProvider.manifestController.text.isNotEmpty ? _onSearchButtonPressed : null,
                       child: const Text(
                         'Search',
                         style: TextStyle(color: Colors.white),
                       ),
                     ),
                     const Spacer(),
-                    // ElevatedButton(
-                    //   style: ElevatedButton.styleFrom(
-                    //     backgroundColor: AppColors.cardsred,
-                    //   ),
-                    //   onPressed: manifestProvider.isCancel
-                    //       ? null // Disable button while loading
-                    //       : () async {
-                    //           final provider = Provider.of<ManifestProvider>(
-                    //               context,
-                    //               listen: false);
-                    //           // Collect selected order IDs
-                    //           List<String> selectedOrderIds = provider.orders
-                    //               .asMap()
-                    //               .entries
-                    //               .where((entry) =>
-                    //                   provider.selectedProducts[entry.key])
-                    //               .map((entry) => entry.value.orderId)
-                    //               .toList();
-                    //           if (selectedOrderIds.isEmpty) {
-                    //             // Show an error message if no orders are selected
-                    //             ScaffoldMessenger.of(context).showSnackBar(
-                    //               const SnackBar(
-                    //                 content: Text('No orders selected'),
-                    //                 backgroundColor: AppColors.cardsred,
-                    //               ),
-                    //             );
-                    //           } else {
-                    //             // Set loading status to true before starting the operation
-                    //             provider.setCancelStatus(true);
-                    //             // Call confirmOrders method with selected IDs
-                    //             String resultMessage = await provider
-                    //                 .cancelOrders(context, selectedOrderIds)
-                    //             // Set loading status to false after operation completes
-                    //             provider.setCancelStatus(false);
-                    //             // Determine the background color based on the result
-                    //             Color snackBarColor;
-                    //             if (resultMessage.contains('success')) {
-                    //               snackBarColor =
-                    //                   AppColors.green; // Success: Green
-                    //             } else if (resultMessage.contains('error') ||
-                    //                 resultMessage.contains('failed')) {
-                    //               snackBarColor =
-                    //                   AppColors.cardsred; // Error: Red
-                    //             } else {
-                    //               snackBarColor =
-                    //                   AppColors.orange; // Other: Orange
-                    //             }
-                    //             // Show feedback based on the result
-                    //             ScaffoldMessenger.of(context).showSnackBar(
-                    //               SnackBar(
-                    //                 content: Text(resultMessage),
-                    //                 backgroundColor: snackBarColor,
-                    //               ),
-                    //             );
-                    //           }
-                    //         },
-                    //   child: manifestProvider.isCancel
-                    //       ? const SizedBox(
-                    //           width: 20,
-                    //           height: 20,
-                    //           child: CircularProgressIndicator(
-                    //               color: Colors.white),
-                    //         )
-                    //       : const Text(
-                    //           'Cancel Orders',
-                    //           style: TextStyle(color: Colors.white),
-                    //         ),
-                    // ),
-                    // const SizedBox(width: 8),
-                    // Refresh Button
-                    Text(
-                      selectedCourier!,
-                    ),
-                    PopupMenuButton<String>(
-                      tooltip: 'Filter by Booking Courier',
-                      onSelected: (String value) {
-                        if (value == 'All') {
-                          manifestProvider.fetchOrdersWithStatus8();
-                        } else {
-                          selectedCourier = value;
-                          manifestProvider.fetchOrdersByBookingCourier(
-                              value, manifestProvider.currentPage);
-                        }
-                        log('Selected: $value');
-                      },
-                      itemBuilder: (BuildContext context) =>
-                          <PopupMenuEntry<String>>[
-                        const PopupMenuItem<String>(
-                          value: 'Delhivery', // Hardcoded marketplace
-                          child: Text('Delhivery'),
+                    Column(
+                      children: [
+                        Text(
+                          _selectedDate,
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: _selectedDate == 'Select Date' ? Colors.grey : AppColors.primaryBlue,
+                          ),
                         ),
-                        const PopupMenuItem<String>(
-                          value: 'Shiprocket', // Hardcoded marketplace
-                          child: Text('Shiprocket'),
+                        Tooltip(
+                          message: 'Filter by Date',
+                          child: IconButton(
+                            onPressed: () async {
+                              picked = await showDatePicker(
+                                context: context,
+                                initialDate: DateTime.now(),
+                                firstDate: DateTime(2020),
+                                lastDate: DateTime.now(),
+                                builder: (context, child) {
+                                  return Theme(
+                                    data: Theme.of(context).copyWith(
+                                      colorScheme: const ColorScheme.light(
+                                        primary: AppColors.primaryBlue,
+                                        onPrimary: Colors.white,
+                                        surface: Colors.white,
+                                        onSurface: Colors.black,
+                                      ),
+                                    ),
+                                    child: child!,
+                                  );
+                                },
+                              );
+
+                              if (picked != null) {
+                                String formattedDate = DateFormat('yyyy-MM-dd').format(picked!);
+                                setState(() {
+                                  _selectedDate = formattedDate;
+                                });
+
+                                manifestProvider.fetchOrdersWithStatus8(
+                                  date: picked,
+                                  courier: selectedCourier,
+                                );
+                              }
+                            },
+                            icon: const Icon(
+                              Icons.calendar_today,
+                              size: 30,
+                              color: AppColors.primaryBlue,
+                            ),
+                          ),
                         ),
-                        const PopupMenuItem<String>(
-                          value: 'Others', // Hardcoded marketplace
-                          child: Text('Others'),
-                        ),
-                        const PopupMenuItem<String>(
-                          value: 'All', // Hardcoded marketplace
-                          child: Text('All'),
-                        ),
+                        if (_selectedDate != 'Select Date')
+                          Tooltip(
+                            message: 'Clear selected Date',
+                            child: InkWell(
+                              onTap: () async {
+                                setState(() {
+                                  _selectedDate = 'Select Date';
+                                  picked = null;
+                                });
+                                manifestProvider.fetchOrdersWithStatus8();
+                              },
+                              child: const Icon(
+                                Icons.clear,
+                                size: 12,
+                                color: AppColors.primaryBlue,
+                              ),
+                            ),
+                          ),
                       ],
-                      child: const IconButton(
-                        onPressed: null,
-                        icon: Icon(
-                          Icons.filter_alt_outlined,
-                          size: 30,
-                        ),
-                      ),
                     ),
+                    const SizedBox(width: 8),
+                    // Refresh Button
+                    StatefulBuilder(builder: (context, setState) {
+                      return Column(
+                        children: [
+                          Text(
+                            selectedCourier,
+                          ),
+                          PopupMenuButton<String>(
+                            tooltip: 'Filter by Booking Courier',
+                            onSelected: (String value) {
+                              setState(() {
+                                selectedCourier = value;
+                              });
+                              manifestProvider.fetchOrdersWithStatus8(
+                                date: picked,
+                                courier: selectedCourier,
+                              );
+                              log('Selected: $value');
+                            },
+                            itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
+                              const PopupMenuItem<String>(
+                                value: 'Delhivery', // Hardcoded marketplace
+                                child: Text('Delhivery'),
+                              ),
+                              const PopupMenuItem<String>(
+                                value: 'Shiprocket', // Hardcoded marketplace
+                                child: Text('Shiprocket'),
+                              ),
+                              const PopupMenuItem<String>(
+                                value: 'Others', // Hardcoded marketplace
+                                child: Text('Others'),
+                              ),
+                              const PopupMenuItem<String>(
+                                value: 'All', // Hardcoded marketplace
+                                child: Text('All'),
+                              ),
+                            ],
+                            child: const IconButton(
+                              onPressed: null,
+                              icon: Icon(
+                                Icons.filter_alt_outlined,
+                                size: 30,
+                              ),
+                            ),
+                          ),
+                        ],
+                      );
+                    }),
                     const SizedBox(
                       width: 8,
                     ),
@@ -242,8 +238,7 @@ class _ManifestPageState extends State<ManifestPage> {
                       onPressed: manifestProvider.isCreatingManifest
                           ? null
                           : () async {
-                              manifestProvider.createManifest(
-                                  context, selectedCourier!);
+                              manifestProvider.createManifest(context, selectedCourier);
                             },
                       child: manifestProvider.isCreatingManifest
                           ? const SizedBox(
@@ -269,6 +264,10 @@ class _ManifestPageState extends State<ManifestPage> {
                       onPressed: manifestProvider.isRefreshingOrders
                           ? null
                           : () async {
+                              setState(() {
+                                selectedCourier = 'All';
+                                _selectedDate = 'Select Date';
+                              });
                               manifestProvider.fetchOrdersWithStatus8();
                             },
                       child: manifestProvider.isRefreshingOrders
@@ -289,8 +288,7 @@ class _ManifestPageState extends State<ManifestPage> {
                 ),
               ),
               const SizedBox(height: 8), // Decreased space here
-              _buildTableHeader(
-                  manifestProvider.orders.length, manifestProvider),
+              _buildTableHeader(manifestProvider.orders.length, manifestProvider),
               const SizedBox(height: 4), // New space for alignment
               Expanded(
                 child: Stack(
@@ -332,8 +330,7 @@ class _ManifestPageState extends State<ManifestPage> {
                 ),
               ),
               CustomPaginationFooter(
-                currentPage:
-                    manifestProvider.currentPage, // Ensure correct currentPage
+                currentPage: manifestProvider.currentPage, // Ensure correct currentPage
                 totalPages: manifestProvider.totalPages,
                 buttonSize: 30,
                 pageController: manifestProvider.textEditingController,
@@ -344,17 +341,14 @@ class _ManifestPageState extends State<ManifestPage> {
                   manifestProvider.goToPage(manifestProvider.totalPages);
                 },
                 onNextPage: () {
-                  if (manifestProvider.currentPage <
-                      manifestProvider.totalPages) {
-                    print(
-                        'Navigating to page: ${manifestProvider.currentPage + 1}');
+                  if (manifestProvider.currentPage < manifestProvider.totalPages) {
+                    print('Navigating to page: ${manifestProvider.currentPage + 1}');
                     manifestProvider.goToPage(manifestProvider.currentPage + 1);
                   }
                 },
                 onPreviousPage: () {
                   if (manifestProvider.currentPage > 1) {
-                    print(
-                        'Navigating to page: ${manifestProvider.currentPage - 1}');
+                    print('Navigating to page: ${manifestProvider.currentPage - 1}');
                     manifestProvider.goToPage(manifestProvider.currentPage - 1);
                   }
                 },
@@ -362,11 +356,8 @@ class _ManifestPageState extends State<ManifestPage> {
                   manifestProvider.goToPage(page);
                 },
                 onJumpToPage: () {
-                  final page =
-                      int.tryParse(manifestProvider.textEditingController.text);
-                  if (page != null &&
-                      page > 0 &&
-                      page <= manifestProvider.totalPages) {
+                  final page = int.tryParse(manifestProvider.textEditingController.text);
+                  if (page != null && page > 0 && page <= manifestProvider.totalPages) {
                     manifestProvider.goToPage(page);
                   }
                 },
@@ -421,12 +412,9 @@ class _ManifestPageState extends State<ManifestPage> {
     );
   }
 
-  Widget _buildOrderCard(
-      Order order, int index, ManifestProvider manifestProvider) {
+  Widget _buildOrderCard(Order order, int index, ManifestProvider manifestProvider) {
     return Padding(
-      padding: const EdgeInsets.symmetric(
-          vertical: 4.0,
-          horizontal: 8.0), // Increased vertical space for order cards
+      padding: const EdgeInsets.symmetric(vertical: 4.0, horizontal: 8.0), // Increased vertical space for order cards
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [

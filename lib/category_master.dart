@@ -20,9 +20,10 @@ class _CategoryMasterPageState extends State<CategoryMasterPage> {
   @override
   void initState() {
     super.initState();
-    final categoryProvider =
-        Provider.of<CategoryProvider>(context, listen: false);
-    categoryProvider.fetchAllCategories();
+    final categoryProvider = Provider.of<CategoryProvider>(context, listen: false);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      categoryProvider.fetchAllCategories();
+    });
 
     categoryProvider.searchController.addListener(() {
       if (categoryProvider.isSearchMode) {
@@ -34,8 +35,7 @@ class _CategoryMasterPageState extends State<CategoryMasterPage> {
   void _onSearchChanged(String query) {
     if (_debounce?.isActive ?? false) _debounce!.cancel();
     _debounce = Timer(const Duration(milliseconds: 300), () {
-      Provider.of<CategoryProvider>(context, listen: false)
-          .filterCategories(query);
+      Provider.of<CategoryProvider>(context, listen: false).filterCategories(query);
     });
   }
 
@@ -57,24 +57,16 @@ class _CategoryMasterPageState extends State<CategoryMasterPage> {
                     runSpacing: 16.0,
                     children: [
                       _buildButton(
-                        text: categoryProvider.isCreatingCategory
-                            ? 'Cancel'
-                            : 'Create',
+                        text: categoryProvider.isCreatingCategory ? 'Cancel' : 'Create',
                         color: AppColors.tealcolor,
-                        icon: categoryProvider.isCreatingCategory
-                            ? Icons.cancel
-                            : Icons.add,
+                        icon: categoryProvider.isCreatingCategory ? Icons.cancel : Icons.add,
                         onTap: categoryProvider.toggleCreateCategoryMode,
                       ),
                       if (!categoryProvider.isCreatingCategory) ...[
                         _buildButton(
-                          text: categoryProvider.isSearchMode
-                              ? 'Cancel'
-                              : 'Search',
+                          text: categoryProvider.isSearchMode ? 'Cancel' : 'Search',
                           color: AppColors.primaryBlue,
-                          icon: categoryProvider.isSearchMode
-                              ? Icons.cancel
-                              : Icons.search,
+                          icon: categoryProvider.isSearchMode ? Icons.cancel : Icons.search,
                           onTap: categoryProvider.toggleSearchMode,
                         ),
                       ],
@@ -86,10 +78,8 @@ class _CategoryMasterPageState extends State<CategoryMasterPage> {
                               SizedBox(
                                 width: 150,
                                 child: TextField(
-                                  controller:
-                                      categoryProvider.categoryNameController,
-                                  decoration: const InputDecoration(
-                                      labelText: 'Category Name'),
+                                  controller: categoryProvider.categoryNameController,
+                                  decoration: const InputDecoration(labelText: 'Category Name'),
                                 ),
                               ),
                               const SizedBox(width: 8.0),
@@ -100,8 +90,7 @@ class _CategoryMasterPageState extends State<CategoryMasterPage> {
                             ],
                           ),
                         ),
-                      if (categoryProvider.isSearchMode &&
-                          !categoryProvider.isCreatingCategory)
+                      if (categoryProvider.isSearchMode && !categoryProvider.isCreatingCategory)
                         Container(
                           margin: const EdgeInsets.only(top: 16.0),
                           child: SizedBox(
@@ -144,25 +133,17 @@ class _CategoryMasterPageState extends State<CategoryMasterPage> {
                 : Row(
                     children: [
                       _buildButton(
-                        text: categoryProvider.isCreatingCategory
-                            ? 'Cancel'
-                            : 'Create',
+                        text: categoryProvider.isCreatingCategory ? 'Cancel' : 'Create',
                         color: AppColors.tealcolor,
-                        icon: categoryProvider.isCreatingCategory
-                            ? Icons.cancel
-                            : Icons.add,
+                        icon: categoryProvider.isCreatingCategory ? Icons.cancel : Icons.add,
                         onTap: categoryProvider.toggleCreateCategoryMode,
                       ),
                       const SizedBox(width: 16.0),
                       if (!categoryProvider.isCreatingCategory) ...[
                         _buildButton(
-                          text: categoryProvider.isSearchMode
-                              ? 'Cancel'
-                              : 'Search',
+                          text: categoryProvider.isSearchMode ? 'Cancel' : 'Search',
                           color: AppColors.primaryBlue,
-                          icon: categoryProvider.isSearchMode
-                              ? Icons.cancel
-                              : Icons.search,
+                          icon: categoryProvider.isSearchMode ? Icons.cancel : Icons.search,
                           onTap: categoryProvider.toggleSearchMode,
                         ),
                       ],
@@ -174,10 +155,8 @@ class _CategoryMasterPageState extends State<CategoryMasterPage> {
                               SizedBox(
                                 width: 200,
                                 child: TextField(
-                                  controller:
-                                      categoryProvider.categoryNameController,
-                                  decoration: const InputDecoration(
-                                      labelText: 'Category Name'),
+                                  controller: categoryProvider.categoryNameController,
+                                  decoration: const InputDecoration(labelText: 'Category Name'),
                                 ),
                               ),
                               const SizedBox(width: 8.0),
@@ -188,8 +167,7 @@ class _CategoryMasterPageState extends State<CategoryMasterPage> {
                             ],
                           ),
                         ),
-                      if (categoryProvider.isSearchMode &&
-                          !categoryProvider.isCreatingCategory)
+                      if (categoryProvider.isSearchMode && !categoryProvider.isCreatingCategory)
                         Expanded(
                           child: SizedBox(
                             width: 200,
@@ -239,6 +217,10 @@ class _CategoryMasterPageState extends State<CategoryMasterPage> {
                   endColor: AppColors.primaryBlue,
                   size: 80.0,
                 ),
+              )
+            else if (categoryProvider.categories.isEmpty)
+              const Center(
+                child: Text('No Categories Found!!', style: TextStyle(fontSize: 20)),
               )
             else
               Expanded(

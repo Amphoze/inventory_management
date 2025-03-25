@@ -1,16 +1,113 @@
 import 'dart:convert';
+import 'dart:developer';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
+import 'package:http_parser/http_parser.dart';
+import 'package:inventory_management/constants/constants.dart';
 import 'package:inventory_management/model/combo_model.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:http_parser/http_parser.dart';
-
+// import 'package:http_parser/http_parser.dart';
+//
 class ComboApi with ChangeNotifier {
-  final String baseUrl =
-      'https://inventory-management-backend-s37u.onrender.com';
+  // late final String baseUrl;
 
-  Future<void> createCombo(
-      Combo combo, List<Uint8List>? images, List<String> imageNames) async {
+  // ComboApi() {
+  //   _initialize();
+  // }
+
+  // Future<void> _initialize() async {
+  //   baseUrl = await ApiUrls.getBaseUrl();
+  // }
+
+  Future<String> updateCombo(String comboId, String name, String weight) async {
+    String baseUrl = await Constants.getBaseUrl();
+    try {
+      final token = await _getToken();
+      if (token == null) {
+        throw Exception('No authentication token found');
+      }
+
+      final url = '$baseUrl/combo/$comboId';
+
+      final response = await http.put(
+        Uri.parse(url),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode({
+          'name': name,
+          'comboWeight': weight,
+        }),
+      );
+
+      final res = jsonDecode(response.body);
+
+      log('Response status: ${response.statusCode}');
+      log('Response body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        return res['message'];
+      } else {
+        return res['message'];
+      }
+    } catch (e) {
+      log('Error updating combo: $e');
+      return 'Error updating combo: $e';
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> searchCombo(String query) async {
+    String baseUrl = await Constants.getBaseUrl();
+    try {
+      final token = await _getToken();
+      if (token == null) {
+        throw Exception('No authentication token found');
+      }
+
+      var url = '$baseUrl/combo?${query.contains('-') ? 'comboSku' : 'name'}=$query';
+
+      log('url: $url');
+
+      final response = await http.get(
+        Uri.parse(url),
+        headers: {
+          'Authorization': 'Bearer $token'
+        },
+      );
+
+      //print('Response status: ${response.statusCode}');
+      //print('Response body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        final decodedResponse = json.decode(response.body);
+        //print('Decoded response: $decodedResponse');
+
+        // Handle different response structures here
+        if (decodedResponse is List) {
+          // If it's a list, return it directly
+          //print("list");
+          return List<Map<String, dynamic>>.from(decodedResponse);
+        } else if (decodedResponse is Map) {
+          // If it's a map, check if it contains the list under a specific key
+          //print("map");
+          final comboList = decodedResponse['combos'] as List<dynamic>? ?? [];
+          //print("comboList: $comboList");
+          return List<Map<String, dynamic>>.from(comboList);
+        } else {
+          throw Exception('Unexpected JSON format');
+        }
+      } else {
+        throw Exception('Failed to load combos: ${response.reasonPhrase}');
+      }
+    } catch (e) {
+      print('Error fetching combos: $e');
+      throw Exception('Error fetching combos: $e');
+    }
+  }
+
+  Future<void> createCombo(Combo combo, List<Uint8List>? images, List<String> imageNames) async {
+    String baseUrl = await Constants.getBaseUrl();
     try {
       // Get the token using the token retrieval method
       final token = await _getToken();
@@ -67,8 +164,8 @@ class ComboApi with ChangeNotifier {
   }
 
   // Get all combos
-  Future<List<Map<String, dynamic>>> getCombos(
-      {int page = 1, int limit = 10}) async {
+  Future<List<Map<String, dynamic>>> getCombos({int page = 1, int limit = 10}) async {
+    String baseUrl = await Constants.getBaseUrl();
     try {
       final token = await _getToken();
       if (token == null) {
@@ -77,7 +174,9 @@ class ComboApi with ChangeNotifier {
 
       final response = await http.get(
         Uri.parse('$baseUrl/combo?page=$page&limit=$limit'),
-        headers: {'Authorization': 'Bearer $token'},
+        headers: {
+          'Authorization': 'Bearer $token'
+        },
       );
 
       //print('Response status: ${response.statusCode}');
@@ -111,6 +210,7 @@ class ComboApi with ChangeNotifier {
   }
 
   Future<Map<String, dynamic>> getAllProducts() async {
+    String baseUrl = await Constants.getBaseUrl();
     try {
       final token = await _getToken(); // Fetch token dynamically
 
@@ -134,12 +234,14 @@ class ComboApi with ChangeNotifier {
         throw Exception('Failed to load products: ${response.statusCode}');
       }
     } catch (error) {
-      print('Error in getAllProducts: $error');
-      throw Exception('Error: $error');
+      log('Error in getAllProducts: $error');
+      // throw Exception('Error: $error');
+      return {};
     }
   }
 
   Future<Product> getProductById(String productId) async {
+    String baseUrl = await Constants.getBaseUrl();
     try {
       final token = await _getToken();
       //print(token);

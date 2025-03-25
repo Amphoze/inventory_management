@@ -3,34 +3,34 @@ import 'dart:convert';
 import 'dart:developer';
 
 import 'package:flutter/material.dart';
+import 'package:inventory_management/constants/constants.dart';
 import 'package:logger/logger.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 import '../model/orders_model.dart';
 
-class CancelledProvider extends ChangeNotifier {
-  bool _isLoading = false;
-  bool _selectAll = false;
-  List<bool> _selectedProducts = [];
-  List<Order> _orders = [];
-  int _currentPage = 1; // Ensure this starts at 1
-  int _totalPages = 1;
-  final PageController _pageController = PageController();
-  final TextEditingController _textEditingController = TextEditingController();
-  Timer? _debounce;
+class CancelledProvider with ChangeNotifier {
+  bool isLoading = false;
+  bool selectAll = false;
+  List<bool> selectedProducts = [];
+  List<Order> orders0 = [];
+  int currentPage = 1; // Ensure this starts at 1
+  int totalPages = 1;
+  final PageController pageController = PageController();
+  final TextEditingController textEditingController = TextEditingController();
+  Timer? debounce;
 
-  bool get selectAll => _selectAll;
-  List<bool> get selectedProducts => _selectedProducts;
-  List<Order> get orders => _orders;
-  bool get isLoading => _isLoading;
+  // bool get selectAll => selectAll;
+  // List<bool> get selectedProducts => selectedProducts;
+  List<Order> get orders => orders0;
+  // bool get isLoading => isLoading;
 
-  int get currentPage => _currentPage;
-  int get totalPages => _totalPages;
-  PageController get pageController => _pageController;
-  TextEditingController get textEditingController => _textEditingController;
+  // int get currentPage => currentPage;
+  // int get totalPages => totalPages;
+  // PageController get pageController => pageController;
+  // TextEditingController get textEditingController => textEditingController;
 
-  int get selectedCount =>
-      _selectedProducts.where((isSelected) => isSelected).length;
+  int get selectedCount => selectedProducts.where((isSelected) => isSelected).length;
 
   bool isRefreshingOrders = false;
 
@@ -40,24 +40,24 @@ class CancelledProvider extends ChangeNotifier {
   }
 
   void toggleSelectAll(bool value) {
-    _selectAll = value;
-    _selectedProducts =
-        List<bool>.generate(_orders.length, (index) => _selectAll);
+    selectAll = value;
+    selectedProducts = List<bool>.generate(orders0.length, (index) => selectAll);
     notifyListeners();
   }
 
   Future<void> fetchOrdersWithStatus10() async {
-    _isLoading = true;
+    isLoading = true;
     setRefreshingOrders(true);
     notifyListeners();
 
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('authToken') ?? '';
-    const url =
-        'https://inventory-management-backend-s37u.onrender.com/orders?orderStatus=10&page=';
+    final warehouseId = prefs.getString('warehouseId') ?? '';
+
+    String url = '${await Constants.getBaseUrl()}/orders?warehouse=$warehouseId&orderStatus=10&page=$currentPage';
 
     try {
-      final response = await http.get(Uri.parse('$url$_currentPage'), headers: {
+      final response = await http.get(Uri.parse(url), headers: {
         'Authorization': 'Bearer $token',
         'Content-Type': 'application/json',
       });
@@ -65,42 +65,40 @@ class CancelledProvider extends ChangeNotifier {
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         log("cancel data: $data");
-        List<Order> orders = (data['orders'] as List)
-            .map((order) => Order.fromJson(order))
-            .toList();
+        List<Order> orders = (data['orders'] as List).map((order) => Order.fromJson(order)).toList();
         initializeSelection();
 
-        _totalPages = data['totalPages']; // Get total pages from response
-        _orders = orders; // Set the orders for the current page
+        totalPages = data['totalPages']; // Get total pages from response
+        orders0 = orders; // Set the orders for the current page
 
         Logger().e(orders);
 
         // Initialize selected products list
-        _selectedProducts = List<bool>.filled(_orders.length, false);
+        selectedProducts = List<bool>.filled(orders0.length, false);
 
-        Logger().e(_selectedProducts);
+        Logger().e(selectedProducts);
         // Print the total number of orders fetched from the current page
-        print('Total Orders Fetched from Page $_currentPage: ${orders.length}');
+        print('Total Orders Fetched from Page $currentPage: ${orders.length}');
       } else {
         // Handle non-success responses
-        _orders = [];
-        _totalPages = 1; // Reset total pages if there’s an error
+        orders0 = [];
+        totalPages = 1; // Reset total pages if there’s an error
       }
     } catch (e) {
       // Handle errors
-      _orders = [];
-      _totalPages = 1; // Reset total pages if there’s an error
+      orders0 = [];
+      totalPages = 1; // Reset total pages if there’s an error
     } finally {
-      _isLoading = false;
+      isLoading = false;
       setRefreshingOrders(false);
       notifyListeners();
     }
   }
 
   void goToPage(int page) {
-    if (page < 1 || page > _totalPages) return;
-    _currentPage = page;
-    print('Current page set to: $_currentPage'); // Debugging line
+    if (page < 1 || page > totalPages) return;
+    currentPage = page;
+    print('Current page set to: $currentPage'); // Debugging line
     fetchOrdersWithStatus10();
     notifyListeners();
   }
@@ -114,43 +112,41 @@ class CancelledProvider extends ChangeNotifier {
   }
 
   List<Order> orderscanceled = []; // List of returned orders
-  List<bool> selectedcanceledItems =
-      []; // Selection state for returned orders
+  List<bool> selectedcanceledItems = []; // Selection state for returned orders
   bool selectAllcanceled = false;
 
   void initializeSelection() {
-    _selectedProducts = List<bool>.filled(_orders.length, false);
+    selectedProducts = List<bool>.filled(orders0.length, false);
     selectedcanceledItems = List<bool>.filled(orderscanceled.length, false);
   }
 
   // Handle individual row checkbox change for orders
   void handleRowCheckboxChange(int index, bool isSelected) {
-    _selectedProducts[index] = isSelected;
+    selectedProducts[index] = isSelected;
     notifyListeners();
   }
 
   // Handle individual row checkbox change for returned orders
   void handleRowCheckboxChangeForcanceled(String? orderId, bool isSelected) {
-    int index =
-        orderscanceled.indexWhere((order) => order.orderId == orderId);
+    int index = orderscanceled.indexWhere((order) => order.orderId == orderId);
     if (index != -1) {
       selectedcanceledItems[index] = isSelected;
       orderscanceled[index].isSelected = isSelected;
-      _updateSelectAllStateForcanceled();
+      updateSelectAllStateForcanceled();
     }
     notifyListeners();
   }
 
-  void _updateSelectAllStateForcanceled() {
+  void updateSelectAllStateForcanceled() {
     selectAllcanceled = selectedcanceledItems.every((item) => item);
     notifyListeners();
   }
 
-  bool _isCancelling = false;
-  bool get isCancelling => _isCancelling;
+  bool isCancelling = false;
+  // bool get isCancelling => isCancelling;
 
   Future<void> returnSelectedOrders() async {
-    _isCancelling = true; // Set loading state
+    isCancelling = true; // Set loading state
     notifyListeners();
 
     final prefs = await SharedPreferences.getInstance();
@@ -159,16 +155,14 @@ class CancelledProvider extends ChangeNotifier {
     List<String> selectedOrderIds = [];
 
     // Collect the IDs of orders where trackingStatus is 'NA' (null or empty)
-    for (int i = 0; i < _selectedProducts.length; i++) {
-      if (_selectedProducts[i] &&
-          (_orders[i].trackingStatus?.isEmpty ?? true)) {
-        selectedOrderIds.add(_orders[i].orderId);
+    for (int i = 0; i < selectedProducts.length; i++) {
+      if (selectedProducts[i] && (orders0[i].trackingStatus?.isEmpty ?? true)) {
+        selectedOrderIds.add(orders0[i].orderId);
       }
     }
 
     if (selectedOrderIds.isNotEmpty) {
-      const url =
-          'https://inventory-management-backend-s37u.onrender.com/orders/return';
+      String url = '${await Constants.getBaseUrl()}/orders/return';
 
       try {
         final body = json.encode({
@@ -193,10 +187,9 @@ class CancelledProvider extends ChangeNotifier {
         if (response.statusCode == 200) {
           print('Orders returned successfully!');
           // Update local order tracking status
-          for (int i = 0; i < _orders.length; i++) {
-            if (_selectedProducts[i] &&
-                (_orders[i].trackingStatus?.isEmpty ?? true)) {
-              _orders[i].trackingStatus = 'return'; // Update locally
+          for (int i = 0; i < orders0.length; i++) {
+            if (selectedProducts[i] && (orders0[i].trackingStatus?.isEmpty ?? true)) {
+              orders0[i].trackingStatus = 'return'; // Update locally
             }
           }
 
@@ -207,7 +200,7 @@ class CancelledProvider extends ChangeNotifier {
       } catch (e) {
         print('Error: $e');
       } finally {
-        _isCancelling = false; // Reset loading state
+        isCancelling = false; // Reset loading state
         notifyListeners();
       }
     } else {
@@ -216,8 +209,8 @@ class CancelledProvider extends ChangeNotifier {
   }
 
   void onSearchChanged(String query) {
-    if (_debounce?.isActive ?? false) _debounce!.cancel();
-    _debounce = Timer(const Duration(milliseconds: 500), () {
+    if (debounce?.isActive ?? false) debounce!.cancel();
+    debounce = Timer(const Duration(milliseconds: 500), () {
       if (query.isEmpty) {
         // If query is empty, reload all orders
         fetchOrdersWithStatus10();
@@ -230,17 +223,17 @@ class CancelledProvider extends ChangeNotifier {
   Future<List<Order>> searchOrders(String query) async {
     if (query.isEmpty) {
       await fetchOrdersWithStatus10();
-      return _orders;
+      return orders0;
     }
 
-    _isLoading = true;
+    isLoading = true;
     notifyListeners();
 
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('authToken') ?? '';
+    final warehouseId = prefs.getString('warehouseId') ?? '';
 
-    final url =
-        'https://inventory-management-backend-s37u.onrender.com/orders?orderStatus=9&order_id=$query';
+    final url = '${await Constants.getBaseUrl()}/orders?warehouse=$warehouseId&orderStatus=10&order_id=$query';
 
     print('Searching failed orders with term: $query');
 
@@ -266,20 +259,20 @@ class CancelledProvider extends ChangeNotifier {
           print('No data found in response.');
         }
 
-        _orders = orders;
+        orders0 = orders;
         print('Orders fetched: ${orders.length}');
       } else {
         print('Failed to load orders: ${response.statusCode}');
-        _orders = [];
+        orders0 = [];
       }
     } catch (error) {
       print('Error searching failed orders: $error');
-      _orders = [];
+      orders0 = [];
     } finally {
-      _isLoading = false;
+      isLoading = false;
       notifyListeners();
     }
 
-    return _orders;
+    return orders0;
   }
 }
