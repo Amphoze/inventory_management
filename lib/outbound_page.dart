@@ -408,20 +408,51 @@ class _OutboundPageState extends State<OutboundPage> with TickerProviderStateMix
                             ),
                     ),
                     const SizedBox(width: 8),
+
                     ElevatedButton(
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.grey,
+                        backgroundColor: Colors.orange.shade300,
                       ),
-                      onPressed: () {
+                      onPressed: () async {
                         pro.searchController.clear();
                         pro.resetFilter();
                         pro.fetchOrders();
                         pro.resetSelections();
                         pro.clearSearchResults();
-                        print('Ready to Confirm Orders refreshed');
                       },
-                      child: const Text('Refresh'),
+                      child: const Text('Reset Filters'),
                     ),
+                    const SizedBox(width: 8),
+                    IconButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.white,
+                        ),
+                        onPressed: () async {
+                          // pro.searchController.clear();
+                          // pro.resetFilter();
+                          pro.fetchOrders();
+                          // pro.resetSelections();
+                          // pro.clearSearchResults();
+                        },
+                        icon: const Icon(
+                          Icons.refresh,
+                          color: AppColors.primaryBlue,
+                        )
+                    ),
+                    // ElevatedButton(
+                    //   style: ElevatedButton.styleFrom(
+                    //     backgroundColor: Colors.grey,
+                    //   ),
+                    //   onPressed: () {
+                    //     pro.searchController.clear();
+                    //     pro.resetFilter();
+                    //     pro.fetchOrders();
+                    //     pro.resetSelections();
+                    //     pro.clearSearchResults();
+                    //     print('Ready to Confirm Orders refreshed');
+                    //   },
+                    //   child: const Text('Refresh'),
+                    // ),
                     const SizedBox(width: 8),
                     Container(
                       width: 300,

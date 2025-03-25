@@ -400,31 +400,57 @@ class _AccountsPageState extends State<AccountsPage> {
                                 ),
                         ),
                         const SizedBox(width: 8),
+
                         ElevatedButton(
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.primaryBlue,
+                            backgroundColor: Colors.orange.shade300,
                           ),
-                          onPressed: accountsProvider.isLoading
-                              ? null
-                              : () async {
-                                  accountsProvider.accountsSearch.clear();
-                                  accountsProvider.resetFilterData();
-                                  await accountsProvider.fetchOrdersWithStatus2();
-                                },
-                          child: accountsProvider.isLoading
-                              ? const SizedBox(
-                                  width: 16,
-                                  height: 16,
-                                  child: CircularProgressIndicator(
-                                    color: Colors.white,
-                                    strokeWidth: 2,
-                                  ),
-                                )
-                              : const Text(
-                                  'Refresh',
-                                  style: TextStyle(color: Colors.white),
-                                ),
+                          onPressed: () async {
+                            accountsProvider.accountsSearch.clear();
+                            accountsProvider.resetFilterData();
+                            await accountsProvider.fetchOrdersWithStatus2();
+                          },
+                          child: const Text('Reset Filters'),
                         ),
+                        const SizedBox(width: 8),
+                        IconButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.white,
+                            ),
+                            onPressed: () async {
+                              await accountsProvider.fetchOrdersWithStatus2();
+                            },
+                            icon: const Icon(
+                              Icons.refresh,
+                              color: AppColors.primaryBlue,
+                            )
+                        ),
+
+                        // ElevatedButton(
+                        //   style: ElevatedButton.styleFrom(
+                        //     backgroundColor: AppColors.primaryBlue,
+                        //   ),
+                        //   onPressed: accountsProvider.isLoading
+                        //       ? null
+                        //       : () async {
+                        //           accountsProvider.accountsSearch.clear();
+                        //           accountsProvider.resetFilterData();
+                        //           await accountsProvider.fetchOrdersWithStatus2();
+                        //         },
+                        //   child: accountsProvider.isLoading
+                        //       ? const SizedBox(
+                        //           width: 16,
+                        //           height: 16,
+                        //           child: CircularProgressIndicator(
+                        //             color: Colors.white,
+                        //             strokeWidth: 2,
+                        //           ),
+                        //         )
+                        //       : const Text(
+                        //           'Refresh',
+                        //           style: TextStyle(color: Colors.white),
+                        //         ),
+                        // ),
                       ],
                     ),
                   ],

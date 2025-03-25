@@ -76,10 +76,12 @@ class _InvoicedOrdersState extends State<InvoicedOrders> with SingleTickerProvid
   }
 
 // Refresh ordersBooked for both B2B and B2C
-  void _refreshBookedOrders() {
+  void _refreshBookedOrders({bool removeFilter = true}) {
     final accountsProvider = Provider.of<AccountsProvider>(context, listen: false);
     accountsProvider.fetchInvoicedOrders(accountsProvider.currentPage);
-    accountsProvider.resetFilterData();
+    if (removeFilter) {
+      accountsProvider.resetFilterData();
+    }
     accountsProvider.invoiceSearch.clear();
   }
 
@@ -540,29 +542,55 @@ class _InvoicedOrdersState extends State<InvoicedOrders> with SingleTickerProvid
                     ),
             ),
             const SizedBox(width: 8),
+
             ElevatedButton(
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primaryBlue,
+                backgroundColor: Colors.orange.shade300,
               ),
-              onPressed: accountsProvider.isLoadingBooked
-                  ? null
-                  : () async {
-                      _refreshBookedOrders();
-                    },
-              child: accountsProvider.isLoadingBooked
-                  ? const SizedBox(
-                      width: 16,
-                      height: 16,
-                      child: CircularProgressIndicator(
-                        color: Colors.white,
-                        strokeWidth: 2,
-                      ),
-                    )
-                  : const Text(
-                      'Refresh',
-                      style: TextStyle(color: Colors.white),
-                    ),
+              onPressed: () async {
+                _refreshBookedOrders();
+              },
+              child: const Text('Reset Filters'),
             ),
+
+            const SizedBox(width: 8),
+
+            IconButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.white,
+                ),
+                onPressed: () async {
+                  _refreshBookedOrders(removeFilter: false);
+                },
+                icon: const Icon(
+                  Icons.refresh,
+                  color: AppColors.primaryBlue,
+                )
+            ),
+
+            // ElevatedButton(
+            //   style: ElevatedButton.styleFrom(
+            //     backgroundColor: AppColors.primaryBlue,
+            //   ),
+            //   onPressed: accountsProvider.isLoadingBooked
+            //       ? null
+            //       : () async {
+            //           _refreshBookedOrders();
+            //         },
+            //   child: accountsProvider.isLoadingBooked
+            //       ? const SizedBox(
+            //           width: 16,
+            //           height: 16,
+            //           child: CircularProgressIndicator(
+            //             color: Colors.white,
+            //             strokeWidth: 2,
+            //           ),
+            //         )
+            //       : const Text(
+            //           'Refresh',
+            //           style: TextStyle(color: Colors.white),
+            //         ),
+            // ),
           ],
         ),
       ),

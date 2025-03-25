@@ -148,7 +148,8 @@ class _BaApprovePageState extends State<BaApprovePage> {
                     const SizedBox(width: 8),
                     Row(
                       children: [
-                        // date filter
+
+                        // Date Filter
                         Column(
                           children: [
                             Text(
@@ -218,8 +219,10 @@ class _BaApprovePageState extends State<BaApprovePage> {
                               ),
                           ],
                         ),
+
                         const SizedBox(width: 8),
-                        // marketplace filter
+
+                        // Marketplace Filter
                         StatefulBuilder(builder: (context, setState) {
                           return Column(
                             children: [
@@ -261,8 +264,10 @@ class _BaApprovePageState extends State<BaApprovePage> {
                             ],
                           );
                         }),
+
                         const SizedBox(width: 8),
-                        // approve
+
+                        // Approve
                         ElevatedButton(
                           style: ElevatedButton.styleFrom(
                             backgroundColor: AppColors.primaryBlue,
@@ -284,8 +289,10 @@ class _BaApprovePageState extends State<BaApprovePage> {
                                   style: TextStyle(color: Colors.white),
                                 ),
                         ),
+
                         const SizedBox(width: 8),
-                        // cancel
+
+                        // Cancel
                         ElevatedButton(
                           style: ElevatedButton.styleFrom(
                             backgroundColor: AppColors.cardsred,
@@ -359,35 +366,67 @@ class _BaApprovePageState extends State<BaApprovePage> {
                                   style: TextStyle(color: Colors.white),
                                 ),
                         ),
+
                         const SizedBox(width: 8),
-                        // refresh
+
+                        // Reset
                         ElevatedButton(
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.primaryBlue,
+                            backgroundColor: Colors.orange.shade300,
                           ),
-                          onPressed: baApproveProvider.isRefreshingOrders
-                              ? null
-                              : () async {
-                                  setState(() {
-                                    selectedCourier = 'All';
-                                    _selectedDate = 'Select Date';
-                                  });
-                                  await baApproveProvider.fetchOrdersWithStatus2();
-                                },
-                          child: baApproveProvider.isRefreshingOrders
-                              ? const SizedBox(
-                                  width: 16,
-                                  height: 16,
-                                  child: CircularProgressIndicator(
-                                    color: Colors.white,
-                                    strokeWidth: 2,
-                                  ),
-                                )
-                              : const Text(
-                                  'Refresh',
-                                  style: TextStyle(color: Colors.white),
-                                ),
+                          onPressed: () async {
+                            setState(() {
+                              selectedCourier = 'All';
+                              _selectedDate = 'Select Date';
+                            });
+                            await baApproveProvider.fetchOrdersWithStatus2();
+                          },
+                          child: const Text('Reset Filters'),
                         ),
+
+                        const SizedBox(width: 8),
+
+                        // Refresh
+                        IconButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.white,
+                            ),
+                            onPressed: () async {
+                              baApproveProvider.fetchOrdersWithStatus2(date: picked, market: selectedCourier);
+                            },
+                            icon: const Icon(
+                              Icons.refresh,
+                              color: AppColors.primaryBlue,
+                            )
+                        ),
+
+                        // ElevatedButton(
+                        //   style: ElevatedButton.styleFrom(
+                        //     backgroundColor: AppColors.primaryBlue,
+                        //   ),
+                        //   onPressed: baApproveProvider.isRefreshingOrders
+                        //       ? null
+                        //       : () async {
+                        //           setState(() {
+                        //             selectedCourier = 'All';
+                        //             _selectedDate = 'Select Date';
+                        //           });
+                        //           await baApproveProvider.fetchOrdersWithStatus2();
+                        //         },
+                        //   child: baApproveProvider.isRefreshingOrders
+                        //       ? const SizedBox(
+                        //           width: 16,
+                        //           height: 16,
+                        //           child: CircularProgressIndicator(
+                        //             color: Colors.white,
+                        //             strokeWidth: 2,
+                        //           ),
+                        //         )
+                        //       : const Text(
+                        //           'Refresh',
+                        //           style: TextStyle(color: Colors.white),
+                        //         ),
+                        // ),
                       ],
                     ),
                   ],

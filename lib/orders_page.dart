@@ -139,45 +139,33 @@ class _OrdersNewPageState extends State<OrdersNewPage> with TickerProviderStateM
       key: _scaffoldMessengerKey,
       backgroundColor: Colors.white,
       endDrawer: const ChatScreen(),
-      appBar: _buildAppBar(),
-      body: _buildBody(),
-    );
-  }
-
-  AppBar _buildAppBar() {
-    return AppBar(
-      backgroundColor: Colors.white,
-      elevation: 0,
-      toolbarHeight: 0, // Removes space above the tabs
-      bottom: PreferredSize(
-        preferredSize: const Size.fromHeight(50),
-        child: _buildTabBar(),
+      appBar: AppBar(
+        backgroundColor: Colors.white,
+        elevation: 0,
+        toolbarHeight: 0,
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(50),
+          child:TabBar(
+            controller: _tabController,
+            tabs: const [
+              Tab(text: 'Ready to Confirm'),
+              Tab(text: 'Failed Orders'),
+            ],
+            indicatorColor: Colors.blue,
+            labelColor: Colors.black,
+            unselectedLabelColor: Colors.grey,
+            indicatorWeight: 3,
+            indicatorSize: TabBarIndicatorSize.tab,
+          ),
+        ),
       ),
-    );
-  }
-
-  Widget _buildTabBar() {
-    return TabBar(
-      controller: _tabController,
-      tabs: const [
-        Tab(text: 'Ready to Confirm'),
-        Tab(text: 'Failed Orders'),
-      ],
-      indicatorColor: Colors.blue,
-      labelColor: Colors.black,
-      unselectedLabelColor: Colors.grey,
-      indicatorWeight: 3,
-      indicatorSize: TabBarIndicatorSize.tab,
-    );
-  }
-
-  Widget _buildBody() {
-    return TabBarView(
-      controller: _tabController,
-      children: [
-        _buildReadyToConfirmTab(),
-        _buildFailedOrdersTab(),
-      ],
+      body: TabBarView(
+        controller: _tabController,
+        children: [
+          _buildReadyToConfirmTab(),
+          _buildFailedOrdersTab(),
+        ],
+      ),
     );
   }
 
@@ -203,15 +191,17 @@ class _OrdersNewPageState extends State<OrdersNewPage> with TickerProviderStateM
                 ),
                 Row(
                   children: [
+                    const SizedBox(width: 8),
                     Column(
                       children: [
                         Text(
                           ordersProvider.selectedReadyDate,
                           style: TextStyle(
                             fontSize: 11,
-                            color: ordersProvider.selectedReadyDate == 'Select Date' ? Colors.grey : AppColors.primaryBlue,
+                            color: ordersProvider.selectedReadyDate == 'Select Date' ? Colors.black : AppColors.primaryBlue,
                           ),
                         ),
+
                         IconButton(
                           tooltip: 'Filter by Date',
                           onPressed: () async {
@@ -244,12 +234,17 @@ class _OrdersNewPageState extends State<OrdersNewPage> with TickerProviderStateM
 
                             Logger().e('picked: ${ordersProvider.readyPicked}');
                           },
+                          style: IconButton.styleFrom(
+                            backgroundColor: Colors.white,
+                            padding: const EdgeInsets.all(5)
+                          ),
                           icon: const Icon(
                             Icons.calendar_today,
                             size: 30,
                             color: AppColors.primaryBlue,
                           ),
                         ),
+
                         if (ordersProvider.selectedReadyDate != 'Select Date')
                           Tooltip(
                             message: 'Clear selected Date',
@@ -270,16 +265,26 @@ class _OrdersNewPageState extends State<OrdersNewPage> with TickerProviderStateM
                           ),
                       ],
                     ),
-                    const SizedBox(width: 8),
+                    const SizedBox(width: 10),
                     Column(
                       children: [
                         Text(
                           ordersProvider.selectedReadyCourier,
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: ordersProvider.selectedReadyCourier == 'All' ? Colors.black : AppColors.primaryBlue,
+                          ),
                         ),
+
                         Consumer<MarketplaceProvider>(
                           builder: (context, provider, child) {
                             return PopupMenuButton<String>(
                               tooltip: 'Filter by Marketplace',
+                              icon: const Icon(
+                                Icons.filter_alt_outlined,
+                                size: 30,
+                                color: Colors.black,
+                              ),
                               onSelected: (String value) {
                                 setState(() {
                                   ordersProvider.selectedReadyCourier = value;
@@ -296,19 +301,13 @@ class _OrdersNewPageState extends State<OrdersNewPage> with TickerProviderStateM
                                   child: Text('All'),
                                 ),
                               ],
-                              child: const IconButton(
-                                onPressed: null,
-                                icon: Icon(
-                                  Icons.filter_alt_outlined,
-                                  size: 30,
-                                ),
-                              ),
+                              // child:
                             );
                           },
                         ),
                       ],
                     ),
-                    const SizedBox(width: 8),
+                    const SizedBox(width: 10),
                     ElevatedButton(
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.primaryBlue,
@@ -504,7 +503,7 @@ class _OrdersNewPageState extends State<OrdersNewPage> with TickerProviderStateM
                     const SizedBox(width: 8),
                     ElevatedButton(
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.grey,
+                        backgroundColor: Colors.orange.shade300,
                       ),
                       onPressed: () async {
                         ordersProvider.searchControllerReady.clear();
@@ -512,7 +511,20 @@ class _OrdersNewPageState extends State<OrdersNewPage> with TickerProviderStateM
                         await ordersProvider.fetchReadyOrders();
                         ordersProvider.resetSelections();
                       },
-                      child: const Text('Refresh'),
+                      child: const Text('Reset Filters'),
+                    ),
+                    const SizedBox(width: 8),
+                    IconButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.white,
+                      ),
+                      onPressed: () async {
+                        await ordersProvider.fetchReadyOrders();
+                      },
+                      icon: const Icon(
+                        Icons.refresh,
+                        color: AppColors.primaryBlue,
+                      )
                     ),
                     const SizedBox(width: 8),
                     Container(
@@ -1665,16 +1677,28 @@ class _OrdersNewPageState extends State<OrdersNewPage> with TickerProviderStateM
                     const SizedBox(width: 8),
                     ElevatedButton(
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.grey,
+                        backgroundColor: Colors.orange.shade300,
                       ),
                       onPressed: () async {
                         ordersProvider.searchControllerFailed.clear();
                         ordersProvider.resetFailedFilterData();
                         await ordersProvider.fetchFailedOrders();
                         ordersProvider.resetSelections();
-                        print('Failed Orders refreshed');
                       },
-                      child: const Text('Refresh'),
+                      child: const Text('Reset Filters'),
+                    ),
+                    const SizedBox(width: 8),
+                    IconButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.white,
+                        ),
+                        onPressed: () async {
+                          await ordersProvider.fetchFailedOrders();
+                        },
+                        icon: const Icon(
+                          Icons.refresh,
+                          color: AppColors.primaryBlue,
+                        )
                     ),
                     const SizedBox(width: 8),
                     Container(
