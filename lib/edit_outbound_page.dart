@@ -1163,16 +1163,11 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
                                     enabled: false,
                                   ),
                                   const SizedBox(height: 10),
-                                  GestureDetector(
-                                    onTap: () => _selectDate(context, false),
-                                    child: AbsorbPointer(
-                                      child: _buildTextField(
-                                        controller: _dateController,
-                                        label: "Date",
-                                        enabled: false,
-                                        icon: Icons.date_range,
-                                      ),
-                                    ),
+                                  _buildTextField(
+                                    controller: _dateController,
+                                    label: "Date",
+                                    enabled: false,
+                                    icon: Icons.date_range,
                                   ),
                                   const SizedBox(height: 10),
                                   Consumer<OrdersProvider>(
