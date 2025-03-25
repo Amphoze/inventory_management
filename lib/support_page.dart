@@ -524,7 +524,7 @@ class _SupportPageState extends State<SupportPage> {
                                             tooltip: 'Support Chat',
                                             icon: const Icon(Icons.message),
                                             onPressed: () {
-                                              pro.setUserData(order.orderId, email!, role!);
+                                              pro.setUserData(order.orderId, true);
                                               Scaffold.of(context).openEndDrawer();
                                             },
                                           ),

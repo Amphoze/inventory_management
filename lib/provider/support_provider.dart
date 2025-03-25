@@ -13,6 +13,11 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'chat_provider.dart';
 
 class SupportProvider with ChangeNotifier {
+
+  SupportProvider() {
+
+  }
+
   bool _isLoading = false;
   bool _selectAll = false;
   List<bool> _selectedProducts = [];
@@ -24,12 +29,10 @@ class SupportProvider with ChangeNotifier {
   final TextEditingController _textEditingController = TextEditingController();
   Timer? _debounce;
   String? _orderId = '';
-  String? _currentUserEmail = '';
-  String? _currentUserRole = '';
+  bool _canSendMessage = true;
 
   String? get orderId => _orderId;
-  String? get currentUserEmail => _currentUserEmail;
-  String? get currentUserRole => _currentUserRole;
+  bool get canSendMessage => _canSendMessage;
 
   bool get selectAll => _selectAll;
   List<bool> get selectedProducts => _selectedProducts;
@@ -45,11 +48,23 @@ class SupportProvider with ChangeNotifier {
   bool isRefreshingOrders = false;
   bool isCancel = false;
 
-  void setUserData(String orderId, String currentUserEmail, String currentUserRole) {
+  String? _currentUserRole;
+  String? get currentUserRole => _currentUserRole;
+
+  String? _currentUserEmail;
+  String? get currentUserEmail => _currentUserEmail;
+
+  void setUserData(String orderId,  bool canSendMessage) {
     _orderId = orderId;
-    _currentUserEmail = currentUserEmail;
-    _currentUserRole = currentUserRole;
+    _canSendMessage = canSendMessage;
+    initUserDetails();
     notifyListeners();
+  }
+
+  initUserDetails() async {
+    final prefs = await SharedPreferences.getInstance();
+    _currentUserRole = prefs.getString('userPrimaryRole');
+    _currentUserEmail = prefs.getString('email');
   }
 
   void setCancelStatus(bool status) {

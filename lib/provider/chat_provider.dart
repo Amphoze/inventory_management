@@ -1,6 +1,7 @@
 import 'dart:developer';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../Api/notification_service.dart';
 
@@ -82,12 +83,19 @@ class ChatProvider extends ChangeNotifier {
   }) async {
     if (message.trim().isEmpty) return;
 
+    final pref = await SharedPreferences.getInstance();
+
+    String? email = pref.getString('email');
+    String? userRole = pref.getString('userPrimaryRole');
+
+    if (email == null || userRole == null) return;
+
     final body = {
-      'sender': senderEmail ?? _currentUserEmail,
+      'sender': email,
       'text': message.trim(),
       'timestamp': FieldValue.serverTimestamp(),
-      'readBy': {senderEmail ?? _currentUserEmail: true},
-      'userRole': userRole ?? _currentUserRole,
+      'readBy': {email: true},
+      'userRole': userRole,
     };
 
     log('message body for order $orderId: $body');

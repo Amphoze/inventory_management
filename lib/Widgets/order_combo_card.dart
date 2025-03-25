@@ -468,7 +468,6 @@ class _OrderComboCardState extends State<OrderComboCard> {
                         tooltip: 'Report Bug',
                         onPressed: () {
                           TextEditingController messageController = TextEditingController();
-                          context.read<SupportProvider>().setUserData(widget.order.orderId, email!, role!);
                           showDialog(
                             context: context,
                             builder: (context) {
@@ -634,13 +633,26 @@ class _OrderComboCardState extends State<OrderComboCard> {
                         icon: const Icon(Icons.bug_report_outlined),
                       ),
                       const SizedBox(width: 8),
-                      if (widget.order.mistakeStatus ?? false) ...[
+
+                      if (widget.order.mistakes.any((e) => e.status)) ...[
+
                         const SizedBox(width: 8),
+
                         IconButton(
                           tooltip: 'Support Chat',
                           icon: const Icon(Icons.message),
                           onPressed: () {
-                            context.read<SupportProvider>().setUserData(widget.order.orderId, email!, role!);
+
+                            bool canSendMessage = false;
+
+                            if (widget.order.mistakes.isEmpty) {
+                              canSendMessage = true;
+                            } else {
+                              canSendMessage = !widget.order.mistakes.last.status;
+                            }
+
+                            context.read<SupportProvider>().setUserData(widget.order.orderId, canSendMessage);
+
                             context.read<BookProvider>().scaffoldKey.currentState?.openEndDrawer();
                           },
                         ),

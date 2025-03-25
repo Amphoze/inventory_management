@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -956,7 +957,6 @@ class _OrdersNewPageState extends State<OrdersNewPage> with TickerProviderStateM
                                               tooltip: 'Report Bug',
                                               onPressed: () {
                                                 TextEditingController messageController = TextEditingController();
-                                                context.read<SupportProvider>().setUserData(order.orderId, email!, role!);
                                                 showDialog(
                                                   context: context,
                                                   builder: (context) {
@@ -1125,13 +1125,28 @@ class _OrdersNewPageState extends State<OrdersNewPage> with TickerProviderStateM
                                               },
                                               icon: const Icon(Icons.bug_report_outlined),
                                             ),
-                                            if (order.mistakeStatus ?? false) ...[
+
+                                            if (order.mistakes.any((e) => e.status)) ...[
                                               const SizedBox(width: 8),
+
                                               IconButton(
                                                 tooltip: 'Support Chat',
                                                 icon: const Icon(Icons.message),
                                                 onPressed: () {
-                                                  context.read<SupportProvider>().setUserData(order.orderId, email!, role!);
+
+                                                  bool canSendMessage = false;
+
+                                                  if (order.mistakes.isEmpty) {
+                                                    log('1) Can Send Message set to true');
+                                                    canSendMessage = true;
+                                                  } else {
+                                                    canSendMessage = order.mistakes.last.status;
+                                                    log('2) Can Send Message set to $canSendMessage');
+                                                  }
+                                                  
+                                                  log('Order Mistakes are ${order.mistakes.map((mistake) => jsonEncode(mistake.toJson())).toList()}');
+
+                                                  context.read<SupportProvider>().setUserData(order.orderId, canSendMessage);
                                                   Scaffold.of(context).openEndDrawer();
                                                 },
                                               ),

@@ -1,9 +1,12 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:inventory_management/provider/chat_provider.dart';
 import 'package:inventory_management/provider/support_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'Custom-Files/colors.dart';
 
@@ -58,8 +61,7 @@ class ChatScreenState extends State<ChatScreen> {
     supportProvider = Provider.of<SupportProvider>(context, listen: false);
     userName = supportProvider.currentUserEmail?.split('@')[0] ?? '';
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      chatProvider.initializeChat(
-          supportProvider.orderId ?? '', supportProvider.currentUserEmail ?? '', supportProvider.currentUserRole ?? '');
+      chatProvider.initializeChat(supportProvider.orderId ?? '', supportProvider.currentUserEmail ?? '', supportProvider.currentUserRole ?? '');
     });
 
     _scrollController.addListener(() {
@@ -89,12 +91,19 @@ class ChatScreenState extends State<ChatScreen> {
     final text = _messageController.text.trim();
     if (text.isEmpty) return;
 
+    final pref = await SharedPreferences.getInstance();
+
+    String? email = pref.getString('email');
+    String? userRole = pref.getString('userPrimaryRole');
+
+    if (email == null || userRole == null) return;
+
     final pendingMessage = Message(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
-      sender: supportProvider.currentUserEmail ?? '',
+      sender: email,
       text: text,
       timestamp: DateTime.now(),
-      userRole: supportProvider.currentUserRole ?? '',
+      userRole: userRole,
       isPending: true,
     );
 
@@ -179,7 +188,19 @@ class ChatScreenState extends State<ChatScreen> {
                 child: _buildMessageList(),
               ),
             ),
-            _buildMessageInput(),
+
+            Consumer<SupportProvider>(
+              builder: (context, provider, _) {
+
+                log('Can Send Message :- ${provider.canSendMessage}');
+
+                return provider.canSendMessage
+                    ?
+                _buildMessageInput()
+                    :
+                const SizedBox();
+              },
+            ),
           ],
         ),
       ),
@@ -312,6 +333,7 @@ class ChatScreenState extends State<ChatScreen> {
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
           itemCount: allMessages.length,
           itemBuilder: (context, index) {
+
             final message = allMessages[index];
             final bool isMe = message.sender == supportProvider.currentUserEmail;
             final DateTime istTime = message.timestamp.toLocal().add(const Duration(hours: 5, minutes: 30));

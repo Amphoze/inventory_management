@@ -89,8 +89,6 @@ class Order {
   String? selectedCourier;
 
   final List<Mistake> mistakes;
-  String? mistakeUser;
-  bool? mistakeStatus;
 
   String? selectedCourierId;
 
@@ -100,8 +98,6 @@ class Order {
     this.picklistId = '',
     this.rebookedBy,
     required this.mistakes,
-    this.mistakeUser,
-    this.mistakeStatus,
     this.isHold,
     this.selectedCourier = '',
     this.selectedCourierId = '',
@@ -234,7 +230,7 @@ class Order {
 
   factory Order.fromJson(Map<String, dynamic> json) {
 
-    Logger().i("Mistakes :- ${List.from(json['isMistake'] ?? [])} for Order ID :- ${json['order_id'] ?? 'null'}");
+    // Logger().i("Mistakes :- ${List.from(json['isMistake'] ?? [])} for Order ID :- ${json['order_id'] ?? 'null'}");
 
     return Order(
       callStatus: (json['callStatus'] as List? ?? []).map((e) => CallStatus.fromJson(e)).toList(),
@@ -260,9 +256,6 @@ class Order {
           : (json['isMistake'] as List<dynamic>)
           .map((e) => Mistake.fromJson(e as Map<String, dynamic>))
           .toList(),
-
-      mistakeUser: (json['isMistake'] as List?)?.isNotEmpty == true ? (json['isMistake'].last['user'] ?? '') : null,
-      mistakeStatus: (json['isMistake'] as List?)?.any((e) => e['status'] == true) == true ? true : null,
 
       outBoundBy: json['isOutBound'] ?? {},
       confirmedBy: json['confirmedBy'] ?? {},
