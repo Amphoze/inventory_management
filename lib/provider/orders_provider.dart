@@ -435,7 +435,21 @@ class OrdersProvider with ChangeNotifier {
 
       if (responseReady.statusCode == 200) {
         final jsonData = json.decode(responseReady.body);
-        _readyOrders = (jsonData['orders'] as List).map((order) => Order.fromJson(order)).toList();
+
+        List<Order> rOrders = [];
+
+        List<dynamic> orders = jsonData['orders'] ?? [];
+
+        for (var order in orders) {
+          try {
+            rOrders.add(Order.fromJson(order));
+          } catch (e, s) {
+            log('Error parsing order :- $e\n$s');
+          }
+        }
+
+        // _readyOrders = (jsonData['orders'] as List).map((order) => Order.fromJson(order)).toList();
+        _readyOrders = rOrders;
         _totalReadyPages = jsonData['totalPages'] ?? 1;
         _currentPageReady = page;
 
@@ -868,7 +882,7 @@ class OrdersProvider with ChangeNotifier {
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        log('data: $data');
+        // log('data: $data');
         _readyOrders = (data['orders'] as List).map((order) => Order.fromJson(order)).toList();
         // _readyOrders = [Order.fromJson(data)];
         log('selectedReadyOrders: $selectedReadyOrders');

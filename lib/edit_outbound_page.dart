@@ -21,6 +21,9 @@ import 'package:provider/provider.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'feature/country_codes_and_states.dart';
+import 'feature/widgets/customer_searchable_text_field.dart';
+
 class EditOutboundPage extends StatefulWidget {
   final Order order;
   final bool isBookPage;
@@ -228,11 +231,17 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
     _billingAddress1Controller = TextEditingController(text: widget.order.billingAddress?.address1 ?? '');
     _billingAddress2Controller = TextEditingController(text: widget.order.billingAddress?.address2 ?? '');
     _billingPhoneController = TextEditingController(text: widget.order.billingAddress?.phone?.toString() ?? '');
+
     _billingCityController = TextEditingController(text: widget.order.billingAddress?.city ?? '');
     _billingPincodeController = TextEditingController(text: widget.order.billingAddress?.pincode?.toString() ?? '');
     _billingStateController = TextEditingController(text: widget.order.billingAddress?.state ?? '');
-    _billingCountryController = TextEditingController(text: widget.order.billingAddress?.country ?? '');
-    _billingCountryCodeController = TextEditingController(text: widget.order.billingAddress?.countryCode ?? '');
+
+    String billingCountry = widget.order.billingAddress?.country ?? '';
+    String billingCountryCode = countryCodes[billingCountry] ?? '';
+
+    _billingCountryController = TextEditingController(text: billingCountry);
+    _billingCountryCodeController = TextEditingController(text: billingCountryCode.isEmpty ? widget.order.billingAddress?.countryCode ?? '' : billingCountryCode);
+
     _shippingFirstNameController = TextEditingController(text: widget.order.shippingAddress?.firstName ?? '');
     _shippingLastNameController = TextEditingController(text: widget.order.shippingAddress?.lastName ?? '');
     _shippingEmailController = TextEditingController(text: widget.order.shippingAddress?.email ?? '');
@@ -242,8 +251,12 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
     _shippingCityController = TextEditingController(text: widget.order.shippingAddress?.city ?? '');
     _shippingPincodeController = TextEditingController(text: widget.order.shippingAddress?.pincode?.toString() ?? '');
     _shippingStateController = TextEditingController(text: widget.order.shippingAddress?.state ?? '');
-    _shippingCountryController = TextEditingController(text: widget.order.shippingAddress?.country ?? '');
-    _shippingCountryCodeController = TextEditingController(text: widget.order.shippingAddress?.countryCode ?? '');
+
+    String shippingCountry = widget.order.shippingAddress?.country ?? '';
+    String shippingCountryCode = countryCodes[billingCountry] ?? '';
+
+    _shippingCountryController = TextEditingController(text: shippingCountry);
+    _shippingCountryCodeController = TextEditingController(text: shippingCountryCode.isEmpty ? widget.order.shippingAddress?.countryCode ?? '' : shippingCountryCode);
 
     log("_prepaidAmountController: ${_prepaidAmountController.text}");
     log("_discountPercentController: ${_discountPercentController.text}");
@@ -2093,7 +2106,9 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
                                 ),
                               ],
                             ),
+
                             const SizedBox(height: 10),
+
                             Row(
                               children: [
                                 Expanded(
@@ -2104,6 +2119,18 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
                                   ),
                                 ),
                                 const SizedBox(width: 10),
+
+                                (_billingCountryController.text.trim().isEmpty || _billingCountryController.text.trim().toLowerCase() == 'india')
+                                    ?
+                                Expanded(
+                                  child: CustomerSearchableTextField(
+                                    items: indianStates,
+                                    controller: _billingStateController,
+                                    icon: Icons.map,
+                                    label: 'State',
+                                  ),
+                                )
+                                    :
                                 Expanded(
                                   child: _buildTextField(
                                     controller: _billingStateController,
@@ -2111,7 +2138,9 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
                                     icon: Icons.map,
                                   ),
                                 ),
+
                                 const SizedBox(width: 10),
+
                                 Expanded(
                                   child: _buildTextField(
                                     controller: _billingCountryController,
@@ -2134,11 +2163,13 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
                                 const SizedBox(width: 10),
                                 Expanded(
                                   child: _buildNumberTextField(
-                                      controller: _billingPincodeController,
-                                      label: 'Pincode',
-                                      icon: Icons.code,
-                                      onFieldSubmitted: (value) =>
-                                          setState(() => getLocationDetails(context: context, pincode: value, isBilling: true))),
+                                    controller: _billingPincodeController,
+                                    label: 'Pincode',
+                                    icon: Icons.code,
+                                    onFieldSubmitted: (value) {
+                                      getLocationDetails(context: context, pincode: value, isBilling: true);
+                                    },
+                                  ),
                                 ),
                                 const SizedBox(width: 10),
                                 Expanded(
@@ -2235,6 +2266,18 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
                                   ),
                                 ),
                                 const SizedBox(width: 10),
+
+                                (_shippingCountryController.text.trim().isEmpty || _shippingCountryController.text.trim().toLowerCase() == 'india')
+                                    ?
+                                Expanded(
+                                  child: CustomerSearchableTextField(
+                                    items: indianStates,
+                                    controller: _shippingStateController,
+                                    label: 'State',
+                                    icon: Icons.map,
+                                  ),
+                                )
+                                    :
                                 Expanded(
                                   child: _buildTextField(
                                     controller: _shippingStateController,
@@ -2242,7 +2285,9 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
                                     icon: Icons.map,
                                   ),
                                 ),
+
                                 const SizedBox(width: 10),
+
                                 Expanded(
                                   child: _buildTextField(
                                     controller: _shippingCountryController,
@@ -2267,11 +2312,13 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
                                 const SizedBox(width: 10),
                                 Expanded(
                                   child: _buildNumberTextField(
-                                      controller: _shippingPincodeController,
-                                      label: 'Pincode',
-                                      icon: Icons.code,
-                                      onFieldSubmitted: (value) =>
-                                          setState(() => getLocationDetails(context: context, pincode: value, isBilling: false))),
+                                    controller: _shippingPincodeController,
+                                    label: 'Pincode',
+                                    icon: Icons.code,
+                                    onFieldSubmitted: (value) {
+                                      getLocationDetails(context: context, pincode: value, isBilling: false);
+                                    },
+                                  ),
                                 ),
                                 const SizedBox(width: 10),
                                 Expanded(
@@ -3202,6 +3249,7 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
   }
 
   Future<void> getLocationDetails({required BuildContext context, required String pincode, required bool isBilling}) async {
+
     Utils.showLoadingDialog(context, 'Fetching Address');
 
     try {
@@ -3227,12 +3275,16 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
             _billingStateController.text = state;
             _billingCityController.text = city;
             _billingCountryCodeController.text = countryCode;
+
           } else {
             _shippingCountryController.text = country;
             _shippingStateController.text = state;
             _shippingCityController.text = city;
             _shippingCountryCodeController.text = countryCode;
           }
+
+          setState(() {});
+
         } else {
           log('No location details found for the provided pincode :- ${response.body}');
           Utils.showSnackBar(context, 'No location details found for the provided pincode.');

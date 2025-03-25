@@ -1,4 +1,5 @@
 import 'package:intl/intl.dart';
+import 'package:logger/logger.dart';
 
 class Order {
   final List<CallStatus>? callStatus;
@@ -86,8 +87,11 @@ class Order {
   final String? warehouseName;
   final bool? isHold;
   String? selectedCourier;
+
+  final List<Mistake> mistakes;
   String? mistakeUser;
   bool? mistakeStatus;
+
   String? selectedCourierId;
 
   Order({
@@ -95,6 +99,7 @@ class Order {
     this.merged,
     this.picklistId = '',
     this.rebookedBy,
+    required this.mistakes,
     this.mistakeUser,
     this.mistakeStatus,
     this.isHold,
@@ -228,6 +233,9 @@ class Order {
   }
 
   factory Order.fromJson(Map<String, dynamic> json) {
+
+    Logger().i("Mistakes :- ${List.from(json['isMistake'] ?? [])} for Order ID :- ${json['order_id'] ?? 'null'}");
+
     return Order(
       callStatus: (json['callStatus'] as List? ?? []).map((e) => CallStatus.fromJson(e)).toList(),
       merged: json['merged'] ?? {},
@@ -244,8 +252,18 @@ class Order {
       warehouseName: json['warehouse']?['warehouse_id']?['name'] ?? '',
       isHold: json['warehouse']?['isHold'] ?? false,
       messages: json['messages'] ?? {},
+
+      // mistakes: json['isMistake'] == null ? [] : json['isMistake'].map((e) => Mistake.fromJson(e)).toList(),
+
+      mistakes: json['isMistake'] == null
+          ? []
+          : (json['isMistake'] as List<dynamic>)
+          .map((e) => Mistake.fromJson(e as Map<String, dynamic>))
+          .toList(),
+
       mistakeUser: (json['isMistake'] as List?)?.isNotEmpty == true ? (json['isMistake'].last['user'] ?? '') : null,
       mistakeStatus: (json['isMistake'] as List?)?.any((e) => e['status'] == true) == true ? true : null,
+
       outBoundBy: json['isOutBound'] ?? {},
       confirmedBy: json['confirmedBy'] ?? {},
       baApprovedBy: json['baApprovedBy'] ?? {},
@@ -937,5 +955,32 @@ class CallStatus {
       timestamp: DateTime.parse(json['timestamp']),
       id: json['_id'] ?? '',
     );
+  }
+}
+
+class Mistake {
+  final String id;
+  final bool status;
+  final String user;
+  final String timestamp;
+
+  Mistake({required this.id, required this.status, required this.user, required this.timestamp});
+
+  factory Mistake.fromJson(Map<String, dynamic> json) {
+    return Mistake(
+      id: json['_id'] ?? '',
+      status: json['status'] ?? false,
+      user: json['user'] ?? '',
+      timestamp: json['timestamp'] ?? '',
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      '_id': id,
+      'status': status,
+      'user': user,
+      'timestamp': timestamp,
+    };
   }
 }

@@ -621,776 +621,770 @@ class _OrdersNewPageState extends State<OrdersNewPage> with TickerProviderStateM
                                 .toList();
 
                             Logger().e('selectedReadyOrders: ${ordersProvider.selectedReadyOrders}');
-                            //////////////////////////////////////////////////////////
-                            return Stack(
-                              children: [
-                                // if (order.mistakeStatus ?? false)
-                                //   Align(
-                                //     alignment: Alignment.topLeft,
-                                //     child: HighlightedBannerCard(
-                                //       bannerText: 'Mistake',
-                                //       cardContent: Text(order.mistakeUser ?? ''),
-                                //     ),
-                                //   ),
-                                Card(
-                                  surfaceTintColor: Colors.white,
-                                  color: ordersProvider.selectedReadyOrders[index] ? Colors.grey[300] : Colors.grey[100],
-                                  elevation: 2,
-                                  margin: const EdgeInsets.all(8.0),
-                                  child: Padding(
-                                    padding: const EdgeInsets.all(8.0),
-                                    child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
+
+                            return Card(
+                              surfaceTintColor: Colors.white,
+                              color: ordersProvider.selectedReadyOrders[index] ? Colors.grey[300] : Colors.grey[100],
+                              elevation: 2,
+                              margin: const EdgeInsets.all(8.0),
+                              child: Padding(
+                                padding: const EdgeInsets.all(8.0),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                       children: [
-                                        Row(
-                                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                        Checkbox(
+                                          value: ordersProvider.selectedReadyOrders[index],
+                                          onChanged: (value) => ordersProvider.toggleOrderSelectionReady(value ?? false, index),
+                                        ),
+                                        Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
                                           children: [
-                                            Checkbox(
-                                              value: ordersProvider.selectedReadyOrders[index],
-                                              onChanged: (value) => ordersProvider.toggleOrderSelectionReady(value ?? false, index),
+                                            const Text(
+                                              'Order ID: ',
+                                              style: TextStyle(fontWeight: FontWeight.bold),
                                             ),
-                                            Column(
-                                              crossAxisAlignment: CrossAxisAlignment.start,
-                                              children: [
-                                                const Text(
-                                                  'Order ID: ',
-                                                  style: TextStyle(fontWeight: FontWeight.bold),
-                                                ),
-                                                Text(
-                                                  order.orderId ?? 'N/A',
-                                                  style: const TextStyle(
-                                                    fontWeight: FontWeight.bold,
-                                                    color: AppColors.primaryBlue,
+                                            Text(
+                                              order.orderId ?? 'N/A',
+                                              style: const TextStyle(
+                                                fontWeight: FontWeight.bold,
+                                                color: AppColors.primaryBlue,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                        Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            const Text(
+                                              'Date: ',
+                                              style: TextStyle(fontWeight: FontWeight.bold),
+                                            ),
+                                            if (order.date != null)
+                                              Text(
+                                                ordersProvider.formatDate(order.date!),
+                                                style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.primaryBlue),
+                                              ),
+                                          ],
+                                        ),
+                                        Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            const Text(
+                                              'Total Amount: ',
+                                              style: TextStyle(fontWeight: FontWeight.bold),
+                                            ),
+                                            Text(
+                                              'Rs. ${order.totalAmount ?? ''}',
+                                              style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.primaryBlue),
+                                            ),
+                                          ],
+                                        ),
+                                        Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            const Text(
+                                              'Total Items: ',
+                                              style: TextStyle(fontWeight: FontWeight.bold),
+                                            ),
+                                            Text(
+                                              '${order.items.fold(0, (total, item) => total + item.qty!)}',
+                                              style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.primaryBlue),
+                                            ),
+                                          ],
+                                        ),
+                                        Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            const Text(
+                                              'Total Weight: ',
+                                              style: TextStyle(fontWeight: FontWeight.bold),
+                                            ),
+                                            Text(
+                                              order.totalWeight.toStringAsFixed(2) ?? '',
+                                              style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.primaryBlue),
+                                            ),
+                                          ],
+                                        ),
+                                        Row(
+                                          children: [
+                                            IconButton(
+                                              tooltip: 'Edit Order',
+                                              onPressed: () async {
+                                                final result = await Navigator.push(
+                                                  context,
+                                                  MaterialPageRoute(
+                                                    builder: (context) => EditOutboundPage(
+                                                      order: order,
+                                                      isBookPage: false,
+                                                    ),
                                                   ),
-                                                ),
-                                              ],
+                                                );
+                                                if (result == true) {
+                                                  final readySearched = provider.searchControllerReady.text.trim();
+
+                                                  log('readySearched: $readySearched');
+                                                  log('result: $result');
+
+                                                  if (readySearched.isNotEmpty) {
+                                                    ordersProvider.searchReadyToConfirmOrders(readySearched);
+                                                  } else {
+                                                    ordersProvider.fetchReadyOrders(page: ordersProvider.currentPageReady);
+                                                  }
+                                                }
+                                              },
+                                              icon: const Icon(Icons.edit_note),
                                             ),
-                                            Column(
-                                              crossAxisAlignment: CrossAxisAlignment.start,
-                                              children: [
-                                                const Text(
-                                                  'Date: ',
-                                                  style: TextStyle(fontWeight: FontWeight.bold),
-                                                ),
-                                                if (order.date != null)
-                                                  Text(
-                                                    ordersProvider.formatDate(order.date!),
-                                                    style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.primaryBlue),
-                                                  ),
-                                              ],
-                                            ),
-                                            Column(
-                                              crossAxisAlignment: CrossAxisAlignment.start,
-                                              children: [
-                                                const Text(
-                                                  'Total Amount: ',
-                                                  style: TextStyle(fontWeight: FontWeight.bold),
-                                                ),
-                                                Text(
-                                                  'Rs. ${order.totalAmount ?? ''}',
-                                                  style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.primaryBlue),
-                                                ),
-                                              ],
-                                            ),
-                                            Column(
-                                              crossAxisAlignment: CrossAxisAlignment.start,
-                                              children: [
-                                                const Text(
-                                                  'Total Items: ',
-                                                  style: TextStyle(fontWeight: FontWeight.bold),
-                                                ),
-                                                Text(
-                                                  '${order.items.fold(0, (total, item) => total + item.qty!)}',
-                                                  style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.primaryBlue),
-                                                ),
-                                              ],
-                                            ),
-                                            Column(
-                                              crossAxisAlignment: CrossAxisAlignment.start,
-                                              children: [
-                                                const Text(
-                                                  'Total Weight: ',
-                                                  style: TextStyle(fontWeight: FontWeight.bold),
-                                                ),
-                                                Text(
-                                                  order.totalWeight.toStringAsFixed(2) ?? '',
-                                                  style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.primaryBlue),
-                                                ),
-                                              ],
-                                            ),
-                                            Row(
-                                              children: [
-                                                IconButton(
-                                                  tooltip: 'Edit Order',
-                                                  onPressed: () async {
-                                                    final result = await Navigator.push(
-                                                      context,
-                                                      MaterialPageRoute(
-                                                        builder: (context) => EditOutboundPage(
-                                                          order: order,
-                                                          isBookPage: false,
-                                                        ),
-                                                      ),
-                                                    );
-                                                    if (result == true) {
-                                                      final readySearched = provider.searchControllerReady.text.trim();
+                                            const SizedBox(width: 8),
+                                            IconButton(
+                                              tooltip: 'Edit warehouse',
+                                              onPressed: () {
+                                                showDialog(
+                                                  context: context,
+                                                  builder: (context) {
+                                                    String selectedWarehouse = order.warehouseName ?? '';
 
-                                                      log('readySearched: $readySearched');
-                                                      log('result: $result');
-
-                                                      if (readySearched.isNotEmpty) {
-                                                        ordersProvider.searchReadyToConfirmOrders(readySearched);
-                                                      } else {
-                                                        ordersProvider.fetchReadyOrders(page: ordersProvider.currentPageReady);
-                                                      }
-                                                    }
-                                                  },
-                                                  icon: const Icon(Icons.edit_note),
-                                                ),
-                                                const SizedBox(width: 8),
-                                                IconButton(
-                                                  tooltip: 'Edit warehouse',
-                                                  onPressed: () {
-                                                    showDialog(
-                                                      context: context,
-                                                      builder: (context) {
-                                                        String selectedWarehouse = order.warehouseName ?? '';
-
-                                                        return StatefulBuilder(
-                                                          builder: (context, setState) {
-                                                            return AlertDialog(
-                                                              title: Column(
-                                                                crossAxisAlignment: CrossAxisAlignment.start,
-                                                                children: [
-                                                                  const Text('Edit Warehouse', style: TextStyle(fontSize: 20)),
-                                                                  Text(order.orderId, style: const TextStyle(fontSize: 15)),
-                                                                ],
-                                                              ),
-                                                              content: Consumer<LocationProvider>(builder: (context, pro, child) {
-                                                                return DropdownButton(
-                                                                  value: selectedWarehouse,
-                                                                  isExpanded: true,
-                                                                  hint: const Text('Select Warehouse'),
-                                                                  items: pro.warehouses.map<DropdownMenuItem<String>>((dynamic warehouse) {
-                                                                    return DropdownMenuItem<String>(
-                                                                      value: warehouse['name'],
-                                                                      child: Text(warehouse['name']),
-                                                                    );
-                                                                  }).toList(),
-                                                                  onChanged: (newValue) {
-                                                                    if (newValue != null) {
-                                                                      setState(() {
-                                                                        selectedWarehouse = newValue;
-                                                                      });
-                                                                    }
-                                                                  },
-                                                                );
-                                                              }),
-                                                              actions: <Widget>[
-                                                                TextButton(
-                                                                  onPressed: () {
-                                                                    Navigator.of(context).pop();
-                                                                  },
-                                                                  child: const Text('Cancel'),
-                                                                ),
-                                                                TextButton(
-                                                                  onPressed: () async {
-                                                                    if (selectedWarehouse.isNotEmpty) {
-                                                                      showDialog(
-                                                                        context: context,
-                                                                        builder: (context) => const AlertDialog(
-                                                                          content: Row(
-                                                                            children: [
-                                                                              CircularProgressIndicator(),
-                                                                              SizedBox(width: 8),
-                                                                              Text('Updating Warehouse'),
-                                                                            ],
-                                                                          ),
-                                                                        ),
-                                                                      );
-                                                                      final pro = Provider.of<BookProvider>(context, listen: false);
-                                                                      final res =
-                                                                          await pro.editWarehouse(order.orderId, selectedWarehouse.trim());
-                                                                      if (res == true) {
-                                                                        if (ordersProvider.searchControllerReady.text.trim().isNotEmpty) {
-                                                                          ordersProvider.searchReadyToConfirmOrders(
-                                                                              ordersProvider.searchControllerReady.text.trim());
-                                                                        } else {
-                                                                          ordersProvider.fetchReadyOrders();
-                                                                        }
-                                                                      } else {
-                                                                        if (context.mounted) {
-                                                                          ScaffoldMessenger.of(context).showSnackBar(
-                                                                            const SnackBar(content: Text('Failed to edit warehouse')),
-                                                                          );
-                                                                        }
-                                                                      }
-                                                                      if (context.mounted) {
-                                                                        Navigator.of(context).pop();
-                                                                        Navigator.of(context).pop();
-                                                                      }
-                                                                    }
-                                                                  },
-                                                                  child: const Text('Submit'),
-                                                                ),
-                                                              ],
-                                                            );
-                                                          },
-                                                        );
-                                                      },
-                                                    );
-                                                  },
-                                                  icon: const Icon(Icons.edit_location_alt_outlined),
-                                                ),
-                                                const SizedBox(width: 8),
-                                                IconButton(
-                                                  tooltip: 'Split Order',
-                                                  onPressed: () {
-                                                    final List<String> selectedItems = [];
-                                                    final weightController = TextEditingController();
-                                                    showDialog(
-                                                      context: context,
-                                                      builder: (BuildContext dialogContext) {
-                                                        return StatefulBuilder(
-                                                          builder: (BuildContext context, StateSetter setDialogState) {
-                                                            return AlertDialog(
-                                                              title: Text(order.orderId),
-                                                              content: Column(
-                                                                mainAxisSize: MainAxisSize.min,
-                                                                crossAxisAlignment: CrossAxisAlignment.start,
-                                                                children: [
-                                                                  ...remainingItems.map(
-                                                                    (item) => Row(
-                                                                      children: [
-                                                                        Checkbox(
-                                                                          value: selectedItems.contains(item.sku),
-                                                                          onChanged: (value) {
-                                                                            setDialogState(() {
-                                                                              if (selectedItems.contains(item.sku)) {
-                                                                                selectedItems.remove(item.sku);
-                                                                              } else {
-                                                                                selectedItems.add(item.sku ?? '');
-                                                                              }
-                                                                            });
-                                                                          },
-                                                                        ),
-                                                                        Text(item.sku ?? ''),
-                                                                      ],
-                                                                    ),
-                                                                  ),
-                                                                  ...comboItemGroups.map(
-                                                                    (item) => Row(
-                                                                      children: [
-                                                                        Checkbox(
-                                                                          value: selectedItems.contains(item[0].sku),
-                                                                          onChanged: (value) {
-                                                                            setDialogState(() {
-                                                                              if (selectedItems.contains(item[0].sku)) {
-                                                                                selectedItems.remove(item[0].sku);
-                                                                              } else {
-                                                                                selectedItems.add(item[0].sku ?? '');
-                                                                              }
-                                                                            });
-                                                                          },
-                                                                        ),
-                                                                        Text(item[0].comboSku ?? ''),
-                                                                      ],
-                                                                    ),
-                                                                  ),
-                                                                  const SizedBox(height: 10),
-                                                                  TextField(
-                                                                    controller: weightController,
-                                                                    decoration: const InputDecoration(
-                                                                      labelText: 'Weight Limit (Optional)',
-                                                                      // border: OutlineInputBorder(),
-                                                                    ),
-                                                                  ),
-                                                                ],
-                                                              ),
-                                                              actions: [
-                                                                TextButton(
-                                                                  child: const Text('Cancel'),
-                                                                  onPressed: () => Navigator.pop(context),
-                                                                ),
-                                                                TextButton(
-                                                                  child: const Text('Submit'),
-                                                                  onPressed: () async {
-                                                                    showDialog(
-                                                                      context: context,
-                                                                      builder: (_) {
-                                                                        return const AlertDialog(
-                                                                          content: Row(
-                                                                            children: [
-                                                                              CircularProgressIndicator(),
-                                                                              SizedBox(
-                                                                                width: 8,
-                                                                              ),
-                                                                              Text('Splitting')
-                                                                            ],
-                                                                          ),
-                                                                        );
-                                                                      },
-                                                                    );
-
-                                                                    List<String>? productSkus;
-
-                                                                    setDialogState(() {
-                                                                      productSkus = selectedItems;
-                                                                    });
-
-                                                                    final res = await ordersProvider.splitOrder(
-                                                                        order.orderId, productSkus ?? [],
-                                                                        weightLimit: weightController.text.trim());
-                                                                    Navigator.pop(context);
-                                                                    Navigator.pop(context);
-                                                                    if (res['success'] == true) {
-                                                                      ordersProvider.showSnackBar(
-                                                                          context, res['message'].toString(), Colors.green);
-                                                                    } else {
-                                                                      ordersProvider.showSnackBar(
-                                                                          context, res['message'].toString(), Colors.red);
-                                                                    }
-                                                                  },
-                                                                ),
-                                                              ],
-                                                            );
-                                                          },
-                                                        );
-                                                      },
-                                                    );
-                                                  },
-                                                  icon: const Icon(Icons.call_split),
-                                                ),
-                                                const SizedBox(width: 8),
-                                                IconButton(
-                                                  tooltip: 'Report Bug',
-                                                  onPressed: () {
-                                                    TextEditingController messageController = TextEditingController();
-                                                    context.read<SupportProvider>().setUserData(order.orderId, email!, role!);
-                                                    showDialog(
-                                                      context: context,
-                                                      builder: (context) {
+                                                    return StatefulBuilder(
+                                                      builder: (context, setState) {
                                                         return AlertDialog(
-                                                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                                                          titlePadding: EdgeInsets.zero,
-                                                          title: Container(
-                                                            padding: const EdgeInsets.all(20),
-                                                            decoration: BoxDecoration(
-                                                              color: Theme.of(context).primaryColor,
-                                                              borderRadius: const BorderRadius.only(
-                                                                topLeft: Radius.circular(16),
-                                                                topRight: Radius.circular(16),
-                                                              ),
-                                                            ),
-                                                            child: const Row(
-                                                              children: [
-                                                                Icon(Icons.support_agent, color: Colors.white, size: 24),
-                                                                SizedBox(width: 12),
-                                                                Text(
-                                                                  'Connect with Support',
-                                                                  style: TextStyle(
-                                                                    color: Colors.white,
-                                                                    fontSize: 20,
-                                                                    fontWeight: FontWeight.w600,
-                                                                  ),
-                                                                ),
-                                                              ],
-                                                            ),
+                                                          title: Column(
+                                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                                            children: [
+                                                              const Text('Edit Warehouse', style: TextStyle(fontSize: 20)),
+                                                              Text(order.orderId, style: const TextStyle(fontSize: 15)),
+                                                            ],
                                                           ),
-                                                          content: Container(
-                                                            width: MediaQuery.of(context).size.width * 0.4,
-                                                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 16),
-                                                            child: Column(
-                                                              mainAxisSize: MainAxisSize.min,
-                                                              crossAxisAlignment: CrossAxisAlignment.start,
-                                                              children: [
-                                                                const Text(
-                                                                  'Order Details',
-                                                                  style: TextStyle(
-                                                                    fontSize: 16,
-                                                                    fontWeight: FontWeight.w600,
-                                                                    color: Colors.grey,
-                                                                  ),
-                                                                ),
-                                                                const SizedBox(height: 12),
-                                                                TextField(
-                                                                  controller: TextEditingController(text: order.orderId),
-                                                                  readOnly: true,
-                                                                  decoration: InputDecoration(
-                                                                    labelText: 'Order ID',
-                                                                    prefixIcon: const Icon(Icons.shopping_cart_outlined),
-                                                                    filled: true,
-                                                                    fillColor: Colors.grey.shade100,
-                                                                    border: OutlineInputBorder(
-                                                                      borderRadius: BorderRadius.circular(12),
-                                                                      borderSide: BorderSide(color: Colors.grey.shade300),
-                                                                    ),
-                                                                    enabledBorder: OutlineInputBorder(
-                                                                      borderRadius: BorderRadius.circular(12),
-                                                                      borderSide: BorderSide(color: Colors.grey.shade300),
-                                                                    ),
-                                                                    focusedBorder: OutlineInputBorder(
-                                                                      borderRadius: BorderRadius.circular(12),
-                                                                      borderSide: BorderSide(color: Theme.of(context).primaryColor),
-                                                                    ),
-                                                                  ),
-                                                                ),
-                                                                const SizedBox(height: 24),
-                                                                const Text(
-                                                                  'Your Message',
-                                                                  style: TextStyle(
-                                                                    fontSize: 16,
-                                                                    fontWeight: FontWeight.w600,
-                                                                    color: Colors.grey,
-                                                                  ),
-                                                                ),
-                                                                const SizedBox(height: 12),
-                                                                TextField(
-                                                                  controller: messageController,
-                                                                  maxLines: 4,
-                                                                  decoration: InputDecoration(
-                                                                    hintText: 'Please describe your issue...',
-                                                                    prefixIcon: const Padding(
-                                                                      padding: EdgeInsets.only(bottom: 84),
-                                                                      child: Icon(Icons.message_outlined),
-                                                                    ),
-                                                                    filled: true,
-                                                                    fillColor: Colors.white,
-                                                                    border: OutlineInputBorder(
-                                                                      borderRadius: BorderRadius.circular(12),
-                                                                      borderSide: BorderSide(color: Colors.grey.shade300),
-                                                                    ),
-                                                                    enabledBorder: OutlineInputBorder(
-                                                                      borderRadius: BorderRadius.circular(12),
-                                                                      borderSide: BorderSide(color: Colors.grey.shade300),
-                                                                    ),
-                                                                    focusedBorder: OutlineInputBorder(
-                                                                      borderRadius: BorderRadius.circular(12),
-                                                                      borderSide: BorderSide(color: Theme.of(context).primaryColor),
-                                                                    ),
-                                                                  ),
-                                                                ),
-                                                              ],
+                                                          content: Consumer<LocationProvider>(builder: (context, pro, child) {
+                                                            return DropdownButton(
+                                                              value: selectedWarehouse,
+                                                              isExpanded: true,
+                                                              hint: const Text('Select Warehouse'),
+                                                              items: pro.warehouses.map<DropdownMenuItem<String>>((dynamic warehouse) {
+                                                                return DropdownMenuItem<String>(
+                                                                  value: warehouse['name'],
+                                                                  child: Text(warehouse['name']),
+                                                                );
+                                                              }).toList(),
+                                                              onChanged: (newValue) {
+                                                                if (newValue != null) {
+                                                                  setState(() {
+                                                                    selectedWarehouse = newValue;
+                                                                  });
+                                                                }
+                                                              },
+                                                            );
+                                                          }),
+                                                          actions: <Widget>[
+                                                            TextButton(
+                                                              onPressed: () {
+                                                                Navigator.of(context).pop();
+                                                              },
+                                                              child: const Text('Cancel'),
                                                             ),
+                                                            TextButton(
+                                                              onPressed: () async {
+                                                                if (selectedWarehouse.isNotEmpty) {
+                                                                  showDialog(
+                                                                    context: context,
+                                                                    builder: (context) => const AlertDialog(
+                                                                      content: Row(
+                                                                        children: [
+                                                                          CircularProgressIndicator(),
+                                                                          SizedBox(width: 8),
+                                                                          Text('Updating Warehouse'),
+                                                                        ],
+                                                                      ),
+                                                                    ),
+                                                                  );
+                                                                  final pro = Provider.of<BookProvider>(context, listen: false);
+                                                                  final res =
+                                                                      await pro.editWarehouse(order.orderId, selectedWarehouse.trim());
+                                                                  if (res == true) {
+                                                                    if (ordersProvider.searchControllerReady.text.trim().isNotEmpty) {
+                                                                      ordersProvider.searchReadyToConfirmOrders(
+                                                                          ordersProvider.searchControllerReady.text.trim());
+                                                                    } else {
+                                                                      ordersProvider.fetchReadyOrders();
+                                                                    }
+                                                                  } else {
+                                                                    if (context.mounted) {
+                                                                      ScaffoldMessenger.of(context).showSnackBar(
+                                                                        const SnackBar(content: Text('Failed to edit warehouse')),
+                                                                      );
+                                                                    }
+                                                                  }
+                                                                  if (context.mounted) {
+                                                                    Navigator.of(context).pop();
+                                                                    Navigator.of(context).pop();
+                                                                  }
+                                                                }
+                                                              },
+                                                              child: const Text('Submit'),
+                                                            ),
+                                                          ],
+                                                        );
+                                                      },
+                                                    );
+                                                  },
+                                                );
+                                              },
+                                              icon: const Icon(Icons.edit_location_alt_outlined),
+                                            ),
+                                            const SizedBox(width: 8),
+                                            IconButton(
+                                              tooltip: 'Split Order',
+                                              onPressed: () {
+                                                final List<String> selectedItems = [];
+                                                final weightController = TextEditingController();
+                                                showDialog(
+                                                  context: context,
+                                                  builder: (BuildContext dialogContext) {
+                                                    return StatefulBuilder(
+                                                      builder: (BuildContext context, StateSetter setDialogState) {
+                                                        return AlertDialog(
+                                                          title: Text(order.orderId),
+                                                          content: Column(
+                                                            mainAxisSize: MainAxisSize.min,
+                                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                                            children: [
+                                                              ...remainingItems.map(
+                                                                (item) => Row(
+                                                                  children: [
+                                                                    Checkbox(
+                                                                      value: selectedItems.contains(item.sku),
+                                                                      onChanged: (value) {
+                                                                        setDialogState(() {
+                                                                          if (selectedItems.contains(item.sku)) {
+                                                                            selectedItems.remove(item.sku);
+                                                                          } else {
+                                                                            selectedItems.add(item.sku ?? '');
+                                                                          }
+                                                                        });
+                                                                      },
+                                                                    ),
+                                                                    Text(item.sku ?? ''),
+                                                                  ],
+                                                                ),
+                                                              ),
+                                                              ...comboItemGroups.map(
+                                                                (item) => Row(
+                                                                  children: [
+                                                                    Checkbox(
+                                                                      value: selectedItems.contains(item[0].sku),
+                                                                      onChanged: (value) {
+                                                                        setDialogState(() {
+                                                                          if (selectedItems.contains(item[0].sku)) {
+                                                                            selectedItems.remove(item[0].sku);
+                                                                          } else {
+                                                                            selectedItems.add(item[0].sku ?? '');
+                                                                          }
+                                                                        });
+                                                                      },
+                                                                    ),
+                                                                    Text(item[0].comboSku ?? ''),
+                                                                  ],
+                                                                ),
+                                                              ),
+                                                              const SizedBox(height: 10),
+                                                              TextField(
+                                                                controller: weightController,
+                                                                decoration: const InputDecoration(
+                                                                  labelText: 'Weight Limit (Optional)',
+                                                                  // border: OutlineInputBorder(),
+                                                                ),
+                                                              ),
+                                                            ],
                                                           ),
                                                           actions: [
-                                                            TextButton.icon(
+                                                            TextButton(
+                                                              child: const Text('Cancel'),
                                                               onPressed: () => Navigator.pop(context),
-                                                              // icon: const Icon(Icons.close),
-                                                              label: const Text('Cancel'),
-                                                              style: TextButton.styleFrom(
-                                                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                                                              ),
                                                             ),
-                                                            // const SizedBox(width: 12),
-                                                            ElevatedButton.icon(
+                                                            TextButton(
+                                                              child: const Text('Submit'),
                                                               onPressed: () async {
-                                                                if(messageController.text.trim().isEmpty ) {
-                                                                  Utils.showSnackBar(context, 'Please enter your message');
-                                                                  return;
-                                                                }
-
                                                                 showDialog(
                                                                   context: context,
-                                                                  barrierDismissible: false,
-                                                                  builder: (context) {
+                                                                  builder: (_) {
                                                                     return const AlertDialog(
                                                                       content: Row(
                                                                         children: [
                                                                           CircularProgressIndicator(),
-                                                                          SizedBox(width: 20),
-                                                                          Text('Processing...'),
+                                                                          SizedBox(
+                                                                            width: 8,
+                                                                          ),
+                                                                          Text('Splitting')
                                                                         ],
                                                                       ),
                                                                     );
                                                                   },
                                                                 );
-                                                                bool result = await context
-                                                                    .read<OrdersProvider>()
-                                                                    .connectWithSupport(context, order.orderId, messageController.text);
 
+                                                                List<String>? productSkus;
+
+                                                                setDialogState(() {
+                                                                  productSkus = selectedItems;
+                                                                });
+
+                                                                final res = await ordersProvider.splitOrder(
+                                                                    order.orderId, productSkus ?? [],
+                                                                    weightLimit: weightController.text.trim());
                                                                 Navigator.pop(context);
                                                                 Navigator.pop(context);
-
-                                                                if (result) {
-                                                                  await provider.fetchReadyOrders();
+                                                                if (res['success'] == true) {
+                                                                  ordersProvider.showSnackBar(
+                                                                      context, res['message'].toString(), Colors.green);
+                                                                } else {
+                                                                  ordersProvider.showSnackBar(
+                                                                      context, res['message'].toString(), Colors.red);
                                                                 }
-                                                                // _showResultDialog(context, result);
                                                               },
-                                                              // icon: const Icon(Icons.send),
-                                                              label: const Text('Report'),
-                                                              style: ElevatedButton.styleFrom(
-                                                                backgroundColor: Theme.of(context).primaryColor,
-                                                                foregroundColor: Colors.white,
-                                                                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                                                                shape: RoundedRectangleBorder(
-                                                                  borderRadius: BorderRadius.circular(8),
-                                                                ),
-                                                              ),
                                                             ),
                                                           ],
                                                         );
                                                       },
                                                     );
                                                   },
-                                                  icon: const Icon(Icons.bug_report_outlined),
-                                                ),
-                                                if (order.mistakeStatus ?? false) ...[
-                                                  const SizedBox(width: 8),
-                                                  IconButton(
-                                                    tooltip: 'Support Chat',
-                                                    icon: const Icon(Icons.message),
-                                                    onPressed: () {
-                                                      context.read<SupportProvider>().setUserData(order.orderId, email!, role!);
-                                                      Scaffold.of(context).openEndDrawer();
-                                                    },
-                                                  ),
-                                                ]
-                                              ],
+                                                );
+                                              },
+                                              icon: const Icon(Icons.call_split),
                                             ),
-                                          ],
-                                        ),
-                                        const Divider(
-                                          thickness: 1,
-                                          color: AppColors.grey,
-                                        ),
-                                        OrderInfo(order: order, pro: ordersProvider),
-                                        const SizedBox(height: 6),
-                                        Padding(
-                                          padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                                          child: Row(
-                                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                            crossAxisAlignment: CrossAxisAlignment.end,
-                                            children: [
-                                              Column(
-                                                crossAxisAlignment: CrossAxisAlignment.start,
-                                                children: [
-                                                  Text.rich(
-                                                    TextSpan(
-                                                        text: "Outbound: ",
-                                                        children: [
-                                                          TextSpan(
-                                                              text: "${order.outBoundBy?['status'] ?? false}",
-                                                              style: const TextStyle(
-                                                                fontWeight: FontWeight.normal,
-                                                              )),
-                                                          (order.outBoundBy?['outboundBy']?.toString().isNotEmpty ?? false)
-                                                              ? TextSpan(
-                                                                  text:
-                                                                      "(${order.outBoundBy?['outboundBy'].toString().split('@')[0] ?? ''})",
-                                                                  style: const TextStyle(
-                                                                    fontWeight: FontWeight.normal,
-                                                                  ),
-                                                                )
-                                                              : const TextSpan()
-                                                        ],
-                                                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 20)),
-                                                  ),
-                                                  Text.rich(
-                                                    TextSpan(
-                                                        text: "Warehouse: ",
-                                                        children: [
-                                                          TextSpan(
-                                                            text: "${order.warehouseName}",
-                                                            style: const TextStyle(
-                                                              fontWeight: FontWeight.normal,
-                                                            ),
+                                            const SizedBox(width: 8),
+                                            IconButton(
+                                              tooltip: 'Report Bug',
+                                              onPressed: () {
+                                                TextEditingController messageController = TextEditingController();
+                                                context.read<SupportProvider>().setUserData(order.orderId, email!, role!);
+                                                showDialog(
+                                                  context: context,
+                                                  builder: (context) {
+                                                    return AlertDialog(
+                                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                                                      titlePadding: EdgeInsets.zero,
+                                                      title: Container(
+                                                        padding: const EdgeInsets.all(20),
+                                                        decoration: BoxDecoration(
+                                                          color: Theme.of(context).primaryColor,
+                                                          borderRadius: const BorderRadius.only(
+                                                            topLeft: Radius.circular(16),
+                                                            topRight: Radius.circular(16),
                                                           ),
-                                                        ],
-                                                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
-                                                  ),
-                                                  if (order.updatedAt != null)
-                                                    Text.rich(
-                                                      TextSpan(
-                                                          text: "Updated on: ",
+                                                        ),
+                                                        child: const Row(
                                                           children: [
-                                                            TextSpan(
-                                                                text: DateFormat('yyyy-MM-dd\',\' hh:mm a').format(
-                                                                  DateTime.parse("${order.updatedAt}"),
-                                                                ),
-                                                                style: const TextStyle(
-                                                                  fontWeight: FontWeight.normal,
-                                                                )),
-                                                          ],
-                                                          style: const TextStyle(
-                                                            fontWeight: FontWeight.bold,
-                                                          )),
-                                                    ),
-                                                ],
-                                              ),
-                                              Column(
-                                                crossAxisAlignment: CrossAxisAlignment.end,
-                                                children: [
-                                                  ElevatedButton(
-                                                    onPressed: () {
-                                                      showDialog(
-                                                        context: context,
-                                                        builder: (_) {
-                                                          return Dialog(
-                                                            shape: RoundedRectangleBorder(
-                                                              borderRadius: BorderRadius.circular(16),
-                                                            ),
-                                                            insetPadding: const EdgeInsets.symmetric(horizontal: 20),
-                                                            child: Container(
-                                                              width: MediaQuery.of(context).size.width * 0.9, // 90% of screen width
-                                                              constraints: const BoxConstraints(maxWidth: 600), // Maximum width limit
-                                                              padding: const EdgeInsets.all(20),
-                                                              child: Column(
-                                                                mainAxisSize: MainAxisSize.min,
-                                                                crossAxisAlignment: CrossAxisAlignment.stretch,
-                                                                children: [
-                                                                  const Text(
-                                                                    'Remark',
-                                                                    style: TextStyle(
-                                                                      fontSize: 24,
-                                                                      fontWeight: FontWeight.bold,
-                                                                    ),
-                                                                  ),
-                                                                  const SizedBox(height: 20),
-                                                                  TextField(
-                                                                    controller: remarkController,
-                                                                    maxLines: 10,
-                                                                    decoration: InputDecoration(
-                                                                      border: OutlineInputBorder(
-                                                                        borderRadius: BorderRadius.circular(8),
-                                                                      ),
-                                                                      hintText: 'Enter your remark here',
-                                                                      filled: true,
-                                                                      fillColor: Colors.grey[50],
-                                                                      contentPadding: const EdgeInsets.all(16),
-                                                                    ),
-                                                                  ),
-                                                                  const SizedBox(height: 24),
-                                                                  Row(
-                                                                    mainAxisAlignment: MainAxisAlignment.end,
-                                                                    children: [
-                                                                      TextButton(
-                                                                        onPressed: () => Navigator.of(context).pop(),
-                                                                        child: const Text(
-                                                                          'Cancel',
-                                                                          style: TextStyle(fontSize: 16),
-                                                                        ),
-                                                                      ),
-                                                                      const SizedBox(width: 16),
-                                                                      ElevatedButton(
-                                                                        onPressed: () async {
-                                                                          showDialog(
-                                                                            context: context,
-                                                                            barrierDismissible: false,
-                                                                            // Prevent dismissing the dialog by tapping outside
-                                                                            builder: (_) {
-                                                                              return AlertDialog(
-                                                                                shape: RoundedRectangleBorder(
-                                                                                  borderRadius: BorderRadius.circular(16),
-                                                                                ),
-                                                                                insetPadding: const EdgeInsets.symmetric(horizontal: 20),
-                                                                                content: const Row(
-                                                                                  mainAxisSize: MainAxisSize.min,
-                                                                                  children: [
-                                                                                    CircularProgressIndicator(),
-                                                                                    SizedBox(width: 20),
-                                                                                    // Adjust to create horizontal spacing
-                                                                                    Text(
-                                                                                      'Submitting Remark',
-                                                                                      style: TextStyle(fontSize: 16),
-                                                                                    ),
-                                                                                  ],
-                                                                                ),
-                                                                              );
-                                                                            },
-                                                                          );
-                                                                          final bool res = await ordersProvider.writeRemark(
-                                                                              order.id, remarkController.text);
-                                                                          Navigator.of(context).pop();
-                                                                          Navigator.of(context).pop();
-
-                                                                          final searched = ordersProvider.searchControllerReady.text.trim();
-
-                                                                          if (res) {
-                                                                            if (searched.isEmpty) {
-                                                                              await ordersProvider.fetchReadyOrders();
-                                                                            } else {
-                                                                              await ordersProvider.searchReadyToConfirmOrders(searched);
-                                                                            }
-                                                                          }
-                                                                        },
-                                                                        style: ElevatedButton.styleFrom(
-                                                                          padding: const EdgeInsets.symmetric(
-                                                                            horizontal: 24,
-                                                                            vertical: 12,
-                                                                          ),
-                                                                        ),
-                                                                        child: const Text(
-                                                                          'Submit',
-                                                                          style: TextStyle(fontSize: 16),
-                                                                        ),
-                                                                      ),
-                                                                    ],
-                                                                  ),
-                                                                ],
+                                                            Icon(Icons.support_agent, color: Colors.white, size: 24),
+                                                            SizedBox(width: 12),
+                                                            Text(
+                                                              'Connect with Support',
+                                                              style: TextStyle(
+                                                                color: Colors.white,
+                                                                fontSize: 20,
+                                                                fontWeight: FontWeight.w600,
                                                               ),
                                                             ),
-                                                          );
-                                                        },
-                                                      );
-                                                    },
-                                                    child: (order.messages?['confirmerMessage']?.toString().isNotEmpty ?? false)
-                                                        ? const Text('Edit Remark')
-                                                        : const Text('Write Remark'),
-                                                  ),
-                                                  if (order.messages?['confirmerMessage']?.toString().isNotEmpty ?? false)
-                                                    Utils().showMessage(
-                                                        context, 'Confirmer Remark', order.messages!['confirmerMessage'].toString())
-                                                ],
+                                                          ],
+                                                        ),
+                                                      ),
+                                                      content: Container(
+                                                        width: MediaQuery.of(context).size.width * 0.4,
+                                                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 16),
+                                                        child: Column(
+                                                          mainAxisSize: MainAxisSize.min,
+                                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                                          children: [
+                                                            const Text(
+                                                              'Order Details',
+                                                              style: TextStyle(
+                                                                fontSize: 16,
+                                                                fontWeight: FontWeight.w600,
+                                                                color: Colors.grey,
+                                                              ),
+                                                            ),
+                                                            const SizedBox(height: 12),
+                                                            TextField(
+                                                              controller: TextEditingController(text: order.orderId),
+                                                              readOnly: true,
+                                                              decoration: InputDecoration(
+                                                                labelText: 'Order ID',
+                                                                prefixIcon: const Icon(Icons.shopping_cart_outlined),
+                                                                filled: true,
+                                                                fillColor: Colors.grey.shade100,
+                                                                border: OutlineInputBorder(
+                                                                  borderRadius: BorderRadius.circular(12),
+                                                                  borderSide: BorderSide(color: Colors.grey.shade300),
+                                                                ),
+                                                                enabledBorder: OutlineInputBorder(
+                                                                  borderRadius: BorderRadius.circular(12),
+                                                                  borderSide: BorderSide(color: Colors.grey.shade300),
+                                                                ),
+                                                                focusedBorder: OutlineInputBorder(
+                                                                  borderRadius: BorderRadius.circular(12),
+                                                                  borderSide: BorderSide(color: Theme.of(context).primaryColor),
+                                                                ),
+                                                              ),
+                                                            ),
+                                                            const SizedBox(height: 24),
+                                                            const Text(
+                                                              'Your Message',
+                                                              style: TextStyle(
+                                                                fontSize: 16,
+                                                                fontWeight: FontWeight.w600,
+                                                                color: Colors.grey,
+                                                              ),
+                                                            ),
+                                                            const SizedBox(height: 12),
+                                                            TextField(
+                                                              controller: messageController,
+                                                              maxLines: 4,
+                                                              decoration: InputDecoration(
+                                                                hintText: 'Please describe your issue...',
+                                                                prefixIcon: const Padding(
+                                                                  padding: EdgeInsets.only(bottom: 84),
+                                                                  child: Icon(Icons.message_outlined),
+                                                                ),
+                                                                filled: true,
+                                                                fillColor: Colors.white,
+                                                                border: OutlineInputBorder(
+                                                                  borderRadius: BorderRadius.circular(12),
+                                                                  borderSide: BorderSide(color: Colors.grey.shade300),
+                                                                ),
+                                                                enabledBorder: OutlineInputBorder(
+                                                                  borderRadius: BorderRadius.circular(12),
+                                                                  borderSide: BorderSide(color: Colors.grey.shade300),
+                                                                ),
+                                                                focusedBorder: OutlineInputBorder(
+                                                                  borderRadius: BorderRadius.circular(12),
+                                                                  borderSide: BorderSide(color: Theme.of(context).primaryColor),
+                                                                ),
+                                                              ),
+                                                            ),
+                                                          ],
+                                                        ),
+                                                      ),
+                                                      actions: [
+                                                        TextButton.icon(
+                                                          onPressed: () => Navigator.pop(context),
+                                                          // icon: const Icon(Icons.close),
+                                                          label: const Text('Cancel'),
+                                                          style: TextButton.styleFrom(
+                                                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                                                          ),
+                                                        ),
+                                                        // const SizedBox(width: 12),
+                                                        ElevatedButton.icon(
+                                                          onPressed: () async {
+                                                            if(messageController.text.trim().isEmpty ) {
+                                                              Utils.showSnackBar(context, 'Please enter your message');
+                                                              return;
+                                                            }
+
+                                                            showDialog(
+                                                              context: context,
+                                                              barrierDismissible: false,
+                                                              builder: (context) {
+                                                                return const AlertDialog(
+                                                                  content: Row(
+                                                                    children: [
+                                                                      CircularProgressIndicator(),
+                                                                      SizedBox(width: 20),
+                                                                      Text('Processing...'),
+                                                                    ],
+                                                                  ),
+                                                                );
+                                                              },
+                                                            );
+                                                            bool result = await context
+                                                                .read<OrdersProvider>()
+                                                                .connectWithSupport(context, order.orderId, messageController.text);
+
+                                                            Navigator.pop(context);
+                                                            Navigator.pop(context);
+
+                                                            if (result) {
+                                                              await provider.fetchReadyOrders();
+                                                            }
+                                                            // _showResultDialog(context, result);
+                                                          },
+                                                          // icon: const Icon(Icons.send),
+                                                          label: const Text('Report'),
+                                                          style: ElevatedButton.styleFrom(
+                                                            backgroundColor: Theme.of(context).primaryColor,
+                                                            foregroundColor: Colors.white,
+                                                            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                                                            shape: RoundedRectangleBorder(
+                                                              borderRadius: BorderRadius.circular(8),
+                                                            ),
+                                                          ),
+                                                        ),
+                                                      ],
+                                                    );
+                                                  },
+                                                );
+                                              },
+                                              icon: const Icon(Icons.bug_report_outlined),
+                                            ),
+                                            if (order.mistakeStatus ?? false) ...[
+                                              const SizedBox(width: 8),
+                                              IconButton(
+                                                tooltip: 'Support Chat',
+                                                icon: const Icon(Icons.message),
+                                                onPressed: () {
+                                                  context.read<SupportProvider>().setUserData(order.orderId, email!, role!);
+                                                  Scaffold.of(context).openEndDrawer();
+                                                },
                                               ),
-                                            ],
-                                          ),
-                                        ),
-                                        const Divider(
-                                          thickness: 1,
-                                          color: AppColors.grey,
-                                        ),
-                                        // Nested cards for each item in the order
-                                        const SizedBox(height: 6),
-                                        ListView.builder(
-                                          shrinkWrap: true,
-                                          physics: const NeverScrollableScrollPhysics(),
-                                          itemCount: comboItemGroups.length,
-                                          itemBuilder: (context, comboIndex) {
-                                            final combo = comboItemGroups[comboIndex];
-                                            // print(
-                                            //     'Item $itemIndex: ${item.product?.displayName.toString() ?? ''}, Quantity: ${item.qty ?? 0}');
-                                            return BigComboCard(
-                                              items: combo,
-                                              index: comboIndex,
-                                              // courierName: order.courierName,
-                                              // orderStatus:
-                                              //     order.orderStatus.toString(),
-                                            );
-                                          },
-                                        ),
-                                        ListView.builder(
-                                          shrinkWrap: true,
-                                          physics: const NeverScrollableScrollPhysics(),
-                                          itemCount: remainingItems.length,
-                                          itemBuilder: (context, itemIndex) {
-                                            final item = remainingItems[itemIndex];
-                                            print(
-                                                'Item $itemIndex: ${item.product?.displayName.toString() ?? ''}, Quantity: ${item.qty ?? 0}');
-                                            return ProductDetailsCard(
-                                              item: item,
-                                              index: itemIndex,
-                                              // courierName: order.courierName,
-                                              // orderStatus:
-                                              //     order.orderStatus.toString(),
-                                            );
-                                          },
+                                            ]
+                                          ],
                                         ),
                                       ],
                                     ),
-                                  ),
+                                    const Divider(
+                                      thickness: 1,
+                                      color: AppColors.grey,
+                                    ),
+
+                                    OrderInfo(
+                                      order: order,
+                                      pro: ordersProvider,
+                                      hasMistake: order.mistakes.isNotEmpty && order.mistakes.last.status
+                                    ),
+
+                                    const SizedBox(height: 6),
+                                    Padding(
+                                      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                                      child: Row(
+                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                        crossAxisAlignment: CrossAxisAlignment.end,
+                                        children: [
+                                          Column(
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            children: [
+                                              Text.rich(
+                                                TextSpan(
+                                                    text: "Outbound: ",
+                                                    children: [
+                                                      TextSpan(
+                                                          text: "${order.outBoundBy?['status'] ?? false}",
+                                                          style: const TextStyle(
+                                                            fontWeight: FontWeight.normal,
+                                                          )),
+                                                      (order.outBoundBy?['outboundBy']?.toString().isNotEmpty ?? false)
+                                                          ? TextSpan(
+                                                              text:
+                                                                  "(${order.outBoundBy?['outboundBy'].toString().split('@')[0] ?? ''})",
+                                                              style: const TextStyle(
+                                                                fontWeight: FontWeight.normal,
+                                                              ),
+                                                            )
+                                                          : const TextSpan()
+                                                    ],
+                                                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 20)),
+                                              ),
+                                              Text.rich(
+                                                TextSpan(
+                                                    text: "Warehouse: ",
+                                                    children: [
+                                                      TextSpan(
+                                                        text: "${order.warehouseName}",
+                                                        style: const TextStyle(
+                                                          fontWeight: FontWeight.normal,
+                                                        ),
+                                                      ),
+                                                    ],
+                                                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                                              ),
+                                              if (order.updatedAt != null)
+                                                Text.rich(
+                                                  TextSpan(
+                                                      text: "Updated on: ",
+                                                      children: [
+                                                        TextSpan(
+                                                            text: DateFormat('yyyy-MM-dd\',\' hh:mm a').format(
+                                                              DateTime.parse("${order.updatedAt}"),
+                                                            ),
+                                                            style: const TextStyle(
+                                                              fontWeight: FontWeight.normal,
+                                                            )),
+                                                      ],
+                                                      style: const TextStyle(
+                                                        fontWeight: FontWeight.bold,
+                                                      )),
+                                                ),
+                                            ],
+                                          ),
+                                          Column(
+                                            crossAxisAlignment: CrossAxisAlignment.end,
+                                            children: [
+                                              ElevatedButton(
+                                                onPressed: () {
+                                                  showDialog(
+                                                    context: context,
+                                                    builder: (_) {
+                                                      return Dialog(
+                                                        shape: RoundedRectangleBorder(
+                                                          borderRadius: BorderRadius.circular(16),
+                                                        ),
+                                                        insetPadding: const EdgeInsets.symmetric(horizontal: 20),
+                                                        child: Container(
+                                                          width: MediaQuery.of(context).size.width * 0.9, // 90% of screen width
+                                                          constraints: const BoxConstraints(maxWidth: 600), // Maximum width limit
+                                                          padding: const EdgeInsets.all(20),
+                                                          child: Column(
+                                                            mainAxisSize: MainAxisSize.min,
+                                                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                                                            children: [
+                                                              const Text(
+                                                                'Remark',
+                                                                style: TextStyle(
+                                                                  fontSize: 24,
+                                                                  fontWeight: FontWeight.bold,
+                                                                ),
+                                                              ),
+                                                              const SizedBox(height: 20),
+                                                              TextField(
+                                                                controller: remarkController,
+                                                                maxLines: 10,
+                                                                decoration: InputDecoration(
+                                                                  border: OutlineInputBorder(
+                                                                    borderRadius: BorderRadius.circular(8),
+                                                                  ),
+                                                                  hintText: 'Enter your remark here',
+                                                                  filled: true,
+                                                                  fillColor: Colors.grey[50],
+                                                                  contentPadding: const EdgeInsets.all(16),
+                                                                ),
+                                                              ),
+                                                              const SizedBox(height: 24),
+                                                              Row(
+                                                                mainAxisAlignment: MainAxisAlignment.end,
+                                                                children: [
+                                                                  TextButton(
+                                                                    onPressed: () => Navigator.of(context).pop(),
+                                                                    child: const Text(
+                                                                      'Cancel',
+                                                                      style: TextStyle(fontSize: 16),
+                                                                    ),
+                                                                  ),
+                                                                  const SizedBox(width: 16),
+                                                                  ElevatedButton(
+                                                                    onPressed: () async {
+                                                                      showDialog(
+                                                                        context: context,
+                                                                        barrierDismissible: false,
+                                                                        // Prevent dismissing the dialog by tapping outside
+                                                                        builder: (_) {
+                                                                          return AlertDialog(
+                                                                            shape: RoundedRectangleBorder(
+                                                                              borderRadius: BorderRadius.circular(16),
+                                                                            ),
+                                                                            insetPadding: const EdgeInsets.symmetric(horizontal: 20),
+                                                                            content: const Row(
+                                                                              mainAxisSize: MainAxisSize.min,
+                                                                              children: [
+                                                                                CircularProgressIndicator(),
+                                                                                SizedBox(width: 20),
+                                                                                // Adjust to create horizontal spacing
+                                                                                Text(
+                                                                                  'Submitting Remark',
+                                                                                  style: TextStyle(fontSize: 16),
+                                                                                ),
+                                                                              ],
+                                                                            ),
+                                                                          );
+                                                                        },
+                                                                      );
+
+                                                                      final bool res = await ordersProvider.writeRemark(order.id, remarkController.text);
+                                                                      Navigator.of(context).pop();
+                                                                      Navigator.of(context).pop();
+
+                                                                      final searched = ordersProvider.searchControllerReady.text.trim();
+
+                                                                      if (res) {
+                                                                        if (searched.isEmpty) {
+                                                                          await ordersProvider.fetchReadyOrders();
+                                                                        } else {
+                                                                          await ordersProvider.searchReadyToConfirmOrders(searched);
+                                                                        }
+                                                                      }
+                                                                    },
+                                                                    style: ElevatedButton.styleFrom(
+                                                                      padding: const EdgeInsets.symmetric(
+                                                                        horizontal: 24,
+                                                                        vertical: 12,
+                                                                      ),
+                                                                    ),
+                                                                    child: const Text(
+                                                                      'Submit',
+                                                                      style: TextStyle(fontSize: 16),
+                                                                    ),
+                                                                  ),
+                                                                ],
+                                                              ),
+                                                            ],
+                                                          ),
+                                                        ),
+                                                      );
+                                                    },
+                                                  );
+                                                },
+                                                child: (order.messages?['confirmerMessage']?.toString().isNotEmpty ?? false)
+                                                    ? const Text('Edit Remark')
+                                                    : const Text('Write Remark'),
+                                              ),
+                                              if (order.messages?['confirmerMessage']?.toString().isNotEmpty ?? false)
+                                                Utils().showMessage(
+                                                    context, 'Confirmer Remark', order.messages!['confirmerMessage'].toString())
+                                            ],
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    const Divider(
+                                      thickness: 1,
+                                      color: AppColors.grey,
+                                    ),
+                                    // Nested cards for each item in the order
+                                    const SizedBox(height: 6),
+                                    ListView.builder(
+                                      shrinkWrap: true,
+                                      physics: const NeverScrollableScrollPhysics(),
+                                      itemCount: comboItemGroups.length,
+                                      itemBuilder: (context, comboIndex) {
+                                        final combo = comboItemGroups[comboIndex];
+                                        // print(
+                                        //     'Item $itemIndex: ${item.product?.displayName.toString() ?? ''}, Quantity: ${item.qty ?? 0}');
+                                        return BigComboCard(
+                                          items: combo,
+                                          index: comboIndex,
+                                          // courierName: order.courierName,
+                                          // orderStatus:
+                                          //     order.orderStatus.toString(),
+                                        );
+                                      },
+                                    ),
+                                    ListView.builder(
+                                      shrinkWrap: true,
+                                      physics: const NeverScrollableScrollPhysics(),
+                                      itemCount: remainingItems.length,
+                                      itemBuilder: (context, itemIndex) {
+                                        final item = remainingItems[itemIndex];
+                                        print(
+                                            'Item $itemIndex: ${item.product?.displayName.toString() ?? ''}, Quantity: ${item.qty ?? 0}');
+                                        return ProductDetailsCard(
+                                          item: item,
+                                          index: itemIndex,
+                                          // courierName: order.courierName,
+                                          // orderStatus:
+                                          //     order.orderStatus.toString(),
+                                        );
+                                      },
+                                    ),
+                                  ],
                                 ),
-                              ],
+                              ),
                             );
                           },
                         ),
