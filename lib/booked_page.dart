@@ -80,11 +80,10 @@ class _BookedPageState extends State<BookedPage> with SingleTickerProviderStateM
     );
   }
 
-// Refresh orders for both B2B and B2C
   void _refreshOrders() {
     final bookProvider = Provider.of<BookProvider>(context, listen: false);
     bookProvider.fetchBookedOrders(bookProvider.currentPageBooked);
-    bookProvider.resetFilterData();
+    // bookProvider.resetFilterData();
   }
 
   Widget _searchBar() {
@@ -788,6 +787,17 @@ class _BookedPageState extends State<BookedPage> with SingleTickerProviderStateM
                       'Cancel Orders',
                       style: TextStyle(color: Colors.white),
                     ),
+            ),
+            const SizedBox(width: 8),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.orange.shade300,
+              ),
+              onPressed: () {
+                bookProvider.resetFilterData();
+                _refreshOrders();
+              },
+              child: const Text('Reset Filters'),
             ),
             const SizedBox(width: 8),
             IconButton(

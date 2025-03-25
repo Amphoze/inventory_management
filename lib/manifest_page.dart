@@ -254,23 +254,28 @@ class _ManifestPageState extends State<ManifestPage> {
                               style: TextStyle(color: Colors.white),
                             ),
                     ),
-                    const SizedBox(
-                      width: 8,
-                    ),
+                    const SizedBox(width: 8),
                     ElevatedButton(
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primaryBlue,
+                        backgroundColor: Colors.orange.shade300,
                       ),
+                      onPressed: () {
+                        setState(() {
+                          selectedCourier = 'All';
+                          _selectedDate = 'Select Date';
+                        });
+                        manifestProvider.fetchOrdersWithStatus8();
+                      },
+                      child: const Text('Reset Filters'),
+                    ),
+                    const SizedBox(width: 8),
+                    IconButton(
                       onPressed: manifestProvider.isRefreshingOrders
                           ? null
                           : () async {
-                              setState(() {
-                                selectedCourier = 'All';
-                                _selectedDate = 'Select Date';
-                              });
                               manifestProvider.fetchOrdersWithStatus8();
                             },
-                      child: manifestProvider.isRefreshingOrders
+                      icon: manifestProvider.isRefreshingOrders
                           ? const SizedBox(
                               width: 16,
                               height: 16,
@@ -279,10 +284,7 @@ class _ManifestPageState extends State<ManifestPage> {
                                 strokeWidth: 2,
                               ),
                             )
-                          : const Text(
-                              'Refresh',
-                              style: TextStyle(color: Colors.white),
-                            ),
+                          : const Icon(Icons.refresh),
                     ),
                   ],
                 ),

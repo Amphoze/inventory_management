@@ -766,7 +766,7 @@ class Address {
   final String? lastName;
   final String? address1;
   final String? address2;
-  final int? phone;
+  final String? phone;
   final String? city;
   final String? pincode;
   final String? zipcode;
@@ -796,7 +796,7 @@ class Address {
       lastName: json['last_name']?.toString() ?? '',
       address1: json['address1']?.toString() ?? '',
       address2: json['address2']?.toString() ?? '',
-      phone: (json['phone'] as num?)?.toInt(),
+      phone: (json['phone'] )?.toString(),
       city: json['city']?.toString() ?? '',
       pincode: json['pincode'] is int ? json['pincode'].toString() : json['pincode'] ?? '0',
       zipcode: json['zip_code'] is int ? json['zip_code'].toString() : json['zip_code'] ?? '',
