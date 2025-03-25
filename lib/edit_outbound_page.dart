@@ -1896,6 +1896,14 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
                                     controller: _customerEmailController,
                                     label: 'Email',
                                     icon: Icons.email,
+                                    validator: (value) {
+                                      if (value != null) {
+                                        if (!value.contains('@') || !value.contains('.')) {
+                                          return 'Enter a valid email';
+                                        }
+                                      }
+                                      return null;
+                                    },
                                   ),
                                 ),
                               ],
@@ -2053,6 +2061,14 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
                                     controller: _billingEmailController,
                                     label: 'Email',
                                     icon: Icons.email,
+                                    validator: (value) {
+                                      if (value != null) {
+                                        if (!value.contains('@') || !value.contains('.')) {
+                                          return 'Enter a valid email';
+                                        }
+                                      }
+                                      return null;
+                                    },
                                   ),
                                 )
                               ],
@@ -2176,6 +2192,14 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
                                     controller: _shippingEmailController,
                                     label: 'Email',
                                     icon: Icons.email,
+                                    validator: (value) {
+                                      if (value != null) {
+                                        if (!value.contains('@') || !value.contains('.')) {
+                                          return 'Enter a valid email';
+                                        }
+                                      }
+                                      return null;
+                                    },
                                   ),
                                 )
                               ],
@@ -2859,6 +2883,8 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
     double discountedTotal = discount != 0 ? total - discountAmt : total;
     _totalAmtController.text = discountedTotal.toStringAsFixed(2);
     _discountAmountController.text = discountAmt.toStringAsFixed(2);
+    _codAmountController.clear();
+    _prepaidAmountController.clear();
   }
 
   void _updateOriginal() {
@@ -2866,10 +2892,11 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
     final total = _calculateTotal();
 
     double discountedTotal = discount != 0 ? total - (total * (discount / 100)) : total;
-    setState(() {
-      _totalAmtController.text = discountedTotal.toStringAsFixed(2);
-      _originalAmtController.text = total.toString(); // Use totalQty instead of qty
-    });
+
+    _codAmountController.clear();
+    _prepaidAmountController.clear();
+    _totalAmtController.text = discountedTotal.toStringAsFixed(2);
+    _originalAmtController.text = total.toString(); // Use totalQty instead of qty
   }
 
   void _updateCod() {
@@ -3031,7 +3058,7 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
                 child: TextFormField(
                   controller: controller,
                   enabled: enabled,
-                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                  inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*'))],
                   style: TextStyle(
                     color: enabled ? AppColors.primaryBlue : Colors.grey[700],
                     fontWeight: FontWeight.w500,

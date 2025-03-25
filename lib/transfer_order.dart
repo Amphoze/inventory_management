@@ -40,12 +40,15 @@ class _TransferOrderPageState extends State<TransferOrderPage> {
   void _saveOrder(TransferOrderProvider provider) async {
     provider.setBillingSameAsShipping(provider.isBillingSameAsShipping);
 
-    if (provider.selectedFromWarehouse == null || provider.selectedFromWarehouse!.isEmpty || provider.selectedToWarehouse == null || provider.selectedToWarehouse!.isEmpty) {
+    if (provider.selectedFromWarehouse == null ||
+        provider.selectedFromWarehouse!.isEmpty ||
+        provider.selectedToWarehouse == null ||
+        provider.selectedToWarehouse!.isEmpty) {
       Utils.showSnackBar(context, 'Please select both source and destination warehouses.');
       return;
     }
 
-    if (provider.selectedFromWarehouse == provider.selectedToWarehouse)  {
+    if (provider.selectedFromWarehouse == provider.selectedToWarehouse) {
       Utils.showSnackBar(context, 'Please select different warehouses.');
       return;
     }
@@ -90,11 +93,11 @@ class _TransferOrderPageState extends State<TransferOrderPage> {
                 _buildWarehouseSection(context, provider),
                 const SizedBox(height: 30),
                 _buildShippingAddressSection(provider),
-                const SizedBox(height: 30),
-                if (provider.isBillingSameAsShipping == false) _buildBillingAddressSection(provider),
                 if (provider.isBillingSameAsShipping == false) const SizedBox(height: 30),
+                if (provider.isBillingSameAsShipping == false) _buildBillingAddressSection(provider),
                 const SizedBox(height: 30),
                 _buildOrderDetailsSection(context, provider),
+                const SizedBox(height: 30),
                 _buildItemsSection(context, provider),
                 const SizedBox(height: 20),
                 Row(
@@ -297,7 +300,7 @@ class _TransferOrderPageState extends State<TransferOrderPage> {
                           }
                           context.read<TransferOrderProvider>().getLocationDetails(context: context, pincode: value, isBilling: true);
                         },
-                        isNumber: true,
+                        // isNumber: true,
                       ),
                     ),
                     const SizedBox(width: 10),
@@ -421,7 +424,7 @@ class _TransferOrderPageState extends State<TransferOrderPage> {
                           }
                           context.read<TransferOrderProvider>().getLocationDetails(context: context, pincode: value, isBilling: false);
                         },
-                        isNumber: true,
+                        // isNumber: true,
                       ),
                     ),
                     const SizedBox(width: 10),
@@ -541,56 +544,61 @@ class _TransferOrderPageState extends State<TransferOrderPage> {
                         final product = products[index];
                         if (product == null) return const SizedBox.shrink();
 
-                        return Row(
-                          children: [
-                            Expanded(
-                              flex: 5,
-                              child: ProductCard(product: product, index: index),
-                            ),
-                            const SizedBox(width: 16),
-                            Expanded(
-                              flex: 1,
-                              child: Column(
-                                children: [
-                                  SizedBox(
-                                    width: 200,
-                                    child: _buildTextField(
-                                      controller: provider.addedProductQuantityControllers[index],
-                                      label: 'Qty',
-                                      icon: Icons.production_quantity_limits,
-                                      onSubmitted: (_) => provider.updateTotalAmount(),
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 8),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                flex: 5,
+                                child: ProductCard(product: product, index: index),
+                              ),
+                              const SizedBox(width: 16),
+                              Expanded(
+                                flex: 1,
+                                child: Column(
+                                  children: [
+                                    SizedBox(
+                                      width: 200,
+                                      child: _buildTextField(
+                                        controller: provider.addedProductQuantityControllers[index],
+                                        isNumber: true,
+                                        label: 'Qty',
+                                        icon: Icons.production_quantity_limits,
+                                        onSubmitted: (_) => provider.updateTotalAmount(),
+                                      ),
                                     ),
-                                  ),
-                                  const SizedBox(height: 8),
-                                  SizedBox(
-                                    width: 200,
-                                    child: _buildTextField(
-                                      controller: provider.addedProductRateControllers[index],
-                                      label: 'Rate',
-                                      icon: Icons.currency_rupee,
-                                      onSubmitted: (_) => provider.updateTotalAmount(),
+                                    const SizedBox(height: 8),
+                                    SizedBox(
+                                      width: 200,
+                                      child: _buildTextField(
+                                        controller: provider.addedProductRateControllers[index],
+                                        label: 'Rate',
+                                        isNumber: true,
+                                        icon: Icons.currency_rupee,
+                                        onSubmitted: (_) => provider.updateTotalAmount(),
+                                      ),
                                     ),
-                                  ),
-                                ],
+                                  ],
+                                ),
                               ),
-                            ),
-                            const SizedBox(width: 16),
-                            ElevatedButton(
-                              onPressed: () => provider.deleteProduct(index, product.id!),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.red,
-                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                              const SizedBox(width: 16),
+                              ElevatedButton(
+                                onPressed: () => provider.deleteProduct(index, product.id!),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.red,
+                                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                                ),
+                                child: const Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(Icons.delete),
+                                    SizedBox(width: 8),
+                                    Text('Delete'),
+                                  ],
+                                ),
                               ),
-                              child: const Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(Icons.delete),
-                                  SizedBox(width: 8),
-                                  Text('Delete'),
-                                ],
-                              ),
-                            ),
-                          ],
+                            ],
+                          ),
                         );
                       },
                     );
@@ -616,56 +624,61 @@ class _TransferOrderPageState extends State<TransferOrderPage> {
                         final combo = combos[index];
                         if (combo == null) return const SizedBox.shrink();
 
-                        return Row(
-                          children: [
-                            Expanded(
-                              flex: 5,
-                              child: ComboCard(combo: combo, index: index),
-                            ),
-                            const SizedBox(width: 16),
-                            Expanded(
-                              flex: 1,
-                              child: Column(
-                                children: [
-                                  SizedBox(
-                                    width: 200,
-                                    child: _buildTextField(
-                                      controller: provider.addedComboQuantityControllers[index],
-                                      label: 'Qty',
-                                      icon: Icons.production_quantity_limits,
-                                      onSubmitted: (_) => provider.updateTotalAmount(),
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 8),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                flex: 5,
+                                child: ComboCard(combo: combo, index: index),
+                              ),
+                              const SizedBox(width: 16),
+                              Expanded(
+                                flex: 1,
+                                child: Column(
+                                  children: [
+                                    SizedBox(
+                                      width: 200,
+                                      child: _buildTextField(
+                                        controller: provider.addedComboQuantityControllers[index],
+                                        isNumber: true,
+                                        label: 'Qty',
+                                        icon: Icons.production_quantity_limits,
+                                        onSubmitted: (_) => provider.updateTotalAmount(),
+                                      ),
                                     ),
-                                  ),
-                                  const SizedBox(height: 8),
-                                  SizedBox(
-                                    width: 200,
-                                    child: _buildTextField(
-                                      controller: provider.addedComboRateControllers[index],
-                                      label: 'Rate',
-                                      icon: Icons.currency_rupee,
-                                      onSubmitted: (_) => provider.updateTotalAmount(),
+                                    const SizedBox(height: 8),
+                                    SizedBox(
+                                      width: 200,
+                                      child: _buildTextField(
+                                        controller: provider.addedComboRateControllers[index],
+                                        label: 'Rate',
+                                        isNumber: true,
+                                        icon: Icons.currency_rupee,
+                                        onSubmitted: (_) => provider.updateTotalAmount(),
+                                      ),
                                     ),
-                                  ),
-                                ],
+                                  ],
+                                ),
                               ),
-                            ),
-                            const SizedBox(width: 16),
-                            ElevatedButton(
-                              onPressed: () => provider.deleteCombo(index, combo.comboSku),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.red,
-                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                              const SizedBox(width: 16),
+                              ElevatedButton(
+                                onPressed: () => provider.deleteCombo(index, combo.comboSku),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.red,
+                                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                                ),
+                                child: const Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(Icons.delete),
+                                    SizedBox(width: 8),
+                                    Text('Delete'),
+                                  ],
+                                ),
                               ),
-                              child: const Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(Icons.delete),
-                                  SizedBox(width: 8),
-                                  Text('Delete'),
-                                ],
-                              ),
-                            ),
-                          ],
+                            ],
+                          ),
                         );
                       },
                     );
@@ -698,7 +711,7 @@ class _TransferOrderPageState extends State<TransferOrderPage> {
     void Function(String)? onSubmitted,
     void Function(String)? onChanged,
     int? maxLength,
-    bool? isNumber = false,
+    bool isNumber = false,
   }) {
     return TextFormField(
       controller: controller,
@@ -706,7 +719,10 @@ class _TransferOrderPageState extends State<TransferOrderPage> {
       validator: validator,
       onChanged: onChanged,
       maxLength: maxLength,
-      keyboardType: isNumber! ? TextInputType.number : TextInputType.text,
+      // keyboardType: isNumber! ? TextInputType.number : TextInputType.text,
+      inputFormatters: isNumber
+          ? [FilteringTextInputFormatter.digitsOnly, if (label == 'Rate') FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*'))]
+          : [],
       onFieldSubmitted: onSubmitted,
       decoration: InputDecoration(
         labelText: label,

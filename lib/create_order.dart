@@ -423,7 +423,7 @@ class _CreateOrderPageState extends State<CreateOrderPage> {
                   label: 'Email',
                   icon: Icons.email,
                   validator: (value) {
-                    if (value != null) {
+                    if (value != null && value.isNotEmpty) {
                       if (!value.contains('@') || !value.contains('.')) {
                         return 'Enter a valid email';
                       }
@@ -490,6 +490,14 @@ class _CreateOrderPageState extends State<CreateOrderPage> {
                         label: 'Email',
                         icon: Icons.email,
                         enabled: !provider.isBillingSameAsShipping,
+                        validator: (value) {
+                          if (value != null) {
+                            if (!value.contains('@') || !value.contains('.')) {
+                              return 'Enter a valid email';
+                            }
+                          }
+                          return null;
+                        },
                       ),
                     ),
                   ],
@@ -535,7 +543,7 @@ class _CreateOrderPageState extends State<CreateOrderPage> {
                           // }
                         },
                         // maxLength: 6,
-                        isNumber: true,
+                        // isNumber: true,
                       ),
                     ),
                     const SizedBox(width: 10),
@@ -650,6 +658,14 @@ class _CreateOrderPageState extends State<CreateOrderPage> {
                         controller: provider.shippingEmailController,
                         label: 'Email',
                         icon: Icons.email,
+                        validator: (value) {
+                          if (value != null) {
+                            if (!value.contains('@') || !value.contains('.')) {
+                              return 'Enter a valid email';
+                            }
+                          }
+                          return null;
+                        },
                       ),
                     ),
                   ],
@@ -693,7 +709,7 @@ class _CreateOrderPageState extends State<CreateOrderPage> {
                           // }
                         },
                         // maxLength: 6,
-                        isNumber: true,
+                        // isNumber: true,
                       ),
                     ),
                     const SizedBox(width: 10),
@@ -987,7 +1003,7 @@ class _CreateOrderPageState extends State<CreateOrderPage> {
     void Function(String)? onSubmitted,
     void Function(String)? onChanged,
     int? maxLength,
-    bool? isNumber = false,
+    bool isNumber = false,
   }) {
     return TextFormField(
       controller: controller,
@@ -995,8 +1011,8 @@ class _CreateOrderPageState extends State<CreateOrderPage> {
       validator: validator,
       onChanged: onChanged,
       maxLength: maxLength,
-      keyboardType: (isNumber ?? false) ? TextInputType.number : TextInputType.text,
-      inputFormatters: (isNumber ?? false) ? [FilteringTextInputFormatter.digitsOnly] : [],
+      // keyboardType: isNumber ? TextInputType.number : TextInputType.text,
+      inputFormatters: isNumber ? [FilteringTextInputFormatter.digitsOnly, if(label == 'Rate') FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*'))] : [],
       onFieldSubmitted: onSubmitted,
       decoration: InputDecoration(
         label: Text(label, style: TextStyle(color: validator != null ? Colors.red : Colors.grey)),
