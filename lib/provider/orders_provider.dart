@@ -292,6 +292,9 @@ class OrdersProvider with ChangeNotifier {
 
     final url = '${await Constants.getBaseUrl()}/orders/$id';
 
+    final prefs = SharedPreferences.getInstance();
+    String? email = await prefs.then((prefs) => prefs.getString('email'));
+
     log('writeRemark url: $url');
 
     try {
@@ -302,7 +305,11 @@ class OrdersProvider with ChangeNotifier {
           'Content-Type': 'application/json',
         },
         body: json.encode({
-          "messages": {"confirmerMessage": msg}
+          "messages": {
+            "conformerMessage": msg,
+            "timestamp": DateTime.now().toIso8601String(),
+            "author": email
+          }
         }),
       );
 
@@ -534,11 +541,7 @@ class OrdersProvider with ChangeNotifier {
 
       _socket ??= IO.io(
         baseUrl,
-        IO.OptionBuilder()
-            .setTransports(['websocket'])
-            .disableAutoConnect()
-            .setQuery({'email': email})
-            .build(),
+        IO.OptionBuilder().setTransports(['websocket']).disableAutoConnect().setQuery({'email': email}).build(),
       );
 
       _socket?.onConnect((_) {
