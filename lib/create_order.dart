@@ -8,10 +8,11 @@ import 'package:inventory_management/Widgets/product_card.dart';
 import 'package:inventory_management/Widgets/searchable_dropdown.dart';
 import 'package:inventory_management/provider/create_order_provider.dart';
 import 'package:inventory_management/provider/marketplace_provider.dart';
+import 'package:inventory_management/provider/orders_provider.dart';
 import 'package:provider/provider.dart';
 import 'Custom-Files/utils.dart';
-import 'model/combo_model.dart' hide Product;
-import 'model/orders_model.dart';
+// import 'model/combo_model.dart' hide Product;
+// import 'model/orders_model.dart';
 
 class CreateOrderPage extends StatefulWidget {
   const CreateOrderPage({super.key});
@@ -23,10 +24,13 @@ class CreateOrderPage extends StatefulWidget {
 class _CreateOrderPageState extends State<CreateOrderPage> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   final ScrollController _scrollController = ScrollController();
+  late CreateOrderProvider provider;
 
   @override
   void initState() {
+    provider = context.read<CreateOrderProvider>();
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      provider.initializeControllers();
       context.read<MarketplaceProvider>().fetchMarketplaces();
     });
     super.initState();
@@ -35,7 +39,9 @@ class _CreateOrderPageState extends State<CreateOrderPage> {
   @override
   void dispose() {
     _scrollController.dispose();
-    // Provider.of<CreateOrderProvider>(context, listen: false).disposeControllers();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      provider.disposeControllers();
+    });
     super.dispose();
   }
 
@@ -67,7 +73,8 @@ class _CreateOrderPageState extends State<CreateOrderPage> {
       final result = await provider.saveOrder();
       if (result['success'] == true) {
         Utils.showSnackBar(context, result['message'] ?? 'Order Created Successfully', color: Colors.green);
-        _formKey.currentState!.reset();
+        // _formKey.currentState!.reset();
+        Navigator.pop(context);
       } else {
         Utils.showSnackBar(context, result['message'] ?? "An error occurred",
             details: result['details'] ?? "Unknown error", color: Colors.red);
@@ -77,49 +84,57 @@ class _CreateOrderPageState extends State<CreateOrderPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<CreateOrderProvider>(
-      builder: (context, provider, child) {
-        return Form(
-          key: _formKey,
-          child: SingleChildScrollView(
-            controller: _scrollController,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildOrderDetailsSection(context, provider),
-                const SizedBox(height: 30),
-                _buildCustomerDetailsSection(provider),
-                const SizedBox(height: 30),
-                _buildItemsSection(context, provider),
-                const SizedBox(height: 30),
-                _buildPaymentDetailsSection(context, provider),
-                const SizedBox(height: 30),
-                _buildShippingAddressSection(provider),
-                const SizedBox(height: 30),
-                if (provider.isBillingSameAsShipping == false) _buildBillingAddressSection(provider),
-                if (provider.isBillingSameAsShipping == false) const SizedBox(height: 30),
-                _buildDiscountAndAdditionalSection(context, provider),
-                const SizedBox(height: 30),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Create Order'),
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Consumer<CreateOrderProvider>(
+          builder: (context, provider, child) {
+            return Form(
+              key: _formKey,
+              child: SingleChildScrollView(
+                controller: _scrollController,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    ElevatedButton(
-                      onPressed: provider.isSavingOrder ? null : () => _saveOrder(provider),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primaryBlue,
-                        padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-                      ),
-                      child: provider.isSavingOrder
-                          ? const CircularProgressIndicator(color: Colors.white)
-                          : const Text('Create ', style: TextStyle(color: Colors.white)),
+                    _buildOrderDetailsSection(context, provider),
+                    const SizedBox(height: 30),
+                    _buildCustomerDetailsSection(provider),
+                    const SizedBox(height: 30),
+                    _buildItemsSection(context, provider),
+                    const SizedBox(height: 30),
+                    _buildPaymentDetailsSection(context, provider),
+                    const SizedBox(height: 30),
+                    _buildShippingAddressSection(provider),
+                    const SizedBox(height: 30),
+                    if (provider.isBillingSameAsShipping == false) _buildBillingAddressSection(provider),
+                    if (provider.isBillingSameAsShipping == false) const SizedBox(height: 30),
+                    _buildDiscountAndAdditionalSection(context, provider),
+                    const SizedBox(height: 30),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        ElevatedButton(
+                          onPressed: provider.isSavingOrder ? null : () => _saveOrder(provider),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.primaryBlue,
+                            padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+                          ),
+                          child: provider.isSavingOrder
+                              ? const CircularProgressIndicator(color: Colors.white)
+                              : const Text('Create ', style: TextStyle(color: Colors.white)),
+                        ),
+                      ],
                     ),
                   ],
                 ),
-              ],
-            ),
-          ),
-        );
-      },
+              ),
+            );
+          },
+        ),
+      ),
     );
   }
 
@@ -422,14 +437,6 @@ class _CreateOrderPageState extends State<CreateOrderPage> {
                   controller: provider.customerEmailController,
                   label: 'Email',
                   icon: Icons.email,
-                  validator: (value) {
-                    if (value != null && value.isNotEmpty) {
-                      if (!value.contains('@') || !value.contains('.')) {
-                        return 'Enter a valid email';
-                      }
-                    }
-                    return null;
-                  },
                 ),
                 const SizedBox(height: 10),
                 _buildPhoneField(
@@ -490,14 +497,6 @@ class _CreateOrderPageState extends State<CreateOrderPage> {
                         label: 'Email',
                         icon: Icons.email,
                         enabled: !provider.isBillingSameAsShipping,
-                        validator: (value) {
-                          if (value != null) {
-                            if (!value.contains('@') || !value.contains('.')) {
-                              return 'Enter a valid email';
-                            }
-                          }
-                          return null;
-                        },
                       ),
                     ),
                   ],
@@ -658,14 +657,6 @@ class _CreateOrderPageState extends State<CreateOrderPage> {
                         controller: provider.shippingEmailController,
                         label: 'Email',
                         icon: Icons.email,
-                        validator: (value) {
-                          if (value != null) {
-                            if (!value.contains('@') || !value.contains('.')) {
-                              return 'Enter a valid email';
-                            }
-                          }
-                          return null;
-                        },
                       ),
                     ),
                   ],
@@ -987,7 +978,16 @@ class _CreateOrderPageState extends State<CreateOrderPage> {
     return TextFormField(
       controller: controller,
       enabled: enabled,
-      validator: validator,
+      validator: label == 'Email'
+          ? (value) {
+              if (value != null && value.isNotEmpty) {
+                if (!value.contains('@') || !value.contains('.')) {
+                  return 'Enter a valid email';
+                }
+              }
+              return null;
+            }
+          : validator,
       onChanged: onChanged,
       maxLength: maxLength,
       // keyboardType: isNumber ? TextInputType.number : TextInputType.text,

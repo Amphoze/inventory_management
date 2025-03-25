@@ -87,7 +87,7 @@ class _DashboardPageState extends State<DashboardPage> {
   DateTime? selectedDate; // State variable to hold the selected date
   DateTime? lastUpdatedTime; // Make sure this is initialized properly in your actual code
   DateTime? previousDate;
-  bool isCreateOrderPage = false;
+  // bool isCreateOrderPage = false;
   // String? selectedWarehouse;
 
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
@@ -1665,75 +1665,75 @@ class _DashboardPageState extends State<DashboardPage> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
-                if (!isCreateOrderPage) ...[
-                  Expanded(
-                    child: Text.rich(
-                      TextSpan(
-                        text: 'Hello, ',
-                        children: [
-                          TextSpan(
-                            text: userName,
-                            style: const TextStyle(
-                              fontSize: 24,
-                              fontWeight: FontWeight.normal,
-                              color: AppColors.primaryBlue,
-                            ),
-                          )
-                        ],
-                        style: const TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                          color: AppColors.primaryBlue,
-                        ),
+                // if (!isCreateOrderPage) ...[
+                Expanded(
+                  child: Text.rich(
+                    TextSpan(
+                      text: 'Hello, ',
+                      children: [
+                        TextSpan(
+                          text: userName,
+                          style: const TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.normal,
+                            color: AppColors.primaryBlue,
+                          ),
+                        )
+                      ],
+                      style: const TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.primaryBlue,
                       ),
                     ),
                   ),
-                  Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: Container(
-                      decoration: BoxDecoration(
+                ),
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(10),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.grey.withValues(alpha: 0.3), // Shadow color
+                          spreadRadius: 2,
+                          blurRadius: 5,
+                          offset: const Offset(0, 3),
+                        ),
+                      ],
+                    ),
+                    child: ElevatedButton.icon(
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const DownloadOrders(),
+                          ),
+                        );
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primaryBlue, // Button background color
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10), // Same border radius
+                        ),
+                        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0), // Button padding
+                      ),
+                      icon: const Icon(
+                        Icons.download,
                         color: Colors.white,
-                        borderRadius: BorderRadius.circular(10),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.grey.withValues(alpha: 0.3), // Shadow color
-                            spreadRadius: 2,
-                            blurRadius: 5,
-                            offset: const Offset(0, 3),
-                          ),
-                        ],
-                      ),
-                      child: ElevatedButton.icon(
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => const DownloadOrders(),
-                            ),
-                          );
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.primaryBlue, // Button background color
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10), // Same border radius
-                          ),
-                          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0), // Button padding
-                        ),
-                        icon: const Icon(
-                          Icons.download,
-                          color: Colors.white,
-                        ), // Button icon
-                        label: const Text(
-                          'Download Orders CSV', // Button label
-                          style: TextStyle(
-                            color: Colors.white, // Text color
-                            fontSize: 16, // Font size
-                          ),
+                      ), // Button icon
+                      label: const Text(
+                        'Download Orders CSV', // Button label
+                        style: TextStyle(
+                          color: Colors.white, // Text color
+                          fontSize: 16, // Font size
                         ),
                       ),
                     ),
                   ),
-                ],
+                ),
+                // ],
                 Padding(
                   padding: const EdgeInsets.all(8.0),
                   child: Container(
@@ -1751,27 +1751,17 @@ class _DashboardPageState extends State<DashboardPage> {
                     ),
                     child: ElevatedButton.icon(
                       onPressed: () async {
-                        if (isCreateOrder == true || isSuperAdmin == true || isAdmin == true) {
-                          setState(() {
-                            Logger().e("isCreateOrderPage pehle: $isCreateOrderPage");
-                            isCreateOrderPage = !isCreateOrderPage;
-                            Logger().e("isCreateOrderPage baad me: $isCreateOrderPage");
-                          });
-                        } else {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text("You are not authorized to view this page.")),
-                          );
-                        }
+                        Navigator.push(context, MaterialPageRoute(builder: (context) => const CreateOrderPage()));
                       },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: isCreateOrderPage ? AppColors.cardsred : AppColors.primaryBlue, // Button background color
+                        backgroundColor: AppColors.primaryBlue, // Button background color
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(10), // Same border radius
                         ),
                         padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0), // Button padding
                       ),
-                      label: Text(
-                        isCreateOrderPage ? 'Back' : 'Create Order', // Button label
+                      label: const Text(
+                        'Create Order', // Button label
                         style: const TextStyle(
                           color: Colors.white, // Text color
                           fontSize: 16, // Font size
@@ -1782,182 +1772,182 @@ class _DashboardPageState extends State<DashboardPage> {
                 ),
               ],
             ),
-            if (!isCreateOrderPage) ...[
-              const SizedBox(height: 10),
-              const Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    "Here's what's happening with your store today",
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: AppColors.greyText,
-                    ),
+            // if (!isCreateOrderPage) ...[
+            const SizedBox(height: 10),
+            const Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  "Here's what's happening with your store today",
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: AppColors.greyText,
                   ),
-                ],
-              ),
-              const SizedBox(height: 20),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                decoration: BoxDecoration(
-                  color: Colors.grey[100],
-                  borderRadius: BorderRadius.circular(8),
                 ),
-                child: Row(
-                  // mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    // Last Updated Section
-                    Row(
-                      children: [
-                        const Icon(
-                          Icons.access_time,
-                          size: 16,
+              ],
+            ),
+            const SizedBox(height: 20),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              decoration: BoxDecoration(
+                color: Colors.grey[100],
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Row(
+                // mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  // Last Updated Section
+                  Row(
+                    children: [
+                      const Icon(
+                        Icons.access_time,
+                        size: 16,
+                        color: AppColors.greyText,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Last updated: ${lastUpdatedTime != null ? DateFormat('hh:mm a').format(lastUpdatedTime!) : 'N/A'}',
+                        style: const TextStyle(
+                          fontSize: 14,
                           color: AppColors.greyText,
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          'Last updated: ${lastUpdatedTime != null ? DateFormat('hh:mm a').format(lastUpdatedTime!) : 'N/A'}',
-                          style: const TextStyle(
-                            fontSize: 14,
-                            color: AppColors.greyText,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const Spacer(),
-                    if (selectedDate != null) // Display selected date if not null
-                      Padding(
-                        padding: const EdgeInsets.all(5.0),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                          decoration: BoxDecoration(
-                            color: AppColors.greyText.withValues(alpha: 0.08),
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              const Icon(
-                                Icons.calendar_today_outlined,
-                                size: 16,
-                                color: AppColors.greyText,
-                              ),
-                              const SizedBox(width: 8),
-                              Text(
-                                DateFormat('dd MMM yyyy').format(selectedDate!),
-                                style: const TextStyle(
-                                  fontSize: 14,
-                                  color: AppColors.greyText,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                            ],
-                          ),
+                          fontWeight: FontWeight.w500,
                         ),
                       ),
+                    ],
+                  ),
+                  const Spacer(),
+                  if (selectedDate != null) // Display selected date if not null
                     Padding(
-                      padding: const EdgeInsets.all(8.0),
+                      padding: const EdgeInsets.all(5.0),
                       child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                         decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(10),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.grey.withValues(alpha: 0.3), // Shadow color
-                              spreadRadius: 2,
-                              blurRadius: 5,
-                              offset: const Offset(0, 3),
+                          color: AppColors.greyText.withValues(alpha: 0.08),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(
+                              Icons.calendar_today_outlined,
+                              size: 16,
+                              color: AppColors.greyText,
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              DateFormat('dd MMM yyyy').format(selectedDate!),
+                              style: const TextStyle(
+                                fontSize: 14,
+                                color: AppColors.greyText,
+                                fontWeight: FontWeight.w500,
+                              ),
                             ),
                           ],
                         ),
-                        child: ElevatedButton.icon(
-                          onPressed: () async {
-                            DateTime? pickedDate = await _selectDate(context);
-                            if (pickedDate != null) {
-                              String formattedDate = DateFormat('yyyy-MM-dd').format(pickedDate);
-                              Provider.of<DashboardProvider>(context, listen: false).fetchAllData(formattedDate);
-                            }
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.primaryBlue, // Button background color
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10), // Same border radius
-                            ),
-                            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0), // Button padding
-                          ),
-                          icon: const Icon(
-                            Icons.calendar_month_outlined,
-                            color: Colors.white,
-                          ), // Button icon
-                          label: const Text(
-                            'Select Date', // Button label
-                            style: TextStyle(
-                              color: Colors.white, // Text color
-                              fontSize: 16, // Font size
-                            ),
-                          ),
-                        ),
                       ),
                     ),
-                    // Refresh Button
-                    Tooltip(
-                      message: 'Update the below shown data',
+                  Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(10),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.grey.withValues(alpha: 0.3), // Shadow color
+                            spreadRadius: 2,
+                            blurRadius: 5,
+                            offset: const Offset(0, 3),
+                          ),
+                        ],
+                      ),
                       child: ElevatedButton.icon(
-                        onPressed: () {
-                          // selectedDate = DateTime.now();
-                          refreshData();
-                          _refreshData();
+                        onPressed: () async {
+                          DateTime? pickedDate = await _selectDate(context);
+                          if (pickedDate != null) {
+                            String formattedDate = DateFormat('yyyy-MM-dd').format(pickedDate);
+                            Provider.of<DashboardProvider>(context, listen: false).fetchAllData(formattedDate);
+                          }
                         },
-                        label: const Text(
-                          'Update Data',
-                          style: TextStyle(
-                            fontSize: 16,
-                            // fontWeight: FontWeight.w600,
-                          ),
-                        ),
                         style: ElevatedButton.styleFrom(
-                          foregroundColor: Colors.white,
-                          backgroundColor: AppColors.primaryBlue,
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 20,
-                            vertical: 12,
-                          ),
+                          backgroundColor: AppColors.primaryBlue, // Button background color
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
+                            borderRadius: BorderRadius.circular(10), // Same border radius
                           ),
-                          elevation: 2,
+                          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0), // Button padding
+                        ),
+                        icon: const Icon(
+                          Icons.calendar_month_outlined,
+                          color: Colors.white,
+                        ), // Button icon
+                        label: const Text(
+                          'Select Date', // Button label
+                          style: TextStyle(
+                            color: Colors.white, // Text color
+                            fontSize: 16, // Font size
+                          ),
                         ),
                       ),
                     ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 20),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Expanded(
-                    child: DashboardCards(
-                      date: picked ?? DateTime.now(),
-                      isSuperAdmin: isSuperAdmin,
-                      isAdmin: isAdmin,
-                      isConfirmer: isConfirmer,
-                      isBooker: isBooker,
-                      isAccounts: isAccounts,
-                      isPicker: isPicker,
-                      isPacker: isPacker,
-                      isChecker: isChecker,
-                      isRacker: isRacker,
-                      isManifest: isManifest,
-                      isOutbound: isOutbound,
+                  ),
+                  // Refresh Button
+                  Tooltip(
+                    message: 'Update the below shown data',
+                    child: ElevatedButton.icon(
+                      onPressed: () {
+                        // selectedDate = DateTime.now();
+                        refreshData();
+                        _refreshData();
+                      },
+                      label: const Text(
+                        'Update Data',
+                        style: TextStyle(
+                          fontSize: 16,
+                          // fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        foregroundColor: Colors.white,
+                        backgroundColor: AppColors.primaryBlue,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 20,
+                          vertical: 12,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        elevation: 2,
+                      ),
                     ),
                   ),
                 ],
               ),
-            ] else ...[
-              const CreateOrderPage(),
-            ],
+            ),
+            const SizedBox(height: 20),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  child: DashboardCards(
+                    date: picked ?? DateTime.now(),
+                    isSuperAdmin: isSuperAdmin,
+                    isAdmin: isAdmin,
+                    isConfirmer: isConfirmer,
+                    isBooker: isBooker,
+                    isAccounts: isAccounts,
+                    isPicker: isPicker,
+                    isPacker: isPacker,
+                    isChecker: isChecker,
+                    isRacker: isRacker,
+                    isManifest: isManifest,
+                    isOutbound: isOutbound,
+                  ),
+                ),
+              ],
+            ),
+            // ] else ...[
+            //   const CreateOrderPage(),
+            // ],
           ],
         ),
       ),

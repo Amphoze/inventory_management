@@ -15,12 +15,12 @@ class CreateOrderProvider with ChangeNotifier {
   List<Map<String, dynamic>> addedComboList = [];
   bool isLoading = false;
   bool isSavingOrder = false;
-  String selectedItemType = 'Product';
-  String? selectedOrderType;
-  String? selectedMarketplace;
-  String? selectedFilter;
-  String selectedPayment = 'COD';
-  String? selectedCourier;
+  String selectedItemType = 'Product'; //
+  String? selectedOrderType; //
+  String? selectedMarketplace; //
+  String? selectedFilter; //
+  String selectedPayment = 'COD'; //
+  String? selectedCourier; //
   bool isBillingSameAsShipping = true;
 
   final List<Product?> _productsFuture = [];
@@ -77,10 +77,10 @@ class CreateOrderProvider with ChangeNotifier {
   final List<TextEditingController> addedComboQuantityControllers = [];
   final List<TextEditingController> addedComboRateControllers = [];
 
-  CreateOrderProvider() {
-    initializeControllers();
-    // _fetchInitialData();
-  }
+  // CreateOrderProvider() {
+  //   initializeControllers();
+  //   // _fetchInitialData();
+  // }
 
   void initializeControllers() {
     orderIdController = TextEditingController();
@@ -207,6 +207,18 @@ class CreateOrderProvider with ChangeNotifier {
     for (var controller in addedProductRateControllers) controller.dispose();
     for (var controller in addedComboQuantityControllers) controller.dispose();
     for (var controller in addedComboRateControllers) controller.dispose();
+
+    addedProductList.clear();
+    addedComboList.clear();
+    _productsFuture.clear();
+    _combosFuture.clear();
+
+    selectedOrderType = null; //
+    selectedMarketplace = null; //
+    selectedFilter = null; //
+    selectedCourier = null; //
+
+    notifyListeners();
   }
 
   String formatDate(DateTime date) => "${date.day}-${date.month}-${date.year}";
@@ -289,6 +301,7 @@ class CreateOrderProvider with ChangeNotifier {
       addedProductList.add(newItem);
       addedProductQuantityControllers.add(TextEditingController(text: '1'));
       addedProductRateControllers.add(TextEditingController(text: '0.00'));
+      _productsFuture.add(fetchedProduct);
       setTotalQuantity();
     } catch (e, s) {
       log('addProduct error: $e $s');
