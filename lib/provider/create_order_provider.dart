@@ -435,43 +435,6 @@ class CreateOrderProvider with ChangeNotifier {
     }
   }
 
-  void updateTotalAmount() {
-    double total = 0;
-
-    for (int i = 0; i < addedProductList.length; i++) {
-      final qty = int.tryParse(addedProductQuantityControllers[i].text) ?? 0;
-      final rate = double.tryParse(addedProductRateControllers[i].text) ?? 0;
-      total += qty * rate;
-    }
-
-    for (int i = 0; i < addedComboList.length; i++) {
-      final qty = int.tryParse(addedComboQuantityControllers[i].text) ?? 0;
-      final rate = double.tryParse(addedComboRateControllers[i].text) ?? 0;
-      total += qty * rate;
-    }
-
-    final discountPercent = double.tryParse(discountPercentController.text) ?? 0;
-    double discountAmount = 0;
-
-    if (discountPercent > 0) {
-      discountAmount = total * (discountPercent / 100);
-      total -= discountAmount;
-    }
-
-    discountAmountController.text = discountAmount.toStringAsFixed(2);
-
-    totalAmtController.text = total.toStringAsFixed(2);
-
-    final prepaidAmount = double.tryParse(prepaidAmountController.text) ?? 0.0;
-    final codAmount = (total - prepaidAmount).clamp(0, total);
-
-    codAmountController.text = codAmount.toStringAsFixed(2);
-
-    setTotalQuantity();
-
-    notifyListeners();
-  }
-
   void setTotalQuantity() {
     int totalQuantity = 0;
 
