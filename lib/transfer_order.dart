@@ -38,6 +38,8 @@ class _TransferOrderPageState extends State<TransferOrderPage> {
   }
 
   void _saveOrder(TransferOrderProvider provider) async {
+    provider.setBillingSameAsShipping(provider.isBillingSameAsShipping);
+
     if (provider.selectedFromWarehouse == null || provider.selectedFromWarehouse!.isEmpty || provider.selectedToWarehouse == null || provider.selectedToWarehouse!.isEmpty) {
       Utils.showSnackBar(context, 'Please select both source and destination warehouses.');
       return;
@@ -50,6 +52,11 @@ class _TransferOrderPageState extends State<TransferOrderPage> {
 
     if (provider.addedProductList.isEmpty && provider.addedComboList.isEmpty) {
       Utils.showSnackBar(context, 'Please add items to the order.');
+      return;
+    }
+
+    if ((provider.billingStateController.text.trim().length < 3) || (provider.shippingStateController.text.trim().length < 3)) {
+      Utils.showSnackBar(context, 'State name must be at least 3 characters long');
       return;
     }
 
@@ -84,10 +91,10 @@ class _TransferOrderPageState extends State<TransferOrderPage> {
                 const SizedBox(height: 30),
                 _buildShippingAddressSection(provider),
                 const SizedBox(height: 30),
-                _buildOrderDetailsSection(context, provider),
-                const SizedBox(height: 30),
                 if (provider.isBillingSameAsShipping == false) _buildBillingAddressSection(provider),
                 if (provider.isBillingSameAsShipping == false) const SizedBox(height: 30),
+                const SizedBox(height: 30),
+                _buildOrderDetailsSection(context, provider),
                 _buildItemsSection(context, provider),
                 const SizedBox(height: 20),
                 Row(

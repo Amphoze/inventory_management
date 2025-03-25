@@ -422,6 +422,14 @@ class _CreateOrderPageState extends State<CreateOrderPage> {
                   controller: provider.customerEmailController,
                   label: 'Email',
                   icon: Icons.email,
+                  validator: (value) {
+                    if (value != null) {
+                      if (!value.contains('@') || !value.contains('.')) {
+                        return 'Enter a valid email';
+                      }
+                    }
+                    return null;
+                  },
                 ),
                 const SizedBox(height: 10),
                 _buildPhoneField(
@@ -834,6 +842,7 @@ class _CreateOrderPageState extends State<CreateOrderPage> {
                                     child: _buildTextField(
                                       controller: provider.addedProductQuantityControllers[index],
                                       label: 'Qty',
+                                      isNumber: true,
                                       icon: Icons.production_quantity_limits,
                                       onSubmitted: (_) => provider.updateOriginal(),
                                     ),
@@ -844,6 +853,7 @@ class _CreateOrderPageState extends State<CreateOrderPage> {
                                     child: _buildTextField(
                                       controller: provider.addedProductRateControllers[index],
                                       label: 'Rate',
+                                      isNumber: true,
                                       icon: Icons.currency_rupee,
                                       onSubmitted: (_) => provider.updateOriginal(),
                                     ),
@@ -909,6 +919,7 @@ class _CreateOrderPageState extends State<CreateOrderPage> {
                                     child: _buildTextField(
                                       controller: provider.addedComboQuantityControllers[index],
                                       label: 'Qty',
+                                      isNumber: true,
                                       icon: Icons.production_quantity_limits,
                                       onSubmitted: (_) => provider.updateOriginal(),
                                     ),
@@ -919,6 +930,7 @@ class _CreateOrderPageState extends State<CreateOrderPage> {
                                     child: _buildTextField(
                                       controller: provider.addedComboRateControllers[index],
                                       label: 'Rate',
+                                      isNumber: true,
                                       icon: Icons.currency_rupee,
                                       onSubmitted: (_) => provider.updateOriginal(),
                                     ),
@@ -975,7 +987,7 @@ class _CreateOrderPageState extends State<CreateOrderPage> {
     void Function(String)? onSubmitted,
     void Function(String)? onChanged,
     int? maxLength,
-    bool isNumber = false,
+    bool? isNumber = false,
   }) {
     return TextFormField(
       controller: controller,
@@ -983,8 +995,8 @@ class _CreateOrderPageState extends State<CreateOrderPage> {
       validator: validator,
       onChanged: onChanged,
       maxLength: maxLength,
-      keyboardType: isNumber ? TextInputType.number : TextInputType.text,
-      inputFormatters: isNumber ? [FilteringTextInputFormatter.digitsOnly] : [],
+      keyboardType: (isNumber ?? false) ? TextInputType.number : TextInputType.text,
+      inputFormatters: (isNumber ?? false) ? [FilteringTextInputFormatter.digitsOnly] : [],
       onFieldSubmitted: onSubmitted,
       decoration: InputDecoration(
         label: Text(label, style: TextStyle(color: validator != null ? Colors.red : Colors.grey)),
