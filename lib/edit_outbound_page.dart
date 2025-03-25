@@ -148,8 +148,8 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
   late TextEditingController _shippingCountryController;
   late TextEditingController _shippingCountryCodeController;
 
-  Future<List<Product?>>? _productsFuture;
-  Future<List<Combo?>>? _combosFuture;
+  final List<Product?> _productsFuture = [];
+  final List<Combo?> _combosFuture = [];
 
   final List<TextEditingController> _productQuantityControllers = [];
   final List<TextEditingController> _productRateControllers = [];
@@ -286,15 +286,6 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
     }
 
     _initializeControllers();
-
-    // log("addedComboList: $addedComboList");
-    // log("addedProductList: $addedProductList");
-    // log('productList: $productList');
-    // log('comboList: $comboList');
-    // log("comboFuture: $_combosFuture");
-    // log("productFuture: $_productsFuture");
-    // log("comboItemGroups: $comboItemGroups");
-    // log("remainingItems: $remainingItems");
   }
 
   @override
@@ -759,6 +750,7 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
     }
   }
 
+  // Product
   Future<void> _addProduct(Map<String, String> selected) async {
     if (selected['id'] == null) {
       print('Invalid product selection: missing ID');
@@ -769,88 +761,117 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
         addedProductList.any((item) => item['id'] == selected['id']) || productList.any((item) => item['id'] == selected['id']);
     if (productExists) {
       print('Product already added');
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Product already added.')),
-      );
+      Utils.showSnackBar(context, 'Product already added', color: Colors.red);
       return;
     }
 
-    final fetchedProduct = await fetchProduct(selected['id']!);
+    Utils.showLoadingDialog(context, 'Adding product');
 
-    log('fetchedProduct: ${fetchedProduct!.toJson()}');
+    try {
+      final fetchedProduct = await fetchProduct(selected['id']!);
 
-    final newItem = {
-      'id': fetchedProduct.id,
-      'qty': 1,
-      'amount': 0.0,
-      'sku': fetchedProduct.sku ?? '',
-    };
+      final newItem = {
+        'id': fetchedProduct?.id ?? '',
+        'qty': 1,
+        'amount': 0.0,
+        'sku': fetchedProduct?.sku ?? '',
+      };
+      setState(() {
+        addedProductList.add(newItem);
+        _addedProductQuantityControllers.add(TextEditingController(text: '1'));
+        _addedProductRateControllers.add(TextEditingController(text: '0.00'));
 
-    log("newItem: $newItem");
-
-    setState(() {
-      addedProductList.add(newItem);
-      _addedProductQuantityControllers.add(TextEditingController(text: '1'));
-      _addedProductRateControllers.add(TextEditingController(text: '0.00'));
-
-      _totalWeightController.text = (double.parse(_totalWeightController.text) + (fetchedProduct.grossWeight ?? 0.0)).toStringAsFixed(2);
-      _productsFuture = fetchAllProducts(addedProductList);
-    });
-    log("addedProductList: $addedProductList");
+        _totalWeightController.text = (double.parse(_totalWeightController.text) + (fetchedProduct?.grossWeight ?? 0.0)).toStringAsFixed(2);
+        _productsFuture.add(fetchedProduct);
+      });
+      log('addedProductList in add: $addedProductList');
+      log('_productsFuture in add: $_productsFuture');
+    } catch (e, s) {
+      log('Error fetching product: $e $s');
+    } finally {
+      Navigator.pop(context);
+    }
   }
 
   Future<void> _deleteProduct(int index, String id) async {
     log('Deleting product at index: $index');
 
-    final fetchedProduct = await fetchProduct(id);
+    Utils.showLoadingDialog(context, 'Deleting product');
 
-    Logger().e('fetched p: $fetchedProduct');
+    try {
+      final fetchedProduct = await fetchProduct(id);
 
-    if (fetchedProduct != null) {
-      log('Fetched product: $fetchedProduct');
-      log('Fetched product weight: ${fetchedProduct.grossWeight}');
+      Logger().e('fetched p: $fetchedProduct');
 
-      if (index < productList.length) {
-        setState(() {
-          productList.removeAt(index);
+      if (fetchedProduct != null) {
+        log('Fetched product: $fetchedProduct');
+        log('Fetched product weight: ${fetchedProduct.grossWeight}');
 
-          _totalWeightController.text = (double.parse(_totalWeightController.text) - fetchedProduct.grossWeight! ?? 0.0).toStringAsFixed(2);
-          _totalAmtController.text = (double.parse(_totalAmtController.text) -
-                  double.parse(_productRateControllers[index].text) * int.parse(_productQuantityControllers[index].text))
-              .toStringAsFixed(2);
+        if (index < productList.length) {
+          setState(() {
+            productList.removeAt(index);
 
-          remainingItems!.removeAt(index);
+            _totalWeightController.text =
+                (double.parse(_totalWeightController.text) - fetchedProduct.grossWeight! ?? 0.0).toStringAsFixed(2);
+            _totalAmtController.text = (double.parse(_totalAmtController.text) -
+                    double.parse(_productRateControllers[index].text) * int.parse(_productQuantityControllers[index].text))
+                .toStringAsFixed(2);
 
-          _productQuantityControllers.removeAt(index);
-          _productRateControllers.removeAt(index);
-        });
+            remainingItems!.removeAt(index);
+
+            _productQuantityControllers.removeAt(index);
+            _productRateControllers.removeAt(index);
+          });
+        }
+        log('p: $productList');
       }
-      log('p: $productList');
+    } catch (e, s) {
+      log('_deleteProduct: $e $s');
+    } finally {
+      Navigator.pop(context);
     }
   }
 
   Future<void> _deleteAddedProduct(int index, String id) async {
     log('Deleting added product at index: $index');
-    final fetchedProduct = await fetchProduct(id);
+    Utils.showLoadingDialog(context, 'Deleting added product');
 
-    if (fetchedProduct != null) {
-      if (index < addedProductList.length) {
-        setState(() {
-          addedProductList.removeAt(index);
+    try {
+      final fetchedProduct = await fetchProduct(id);
 
-          _totalWeightController.text = (double.parse(_totalWeightController.text) - fetchedProduct.grossWeight! ?? 0.0).toStringAsFixed(2);
-          _totalAmtController.text = (double.parse(_totalAmtController.text) -
-                  double.parse(_addedProductRateControllers[index].text) * int.parse(_addedProductQuantityControllers[index].text))
-              .toStringAsFixed(2);
+      log('addedProductList length: ${addedProductList.length}');
+      log('index: $index');
 
-          _addedProductQuantityControllers.removeAt(index);
-          _addedProductRateControllers.removeAt(index);
+      if (fetchedProduct != null) {
+        if (index < addedProductList.length) {
+          setState(() {
+            // Remove from addedProductList
+            addedProductList.removeAt(index);
 
-          _productsFuture = fetchAllProducts(addedProductList);
-        });
+            // Update totals
+            _totalWeightController.text =
+                (double.parse(_totalWeightController.text) - (fetchedProduct.grossWeight ?? 0.0)).toStringAsFixed(2);
+            _totalAmtController.text = (double.parse(_totalAmtController.text) -
+                    double.parse(_addedProductRateControllers[index].text) * int.parse(_addedProductQuantityControllers[index].text))
+                .toStringAsFixed(2);
+
+            // Remove controllers
+            _addedProductQuantityControllers.removeAt(index);
+            _addedProductRateControllers.removeAt(index);
+
+            // Find and remove the product from _productsFuture using its ID
+            final productIndex = _productsFuture.indexWhere((product) => product?.id == id);
+            if (productIndex != -1) {
+              _productsFuture.removeAt(productIndex);
+            }
+          });
+        }
       }
+    } catch (e, s) {
+      log('Error deleting added product: $e $s');
+    } finally {
+      Navigator.pop(context);
     }
-    log('ap: $addedProductList');
   }
 
   Future<Product?> fetchProduct(String query) async {
@@ -869,8 +890,8 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
           'Authorization': 'Bearer $token',
         },
       );
-      Logger().e('ye le code: ${response.statusCode}');
-      Logger().e('ye le body: ${response.body}');
+      // Logger().e('ye le code: ${response.statusCode}');
+      // Logger().e('ye le body: ${response.body}');
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
@@ -888,18 +909,7 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
     return null;
   }
 
-  Future<List<Product?>> fetchAllProducts(List<dynamic> dynamicItemsList) async {
-    print('Fetching products for list: $dynamicItemsList');
-    List<Product?> products = [];
-    for (var item in dynamicItemsList) {
-      Product? product = await fetchProduct(item['id']);
-      print('Fetched product: $product');
-      products.add(product);
-    }
-    print('Final products list: $products');
-    return products;
-  }
-
+  // Combo
   Future<void> _addCombo(Map<String, String> selected) async {
     log('_addCombo called with: $selected');
 
@@ -919,87 +929,112 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
       return;
     }
 
-    final fetchedCombo = await fetchCombo(selected['sku']!);
-    Logger().e('fetchedCombo: ${fetchedCombo!.toJson()}');
+    Utils.showLoadingDialog(context, 'Adding combo');
 
-    final newItem = {
-      'id': fetchedCombo.id,
-      'qty': 1,
-      'amount': fetchedCombo.comboAmount,
-      'sku': fetchedCombo.comboSku ?? '',
-    };
+    try {
+      final fetchedCombo = await fetchCombo(selected['sku']!);
+      Logger().e('fetchedCombo: ${fetchedCombo!.toJson()}');
 
-    setState(() {
-      addedComboList.add(newItem);
-      _addedComboQuantityControllers.add(TextEditingController(text: '1'));
-      _addedComboRateControllers.add(TextEditingController(text: fetchedCombo.comboAmount ?? ''));
+      final newItem = {
+        'id': fetchedCombo.id,
+        'qty': 1,
+        'amount': fetchedCombo.comboAmount,
+        'sku': fetchedCombo.comboSku ?? '',
+      };
 
-      _totalWeightController.text = (double.parse(_totalWeightController.text) + (fetchedCombo.comboWeight ?? 0.0)).toStringAsFixed(2);
-      if (fetchedCombo.comboAmount != 0) {
-        _totalAmtController.text = (double.parse(_totalAmtController.text) +
-                (100 - double.parse(_discountPercentController.text)) * (double.parse(fetchedCombo.comboAmount!) ?? 0))
-            .toStringAsFixed(2);
-      }
+      setState(() {
+        addedComboList.add(newItem);
+        _addedComboQuantityControllers.add(TextEditingController(text: '1'));
+        _addedComboRateControllers.add(TextEditingController(text: fetchedCombo.comboAmount ?? ''));
 
-      _combosFuture = fetchAllCombos(addedComboList);
-    });
+        _totalWeightController.text = (double.parse(_totalWeightController.text) + (fetchedCombo.comboWeight ?? 0.0)).toStringAsFixed(2);
+        if (fetchedCombo.comboAmount != 0) {
+          _totalAmtController.text = (double.parse(_totalAmtController.text) +
+                  (100 - double.parse(_discountPercentController.text)) * (double.parse(fetchedCombo.comboAmount!) ?? 0))
+              .toStringAsFixed(2);
+        }
 
-    log("addedComboList 1: $addedComboList");
-    log("addedProductList 1: $addedProductList");
-    log("comboFuture 1: $_combosFuture");
-    log("productFuture 1: $_productsFuture");
-    Logger().e("_combosFuture: $_combosFuture");
+        _combosFuture.add(fetchedCombo);
+      });
+    } catch (e, s) {
+      log('_addCombo error: $e $s');
+    } finally {
+      Navigator.pop(context);
+    }
   }
 
   Future<void> _deleteAddedCombo(int index, String id) async {
     log('deleting added combo at index: $index');
+    Utils.showLoadingDialog(context, 'Deleting added combo');
 
-    final fetchedCombo = await fetchCombo(id);
+    try {
+      final fetchedCombo = await fetchCombo(id);
 
-    if (fetchedCombo != null) {
-      if (index < addedComboList.length) {
-        setState(() {
-          addedComboList.removeAt(index);
+      if (fetchedCombo != null) {
+        if (index < addedComboList.length) {
+          setState(() {
+            // Remove from addedComboList
+            addedComboList.removeAt(index);
 
-          _totalWeightController.text = (double.parse(_totalWeightController.text) - fetchedCombo.comboWeight! ?? 0.0).toStringAsFixed(2);
-          _totalAmtController.text = (double.parse(_totalAmtController.text) -
-                  double.parse(_addedComboRateControllers[index].text) * int.parse(_addedComboQuantityControllers[index].text))
-              .toStringAsFixed(2);
+            // Update totals
+            _totalWeightController.text =
+                (double.parse(_totalWeightController.text) - (fetchedCombo.comboWeight ?? 0.0))
+                    .toStringAsFixed(2);
+            _totalAmtController.text =
+                (double.parse(_totalAmtController.text) -
+                    double.parse(_addedComboRateControllers[index].text) *
+                        int.parse(_addedComboQuantityControllers[index].text))
+                    .toStringAsFixed(2);
 
-          _combosFuture = fetchAllCombos(addedComboList);
+            // Remove controllers
+            _addedComboQuantityControllers.removeAt(index);
+            _addedComboRateControllers.removeAt(index);
 
-          _addedComboQuantityControllers.removeAt(index);
-          _addedComboRateControllers.removeAt(index);
-        });
+            // Find and remove the combo from _combosFuture using its ID
+            final comboIndex = _combosFuture.indexWhere((combo) => combo?.id == id);
+            if (comboIndex != -1) {
+              _combosFuture.removeAt(comboIndex);
+            }
+          });
+        }
       }
+    } catch (e, s) {
+      log('_deleteAddedCombo error: $e $s');
+    } finally {
+      Navigator.pop(context);
     }
-
-    log('ac: $addedComboList');
   }
 
   Future<void> _deleteCombo(int index, String id) async {
     log('Deleting combo at index: $index');
-    final fetchedCombo = await fetchCombo(id);
+    Utils.showLoadingDialog(context, 'Deleting combo');
 
-    Logger().e('fetched c: $fetchedCombo');
+    try {
+      final fetchedCombo = await fetchCombo(id);
 
-    if (fetchedCombo != null) {
-      if (index < comboList.length) {
-        setState(() {
-          comboList.removeAt(index);
+      Logger().e('fetched c: $fetchedCombo');
 
-          _totalWeightController.text = (double.parse(_totalWeightController.text) - fetchedCombo.comboWeight! ?? 0.0).toStringAsFixed(2);
-          _totalAmtController.text = (double.parse(_totalAmtController.text) -
-                  double.parse(_comboRateControllers[index].text) * int.parse(_comboQuantityControllers[index].text))
-              .toStringAsFixed(2);
+      if (fetchedCombo != null) {
+        if (index < comboList.length) {
+          setState(() {
+            comboList.removeAt(index);
 
-          _comboQuantityControllers.removeAt(index);
-          _comboRateControllers.removeAt(index);
-          comboItemGroups!.removeAt(index);
-        });
+            _totalWeightController.text = (double.parse(_totalWeightController.text) - fetchedCombo.comboWeight! ?? 0.0).toStringAsFixed(2);
+            _totalAmtController.text = (double.parse(_totalAmtController.text) -
+                    double.parse(_comboRateControllers[index].text) * int.parse(_comboQuantityControllers[index].text))
+                .toStringAsFixed(2);
+
+            _comboQuantityControllers.removeAt(index);
+            _comboRateControllers.removeAt(index);
+            comboItemGroups!.removeAt(index);
+          });
+        }
       }
+    } catch (e, s) {
+      log('_deleteCombo error: $e $s');
+    } finally{
+      Navigator.pop(context);
     }
-    log('c: $comboList');
   }
 
   Future<Combo?> fetchCombo(String query) async {
@@ -1024,7 +1059,7 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
-        if (data != null && data['combos'] != null && data['combos'].isNotEmpty) {
+        if (data?['combos']?.isNotEmpty ?? false) {
           final comboData = data['combos'].firstWhere(
             (combo) => combo['comboSku'] == query || combo['id'] == query,
             orElse: () => null,
@@ -1047,27 +1082,8 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
     }
   }
 
-  Future<List<Combo?>> fetchAllCombos(List<dynamic> addedComboList) async {
-    print('Starting fetchAllCombos with list: $addedComboList');
-    List<Combo?> combos = [];
-
-    for (var item in addedComboList) {
-      print('Fetching combo with sku: ${item['sku']}');
-      Combo? combo = await fetchCombo(item['sku'] ?? item['id']);
-      print('Fetched combo result: $combo');
-      if (combo != null) {
-        combos.add(combo);
-      }
-    }
-
-    print('Finished fetchAllCombos, returning combos: $combos');
-    return combos;
-  }
-
   @override
   Widget build(BuildContext context) {
-    // selectedPayment = _ordersProvider.selectedPayment;
-    // Logger().e('selectedPayment: $selectedPayment');
     return Form(
       key: _formKey,
       child: Scaffold(
@@ -1140,6 +1156,7 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
                                       child: _buildTextField(
                                         controller: _dateController,
                                         label: "Date",
+                                        enabled: false,
                                         icon: Icons.date_range,
                                       ),
                                     ),
@@ -1234,33 +1251,34 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
                                       }
 
                                       return DropdownButtonFormField<String>(
-                                        value: selectedMarketplace,
-                                        decoration: InputDecoration(
-                                          labelText: 'Marketplace',
-                                          labelStyle: TextStyle(
-                                            fontWeight: FontWeight.w500,
-                                            color: Colors.grey.withValues(alpha: 0.7),
-                                            fontSize: 14,
-                                          ),
-                                          prefixIcon: Icon(Icons.store, color: Colors.grey[700]),
-                                          border: OutlineInputBorder(
-                                            borderRadius: BorderRadius.circular(10),
-                                            borderSide: BorderSide(
-                                              color: Colors.grey[400]!,
-                                              width: 1.2,
+                                          value: selectedMarketplace,
+                                          decoration: InputDecoration(
+                                            labelText: 'Marketplace',
+                                            labelStyle: TextStyle(
+                                              fontWeight: FontWeight.w500,
+                                              color: Colors.grey.withValues(alpha: 0.7),
+                                              fontSize: 14,
+                                            ),
+                                            prefixIcon: Icon(Icons.store, color: Colors.grey[700]),
+                                            border: OutlineInputBorder(
+                                              borderRadius: BorderRadius.circular(10),
+                                              borderSide: BorderSide(
+                                                color: Colors.grey[400]!,
+                                                width: 1.2,
+                                              ),
                                             ),
                                           ),
-                                        ),
-                                        dropdownColor: Colors.white,
-                                        hint: const Text('Select Marketplace'),
-                                        items: items,
-                                        onChanged: (value) {
-                                          if (value != null) {
-                                            ordersProvider.selectMarketplace(value);
-                                            _marketplaceController.text = value;
-                                          }
-                                        },
-                                      );
+                                          dropdownColor: Colors.white,
+                                          hint: const Text('Select Marketplace'),
+                                          items: items,
+                                          onChanged: null
+                                          // onChanged: (value) {
+                                          //   if (value != null) {
+                                          //     ordersProvider.selectMarketplace(value);
+                                          //     _marketplaceController.text = value;
+                                          //   }
+                                          // },
+                                          );
                                     },
                                   ),
                                   const SizedBox(height: 10),
@@ -1281,12 +1299,12 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
                                     label: 'Transaction Number',
                                     icon: Icons.confirmation_number,
                                   ),
-                                  const SizedBox(height: 10),
-                                  _buildTextField(
-                                    controller: _calcEntryNumberController,
-                                    label: 'Calculation Entry Number',
-                                    icon: Icons.calculate,
-                                  ),
+                                  // const SizedBox(height: 10),
+                                  // _buildTextField(
+                                  //   controller: _calcEntryNumberController,
+                                  //   label: 'Calculation Entry Number',
+                                  //   icon: Icons.calculate,
+                                  // ),
                                   const SizedBox(height: 10),
                                   Consumer<OrdersProvider>(
                                     builder: (context, ordersProvider, child) {
@@ -1351,10 +1369,11 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
                                         dropdownColor: Colors.white,
                                         hint: const Text('Select Filter'),
                                         items: items,
-                                        onChanged: (value) {
-                                          ordersProvider.selectFilter(value);
-                                          _filterController.text = value ?? '';
-                                        },
+                                        onChanged: null,
+                                        // onChanged: (value) {
+                                        //   ordersProvider.selectFilter(value);
+                                        //   _filterController.text = value ?? '';
+                                        // },
                                       );
                                     },
                                   ),
@@ -2349,305 +2368,280 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
                   ),
                 ),
                 const SizedBox(height: 10),
-                Column(
-                  children: [
-                    ListView.builder(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      itemCount: remainingItems!.length,
-                      itemBuilder: (context, index) {
-                        final item = remainingItems![index];
-                        final id = item.product?.id ?? '';
-                        log('id: $id');
+                // products
+                ListView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: remainingItems!.length,
+                  itemBuilder: (context, index) {
+                    final item = remainingItems![index];
+                    final id = item.product?.id ?? '';
+                    log('id: $id');
 
-                        return Row(
-                          children: [
-                            Expanded(
-                              flex: 5,
-                              child: ProductDetailsCard(
-                                item: item,
-                                index: index,
-                              ),
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 8.0),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            flex: 5,
+                            child: ProductDetailsCard(
+                              item: item,
+                              index: index,
                             ),
-                            const SizedBox(width: 16),
-                            Expanded(
-                              flex: 1,
-                              child: Column(
-                                children: [
-                                  SizedBox(
-                                    width: 200,
-                                    child: _buildQuantityTextField(
-                                      controller: _productQuantityControllers[index],
-                                      label: 'Qty',
-                                      icon: Icons.production_quantity_limits,
-                                    ),
+                          ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            flex: 1,
+                            child: Column(
+                              children: [
+                                SizedBox(
+                                  width: 200,
+                                  child: _buildQuantityTextField(
+                                    controller: _productQuantityControllers[index],
+                                    label: 'Qty',
+                                    icon: Icons.production_quantity_limits,
                                   ),
-                                  const SizedBox(height: 8),
-                                  SizedBox(
-                                    width: 200,
-                                    child: _buildRateTextField(
-                                      controller: _productRateControllers[index],
-                                      label: 'Rate',
-                                      icon: Icons.currency_rupee,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            const SizedBox(width: 16),
-                            ElevatedButton(
-                              onPressed: () => _deleteProduct(index, id),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.red,
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 16,
-                                  vertical: 8,
                                 ),
-                              ),
-                              child: const Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(Icons.delete),
-                                  SizedBox(width: 8),
-                                  Text('Delete'),
-                                ],
-                              ),
-                            ),
-                          ],
-                        );
-                      },
-                    ),
-                    FutureBuilder<List<Product?>>(
-                      future: _productsFuture,
-                      builder: (context, snapshot) {
-                        if (snapshot.connectionState == ConnectionState.waiting) {
-                          return const Center(child: CircularProgressIndicator());
-                        } else if (snapshot.hasError) {
-                          return Center(child: Text('Error: ${snapshot.error}'));
-                        } else {
-                          final products = snapshot.data ?? [];
-
-                          if (products.isEmpty) return const SizedBox.shrink();
-
-                          return Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              ListView.builder(
-                                shrinkWrap: true,
-                                physics: const NeverScrollableScrollPhysics(),
-                                itemCount: products.length,
-                                itemBuilder: (context, index) {
-                                  final product = products[index];
-                                  final id = product!.id;
-
-                                  log('id: $id');
-                                  return Row(
-                                    children: [
-                                      Expanded(
-                                        flex: 5,
-                                        child: ProductCard(
-                                          product: product,
-                                          index: index,
-                                        ),
-                                      ),
-                                      const SizedBox(width: 16),
-                                      Expanded(
-                                        flex: 1,
-                                        child: Column(
-                                          children: [
-                                            SizedBox(
-                                              width: 200,
-                                              child: _buildQuantityTextField(
-                                                controller: _addedProductQuantityControllers[index],
-                                                label: 'Qty',
-                                                icon: Icons.production_quantity_limits,
-                                              ),
-                                            ),
-                                            const SizedBox(height: 8),
-                                            SizedBox(
-                                              width: 200,
-                                              child: _buildRateTextField(
-                                                controller: _addedProductRateControllers[index],
-                                                label: 'Rate',
-                                                icon: Icons.currency_rupee,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                      const SizedBox(width: 16),
-                                      ElevatedButton(
-                                        onPressed: () => _deleteAddedProduct(index, id!),
-                                        style: ElevatedButton.styleFrom(
-                                          backgroundColor: Colors.red,
-                                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                                        ),
-                                        child: const Row(
-                                          mainAxisSize: MainAxisSize.min,
-                                          children: [
-                                            Icon(Icons.delete),
-                                            SizedBox(width: 8),
-                                            Text('Delete'),
-                                          ],
-                                        ),
-                                      ),
-                                    ],
-                                  );
-                                },
-                              ),
-                            ],
-                          );
-                        }
-                      },
-                    ),
-                    ListView.builder(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      itemCount: comboItemGroups!.length,
-                      itemBuilder: (context, index) {
-                        final combo = comboItemGroups![index];
-                        final sku = combo[0].comboSku;
-                        return Row(
-                          children: [
-                            Expanded(
-                              flex: 5,
-                              child: BigComboCard(
-                                items: combo,
-                                index: index,
-                              ),
-                            ),
-                            const SizedBox(width: 16),
-                            Expanded(
-                              flex: 1,
-                              child: Column(
-                                children: [
-                                  SizedBox(
-                                    width: 200,
-                                    child: _buildQuantityTextField(
-                                      controller: _comboQuantityControllers[index],
-                                      label: 'Qty',
-                                      icon: Icons.production_quantity_limits,
-                                    ),
+                                const SizedBox(height: 8),
+                                SizedBox(
+                                  width: 200,
+                                  child: _buildRateTextField(
+                                    controller: _productRateControllers[index],
+                                    label: 'Rate',
+                                    icon: Icons.currency_rupee,
                                   ),
-                                  const SizedBox(height: 8),
-                                  SizedBox(
-                                    width: 200,
-                                    child: _buildRateTextField(
-                                      controller: _comboRateControllers[index],
-                                      label: 'Rate',
-                                      icon: Icons.currency_rupee,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            ElevatedButton(
-                              onPressed: () => _deleteCombo(index, sku!),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.red,
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 16,
-                                  vertical: 8,
                                 ),
-                              ),
-                              child: const Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(Icons.delete),
-                                  SizedBox(width: 8),
-                                  Text('Delete'),
-                                ],
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          ElevatedButton(
+                            onPressed: () => _deleteProduct(index, id),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.red,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 8,
                               ),
                             ),
-                          ],
-                        );
-                      },
-                    ),
-                    FutureBuilder<List<Combo?>>(
-                      future: _combosFuture,
-                      builder: (context, snapshot) {
-                        if (snapshot.connectionState == ConnectionState.waiting) {
-                          return const Center(child: CircularProgressIndicator());
-                        } else if (snapshot.hasError) {
-                          return Center(child: Text('Error: ${snapshot.error}'));
-                        } else {
-                          final combos = snapshot.data ?? [];
+                            child: const Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(Icons.delete),
+                                SizedBox(width: 8),
+                                Text('Delete'),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                ),
+                // added products
+                ListView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: _productsFuture.length,
+                  itemBuilder: (context, index) {
+                    final product = _productsFuture[index];
+                    final id = product!.id;
 
-                          return Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              ListView.builder(
-                                shrinkWrap: true,
-                                physics: const NeverScrollableScrollPhysics(),
-                                itemCount: combos.length,
-                                itemBuilder: (context, index) {
-                                  final combo = combos[index];
-                                  final sku = combo!.comboSku;
+                    log('id: $id');
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 8.0),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            flex: 5,
+                            child: ProductCard(
+                              product: product,
+                              index: index,
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            flex: 1,
+                            child: Column(
+                              children: [
+                                SizedBox(
+                                  width: 200,
+                                  child: _buildQuantityTextField(
+                                    controller: _addedProductQuantityControllers[index],
+                                    label: 'Qty',
+                                    icon: Icons.production_quantity_limits,
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                SizedBox(
+                                  width: 200,
+                                  child: _buildRateTextField(
+                                    controller: _addedProductRateControllers[index],
+                                    label: 'Rate',
+                                    icon: Icons.currency_rupee,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          ElevatedButton(
+                            onPressed: () => _deleteAddedProduct(index, id!),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.red,
+                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                            ),
+                            child: const Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(Icons.delete),
+                                SizedBox(width: 8),
+                                Text('Delete'),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                ),
+                // combos
+                ListView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: comboItemGroups!.length,
+                  itemBuilder: (context, index) {
+                    final combo = comboItemGroups![index];
+                    final sku = combo[0].comboSku;
 
-                                  return Row(
-                                    children: [
-                                      Expanded(
-                                        flex: 5,
-                                        child: ComboCard(
-                                          combo: combo,
-                                          index: index,
-                                        ),
-                                      ),
-                                      const SizedBox(width: 16),
-                                      Expanded(
-                                        flex: 1,
-                                        child: Column(
-                                          children: [
-                                            SizedBox(
-                                              width: 200,
-                                              child: _buildQuantityTextField(
-                                                controller: _addedComboQuantityControllers[index],
-                                                label: 'Qty',
-                                                icon: Icons.production_quantity_limits,
-                                              ),
-                                            ),
-                                            const SizedBox(height: 8),
-                                            SizedBox(
-                                              width: 200,
-                                              child: _buildRateTextField(
-                                                controller: _addedComboRateControllers[index],
-                                                label: 'Rate',
-                                                icon: Icons.currency_rupee,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                      const SizedBox(width: 8),
-                                      ElevatedButton(
-                                        onPressed: () => _deleteAddedCombo(index, sku),
-                                        style: ElevatedButton.styleFrom(
-                                          backgroundColor: Colors.red,
-                                          padding: const EdgeInsets.symmetric(
-                                            horizontal: 16,
-                                            vertical: 8,
-                                          ),
-                                        ),
-                                        child: const Row(
-                                          mainAxisSize: MainAxisSize.min,
-                                          children: [
-                                            Icon(Icons.delete),
-                                            SizedBox(width: 8),
-                                            Text('Delete'),
-                                          ],
-                                        ),
-                                      ),
-                                    ],
-                                  );
-                                },
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 8.0),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            flex: 5,
+                            child: BigComboCard(
+                              items: combo,
+                              index: index,
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            flex: 1,
+                            child: Column(
+                              children: [
+                                SizedBox(
+                                  width: 200,
+                                  child: _buildQuantityTextField(
+                                    controller: _comboQuantityControllers[index],
+                                    label: 'Qty',
+                                    icon: Icons.production_quantity_limits,
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                SizedBox(
+                                  width: 200,
+                                  child: _buildRateTextField(
+                                    controller: _comboRateControllers[index],
+                                    label: 'Rate',
+                                    icon: Icons.currency_rupee,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          ElevatedButton(
+                            onPressed: () => _deleteCombo(index, sku!),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.red,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 8,
                               ),
-                            ],
-                          );
-                        }
-                      },
-                    ),
-                  ],
+                            ),
+                            child: const Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(Icons.delete),
+                                SizedBox(width: 8),
+                                Text('Delete'),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                ),
+                //added combos
+                ListView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: _combosFuture.length,
+                  itemBuilder: (context, index) {
+                    final combo = _combosFuture[index];
+                    final sku = combo!.comboSku;
+
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 8.0),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            flex: 5,
+                            child: ComboCard(
+                              combo: combo,
+                              index: index,
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            flex: 1,
+                            child: Column(
+                              children: [
+                                SizedBox(
+                                  width: 200,
+                                  child: _buildQuantityTextField(
+                                    controller: _addedComboQuantityControllers[index],
+                                    label: 'Qty',
+                                    icon: Icons.production_quantity_limits,
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                SizedBox(
+                                  width: 200,
+                                  child: _buildRateTextField(
+                                    controller: _addedComboRateControllers[index],
+                                    label: 'Rate',
+                                    icon: Icons.currency_rupee,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          ElevatedButton(
+                            onPressed: () => _deleteAddedCombo(index, sku),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.red,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 8,
+                              ),
+                            ),
+                            child: const Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(Icons.delete),
+                                SizedBox(width: 8),
+                                Text('Delete'),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
                 ),
                 const SizedBox(height: 10),
               ],
@@ -2669,15 +2663,16 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
     );
   }
 
-  Widget _buildTextField(
-      {required TextEditingController controller,
-      required String label,
-      required IconData icon,
-      bool enabled = true,
-      TextInputType? keyboardType,
-      String? Function(String?)? validator,
-      bool obscureText = false,
-      void Function(String)? onFieldSubmitted}) {
+  Widget _buildTextField({
+    required TextEditingController controller,
+    required String label,
+    required IconData icon,
+    bool enabled = true,
+    TextInputType? keyboardType,
+    String? Function(String?)? validator,
+    bool obscureText = false,
+    void Function(String)? onFieldSubmitted,
+  }) {
     return StatefulBuilder(
       builder: (context, setState) {
         return Focus(

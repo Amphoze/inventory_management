@@ -418,7 +418,6 @@ class Product {
   final Category? category;
   final String? technicalName;
   final Label? label;
-
   final String? taxRule;
   final BoxSize? boxSize;
   final OuterPackage? outerPackage;

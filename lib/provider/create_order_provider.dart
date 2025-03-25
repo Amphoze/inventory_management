@@ -23,8 +23,8 @@ class CreateOrderProvider with ChangeNotifier {
   String? selectedCourier;
   bool isBillingSameAsShipping = true;
 
-  Future<List<Product?>>? _productsFuture;
-  Future<List<Combo?>>? _combosFuture;
+  final List<Product?> _productsFuture = [];
+  final List<Combo?> _combosFuture = [];
 
   late TextEditingController orderIdController;
   late TextEditingController paymentModeController;
@@ -79,7 +79,7 @@ class CreateOrderProvider with ChangeNotifier {
 
   CreateOrderProvider() {
     initializeControllers();
-    _fetchInitialData();
+    // _fetchInitialData();
   }
 
   void initializeControllers() {
@@ -132,11 +132,11 @@ class CreateOrderProvider with ChangeNotifier {
     _updateItemControllers();
   }
 
-  void _fetchInitialData() {
-    _productsFuture = fetchAllProducts(addedProductList);
-    _combosFuture = fetchAllCombos(addedComboList);
-    notifyListeners();
-  }
+  // void _fetchInitialData() {
+  //   _productsFuture = fetchAllProducts(addedProductList);
+  //   _combosFuture = fetchAllCombos(addedComboList);
+  //   notifyListeners();
+  // }
 
   void _updateItemControllers() {
     addedProductQuantityControllers.clear();
@@ -263,82 +263,167 @@ class CreateOrderProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> addProduct(Map<String, String> selected) async {
-    if (selected['id'] == null || addedProductList.any((item) => item['id'] == selected['id'])) return;
+  Future<void> addProduct(BuildContext context, Map<String, String> selected) async {
+    if (selected['id'] == null) return;
 
-    final fetchedProduct = await fetchProduct(selected['id']!);
-    if (fetchedProduct == null) return;
+    bool productExists = addedProductList.any((item) => item['id'] == selected['id']);
 
-    final newItem = {
-      'id': fetchedProduct.id,
-      'qty': 1,
-      'amount': 0.0,
-      'sku': fetchedProduct.sku ?? '',
-    };
+    if (productExists) {
+      Utils.showSnackBar(context, 'Product already added', color: Colors.red);
+      return;
+    }
 
-    addedProductList.add(newItem);
-    addedProductQuantityControllers.add(TextEditingController(text: '1'));
-    addedProductRateControllers.add(TextEditingController(text: '0.00'));
-    _productsFuture = fetchAllProducts(addedProductList);
-    setTotalQuantity();
-    notifyListeners();
-  }
+    Utils.showLoadingDialog(context, 'Adding product');
 
-  Future<void> deleteProduct(int index, String id) async {
-    final fetchedProduct = await fetchProduct(id);
-    if (fetchedProduct != null && index < addedProductList.length) {
-      final qty = int.parse(addedProductQuantityControllers[index].text);
-      final rate = double.parse(addedProductRateControllers[index].text);
-      addedProductList.removeAt(index);
-      totalAmtController.text = (double.parse(totalAmtController.text) - (rate * qty)).toStringAsFixed(2);
-      codAmountController.text = totalAmtController.text;
-      addedProductQuantityControllers.removeAt(index);
-      addedProductRateControllers.removeAt(index);
-      _productsFuture = fetchAllProducts(addedProductList);
+    try {
+      final fetchedProduct = await fetchProduct(selected['id']!);
+      if (fetchedProduct == null) return;
+
+      final newItem = {
+        'id': fetchedProduct.id,
+        'qty': 1,
+        'amount': 0.0,
+        'sku': fetchedProduct.sku ?? '',
+      };
+
+      addedProductList.add(newItem);
+      addedProductQuantityControllers.add(TextEditingController(text: '1'));
+      addedProductRateControllers.add(TextEditingController(text: '0.00'));
       setTotalQuantity();
+    } catch (e, s) {
+      log('addProduct error: $e $s');
+    } finally {
+      Navigator.of(context).pop();
       notifyListeners();
     }
   }
 
-  Future<void> addCombo(Map<String, String> selected) async {
-    if (selected['id'] == null || addedComboList.any((item) => item['id'] == selected['id'])) return;
+  Future<void> deleteProduct(BuildContext context, int index, String id) async {
+    // Note: Your example didn't include deleteProduct, so I'm adapting it to match
+    log('Deleting product at index: $index');
 
-    final fetchedCombo = await fetchCombo(selected['sku']!);
-    if (fetchedCombo == null) return;
+    Utils.showLoadingDialog(context, 'Deleting product');
 
-    final newItem = {
-      'id': fetchedCombo.id,
-      'qty': 1,
-      'amount': fetchedCombo.comboAmount ?? '0',
-      'sku': fetchedCombo.comboSku ?? '',
-    };
+    try {
+      final fetchedProduct = await fetchProduct(id);
+      if (fetchedProduct == null) return;
 
-    addedComboList.add(newItem);
-    addedComboQuantityControllers.add(TextEditingController(text: '1'));
-    addedComboRateControllers.add(TextEditingController(text: fetchedCombo.comboAmount ?? '0'));
-    if (fetchedCombo.comboAmount != null && fetchedCombo.comboAmount != '0') {
-      totalAmtController.text = (double.parse(totalAmtController.text) +
-              (100 - double.parse(discountPercentController.text)) * (double.parse(fetchedCombo.comboAmount!) ?? 0))
-          .toStringAsFixed(2);
-      codAmountController.text = totalAmtController.text;
+      Logger().e('fetched p: $fetchedProduct');
+
+      if (index < addedProductList.length) {
+        addedProductList.removeAt(index);
+
+        totalAmtController.text =
+            (double.parse(totalAmtController.text) -
+                double.parse(addedProductRateControllers[index].text) *
+                    int.parse(addedProductQuantityControllers[index].text))
+                .toStringAsFixed(2);
+
+        addedProductQuantityControllers.removeAt(index);
+        addedProductRateControllers.removeAt(index);
+
+        final productIndex = _productsFuture.indexWhere((product) => product?.id == id);
+        if (productIndex != -1) {
+          _productsFuture.removeAt(productIndex);
+        }
+
+        log('p: $addedProductList');
+        setTotalQuantity();
+      }
+    } catch (e, s) {
+      log('deleteProduct error: $e $s');
+    } finally {
+      Navigator.of(context).pop();
+      notifyListeners();
     }
-    _combosFuture = fetchAllCombos(addedComboList);
-    setTotalQuantity();
-    notifyListeners();
   }
 
-  Future<void> deleteCombo(int index, String sku) async {
-    final fetchedCombo = await fetchCombo(sku);
-    if (fetchedCombo != null && index < addedComboList.length) {
-      final qty = int.parse(addedComboQuantityControllers[index].text);
-      final rate = double.parse(addedComboRateControllers[index].text);
-      addedComboList.removeAt(index);
-      totalAmtController.text = (double.parse(totalAmtController.text) - (rate * qty)).toStringAsFixed(2);
-      codAmountController.text = totalAmtController.text;
-      addedComboQuantityControllers.removeAt(index);
-      addedComboRateControllers.removeAt(index);
-      _combosFuture = fetchAllCombos(addedComboList);
+  Future<void> addCombo(BuildContext context, Map<String, String> selected) async {
+    if (selected['id'] == null) return;
+
+    bool comboExists = addedComboList.any((item) => item['id'] == selected['id']) ||
+        addedComboList.any((item) => item['id'] == selected['id']);
+
+    if (comboExists) {
+      Utils.showSnackBar(context, 'Combo already added', color: Colors.red);
+      return;
+    }
+
+    Utils.showLoadingDialog(context, 'Adding Combo');
+
+    try {
+      final fetchedCombo = await fetchCombo(selected['sku']!);
+      if (fetchedCombo == null) return;
+
+      final newItem = {
+        'id': fetchedCombo.id,
+        'qty': 1,
+        'amount': fetchedCombo.comboAmount ?? '0',
+        'sku': fetchedCombo.comboSku ?? '',
+      };
+
+      addedComboList.add(newItem);
+      addedComboQuantityControllers.add(TextEditingController(text: '1'));
+      addedComboRateControllers.add(TextEditingController(text: fetchedCombo.comboAmount ?? '0'));
+
+      if (fetchedCombo.comboAmount != null && fetchedCombo.comboAmount != '0') {
+        totalAmtController.text = (double.parse(totalAmtController.text) +
+            (100 - double.parse(discountPercentController.text)) * (double.parse(fetchedCombo.comboAmount!) ?? 0))
+            .toStringAsFixed(2);
+        codAmountController.text = totalAmtController.text;
+      }
+
+      _combosFuture.add(fetchedCombo);
+
+      log('addedComboList in add: $addedComboList');
+      log('_combosFuture in add: $_combosFuture');
+
       setTotalQuantity();
+    } catch (e, s) {
+      log('addCombo error: $e $s');
+    } finally {
+      Navigator.of(context).pop();
+      notifyListeners();
+    }
+  }
+
+  Future<void> deleteCombo(BuildContext context, int index, String sku) async {
+    log('Deleting combo at index: $index');
+
+    Utils.showLoadingDialog(context, 'Deleting combo');
+
+    try {
+      final fetchedCombo = await fetchCombo(sku);
+      if (fetchedCombo == null) return;
+
+      Logger().e('fetched c: $fetchedCombo');
+
+      if (index < addedComboList.length) {
+        final qty = int.parse(addedComboQuantityControllers[index].text);
+        final rate = double.parse(addedComboRateControllers[index].text);
+
+        addedComboList.removeAt(index);
+
+        totalAmtController.text =
+            (double.parse(totalAmtController.text) - (rate * qty))
+                .toStringAsFixed(2);
+        codAmountController.text = totalAmtController.text;
+
+        addedComboQuantityControllers.removeAt(index);
+        addedComboRateControllers.removeAt(index);
+
+        final comboIndex = _combosFuture.indexWhere((combo) => combo?.id == fetchedCombo.id);
+        if (comboIndex != -1) {
+          _combosFuture.removeAt(comboIndex);
+        }
+
+        log('c: $addedComboList');
+        setTotalQuantity();
+      }
+    } catch (e, s) {
+      log('deleteCombo error: $e $s');
+    } finally {
+      Navigator.of(context).pop();
       notifyListeners();
     }
   }
@@ -444,36 +529,6 @@ class CreateOrderProvider with ChangeNotifier {
       Logger().e('Error fetching combo: $e');
     }
     return null;
-  }
-
-  Future<List<Product?>> fetchAllProducts(List<dynamic> dynamicItemsList) async {
-    isLoading = true;
-    notifyListeners();
-
-    List<Product?> products = [];
-    for (var item in dynamicItemsList) {
-      Product? product = await fetchProduct(item['id']);
-      products.add(product);
-    }
-
-    isLoading = false;
-    notifyListeners();
-    return products;
-  }
-
-  Future<List<Combo?>> fetchAllCombos(List<dynamic> addedComboList) async {
-    isLoading = true;
-    notifyListeners();
-
-    List<Combo?> combos = [];
-    for (var item in addedComboList) {
-      Combo? combo = await fetchCombo(item['sku'] ?? item['id']);
-      if (combo != null) combos.add(combo);
-    }
-
-    isLoading = false;
-    notifyListeners();
-    return combos;
   }
 
   Future<String?> _getToken() async {
@@ -747,6 +802,8 @@ class CreateOrderProvider with ChangeNotifier {
     double discountedTotal = discount != 0 ? total - discountAmt : total;
     totalAmtController.text = discountedTotal.toStringAsFixed(2);
     discountAmountController.text = discountAmt.toStringAsFixed(2);
+    codAmountController.clear();
+    prepaidAmountController.clear();
     notifyListeners();
   }
 
@@ -758,6 +815,8 @@ class CreateOrderProvider with ChangeNotifier {
 
     totalAmtController.text = discountedTotal.toStringAsFixed(2);
     originalAmtController.text = total.toString(); // Use totalQty instead of qty
+    codAmountController.clear();
+    prepaidAmountController.clear();
     notifyListeners();
   }
 
@@ -820,6 +879,6 @@ class CreateOrderProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  Future<List<Product?>>? get productsFuture => _productsFuture;
-  Future<List<Combo?>>? get combosFuture => _combosFuture;
+  List<Product?> get productsFuture => _productsFuture;
+  List<Combo?> get combosFuture => _combosFuture;
 }

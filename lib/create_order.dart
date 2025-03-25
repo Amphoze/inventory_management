@@ -806,10 +806,11 @@ class _CreateOrderPageState extends State<CreateOrderPage> {
                 isCombo: provider.selectedItemType == 'Combo',
                 onChanged: (selected) {
                   if (selected != null) {
+                    log('selected: $selected');
                     if (provider.selectedItemType == 'Product') {
-                      provider.addProduct(selected);
+                      provider.addProduct(context, selected);
                     } else {
-                      provider.addCombo(selected);
+                      provider.addCombo(context, selected);
                     }
                   }
                 },
@@ -823,160 +824,138 @@ class _CreateOrderPageState extends State<CreateOrderPage> {
         else
           Column(
             children: [
-              FutureBuilder<List<Product?>>(
-                future: provider.productsFuture,
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const Center(child: CircularProgressIndicator());
-                  } else if (snapshot.hasError) {
-                    return Center(child: Text('Error: ${snapshot.error}'));
-                  } else {
-                    final products = snapshot.data ?? [];
-                    if (products.isEmpty) return const SizedBox.shrink();
+              ListView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: provider.productsFuture.length,
+                itemBuilder: (context, index) {
+                  final product = provider.productsFuture[index];
+                  if (product == null) return const SizedBox.shrink();
 
-                    return ListView.builder(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      itemCount: products.length,
-                      itemBuilder: (context, index) {
-                        final product = products[index];
-                        if (product == null) return const SizedBox.shrink();
-
-                        return Row(
-                          children: [
-                            Expanded(
-                              flex: 5,
-                              child: ProductCard(product: product, index: index),
-                            ),
-                            const SizedBox(width: 16),
-                            Expanded(
-                              flex: 1,
-                              child: Column(
-                                children: [
-                                  SizedBox(
-                                    width: 200,
-                                    child: _buildTextField(
-                                      controller: provider.addedProductQuantityControllers[index],
-                                      label: 'Qty',
-                                      isNumber: true,
-                                      icon: Icons.production_quantity_limits,
-                                      onSubmitted: (_) => provider.updateOriginal(),
-                                    ),
-                                  ),
-                                  const SizedBox(height: 8),
-                                  SizedBox(
-                                    width: 200,
-                                    child: _buildTextField(
-                                      controller: provider.addedProductRateControllers[index],
-                                      label: 'Rate',
-                                      isNumber: true,
-                                      icon: Icons.currency_rupee,
-                                      onSubmitted: (_) => provider.updateOriginal(),
-                                    ),
-                                  ),
-                                ],
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 8.0),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          flex: 5,
+                          child: ProductCard(product: product, index: index),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          flex: 1,
+                          child: Column(
+                            children: [
+                              SizedBox(
+                                width: 200,
+                                child: _buildTextField(
+                                  controller: provider.addedProductQuantityControllers[index],
+                                  label: 'Qty',
+                                  isNumber: true,
+                                  icon: Icons.production_quantity_limits,
+                                  onSubmitted: (_) => provider.updateOriginal(),
+                                ),
                               ),
-                            ),
-                            const SizedBox(width: 16),
-                            ElevatedButton(
-                              onPressed: () => provider.deleteProduct(index, product.id!),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.red,
-                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                              const SizedBox(height: 8),
+                              SizedBox(
+                                width: 200,
+                                child: _buildTextField(
+                                  controller: provider.addedProductRateControllers[index],
+                                  label: 'Rate',
+                                  isNumber: true,
+                                  icon: Icons.currency_rupee,
+                                  onSubmitted: (_) => provider.updateOriginal(),
+                                ),
                               ),
-                              child: const Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(Icons.delete),
-                                  SizedBox(width: 8),
-                                  Text('Delete'),
-                                ],
-                              ),
-                            ),
-                          ],
-                        );
-                      },
-                    );
-                  }
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        ElevatedButton(
+                          onPressed: () => provider.deleteProduct(context, index, product.id!),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.red,
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                          ),
+                          child: const Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.delete),
+                              SizedBox(width: 8),
+                              Text('Delete'),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
                 },
               ),
-              FutureBuilder<List<Combo?>>(
-                future: provider.combosFuture,
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const Center(child: CircularProgressIndicator());
-                  } else if (snapshot.hasError) {
-                    return Center(child: Text('Error: ${snapshot.error}'));
-                  } else {
-                    final combos = snapshot.data ?? [];
-                    if (combos.isEmpty) return const SizedBox.shrink();
+              ListView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: provider.combosFuture.length,
+                itemBuilder: (context, index) {
+                  final combo = provider.combosFuture[index];
+                  if (combo == null) return const SizedBox.shrink();
 
-                    return ListView.builder(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      itemCount: combos.length,
-                      itemBuilder: (context, index) {
-                        final combo = combos[index];
-                        if (combo == null) return const SizedBox.shrink();
-
-                        return Row(
-                          children: [
-                            Expanded(
-                              flex: 5,
-                              child: ComboCard(combo: combo, index: index),
-                            ),
-                            const SizedBox(width: 16),
-                            Expanded(
-                              flex: 1,
-                              child: Column(
-                                children: [
-                                  SizedBox(
-                                    width: 200,
-                                    child: _buildTextField(
-                                      controller: provider.addedComboQuantityControllers[index],
-                                      label: 'Qty',
-                                      isNumber: true,
-                                      icon: Icons.production_quantity_limits,
-                                      onSubmitted: (_) => provider.updateOriginal(),
-                                    ),
-                                  ),
-                                  const SizedBox(height: 8),
-                                  SizedBox(
-                                    width: 200,
-                                    child: _buildTextField(
-                                      controller: provider.addedComboRateControllers[index],
-                                      label: 'Rate',
-                                      isNumber: true,
-                                      icon: Icons.currency_rupee,
-                                      onSubmitted: (_) => provider.updateOriginal(),
-                                    ),
-                                  ),
-                                ],
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 8.0),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          flex: 5,
+                          child: ComboCard(combo: combo, index: index),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          flex: 1,
+                          child: Column(
+                            children: [
+                              SizedBox(
+                                width: 200,
+                                child: _buildTextField(
+                                  controller: provider.addedComboQuantityControllers[index],
+                                  label: 'Qty',
+                                  isNumber: true,
+                                  icon: Icons.production_quantity_limits,
+                                  onSubmitted: (_) => provider.updateOriginal(),
+                                ),
                               ),
-                            ),
-                            const SizedBox(width: 16),
-                            ElevatedButton(
-                              onPressed: () => provider.deleteCombo(index, combo.comboSku),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.red,
-                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                              const SizedBox(height: 8),
+                              SizedBox(
+                                width: 200,
+                                child: _buildTextField(
+                                  controller: provider.addedComboRateControllers[index],
+                                  label: 'Rate',
+                                  isNumber: true,
+                                  icon: Icons.currency_rupee,
+                                  onSubmitted: (_) => provider.updateOriginal(),
+                                ),
                               ),
-                              child: const Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(Icons.delete),
-                                  SizedBox(width: 8),
-                                  Text('Delete'),
-                                ],
-                              ),
-                            ),
-                          ],
-                        );
-                      },
-                    );
-                  }
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        ElevatedButton(
+                          onPressed: () => provider.deleteCombo(context, index, combo.comboSku),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.red,
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                          ),
+                          child: const Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.delete),
+                              SizedBox(width: 8),
+                              Text('Delete'),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
                 },
-              ),
+              )
             ],
           ),
       ],
@@ -1012,7 +991,9 @@ class _CreateOrderPageState extends State<CreateOrderPage> {
       onChanged: onChanged,
       maxLength: maxLength,
       // keyboardType: isNumber ? TextInputType.number : TextInputType.text,
-      inputFormatters: isNumber ? [FilteringTextInputFormatter.digitsOnly, if(label == 'Rate') FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*'))] : [],
+      inputFormatters: isNumber
+          ? [FilteringTextInputFormatter.digitsOnly, if (label == 'Rate') FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*'))]
+          : [],
       onFieldSubmitted: onSubmitted,
       decoration: InputDecoration(
         label: Text(label, style: TextStyle(color: validator != null ? Colors.red : Colors.grey)),
