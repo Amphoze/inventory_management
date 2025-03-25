@@ -622,7 +622,9 @@ class CreateOrderProvider with ChangeNotifier {
       'notes': notesController.text,
     };
 
-    log('create order data: $orderData');
+    final payload = json.encode(orderData);
+
+    log('Create Order Payload: $payload');
 
     try {
       final url = Uri.parse('${await Constants.getBaseUrl()}/orders');
@@ -633,7 +635,7 @@ class CreateOrderProvider with ChangeNotifier {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer $token',
         },
-        body: json.encode(orderData),
+        body: payload,
       );
 
       final res = json.decode(response.body);

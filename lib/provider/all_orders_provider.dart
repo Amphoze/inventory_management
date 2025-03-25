@@ -246,15 +246,17 @@ class AllOrdersProvider with ChangeNotifier {
 
       clearAllSelections();
 
+      final uri = Uri.parse(Uri.encodeFull(url));
+
       final response = await http.get(
-        Uri.parse(Uri.encodeFull(url)),
+        uri,
         headers: {
           'Authorization': 'Bearer $token',
           'Content-Type': 'application/json',
         },
       );
 
-      log('status: ${response.statusCode}');
+      log('Fetching All Orders with URL :- $url');
 
       if (response.statusCode == 200) {
         final jsonResponse = jsonDecode(response.body);
@@ -267,14 +269,13 @@ class AllOrdersProvider with ChangeNotifier {
         _orders = [];
         _totalPages = 1;
         _currentPage = 1;
-        log('Orders not found');
-        throw Exception('Failed to load orders: ${response.statusCode}');
+        log('No Order Found :- ${response.statusCode} with reponse ${response.body}');
       }
-    } catch (e) {
+    } catch (e, s) {
       _orders = [];
       _totalPages = 1;
       _currentPage = 1;
-      log('Error fetching orders: $e');
+      log('Error fetching orders: $e\n$s');
     } finally {
       _isLoading = false;
       setRefreshingOrders(false);

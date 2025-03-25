@@ -41,14 +41,16 @@ class _CreateOrderPageState extends State<CreateOrderPage> {
       return;
     }
 
-    if (double.parse(provider.codAmountController.text) + double.parse(provider.prepaidAmountController.text) !=
-        double.parse(provider.totalAmtController.text)) {
-      Utils.showSnackBar(context, "Total amount must be equal to the sum of cod amount and prepaid amount");
-      return;
-    }
+    double codAmount = double.tryParse(provider.codAmountController.text.trim()) ?? 0;
+    double prepaidAmount = double.tryParse(provider.prepaidAmountController.text.trim()) ?? 0;
+    double totalAmount = double.tryParse(provider.totalAmtController.text.trim()) ?? 0;
 
-    if (double.parse(provider.totalAmtController.text) > double.parse(provider.originalAmtController.text)) {
-      Utils.showSnackBar(context, "Total amount cannot be greater than original amount");
+    log('COD Amount :- $codAmount');
+    log('Pre Paid Amount :- $prepaidAmount');
+    log('Total Amount :- $totalAmount');
+
+    if (codAmount + prepaidAmount != totalAmount) {
+      Utils.showSnackBar(context, "Total amount must be equal to the sum of cod amount and prepaid amount");
       return;
     }
 

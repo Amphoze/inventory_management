@@ -127,7 +127,7 @@ class OrderInfo extends StatelessWidget {
                       alignment: Alignment.center,
                       width: MediaQuery.of(context).size.width * 0.1,
                       child: const Text(
-                        'Mistake',
+                        'Support',
                         style: TextStyle(
                           fontSize: 16,
                           color: Colors.white,

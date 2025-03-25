@@ -80,7 +80,6 @@ class _OrdersNewPageState extends State<OrdersNewPage> with TickerProviderStateM
 
   @override
   void dispose() {
-    super.dispose();
     _tabController.dispose();
     // _searchController.dispose();
     provider.searchControllerReady.dispose();
@@ -88,6 +87,7 @@ class _OrdersNewPageState extends State<OrdersNewPage> with TickerProviderStateM
     _pageController.dispose();
     pageController.dispose();
     remarkController.dispose();
+    super.dispose();
   }
 
   void _reloadOrders() async {
@@ -340,13 +340,7 @@ class _OrdersNewPageState extends State<OrdersNewPage> with TickerProviderStateM
                                   snackBarColor = AppColors.orange; // Other: Orange
                                 }
 
-                                // Show feedback based on the result
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text(resultMessage),
-                                    backgroundColor: snackBarColor,
-                                  ),
-                                );
+                                Utils.showSnackBar(context, resultMessage, details: resultMessage, color: snackBarColor);
                               }
                             },
                       child: ordersProvider.isCloning
@@ -387,6 +381,10 @@ class _OrdersNewPageState extends State<OrdersNewPage> with TickerProviderStateM
 
                                 // String resultMessage =
                                 await provider.confirmOrders(context, selectedOrderIds);
+
+
+
+
                                 // Color snackBarColor;
                                 // if (resultMessage.contains('success')) {
                                 //   snackBarColor = AppColors.green; // Success: Green
@@ -614,7 +612,7 @@ class _OrdersNewPageState extends State<OrdersNewPage> with TickerProviderStateM
                             final order = ordersProvider.readyOrders[index];
                             if (order.messages?['confirmerMessage']?.toString().isNotEmpty ?? false) {
                               remarkController.clear();
-                              remarkController.text = order.messages!['confirmerMessage'].toString() ?? '';
+                              remarkController.text = order.messages!['confirmerMessage'].toString();
                             }
                             //////////////////////////////////////////////////////////////
                             final Map<String, List<Item>> groupedComboItems = {};
@@ -634,6 +632,15 @@ class _OrdersNewPageState extends State<OrdersNewPage> with TickerProviderStateM
                                 .toList();
 
                             Logger().e('selectedReadyOrders: ${ordersProvider.selectedReadyOrders}');
+
+                            if (ordersProvider.selectedReadyOrders.length - 1 < index) {
+                              return const Center(
+                                child: Text(
+                                  "No orders found",
+                                  style: TextStyle(color: Colors.grey, fontSize: 16),
+                                ),
+                              );
+                            }
 
                             return Card(
                               surfaceTintColor: Colors.white,
@@ -1800,6 +1807,16 @@ class _OrdersNewPageState extends State<OrdersNewPage> with TickerProviderStateM
                                 .where((item) =>
                                     !(item.isCombo == true && item.comboSku != null && groupedComboItems[item.comboSku]!.length > 1))
                                 .toList();
+
+
+                            if (ordersProvider.selectedFailedOrders.length - 1 < index) {
+                              return const Center(
+                                child: Text(
+                                  "No orders found",
+                                  style: TextStyle(color: Colors.grey, fontSize: 16),
+                                ),
+                              );
+                            }
 
                             return Card(
                               surfaceTintColor: Colors.white,

@@ -398,7 +398,7 @@ class OrdersProvider with ChangeNotifier {
   }
 
   Future<void> fetchReadyOrders({int page = 1}) async {
-    searchControllerReady.clear();
+    // searchControllerReady.clear();
     log('fetchReadyOrders');
     if (page < 1 || page > totalReadyPages) {
       return;
@@ -510,10 +510,11 @@ class OrdersProvider with ChangeNotifier {
         resetSelections();
         return responseData['message'] + ": ${responseData['newOrders'][0]['order_id']}" ?? 'Orders clone successfully';
       } else {
+        log('Cloning Response :- ${response.statusCode} ### ${response.body}');
         return responseData['message'] ?? 'Failed to clone orders';
       }
-    } catch (error) {
-      log('catched error: $error');
+    } catch (error, s) {
+      log('Cloning Error: $error\n$s');
       return 'An error occurred: $error';
     } finally {
       setCloning(false);
@@ -632,19 +633,28 @@ class OrdersProvider with ChangeNotifier {
       'orderIds': orderIds,
     });
 
+    log('Confirming Orders Payload :- $body');
+
+    final url =  Uri.parse(confirmOrderUrl);
+
+    log('Confirming Order with URL :- $url');
+
     try {
       final response = await http.post(
-        Uri.parse(confirmOrderUrl),
+        url,
         headers: headers,
         body: body,
       );
 
       final responseData = json.decode(response.body);
 
+      log('Confirming Response :- $responseData');
+
       if (response.statusCode == 200) {
-        // Utils.showSnackBar(context, responseData['message']);
+        log('Order Confirmed Successfully :)');
         return responseData['message'] + "$orderIds" ?? 'Orders Confirmed successfully';
       } else {
+        log('Failed to Confirm Order with Status Code ${response.statusCode} and Response as ${response.body}');
         return responseData['errors'][0]['errors'][0] ?? 'Failed to confirm orders';
       }
     } catch (error) {
@@ -684,10 +694,14 @@ class OrdersProvider with ChangeNotifier {
 
       final responseData = json.decode(response.body);
 
+      log('Cancelling Order Response :- $responseData with status code :- ${response.statusCode}');
+
       if (response.statusCode == 200) {
         await fetchReadyOrders();
         resetSelections();
         notifyListeners();
+
+        log('Order Cancelled Successfully :)');
 
         return responseData['message'] ?? 'Orders cancelled successfully';
       } else {
