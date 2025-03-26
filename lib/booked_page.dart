@@ -892,8 +892,9 @@ class _BookedPageState extends State<BookedPage> with SingleTickerProviderStateM
 
     return Row(
       children: [
+
         Expanded(
-          flex: 7,
+          flex: 8,
           child: OrderComboCard(
             order: order,
             toShowBy: true,
@@ -904,29 +905,39 @@ class _BookedPageState extends State<BookedPage> with SingleTickerProviderStateM
             isSuperAdmin: isSuperAdmin ?? false,
           ),
         ),
-        // const SizedBox(width: 50),
-        buildCell(order.isBooked, flex: 1),
-      ],
-    );
-  }
 
-  Widget buildCell(bool isBooked, {int flex = 1}) {
-    return Flexible(
-      flex: flex,
-      child: Container(
-        padding: const EdgeInsets.all(6.0),
-        child: isBooked
-            ? const Icon(
+        Expanded(
+          flex: 2,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              order.isBooked
+                  ? const Icon(
                 Icons.check,
                 size: 40,
                 color: AppColors.green,
               )
-            : const Icon(
+                  : const Icon(
                 Icons.close,
                 size: 40,
                 color: AppColors.cardsred,
               ),
-      ),
+
+              const SizedBox(height: 10),
+
+              if (order.orderStatusMap.isNotEmpty)
+                Text(
+                  order.orderStatusMap.last.status,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.blueAccent,
+                  ),
+                )
+            ],
+          ),
+        )
+      ],
     );
   }
 

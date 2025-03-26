@@ -93,17 +93,6 @@ class AllOrdersProvider with ChangeNotifier {
     }
   }
 
-  void onSearchChanged(String query) {
-    if (_debounce?.isActive ?? false) _debounce!.cancel();
-    _debounce = Timer(const Duration(milliseconds: 500), () {
-      if (query.isEmpty) {
-        fetchAllOrders(page: _currentPage);
-      } else {
-        searchOrders(query);
-      }
-    });
-  }
-
   ///////////////////////////////////////////////////////////////////////////////
 
   void setRefreshingOrders(bool value) {
@@ -230,7 +219,7 @@ class AllOrdersProvider with ChangeNotifier {
       url += '&date=$formattedDate';
     }
 
-    if (status != 'all' && status != null) {
+    if (status != null) {
       url += '&orderStatus=$status';
     }
 
@@ -327,7 +316,7 @@ class AllOrdersProvider with ChangeNotifier {
     }
   }
 
-  Future<void> searchOrders(String orderId) async {
+  Future<void> searchOrdersWithId(String orderId) async {
     String encodedOrderId = Uri.encodeComponent(orderId);
 
     final prefs = await SharedPreferences.getInstance();
@@ -361,13 +350,20 @@ class AllOrdersProvider with ChangeNotifier {
           _orders = [Order.fromJson(data)];
         }
 
+        _currentPage = data['currentPage'];
+        _totalPages = data['totalPages'];
+
         // _orders = [Order.fromJson(data)];
         notifyListeners();
       } else {
+        _currentPage = 1;
+        _totalPages = 1;
         _orders = [];
       }
     } catch (e, s) {
       log('catched error: $e $s');
+      _totalPages = 1;
+      _currentPage = 1;
       _orders = [];
     } finally {
       _isLoading = false;
@@ -405,8 +401,7 @@ class AllOrdersProvider with ChangeNotifier {
   void goToPage(int page, {DateTime? date, String? status, String? marketplace}) {
     if (page < 1 || page > totalPages) return;
     _currentPage = page;
-    print('Current booked page set to: $_currentPage');
-    fetchAllOrders(page: _currentPage, date: date, status: status, marketplace: marketplace);
+    fetchAllOrders(page: page, date: date, status: status, marketplace: marketplace);
     notifyListeners();
   }
 

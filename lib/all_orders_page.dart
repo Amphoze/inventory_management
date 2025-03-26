@@ -22,7 +22,6 @@ class _AllOrdersPageState extends State<AllOrdersPage> with SingleTickerProvider
 
   final TextEditingController _pageController = TextEditingController();
   List<Map<String, String>> statuses = [];
-  bool areOrdersFetched = false;
   String selectedCourier = 'All';
   String selectedStatus = 'All';
   DateTime? picked;
@@ -246,55 +245,65 @@ class _AllOrdersPageState extends State<AllOrdersPage> with SingleTickerProvider
             ),
           ),
 
-          if (areOrdersFetched)
-            CustomPaginationFooter(
-              currentPage: allOrdersProvider.currentPage,
-              totalPages: allOrdersProvider.totalPages,
-              buttonSize: 30,
-              pageController: _pageController,
-              onFirstPage: () {
-                allOrdersProvider.goToPage(1, date: picked, status: selectedStatus, marketplace: selectedCourier);
-              },
-              onLastPage: () {
-                allOrdersProvider.goToPage(allOrdersProvider.totalPages, date: picked, status: selectedStatus, marketplace: selectedCourier);
-              },
-              onNextPage: () {
-                int currentPage = allOrdersProvider.currentPage;
-                int totalPages = allOrdersProvider.totalPages;
-                if (currentPage < totalPages) {
-                  allOrdersProvider.goToPage(allOrdersProvider.currentPage + 1,
-                      date: picked, status: selectedStatus, marketplace: selectedCourier);
-                }
-              },
-              onPreviousPage: () {
-                int currentPage = allOrdersProvider.currentPage;
-                if (currentPage > 1) {
-                  allOrdersProvider.goToPage(allOrdersProvider.currentPage - 1,
-                      date: picked, status: selectedStatus, marketplace: selectedCourier);
-                }
-              },
-              onGoToPage: (int page) {
-                int totalPages = allOrdersProvider.totalPages;
-                if (page > 0 && page <= totalPages) {
+          const SizedBox(height: 10),
+
+          Consumer<AllOrdersProvider>(
+            builder: (context, allOrdersProvider, _) {
+
+              if (allOrdersProvider.isLoading) {
+                return const SizedBox();
+              }
+
+              return CustomPaginationFooter(
+                currentPage: allOrdersProvider.currentPage,
+                totalPages: allOrdersProvider.totalPages,
+                buttonSize: 30,
+                pageController: _pageController,
+                onFirstPage: () {
+                  allOrdersProvider.goToPage(1, date: picked, status: selectedStatus, marketplace: selectedCourier);
+                },
+                onLastPage: () {
+                  allOrdersProvider.goToPage(allOrdersProvider.totalPages, date: picked, status: selectedStatus, marketplace: selectedCourier);
+                },
+                onNextPage: () {
+                  int currentPage = allOrdersProvider.currentPage;
+                  int totalPages = allOrdersProvider.totalPages;
+                  if (currentPage < totalPages) {
+                    allOrdersProvider.goToPage(allOrdersProvider.currentPage + 1,
+                        date: picked, status: selectedStatus, marketplace: selectedCourier);
+                  }
+                },
+                onPreviousPage: () {
+                  int currentPage = allOrdersProvider.currentPage;
+                  if (currentPage > 1) {
+                    allOrdersProvider.goToPage(allOrdersProvider.currentPage - 1,
+                        date: picked, status: selectedStatus, marketplace: selectedCourier);
+                  }
+                },
+                onGoToPage: (int page) {
+                  int totalPages = allOrdersProvider.totalPages;
+                  if (page > 0 && page <= totalPages) {
+                    allOrdersProvider.goToPage(page, date: picked, status: selectedStatus, marketplace: selectedCourier);
+                  } else {
+                    _showSnackbar(context, 'Please enter a valid page number between 1 and $totalPages.');
+                  }
+                },
+                onJumpToPage: () {
+                  final String pageText = _pageController.text;
+                  int? page = int.tryParse(pageText);
+                  int totalPages = allOrdersProvider.totalPages;
+
+                  if (page == null || page < 1 || page > totalPages) {
+                    _showSnackbar(context, 'Please enter a valid page number between 1 and $totalPages.');
+                    return;
+                  }
+
                   allOrdersProvider.goToPage(page, date: picked, status: selectedStatus, marketplace: selectedCourier);
-                } else {
-                  _showSnackbar(context, 'Please enter a valid page number between 1 and $totalPages.');
-                }
-              },
-              onJumpToPage: () {
-                final String pageText = _pageController.text;
-                int? page = int.tryParse(pageText);
-                int totalPages = allOrdersProvider.totalPages;
-
-                if (page == null || page < 1 || page > totalPages) {
-                  _showSnackbar(context, 'Please enter a valid page number between 1 and $totalPages.');
-                  return;
-                }
-
-                allOrdersProvider.goToPage(page, date: picked, status: selectedStatus, marketplace: selectedCourier);
-                _pageController.clear();
-              },
-            ),
+                  _pageController.clear();
+                },
+              );
+            },
+          ),
         ],
       ),
     );
@@ -360,7 +369,7 @@ class _AllOrdersPageState extends State<AllOrdersPage> with SingleTickerProvider
                   if (text.trim().isEmpty) {
                     context.read<AllOrdersProvider>().fetchAllOrders();
                   } else {
-                    Provider.of<AllOrdersProvider>(context, listen: false).searchOrders(text.trim());
+                    Provider.of<AllOrdersProvider>(context, listen: false).searchOrdersWithId(text.trim());
                   }
                 },
               ),
@@ -448,7 +457,8 @@ class _AllOrdersPageState extends State<AllOrdersPage> with SingleTickerProvider
                           page: allOrdersProvider.currentPage,
                           date: picked,
                           status: statuses.firstWhere((map) => map.containsKey(selectedStatus), orElse: () => {})[selectedStatus]!,
-                          marketplace: selectedCourier);
+                          marketplace: selectedCourier
+                      );
                     }
                   },
                   icon: const Icon(Icons.date_range),
