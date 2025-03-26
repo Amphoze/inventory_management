@@ -45,8 +45,9 @@ class OrderService {
           [
             {
               "message": remark,
-              "timestamp": DateTime.now().toIso8601String(),
               "author": email ?? "Unknown",
+              "type": message,
+              "timestamp": DateTime.now().toIso8601String(),
             }
           ]
         }

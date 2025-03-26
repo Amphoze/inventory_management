@@ -817,7 +817,7 @@ class _AccountsPageState extends State<AccountsPage> {
                                                     context: context,
                                                     orderId: order.orderId,
                                                     message: 'accountMessage',
-                                                    remarks: accountMessages,
+                                                    messages: order.messages,
                                                     onSubmitted: () async {
 
                                                       final accountProvider = context.read<AccountsProvider>();

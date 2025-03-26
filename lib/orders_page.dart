@@ -1259,7 +1259,7 @@ class _OrdersNewPageState extends State<OrdersNewPage> with TickerProviderStateM
                                                     context: context,
                                                     orderId: order.orderId,
                                                     message: 'confirmerMessage',
-                                                    remarks: remarks,
+                                                    messages: order.messages,
                                                     onSubmitted: () async {
 
                                                       final searched = ordersProvider.searchControllerReady.text.trim();

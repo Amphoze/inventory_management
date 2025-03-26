@@ -395,14 +395,22 @@ class Message {
   final String id;
   final String author;
   final String message;
+  final String type;
   final String timestamp;
 
-  Message({required this.id, required this.author, required this.message, required this.timestamp});
+  Message({
+    required this.id,
+    required this.author,
+    required this.type,
+    required this.message,
+    required this.timestamp,
+  });
 
   factory Message.fromJson(Map<String, dynamic> json) {
     return Message(
       id: json['_id'] ?? '',
       author: json['author'] ?? '',
+      type: json['type'] ?? '',
       message: json['message'] ?? '',
       timestamp: json['timestamp'] ?? '',
     );
@@ -412,7 +420,9 @@ class Message {
     return {
       '-_id': id,
       'author': author,
+      'type': type,
       'message': message,
+      'timestamp': timestamp,
     };
   }
 }

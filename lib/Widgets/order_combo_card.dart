@@ -1017,7 +1017,7 @@ class _OrderComboCardState extends State<OrderComboCard> {
                               context: context,
                               orderId: widget.order.orderId,
                               message: 'bookerMessage',
-                              remarks: bookerMessages,
+                              messages: widget.order.messages,
                               onSubmitted: () async {
 
                                 final bookerProvider = context.read<BookProvider>();
@@ -1189,7 +1189,7 @@ class _OrderComboCardState extends State<OrderComboCard> {
                               context: context,
                               orderId: widget.order.orderId,
                               message: 'accountMessage',
-                              remarks: accountMessages,
+                              messages: widget.order.messages,
                               onSubmitted: () async {
 
                                 final accountProvider = context.read<AccountsProvider>();

@@ -11,14 +11,14 @@ import 'package:provider/provider.dart';
 class WriteRemarkDialog extends StatefulWidget {
 
   final String orderId;
-  final List<Message> remarks;
+  final Messages? messages;
   final String message;
   final VoidCallback onSubmitted;
 
   const WriteRemarkDialog({
     super.key,
     required this.orderId,
-    required this.remarks,
+    required this.messages,
     required this.message,
     required this.onSubmitted,
   });
@@ -140,69 +140,133 @@ class _WriteRemarkDialogState extends State<WriteRemarkDialog> {
               ],
             ),
 
-            if (widget.remarks.isNotEmpty)...[
+            if (widget.messages != null)...[
               const SizedBox(height: 20),
 
-              Expanded(
-                child: ListView.builder(
-                    shrinkWrap: true,
-                    padding: EdgeInsets.zero,
-                    itemCount: widget.remarks.length,
-                    itemBuilder: (context, index) {
-
-                      final remark = widget.remarks[index];
-
-                      String author = remark.author;
-                      String message = remark.message;
-                      String timestamp = remark.timestamp;
-
-                      String date = 'NA';
-
-                      try {
-                        date = DateFormat('dd MMM, yyyy\nHH:mm a').format(DateTime.parse(timestamp));
-                      } catch (e) {
-                        log('Cannot parse remark date ($timestamp)');
-                      }
-
-                      return Card(
-                        elevation: 2,
-                        color: Colors.white,
-
-                        child: ListTile(
-                          title: Text(
-                            message,
-                            style: const TextStyle(
-                              fontSize: 14,
-                              color: Colors.black,
-                            ),
-                          ),
-
-                          subtitle: Text(
-                            author,
-                            style: const TextStyle(
-                                fontSize: 12,
-                                color: Colors.black54
-                            ),
-                          ),
-
-                          trailing: Text(
-                            date,
-                            style: const TextStyle(
-                              fontSize: 12,
-                              color: Colors.grey,
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
-                        ),
-                      );
-                    }
-                ),
-              ),
+              _buildRemarkList(),
 
               const SizedBox(height: 20),
             ],
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildRemarkList() {
+
+    log('Messages are :- ${widget.messages}');
+
+    List<Message> remarks = [];
+
+    log('${widget.messages!.confirmerMessages.length} Confirmer Messages');
+    log('${widget.messages!.accountMessages.length} Account Messages');
+    log('${widget.messages!.bookerMessages.length} Booker Messages');
+
+
+    log('Total Remarks Before:- ${remarks.length}');
+
+    for (var message in widget.messages!.confirmerMessages) {
+      remarks.add(message);
+    }
+    for (var message in widget.messages!.accountMessages) {
+      remarks.add(message);
+    }
+    for (var message in widget.messages!.bookerMessages) {
+      remarks.add(message);
+    }
+
+    log('Total Remarks After:- ${remarks.length}');
+
+    remarks.sort((a, b) => DateTime.parse(b.timestamp).compareTo(DateTime.parse(a.timestamp)));
+
+    return Expanded(
+      child: ListView.builder(
+          shrinkWrap: true,
+          padding: EdgeInsets.zero,
+          itemCount: remarks.length,
+          itemBuilder: (context, index) {
+
+            final remark = remarks[index];
+
+            String author = remark.author;
+            String message = remark.message;
+            String type = remark.type;
+            String timestamp = remark.timestamp;
+
+            String date = 'NA';
+
+            try {
+              date = DateFormat('dd MMM, yyyy\nHH:mm a').format(DateTime.parse(timestamp));
+            } catch (e) {
+              log('Cannot parse remark date ($timestamp)');
+            }
+
+            return Card(
+              elevation: 2,
+              color: Colors.white,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          message,
+                          style: const TextStyle(
+                            fontSize: 14,
+                            color: Colors.black,
+                          ),
+                        ),
+
+                        const SizedBox(height: 2),
+
+                        Text(
+                          author,
+                          style: const TextStyle(
+                              fontSize: 12,
+                              color: Colors.black54
+                          ),
+                        ),
+                      ],
+                    ),
+
+                    Text(
+                      type == 'confirmerMessage'
+                          ? 'Confirmer'
+                          : type == 'accountMessage'
+                          ? 'Account'
+                          : type == 'bookerMessage'
+                          ? 'Booker'
+                          : 'Unknown',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: type == 'confirmerMessage'
+                            ? Colors.green
+                            : type == 'accountMessage'
+                            ? Colors.deepOrange
+                            : type == 'bookerMessage'
+                            ? Colors.blueAccent
+                            : Colors.black45,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+
+                    Text(
+                      date,
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: Colors.grey,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
+                ),
+              ),
+            );
+          }
       ),
     );
   }
@@ -218,7 +282,7 @@ class _WriteRemarkDialogState extends State<WriteRemarkDialog> {
 showWriteRemarkDialog({
   required BuildContext context,
   required String orderId,
-  required List<Message> remarks,
+  required Messages? messages,
   required String message,
   required VoidCallback onSubmitted
 }) {
@@ -226,7 +290,7 @@ showWriteRemarkDialog({
     context: context,
     builder: (context) => WriteRemarkDialog(
       orderId: orderId,
-      remarks: remarks,
+      messages: messages,
       message: message,
       onSubmitted: onSubmitted,
     )
