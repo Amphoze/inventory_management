@@ -80,7 +80,7 @@ class Order {
   final Map<String, dynamic>? checkedBy;
   final Map<String, dynamic>? rackedBy;
   final Map<String, dynamic>? manifestedBy;
-  final Map<String, dynamic>? messages;
+  final Messages? messages;
   final Map<String, dynamic>? merged;
   final String? bookingCourier;
   final String? warehouseId;
@@ -181,75 +181,25 @@ class Order {
     this.trackingStatus,
   });
 
-  static String _parseString(dynamic value) {
-    return value?.toString() ?? '';
-  }
-
-  static double _parseDouble(dynamic value) {
-    if (value == null) return 0.0;
-    return value is num ? value.toDouble() : double.tryParse(value.toString()) ?? 0.0;
-  }
-
-  static int _parseInt(dynamic value) {
-    if (value == null) return 0;
-    return value is int ? value : int.tryParse(value.toString()) ?? 0;
-  }
-
-  static DateTime? _parseDate(String? dateString) {
-    if (dateString == null || dateString.isEmpty) {
-      return null;
-    }
-
-    try {
-      return DateTime.parse(dateString).toLocal();
-    } catch (e) {
-      return null;
-    }
-  }
-
-  static String? formatDate(DateTime? date) {
-    return date == null ? null : DateFormat('dd-MM-yyyy').format(date);
-  }
-
-  static String? parseAndFormatDate(String? dateString) {
-    DateTime? parsedDate = _parseDate(dateString);
-    return parsedDate != null ? formatDate(parsedDate) : null;
-  }
-
-  Map<String, int> countCallStatuses() {
-    Map<String, int> statusCounts = {"not answered": 0, "answered": 0, "not reach": 0, "busy": 0};
-
-    if (callStatus != null) {
-      for (var status in callStatus!) {
-        int currentCount = statusCounts[status.status] ?? 0;
-        statusCounts[status.status] = currentCount + 1;
-      }
-    }
-    return statusCounts;
-  }
-
   factory Order.fromJson(Map<String, dynamic> json) {
-
-    // Logger().i("Mistakes :- ${List.from(json['isMistake'] ?? [])} for Order ID :- ${json['order_id'] ?? 'null'}");
 
     return Order(
       callStatus: (json['callStatus'] as List? ?? []).map((e) => CallStatus.fromJson(e)).toList(),
       merged: json['merged'] ?? {},
       availableCouriers: (json['availableCouriers'] as List?)
-              ?.map((courier) => {
-                    'name': _parseString(courier['name']),
-                    'freight_charge': _parseDouble(courier['freight_charge']),
-                    'courier_company_id': _parseString(courier['courier_company_id']),
-                  })
-              .toList() ??
+          ?.map((courier) => {
+        'name': _parseString(courier['name']),
+        'freight_charge': _parseDouble(courier['freight_charge']),
+        'courier_company_id': _parseString(courier['courier_company_id']),
+      })
+          .toList() ??
           [],
       picklistId: _parseString(json['picklistId']),
       warehouseId: json['warehouse']?['warehouse_id']?['_id'] ?? '',
       warehouseName: json['warehouse']?['warehouse_id']?['name'] ?? '',
       isHold: json['warehouse']?['isHold'] ?? false,
-      messages: json['messages'] ?? {},
 
-      // mistakes: json['isMistake'] == null ? [] : json['isMistake'].map((e) => Mistake.fromJson(e)).toList(),
+      messages: json['messages'] == null ? null : Messages.fromJson(json['messages']),
 
       mistakes: json['isMistake'] == null
           ? []
@@ -337,6 +287,133 @@ class Order {
       checkManifest: json['checkManifest'] != null ? CheckManifest.fromJson(json['checkManifest'] ?? {}) : null,
       trackingStatus: _parseString(json['tracking_status'] ?? ''),
     );
+  }
+
+  static String _parseString(dynamic value) {
+    return value?.toString() ?? '';
+  }
+
+  static double _parseDouble(dynamic value) {
+    if (value == null) return 0.0;
+    return value is num ? value.toDouble() : double.tryParse(value.toString()) ?? 0.0;
+  }
+
+  static int _parseInt(dynamic value) {
+    if (value == null) return 0;
+    return value is int ? value : int.tryParse(value.toString()) ?? 0;
+  }
+
+  static DateTime? _parseDate(String? dateString) {
+    if (dateString == null || dateString.isEmpty) {
+      return null;
+    }
+
+    try {
+      return DateTime.parse(dateString).toLocal();
+    } catch (e) {
+      return null;
+    }
+  }
+
+  static String? formatDate(DateTime? date) {
+    return date == null ? null : DateFormat('dd-MM-yyyy').format(date);
+  }
+
+  static String? parseAndFormatDate(String? dateString) {
+    DateTime? parsedDate = _parseDate(dateString);
+    return parsedDate != null ? formatDate(parsedDate) : null;
+  }
+
+  Map<String, int> countCallStatuses() {
+    Map<String, int> statusCounts = {"not answered": 0, "answered": 0, "not reach": 0, "busy": 0};
+
+    if (callStatus != null) {
+      for (var status in callStatus!) {
+        int currentCount = statusCounts[status.status] ?? 0;
+        statusCounts[status.status] = currentCount + 1;
+      }
+    }
+    return statusCounts;
+  }
+}
+
+class Messages {
+
+  final List<FailureReason> failureReason;
+  final List<Message> confirmerMessages;
+  final List<Message> bookerMessages;
+  final List<Message> accountMessages;
+
+
+  Messages({required this.failureReason, required this.confirmerMessages, required this.bookerMessages, required this.accountMessages});
+
+  factory Messages.fromJson(Map<String, dynamic> json) {
+    return Messages(
+      failureReason: json['failureReason'] == null ? [] : (json['failureReason'] as List<dynamic>).map((reason) => FailureReason.fromJson(reason)).toList(),
+      confirmerMessages: json['confirmerMessage'] == null ? [] : (json['confirmerMessage']  as List<dynamic>).map((message) => Message.fromJson(message)).toList(),
+      bookerMessages: json['bookerMessage'] == null ? [] : (json['bookerMessage']  as List<dynamic>).map((message) => Message.fromJson(message)).toList(),
+      accountMessages: json['accountMessage'] == null ? [] : (json['accountMessage']  as List<dynamic>).map((message) => Message.fromJson(message)).toList(),
+    );
+  }
+
+
+  Map<String, dynamic> toJson() {
+    return {
+      'failureReason': failureReason.map((reason) => reason.toJson()).toList(),
+      'confirmerMessage': confirmerMessages.map((message) => message.toJson()).toList(),
+      'bookerMessage': bookerMessages.map((message) => message.toJson()).toList(),
+      'accountMessage': accountMessages.map((message) => message.toJson()).toList(),
+    };
+  }
+}
+
+class FailureReason {
+  final String id;
+  final String type;
+  final String timestamp;
+
+  FailureReason({required this.id, required this.type, required this.timestamp});
+
+  factory FailureReason.fromJson(Map<String, dynamic> json) {
+    return FailureReason(
+      id: json['_id'] ?? '',
+      type: json['type'] ?? '',
+      timestamp: json['timestamp'] ?? '',
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      '_id': id,
+      'type': type,
+      'timestamp': timestamp,
+    };
+  }
+}
+
+class Message {
+  final String id;
+  final String author;
+  final String message;
+  final String timestamp;
+
+  Message({required this.id, required this.author, required this.message, required this.timestamp});
+
+  factory Message.fromJson(Map<String, dynamic> json) {
+    return Message(
+      id: json['_id'] ?? '',
+      author: json['author'] ?? '',
+      message: json['message'] ?? '',
+      timestamp: json['timestamp'] ?? '',
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      '-_id': id,
+      'author': author,
+      'message': message,
+    };
   }
 }
 

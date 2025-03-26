@@ -290,12 +290,37 @@ class OrdersProvider with ChangeNotifier {
       return false;
     }
 
-    final url = '${await Constants.getBaseUrl()}/orders/$id';
+    final url = '${await Constants.getBaseUrl()}/orders?order_id=$id';
 
-    final prefs = SharedPreferences.getInstance();
-    String? email = await prefs.then((prefs) => prefs.getString('email'));
+    final prefs = await SharedPreferences.getInstance();
+    String? email = prefs.getString('email');
 
-    log('writeRemark url: $url');
+    log('Writing Remark for order id $id at URL :- $url');
+
+    // final body = {
+    //   "messages": {
+    //     "confirmerMessage": msg,
+    //     "timestamp": DateTime.now().toIso8601String(),
+    //     "author": email ?? "Unknown",
+    //   }
+    // };
+
+    final body = {
+      "messages": {
+        "confirmerMessage":
+        [
+          {
+            "message": msg,
+            "timestamp": DateTime.now().toIso8601String(),
+            "author": email ?? "Unknown",
+          }
+        ]
+      }
+    };
+
+    final payload = jsonEncode(body);
+
+    log('Remark Payload :- $payload');
 
     try {
       final response = await http.put(
@@ -304,26 +329,18 @@ class OrdersProvider with ChangeNotifier {
           'Authorization': 'Bearer $token',
           'Content-Type': 'application/json',
         },
-        body: json.encode({
-          "messages": {
-            "conformerMessage": msg,
-            "timestamp": DateTime.now().toIso8601String(),
-            "author": email
-          }
-        }),
+        body: payload,
       );
 
-      log("writeRemark code: ${response.statusCode}");
-      log("writeRemark body: ${response.body}");
-
       if (response.statusCode == 200) {
+        log('Remark Submitted Successfully :)');
         return true;
       } else {
-        log('Failed to update order: ${response.body}');
+        log('Failed to submit remark with status code ${response.statusCode} and response as ${response.body}');
         return false;
       }
-    } catch (error) {
-      log('Error updating order: $error');
+    } catch (error, s) {
+      log('Error submitting remark: $error\n$s');
       return false;
     } finally {
       notifyListeners();
@@ -884,7 +901,7 @@ class OrdersProvider with ChangeNotifier {
     final token = await _getToken();
     if (token == null) return;
 
-    log('ready search url: $url');
+    log('Ready to Confirm URL: $url');
 
     try {
       setReadyLoading(true);
