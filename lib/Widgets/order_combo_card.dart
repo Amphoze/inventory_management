@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import 'package:inventory_management/Api/auth_provider.dart';
 import 'package:inventory_management/Custom-Files/colors.dart';
 import 'package:inventory_management/Custom-Files/utils.dart';
+import 'package:inventory_management/Widgets/revert_icon.dart';
 import 'package:inventory_management/edit_outbound_page.dart';
 import 'package:inventory_management/model/orders_model.dart';
 import 'package:inventory_management/provider/accounts_provider.dart';
@@ -142,7 +143,7 @@ class _OrderComboCardState extends State<OrderComboCard> {
                     if (widget.isBookPage) ...[
                       IconButton(
                         tooltip: 'Recalculate Freight Charges',
-                        icon: const Icon(Icons.undo),
+                        icon: const Icon(Icons.calculate_outlined),
                         onPressed: () async {
                           showDialog(
                             context: context,
@@ -182,7 +183,7 @@ class _OrderComboCardState extends State<OrderComboCard> {
                                       try {
                                         log('in revert try');
                                         final authPro = context.read<AuthProvider>();
-                                        final res = await authPro.reverseOrder(widget.order.orderId);
+                                        final res = await authPro.reverseOrder(widget.order.orderId, "", '');
 
                                         Navigator.pop(context);
 
@@ -337,6 +338,16 @@ class _OrderComboCardState extends State<OrderComboCard> {
                       const SizedBox(width: 8),
                     ],
                     if (widget.isSuperAdmin || widget.isAdmin)
+
+                      RevertOrderWidget(
+                        dropdownEnabled: true,
+                        dropdownOptions: [
+                          "READY-TO-CONFIRM",
+                          "READY-TO-ACCOUNT"
+                        ],
+                        orderid:  widget.order.orderId,
+                      ),
+
                       // IconButton(
                       //   tooltip: 'Revert Order',
                       //   icon: const Icon(Icons.undo),
@@ -356,6 +367,7 @@ class _OrderComboCardState extends State<OrderComboCard> {
                       //             ),
                       //             TextButton(
                       //               onPressed: () async {
+                      //                 // close confirm dialog
                       //                 Navigator.pop(context);
                       //
                       //                 showDialog(
@@ -375,8 +387,9 @@ class _OrderComboCardState extends State<OrderComboCard> {
                       //                 );
                       //
                       //                 try {
+                      //                   log('in revert try');
                       //                   final authPro = context.read<AuthProvider>();
-                      //                   final res = await authPro.reverseOrder(widget.order.orderId);
+                      //                   final res = await authPro.reverseOrder(widget.order.orderId, '', '');
                       //
                       //                   Navigator.pop(context);
                       //
@@ -385,7 +398,8 @@ class _OrderComboCardState extends State<OrderComboCard> {
                       //                   } else {
                       //                     Utils.showInfoDialog(context, res['message'], false);
                       //                   }
-                      //                 } catch (e) {
+                      //                 } catch (e, s) {
+                      //                   log('in revert catch: $e $s');
                       //                   Navigator.pop(context);
                       //                   Utils.showInfoDialog(context, 'An error occurred: $e', false);
                       //                 }
@@ -398,70 +412,9 @@ class _OrderComboCardState extends State<OrderComboCard> {
                       //     );
                       //   },
                       // ),
-                      IconButton(
-                        tooltip: 'Revert Order',
-                        icon: const Icon(Icons.undo),
-                        onPressed: () async {
-                          showDialog(
-                            context: context,
-                            builder: (context) {
-                              return AlertDialog(
-                                title: const Text('Revert Order'),
-                                content: Text('Are you sure you want to revert ${widget.order.orderId} to READY TO CONFIRM'),
-                                actions: [
-                                  TextButton(
-                                    onPressed: () {
-                                      Navigator.of(context).pop();
-                                    },
-                                    child: const Text('Cancel'),
-                                  ),
-                                  TextButton(
-                                    onPressed: () async {
-                                      // close confirm dialog
-                                      Navigator.pop(context);
 
-                                      showDialog(
-                                        barrierDismissible: false,
-                                        context: context,
-                                        builder: (context) {
-                                          return const AlertDialog(
-                                            content: Row(
-                                              children: [
-                                                CircularProgressIndicator(),
-                                                SizedBox(width: 8),
-                                                Text('Reversing'),
-                                              ],
-                                            ),
-                                          );
-                                        },
-                                      );
 
-                                      try {
-                                        log('in revert try');
-                                        final authPro = context.read<AuthProvider>();
-                                        final res = await authPro.reverseOrder(widget.order.orderId);
 
-                                        Navigator.pop(context);
-
-                                        if (res['success'] == true) {
-                                          Utils.showInfoDialog(context, "${res['message']}\nNew Order ID: ${res['newOrderId']}", true);
-                                        } else {
-                                          Utils.showInfoDialog(context, res['message'], false);
-                                        }
-                                      } catch (e, s) {
-                                        log('in revert catch: $e $s');
-                                        Navigator.pop(context);
-                                        Utils.showInfoDialog(context, 'An error occurred: $e', false);
-                                      }
-                                    },
-                                    child: const Text('Submit'),
-                                  ),
-                                ],
-                              );
-                            },
-                          );
-                        },
-                      ),
                     if (widget.isBookPage) ...[
                       const SizedBox(width: 8),
                       IconButton(
