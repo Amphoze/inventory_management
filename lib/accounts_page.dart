@@ -532,6 +532,7 @@ class _AccountsPageState extends State<AccountsPage> {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Row(
+
                                     mainAxisAlignment:
                                         MainAxisAlignment.spaceBetween,
                                     children: [
