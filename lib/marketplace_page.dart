@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:inventory_management/Custom-Files/colors.dart';
 import 'package:provider/provider.dart';
 import 'package:inventory_management/provider/marketplace_provider.dart';
-import 'package:inventory_management/custom-files/custom-dropdown.dart';
+import 'package:inventory_management/Custom-Files/custom-dropdown.dart';
 
 class MarketplacePage extends StatefulWidget {
   const MarketplacePage({super.key});
