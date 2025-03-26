@@ -4,15 +4,15 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:inventory_management/Custom-Files/colors.dart';
 import 'package:inventory_management/Custom-Files/custom_pagination.dart';
-import 'package:inventory_management/Custom-Files/highlighted_banner_card.dart';
 import 'package:inventory_management/Custom-Files/loading_indicator.dart';
 import 'package:inventory_management/Custom-Files/utils.dart';
 import 'package:inventory_management/Widgets/big_combo_card.dart';
 import 'package:inventory_management/Widgets/order_info.dart';
 import 'package:inventory_management/Widgets/product_details_card.dart';
-import 'package:inventory_management/chat_screen.dart';
+import 'package:inventory_management/chat_screen.dart' hide Message;
 import 'package:inventory_management/edit_outbound_page.dart';
 import 'package:inventory_management/model/orders_model.dart';
+import 'package:inventory_management/orders/widgets/write_remark_dialog.dart';
 import 'package:inventory_management/provider/book_provider.dart';
 import 'package:inventory_management/provider/location_provider.dart';
 import 'package:inventory_management/provider/marketplace_provider.dart';
@@ -383,8 +383,6 @@ class _OrdersNewPageState extends State<OrdersNewPage> with TickerProviderStateM
                                 await provider.confirmOrders(context, selectedOrderIds);
 
 
-
-
                                 // Color snackBarColor;
                                 // if (resultMessage.contains('success')) {
                                 //   snackBarColor = AppColors.green; // Success: Green
@@ -610,11 +608,14 @@ class _OrdersNewPageState extends State<OrdersNewPage> with TickerProviderStateM
                           itemCount: ordersProvider.readyOrders.length,
                           itemBuilder: (context, index) {
                             final order = ordersProvider.readyOrders[index];
-                            if (order.messages?['confirmerMessage']?.toString().isNotEmpty ?? false) {
-                              remarkController.clear();
-                              remarkController.text = order.messages!['confirmerMessage'].toString();
-                            }
-                            //////////////////////////////////////////////////////////////
+
+                            List<Message> remarks = order.messages != null ? order.messages!.confirmerMessages : [];
+
+                            // if (order.messages?['confirmerMessage']?.toString().isNotEmpty ?? false) {
+                            //   remarkController.clear();
+                            //   remarkController.text = order.messages!['confirmerMessage'].toString();
+                            // }
+
                             final Map<String, List<Item>> groupedComboItems = {};
                             for (var item in order.items) {
                               if (item.isCombo == true && item.comboSku != null) {
@@ -631,7 +632,7 @@ class _OrdersNewPageState extends State<OrdersNewPage> with TickerProviderStateM
                                     !(item.isCombo == true && item.comboSku != null && groupedComboItems[item.comboSku]!.length > 1))
                                 .toList();
 
-                            Logger().e('selectedReadyOrders: ${ordersProvider.selectedReadyOrders}');
+                            // Logger().e('selectedReadyOrders: ${ordersProvider.selectedReadyOrders}');
 
                             if (ordersProvider.selectedReadyOrders.length - 1 < index) {
                               return const Center(
@@ -1253,124 +1254,44 @@ class _OrdersNewPageState extends State<OrdersNewPage> with TickerProviderStateM
                                             children: [
                                               ElevatedButton(
                                                 onPressed: () {
-                                                  showDialog(
+
+                                                  showWriteRemarkDialog(
                                                     context: context,
-                                                    builder: (_) {
-                                                      return Dialog(
-                                                        shape: RoundedRectangleBorder(
-                                                          borderRadius: BorderRadius.circular(16),
-                                                        ),
-                                                        insetPadding: const EdgeInsets.symmetric(horizontal: 20),
-                                                        child: Container(
-                                                          width: MediaQuery.of(context).size.width * 0.9, // 90% of screen width
-                                                          constraints: const BoxConstraints(maxWidth: 600), // Maximum width limit
-                                                          padding: const EdgeInsets.all(20),
-                                                          child: Column(
-                                                            mainAxisSize: MainAxisSize.min,
-                                                            crossAxisAlignment: CrossAxisAlignment.stretch,
-                                                            children: [
-                                                              const Text(
-                                                                'Remark',
-                                                                style: TextStyle(
-                                                                  fontSize: 24,
-                                                                  fontWeight: FontWeight.bold,
-                                                                ),
-                                                              ),
-                                                              const SizedBox(height: 20),
-                                                              TextField(
-                                                                controller: remarkController,
-                                                                maxLines: 10,
-                                                                decoration: InputDecoration(
-                                                                  border: OutlineInputBorder(
-                                                                    borderRadius: BorderRadius.circular(8),
-                                                                  ),
-                                                                  hintText: 'Enter your remark here',
-                                                                  filled: true,
-                                                                  fillColor: Colors.grey[50],
-                                                                  contentPadding: const EdgeInsets.all(16),
-                                                                ),
-                                                              ),
-                                                              const SizedBox(height: 24),
-                                                              Row(
-                                                                mainAxisAlignment: MainAxisAlignment.end,
-                                                                children: [
-                                                                  TextButton(
-                                                                    onPressed: () => Navigator.of(context).pop(),
-                                                                    child: const Text(
-                                                                      'Cancel',
-                                                                      style: TextStyle(fontSize: 16),
-                                                                    ),
-                                                                  ),
-                                                                  const SizedBox(width: 16),
-                                                                  ElevatedButton(
-                                                                    onPressed: () async {
-                                                                      showDialog(
-                                                                        context: context,
-                                                                        barrierDismissible: false,
-                                                                        // Prevent dismissing the dialog by tapping outside
-                                                                        builder: (_) {
-                                                                          return AlertDialog(
-                                                                            shape: RoundedRectangleBorder(
-                                                                              borderRadius: BorderRadius.circular(16),
-                                                                            ),
-                                                                            insetPadding: const EdgeInsets.symmetric(horizontal: 20),
-                                                                            content: const Row(
-                                                                              mainAxisSize: MainAxisSize.min,
-                                                                              children: [
-                                                                                CircularProgressIndicator(),
-                                                                                SizedBox(width: 20),
-                                                                                // Adjust to create horizontal spacing
-                                                                                Text(
-                                                                                  'Submitting Remark',
-                                                                                  style: TextStyle(fontSize: 16),
-                                                                                ),
-                                                                              ],
-                                                                            ),
-                                                                          );
-                                                                        },
-                                                                      );
+                                                    orderId: order.orderId,
+                                                    message: 'confirmerMessage',
+                                                    messages: order.messages,
+                                                    onSubmitted: () async {
 
-                                                                      final bool res = await ordersProvider.writeRemark(order.id, remarkController.text);
-                                                                      Navigator.of(context).pop();
-                                                                      Navigator.of(context).pop();
+                                                      final searched = ordersProvider.searchControllerReady.text.trim();
 
-                                                                      final searched = ordersProvider.searchControllerReady.text.trim();
-
-                                                                      if (res) {
-                                                                        if (searched.isEmpty) {
-                                                                          await ordersProvider.fetchReadyOrders();
-                                                                        } else {
-                                                                          await ordersProvider.searchReadyToConfirmOrders(searched);
-                                                                        }
-                                                                      }
-                                                                    },
-                                                                    style: ElevatedButton.styleFrom(
-                                                                      padding: const EdgeInsets.symmetric(
-                                                                        horizontal: 24,
-                                                                        vertical: 12,
-                                                                      ),
-                                                                    ),
-                                                                    child: const Text(
-                                                                      'Submit',
-                                                                      style: TextStyle(fontSize: 16),
-                                                                    ),
-                                                                  ),
-                                                                ],
-                                                              ),
-                                                            ],
-                                                          ),
-                                                        ),
-                                                      );
+                                                      if (searched.isEmpty) {
+                                                        await ordersProvider.fetchReadyOrders();
+                                                      } else {
+                                                        await ordersProvider.searchReadyToConfirmOrders(searched);
+                                                      }
                                                     },
                                                   );
                                                 },
-                                                child: (order.messages?['confirmerMessage']?.toString().isNotEmpty ?? false)
-                                                    ? const Text('Edit Remark')
-                                                    : const Text('Write Remark'),
+                                                child: Text(remarks.isNotEmpty ? 'Add a Remark' : 'Write a Remark'),
                                               ),
-                                              if (order.messages?['confirmerMessage']?.toString().isNotEmpty ?? false)
-                                                Utils().showMessage(
-                                                    context, 'Confirmer Remark', order.messages!['confirmerMessage'].toString())
+
+                                              if (remarks.isNotEmpty)
+                                                Tooltip(
+                                                  message: remarks.last.message,
+                                                  child: SizedBox(
+                                                    width: MediaQuery.of(context).size.width * 0.3,
+                                                    child: Text(
+                                                      remarks.last.message,
+                                                      style: const TextStyle(
+                                                        fontSize: 13,
+                                                        color: Colors.green,
+                                                      ),
+                                                      maxLines: 1,
+                                                      overflow: TextOverflow.ellipsis,
+                                                      textAlign: TextAlign.right,
+                                                    ),
+                                                  ),
+                                                ),
                                             ],
                                           ),
                                         ],
@@ -1793,6 +1714,7 @@ class _OrdersNewPageState extends State<OrdersNewPage> with TickerProviderStateM
                             final order = ordersProvider.failedOrders[index];
 
                             final Map<String, List<Item>> groupedComboItems = {};
+
                             for (var item in order.items) {
                               if (item.isCombo == true && item.comboSku != null) {
                                 if (!groupedComboItems.containsKey(item.comboSku)) {
@@ -1801,13 +1723,13 @@ class _OrdersNewPageState extends State<OrdersNewPage> with TickerProviderStateM
                                 groupedComboItems[item.comboSku]!.add(item);
                               }
                             }
+
                             final List<List<Item>> comboItemGroups = groupedComboItems.values.where((items) => items.length > 1).toList();
 
                             final List<Item> remainingItems = order.items
                                 .where((item) =>
                                     !(item.isCombo == true && item.comboSku != null && groupedComboItems[item.comboSku]!.length > 1))
                                 .toList();
-
 
                             if (ordersProvider.selectedFailedOrders.length - 1 < index) {
                               return const Center(
@@ -1817,6 +1739,8 @@ class _OrdersNewPageState extends State<OrdersNewPage> with TickerProviderStateM
                                 ),
                               );
                             }
+
+                            List<FailureReason> failureReasons = order.messages == null ? [] : order.messages!.failureReason;
 
                             return Card(
                               surfaceTintColor: Colors.white,
@@ -2118,6 +2042,7 @@ class _OrdersNewPageState extends State<OrdersNewPage> with TickerProviderStateM
                                               ),
                                             ),
                                           ),
+
                                           Expanded(
                                             flex: 2,
                                             child: FittedBox(
@@ -2157,68 +2082,68 @@ class _OrdersNewPageState extends State<OrdersNewPage> with TickerProviderStateM
                                               ),
                                             ),
                                           ),
-                                          ((order.messages?['failureReason'] ?? []).isEmpty ?? false)
-                                              ? const SizedBox()
-                                              : Expanded(
-                                                  flex: 1,
-                                                  child: Container(
-                                                    padding: const EdgeInsets.all(16.0),
-                                                    decoration: BoxDecoration(
-                                                      color: Colors.red[50],
-                                                      // Lighter shade for better readability
-                                                      borderRadius: BorderRadius.circular(8.0),
-                                                      border: Border.all(color: Colors.red[300]!),
-                                                    ),
-                                                    child: Column(
-                                                      crossAxisAlignment: CrossAxisAlignment.start,
+
+                                          if (failureReasons.isNotEmpty)
+                                            Expanded(
+                                              flex: 1,
+                                              child: Container(
+                                                padding: const EdgeInsets.all(16.0),
+                                                decoration: BoxDecoration(
+                                                  color: Colors.red[50],
+                                                  // Lighter shade for better readability
+                                                  borderRadius: BorderRadius.circular(8.0),
+                                                  border: Border.all(color: Colors.red[300]!),
+                                                ),
+                                                child: Column(
+                                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                                  children: [
+                                                    Row(
                                                       children: [
-                                                        Row(
-                                                          children: [
-                                                            Icon(Icons.error_outline, color: Colors.red[700], size: 20),
-                                                            const SizedBox(width: 8),
-                                                            Text(
-                                                              "Failure Reasons",
-                                                              style: TextStyle(
-                                                                fontSize: 16,
-                                                                fontWeight: FontWeight.bold,
-                                                                color: Colors.red[700],
-                                                              ),
-                                                            ),
-                                                          ],
-                                                        ),
-                                                        const SizedBox(height: 12),
-                                                        ...order.messages!['failureReason'].map(
-                                                          (reason) => Padding(
-                                                            padding: const EdgeInsets.symmetric(vertical: 4.0),
-                                                            child: Row(
-                                                              crossAxisAlignment: CrossAxisAlignment.start,
-                                                              children: [
-                                                                Text(
-                                                                  '•',
-                                                                  style: TextStyle(
-                                                                    color: Colors.red[700],
-                                                                    fontSize: 16,
-                                                                    fontWeight: FontWeight.bold,
-                                                                  ),
-                                                                ),
-                                                                const SizedBox(width: 8),
-                                                                Expanded(
-                                                                  child: Text(
-                                                                    reason['type'],
-                                                                    style: TextStyle(
-                                                                      color: Colors.red[900],
-                                                                      height: 1.3,
-                                                                    ),
-                                                                  ),
-                                                                ),
-                                                              ],
-                                                            ),
+                                                        Icon(Icons.error_outline, color: Colors.red[700], size: 20),
+                                                        const SizedBox(width: 8),
+                                                        Text(
+                                                          "Failure Reasons",
+                                                          style: TextStyle(
+                                                            fontSize: 16,
+                                                            fontWeight: FontWeight.bold,
+                                                            color: Colors.red[700],
                                                           ),
                                                         ),
                                                       ],
                                                     ),
-                                                  ),
-                                                )
+                                                    const SizedBox(height: 12),
+                                                    ...failureReasons.map(
+                                                          (reason) => Padding(
+                                                        padding: const EdgeInsets.symmetric(vertical: 4.0),
+                                                        child: Row(
+                                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                                          children: [
+                                                            Text(
+                                                              '•',
+                                                              style: TextStyle(
+                                                                color: Colors.red[700],
+                                                                fontSize: 16,
+                                                                fontWeight: FontWeight.bold,
+                                                              ),
+                                                            ),
+                                                            const SizedBox(width: 8),
+                                                            Expanded(
+                                                              child: Text(
+                                                                reason.type,
+                                                                style: TextStyle(
+                                                                  color: Colors.red[900],
+                                                                  height: 1.3,
+                                                                ),
+                                                              ),
+                                                            ),
+                                                          ],
+                                                        ),
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                            ),
                                         ],
                                       ),
                                     ),

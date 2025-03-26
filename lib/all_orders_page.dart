@@ -19,9 +19,9 @@ class AllOrdersPage extends StatefulWidget {
 }
 
 class _AllOrdersPageState extends State<AllOrdersPage> with SingleTickerProviderStateMixin {
+
   final TextEditingController _pageController = TextEditingController();
   List<Map<String, String>> statuses = [];
-  bool areOrdersFetched = false;
   String selectedCourier = 'All';
   String selectedStatus = 'All';
   DateTime? picked;
@@ -99,9 +99,212 @@ class _AllOrdersPageState extends State<AllOrdersPage> with SingleTickerProvider
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      body: Padding(
-        padding: const EdgeInsets.only(top: 3.0),
-        child: _buildOrderList(),
+      body: Column(
+        children: [
+
+          Row(
+            children: [
+              Consumer<AllOrdersProvider>(
+                builder: (context, provider, _) {
+
+                  int selectedCount = provider.ordersBooked.where((order) => order.isSelected).length;
+
+                  return SizedBox(
+                    width: 140,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Checkbox(
+                          value: provider.selectAll,
+                          onChanged: (value) {
+                            provider.toggleSelectAll(value!);
+                          },
+                        ),
+                        Text("Select All ($selectedCount)"),
+                      ],
+                    ),
+                  );
+                },
+              ),
+
+              const SizedBox(width: 10),
+
+              _searchBar(),
+
+              const Spacer(),
+
+              _buildConfirmButtons(),
+            ],
+          ),
+
+          Expanded(
+            child: Consumer<AllOrdersProvider>(
+              builder: (context, provider, _) {
+                return provider.isLoading
+                    ?
+                const Center(
+                  child: LoadingAnimation(
+                    icon: Icons.apps,
+                    beginColor: Color.fromRGBO(189, 189, 189, 1),
+                    endColor: AppColors.primaryBlue,
+                    size: 80.0,
+                  ),
+                )
+                    :
+                provider.ordersBooked.isEmpty
+                    ?
+                const Center(
+                  child: Text(
+                    'No Orders Found',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.grey,
+                    ),
+                  ),
+                )
+                    :
+                ListView.builder(
+                  itemCount: provider.ordersBooked.length,
+                  itemBuilder: (context, index) {
+
+                    final order = provider.ordersBooked[index];
+
+                    String orderStatus = (order.orderStatusMap.isNotEmpty)
+                        ? order.orderStatusMap.last.status
+                        : 'Unknown Status';
+
+                    return Card(
+                      elevation: 2,
+                      color: Colors.grey.shade100,
+                      margin: const EdgeInsets.only(bottom: 10),
+                      child: Padding(
+                        padding: const EdgeInsets.all(10),
+                        child: Row(
+                          children: [
+
+                            Expanded(
+                              flex: 7,
+                              child: OrderComboCard(
+                                order: order,
+                                elevation: 0,
+                                margin: EdgeInsets.zero,
+                                toShowBy: true,
+                                toShowOrderDetails: true,
+                                checkboxWidget:  SizedBox(
+                                  width: 30,
+                                  height: 30,
+                                  child: Transform.scale(
+                                    scale: 0.9,
+                                    child: Checkbox(
+                                      value: order.isSelected,
+                                      onChanged: (value) {
+                                        allOrdersProvider.handleRowCheckboxChangeBooked(
+                                          order.orderId,
+                                          value!,
+                                        );
+                                      },
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+
+                            const SizedBox(width: 10),
+
+                            Expanded(
+                              flex: 2,
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+
+                                  _buildOrderStatusCard(orderStatus),
+
+                                  SizedBox(height: MediaQuery.of(context).size.height * 0.1),
+
+                                  // order.awbNumber == ''
+                                  //     ?
+                                  // const Text('Not Available')
+                                  //     :
+                                  // _buildTrackingStatus(order),
+
+                                  _buildTrackingStatusCard(order),
+
+                                  if (order.reverseOrder.isNotEmpty)
+                                    _buildReverseOrderCard(order),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                );
+              },
+            ),
+          ),
+
+          const SizedBox(height: 10),
+
+          Consumer<AllOrdersProvider>(
+            builder: (context, allOrdersProvider, _) {
+
+              if (allOrdersProvider.isLoading) {
+                return const SizedBox();
+              }
+
+              return CustomPaginationFooter(
+                currentPage: allOrdersProvider.currentPage,
+                totalPages: allOrdersProvider.totalPages,
+                buttonSize: 30,
+                pageController: _pageController,
+                onFirstPage: () {
+                  allOrdersProvider.goToPage(1, date: picked, status: selectedStatus, marketplace: selectedCourier);
+                },
+                onLastPage: () {
+                  allOrdersProvider.goToPage(allOrdersProvider.totalPages, date: picked, status: selectedStatus, marketplace: selectedCourier);
+                },
+                onNextPage: () {
+                  int currentPage = allOrdersProvider.currentPage;
+                  int totalPages = allOrdersProvider.totalPages;
+                  if (currentPage < totalPages) {
+                    allOrdersProvider.goToPage(allOrdersProvider.currentPage + 1,
+                        date: picked, status: selectedStatus, marketplace: selectedCourier);
+                  }
+                },
+                onPreviousPage: () {
+                  int currentPage = allOrdersProvider.currentPage;
+                  if (currentPage > 1) {
+                    allOrdersProvider.goToPage(allOrdersProvider.currentPage - 1,
+                        date: picked, status: selectedStatus, marketplace: selectedCourier);
+                  }
+                },
+                onGoToPage: (int page) {
+                  int totalPages = allOrdersProvider.totalPages;
+                  if (page > 0 && page <= totalPages) {
+                    allOrdersProvider.goToPage(page, date: picked, status: selectedStatus, marketplace: selectedCourier);
+                  } else {
+                    _showSnackbar(context, 'Please enter a valid page number between 1 and $totalPages.');
+                  }
+                },
+                onJumpToPage: () {
+                  final String pageText = _pageController.text;
+                  int? page = int.tryParse(pageText);
+                  int totalPages = allOrdersProvider.totalPages;
+
+                  if (page == null || page < 1 || page > totalPages) {
+                    _showSnackbar(context, 'Please enter a valid page number between 1 and $totalPages.');
+                    return;
+                  }
+
+                  allOrdersProvider.goToPage(page, date: picked, status: selectedStatus, marketplace: selectedCourier);
+                  _pageController.clear();
+                },
+              );
+            },
+          ),
+        ],
       ),
     );
   }
@@ -166,7 +369,7 @@ class _AllOrdersPageState extends State<AllOrdersPage> with SingleTickerProvider
                   if (text.trim().isEmpty) {
                     context.read<AllOrdersProvider>().fetchAllOrders();
                   } else {
-                    Provider.of<AllOrdersProvider>(context, listen: false).searchOrders(text.trim());
+                    Provider.of<AllOrdersProvider>(context, listen: false).searchOrdersWithId(text.trim());
                   }
                 },
               ),
@@ -192,112 +395,6 @@ class _AllOrdersPageState extends State<AllOrdersPage> with SingleTickerProvider
           ],
         ),
       ),
-    );
-  }
-
-  Widget _buildOrderList() {
-    final allOrdersProvider = Provider.of<AllOrdersProvider>(context);
-    List<Order> ordersBooked = allOrdersProvider.ordersBooked;
-
-    int selectedCount = ordersBooked.where((order) => order.isSelected).length;
-
-    if (ordersBooked.isNotEmpty) {
-      areOrdersFetched = true;
-    }
-
-    return Column(
-      children: [
-        Row(
-          children: [
-            _searchBar(),
-            const Spacer(),
-            _buildConfirmButtons(),
-          ],
-        ),
-        _buildTableHeader(selectedCount),
-        Expanded(
-          child: allOrdersProvider.isLoading
-              ? const Center(
-                  child: LoadingAnimation(
-                    icon: Icons.apps,
-                    beginColor: Color.fromRGBO(189, 189, 189, 1),
-                    endColor: AppColors.primaryBlue,
-                    size: 80.0,
-                  ),
-                )
-              : ordersBooked.isEmpty
-                  ? const Center(
-                      child: Text(
-                        'No Orders Found',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.grey,
-                        ),
-                      ),
-                    )
-                  : ListView.builder(
-                      itemCount: ordersBooked.length,
-                      itemBuilder: (context, index) {
-                        return Column(
-                          children: [
-                            _buildOrderCard(ordersBooked[index]),
-                            const Divider(thickness: 1, color: Colors.grey),
-                          ],
-                        );
-                      },
-                    ),
-        ),
-        if (areOrdersFetched)
-          CustomPaginationFooter(
-            currentPage: allOrdersProvider.currentPage,
-            totalPages: allOrdersProvider.totalPages,
-            buttonSize: 30,
-            pageController: _pageController,
-            onFirstPage: () {
-              allOrdersProvider.goToPage(1, date: picked, status: selectedStatus, marketplace: selectedCourier);
-            },
-            onLastPage: () {
-              allOrdersProvider.goToPage(allOrdersProvider.totalPages, date: picked, status: selectedStatus, marketplace: selectedCourier);
-            },
-            onNextPage: () {
-              int currentPage = allOrdersProvider.currentPage;
-              int totalPages = allOrdersProvider.totalPages;
-              if (currentPage < totalPages) {
-                allOrdersProvider.goToPage(allOrdersProvider.currentPage + 1,
-                    date: picked, status: selectedStatus, marketplace: selectedCourier);
-              }
-            },
-            onPreviousPage: () {
-              int currentPage = allOrdersProvider.currentPage;
-              if (currentPage > 1) {
-                allOrdersProvider.goToPage(allOrdersProvider.currentPage - 1,
-                    date: picked, status: selectedStatus, marketplace: selectedCourier);
-              }
-            },
-            onGoToPage: (int page) {
-              int totalPages = allOrdersProvider.totalPages;
-              if (page > 0 && page <= totalPages) {
-                allOrdersProvider.goToPage(page, date: picked, status: selectedStatus, marketplace: selectedCourier);
-              } else {
-                _showSnackbar(context, 'Please enter a valid page number between 1 and $totalPages.');
-              }
-            },
-            onJumpToPage: () {
-              final String pageText = _pageController.text;
-              int? page = int.tryParse(pageText);
-              int totalPages = allOrdersProvider.totalPages;
-
-              if (page == null || page < 1 || page > totalPages) {
-                _showSnackbar(context, 'Please enter a valid page number between 1 and $totalPages.');
-                return;
-              }
-
-              allOrdersProvider.goToPage(page, date: picked, status: selectedStatus, marketplace: selectedCourier);
-              _pageController.clear();
-            },
-          ),
-      ],
     );
   }
 
@@ -360,7 +457,8 @@ class _AllOrdersPageState extends State<AllOrdersPage> with SingleTickerProvider
                           page: allOrdersProvider.currentPage,
                           date: picked,
                           status: statuses.firstWhere((map) => map.containsKey(selectedStatus), orElse: () => {})[selectedStatus]!,
-                          marketplace: selectedCourier);
+                          marketplace: selectedCourier
+                      );
                     }
                   },
                   icon: const Icon(Icons.date_range),
@@ -579,182 +677,320 @@ class _AllOrdersPageState extends State<AllOrdersPage> with SingleTickerProvider
     );
   }
 
-  Widget _buildTableHeader(int selectedCount) {
-    final allOrdersProvider = Provider.of<AllOrdersProvider>(context);
+  Widget _buildOrderStatusCard(String orderStatus) {
+
+    Color bgColor = Colors.blue.shade300;
+    Color fgColor = Colors.blue;
+
     return Container(
-      color: Colors.grey[300],
-      padding: const EdgeInsets.symmetric(vertical: 12),
-      child: Row(
+      width: double.maxFinite,
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+      decoration: BoxDecoration(
+        color: bgColor.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: fgColor,
+          width: 2,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.center,
+        mainAxisSize: MainAxisSize.min,
         children: [
-          SizedBox(
-            width: 140,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Checkbox(
-                  value: allOrdersProvider.selectAll,
-                  onChanged: (value) {
-                    allOrdersProvider.toggleSelectAll(value!);
-                  },
-                ),
-                Text("Select All ($selectedCount)"),
-              ],
+          Text(
+            'Order Status',
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.bold,
+              color: fgColor,
             ),
           ),
-          buildHeader('ORDERS', flex: 5),
-          buildHeader('STATUS', flex: 1),
-          buildHeader('TRACKING\nSTATUS', flex: 1),
+
+          const SizedBox(height: 3),
+
+          Text(
+            orderStatus,
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.bold,
+              color: bgColor,
+            ),
+          )
         ],
       ),
     );
   }
 
-  Widget buildHeader(String title, {int flex = 1}) {
-    return Flexible(
-      flex: flex,
-      child: Center(
-        child: Text(
-          title,
-          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.black87),
-        ),
-      ),
-    );
-  }
+  Widget _buildTrackingStatusCard(Order order) {
 
-  Widget _buildOrderCard(Order order) {
-    final allOrdersProvider = Provider.of<AllOrdersProvider>(context);
-    Widget? checkboxWidget;
-    bool isBookPage = true;
+    bool isDelhivery = order.bookingCourier == 'Delhivery';
+    String awbNumber = order.awbNumber;
 
-    if (isBookPage) {
-      checkboxWidget = SizedBox(
-        width: 30,
-        height: 30,
-        child: Transform.scale(
-          scale: 0.9,
-          child: Checkbox(
-            value: order.isSelected,
-            onChanged: (value) {
-              allOrdersProvider.handleRowCheckboxChangeBooked(
-                order.orderId,
-                value!,
-              );
-            },
-          ),
-        ),
-      );
+    Color bgColor = Colors.green.shade300;
+    Color fgColor = Colors.green;
+
+    if (awbNumber.isNotEmpty) {
+      _updateTrackingStatus(awbNumber, isDelhivery);
     }
 
-    return Row(
-      children: [
-        Expanded(
-          flex: 6,
-          child: OrderComboCard(
-            order: order,
-            toShowBy: true,
-            toShowOrderDetails: true,
-            checkboxWidget: checkboxWidget,
-          ),
+    return Container(
+      width: double.maxFinite,
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+      decoration: BoxDecoration(
+        color: bgColor.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: fgColor,
+          width: 2,
         ),
-        buildCell((order.orderStatusMap?.isNotEmpty ?? false) ? order.orderStatusMap!.last.status : 'Unknown Status', flex: 1),
-        if (order.awbNumber == '')
-          const Expanded(
-              flex: 1,
-              child: Center(
-                child: Text('Not Available'),
-              ))
-        else ...[
-          if (order.bookingCourier == 'Delhivery')
-            Expanded(
-              flex: 1,
-              child: Center(
-                child: Column(
-                  children: [
-                    Text(order.awbNumber),
-                    Builder(
-                      builder: (context) {
-                        _updateTrackingStatus(order.awbNumber, true);
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.center,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            'Tracking Status',
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.bold,
+              color: fgColor,
+            ),
+          ),
 
-                        return ValueListenableBuilder<String?>(
-                          valueListenable: _getTrackingNotifier(order.awbNumber, true),
-                          builder: (context, status, child) {
-                            if (status == null) {
-                              return const SizedBox(
-                                width: 16,
-                                height: 16,
-                                child: CircularProgressIndicator(
-                                  color: AppColors.primaryBlue,
-                                  strokeWidth: 2,
-                                ),
-                              );
-                            } else if (status.startsWith('Error:')) {
-                              return Text(status);
-                            } else {
-                              return Text(
-                                status,
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              );
-                            }
-                          },
-                        );
-                      },
-                    )
-                  ],
-                ),
-              ),
-            )
-          else if (order.bookingCourier == 'Shiprocket')
-            Expanded(
-              flex: 1,
-              child: Center(
-                child: Column(
-                  children: [
-                    Text(order.awbNumber),
-                    Builder(
-                      builder: (context) {
-                        _updateTrackingStatus(order.awbNumber, false);
+          const SizedBox(height: 3),
 
-                        return ValueListenableBuilder<String?>(
-                          valueListenable: _getTrackingNotifier(order.awbNumber, false),
-                          builder: (context, status, child) {
-                            if (status == null) {
-                              return const SizedBox(
-                                width: 16,
-                                height: 16,
-                                child: CircularProgressIndicator(
-                                  color: AppColors.primaryBlue,
-                                  strokeWidth: 2,
-                                ),
-                              );
-                            } else if (status.startsWith('Error:')) {
-                              return Text(status);
-                            } else {
-                              return Text(
-                                status ?? '',
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              );
-                            }
-                          },
-                        );
-                      },
-                    )
-                  ],
-                ),
-              ),
-            )
+          if (awbNumber.isNotEmpty)
+            ValueListenableBuilder<String?>(
+              valueListenable: _getTrackingNotifier(awbNumber, isDelhivery),
+              builder: (context, status, child) {
+                if (status == null) {
+                  return const SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(
+                      color: AppColors.primaryBlue,
+                      strokeWidth: 2,
+                    ),
+                  );
+                } else if (status.startsWith('Error:')) {
+                  return Text(
+                    status,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.red,
+                    ),
+                  );
+                } else {
+                  return Text(
+                    status,
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      color: bgColor,
+                    ),
+                  );
+                }
+              },
+            ),
+
+          const SizedBox(height: 3),
+
+          _buildReverseInfoRow(
+            title: 'AWB',
+            value: awbNumber.isEmpty ? 'Not Available' : awbNumber,
+            isReverseDetailCard: false,
+          ),
         ],
-      ],
+      ),
     );
   }
 
-  Widget buildCell(String title, {int flex = 1}) {
-    return Expanded(
-      flex: flex,
-      child: Center(child: Text(title)),
+  Widget _buildTrackingStatus(Order order) {
+
+    bool isDelhivery = order.bookingCourier == 'Delhivery';
+
+    return Center(
+      child: Column(
+        children: [
+          Text(order.awbNumber),
+
+          Builder(
+            builder: (context) {
+              _updateTrackingStatus(order.awbNumber, isDelhivery);
+
+              return ValueListenableBuilder<String?>(
+                valueListenable: _getTrackingNotifier(order.awbNumber, isDelhivery),
+                builder: (context, status, child) {
+                  if (status == null) {
+                    return const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(
+                        color: AppColors.primaryBlue,
+                        strokeWidth: 2,
+                      ),
+                    );
+                  } else if (status.startsWith('Error:')) {
+                    return Text(status);
+                  } else {
+                    return Text(
+                      status,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                      ),
+                    );
+                  }
+                },
+              );
+            },
+          )
+        ],
+      ),
+    );
+
+    // return Expanded(
+    //   flex: 1,
+    //   child: Center(
+    //     child: Column(
+    //       children: [
+    //         Text(order.awbNumber),
+    //
+    //         Builder(
+    //           builder: (context) {
+    //             _updateTrackingStatus(order.awbNumber, false);
+    //
+    //             return ValueListenableBuilder<String?>(
+    //               valueListenable: _getTrackingNotifier(order.awbNumber, false),
+    //               builder: (context, status, child) {
+    //                 if (status == null) {
+    //                   return const SizedBox(
+    //                     width: 16,
+    //                     height: 16,
+    //                     child: CircularProgressIndicator(
+    //                       color: AppColors.primaryBlue,
+    //                       strokeWidth: 2,
+    //                     ),
+    //                   );
+    //                 } else if (status.startsWith('Error:')) {
+    //                   return Text(status);
+    //                 } else {
+    //                   return Text(
+    //                     status ?? '',
+    //                     style: const TextStyle(
+    //                       fontWeight: FontWeight.bold,
+    //                     ),
+    //                   );
+    //                 }
+    //               },
+    //             );
+    //           },
+    //         )
+    //       ],
+    //     ),
+    //   ),
+    // );
+  }
+
+  Widget _buildReverseOrderCard(Order order) {
+    
+    final reverseOrder = order.reverseOrder.last;
+
+    if (!reverseOrder.status) return const SizedBox();
+
+    String timestamp = reverseOrder.timestamp;
+
+    String date = 'NA';
+
+    try {
+      DateTime dateTime = DateTime.parse(timestamp);
+      date = DateFormat('dd MMM, yyyy hh:mm:ss a').format(dateTime);
+    } catch (e) {
+      log('Cannot Parse Timestamp for Reverse Order :- $e');
+    }
+
+    return Padding(
+      padding: EdgeInsets.only(top: MediaQuery.of(context).size.height * 0.1),
+      child: Container(
+        width: double.maxFinite,
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+        decoration: BoxDecoration(
+          color: Colors.red.shade100.withValues(alpha: 0.1),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(
+            color: Colors.red,
+            width: 2,
+          ),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+
+            const Text(
+              'Reversing Details',
+              style: TextStyle(
+                fontSize: 14.0,
+                fontWeight: FontWeight.bold,
+                color: Colors.red,
+              ),
+            ),
+
+            const SizedBox(height: 3),
+
+            _buildReverseInfoRow(
+              title: 'Reason',
+              value: reverseOrder.reason,
+            ),
+
+            const SizedBox(height: 3),
+
+            _buildReverseInfoRow(
+              title: 'Reversed By',
+              value: reverseOrder.reverseBy,
+            ),
+
+            const SizedBox(height: 3),
+
+            _buildReverseInfoRow(
+              title: 'Date',
+              value: date,
+            ),
+
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildReverseInfoRow({
+    required String title,
+    required String value,
+    bool isReverseDetailCard = true,
+  }) {
+    return Text.rich(
+        TextSpan(
+            children: [
+              TextSpan(
+                  text: '$title: ',
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold,
+                    color: isReverseDetailCard ? Colors.red : Colors.green,
+                  )
+              ),
+
+              TextSpan(
+                  text: value,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: isReverseDetailCard ? Colors.red.shade400 : Colors.green.shade400,
+                  )
+              )
+            ]
+        )
     );
   }
 }

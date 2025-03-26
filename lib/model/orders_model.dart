@@ -1,5 +1,4 @@
 import 'package:intl/intl.dart';
-import 'package:logger/logger.dart';
 
 class Order {
   final List<CallStatus>? callStatus;
@@ -33,7 +32,7 @@ class Order {
   int orderStatus;
   bool isBooked;
   bool checkInvoice;
-  final List<dynamic>? orderStatusMap;
+  final List<OrderStatusMap> orderStatusMap;
   final Marketplace? marketplace;
   final String agent;
   final String? filter;
@@ -80,7 +79,8 @@ class Order {
   final Map<String, dynamic>? checkedBy;
   final Map<String, dynamic>? rackedBy;
   final Map<String, dynamic>? manifestedBy;
-  final Map<String, dynamic>? messages;
+  final Messages? messages;
+  final List<ReverseOrder> reverseOrder;
   final Map<String, dynamic>? merged;
   final String? bookingCourier;
   final String? warehouseId;
@@ -98,6 +98,7 @@ class Order {
     this.picklistId = '',
     this.rebookedBy,
     required this.mistakes,
+    required this.reverseOrder,
     this.isHold,
     this.selectedCourier = '',
     this.selectedCourierId = '',
@@ -144,7 +145,7 @@ class Order {
     this.outerPackages,
     this.replacement = false,
     required this.orderStatus,
-    this.orderStatusMap,
+    required this.orderStatusMap,
     this.marketplace,
     this.agent = '',
     this.filter = '',
@@ -181,75 +182,31 @@ class Order {
     this.trackingStatus,
   });
 
-  static String _parseString(dynamic value) {
-    return value?.toString() ?? '';
-  }
-
-  static double _parseDouble(dynamic value) {
-    if (value == null) return 0.0;
-    return value is num ? value.toDouble() : double.tryParse(value.toString()) ?? 0.0;
-  }
-
-  static int _parseInt(dynamic value) {
-    if (value == null) return 0;
-    return value is int ? value : int.tryParse(value.toString()) ?? 0;
-  }
-
-  static DateTime? _parseDate(String? dateString) {
-    if (dateString == null || dateString.isEmpty) {
-      return null;
-    }
-
-    try {
-      return DateTime.parse(dateString).toLocal();
-    } catch (e) {
-      return null;
-    }
-  }
-
-  static String? formatDate(DateTime? date) {
-    return date == null ? null : DateFormat('dd-MM-yyyy').format(date);
-  }
-
-  static String? parseAndFormatDate(String? dateString) {
-    DateTime? parsedDate = _parseDate(dateString);
-    return parsedDate != null ? formatDate(parsedDate) : null;
-  }
-
-  Map<String, int> countCallStatuses() {
-    Map<String, int> statusCounts = {"not answered": 0, "answered": 0, "not reach": 0, "busy": 0};
-
-    if (callStatus != null) {
-      for (var status in callStatus!) {
-        int currentCount = statusCounts[status.status] ?? 0;
-        statusCounts[status.status] = currentCount + 1;
-      }
-    }
-    return statusCounts;
-  }
-
   factory Order.fromJson(Map<String, dynamic> json) {
-
-    // Logger().i("Mistakes :- ${List.from(json['isMistake'] ?? [])} for Order ID :- ${json['order_id'] ?? 'null'}");
 
     return Order(
       callStatus: (json['callStatus'] as List? ?? []).map((e) => CallStatus.fromJson(e)).toList(),
       merged: json['merged'] ?? {},
       availableCouriers: (json['availableCouriers'] as List?)
-              ?.map((courier) => {
-                    'name': _parseString(courier['name']),
-                    'freight_charge': _parseDouble(courier['freight_charge']),
-                    'courier_company_id': _parseString(courier['courier_company_id']),
-                  })
-              .toList() ??
+          ?.map((courier) => {
+        'name': _parseString(courier['name']),
+        'freight_charge': _parseDouble(courier['freight_charge']),
+        'courier_company_id': _parseString(courier['courier_company_id']),
+      })
+          .toList() ??
           [],
       picklistId: _parseString(json['picklistId']),
       warehouseId: json['warehouse']?['warehouse_id']?['_id'] ?? '',
       warehouseName: json['warehouse']?['warehouse_id']?['name'] ?? '',
       isHold: json['warehouse']?['isHold'] ?? false,
-      messages: json['messages'] ?? {},
 
-      // mistakes: json['isMistake'] == null ? [] : json['isMistake'].map((e) => Mistake.fromJson(e)).toList(),
+      messages: json['messages'] == null ? null : Messages.fromJson(json['messages']),
+      reverseOrder: json['reverseOrder'] == null
+          ? []
+          : (json['reverseOrder'] is Map<String, dynamic>)
+          ? ([ReverseOrder.fromJson(json['reverseOrder'])])
+          : (json['reverseOrder'] is List<dynamic>) ? (json['reverseOrder'] as List<dynamic>).map((e) => ReverseOrder.fromJson(e)).toList()
+          : [],
 
       mistakes: json['isMistake'] == null
           ? []
@@ -301,7 +258,7 @@ class Order {
       // outerPackage: _parseString(json['outerPackage']),
       replacement: json['replacement'] is bool ? json['replacement'] : false,
       orderStatus: _parseInt(json['order_status']),
-      orderStatusMap: (json['order_status_map'] as List?)?.map((status) => OrderStatusMap.fromJson(status)).toList() ?? [],
+      orderStatusMap: json['order_status_map'] == null ? [] : ((json['order_status_map'] ?? []) as List).map((status) => OrderStatusMap.fromJson(status)).toList(),
       marketplace: json['marketplace'] != null ? Marketplace.fromJson(json['marketplace']) : null,
       agent: _parseString(json['agent']),
       filter: _parseString(json['filter']),
@@ -337,6 +294,207 @@ class Order {
       checkManifest: json['checkManifest'] != null ? CheckManifest.fromJson(json['checkManifest'] ?? {}) : null,
       trackingStatus: _parseString(json['tracking_status'] ?? ''),
     );
+  }
+
+  static String _parseString(dynamic value) {
+    return value?.toString() ?? '';
+  }
+
+  static double _parseDouble(dynamic value) {
+    if (value == null) return 0.0;
+    return value is num ? value.toDouble() : double.tryParse(value.toString()) ?? 0.0;
+  }
+
+  static int _parseInt(dynamic value) {
+    if (value == null) return 0;
+    return value is int ? value : int.tryParse(value.toString()) ?? 0;
+  }
+
+  static DateTime? _parseDate(String? dateString) {
+    if (dateString == null || dateString.isEmpty) {
+      return null;
+    }
+
+    try {
+      return DateTime.parse(dateString).toLocal();
+    } catch (e) {
+      return null;
+    }
+  }
+
+  static String? formatDate(DateTime? date) {
+    return date == null ? null : DateFormat('dd-MM-yyyy').format(date);
+  }
+
+  static String? parseAndFormatDate(String? dateString) {
+    DateTime? parsedDate = _parseDate(dateString);
+    return parsedDate != null ? formatDate(parsedDate) : null;
+  }
+
+  Map<String, int> countCallStatuses() {
+    Map<String, int> statusCounts = {"not answered": 0, "answered": 0, "not reach": 0, "busy": 0};
+
+    if (callStatus != null) {
+      for (var status in callStatus!) {
+        int currentCount = statusCounts[status.status] ?? 0;
+        statusCounts[status.status] = currentCount + 1;
+      }
+    }
+    return statusCounts;
+  }
+}
+
+class Messages {
+
+  final List<FailureReason> failureReason;
+  final List<Message> confirmerMessages;
+  final List<Message> bookerMessages;
+  final List<Message> accountMessages;
+
+
+  Messages({required this.failureReason, required this.confirmerMessages, required this.bookerMessages, required this.accountMessages});
+
+  factory Messages.fromJson(Map<String, dynamic> json) {
+    return Messages(
+      failureReason: json['failureReason'] == null ? [] : (json['failureReason'] as List<dynamic>).map((reason) => FailureReason.fromJson(reason)).toList(),
+      confirmerMessages: json['confirmerMessage'] == null ? [] : (json['confirmerMessage']  as List<dynamic>).map((message) => Message.fromJson(message)).toList(),
+      bookerMessages: json['bookerMessage'] == null ? [] : (json['bookerMessage']  as List<dynamic>).map((message) => Message.fromJson(message)).toList(),
+      accountMessages: json['accountMessage'] == null ? [] : (json['accountMessage']  as List<dynamic>).map((message) => Message.fromJson(message)).toList(),
+    );
+  }
+
+
+  Map<String, dynamic> toJson() {
+    return {
+      'failureReason': failureReason.map((reason) => reason.toJson()).toList(),
+      'confirmerMessage': confirmerMessages.map((message) => message.toJson()).toList(),
+      'bookerMessage': bookerMessages.map((message) => message.toJson()).toList(),
+      'accountMessage': accountMessages.map((message) => message.toJson()).toList(),
+    };
+  }
+}
+
+class FailureReason {
+  final String id;
+  final String type;
+  final String timestamp;
+
+  FailureReason({required this.id, required this.type, required this.timestamp});
+
+  factory FailureReason.fromJson(Map<String, dynamic> json) {
+    return FailureReason(
+      id: json['_id'] ?? '',
+      type: json['type'] ?? '',
+      timestamp: json['timestamp'] ?? '',
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      '_id': id,
+      'type': type,
+      'timestamp': timestamp,
+    };
+  }
+}
+
+class Message {
+  final String id;
+  final String author;
+  final String message;
+  final String type;
+  final String timestamp;
+
+  Message({
+    required this.id,
+    required this.author,
+    required this.type,
+    required this.message,
+    required this.timestamp,
+  });
+
+  factory Message.fromJson(Map<String, dynamic> json) {
+    return Message(
+      id: json['_id'] ?? '',
+      author: json['author'] ?? '',
+      type: json['type'] ?? '',
+      message: json['message'] ?? '',
+      timestamp: json['timestamp'] ?? '',
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      '-_id': id,
+      'author': author,
+      'type': type,
+      'message': message,
+      'timestamp': timestamp,
+    };
+  }
+}
+
+class ReverseOrder {
+
+  final String id;
+  final String reverseBy;
+  final String reason;
+  final int reverseStatus;
+  final bool status;
+  final String timestamp;
+
+  ReverseOrder({required this.id, required this.reverseBy, required this.reason, required this.reverseStatus, required this.status, required this.timestamp});
+
+  factory ReverseOrder.fromJson(Map<String, dynamic> json) {
+    return ReverseOrder(
+      id: json['_id'] ?? '',
+      reverseBy: json['reverseBy'] ?? '',
+      reason: json['reason'] ?? '',
+      reverseStatus: json['reverseStatus'] ?? 0,
+      status: json['status'] ?? false,
+      timestamp: json['timestamp'] ?? '',
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      '_id': id,
+      'reverseBy': reverseBy,
+      'reason': reason,
+      'reverseStatus': reverseStatus,
+      'status': status,
+      'timestamp': timestamp,
+    };
+  }
+}
+
+class OrderStatusMap {
+  final String id;
+  final int statusId;
+  final String status;
+  final String createdAt;
+  final String updatedAt;
+
+  OrderStatusMap({required this.id, required this.statusId, required this.status, required this.createdAt, required this.updatedAt});
+
+  factory OrderStatusMap.fromJson(Map<String, dynamic> json) {
+    return OrderStatusMap(
+      id: json['_id'] ?? '',
+      statusId: json['status_id'] ?? 0,
+      status: json['status'] ?? '',
+      createdAt: json['createdAt'] ?? '',
+      updatedAt: json['updatedAt'] ?? '',
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      '_id': id,
+      'status_id': statusId,
+      'status': status,
+      'createdAt': createdAt,
+      'updatedAt': updatedAt,
+    };
   }
 }
 
@@ -564,8 +722,8 @@ class Brand {
     return {
       '_id': id,
       'name': name,
-      'createdAt': createdAt?.toIso8601String() ?? null,
-      'updatedAt': updatedAt?.toIso8601String() ?? null,
+      'createdAt': createdAt?.toIso8601String(),
+      'updatedAt': updatedAt?.toIso8601String(),
       '__v': v,
     };
   }
@@ -600,8 +758,8 @@ class Category {
     return {
       '_id': id,
       'name': name,
-      'createdAt': createdAt?.toIso8601String() ?? null,
-      'updatedAt': updatedAt?.toIso8601String() ?? null,
+      'createdAt': createdAt?.toIso8601String(),
+      'updatedAt': updatedAt?.toIso8601String(),
       '__v': v,
     };
   }
@@ -808,25 +966,6 @@ class Address {
   }
 }
 
-class OrderStatusMap {
-  final String? status;
-  final int? statusId;
-  final DateTime? date;
-
-  OrderStatusMap({
-    required this.status,
-    required this.statusId,
-    required this.date,
-  });
-
-  factory OrderStatusMap.fromJson(Map<String, dynamic> json) {
-    return OrderStatusMap(
-      status: json['status']?.toString() ?? '',
-      statusId: (json['status_id'] as num?)?.toInt() ?? 0,
-      date: Order._parseDate(json['createdAt']),
-    );
-  }
-}
 
 class FreightCharge {
   final double? delhivery;
@@ -869,7 +1008,7 @@ class Marketplace {
     return Marketplace(
       id: json['_id'],
       name: json['name'],
-      skuMap: List<Map<String, dynamic>>.from(json['sku_map']) ?? [],
+      skuMap: List<Map<String, dynamic>>.from(json['sku_map'] ?? []),
       version: json['__v'],
       createdAt: json['createdAt'] != null ? DateTime.parse(json['createdAt']) : null,
       updatedAt: json['updatedAt'] != null ? DateTime.parse(json['updatedAt']) : null,

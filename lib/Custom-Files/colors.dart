@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
-class AppColors {
+class
+AppColors {
   static const Color googleColor = Color.fromRGBO(219, 68, 55, 1);
   static const Color facebookColor = Color.fromRGBO(24, 119, 242, 1);
   static const Color linkedinColor = Color.fromRGBO(0, 119, 181, 1);

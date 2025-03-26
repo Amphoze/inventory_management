@@ -14,6 +14,7 @@ import 'package:inventory_management/provider/packer_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../orders/widgets/write_remark_dialog.dart';
 import '../provider/orders_provider.dart';
 import '../provider/support_provider.dart';
 
@@ -29,6 +30,8 @@ class OrderComboCard extends StatefulWidget {
   final bool isPacked;
   final bool isAdmin;
   final bool isSuperAdmin;
+  final double elevation;
+  final EdgeInsets? margin;
 
   const OrderComboCard({
     super.key,
@@ -43,6 +46,8 @@ class OrderComboCard extends StatefulWidget {
     this.isAccountSection = false,
     this.isAdmin = false,
     this.isSuperAdmin = false,
+    this.elevation = 4,
+    this.margin,
   });
 
   static String maskPhoneNumber(dynamic phone) {
@@ -91,8 +96,8 @@ class _OrderComboCardState extends State<OrderComboCard> {
   Widget build(BuildContext context) {
     final provider = Provider.of<OrdersProvider>(context, listen: false);
 
-    log('Building OrderCard for Order ID: ${widget.order.id}');
-    log('bookerMessage in card: ${widget.order.orderId}  ${widget.order.messages?['bookerMessage']?.toString() ?? ''}');
+    // log('Building OrderCard for Order ID: ${widget.order.id}');
+    // log('bookerMessage in card: ${widget.order.orderId}  ${widget.order.messages?['bookerMessage']?.toString() ?? ''}');
     // log('accountMessage: ${widget.order.messages!['accountMessage']}');
 
     final Map<String, List<Item>> groupedComboItems = {};
@@ -112,13 +117,18 @@ class _OrderComboCardState extends State<OrderComboCard> {
         .where((item) => !(item.isCombo == true && item.comboSku != null && groupedComboItems[item.comboSku]!.length > 1))
         .toList();
 
+    List<Message> confirmerMessages = widget.order.messages == null ? [] : widget.order.messages!.confirmerMessages;
+    List<Message> accountMessages = widget.order.messages == null ? [] : widget.order.messages!.accountMessages;
+    List<Message> bookerMessages = widget.order.messages == null ? [] : widget.order.messages!.bookerMessages;
+
+
     return Card(
       color: AppColors.white,
-      elevation: 4,
+      elevation: widget.elevation,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
       ),
-      margin: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 12.0),
+      margin: widget.margin ?? const EdgeInsets.symmetric(vertical: 8.0, horizontal: 12.0),
       child: Padding(
         padding: const EdgeInsets.all(12.0),
         child: Column(
@@ -662,6 +672,7 @@ class _OrderComboCardState extends State<OrderComboCard> {
                 ),
               ],
             ),
+
             if (widget.toShowOrderDetails)
               Padding(
                 padding: const EdgeInsets.all(4.0),
@@ -883,6 +894,7 @@ class _OrderComboCardState extends State<OrderComboCard> {
                   ],
                 ),
               ),
+
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               crossAxisAlignment: CrossAxisAlignment.end,
@@ -996,6 +1008,7 @@ class _OrderComboCardState extends State<OrderComboCard> {
                     ],
                   ),
                 ),
+
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.end,
@@ -1003,270 +1016,378 @@ class _OrderComboCardState extends State<OrderComboCard> {
                       if (widget.isBookPage || widget.isBookedPage)
                         ElevatedButton(
                           onPressed: () {
-                            final pro = context.read<BookProvider>();
-                            setState(() {
-                              bookRemark.text = widget.order.messages?['bookerMessage']?.toString() ?? '';
-                            });
-                            showDialog(
+
+                            showWriteRemarkDialog(
                               context: context,
-                              builder: (_) {
-                                return Dialog(
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(16),
-                                  ),
-                                  insetPadding: const EdgeInsets.symmetric(horizontal: 20),
-                                  child: Container(
-                                    width: MediaQuery.of(context).size.width * 0.9,
-                                    constraints: const BoxConstraints(maxWidth: 600),
-                                    padding: const EdgeInsets.all(20),
-                                    child: Column(
-                                      mainAxisSize: MainAxisSize.min,
-                                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                                      children: [
-                                        const Text(
-                                          'Remark',
-                                          style: TextStyle(
-                                            fontSize: 24,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        ),
-                                        const SizedBox(height: 20),
-                                        TextField(
-                                          controller: bookRemark,
-                                          maxLines: 10,
-                                          decoration: InputDecoration(
-                                            border: OutlineInputBorder(
-                                              borderRadius: BorderRadius.circular(8),
-                                            ),
-                                            hintText: 'Enter your remark here',
-                                            filled: true,
-                                            fillColor: Colors.grey[50],
-                                            contentPadding: const EdgeInsets.all(16),
-                                          ),
-                                        ),
-                                        const SizedBox(height: 24),
-                                        Row(
-                                          mainAxisAlignment: MainAxisAlignment.end,
-                                          children: [
-                                            TextButton(
-                                              onPressed: () => Navigator.of(context).pop(),
-                                              child: const Text(
-                                                'Cancel',
-                                                style: TextStyle(fontSize: 16),
-                                              ),
-                                            ),
-                                            const SizedBox(width: 16),
-                                            ElevatedButton(
-                                              onPressed: () async {
-                                                showDialog(
-                                                  context: context,
-                                                  barrierDismissible: false,
-                                                  builder: (_) {
-                                                    return AlertDialog(
-                                                      shape: RoundedRectangleBorder(
-                                                        borderRadius: BorderRadius.circular(16),
-                                                      ),
-                                                      insetPadding: const EdgeInsets.symmetric(horizontal: 20),
-                                                      content: const Row(
-                                                        mainAxisSize: MainAxisSize.min,
-                                                        children: [
-                                                          CircularProgressIndicator(),
-                                                          SizedBox(width: 20),
-                                                          Text(
-                                                            'Submitting Remark',
-                                                            style: TextStyle(fontSize: 16),
-                                                          ),
-                                                        ],
-                                                      ),
-                                                    );
-                                                  },
-                                                );
+                              orderId: widget.order.orderId,
+                              message: 'bookerMessage',
+                              messages: widget.order.messages,
+                              onSubmitted: () async {
 
-                                                final res = await pro.writeRemark(context, widget.order.id, bookRemark.text);
+                                final bookerProvider = context.read<BookProvider>();
 
-                                                log('saved :)');
+                                final bookedSearch = bookerProvider.searchController.text.trim();
+                                final b2bSearch = bookerProvider.b2bSearchController.text.trim();
+                                final b2cSearch = bookerProvider.b2cSearchController.text.trim();
+                                final searchType = bookerProvider.searchType;
 
-                                                Navigator.pop(context);
-                                                Navigator.pop(context);
+                                if(bookedSearch.isEmpty) {
+                                  await bookerProvider.fetchBookedOrders(bookerProvider.currentPageBooked);
+                                } else {
+                                  await bookerProvider.searchBookedOrders(bookedSearch, searchType);
+                                }
 
-                                                if(res) {
-                                                  final bookedSearch = pro.searchController.text.trim();
-                                                  final b2bSearch = pro.b2bSearchController.text.trim();
-                                                  final b2cSearch = pro.b2cSearchController.text.trim();
-                                                  final searchType = pro.searchType;
+                                if(b2bSearch.isEmpty) {
+                                  await bookerProvider.fetchPaginatedOrdersB2B(bookerProvider.currentPageB2B);
+                                } else {
+                                  await bookerProvider.searchB2BOrders(b2bSearch);
+                                }
 
-                                                  if(bookedSearch.isEmpty) await pro.fetchBookedOrders(pro.currentPageBooked);
-                                                  else await pro.searchBookedOrders(bookedSearch, searchType);
-
-                                                  if(b2bSearch.isEmpty) await pro.fetchPaginatedOrdersB2B(pro.currentPageB2B);
-                                                  else await pro.searchB2BOrders(b2bSearch);
-
-                                                  if(b2cSearch.isEmpty) await pro.fetchPaginatedOrdersB2C(pro.currentPageB2C);
-                                                  else await pro.searchB2COrders(b2cSearch);
-                                                }
-
-                                                // res ? await pro.fetchBookedOrders(pro.currentPageBooked) : null;
-                                                // res ? await pro.fetchPaginatedOrdersB2B(pro.currentPageB2B) : null;
-                                                // res ? await pro.fetchPaginatedOrdersB2C(pro.currentPageB2C) : null;
-                                              },
-                                              style: ElevatedButton.styleFrom(
-                                                padding: const EdgeInsets.symmetric(
-                                                  horizontal: 24,
-                                                  vertical: 12,
-                                                ),
-                                              ),
-                                              child: const Text(
-                                                'Submit',
-                                                style: TextStyle(fontSize: 16),
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                );
+                                if(b2cSearch.isEmpty) {
+                                  await bookerProvider.fetchPaginatedOrdersB2C(bookerProvider.currentPageB2C);
+                                } else {
+                                  await bookerProvider.searchB2COrders(b2cSearch);
+                                }
                               },
                             );
+
+                            // showDialog(
+                            //   context: context,
+                            //   builder: (_) {
+                            //     return Dialog(
+                            //       shape: RoundedRectangleBorder(
+                            //         borderRadius: BorderRadius.circular(16),
+                            //       ),
+                            //       insetPadding: const EdgeInsets.symmetric(horizontal: 20),
+                            //       child: Container(
+                            //         width: MediaQuery.of(context).size.width * 0.9,
+                            //         constraints: const BoxConstraints(maxWidth: 600),
+                            //         padding: const EdgeInsets.all(20),
+                            //         child: Column(
+                            //           mainAxisSize: MainAxisSize.min,
+                            //           crossAxisAlignment: CrossAxisAlignment.stretch,
+                            //           children: [
+                            //             const Text(
+                            //               'Remark',
+                            //               style: TextStyle(
+                            //                 fontSize: 24,
+                            //                 fontWeight: FontWeight.bold,
+                            //               ),
+                            //             ),
+                            //             const SizedBox(height: 20),
+                            //             TextField(
+                            //               controller: bookRemark,
+                            //               maxLines: 10,
+                            //               decoration: InputDecoration(
+                            //                 border: OutlineInputBorder(
+                            //                   borderRadius: BorderRadius.circular(8),
+                            //                 ),
+                            //                 hintText: 'Enter your remark here',
+                            //                 filled: true,
+                            //                 fillColor: Colors.grey[50],
+                            //                 contentPadding: const EdgeInsets.all(16),
+                            //               ),
+                            //             ),
+                            //             const SizedBox(height: 24),
+                            //             Row(
+                            //               mainAxisAlignment: MainAxisAlignment.end,
+                            //               children: [
+                            //                 TextButton(
+                            //                   onPressed: () => Navigator.of(context).pop(),
+                            //                   child: const Text(
+                            //                     'Cancel',
+                            //                     style: TextStyle(fontSize: 16),
+                            //                   ),
+                            //                 ),
+                            //                 const SizedBox(width: 16),
+                            //                 ElevatedButton(
+                            //                   onPressed: () async {
+                            //                     showDialog(
+                            //                       context: context,
+                            //                       barrierDismissible: false,
+                            //                       builder: (_) {
+                            //                         return AlertDialog(
+                            //                           shape: RoundedRectangleBorder(
+                            //                             borderRadius: BorderRadius.circular(16),
+                            //                           ),
+                            //                           insetPadding: const EdgeInsets.symmetric(horizontal: 20),
+                            //                           content: const Row(
+                            //                             mainAxisSize: MainAxisSize.min,
+                            //                             children: [
+                            //                               CircularProgressIndicator(),
+                            //                               SizedBox(width: 20),
+                            //                               Text(
+                            //                                 'Submitting Remark',
+                            //                                 style: TextStyle(fontSize: 16),
+                            //                               ),
+                            //                             ],
+                            //                           ),
+                            //                         );
+                            //                       },
+                            //                     );
+                            //
+                            //                     final res = await pro.writeRemark(context, widget.order.id, bookRemark.text);
+                            //
+                            //                     log('saved :)');
+                            //
+                            //                     Navigator.pop(context);
+                            //                     Navigator.pop(context);
+                            //
+                            //                     if(res) {
+                            //                       final bookedSearch = pro.searchController.text.trim();
+                            //                       final b2bSearch = pro.b2bSearchController.text.trim();
+                            //                       final b2cSearch = pro.b2cSearchController.text.trim();
+                            //                       final searchType = pro.searchType;
+                            //
+                            //                       if(bookedSearch.isEmpty) {
+                            //                         await pro.fetchBookedOrders(pro.currentPageBooked);
+                            //                       } else {
+                            //                         await pro.searchBookedOrders(bookedSearch, searchType);
+                            //                       }
+                            //
+                            //                       if(b2bSearch.isEmpty) {
+                            //                         await pro.fetchPaginatedOrdersB2B(pro.currentPageB2B);
+                            //                       } else {
+                            //                         await pro.searchB2BOrders(b2bSearch);
+                            //                       }
+                            //
+                            //                       if(b2cSearch.isEmpty) {
+                            //                         await pro.fetchPaginatedOrdersB2C(pro.currentPageB2C);
+                            //                       } else {
+                            //                         await pro.searchB2COrders(b2cSearch);
+                            //                       }
+                            //                     }
+                            //
+                            //                     // res ? await pro.fetchBookedOrders(pro.currentPageBooked) : null;
+                            //                     // res ? await pro.fetchPaginatedOrdersB2B(pro.currentPageB2B) : null;
+                            //                     // res ? await pro.fetchPaginatedOrdersB2C(pro.currentPageB2C) : null;
+                            //                   },
+                            //                   style: ElevatedButton.styleFrom(
+                            //                     padding: const EdgeInsets.symmetric(
+                            //                       horizontal: 24,
+                            //                       vertical: 12,
+                            //                     ),
+                            //                   ),
+                            //                   child: const Text(
+                            //                     'Submit',
+                            //                     style: TextStyle(fontSize: 16),
+                            //                   ),
+                            //                 ),
+                            //               ],
+                            //             ),
+                            //           ],
+                            //         ),
+                            //       ),
+                            //     );
+                            //   },
+                            // );
                           },
-                          child: (widget.order.messages?['bookerMessage']?.toString().isNotEmpty ?? false)
-                              ? const Text('Edit Remark')
-                              : const Text('Write Remark'),
+                          child: Text(bookerMessages.isNotEmpty ? 'Add a Remark' : 'Write a Remark'),
                         ),
+
                       if (widget.isAccountSection)
                         ElevatedButton(
                           onPressed: () {
-                            final pro = context.read<AccountsProvider>();
-                            setState(() {
-                              accountsRemark.text = widget.order.messages?['accountMessage']?.toString() ?? '';
-                            });
-                            showDialog(
+
+                            showWriteRemarkDialog(
                               context: context,
-                              builder: (_) {
-                                return Dialog(
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(16),
-                                  ),
-                                  insetPadding: const EdgeInsets.symmetric(horizontal: 20),
-                                  child: Container(
-                                    width: MediaQuery.of(context).size.width * 0.9,
-                                    constraints: const BoxConstraints(maxWidth: 600),
-                                    padding: const EdgeInsets.all(20),
-                                    child: Column(
-                                      mainAxisSize: MainAxisSize.min,
-                                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                                      children: [
-                                        const Text(
-                                          'Remark',
-                                          style: TextStyle(
-                                            fontSize: 24,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        ),
-                                        const SizedBox(height: 20),
-                                        TextField(
-                                          controller: accountsRemark,
-                                          maxLines: 10,
-                                          decoration: InputDecoration(
-                                            border: OutlineInputBorder(
-                                              borderRadius: BorderRadius.circular(8),
-                                            ),
-                                            hintText: 'Enter your remark here',
-                                            filled: true,
-                                            fillColor: Colors.grey[50],
-                                            contentPadding: const EdgeInsets.all(16),
-                                          ),
-                                        ),
-                                        const SizedBox(height: 24),
-                                        Row(
-                                          mainAxisAlignment: MainAxisAlignment.end,
-                                          children: [
-                                            TextButton(
-                                              onPressed: () => Navigator.of(context).pop(),
-                                              child: const Text(
-                                                'Cancel',
-                                                style: TextStyle(fontSize: 16),
-                                              ),
-                                            ),
-                                            const SizedBox(width: 16),
-                                            ElevatedButton(
-                                              onPressed: () async {
-                                                showDialog(
-                                                  context: context,
-                                                  barrierDismissible: false,
-                                                  builder: (_) {
-                                                    return AlertDialog(
-                                                      shape: RoundedRectangleBorder(
-                                                        borderRadius: BorderRadius.circular(16),
-                                                      ),
-                                                      insetPadding: const EdgeInsets.symmetric(horizontal: 20),
-                                                      content: const Row(
-                                                        mainAxisSize: MainAxisSize.min,
-                                                        children: [
-                                                          CircularProgressIndicator(),
-                                                          SizedBox(width: 20),
-                                                          Text(
-                                                            'Submitting Remark',
-                                                            style: TextStyle(fontSize: 16),
-                                                          ),
-                                                        ],
-                                                      ),
-                                                    );
-                                                  },
-                                                );
+                              orderId: widget.order.orderId,
+                              message: 'accountMessage',
+                              messages: widget.order.messages,
+                              onSubmitted: () async {
 
-                                                final res = await pro.writeRemark(context, widget.order.id, accountsRemark.text);
+                                final accountProvider = context.read<AccountsProvider>();
 
-                                                log('saved :)');
+                                final invoiceSearch = accountProvider.invoiceSearch.text.trim();
+                                final searchType = accountProvider.selectedSearchType;
 
-                                                Navigator.pop(context);
-                                                Navigator.pop(context);
+                                if (invoiceSearch.isEmpty) {
+                                  await accountProvider.fetchInvoicedOrders(accountProvider.currentPageBooked);
 
-                                                if(res) {
-                                                  final invoiceSearch = pro.invoiceSearch.text.trim();
-                                                  final searchType = pro.selectedSearchType;
+                                } else {
+                                  await accountProvider.searchInvoicedOrders(invoiceSearch, searchType);
+                                }
 
-                                                  if(invoiceSearch.isEmpty) await pro.fetchInvoicedOrders(pro.currentPageBooked);
-                                                  else await pro.searchInvoicedOrders(invoiceSearch, searchType);
-                                                }
-
-                                                res ? await pro.fetchInvoicedOrders(pro.currentPageBooked) : null;
-                                                res ? await pro.fetchOrdersWithStatus2() : null;
-                                              },
-                                              style: ElevatedButton.styleFrom(
-                                                padding: const EdgeInsets.symmetric(
-                                                  horizontal: 24,
-                                                  vertical: 12,
-                                                ),
-                                              ),
-                                              child: const Text(
-                                                'Submit',
-                                                style: TextStyle(fontSize: 16),
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                );
+                                await accountProvider.fetchOrdersWithStatus2();
                               },
                             );
+
+
+                            // showDialog(
+                            //   context: context,
+                            //   builder: (_) {
+                            //     return Dialog(
+                            //       shape: RoundedRectangleBorder(
+                            //         borderRadius: BorderRadius.circular(16),
+                            //       ),
+                            //       insetPadding: const EdgeInsets.symmetric(horizontal: 20),
+                            //       child: Container(
+                            //         width: MediaQuery.of(context).size.width * 0.9,
+                            //         constraints: const BoxConstraints(maxWidth: 600),
+                            //         padding: const EdgeInsets.all(20),
+                            //         child: Column(
+                            //           mainAxisSize: MainAxisSize.min,
+                            //           crossAxisAlignment: CrossAxisAlignment.stretch,
+                            //           children: [
+                            //             const Text(
+                            //               'Remark',
+                            //               style: TextStyle(
+                            //                 fontSize: 24,
+                            //                 fontWeight: FontWeight.bold,
+                            //               ),
+                            //             ),
+                            //             const SizedBox(height: 20),
+                            //             TextField(
+                            //               controller: accountsRemark,
+                            //               maxLines: 10,
+                            //               decoration: InputDecoration(
+                            //                 border: OutlineInputBorder(
+                            //                   borderRadius: BorderRadius.circular(8),
+                            //                 ),
+                            //                 hintText: 'Enter your remark here',
+                            //                 filled: true,
+                            //                 fillColor: Colors.grey[50],
+                            //                 contentPadding: const EdgeInsets.all(16),
+                            //               ),
+                            //             ),
+                            //             const SizedBox(height: 24),
+                            //             Row(
+                            //               mainAxisAlignment: MainAxisAlignment.end,
+                            //               children: [
+                            //                 TextButton(
+                            //                   onPressed: () => Navigator.of(context).pop(),
+                            //                   child: const Text(
+                            //                     'Cancel',
+                            //                     style: TextStyle(fontSize: 16),
+                            //                   ),
+                            //                 ),
+                            //                 const SizedBox(width: 16),
+                            //                 ElevatedButton(
+                            //                   onPressed: () async {
+                            //                     showDialog(
+                            //                       context: context,
+                            //                       barrierDismissible: false,
+                            //                       builder: (_) {
+                            //                         return AlertDialog(
+                            //                           shape: RoundedRectangleBorder(
+                            //                             borderRadius: BorderRadius.circular(16),
+                            //                           ),
+                            //                           insetPadding: const EdgeInsets.symmetric(horizontal: 20),
+                            //                           content: const Row(
+                            //                             mainAxisSize: MainAxisSize.min,
+                            //                             children: [
+                            //                               CircularProgressIndicator(),
+                            //                               SizedBox(width: 20),
+                            //                               Text(
+                            //                                 'Submitting Remark',
+                            //                                 style: TextStyle(fontSize: 16),
+                            //                               ),
+                            //                             ],
+                            //                           ),
+                            //                         );
+                            //                       },
+                            //                     );
+                            //
+                            //                     final res = await pro.writeRemark(context, widget.order.id, accountsRemark.text);
+                            //
+                            //                     log('saved :)');
+                            //
+                            //                     Navigator.pop(context);
+                            //                     Navigator.pop(context);
+                            //
+                            //                     if(res) {
+                            //                       final invoiceSearch = pro.invoiceSearch.text.trim();
+                            //                       final searchType = pro.selectedSearchType;
+                            //
+                            //                       if(invoiceSearch.isEmpty) {
+                            //                         await pro.fetchInvoicedOrders(pro.currentPageBooked);
+                            //                       } else {
+                            //                         await pro.searchInvoicedOrders(invoiceSearch, searchType);
+                            //                       }
+                            //                     }
+                            //
+                            //                     res ? await pro.fetchInvoicedOrders(pro.currentPageBooked) : null;
+                            //                     res ? await pro.fetchOrdersWithStatus2() : null;
+                            //                   },
+                            //                   style: ElevatedButton.styleFrom(
+                            //                     padding: const EdgeInsets.symmetric(
+                            //                       horizontal: 24,
+                            //                       vertical: 12,
+                            //                     ),
+                            //                   ),
+                            //                   child: const Text(
+                            //                     'Submit',
+                            //                     style: TextStyle(fontSize: 16),
+                            //                   ),
+                            //                 ),
+                            //               ],
+                            //             ),
+                            //           ],
+                            //         ),
+                            //       ),
+                            //     );
+                            //   },
+                            // );
+
                           },
-                          child: (widget.order.messages?['accountMessage']?.toString().isNotEmpty ?? false)
-                              ? const Text('Edit Remark')
-                              : const Text('Write Remark'),
+                          child: Text(accountMessages.isNotEmpty ? 'Add a Remark' : 'Write a Remark'),
                         ),
-                      if (widget.order.messages?['confirmerMessage']?.toString().isNotEmpty ?? false) ...[
-                        Utils().showMessage(context, 'Confirmer Remark', widget.order.messages!['confirmerMessage'].toString())
-                      ],
-                      if (widget.order.messages?['accountMessage']?.toString().isNotEmpty ?? false) ...[
-                        Utils().showMessage(context, 'Account Remark', widget.order.messages!['accountMessage'].toString()),
-                      ],
-                      if (widget.order.messages?['bookerMessage']?.toString().isNotEmpty ?? false) ...[
-                        Utils().showMessage(context, 'Booker Remark', widget.order.messages!['bookerMessage'].toString())
-                      ],
+
+                      if (confirmerMessages.isNotEmpty)
+                        Tooltip(
+                          message: confirmerMessages.last.message,
+                          child: SizedBox(
+                            width: MediaQuery.of(context).size.width * 0.3,
+                            child: Text(
+                              confirmerMessages.last.message,
+                              style: const TextStyle(
+                                fontSize: 13,
+                                color: Colors.green,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              textAlign: TextAlign.right,
+                            ),
+                          ),
+                        ),
+
+                      if (accountMessages.isNotEmpty)
+                        Tooltip(
+                          message: accountMessages.last.message,
+                          child: SizedBox(
+                            width: MediaQuery.of(context).size.width * 0.3,
+                            child: Text(
+                              accountMessages.last.message,
+                              style: const TextStyle(
+                                fontSize: 13,
+                                color: Colors.deepOrange,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              textAlign: TextAlign.right,
+                            ),
+                          ),
+                        ),
+
+                      if (bookerMessages.isNotEmpty)
+                        Tooltip(
+                          message: bookerMessages.last.message,
+                          child: SizedBox(
+                            width: MediaQuery.of(context).size.width * 0.3,
+                            child: Text(
+                              bookerMessages.last.message,
+                              style: const TextStyle(
+                                fontSize: 13,
+                                color: Colors.blueAccent,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              textAlign: TextAlign.right,
+                            ),
+                          ),
+                        ),
                     ],
+
                   ),
                 ),
               ],

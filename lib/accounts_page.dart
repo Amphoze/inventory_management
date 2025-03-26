@@ -17,6 +17,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'Custom-Files/colors.dart';
 import 'Custom-Files/custom_pagination.dart';
 import 'Custom-Files/loading_indicator.dart';
+import 'orders/widgets/write_remark_dialog.dart';
 
 class AccountsPage extends StatefulWidget {
   const AccountsPage({super.key});
@@ -26,8 +27,9 @@ class AccountsPage extends StatefulWidget {
 }
 
 class _AccountsPageState extends State<AccountsPage> {
-  final remarkController = TextEditingController();
-  final accountsRemark = TextEditingController();
+
+  TextEditingController accountsRemark = TextEditingController();
+
   bool? isSuperAdmin = false;
   bool? isAdmin = false;
   late AccountsProvider accountsProvider;
@@ -58,12 +60,6 @@ class _AccountsPageState extends State<AccountsPage> {
     final date = DateFormat('yyyy-MM-dd').format(dateTime);
     final time = DateFormat('hh:mm:ss a').format(dateTime);
     return " ($date, $time)";
-  }
-
-  @override
-  void dispose() {
-    remarkController.dispose();
-    super.dispose();
   }
 
   @override
@@ -504,6 +500,9 @@ class _AccountsPageState extends State<AccountsPage> {
                                   !(item.isCombo == true && item.comboSku != null && groupedComboItems[item.comboSku]!.length > 1))
                               .toList();
 
+                          List<Message> confirmerMessages = order.messages == null ? [] : order.messages!.confirmerMessages;
+                          List<Message> accountMessages = order.messages == null ? [] : order.messages!.accountMessages;
+
                           return Card(
                             surfaceTintColor: Colors.white,
                             color: accountsProvider.selectedProducts[index] ? Colors.grey[300] : Colors.grey[100],
@@ -804,142 +803,198 @@ class _AccountsPageState extends State<AccountsPage> {
                                             ],
                                           ),
                                         ),
+
                                         Expanded(
                                           child: Column(
                                             crossAxisAlignment: CrossAxisAlignment.end,
                                             mainAxisAlignment: MainAxisAlignment.end,
+                                            mainAxisSize: MainAxisSize.min,
                                             children: [
                                               ElevatedButton(
                                                 onPressed: () {
-                                                  final pro = context.read<AccountsProvider>();
-                                                  setState(() {
-                                                    accountsRemark.text = order.messages?['accountMessage']?.toString() ?? '';
-                                                  });
-                                                  showDialog(
+
+                                                  showWriteRemarkDialog(
                                                     context: context,
-                                                    builder: (_) {
-                                                      return Dialog(
-                                                        shape: RoundedRectangleBorder(
-                                                          borderRadius: BorderRadius.circular(16),
-                                                        ),
-                                                        insetPadding: const EdgeInsets.symmetric(horizontal: 20),
-                                                        child: Container(
-                                                          width: MediaQuery.of(context).size.width * 0.9,
-                                                          constraints: const BoxConstraints(maxWidth: 600),
-                                                          padding: const EdgeInsets.all(20),
-                                                          child: Column(
-                                                            mainAxisSize: MainAxisSize.min,
-                                                            crossAxisAlignment: CrossAxisAlignment.stretch,
-                                                            children: [
-                                                              const Text(
-                                                                'Remark',
-                                                                style: TextStyle(
-                                                                  fontSize: 24,
-                                                                  fontWeight: FontWeight.bold,
-                                                                ),
-                                                              ),
-                                                              const SizedBox(height: 20),
-                                                              TextField(
-                                                                controller: accountsRemark,
-                                                                maxLines: 10,
-                                                                decoration: InputDecoration(
-                                                                  border: OutlineInputBorder(
-                                                                    borderRadius: BorderRadius.circular(8),
-                                                                  ),
-                                                                  hintText: 'Enter your remark here',
-                                                                  filled: true,
-                                                                  fillColor: Colors.grey[50],
-                                                                  contentPadding: const EdgeInsets.all(16),
-                                                                ),
-                                                              ),
-                                                              const SizedBox(height: 24),
-                                                              Row(
-                                                                mainAxisAlignment: MainAxisAlignment.end,
-                                                                children: [
-                                                                  TextButton(
-                                                                    onPressed: () => Navigator.of(context).pop(),
-                                                                    child: const Text(
-                                                                      'Cancel',
-                                                                      style: TextStyle(fontSize: 16),
-                                                                    ),
-                                                                  ),
-                                                                  const SizedBox(width: 16),
-                                                                  ElevatedButton(
-                                                                    onPressed: () async {
-                                                                      showDialog(
-                                                                        context: context,
-                                                                        barrierDismissible: false,
-                                                                        builder: (_) {
-                                                                          return AlertDialog(
-                                                                            shape: RoundedRectangleBorder(
-                                                                              borderRadius: BorderRadius.circular(16),
-                                                                            ),
-                                                                            insetPadding: const EdgeInsets.symmetric(horizontal: 20),
-                                                                            content: const Row(
-                                                                              mainAxisSize: MainAxisSize.min,
-                                                                              children: [
-                                                                                CircularProgressIndicator(),
-                                                                                SizedBox(width: 20),
-                                                                                Text(
-                                                                                  'Submitting Remark',
-                                                                                  style: TextStyle(fontSize: 16),
-                                                                                ),
-                                                                              ],
-                                                                            ),
-                                                                          );
-                                                                        },
-                                                                      );
+                                                    orderId: order.orderId,
+                                                    message: 'accountMessage',
+                                                    messages: order.messages,
+                                                    onSubmitted: () async {
 
-                                                                      final res =
-                                                                          await pro.writeRemark(context, order.id, accountsRemark.text);
+                                                      final accountProvider = context.read<AccountsProvider>();
 
-                                                                      log('saved :)');
+                                                      final searched = accountsProvider.accountsSearch.text.trim();
+                                                      final type = accountProvider.selectedSearchType;
 
-                                                                      Navigator.pop(context);
-                                                                      Navigator.pop(context);
-
-                                                                      final searched = pro.accountsSearch.text.trim();
-                                                                      final type = pro.selectedSearchType;
-
-                                                                      if (res) {
-                                                                        if (searched.isEmpty)
-                                                                          await pro.fetchOrdersWithStatus2();
-                                                                        else
-                                                                          await pro.searchOrders(searched, type);
-                                                                      }
-                                                                    },
-                                                                    style: ElevatedButton.styleFrom(
-                                                                      padding: const EdgeInsets.symmetric(
-                                                                        horizontal: 24,
-                                                                        vertical: 12,
-                                                                      ),
-                                                                    ),
-                                                                    child: const Text(
-                                                                      'Submit',
-                                                                      style: TextStyle(fontSize: 16),
-                                                                    ),
-                                                                  ),
-                                                                ],
-                                                              ),
-                                                            ],
-                                                          ),
-                                                        ),
-                                                      );
+                                                      if (searched.isEmpty) {
+                                                        await accountProvider.fetchOrdersWithStatus2();
+                                                      } else {
+                                                        await accountProvider.searchOrders(searched, type);
+                                                      }
                                                     },
                                                   );
+
+                                                  // final pro = context.read<AccountsProvider>();
+                                                  //
+                                                  // setState(() {
+                                                  //   accountsRemark.text = order.messages?['accountMessage']?.toString() ?? '';
+                                                  // });
+                                                  // showDialog(
+                                                  //   context: context,
+                                                  //   builder: (_) {
+                                                  //     return Dialog(
+                                                  //       shape: RoundedRectangleBorder(
+                                                  //         borderRadius: BorderRadius.circular(16),
+                                                  //       ),
+                                                  //       insetPadding: const EdgeInsets.symmetric(horizontal: 20),
+                                                  //       child: Container(
+                                                  //         width: MediaQuery.of(context).size.width * 0.9,
+                                                  //         constraints: const BoxConstraints(maxWidth: 600),
+                                                  //         padding: const EdgeInsets.all(20),
+                                                  //         child: Column(
+                                                  //           mainAxisSize: MainAxisSize.min,
+                                                  //           crossAxisAlignment: CrossAxisAlignment.stretch,
+                                                  //           children: [
+                                                  //             const Text(
+                                                  //               'Remark',
+                                                  //               style: TextStyle(
+                                                  //                 fontSize: 24,
+                                                  //                 fontWeight: FontWeight.bold,
+                                                  //               ),
+                                                  //             ),
+                                                  //             const SizedBox(height: 20),
+                                                  //             TextField(
+                                                  //               controller: accountsRemark,
+                                                  //               maxLines: 10,
+                                                  //               decoration: InputDecoration(
+                                                  //                 border: OutlineInputBorder(
+                                                  //                   borderRadius: BorderRadius.circular(8),
+                                                  //                 ),
+                                                  //                 hintText: 'Enter your remark here',
+                                                  //                 filled: true,
+                                                  //                 fillColor: Colors.grey[50],
+                                                  //                 contentPadding: const EdgeInsets.all(16),
+                                                  //               ),
+                                                  //             ),
+                                                  //             const SizedBox(height: 24),
+                                                  //             Row(
+                                                  //               mainAxisAlignment: MainAxisAlignment.end,
+                                                  //               children: [
+                                                  //                 TextButton(
+                                                  //                   onPressed: () => Navigator.of(context).pop(),
+                                                  //                   child: const Text(
+                                                  //                     'Cancel',
+                                                  //                     style: TextStyle(fontSize: 16),
+                                                  //                   ),
+                                                  //                 ),
+                                                  //                 const SizedBox(width: 16),
+                                                  //                 ElevatedButton(
+                                                  //                   onPressed: () async {
+                                                  //                     showDialog(
+                                                  //                       context: context,
+                                                  //                       barrierDismissible: false,
+                                                  //                       builder: (_) {
+                                                  //                         return AlertDialog(
+                                                  //                           shape: RoundedRectangleBorder(
+                                                  //                             borderRadius: BorderRadius.circular(16),
+                                                  //                           ),
+                                                  //                           insetPadding: const EdgeInsets.symmetric(horizontal: 20),
+                                                  //                           content: const Row(
+                                                  //                             mainAxisSize: MainAxisSize.min,
+                                                  //                             children: [
+                                                  //                               CircularProgressIndicator(),
+                                                  //                               SizedBox(width: 20),
+                                                  //                               Text(
+                                                  //                                 'Submitting Remark',
+                                                  //                                 style: TextStyle(fontSize: 16),
+                                                  //                               ),
+                                                  //                             ],
+                                                  //                           ),
+                                                  //                         );
+                                                  //                       },
+                                                  //                     );
+                                                  //
+                                                  //                     final res =
+                                                  //                         await pro.writeRemark(context, order.id, accountsRemark.text);
+                                                  //
+                                                  //                     log('saved :)');
+                                                  //
+                                                  //                     Navigator.pop(context);
+                                                  //                     Navigator.pop(context);
+                                                  //
+                                                  //
+                                                  //
+                                                  //                     if (res) {
+                                                  //
+                                                  //
+                                                  //                     }
+                                                  //                   },
+                                                  //                   style: ElevatedButton.styleFrom(
+                                                  //                     padding: const EdgeInsets.symmetric(
+                                                  //                       horizontal: 24,
+                                                  //                       vertical: 12,
+                                                  //                     ),
+                                                  //                   ),
+                                                  //                   child: const Text(
+                                                  //                     'Submit',
+                                                  //                     style: TextStyle(fontSize: 16),
+                                                  //                   ),
+                                                  //                 ),
+                                                  //               ],
+                                                  //             ),
+                                                  //           ],
+                                                  //         ),
+                                                  //       ),
+                                                  //     );
+                                                  //   },
+                                                  // );
                                                 },
-                                                child: (order.messages?['accountMessage']?.toString().isNotEmpty ?? false)
-                                                    ? const Text('Edit Remark')
-                                                    : const Text('Write Remark'),
+                                                child: Text(accountMessages.isNotEmpty ? 'Add a Remark' : 'Write a Remark'),
                                               ),
-                                              if (order.messages?['confirmerMessage']?.toString().isNotEmpty ?? false) ...[
-                                                Utils().showMessage(
-                                                    context, 'Confirmer Remark', order.messages!['confirmerMessage'].toString())
-                                              ],
-                                              if (order.messages?['accountMessage']?.toString().isNotEmpty ?? false) ...[
-                                                Utils()
-                                                    .showMessage(context, 'Account Remark', order.messages!['accountMessage'].toString()),
-                                              ],
+
+                                              if (confirmerMessages.isNotEmpty)
+                                                Tooltip(
+                                                  message: confirmerMessages.last.message,
+                                                  child: SizedBox(
+                                                    width: MediaQuery.of(context).size.width * 0.3,
+                                                    child: Text(
+                                                      confirmerMessages.last.message,
+                                                      style: const TextStyle(
+                                                        fontSize: 13,
+                                                        color: Colors.green,
+                                                      ),
+                                                      maxLines: 1,
+                                                      overflow: TextOverflow.ellipsis,
+                                                      textAlign: TextAlign.right,
+                                                    ),
+                                                  ),
+                                                ),
+
+                                              if (accountMessages.isNotEmpty)
+                                                Tooltip(
+                                                  message: accountMessages.last.message,
+                                                  child: SizedBox(
+                                                    width: MediaQuery.of(context).size.width * 0.3,
+                                                    child: Text(
+                                                      accountMessages.last.message,
+                                                      style: const TextStyle(
+                                                        fontSize: 13,
+                                                        color: Colors.deepOrange,
+                                                      ),
+                                                      maxLines: 1,
+                                                      overflow: TextOverflow.ellipsis,
+                                                      textAlign: TextAlign.right,
+                                                    ),
+                                                  ),
+                                                ),
+
+                                              // if (order.messages?['confirmerMessage']?.toString().isNotEmpty ?? false) ...[
+                                              //   Utils().showMessage(
+                                              //       context, 'Confirmer Remark', order.messages!['confirmerMessage'].toString())
+                                              // ],
+                                              // if (order.messages?['accountMessage']?.toString().isNotEmpty ?? false) ...[
+                                              //   Utils()
+                                              //       .showMessage(context, 'Account Remark', order.messages!['accountMessage'].toString()),
+                                              // ],
                                             ],
                                           ),
                                         ),

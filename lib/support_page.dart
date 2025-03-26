@@ -547,6 +547,7 @@ class _SupportPageState extends State<SupportPage> {
                                     child: Column(
                                       crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
+
                                         if (order.confirmedBy!['status'] == true)
                                           Padding(
                                             padding: const EdgeInsets.only(bottom: 8.0),
@@ -567,6 +568,7 @@ class _SupportPageState extends State<SupportPage> {
                                               ),
                                             ),
                                           ),
+
                                         Row(
                                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                           children: [
@@ -583,19 +585,37 @@ class _SupportPageState extends State<SupportPage> {
                                                 style: const TextStyle(fontWeight: FontWeight.bold),
                                               ),
                                             ),
-                                            if (order.messages?['confirmerMessage']?.toString().isNotEmpty ?? false)
-                                              Utils()
-                                                  .showMessage(context, 'Confirmer Remark', order.messages!['confirmerMessage'].toString()),
+
+                                            if (order.messages?.confirmerMessages.isNotEmpty ?? false)
+                                              Tooltip(
+                                                message: order.messages!.confirmerMessages.last.message,
+                                                child: SizedBox(
+                                                  width: MediaQuery.of(context).size.width * 0.3,
+                                                  child: Text(
+                                                    order.messages!.confirmerMessages.last.message,
+                                                    style: const TextStyle(
+                                                      fontSize: 13,
+                                                      color: Colors.green,
+                                                    ),
+                                                    maxLines: 1,
+                                                    overflow: TextOverflow.ellipsis,
+                                                    textAlign: TextAlign.right,
+                                                  ),
+                                                ),
+                                              ),
                                           ],
                                         ),
                                       ],
                                     ),
                                   ),
+
                                   const Divider(
                                     thickness: 1,
                                     color: AppColors.grey,
                                   ),
+
                                   const SizedBox(height: 6),
+
                                   ListView.builder(
                                     shrinkWrap: true,
                                     physics: const NeverScrollableScrollPhysics(),
