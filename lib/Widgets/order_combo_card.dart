@@ -30,6 +30,8 @@ class OrderComboCard extends StatefulWidget {
   final bool isPacked;
   final bool isAdmin;
   final bool isSuperAdmin;
+  final double elevation;
+  final EdgeInsets? margin;
 
   const OrderComboCard({
     super.key,
@@ -44,6 +46,8 @@ class OrderComboCard extends StatefulWidget {
     this.isAccountSection = false,
     this.isAdmin = false,
     this.isSuperAdmin = false,
+    this.elevation = 4,
+    this.margin,
   });
 
   static String maskPhoneNumber(dynamic phone) {
@@ -120,11 +124,11 @@ class _OrderComboCardState extends State<OrderComboCard> {
 
     return Card(
       color: AppColors.white,
-      elevation: 4,
+      elevation: widget.elevation,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
       ),
-      margin: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 12.0),
+      margin: widget.margin ?? const EdgeInsets.symmetric(vertical: 8.0, horizontal: 12.0),
       child: Padding(
         padding: const EdgeInsets.all(12.0),
         child: Column(

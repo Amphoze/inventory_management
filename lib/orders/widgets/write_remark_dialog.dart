@@ -41,6 +41,15 @@ class _WriteRemarkDialogState extends State<WriteRemarkDialog> {
 
   @override
   Widget build(BuildContext context) {
+
+    List<Message> remarks = [];
+
+    if (widget.messages != null) {
+      widget.messages!.confirmerMessages.forEach((message) => remarks.add(message));
+      widget.messages!.accountMessages.forEach((message) => remarks.add(message));
+      widget.messages!.bookerMessages.forEach((message) => remarks.add(message));
+    }
+
     return Dialog(
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
@@ -48,10 +57,9 @@ class _WriteRemarkDialogState extends State<WriteRemarkDialog> {
       insetPadding: const EdgeInsets.symmetric(horizontal: 20),
       child: Container(
         width: MediaQuery.of(context).size.width * 0.65,
-        constraints: BoxConstraints(
+        constraints: remarks.isEmpty ? null : BoxConstraints(
           maxHeight: MediaQuery.of(context).size.height * 0.75,
         ),
-        // height: MediaQuery.of(context).size.height * 0.75,
         padding: const EdgeInsets.all(20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -140,10 +148,10 @@ class _WriteRemarkDialogState extends State<WriteRemarkDialog> {
               ],
             ),
 
-            if (widget.messages != null)...[
+            if (remarks.isNotEmpty)...[
               const SizedBox(height: 20),
 
-              _buildRemarkList(),
+              _buildRemarkList(remarks),
 
               const SizedBox(height: 20),
             ],
@@ -153,30 +161,7 @@ class _WriteRemarkDialogState extends State<WriteRemarkDialog> {
     );
   }
 
-  Widget _buildRemarkList() {
-
-    log('Messages are :- ${widget.messages}');
-
-    List<Message> remarks = [];
-
-    log('${widget.messages!.confirmerMessages.length} Confirmer Messages');
-    log('${widget.messages!.accountMessages.length} Account Messages');
-    log('${widget.messages!.bookerMessages.length} Booker Messages');
-
-
-    log('Total Remarks Before:- ${remarks.length}');
-
-    for (var message in widget.messages!.confirmerMessages) {
-      remarks.add(message);
-    }
-    for (var message in widget.messages!.accountMessages) {
-      remarks.add(message);
-    }
-    for (var message in widget.messages!.bookerMessages) {
-      remarks.add(message);
-    }
-
-    log('Total Remarks After:- ${remarks.length}');
+  Widget _buildRemarkList(List<Message> remarks) {
 
     remarks.sort((a, b) => DateTime.parse(b.timestamp).compareTo(DateTime.parse(a.timestamp)));
 

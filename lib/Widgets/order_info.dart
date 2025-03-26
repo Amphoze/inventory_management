@@ -1,4 +1,7 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import '../Custom-Files/colors.dart';
 import '../model/orders_model.dart';
 
@@ -167,9 +170,107 @@ class OrderInfo extends StatelessWidget {
                 order.billingAddress?.countryCode,
               ),
             ),
+
+            if (order.reverseOrder.isNotEmpty)
+              _buildReverseDetails(),
           ],
         ),
       ],
+    );
+  }
+
+  Widget _buildReverseDetails() {
+
+    final reverseOrder = order.reverseOrder.last;
+
+    if (!reverseOrder.status) return const SizedBox();
+
+    String timestamp = reverseOrder.timestamp;
+
+    String date = 'NA';
+
+    try {
+      DateTime dateTime = DateTime.parse(timestamp);
+      date = DateFormat('dd MMM, yyyy hh:mm:ss a').format(dateTime);
+    } catch (e) {
+      log('Cannot Parse Timestamp for Reverse Order :- $e');
+    }
+
+    return Expanded(
+      child: Padding(
+        padding: const EdgeInsets.only(left: 8),
+        child: Card(
+          elevation: 2,
+          color: Colors.blue.shade100,
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+
+                const Text(
+                  'Reversing Details',
+                  style: TextStyle(
+                    fontSize: 14.0,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black,
+                  ),
+                ),
+
+                const SizedBox(height: 8),
+
+                _buildReverseInfoRow(
+                  title: 'Reason',
+                  value: reverseOrder.reason,
+                ),
+
+                const SizedBox(height: 8),
+
+                _buildReverseInfoRow(
+                  title: 'Reversed By',
+                  value: reverseOrder.reverseBy,
+                ),
+
+                const SizedBox(height: 8),
+
+                _buildReverseInfoRow(
+                  title: 'Date',
+                  value: date,
+                ),
+
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildReverseInfoRow({
+    required String title,
+    required String value,
+  }) {
+    return Text.rich(
+      TextSpan(
+        children: [
+          TextSpan(
+            text: '$title: ',
+            style: const TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.bold,
+              color: Colors.black,
+            )
+          ),
+
+          TextSpan(
+            text: value,
+            style: const TextStyle(
+              fontSize: 12,
+              color: Colors.black,
+            )
+          )
+        ]
+      )
     );
   }
 
