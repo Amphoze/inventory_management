@@ -724,7 +724,8 @@ class _OrdersNewPageState extends State<OrdersNewPage> with TickerProviderStateM
                                         ),
                                         Row(
                                           children: [
-                                            // if (order.totalWeight > 20)
+
+                                            if (order.totalWeight > 20)
                                               const Chip(
                                                 // color: WidgetStatePropertyAll(Colors.red),
                                                 label: Text(
@@ -732,7 +733,9 @@ class _OrdersNewPageState extends State<OrdersNewPage> with TickerProviderStateM
                                                   style: TextStyle(color: Colors.red),
                                                 ),
                                               ),
+
                                             const SizedBox(width: 8),
+
                                             IconButton(
                                               tooltip: 'Edit Order',
                                               onPressed: () async {
@@ -760,7 +763,9 @@ class _OrdersNewPageState extends State<OrdersNewPage> with TickerProviderStateM
                                               },
                                               icon: const Icon(Icons.edit_note),
                                             ),
+
                                             const SizedBox(width: 8),
+
                                             IconButton(
                                               tooltip: 'Edit warehouse',
                                               onPressed: () {
