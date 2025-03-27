@@ -596,11 +596,11 @@ class _AllOrdersPageState extends State<AllOrdersPage> with SingleTickerProvider
                         ),
                       );
                     } else {
-                      provider.setCancelStatus(true);
+                      // provider.setCancelStatus(true);
 
                       String resultMessage = await provider.cancelOrders(context, selectedOrderIds);
 
-                      provider.setCancelStatus(false);
+                      // provider.setCancelStatus(false);
 
                       Color snackBarColor;
                       if (resultMessage.contains('success')) {

@@ -252,12 +252,15 @@ class _BookPageState extends State<BookPage> with SingleTickerProviderStateMixin
 
     return Column(
       children: [
-        Row(
-          children: [
-            _searchBar(orderType),
-            const Spacer(),
-            _buildConfirmButtons(orderType),
-          ],
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(
+            children: [
+              _searchBar(orderType),
+              // const Spacer(),
+              _buildConfirmButtons(orderType),
+            ],
+          ),
         ),
         _buildTableHeader(orderType, selectedCount),
         Expanded(

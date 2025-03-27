@@ -446,6 +446,33 @@ class _ManageOuterboxState extends State<ManageOuterbox> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
+                SizedBox(
+                  width: 120,
+                  height: 34,
+                  child: DropdownButtonFormField<String>(
+                    isExpanded: true,
+                    value: provider.selectedSearchBy,
+                    decoration: const InputDecoration(
+                      border: OutlineInputBorder(),
+                      contentPadding: EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
+                    ),
+                    items: const [
+                      DropdownMenuItem(value: 'outerPackage_name', child: Text('Name')),
+                      DropdownMenuItem(value: 'occupied_weight', child: Text('Weight')),
+                      DropdownMenuItem(value: 'outerPackage_sku', child: Text('SKU')),
+                      DropdownMenuItem(value: 'outerPackage_type', child: Text('Type')),
+                    ],
+                    onChanged: (value) {
+                      Logger().e('$value');
+                      setState(() {
+                        if (value != null) {
+                          provider.setSelectedSearchBy(value);
+                        }
+                      });
+                    },
+                  ),
+                ),
+                const SizedBox(width: 8),
                 IconButton(
                   icon: const Icon(Icons.arrow_left, color: AppColors.primaryBlue),
                   onPressed: () {

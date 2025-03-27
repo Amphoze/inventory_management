@@ -479,13 +479,9 @@ class _OrderComboCardState extends State<OrderComboCard> {
 
                           RevertOrderWidget(
                             dropdownEnabled: true,
-                            dropdownOptions: [
-                              "READY-TO-CONFIRM",
-                              "READY-TO-ACCOUNT"
-                            ],
-                            orderid:  widget.order.orderId,
+                            dropdownOptions: ["READY-TO-CONFIRM", "READY-TO-ACCOUNT"],
+                            orderid: widget.order.orderId,
                           ),
-
                         if (widget.isBookPage) ...[
                           const SizedBox(width: 8),
                           IconButton(
@@ -657,16 +653,12 @@ class _OrderComboCardState extends State<OrderComboCard> {
                             icon: const Icon(Icons.bug_report_outlined),
                           ),
                           const SizedBox(width: 8),
-
                           if (widget.order.mistakes.any((e) => e.status)) ...[
-
                             const SizedBox(width: 8),
-
                             IconButton(
                               tooltip: 'Support Chat',
                               icon: const Icon(Icons.message),
                               onPressed: () {
-
                                 bool canSendMessage = false;
 
                                 if (widget.order.mistakes.isEmpty) {
@@ -684,13 +676,9 @@ class _OrderComboCardState extends State<OrderComboCard> {
                         ]
                       ],
                     ),
-
-                    if (hasMistake)
-                      SizedBox(width: MediaQuery.of(context).size.width * 0.0330),
-
+                    if (hasMistake) SizedBox(width: MediaQuery.of(context).size.width * 0.0330),
                   ],
                 ),
-
                 if (widget.toShowOrderDetails)
                   Padding(
                     padding: const EdgeInsets.all(4.0),
@@ -731,7 +719,9 @@ class _OrderComboCardState extends State<OrderComboCard> {
                                   buildLabelValueRow('Filter', widget.order.filter ?? ''),
                                   buildLabelValueRow(
                                     'Expected Delivery Date',
-                                    widget.order.expectedDeliveryDate != null ? provider.formatDate(widget.order.expectedDeliveryDate!) : '',
+                                    widget.order.expectedDeliveryDate != null
+                                        ? provider.formatDate(widget.order.expectedDeliveryDate!)
+                                        : '',
                                   ),
                                 ],
                               ),
@@ -912,7 +902,6 @@ class _OrderComboCardState extends State<OrderComboCard> {
                       ],
                     ),
                   ),
-
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   crossAxisAlignment: CrossAxisAlignment.end,
@@ -1026,7 +1015,6 @@ class _OrderComboCardState extends State<OrderComboCard> {
                         ],
                       ),
                     ),
-
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.end,
@@ -1034,14 +1022,12 @@ class _OrderComboCardState extends State<OrderComboCard> {
                           if (widget.isBookPage || widget.isBookedPage)
                             ElevatedButton(
                               onPressed: () {
-
                                 showWriteRemarkDialog(
                                   context: context,
                                   orderId: widget.order.orderId,
                                   message: 'bookerMessage',
                                   messages: widget.order.messages,
                                   onSubmitted: () async {
-
                                     final bookerProvider = context.read<BookProvider>();
 
                                     final bookedSearch = bookerProvider.searchController.text.trim();
@@ -1049,19 +1035,19 @@ class _OrderComboCardState extends State<OrderComboCard> {
                                     final b2cSearch = bookerProvider.b2cSearchController.text.trim();
                                     final searchType = bookerProvider.searchType;
 
-                                    if(bookedSearch.isEmpty) {
+                                    if (bookedSearch.isEmpty) {
                                       await bookerProvider.fetchBookedOrders(bookerProvider.currentPageBooked);
                                     } else {
                                       await bookerProvider.searchBookedOrders(bookedSearch, searchType);
                                     }
 
-                                    if(b2bSearch.isEmpty) {
+                                    if (b2bSearch.isEmpty) {
                                       await bookerProvider.fetchPaginatedOrdersB2B(bookerProvider.currentPageB2B);
                                     } else {
                                       await bookerProvider.searchB2BOrders(b2bSearch);
                                     }
 
-                                    if(b2cSearch.isEmpty) {
+                                    if (b2cSearch.isEmpty) {
                                       await bookerProvider.fetchPaginatedOrdersB2C(bookerProvider.currentPageB2C);
                                     } else {
                                       await bookerProvider.searchB2COrders(b2cSearch);
@@ -1202,18 +1188,15 @@ class _OrderComboCardState extends State<OrderComboCard> {
                               },
                               child: Text(bookerMessages.isNotEmpty ? 'Add a Remark' : 'Write a Remark'),
                             ),
-
                           if (widget.isAccountSection)
                             ElevatedButton(
                               onPressed: () {
-
                                 showWriteRemarkDialog(
                                   context: context,
                                   orderId: widget.order.orderId,
                                   message: 'accountMessage',
                                   messages: widget.order.messages,
                                   onSubmitted: () async {
-
                                     final accountProvider = context.read<AccountsProvider>();
 
                                     final invoiceSearch = accountProvider.invoiceSearch.text.trim();
@@ -1221,7 +1204,6 @@ class _OrderComboCardState extends State<OrderComboCard> {
 
                                     if (invoiceSearch.isEmpty) {
                                       await accountProvider.fetchInvoicedOrders(accountProvider.currentPageBooked);
-
                                     } else {
                                       await accountProvider.searchInvoicedOrders(invoiceSearch, searchType);
                                     }
@@ -1229,7 +1211,6 @@ class _OrderComboCardState extends State<OrderComboCard> {
                                     await accountProvider.fetchOrdersWithStatus2();
                                   },
                                 );
-
 
                                 // showDialog(
                                 //   context: context,
@@ -1346,11 +1327,9 @@ class _OrderComboCardState extends State<OrderComboCard> {
                                 //     );
                                 //   },
                                 // );
-
                               },
                               child: Text(accountMessages.isNotEmpty ? 'Add a Remark' : 'Write a Remark'),
                             ),
-
                           if (confirmerMessages.isNotEmpty)
                             Tooltip(
                               message: confirmerMessages.last.message,
@@ -1368,7 +1347,6 @@ class _OrderComboCardState extends State<OrderComboCard> {
                                 ),
                               ),
                             ),
-
                           if (accountMessages.isNotEmpty)
                             Tooltip(
                               message: accountMessages.last.message,
@@ -1386,7 +1364,6 @@ class _OrderComboCardState extends State<OrderComboCard> {
                                 ),
                               ),
                             ),
-
                           if (bookerMessages.isNotEmpty)
                             Tooltip(
                               message: bookerMessages.last.message,
@@ -1405,7 +1382,6 @@ class _OrderComboCardState extends State<OrderComboCard> {
                               ),
                             ),
                         ],
-
                       ),
                     ),
                   ],
@@ -1682,7 +1658,6 @@ class _OrderComboCardState extends State<OrderComboCard> {
               ],
             ),
           ),
-
           if (hasMistake)
             Positioned(
               top: MediaQuery.of(context).size.width * 0.02,

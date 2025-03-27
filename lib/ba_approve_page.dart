@@ -464,9 +464,9 @@ class _BaApprovePageState extends State<BaApprovePage> {
                         itemBuilder: (context, index) {
                           final order = baApproveProvider.orders[index];
                           final percentDelhivery =
-                              double.parse(((order.freightCharge!.delhivery! / order.totalAmount!) * 100).toStringAsFixed(2));
+                              double.parse((((order.freightCharge?.delhivery ?? 0) / (order.totalAmount ?? 1)) * 100).toStringAsFixed(2));
                           final percentShiprocket =
-                              double.parse(((order.freightCharge!.shiprocket! / order.totalAmount!) * 100).toStringAsFixed(2));
+                              double.parse((((order.freightCharge?.shiprocket ?? 0) / (order.totalAmount ?? 1)) * 100).toStringAsFixed(2));
                           ////////////////////////////////////////////////////////////////////////////
 
                           final Map<String, List<Item>> groupedComboItems = {};
@@ -1024,7 +1024,7 @@ class _BaApprovePageState extends State<BaApprovePage> {
                                             text: "Delhivery: ",
                                             children: [
                                               TextSpan(
-                                                  text: "Rs. ${order.freightCharge!.delhivery} ",
+                                                  text: "Rs. ${order.freightCharge?.delhivery ?? 0} ",
                                                   style: const TextStyle(
                                                     fontWeight: FontWeight.normal,
                                                   )),
@@ -1047,7 +1047,7 @@ class _BaApprovePageState extends State<BaApprovePage> {
                                             text: "Shiprocket: ",
                                             children: [
                                               TextSpan(
-                                                text: "Rs. ${order.freightCharge!.shiprocket} ",
+                                                text: "Rs. ${order.freightCharge?.shiprocket ?? 0} ",
                                                 style: const TextStyle(
                                                   fontWeight: FontWeight.normal,
                                                 ),
