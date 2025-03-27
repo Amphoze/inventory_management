@@ -350,9 +350,10 @@ class Messages {
   final List<Message> confirmerMessages;
   final List<Message> bookerMessages;
   final List<Message> accountMessages;
+  final List<Message> reverseMessages;
 
 
-  Messages({required this.failureReason, required this.confirmerMessages, required this.bookerMessages, required this.accountMessages});
+  Messages({required this.failureReason, required this.confirmerMessages, required this.bookerMessages, required this.accountMessages, required this.reverseMessages});
 
   factory Messages.fromJson(Map<String, dynamic> json) {
     return Messages(
@@ -360,6 +361,7 @@ class Messages {
       confirmerMessages: json['confirmerMessage'] == null ? [] : (json['confirmerMessage']  as List<dynamic>).map((message) => Message.fromJson(message)).toList(),
       bookerMessages: json['bookerMessage'] == null ? [] : (json['bookerMessage']  as List<dynamic>).map((message) => Message.fromJson(message)).toList(),
       accountMessages: json['accountMessage'] == null ? [] : (json['accountMessage']  as List<dynamic>).map((message) => Message.fromJson(message)).toList(),
+      reverseMessages: json['reverseMessage'] == null ? [] : (json['reverseMessage']  as List<dynamic>).map((message) => Message.fromJson(message)).toList(),
     );
   }
 
@@ -370,6 +372,7 @@ class Messages {
       'confirmerMessage': confirmerMessages.map((message) => message.toJson()).toList(),
       'bookerMessage': bookerMessages.map((message) => message.toJson()).toList(),
       'accountMessage': accountMessages.map((message) => message.toJson()).toList(),
+      'reverseMessage': reverseMessages.map((message) => message.toJson()).toList(),
     };
   }
 }

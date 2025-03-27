@@ -1184,7 +1184,6 @@ class _OrdersNewPageState extends State<OrdersNewPage> with TickerProviderStateM
                                     OrderInfo(
                                       order: order,
                                       pro: ordersProvider,
-                                      hasMistake: order.mistakes.isNotEmpty && order.mistakes.last.status,
                                     ),
                                     const SizedBox(height: 6),
                                     Padding(

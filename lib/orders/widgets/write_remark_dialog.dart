@@ -48,6 +48,7 @@ class _WriteRemarkDialogState extends State<WriteRemarkDialog> {
       widget.messages!.confirmerMessages.forEach((message) => remarks.add(message));
       widget.messages!.accountMessages.forEach((message) => remarks.add(message));
       widget.messages!.bookerMessages.forEach((message) => remarks.add(message));
+      widget.messages!.reverseMessages.forEach((message) => remarks.add(message));
     }
 
     return Dialog(
@@ -225,6 +226,8 @@ class _WriteRemarkDialogState extends State<WriteRemarkDialog> {
                           ? 'Account'
                           : type == 'bookerMessage'
                           ? 'Booker'
+                          : type == 'reverseMessage'
+                          ? 'Revert'
                           : 'Unknown',
                       style: TextStyle(
                         fontSize: 12,
@@ -234,6 +237,8 @@ class _WriteRemarkDialogState extends State<WriteRemarkDialog> {
                             ? Colors.deepOrange
                             : type == 'bookerMessage'
                             ? Colors.blueAccent
+                            : type == 'reverseMessage'
+                            ? Colors.red
                             : Colors.black45,
                       ),
                       textAlign: TextAlign.center,

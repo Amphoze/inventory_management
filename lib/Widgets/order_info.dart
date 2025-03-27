@@ -9,13 +9,11 @@ class OrderInfo extends StatelessWidget {
 
   final Order order;
   final pro;
-  final bool hasMistake;
 
   const OrderInfo({
     super.key,
     required this.order,
     required this.pro,
-    this.hasMistake = false,
   });
 
   String maskPhoneNumber(dynamic phone) {
@@ -132,7 +130,7 @@ class OrderInfo extends StatelessWidget {
                 ),
               ),
 
-              if (hasMistake)
+              if (order.mistakes.isNotEmpty && order.mistakes.last.status)
                 Positioned(
                   top: MediaQuery.of(context).size.width * 0.02,
                   right: -MediaQuery.of(context).size.width * 0.025,
