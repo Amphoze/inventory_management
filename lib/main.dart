@@ -57,6 +57,8 @@ import 'provider/create_order_provider.dart';
 // import 'package:inventory_management/create_account.dart';
 // prarthi2474@gmail.com
 
+// prateekkhatri@katyayaniorganics.com
+
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
 void main() async {
