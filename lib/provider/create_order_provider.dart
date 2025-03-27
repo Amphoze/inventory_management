@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:intl/intl.dart';
 import 'package:inventory_management/constants/constants.dart';
 import 'package:inventory_management/model/combo_model.dart' hide Product;
 import 'package:inventory_management/model/orders_model.dart';
@@ -533,7 +534,7 @@ class CreateOrderProvider with ChangeNotifier {
         int qty = int.tryParse(addedComboQuantityControllers[index].text) ?? 1;
         double amount = rate * qty;
         return {
-          'id': item['id'],
+          // 'id': item['id'],
           'qty': qty,
           'sku': item['sku'],
           'amount': amount,
@@ -570,18 +571,22 @@ class CreateOrderProvider with ChangeNotifier {
         break;
     }
 
+    final customerEmail = customerEmailController.text.trim();
+    final billingEmail = billingEmailController.text.trim();
+    final shippingEmail = shippingEmailController.text.trim();
+
     Map<String, dynamic> orderData = {
       'order_id': orderIdController.text,
       'customer': {
         'first_name': customerFirstNameController.text,
         'last_name': customerLastNameController.text,
-        'email': customerEmailController.text,
+        'email': customerEmail.isEmpty ? null : customerEmail,
         'phone': customerPhoneController.text,
       },
       'billing_addr': {
         'first_name': billingFirstNameController.text,
         'last_name': billingLastNameController.text,
-        'email': billingEmailController.text,
+        'email': billingEmail.isEmpty ? null : billingEmail,
         'address1': billingAddress1Controller.text,
         'address2': billingAddress2Controller.text,
         'phone': billingPhoneController.text,
@@ -594,7 +599,7 @@ class CreateOrderProvider with ChangeNotifier {
       'shipping_addr': {
         'first_name': shippingFirstNameController.text,
         'last_name': shippingLastNameController.text,
-        'email': shippingEmailController.text,
+        'email': shippingEmail.isEmpty ? null : shippingEmail,
         'address1': shippingAddress1Controller.text,
         'address2': shippingAddress2Controller.text,
         'phone': shippingPhoneController.text,
@@ -618,6 +623,7 @@ class CreateOrderProvider with ChangeNotifier {
       'total_quantity': int.tryParse(totalQuantityController.text) ?? 0,
       'marketplace': marketplaceController.text.trim(),
       'source': source,
+      'Date': DateFormat('yyyy-MM-dd').format(DateTime.now()),
       'agent': agentController.text,
       'notes': notesController.text,
     };
@@ -628,7 +634,12 @@ class CreateOrderProvider with ChangeNotifier {
 
     try {
       final url = Uri.parse('${await Constants.getBaseUrl()}/orders');
+      // final url = Uri.parse('http://192.168.107.199:3001/orders');
+
+      log('Creating Order at URL: $url');
+
       final token = await _getToken();
+
       final response = await http.post(
         url,
         headers: {
@@ -640,7 +651,7 @@ class CreateOrderProvider with ChangeNotifier {
 
       final res = json.decode(response.body);
 
-      log('order create response: $res');
+      log('Order Creation Response: ${response.body}');
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         Logger().i('Order saved successfully: $res}');
@@ -649,9 +660,9 @@ class CreateOrderProvider with ChangeNotifier {
         Logger().e('Failed to save order: ${response.statusCode} - ${response.body}');
         return {"success": false, "message": res['error'], "details": res['details']};
       }
-    } catch (e) {
-      Logger().e('Error saving order: $e');
-      return {"success": false, "message": 'Error saving order: $e'};
+    } catch (e, s) {
+      log('Error saving order: $e\n$s');
+      return {"success": false, "message": 'Error saving order: ${e.toString()}'};
     } finally {
       isSavingOrder = false;
       notifyListeners();

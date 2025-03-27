@@ -4,6 +4,7 @@ import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
+import 'package:inventory_management/Custom-Files/utils.dart';
 import 'package:inventory_management/constants/constants.dart';
 import 'package:inventory_management/model/orders_model.dart';
 import 'package:logger/logger.dart';
@@ -12,6 +13,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:socket_io_client/socket_io_client.dart' as IO;
 
 import '../Api/auth_provider.dart';
+import '../dashboard.dart';
 import 'chat_provider.dart';
 
 class OrdersProvider with ChangeNotifier {
@@ -538,11 +540,6 @@ class OrdersProvider with ChangeNotifier {
     }
   }
 
-  GlobalKey<ScaffoldMessengerState>? _scaffoldMessengerKey;
-
-  void setScaffoldMessengerKey(GlobalKey<ScaffoldMessengerState> key) {
-    _scaffoldMessengerKey = key;
-  }
 
   void initializeSocket(BuildContext context) async {
     _progressMessage = '';
@@ -604,24 +601,14 @@ class OrdersProvider with ChangeNotifier {
 
   void _showSnackBar(String message, {Color? color}) {
     log('Attempting to show SnackBar: $message');
-    if (_scaffoldMessengerKey == null) {
-      log('Error: ScaffoldMessengerKey is null');
-      return;
-    }
-    if (_scaffoldMessengerKey!.currentState == null) {
+    if (globalScaffoldKey.currentState == null) {
       log('Error: ScaffoldMessengerState is null');
       return;
     }
     log('Showing SnackBar with message: $message');
-    _scaffoldMessengerKey!.currentState!
-      ..removeCurrentSnackBar()
-      ..showSnackBar(
-        SnackBar(
-          content: Text(message),
-          backgroundColor: color,
-          duration: const Duration(seconds: 3),
-        ),
-      );
+    final context = globalScaffoldKey.currentState!.context;
+
+    Utils.showSnackBar(context, message, details: message, color: color);
   }
 
   @override
