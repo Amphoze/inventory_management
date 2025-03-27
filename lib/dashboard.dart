@@ -1608,7 +1608,7 @@ class _DashboardPageState extends State<DashboardPage> {
       case 'Bin Master':
         return const BinMasterPage();
       case 'Material Planning':
-        return const PlanningScreen();
+        return const MaterialPlanning();
       case 'Label In-Out':
         return const LabelFormPage();
       case 'Transfer Order':

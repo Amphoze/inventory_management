@@ -102,7 +102,7 @@ class _ProductMasterPageState extends State<ProductMasterPage> {
                 ),
               ),
               onChanged: (value) {
-                if(value.trim().isEmpty) {
+                if (value.trim().isEmpty) {
                   provider.refreshPage(context);
                 }
               },
@@ -128,42 +128,51 @@ class _ProductMasterPageState extends State<ProductMasterPage> {
   }
 
   Widget _buildProductList(BuildContext context) {
-    return Consumer<ProductMasterProvider>(
-      builder: (context, provider, child) {
-        return NotificationListener<ScrollNotification>(
-          onNotification: (ScrollNotification scrollInfo) {
-            if (!provider.isLoading && scrollInfo.metrics.pixels == scrollInfo.metrics.maxScrollExtent) {
-              provider.loadMoreProducts(context);
-            }
-            return false;
-          },
-          child: provider.products.isEmpty
-              ? const Center(
-                  child: LoadingAnimation(
-                    icon: Icons.production_quantity_limits_rounded,
-                    beginColor: Color.fromRGBO(189, 189, 189, 1),
-                    endColor: AppColors.primaryBlue,
-                    size: 80.0,
-                  ),
-                )
-              : ListView.builder(
-                  itemCount: provider.products.length + (provider.hasMore ? 1 : 0),
-                  itemBuilder: (context, index) {
-                    if (index == provider.products.length) {
-                      return const Center(
-                        child: LoadingAnimation(
-                          icon: Icons.production_quantity_limits_rounded,
-                          beginColor: Color.fromRGBO(189, 189, 189, 1),
-                          endColor: AppColors.primaryBlue,
-                          size: 80.0,
-                        ),
-                      );
-                    }
-                    return ProductMasterCard(product: provider.products[index]);
-                  },
+    return Consumer<ProductMasterProvider>(builder: (context, provider, child) {
+      return NotificationListener<ScrollNotification>(
+        onNotification: (ScrollNotification scrollInfo) {
+          if (!provider.isLoading && scrollInfo.metrics.pixels == scrollInfo.metrics.maxScrollExtent) {
+            provider.loadMoreProducts(context);
+          }
+          return false;
+        },
+        child: provider.isLoading && provider.products.isEmpty
+            ? const Center(
+                child: LoadingAnimation(
+                  icon: Icons.production_quantity_limits_rounded,
+                  beginColor: Color.fromRGBO(189, 189, 189, 1),
+                  endColor: AppColors.primaryBlue,
+                  size: 80.0,
                 ),
-        );
-      }
-    );
+              )
+            : provider.products.isEmpty
+                ? const Center(
+                    child: Text(
+                      'No Products Found',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.grey,
+                      ),
+                    ),
+                  )
+                : ListView.builder(
+                    itemCount: provider.products.length + (provider.hasMore ? 1 : 0),
+                    itemBuilder: (context, index) {
+                      if (index == provider.products.length) {
+                        return const Center(
+                          child: LoadingAnimation(
+                            icon: Icons.production_quantity_limits_rounded,
+                            beginColor: Color.fromRGBO(189, 189, 189, 1),
+                            endColor: AppColors.primaryBlue,
+                            size: 80.0,
+                          ),
+                        );
+                      }
+                      return ProductMasterCard(product: provider.products[index]);
+                    },
+                  ),
+      );
+    });
   }
 }

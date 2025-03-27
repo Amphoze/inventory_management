@@ -66,30 +66,6 @@ class _ShowLabelPageState extends State<ShowLabelPage> {
     await labelPageProvider!.getProductDetails();
   }
 
-  // Widget _buildDetailRow(String label, String value) {
-  //   return Padding(
-  //     padding: const EdgeInsets.only(bottom: 6),
-  //     child: RichText(
-  //       text: TextSpan(
-  //         text: '$label ',
-  //         style: const TextStyle(
-  //           fontWeight: FontWeight.bold,
-  //           color: Colors.black,
-  //         ),
-  //         children: [
-  //           TextSpan(
-  //             text: value,
-  //             style: const TextStyle(
-  //               fontWeight: FontWeight.normal,
-  //               color: Colors.black,
-  //             ),
-  //           ),
-  //         ],
-  //       ),
-  //     ),
-  //   );
-  // }
-
   void _showDetailsDialog(BuildContext context, Map<String, dynamic> data) async {
     List<dynamic> labelLogs = data['labelLog'] ?? [];
 

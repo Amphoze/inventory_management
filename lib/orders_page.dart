@@ -67,6 +67,7 @@ class _OrdersNewPageState extends State<OrdersNewPage> with TickerProviderStateM
       }
     });
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      provider.resetProgress();
       provider.resetReadyFilterData();
       provider.resetFailedFilterData();
       getUserData();
@@ -145,7 +146,7 @@ class _OrdersNewPageState extends State<OrdersNewPage> with TickerProviderStateM
         toolbarHeight: 0,
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(50),
-          child:TabBar(
+          child: TabBar(
             controller: _tabController,
             tabs: const [
               Tab(text: 'Ready to Confirm'),
@@ -201,7 +202,6 @@ class _OrdersNewPageState extends State<OrdersNewPage> with TickerProviderStateM
                             color: ordersProvider.selectedReadyDate == 'Select Date' ? Colors.black : AppColors.primaryBlue,
                           ),
                         ),
-
                         IconButton(
                           tooltip: 'Filter by Date',
                           onPressed: () async {
@@ -234,17 +234,13 @@ class _OrdersNewPageState extends State<OrdersNewPage> with TickerProviderStateM
 
                             Logger().e('picked: ${ordersProvider.readyPicked}');
                           },
-                          style: IconButton.styleFrom(
-                            backgroundColor: Colors.white,
-                            padding: const EdgeInsets.all(5)
-                          ),
+                          style: IconButton.styleFrom(backgroundColor: Colors.white, padding: const EdgeInsets.all(5)),
                           icon: const Icon(
                             Icons.calendar_today,
                             size: 30,
                             color: AppColors.primaryBlue,
                           ),
                         ),
-
                         if (ordersProvider.selectedReadyDate != 'Select Date')
                           Tooltip(
                             message: 'Clear selected Date',
@@ -275,7 +271,6 @@ class _OrdersNewPageState extends State<OrdersNewPage> with TickerProviderStateM
                             color: ordersProvider.selectedReadyCourier == 'All' ? Colors.black : AppColors.primaryBlue,
                           ),
                         ),
-
                         Consumer<MarketplaceProvider>(
                           builder: (context, provider, child) {
                             return PopupMenuButton<String>(
@@ -381,7 +376,6 @@ class _OrdersNewPageState extends State<OrdersNewPage> with TickerProviderStateM
 
                                 // String resultMessage =
                                 await provider.confirmOrders(context, selectedOrderIds);
-
 
                                 // Color snackBarColor;
                                 // if (resultMessage.contains('success')) {
@@ -511,17 +505,16 @@ class _OrdersNewPageState extends State<OrdersNewPage> with TickerProviderStateM
                     ),
                     const SizedBox(width: 8),
                     IconButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.white,
-                      ),
-                      onPressed: () async {
-                        await ordersProvider.fetchReadyOrders();
-                      },
-                      icon: const Icon(
-                        Icons.refresh,
-                        color: AppColors.primaryBlue,
-                      )
-                    ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.white,
+                        ),
+                        onPressed: () async {
+                          await ordersProvider.fetchReadyOrders();
+                        },
+                        icon: const Icon(
+                          Icons.refresh,
+                          color: AppColors.primaryBlue,
+                        )),
                     const SizedBox(width: 8),
                     Container(
                       width: 180,
@@ -731,6 +724,15 @@ class _OrdersNewPageState extends State<OrdersNewPage> with TickerProviderStateM
                                         ),
                                         Row(
                                           children: [
+                                            if (order.totalWeight > 20 && (remainingItems.isNotEmpty || comboItemGroups.isNotEmpty))
+                                              const Chip(
+                                                // color: WidgetStatePropertyAll(Colors.red),
+                                                label: Text(
+                                                  'To be split',
+                                                  style: TextStyle(color: Colors.red),
+                                                ),
+                                              ),
+                                            const SizedBox(width: 8),
                                             IconButton(
                                               tooltip: 'Edit Order',
                                               onPressed: () async {
@@ -853,125 +855,127 @@ class _OrdersNewPageState extends State<OrdersNewPage> with TickerProviderStateM
                                               },
                                               icon: const Icon(Icons.edit_location_alt_outlined),
                                             ),
-                                            const SizedBox(width: 8),
-                                            IconButton(
-                                              tooltip: 'Split Order',
-                                              onPressed: () {
-                                                final List<String> selectedItems = [];
-                                                final weightController = TextEditingController();
-                                                showDialog(
-                                                  context: context,
-                                                  builder: (BuildContext dialogContext) {
-                                                    return StatefulBuilder(
-                                                      builder: (BuildContext context, StateSetter setDialogState) {
-                                                        return AlertDialog(
-                                                          title: Text(order.orderId),
-                                                          content: Column(
-                                                            mainAxisSize: MainAxisSize.min,
-                                                            crossAxisAlignment: CrossAxisAlignment.start,
-                                                            children: [
-                                                              ...remainingItems.map(
-                                                                (item) => Row(
-                                                                  children: [
-                                                                    Checkbox(
-                                                                      value: selectedItems.contains(item.sku),
-                                                                      onChanged: (value) {
-                                                                        setDialogState(() {
-                                                                          if (selectedItems.contains(item.sku)) {
-                                                                            selectedItems.remove(item.sku);
-                                                                          } else {
-                                                                            selectedItems.add(item.sku ?? '');
-                                                                          }
-                                                                        });
-                                                                      },
-                                                                    ),
-                                                                    Text(item.sku ?? ''),
-                                                                  ],
+                                            if (order.totalWeight > 20 && (remainingItems.isNotEmpty || comboItemGroups.isNotEmpty)) ...[
+                                              const SizedBox(width: 8),
+                                              IconButton(
+                                                tooltip: 'Split Order',
+                                                onPressed: () {
+                                                  final List<String> selectedItems = [];
+                                                  final weightController = TextEditingController();
+                                                  showDialog(
+                                                    context: context,
+                                                    builder: (BuildContext dialogContext) {
+                                                      return StatefulBuilder(
+                                                        builder: (BuildContext context, StateSetter setDialogState) {
+                                                          return AlertDialog(
+                                                            title: Text(order.orderId),
+                                                            content: Column(
+                                                              mainAxisSize: MainAxisSize.min,
+                                                              crossAxisAlignment: CrossAxisAlignment.start,
+                                                              children: [
+                                                                ...remainingItems.map(
+                                                                  (item) => Row(
+                                                                    children: [
+                                                                      Checkbox(
+                                                                        value: selectedItems.contains(item.sku),
+                                                                        onChanged: (value) {
+                                                                          setDialogState(() {
+                                                                            if (selectedItems.contains(item.sku)) {
+                                                                              selectedItems.remove(item.sku);
+                                                                            } else {
+                                                                              selectedItems.add(item.sku ?? '');
+                                                                            }
+                                                                          });
+                                                                        },
+                                                                      ),
+                                                                      Text(item.sku ?? ''),
+                                                                    ],
+                                                                  ),
                                                                 ),
+                                                                ...comboItemGroups.map(
+                                                                  (item) => Row(
+                                                                    children: [
+                                                                      Checkbox(
+                                                                        value: selectedItems.contains(item[0].sku),
+                                                                        onChanged: (value) {
+                                                                          setDialogState(() {
+                                                                            if (selectedItems.contains(item[0].sku)) {
+                                                                              selectedItems.remove(item[0].sku);
+                                                                            } else {
+                                                                              selectedItems.add(item[0].sku ?? '');
+                                                                            }
+                                                                          });
+                                                                        },
+                                                                      ),
+                                                                      Text(item[0].comboSku ?? ''),
+                                                                    ],
+                                                                  ),
+                                                                ),
+                                                                const SizedBox(height: 10),
+                                                                TextField(
+                                                                  controller: weightController,
+                                                                  decoration: const InputDecoration(
+                                                                    labelText: 'Weight Limit (Optional)',
+                                                                    // border: OutlineInputBorder(),
+                                                                  ),
+                                                                ),
+                                                              ],
+                                                            ),
+                                                            actions: [
+                                                              TextButton(
+                                                                child: const Text('Cancel'),
+                                                                onPressed: () => Navigator.pop(context),
                                                               ),
-                                                              ...comboItemGroups.map(
-                                                                (item) => Row(
-                                                                  children: [
-                                                                    Checkbox(
-                                                                      value: selectedItems.contains(item[0].sku),
-                                                                      onChanged: (value) {
-                                                                        setDialogState(() {
-                                                                          if (selectedItems.contains(item[0].sku)) {
-                                                                            selectedItems.remove(item[0].sku);
-                                                                          } else {
-                                                                            selectedItems.add(item[0].sku ?? '');
-                                                                          }
-                                                                        });
-                                                                      },
-                                                                    ),
-                                                                    Text(item[0].comboSku ?? ''),
-                                                                  ],
-                                                                ),
-                                                              ),
-                                                              const SizedBox(height: 10),
-                                                              TextField(
-                                                                controller: weightController,
-                                                                decoration: const InputDecoration(
-                                                                  labelText: 'Weight Limit (Optional)',
-                                                                  // border: OutlineInputBorder(),
-                                                                ),
+                                                              TextButton(
+                                                                child: const Text('Submit'),
+                                                                onPressed: () async {
+                                                                  showDialog(
+                                                                    context: context,
+                                                                    builder: (_) {
+                                                                      return const AlertDialog(
+                                                                        content: Row(
+                                                                          children: [
+                                                                            CircularProgressIndicator(),
+                                                                            SizedBox(
+                                                                              width: 8,
+                                                                            ),
+                                                                            Text('Splitting')
+                                                                          ],
+                                                                        ),
+                                                                      );
+                                                                    },
+                                                                  );
+
+                                                                  List<String>? productSkus;
+
+                                                                  setDialogState(() {
+                                                                    productSkus = selectedItems;
+                                                                  });
+
+                                                                  final res = await ordersProvider.splitOrder(
+                                                                      order.orderId, productSkus ?? [],
+                                                                      weightLimit: weightController.text.trim());
+                                                                  Navigator.pop(context);
+                                                                  Navigator.pop(context);
+                                                                  if (res['success'] == true) {
+                                                                    ordersProvider.showSnackBar(
+                                                                        context, res['message'].toString(), Colors.green);
+                                                                  } else {
+                                                                    ordersProvider.showSnackBar(
+                                                                        context, res['message'].toString(), Colors.red);
+                                                                  }
+                                                                },
                                                               ),
                                                             ],
-                                                          ),
-                                                          actions: [
-                                                            TextButton(
-                                                              child: const Text('Cancel'),
-                                                              onPressed: () => Navigator.pop(context),
-                                                            ),
-                                                            TextButton(
-                                                              child: const Text('Submit'),
-                                                              onPressed: () async {
-                                                                showDialog(
-                                                                  context: context,
-                                                                  builder: (_) {
-                                                                    return const AlertDialog(
-                                                                      content: Row(
-                                                                        children: [
-                                                                          CircularProgressIndicator(),
-                                                                          SizedBox(
-                                                                            width: 8,
-                                                                          ),
-                                                                          Text('Splitting')
-                                                                        ],
-                                                                      ),
-                                                                    );
-                                                                  },
-                                                                );
-
-                                                                List<String>? productSkus;
-
-                                                                setDialogState(() {
-                                                                  productSkus = selectedItems;
-                                                                });
-
-                                                                final res = await ordersProvider.splitOrder(
-                                                                    order.orderId, productSkus ?? [],
-                                                                    weightLimit: weightController.text.trim());
-                                                                Navigator.pop(context);
-                                                                Navigator.pop(context);
-                                                                if (res['success'] == true) {
-                                                                  ordersProvider.showSnackBar(
-                                                                      context, res['message'].toString(), Colors.green);
-                                                                } else {
-                                                                  ordersProvider.showSnackBar(
-                                                                      context, res['message'].toString(), Colors.red);
-                                                                }
-                                                              },
-                                                            ),
-                                                          ],
-                                                        );
-                                                      },
-                                                    );
-                                                  },
-                                                );
-                                              },
-                                              icon: const Icon(Icons.call_split),
-                                            ),
+                                                          );
+                                                        },
+                                                      );
+                                                    },
+                                                  );
+                                                },
+                                                icon: const Icon(Icons.call_split),
+                                              ),
+                                            ],
                                             const SizedBox(width: 8),
                                             IconButton(
                                               tooltip: 'Report Bug',
@@ -1095,7 +1099,7 @@ class _OrdersNewPageState extends State<OrdersNewPage> with TickerProviderStateM
                                                         // const SizedBox(width: 12),
                                                         ElevatedButton.icon(
                                                           onPressed: () async {
-                                                            if(messageController.text.trim().isEmpty ) {
+                                                            if (messageController.text.trim().isEmpty) {
                                                               Utils.showSnackBar(context, 'Please enter your message');
                                                               return;
                                                             }
@@ -1145,15 +1149,12 @@ class _OrdersNewPageState extends State<OrdersNewPage> with TickerProviderStateM
                                               },
                                               icon: const Icon(Icons.bug_report_outlined),
                                             ),
-
                                             if (order.mistakes.any((e) => e.status)) ...[
                                               const SizedBox(width: 8),
-
                                               IconButton(
                                                 tooltip: 'Support Chat',
                                                 icon: const Icon(Icons.message),
                                                 onPressed: () {
-
                                                   bool canSendMessage = false;
 
                                                   if (order.mistakes.isEmpty) {
@@ -1163,7 +1164,7 @@ class _OrdersNewPageState extends State<OrdersNewPage> with TickerProviderStateM
                                                     canSendMessage = order.mistakes.last.status;
                                                     log('2) Can Send Message set to $canSendMessage');
                                                   }
-                                                  
+
                                                   log('Order Mistakes are ${order.mistakes.map((mistake) => jsonEncode(mistake.toJson())).toList()}');
 
                                                   context.read<SupportProvider>().setUserData(order.orderId, canSendMessage);
@@ -1179,13 +1180,11 @@ class _OrdersNewPageState extends State<OrdersNewPage> with TickerProviderStateM
                                       thickness: 1,
                                       color: AppColors.grey,
                                     ),
-
                                     OrderInfo(
                                       order: order,
                                       pro: ordersProvider,
-                                      hasMistake: order.mistakes.isNotEmpty && order.mistakes.last.status
+                                      hasMistake: order.mistakes.isNotEmpty && order.mistakes.last.status,
                                     ),
-
                                     const SizedBox(height: 6),
                                     Padding(
                                       padding: const EdgeInsets.symmetric(horizontal: 16.0),
@@ -1207,8 +1206,7 @@ class _OrdersNewPageState extends State<OrdersNewPage> with TickerProviderStateM
                                                           )),
                                                       (order.outBoundBy?['outboundBy']?.toString().isNotEmpty ?? false)
                                                           ? TextSpan(
-                                                              text:
-                                                                  "(${order.outBoundBy?['outboundBy'].toString().split('@')[0] ?? ''})",
+                                                              text: "(${order.outBoundBy?['outboundBy'].toString().split('@')[0] ?? ''})",
                                                               style: const TextStyle(
                                                                 fontWeight: FontWeight.normal,
                                                               ),
@@ -1254,14 +1252,12 @@ class _OrdersNewPageState extends State<OrdersNewPage> with TickerProviderStateM
                                             children: [
                                               ElevatedButton(
                                                 onPressed: () {
-
                                                   showWriteRemarkDialog(
                                                     context: context,
                                                     orderId: order.orderId,
                                                     message: 'confirmerMessage',
                                                     messages: order.messages,
                                                     onSubmitted: () async {
-
                                                       final searched = ordersProvider.searchControllerReady.text.trim();
 
                                                       if (searched.isEmpty) {
@@ -1274,7 +1270,6 @@ class _OrdersNewPageState extends State<OrdersNewPage> with TickerProviderStateM
                                                 },
                                                 child: Text(remarks.isNotEmpty ? 'Add a Remark' : 'Write a Remark'),
                                               ),
-
                                               if (remarks.isNotEmpty)
                                                 Tooltip(
                                                   message: remarks.last.message,
@@ -1301,7 +1296,6 @@ class _OrdersNewPageState extends State<OrdersNewPage> with TickerProviderStateM
                                       thickness: 1,
                                       color: AppColors.grey,
                                     ),
-                                    // Nested cards for each item in the order
                                     const SizedBox(height: 6),
                                     ListView.builder(
                                       shrinkWrap: true,
@@ -1309,14 +1303,9 @@ class _OrdersNewPageState extends State<OrdersNewPage> with TickerProviderStateM
                                       itemCount: comboItemGroups.length,
                                       itemBuilder: (context, comboIndex) {
                                         final combo = comboItemGroups[comboIndex];
-                                        // print(
-                                        //     'Item $itemIndex: ${item.product?.displayName.toString() ?? ''}, Quantity: ${item.qty ?? 0}');
                                         return BigComboCard(
                                           items: combo,
                                           index: comboIndex,
-                                          // courierName: order.courierName,
-                                          // orderStatus:
-                                          //     order.orderStatus.toString(),
                                         );
                                       },
                                     ),
@@ -1326,14 +1315,9 @@ class _OrdersNewPageState extends State<OrdersNewPage> with TickerProviderStateM
                                       itemCount: remainingItems.length,
                                       itemBuilder: (context, itemIndex) {
                                         final item = remainingItems[itemIndex];
-                                        print(
-                                            'Item $itemIndex: ${item.product?.displayName.toString() ?? ''}, Quantity: ${item.qty ?? 0}');
                                         return ProductDetailsCard(
                                           item: item,
                                           index: itemIndex,
-                                          // courierName: order.courierName,
-                                          // orderStatus:
-                                          //     order.orderStatus.toString(),
                                         );
                                       },
                                     ),
@@ -1626,8 +1610,7 @@ class _OrdersNewPageState extends State<OrdersNewPage> with TickerProviderStateM
                         icon: const Icon(
                           Icons.refresh,
                           color: AppColors.primaryBlue,
-                        )
-                    ),
+                        )),
                     const SizedBox(width: 8),
                     Container(
                       width: 180,
@@ -2042,7 +2025,6 @@ class _OrdersNewPageState extends State<OrdersNewPage> with TickerProviderStateM
                                               ),
                                             ),
                                           ),
-
                                           Expanded(
                                             flex: 2,
                                             child: FittedBox(
@@ -2082,7 +2064,6 @@ class _OrdersNewPageState extends State<OrdersNewPage> with TickerProviderStateM
                                               ),
                                             ),
                                           ),
-
                                           if (failureReasons.isNotEmpty)
                                             Expanded(
                                               flex: 1,
@@ -2113,7 +2094,7 @@ class _OrdersNewPageState extends State<OrdersNewPage> with TickerProviderStateM
                                                     ),
                                                     const SizedBox(height: 12),
                                                     ...failureReasons.map(
-                                                          (reason) => Padding(
+                                                      (reason) => Padding(
                                                         padding: const EdgeInsets.symmetric(vertical: 4.0),
                                                         child: Row(
                                                           crossAxisAlignment: CrossAxisAlignment.start,

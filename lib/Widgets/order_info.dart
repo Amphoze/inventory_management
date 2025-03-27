@@ -27,6 +27,22 @@ class OrderInfo extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final Map<String, List<Item>> groupedComboItems = {};
+    for (var item in order.items) {
+      if (item.isCombo == true && item.comboSku != null) {
+        if (!groupedComboItems.containsKey(item.comboSku)) {
+          groupedComboItems[item.comboSku!] = [];
+        }
+        groupedComboItems[item.comboSku]!.add(item);
+      }
+    }
+    final List<List<Item>> comboItemGroups = groupedComboItems.values.where((items) => items.length > 1).toList();
+
+    final List<Item> remainingItems = order.items
+        .where((item) =>
+    !(item.isCombo == true && item.comboSku != null && groupedComboItems[item.comboSku]!.length > 1))
+        .toList();
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -35,9 +51,7 @@ class OrderInfo extends StatelessWidget {
           elevation: 2,
           color: Colors.white,
           child: Stack(
-
             children: [
-
               Padding(
                 padding: const EdgeInsets.all(16.0),
                 child: Row(

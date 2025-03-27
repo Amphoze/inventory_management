@@ -4,6 +4,7 @@ import 'dart:developer';
 import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:inventory_management/Custom-Files/utils.dart';
 import 'package:inventory_management/constants/constants.dart';
 import 'package:inventory_management/model/orders_model.dart';
 import 'package:logger/logger.dart';
@@ -410,16 +411,13 @@ class AccountsProvider with ChangeNotifier {
         body: jsonEncode({'orderIds': selectedOrderIds}),
       );
 
-      if (response.statusCode == 200) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Orders updated successfully')),
-        );
+      final res = jsonDecode(response.body);
 
+      if (response.statusCode == 200) {
+        Utils.showSnackBar(context, res['message'], color: Colors.green);
         return true;
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Failed to update orders')),
-        );
+        Utils.showSnackBar(context, res['message'], color: Colors.red);
         return false;
       }
     } catch (error) {

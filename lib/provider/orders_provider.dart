@@ -4,7 +4,6 @@ import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
-import 'package:inventory_management/Custom-Files/utils.dart';
 import 'package:inventory_management/constants/constants.dart';
 import 'package:inventory_management/model/orders_model.dart';
 import 'package:logger/logger.dart';
@@ -88,6 +87,11 @@ class OrdersProvider with ChangeNotifier {
   OrdersProvider() {
     searchControllerReady = TextEditingController();
     searchControllerFailed = TextEditingController();
+  }
+
+  void resetProgress() {
+    _progressMessage = '';
+    notifyListeners();
   }
 
   void resetReadyFilterData() {
@@ -1025,7 +1029,7 @@ class OrdersProvider with ChangeNotifier {
 
     try {
       var response = await http.post(
-        Uri.parse('${await Constants.getBaseUrl()}/orders/splitOrder?order_id=$orderId'),
+        Uri.parse('${await Constants.getBaseUrl()}/splitOrder?order_id=$orderId'),
         body: jsonEncode({
           'product_sku': productSkus,
           'weightLimit': weightLimit,

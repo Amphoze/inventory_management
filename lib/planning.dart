@@ -3,6 +3,7 @@ import 'dart:developer';
 import 'dart:js_interop';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 import 'package:inventory_management/constants/constants.dart';
 import 'package:inventory_management/provider/location_provider.dart';
@@ -23,18 +24,16 @@ class UIConstants {
   static const BorderRadius defaultBorderRadius = BorderRadius.all(Radius.circular(12));
 }
 
-class PlanningScreen extends StatefulWidget {
-  const PlanningScreen({super.key});
+class MaterialPlanning extends StatefulWidget {
+  const MaterialPlanning({super.key});
 
   @override
-  _PlanningScreenState createState() => _PlanningScreenState();
+  _MaterialPlanningState createState() => _MaterialPlanningState();
 }
 
-
-class _PlanningScreenState extends State<PlanningScreen> with SingleTickerProviderStateMixin {
+class _MaterialPlanningState extends State<MaterialPlanning> with SingleTickerProviderStateMixin {
   int selectedMonth = DateTime.now().month;
   int selectedYear = DateTime.now().year;
-
 
   String? selectedWarehouse;
   List<String> selectedMarketplaces = [];
@@ -81,7 +80,6 @@ class _PlanningScreenState extends State<PlanningScreen> with SingleTickerProvid
     });
   }
 
-
   Future<void> _fetchPlanningData() async {
     if (!_formKey.currentState!.validate()) {
       setState(() => statusMessage = "Please fill all required fields.");
@@ -99,7 +97,7 @@ class _PlanningScreenState extends State<PlanningScreen> with SingleTickerProvid
 
     var payload = {
       "month": selectedMonth,
-      "days" : days.text.trim(),
+      "days": days.text.trim(),
       "year": selectedYear,
       "warehouse": selectedWarehouse,
       "marketplace": selectedMarketplaces,
@@ -136,7 +134,7 @@ class _PlanningScreenState extends State<PlanningScreen> with SingleTickerProvid
     }
   }
 
-    void _triggerDownload(String csvContent, String fileName) {
+  void _triggerDownload(String csvContent, String fileName) {
     final csvWithBom = '\uFEFF$csvContent';
     final bytes = Uint8List.fromList(utf8.encode(csvWithBom));
     final blob = web.Blob(
@@ -172,11 +170,9 @@ class _PlanningScreenState extends State<PlanningScreen> with SingleTickerProvid
 
   @override
   Widget build(BuildContext context) {
-
     final int currentYear = DateTime.now().year;
 
     return Scaffold(
-
       backgroundColor: Colors.grey[100],
       appBar: AppBar(
         title: const Text(
@@ -196,7 +192,6 @@ class _PlanningScreenState extends State<PlanningScreen> with SingleTickerProvid
           ),
         ),
       ),
-
       body: Center(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24),
@@ -205,23 +200,17 @@ class _PlanningScreenState extends State<PlanningScreen> with SingleTickerProvid
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-
-
                 _buildRow([
-
-
                   _buildSelectionCard(
                     title: "Choose Days",
-
                     child: _buildTextField(
                       controller: days,
-                       label: 'Days',
+                      label: 'Days',
+                      keyboardType: TextInputType.number
                     ),
                   ),
-
                   _buildSelectionCard(
                     title: "Select Month",
-
                     child: _buildStyledDropdown<int>(
                       value: selectedMonth,
                       items: List.generate(12, (index) => index + 1),
@@ -229,14 +218,13 @@ class _PlanningScreenState extends State<PlanningScreen> with SingleTickerProvid
                       onChanged: (value) => setState(() => selectedMonth = value!),
                     ),
                   ),
-
                   _buildSelectionCard(
                     title: "Select Year",
                     child: _buildStyledDropdown<int>(
                       value: selectedYear,
                       items: List.generate(
                         currentYear - (currentYear - 5) + 1,
-                            (index) => currentYear - 5 + index,
+                        (index) => currentYear - 5 + index,
                       ),
                       itemBuilder: (item) => item.toString(),
                       onChanged: (value) => setState(() => selectedYear = value!),
@@ -244,7 +232,6 @@ class _PlanningScreenState extends State<PlanningScreen> with SingleTickerProvid
                   ),
                 ]),
                 const SizedBox(height: UIConstants.spacing),
-
                 _buildRow([
                   _buildSelectionCard(
                     title: "Select Warehouse",
@@ -258,7 +245,6 @@ class _PlanningScreenState extends State<PlanningScreen> with SingleTickerProvid
                       ),
                     ),
                   ),
-
                   _buildSelectionCard(
                     title: "Select Marketplace",
                     child: Container(
@@ -278,20 +264,15 @@ class _PlanningScreenState extends State<PlanningScreen> with SingleTickerProvid
                         buttonIcon: const Icon(Icons.arrow_drop_down_outlined, color: AppColors.black),
                         initialValue: selectedMarketplaces,
                         onConfirm: (values) => setState(() => selectedMarketplaces = List.from(values)),
-
                         decoration: BoxDecoration(
                           border: Border.all(color: Colors.transparent),
                           color: Colors.white,
-
                         ),
-
                         chipDisplay: MultiSelectChipDisplay.none(),
                       ),
                     ),
                   )
-
                 ]),
-
                 if (selectedMarketplaces.isNotEmpty)
                   Align(
                     alignment: Alignment.centerRight,
@@ -310,22 +291,18 @@ class _PlanningScreenState extends State<PlanningScreen> with SingleTickerProvid
                           runSpacing: 6,
                           children: selectedMarketplaces
                               .map((marketplace) => Chip(
-                            label: Text(
-                              marketplace,
-                              style: TextStyle(color: Colors.white),
-                            ),
-                            backgroundColor: Colors.blueAccent,
-                          ))
+                                    label: Text(
+                                      marketplace,
+                                      style: TextStyle(color: Colors.white),
+                                    ),
+                                    backgroundColor: Colors.blueAccent,
+                                  ))
                               .toList(),
                         ),
                       ),
                     ),
                   ),
-
                 const SizedBox(height: UIConstants.spacing),
-
-
-
                 ElevatedButton(
                   onPressed: isLoading ? null : _fetchPlanningData,
                   style: ElevatedButton.styleFrom(
@@ -339,14 +316,14 @@ class _PlanningScreenState extends State<PlanningScreen> with SingleTickerProvid
                     duration: const Duration(milliseconds: 300),
                     child: isLoading
                         ? const SizedBox(
-                      width: 24,
-                      height: 24,
-                      child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
-                    )
+                            width: 24,
+                            height: 24,
+                            child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                          )
                         : const Text(
-                      "Start Planing",
-                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
-                    ),
+                            "Start Planing",
+                            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
+                          ),
                   ),
                 ),
                 const SizedBox(height: UIConstants.spacing),
@@ -371,7 +348,6 @@ class _PlanningScreenState extends State<PlanningScreen> with SingleTickerProvid
                       ),
                     ),
                   ),
-
               ],
             ),
           ),
@@ -382,7 +358,6 @@ class _PlanningScreenState extends State<PlanningScreen> with SingleTickerProvid
 
   Widget _buildSelectionCard({required String title, required Widget child}) {
     return Card(
-
       elevation: 4,
       shape: RoundedRectangleBorder(borderRadius: UIConstants.defaultBorderRadius),
       child: Padding(
@@ -402,7 +377,6 @@ class _PlanningScreenState extends State<PlanningScreen> with SingleTickerProvid
     );
   }
 
-
   Widget _buildPreviewTable() {
     return DataTable(
       decoration: BoxDecoration(
@@ -415,17 +389,19 @@ class _PlanningScreenState extends State<PlanningScreen> with SingleTickerProvid
         DataColumn(label: Text("Required", style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white))),
         DataColumn(label: Text("In Warehouse", style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white))),
       ],
-      rows: csvPreviewData.map((item) => DataRow(
-        color: MaterialStateProperty.resolveWith<Color?>((Set<MaterialState> states) {
-          return states.contains(MaterialState.selected) ? Colors.blue.shade100 : null;
-        }),
-        cells: [
-          DataCell(Text(item["sku"].toString())),
-          DataCell(Text(item["totalQuantitySold"].toString())),
-          DataCell(Text(item["required"].toString())),
-          DataCell(Text(item["totalQuantityInWarehouse"].toString())),
-        ],
-      )).toList(),
+      rows: csvPreviewData
+          .map((item) => DataRow(
+                color: MaterialStateProperty.resolveWith<Color?>((Set<MaterialState> states) {
+                  return states.contains(MaterialState.selected) ? Colors.blue.shade100 : null;
+                }),
+                cells: [
+                  DataCell(Text(item["sku"].toString())),
+                  DataCell(Text(item["totalQuantitySold"].toString())),
+                  DataCell(Text(item["required"].toString())),
+                  DataCell(Text(item["totalQuantityInWarehouse"].toString())),
+                ],
+              ))
+          .toList(),
       border: TableBorder.all(color: Colors.black45, width: 1),
       columnSpacing: 20,
       headingRowColor: MaterialStateProperty.all(AppColors.primaryBlue),
@@ -434,10 +410,10 @@ class _PlanningScreenState extends State<PlanningScreen> with SingleTickerProvid
 
   Widget _buildRow(List<Widget> children) {
     return Row(
-      children: children.map((child) => Expanded(child: Padding(padding: const EdgeInsets.symmetric(horizontal: 4), child: child))).toList(),
+      children:
+          children.map((child) => Expanded(child: Padding(padding: const EdgeInsets.symmetric(horizontal: 4), child: child))).toList(),
     );
   }
-
 
   Widget _buildStyledDropdown<T>({
     required T? value,
@@ -469,28 +445,23 @@ class _PlanningScreenState extends State<PlanningScreen> with SingleTickerProvid
     );
   }
 
-
-
   void _showPreviewDialog() {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-
         title: const Text("Material Planning"),
         content: SingleChildScrollView(
-          child: SizedBox(
-            width: MediaQuery.of(context).size.width * 0.5,
-            child:  Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                _buildPreviewTable(),
-                const SizedBox(height: 20),
-              ],
-            ),
-          )
-        ),
+            child: SizedBox(
+          width: MediaQuery.of(context).size.width * 0.5,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _buildPreviewTable(),
+              const SizedBox(height: 20),
+            ],
+          ),
+        )),
         actions: [
-
           ElevatedButton(
             style: ElevatedButton.styleFrom(
               padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 24),
@@ -512,8 +483,9 @@ class _PlanningScreenState extends State<PlanningScreen> with SingleTickerProvid
             ),
           ),
 
-          SizedBox(width: 18,),
-
+          SizedBox(
+            width: 18,
+          ),
 
           ElevatedButton(
             style: ElevatedButton.styleFrom(
@@ -540,7 +512,6 @@ class _PlanningScreenState extends State<PlanningScreen> with SingleTickerProvid
         ],
       ),
     );
-
   }
 
   Widget _buildTextField({
@@ -560,10 +531,11 @@ class _PlanningScreenState extends State<PlanningScreen> with SingleTickerProvid
       child: TextFormField(
         controller: controller,
         focusNode: focusNode,
+        inputFormatters: [if (keyboardType == TextInputType.number) FilteringTextInputFormatter.digitsOnly],
         // maxLength: label == 'Vendor Phone' ? 10 : null,
         decoration: InputDecoration(
           hintText: isRequired ? '$label *' : label,
-          hintStyle: TextStyle(color: AppColors.primaryBlue),
+          hintStyle: const TextStyle(color: AppColors.primaryBlue),
           border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
           enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),

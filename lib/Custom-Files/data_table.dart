@@ -148,10 +148,7 @@ class _InventoryDataTableState extends State<InventoryDataTable> {
                             onPressed: () {
                               final inventoryId = data['inventoryId'];
                               if (inventoryId != null) {
-                                // Check if inventoryId exists
-
                                 _showDetailsDialog(context, data);
-                                //_showDetailsDialog(context, inventoryId);
                               } else {
                                 print(
                                     'Inventory ID not found for the selected item.');
@@ -827,7 +824,7 @@ class _InventoryDataTableState extends State<InventoryDataTable> {
                                     _buildDetailsSection(
                                       updatedBy: log['updatedBy'],
                                       source: log['source'],
-                                      reason: log['additionalInfo']?['reason'],
+                                      reason: log['additionalInfo']?['reason'] ?? '',
                                     ),
 
                                     // Warehouse section if available
@@ -904,153 +901,6 @@ class _InventoryDataTableState extends State<InventoryDataTable> {
       },
     );
   }
-
-// Helper Widget for Detail Rows
-  // Widget _buildDetailRow(String label, String value) {
-  //   return Padding(
-  //     padding: const EdgeInsets.only(bottom: 6),
-  //     child: RichText(
-  //       text: TextSpan(
-  //         text: '$label ',
-  //         style: const TextStyle(
-  //           fontWeight: FontWeight.bold,
-  //           color: Colors.black,
-  //         ),
-  //         children: [
-  //           TextSpan(
-  //             text: value,
-  //             style: const TextStyle(
-  //               fontWeight: FontWeight.normal,
-  //               color: Colors.black,
-  //             ),
-  //           ),
-  //         ],
-  //       ),
-  //     ),
-  //   );
-  // }
-
-  // void _showDetailsDialog(BuildContext context, String inventoryId) async {
-  //   final inventoryProvider = Provider.of<InventoryProvider>(context,listen: false);
-
-  //   await inventoryProvider.fetchInventoryById(inventoryId);
-  //   inventoryProvider
-  //       .notifyListeners();
-
-  //   final item = inventoryProvider.inventory.firstWhere(
-  //         (element) => element['inventoryId'] == inventoryId,
-  //     //orElse: () => null,
-  //   );
-
-  //   if (item == null) {
-  //     print('Inventory item not found');
-  //     return;  // Exit if no item found
-  //   }
-
-  //   // Extract and cast inventory logs
-  //   List<dynamic> inventoryLogs = [];
-  //   if (item['inventoryLogs'] is List) {
-  //     inventoryLogs = item['inventoryLogs'] as List<dynamic>;  // Safe cast
-  //   }
-
-  //   // Display data in dialog
-  //   showDialog(
-  //     context: context,
-  //     builder: (BuildContext context) {
-  //       return AlertDialog(
-  //         title: Column(
-  //           children: [
-  //             Container(
-  //               height: 30,
-  //               width: 100,
-  //               child: Text(
-  //                 'Updated Details ${item['PRODUCT NAME'] ?? 'Unknown Product'}',
-  //                 style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-  //               ),
-  //             ),
-  //           ],
-  //         ),
-  //         content: Container(
-  //           width: 500,  // Set width to maximum available
-  //           constraints: BoxConstraints(
-  //             maxHeight: MediaQuery.of(context).size.height * 0.4,  // Max height of 40% of screen
-  //           ),
-  //           child: SingleChildScrollView(
-  //             child: Column(
-  //               crossAxisAlignment: CrossAxisAlignment.start,
-  //               children: [
-  //                 Text(
-  //                   'Inventory Logs:',
-  //                   style: TextStyle(
-  //                     fontWeight: FontWeight.bold,
-  //                     fontSize: 16,
-  //                   ),
-  //                 ),
-  //                 const SizedBox(height: 10),
-
-  //                 // Check if there are any logs and render them
-  //                 if (inventoryLogs.isNotEmpty)
-  //                   Column(
-  //                     children: inventoryLogs.map((log) {
-  //                       // Handle log display here
-  //                       IconData icon;
-  //                       Color iconColor;
-  //                       double size = 30;
-
-  //                       if (log['changeType'] == 'Addition') {
-  //                         icon = Icons.add;
-  //                         iconColor = Colors.green;
-  //                       } else if (log['changeType'] == 'Subtraction') {
-  //                         icon = Icons.remove;
-  //                         iconColor = Colors.red;
-  //                       } else {
-  //                         icon = Icons.info;
-  //                         iconColor = Colors.grey;
-  //                       }
-
-  //                       return Card(
-  //                         margin: const EdgeInsets.symmetric(vertical: 8),
-  //                         elevation: 2,
-  //                         child: Padding(
-  //                           padding: const EdgeInsets.all(8.0),
-  //                           child: Row(
-  //                             crossAxisAlignment: CrossAxisAlignment.start,
-  //                             children: [
-  //                               Expanded(
-  //                                 child: Column(
-  //                                   crossAxisAlignment: CrossAxisAlignment.start,
-  //                                   children: [
-  //                                     LabelValueText(
-  //                                       label: 'Quantity Changed: ',
-  //                                       value: '${log['quantityChanged']}',
-  //                                     ),
-  //                                     // Additional fields
-  //                                   ],
-  //                                 ),
-  //                               ),
-  //                               Icon(icon, color: iconColor, size: size),
-  //                             ],
-  //                           ),
-  //                         ),
-  //                       );
-  //                     }).toList(),
-  //                   )
-  //                 else
-  //                   const Center(child: Text('No inventory logs available')),
-  //               ],
-  //             ),
-  //           ),
-  //         ),
-  //         actions: [
-  //           TextButton(
-  //             onPressed: () => Navigator.of(context).pop(),
-  //             child: const Text('Close', style: TextStyle(color: Colors.white)),
-  //           ),
-  //         ],
-  //       );
-  //     },
-  //   );
-  // }
 }
 
 class OuterboxDataTable extends StatefulWidget {
@@ -1423,7 +1273,6 @@ class _OuterboxDataTableState extends State<OuterboxDataTable> {
 
   void _showDetailsDialog(
       BuildContext context, Map<String, dynamic> data) async {
-    // List<dynamic> logs = data['LOGS'] ?? [];
     List<dynamic> logs = (data['LOGS'] as List?)?.reversed.toList() ?? [];
 
 
@@ -1648,154 +1497,6 @@ class _OuterboxDataTableState extends State<OuterboxDataTable> {
       },
     );
   }
-
-// Helper Widget for Detail Rows
-  // Widget _buildDetailRow(String label, String value) {
-  //   return Padding(
-  //     padding: const EdgeInsets.only(bottom: 6),
-  //     child: RichText(
-  //       text: TextSpan(
-  //         text: '$label ',
-  //         style: const TextStyle(
-  //           fontWeight: FontWeight.bold,
-  //           color: Colors.black,
-  //         ),
-  //         children: [
-  //           TextSpan(
-  //             text: value,
-  //             style: const TextStyle(
-  //               fontWeight: FontWeight.normal,
-  //               color: Colors.black,
-  //             ),
-  //           ),
-  //         ],
-  //       ),
-  //     ),
-  //   );
-  // }
-
-  // void _showDetailsDialog(BuildContext context, String inventoryId) async {
-  //   final inventoryProvider = Provider.of<InventoryProvider>(context,listen: false);
-  //
-  //   await inventoryProvider.fetchInventoryById(inventoryId);
-  //   inventoryProvider
-  //       .notifyListeners();
-  //
-  //   final item = inventoryProvider.inventory.firstWhere(
-  //         (element) => element['inventoryId'] == inventoryId,
-  //     //orElse: () => null,
-  //   );
-  //
-  //   if (item == null) {
-  //     print('Inventory item not found');
-  //     return;  // Exit if no item found
-  //   }
-  //
-  //   // Extract and cast inventory logs
-  //   List<dynamic> inventoryLogs = [];
-  //   if (item['inventoryLogs'] is List) {
-  //     inventoryLogs = item['inventoryLogs'] as List<dynamic>;  // Safe cast
-  //   }
-  //
-  //
-  //   // Display data in dialog
-  //   showDialog(
-  //     context: context,
-  //     builder: (BuildContext context) {
-  //       return AlertDialog(
-  //         title: Column(
-  //           children: [
-  //             Container(
-  //               height: 30,
-  //               width: 100,
-  //               child: Text(
-  //                 'Updated Details ${item['PRODUCT NAME'] ?? 'Unknown Product'}',
-  //                 style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-  //               ),
-  //             ),
-  //           ],
-  //         ),
-  //         content: Container(
-  //           width: 500,  // Set width to maximum available
-  //           constraints: BoxConstraints(
-  //             maxHeight: MediaQuery.of(context).size.height * 0.4,  // Max height of 40% of screen
-  //           ),
-  //           child: SingleChildScrollView(
-  //             child: Column(
-  //               crossAxisAlignment: CrossAxisAlignment.start,
-  //               children: [
-  //                 Text(
-  //                   'Inventory Logs:',
-  //                   style: TextStyle(
-  //                     fontWeight: FontWeight.bold,
-  //                     fontSize: 16,
-  //                   ),
-  //                 ),
-  //                 const SizedBox(height: 10),
-  //
-  //                 // Check if there are any logs and render them
-  //                 if (inventoryLogs.isNotEmpty)
-  //                   Column(
-  //                     children: inventoryLogs.map((log) {
-  //                       // Handle log display here
-  //                       IconData icon;
-  //                       Color iconColor;
-  //                       double size = 30;
-  //
-  //                       if (log['changeType'] == 'Addition') {
-  //                         icon = Icons.add;
-  //                         iconColor = Colors.green;
-  //                       } else if (log['changeType'] == 'Subtraction') {
-  //                         icon = Icons.remove;
-  //                         iconColor = Colors.red;
-  //                       } else {
-  //                         icon = Icons.info;
-  //                         iconColor = Colors.grey;
-  //                       }
-  //
-  //                       return Card(
-  //                         margin: const EdgeInsets.symmetric(vertical: 8),
-  //                         elevation: 2,
-  //                         child: Padding(
-  //                           padding: const EdgeInsets.all(8.0),
-  //                           child: Row(
-  //                             crossAxisAlignment: CrossAxisAlignment.start,
-  //                             children: [
-  //                               Expanded(
-  //                                 child: Column(
-  //                                   crossAxisAlignment: CrossAxisAlignment.start,
-  //                                   children: [
-  //                                     LabelValueText(
-  //                                       label: 'Quantity Changed: ',
-  //                                       value: '${log['quantityChanged']}',
-  //                                     ),
-  //                                     // Additional fields
-  //                                   ],
-  //                                 ),
-  //                               ),
-  //                               Icon(icon, color: iconColor, size: size),
-  //                             ],
-  //                           ),
-  //                         ),
-  //                       );
-  //                     }).toList(),
-  //                   )
-  //                 else
-  //                   const Center(child: Text('No inventory logs available')),
-  //               ],
-  //             ),
-  //           ),
-  //         ),
-  //         actions: [
-  //           TextButton(
-  //             onPressed: () => Navigator.of(context).pop(),
-  //             child: const Text('Close', style: TextStyle(color: Colors.white)),
-  //           ),
-  //         ],
-  //       );
-  //     },
-  //   );
-  // }
 }
 
 class LabelValueText extends StatelessWidget {
