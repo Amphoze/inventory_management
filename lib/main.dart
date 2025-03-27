@@ -4,6 +4,7 @@ import 'dart:html' as html;
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:inventory_management/Api/auth_provider.dart';
 import 'package:inventory_management/Api/bin_api.dart';
 import 'package:inventory_management/Api/label-api.dart';
@@ -59,6 +60,7 @@ import 'provider/create_order_provider.dart';
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
 void main() async {
+  await dotenv.load(fileName: ".env"); // Load .env file
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,

@@ -240,7 +240,8 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
     String billingCountryCode = countryCodes[billingCountry] ?? '';
 
     _billingCountryController = TextEditingController(text: billingCountry);
-    _billingCountryCodeController = TextEditingController(text: billingCountryCode.isEmpty ? widget.order.billingAddress?.countryCode ?? '' : billingCountryCode);
+    _billingCountryCodeController =
+        TextEditingController(text: billingCountryCode.isEmpty ? widget.order.billingAddress?.countryCode ?? '' : billingCountryCode);
 
     _shippingFirstNameController = TextEditingController(text: widget.order.shippingAddress?.firstName ?? '');
     _shippingLastNameController = TextEditingController(text: widget.order.shippingAddress?.lastName ?? '');
@@ -256,7 +257,8 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
     String shippingCountryCode = countryCodes[billingCountry] ?? '';
 
     _shippingCountryController = TextEditingController(text: shippingCountry);
-    _shippingCountryCodeController = TextEditingController(text: shippingCountryCode.isEmpty ? widget.order.shippingAddress?.countryCode ?? '' : shippingCountryCode);
+    _shippingCountryCodeController =
+        TextEditingController(text: shippingCountryCode.isEmpty ? widget.order.shippingAddress?.countryCode ?? '' : shippingCountryCode);
 
     log("_prepaidAmountController: ${_prepaidAmountController.text}");
     log("_discountPercentController: ${_discountPercentController.text}");
@@ -604,17 +606,23 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
   }
 
   Future<void> _saveChanges() async {
-    // if (double.parse(_codAmountController.text) + double.parse(_prepaidAmountController.text) != double.parse(_totalAmtController.text)) {
-    //   Utils.showSnackBar(context, "Total amount must be equal to the sum of cod amount and prepaid amount");
-    //   return;
-    // }
-    //
-    // if (double.parse(_totalAmtController.text) > double.parse(_originalAmtController.text)) {
-    //   Utils.showSnackBar(context, "Total amount cannot be greater than original amount");
-    //   return;
-    // }
+    double codAmount = double.tryParse(_codAmountController.text.trim()) ?? 0;
+    double prepaidAmount = double.tryParse(_prepaidAmountController.text.trim()) ?? 0;
+    double totalAmount = double.tryParse(_totalAmtController.text.trim()) ?? 0;
 
-    _validateAmounts(context);
+    log('COD Amount :- $codAmount');
+    log('Pre Paid Amount :- $prepaidAmount');
+    log('Total Amount :- $totalAmount');
+
+    if (codAmount + prepaidAmount != totalAmount) {
+      Utils.showSnackBar(context, "Total amount must be equal to the sum of cod amount and prepaid amount");
+      return;
+    }
+
+    if ((_billingStateController.text.trim().length < 3) || (_shippingStateController.text.trim().length < 3)) {
+      Utils.showSnackBar(context, 'State name must be at least 3 characters long');
+      return;
+    }
 
     if ((_billingStateController.text.trim().length < 3) || (_shippingStateController.text.trim().length < 3)) {
       Utils.showSnackBar(context, 'State name must be at least 3 characters long');
@@ -766,23 +774,21 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
         'items': itemsList,
       };
 
-      log("ddd: $updatedData");
-
       try {
-        await Provider.of<OrdersProvider>(context, listen: false).updateOrder(widget.order.id, updatedData);
+        final res = await Provider.of<OrdersProvider>(context, listen: false).updateOrder(widget.order.id, updatedData);
 
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Order updated successfully!')),
-        );
-
+        if (res['success'] == true) {
+          Utils.showSnackBar(context, res['message'], color: Colors.green);
+          Navigator.pop(context, true);
+        } else {
+          Utils.showSnackBar(context, res['message'], color: Colors.red);
+        }
         // final ordersProvider = Provider.of<OrdersProvider>(context, listen: false);
         // ordersProvider.fetchReadyOrders();
         // ordersProvider.fetchFailedOrders();
-        context.read<AccountsProvider>().fetchOrdersWithStatus2();
-        context.read<BookProvider>().fetchPaginatedOrdersB2B(1);
-        context.read<BookProvider>().fetchPaginatedOrdersB2C(1);
-
-        Navigator.pop(context, true);
+        // context.read<AccountsProvider>().fetchOrdersWithStatus2();
+        // context.read<BookProvider>().fetchPaginatedOrdersB2B(1);
+        // context.read<BookProvider>().fetchPaginatedOrdersB2C(1);
       } catch (error) {
         // ScaffoldMessenger.of(context).showSnackBar(
         //   const SnackBar(content: Text('Failed to update order.')),
@@ -1028,13 +1034,10 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
 
             // Update totals
             _totalWeightController.text =
-                (double.parse(_totalWeightController.text) - (fetchedCombo.comboWeight ?? 0.0))
-                    .toStringAsFixed(2);
-            _totalAmtController.text =
-                (double.parse(_totalAmtController.text) -
-                    double.parse(_addedComboRateControllers[index].text) *
-                        int.parse(_addedComboQuantityControllers[index].text))
-                    .toStringAsFixed(2);
+                (double.parse(_totalWeightController.text) - (fetchedCombo.comboWeight ?? 0.0)).toStringAsFixed(2);
+            _totalAmtController.text = (double.parse(_totalAmtController.text) -
+                    double.parse(_addedComboRateControllers[index].text) * int.parse(_addedComboQuantityControllers[index].text))
+                .toStringAsFixed(2);
 
             // Remove controllers
             _addedComboQuantityControllers.removeAt(index);
@@ -1082,7 +1085,7 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
       }
     } catch (e, s) {
       log('_deleteCombo error: $e $s');
-    } finally{
+    } finally {
       Navigator.pop(context);
     }
   }
@@ -2157,9 +2160,7 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
                                 ),
                               ],
                             ),
-
                             const SizedBox(height: 10),
-
                             Row(
                               children: [
                                 Expanded(
@@ -2170,28 +2171,24 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
                                   ),
                                 ),
                                 const SizedBox(width: 10),
-
-                                (_billingCountryController.text.trim().isEmpty || _billingCountryController.text.trim().toLowerCase() == 'india')
-                                    ?
-                                Expanded(
-                                  child: CustomerSearchableTextField(
-                                    items: indianStates,
-                                    controller: _billingStateController,
-                                    icon: Icons.map,
-                                    label: 'State',
-                                  ),
-                                )
-                                    :
-                                Expanded(
-                                  child: _buildTextField(
-                                    controller: _billingStateController,
-                                    label: 'State',
-                                    icon: Icons.map,
-                                  ),
-                                ),
-
+                                (_billingCountryController.text.trim().isEmpty ||
+                                        _billingCountryController.text.trim().toLowerCase() == 'india')
+                                    ? Expanded(
+                                        child: CustomerSearchableTextField(
+                                          items: indianStates,
+                                          controller: _billingStateController,
+                                          icon: Icons.map,
+                                          label: 'State',
+                                        ),
+                                      )
+                                    : Expanded(
+                                        child: _buildTextField(
+                                          controller: _billingStateController,
+                                          label: 'State',
+                                          icon: Icons.map,
+                                        ),
+                                      ),
                                 const SizedBox(width: 10),
-
                                 Expanded(
                                   child: _buildTextField(
                                     controller: _billingCountryController,
@@ -2317,28 +2314,24 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
                                   ),
                                 ),
                                 const SizedBox(width: 10),
-
-                                (_shippingCountryController.text.trim().isEmpty || _shippingCountryController.text.trim().toLowerCase() == 'india')
-                                    ?
-                                Expanded(
-                                  child: CustomerSearchableTextField(
-                                    items: indianStates,
-                                    controller: _shippingStateController,
-                                    label: 'State',
-                                    icon: Icons.map,
-                                  ),
-                                )
-                                    :
-                                Expanded(
-                                  child: _buildTextField(
-                                    controller: _shippingStateController,
-                                    label: 'State',
-                                    icon: Icons.map,
-                                  ),
-                                ),
-
+                                (_shippingCountryController.text.trim().isEmpty ||
+                                        _shippingCountryController.text.trim().toLowerCase() == 'india')
+                                    ? Expanded(
+                                        child: CustomerSearchableTextField(
+                                          items: indianStates,
+                                          controller: _shippingStateController,
+                                          label: 'State',
+                                          icon: Icons.map,
+                                        ),
+                                      )
+                                    : Expanded(
+                                        child: _buildTextField(
+                                          controller: _shippingStateController,
+                                          label: 'State',
+                                          icon: Icons.map,
+                                        ),
+                                      ),
                                 const SizedBox(width: 10),
-
                                 Expanded(
                                   child: _buildTextField(
                                     controller: _shippingCountryController,
@@ -3276,7 +3269,6 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
   }
 
   Future<void> getLocationDetails({required BuildContext context, required String pincode, required bool isBilling}) async {
-
     Utils.showLoadingDialog(context, 'Fetching Address');
 
     try {
@@ -3302,7 +3294,6 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
             _billingStateController.text = state;
             _billingCityController.text = city;
             _billingCountryCodeController.text = countryCode;
-
           } else {
             _shippingCountryController.text = country;
             _shippingStateController.text = state;
@@ -3311,7 +3302,6 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
           }
 
           setState(() {});
-
         } else {
           log('No location details found for the provided pincode :- ${response.body}');
           Utils.showSnackBar(context, 'No location details found for the provided pincode.');

@@ -724,7 +724,7 @@ class _OrdersNewPageState extends State<OrdersNewPage> with TickerProviderStateM
                                         ),
                                         Row(
                                           children: [
-                                            if (order.totalWeight > 20)
+                                            // if (order.totalWeight > 20)
                                               const Chip(
                                                 // color: WidgetStatePropertyAll(Colors.red),
                                                 label: Text(
