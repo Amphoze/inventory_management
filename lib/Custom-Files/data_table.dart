@@ -52,7 +52,7 @@ class CustomDataTable extends StatelessWidget {
         scrollDirection: Axis.vertical,
         child: DataTable(
           headingRowColor: WidgetStateColor.resolveWith(
-            (states) => AppColors.green.withOpacity(0.2),
+            (states) => AppColors.green.withValues(alpha: 0.2),
           ),
           columns: columns,
           rows: rows,
@@ -90,7 +90,7 @@ class _InventoryDataTableState extends State<InventoryDataTable> {
         scrollDirection: Axis.vertical,
         child: DataTable(
           headingRowColor: WidgetStateColor.resolveWith(
-            (states) => AppColors.blueAccent.withOpacity(0.2),
+            (states) => AppColors.blueAccent.withValues(alpha: 0.2),
           ),
           columns: widget.columnNames.map((name) {
             return DataColumn(
@@ -148,10 +148,7 @@ class _InventoryDataTableState extends State<InventoryDataTable> {
                             onPressed: () {
                               final inventoryId = data['inventoryId'];
                               if (inventoryId != null) {
-                                // Check if inventoryId exists
-
                                 _showDetailsDialog(context, data);
-                                //_showDetailsDialog(context, inventoryId);
                               } else {
                                 print(
                                     'Inventory ID not found for the selected item.');
@@ -174,57 +171,57 @@ class _InventoryDataTableState extends State<InventoryDataTable> {
                     Container(
                       constraints: const BoxConstraints(
                           maxWidth: 300), // Prevent excessive width
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisSize: MainAxisSize
-                            .min, // Take minimum required vertical space
-                        children: thresholds.map<Widget>((threshold) {
-                          return Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 2.0),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Expanded(
-                                  child: Row(
-                                    children: [
-                                      const Icon(
-                                        Icons.warehouse,
-                                        size: 14,
-                                        color: Colors.grey,
-                                      ),
-                                      const SizedBox(width: 4),
-                                      Flexible(
-                                        child: Text(
-                                          threshold['warehouseName'] ?? 'N/A',
-                                          style: const TextStyle(fontSize: 13),
-                                          overflow: TextOverflow.ellipsis,
+                      child: SingleChildScrollView(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: thresholds.map<Widget>((threshold) {
+                            return Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 2.0),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Expanded(
+                                    child: Row(
+                                      children: [
+                                        const Icon(
+                                          Icons.warehouse,
+                                          size: 14,
+                                          color: Colors.grey,
                                         ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                Container(
-                                  margin: const EdgeInsets.only(left: 8),
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 6,
-                                    vertical: 2,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: Colors.grey.shade100,
-                                    borderRadius: BorderRadius.circular(4),
-                                  ),
-                                  child: Text(
-                                    threshold['quantity']?.toString() ?? 'N/A',
-                                    style: TextStyle(
-                                      fontSize: 13,
-                                      color: Colors.grey.shade700,
+                                        const SizedBox(width: 4),
+                                        Flexible(
+                                          child: Text(
+                                            threshold['warehouseName'] ?? 'N/A',
+                                            style: const TextStyle(fontSize: 13),
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                        ),
+                                      ],
                                     ),
                                   ),
-                                ),
-                              ],
-                            ),
-                          );
-                        }).toList(),
+                                  Container(
+                                    margin: const EdgeInsets.only(left: 8),
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 6,
+                                      vertical: 2,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: Colors.grey.shade100,
+                                      borderRadius: BorderRadius.circular(4),
+                                    ),
+                                    child: Text(
+                                      threshold['quantity']?.toString() ?? 'N/A',
+                                      style: TextStyle(
+                                        fontSize: 13,
+                                        color: Colors.grey.shade700,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            );
+                          }).toList(),
+                        ),
                       ),
                     ),
                   );
@@ -255,7 +252,7 @@ class _InventoryDataTableState extends State<InventoryDataTable> {
                 } else if (cellData is Widget) {
                   return DataCell(cellData);
                 } else if (columnName == 'THRESHOLD') {
-                  Logger().e('data: ${data['THRESHOLD']}');
+                  // Logger().e('data: ${data['THRESHOLD']}');
 
                   List<dynamic> thresholds =
                       data['THRESHOLD'] ?? []; // Get the list of thresholds
@@ -264,59 +261,59 @@ class _InventoryDataTableState extends State<InventoryDataTable> {
                     Container(
                       constraints: const BoxConstraints(
                           maxWidth: 300), // Prevent excessive width
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisSize: MainAxisSize
-                            .min, // Take minimum required vertical space
-                        children: thresholds.map<Widget>((threshold) {
-                          return Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 2.0),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Expanded(
-                                  child: Row(
-                                    children: [
-                                      const Icon(
-                                        Icons.warehouse,
-                                        size: 14,
-                                        color: Colors.grey,
-                                      ),
-                                      const SizedBox(width: 4),
-                                      Flexible(
-                                        child: Text(
-                                          threshold['warehouseName'] ?? 'N/A',
-                                          style: const TextStyle(fontSize: 13),
-                                          overflow: TextOverflow.ellipsis,
+                      child: SingleChildScrollView(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: thresholds.map<Widget>((threshold) {
+                            return Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 2.0),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Expanded(
+                                    child: Row(
+                                      children: [
+                                        const Icon(
+                                          Icons.warehouse,
+                                          size: 14,
+                                          color: Colors.grey,
                                         ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                Container(
-                                  margin: const EdgeInsets.only(left: 8),
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 6,
-                                    vertical: 2,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: Colors.grey.shade100,
-                                    borderRadius: BorderRadius.circular(4),
-                                  ),
-                                  child: Text(
-                                    threshold['thresholdQuantity']
-                                            ?.toString() ??
-                                        'N/A',
-                                    style: TextStyle(
-                                      fontSize: 13,
-                                      color: Colors.grey.shade700,
+                                        const SizedBox(width: 4),
+                                        Flexible(
+                                          child: Text(
+                                            threshold['warehouseName'] ?? 'N/A',
+                                            style: const TextStyle(fontSize: 13),
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                        ),
+                                      ],
                                     ),
                                   ),
-                                ),
-                              ],
-                            ),
-                          );
-                        }).toList(),
+                                  Container(
+                                    margin: const EdgeInsets.only(left: 8),
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 6,
+                                      vertical: 2,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: Colors.grey.shade100,
+                                      borderRadius: BorderRadius.circular(4),
+                                    ),
+                                    child: Text(
+                                      threshold['thresholdQuantity']
+                                              ?.toString() ??
+                                          'N/A',
+                                      style: TextStyle(
+                                        fontSize: 13,
+                                        color: Colors.grey.shade700,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            );
+                          }).toList(),
+                        ),
                       ),
                     ),
                   );
@@ -514,7 +511,7 @@ class _InventoryDataTableState extends State<InventoryDataTable> {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Icon(icon, color: color, size: 24),
@@ -559,7 +556,7 @@ class _InventoryDataTableState extends State<InventoryDataTable> {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Column(
@@ -681,7 +678,7 @@ class _InventoryDataTableState extends State<InventoryDataTable> {
 
   void _showDetailsDialog(
       BuildContext context, Map<String, dynamic> data) async {
-    List<dynamic> inventoryLogs = data['inventoryLogs'] ?? [];
+    List<dynamic> inventoryLogs = (data['inventoryLogs'] as List?)?.reversed.toList() ?? [];
 
     showDialog(
       context: context,
@@ -696,7 +693,7 @@ class _InventoryDataTableState extends State<InventoryDataTable> {
               borderRadius: BorderRadius.circular(20),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
+                  color: Colors.black.withValues(alpha: 0.1),
                   spreadRadius: 5,
                   blurRadius: 15,
                   offset: const Offset(0, 3),
@@ -712,7 +709,7 @@ class _InventoryDataTableState extends State<InventoryDataTable> {
                     gradient: LinearGradient(
                       colors: [
                         AppColors.primaryBlue,
-                        AppColors.primaryBlue.withOpacity(0.8),
+                        AppColors.primaryBlue.withValues(alpha: 0.8),
                       ],
                     ),
                     borderRadius: const BorderRadius.only(
@@ -827,7 +824,7 @@ class _InventoryDataTableState extends State<InventoryDataTable> {
                                     _buildDetailsSection(
                                       updatedBy: log['updatedBy'],
                                       source: log['source'],
-                                      reason: log['additionalInfo']?['reason'],
+                                      reason: log['additionalInfo']?['reason'] ?? '',
                                     ),
 
                                     // Warehouse section if available
@@ -904,153 +901,6 @@ class _InventoryDataTableState extends State<InventoryDataTable> {
       },
     );
   }
-
-// Helper Widget for Detail Rows
-  // Widget _buildDetailRow(String label, String value) {
-  //   return Padding(
-  //     padding: const EdgeInsets.only(bottom: 6),
-  //     child: RichText(
-  //       text: TextSpan(
-  //         text: '$label ',
-  //         style: const TextStyle(
-  //           fontWeight: FontWeight.bold,
-  //           color: Colors.black,
-  //         ),
-  //         children: [
-  //           TextSpan(
-  //             text: value,
-  //             style: const TextStyle(
-  //               fontWeight: FontWeight.normal,
-  //               color: Colors.black,
-  //             ),
-  //           ),
-  //         ],
-  //       ),
-  //     ),
-  //   );
-  // }
-
-  // void _showDetailsDialog(BuildContext context, String inventoryId) async {
-  //   final inventoryProvider = Provider.of<InventoryProvider>(context,listen: false);
-
-  //   await inventoryProvider.fetchInventoryById(inventoryId);
-  //   inventoryProvider
-  //       .notifyListeners();
-
-  //   final item = inventoryProvider.inventory.firstWhere(
-  //         (element) => element['inventoryId'] == inventoryId,
-  //     //orElse: () => null,
-  //   );
-
-  //   if (item == null) {
-  //     print('Inventory item not found');
-  //     return;  // Exit if no item found
-  //   }
-
-  //   // Extract and cast inventory logs
-  //   List<dynamic> inventoryLogs = [];
-  //   if (item['inventoryLogs'] is List) {
-  //     inventoryLogs = item['inventoryLogs'] as List<dynamic>;  // Safe cast
-  //   }
-
-  //   // Display data in dialog
-  //   showDialog(
-  //     context: context,
-  //     builder: (BuildContext context) {
-  //       return AlertDialog(
-  //         title: Column(
-  //           children: [
-  //             Container(
-  //               height: 30,
-  //               width: 100,
-  //               child: Text(
-  //                 'Updated Details ${item['PRODUCT NAME'] ?? 'Unknown Product'}',
-  //                 style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-  //               ),
-  //             ),
-  //           ],
-  //         ),
-  //         content: Container(
-  //           width: 500,  // Set width to maximum available
-  //           constraints: BoxConstraints(
-  //             maxHeight: MediaQuery.of(context).size.height * 0.4,  // Max height of 40% of screen
-  //           ),
-  //           child: SingleChildScrollView(
-  //             child: Column(
-  //               crossAxisAlignment: CrossAxisAlignment.start,
-  //               children: [
-  //                 Text(
-  //                   'Inventory Logs:',
-  //                   style: TextStyle(
-  //                     fontWeight: FontWeight.bold,
-  //                     fontSize: 16,
-  //                   ),
-  //                 ),
-  //                 const SizedBox(height: 10),
-
-  //                 // Check if there are any logs and render them
-  //                 if (inventoryLogs.isNotEmpty)
-  //                   Column(
-  //                     children: inventoryLogs.map((log) {
-  //                       // Handle log display here
-  //                       IconData icon;
-  //                       Color iconColor;
-  //                       double size = 30;
-
-  //                       if (log['changeType'] == 'Addition') {
-  //                         icon = Icons.add;
-  //                         iconColor = Colors.green;
-  //                       } else if (log['changeType'] == 'Subtraction') {
-  //                         icon = Icons.remove;
-  //                         iconColor = Colors.red;
-  //                       } else {
-  //                         icon = Icons.info;
-  //                         iconColor = Colors.grey;
-  //                       }
-
-  //                       return Card(
-  //                         margin: const EdgeInsets.symmetric(vertical: 8),
-  //                         elevation: 2,
-  //                         child: Padding(
-  //                           padding: const EdgeInsets.all(8.0),
-  //                           child: Row(
-  //                             crossAxisAlignment: CrossAxisAlignment.start,
-  //                             children: [
-  //                               Expanded(
-  //                                 child: Column(
-  //                                   crossAxisAlignment: CrossAxisAlignment.start,
-  //                                   children: [
-  //                                     LabelValueText(
-  //                                       label: 'Quantity Changed: ',
-  //                                       value: '${log['quantityChanged']}',
-  //                                     ),
-  //                                     // Additional fields
-  //                                   ],
-  //                                 ),
-  //                               ),
-  //                               Icon(icon, color: iconColor, size: size),
-  //                             ],
-  //                           ),
-  //                         ),
-  //                       );
-  //                     }).toList(),
-  //                   )
-  //                 else
-  //                   const Center(child: Text('No inventory logs available')),
-  //               ],
-  //             ),
-  //           ),
-  //         ),
-  //         actions: [
-  //           TextButton(
-  //             onPressed: () => Navigator.of(context).pop(),
-  //             child: const Text('Close', style: TextStyle(color: Colors.white)),
-  //           ),
-  //         ],
-  //       );
-  //     },
-  //   );
-  // }
 }
 
 class OuterboxDataTable extends StatefulWidget {
@@ -1080,7 +930,7 @@ class _OuterboxDataTableState extends State<OuterboxDataTable> {
         scrollDirection: Axis.vertical,
         child: DataTable(
           headingRowColor: WidgetStateColor.resolveWith(
-            (states) => AppColors.blueAccent.withOpacity(0.2),
+            (states) => AppColors.blueAccent.withValues(alpha: 0.2),
           ),
           columns: widget.columnNames.map((name) {
             return DataColumn(
@@ -1256,7 +1106,7 @@ class _OuterboxDataTableState extends State<OuterboxDataTable> {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Icon(icon, color: color, size: 24),
@@ -1301,7 +1151,7 @@ class _OuterboxDataTableState extends State<OuterboxDataTable> {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Column(
@@ -1423,7 +1273,8 @@ class _OuterboxDataTableState extends State<OuterboxDataTable> {
 
   void _showDetailsDialog(
       BuildContext context, Map<String, dynamic> data) async {
-    List<dynamic> logs = data['LOGS'] ?? [];
+    List<dynamic> logs = (data['LOGS'] as List?)?.reversed.toList() ?? [];
+
 
     showDialog(
       context: context,
@@ -1438,7 +1289,7 @@ class _OuterboxDataTableState extends State<OuterboxDataTable> {
               borderRadius: BorderRadius.circular(20),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
+                  color: Colors.black.withValues(alpha: 0.1),
                   spreadRadius: 5,
                   blurRadius: 15,
                   offset: const Offset(0, 3),
@@ -1454,7 +1305,7 @@ class _OuterboxDataTableState extends State<OuterboxDataTable> {
                     gradient: LinearGradient(
                       colors: [
                         AppColors.primaryBlue,
-                        AppColors.primaryBlue.withOpacity(0.8),
+                        AppColors.primaryBlue.withValues(alpha: 0.8),
                       ],
                     ),
                     borderRadius: const BorderRadius.only(
@@ -1646,154 +1497,6 @@ class _OuterboxDataTableState extends State<OuterboxDataTable> {
       },
     );
   }
-
-// Helper Widget for Detail Rows
-  // Widget _buildDetailRow(String label, String value) {
-  //   return Padding(
-  //     padding: const EdgeInsets.only(bottom: 6),
-  //     child: RichText(
-  //       text: TextSpan(
-  //         text: '$label ',
-  //         style: const TextStyle(
-  //           fontWeight: FontWeight.bold,
-  //           color: Colors.black,
-  //         ),
-  //         children: [
-  //           TextSpan(
-  //             text: value,
-  //             style: const TextStyle(
-  //               fontWeight: FontWeight.normal,
-  //               color: Colors.black,
-  //             ),
-  //           ),
-  //         ],
-  //       ),
-  //     ),
-  //   );
-  // }
-
-  // void _showDetailsDialog(BuildContext context, String inventoryId) async {
-  //   final inventoryProvider = Provider.of<InventoryProvider>(context,listen: false);
-  //
-  //   await inventoryProvider.fetchInventoryById(inventoryId);
-  //   inventoryProvider
-  //       .notifyListeners();
-  //
-  //   final item = inventoryProvider.inventory.firstWhere(
-  //         (element) => element['inventoryId'] == inventoryId,
-  //     //orElse: () => null,
-  //   );
-  //
-  //   if (item == null) {
-  //     print('Inventory item not found');
-  //     return;  // Exit if no item found
-  //   }
-  //
-  //   // Extract and cast inventory logs
-  //   List<dynamic> inventoryLogs = [];
-  //   if (item['inventoryLogs'] is List) {
-  //     inventoryLogs = item['inventoryLogs'] as List<dynamic>;  // Safe cast
-  //   }
-  //
-  //
-  //   // Display data in dialog
-  //   showDialog(
-  //     context: context,
-  //     builder: (BuildContext context) {
-  //       return AlertDialog(
-  //         title: Column(
-  //           children: [
-  //             Container(
-  //               height: 30,
-  //               width: 100,
-  //               child: Text(
-  //                 'Updated Details ${item['PRODUCT NAME'] ?? 'Unknown Product'}',
-  //                 style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-  //               ),
-  //             ),
-  //           ],
-  //         ),
-  //         content: Container(
-  //           width: 500,  // Set width to maximum available
-  //           constraints: BoxConstraints(
-  //             maxHeight: MediaQuery.of(context).size.height * 0.4,  // Max height of 40% of screen
-  //           ),
-  //           child: SingleChildScrollView(
-  //             child: Column(
-  //               crossAxisAlignment: CrossAxisAlignment.start,
-  //               children: [
-  //                 Text(
-  //                   'Inventory Logs:',
-  //                   style: TextStyle(
-  //                     fontWeight: FontWeight.bold,
-  //                     fontSize: 16,
-  //                   ),
-  //                 ),
-  //                 const SizedBox(height: 10),
-  //
-  //                 // Check if there are any logs and render them
-  //                 if (inventoryLogs.isNotEmpty)
-  //                   Column(
-  //                     children: inventoryLogs.map((log) {
-  //                       // Handle log display here
-  //                       IconData icon;
-  //                       Color iconColor;
-  //                       double size = 30;
-  //
-  //                       if (log['changeType'] == 'Addition') {
-  //                         icon = Icons.add;
-  //                         iconColor = Colors.green;
-  //                       } else if (log['changeType'] == 'Subtraction') {
-  //                         icon = Icons.remove;
-  //                         iconColor = Colors.red;
-  //                       } else {
-  //                         icon = Icons.info;
-  //                         iconColor = Colors.grey;
-  //                       }
-  //
-  //                       return Card(
-  //                         margin: const EdgeInsets.symmetric(vertical: 8),
-  //                         elevation: 2,
-  //                         child: Padding(
-  //                           padding: const EdgeInsets.all(8.0),
-  //                           child: Row(
-  //                             crossAxisAlignment: CrossAxisAlignment.start,
-  //                             children: [
-  //                               Expanded(
-  //                                 child: Column(
-  //                                   crossAxisAlignment: CrossAxisAlignment.start,
-  //                                   children: [
-  //                                     LabelValueText(
-  //                                       label: 'Quantity Changed: ',
-  //                                       value: '${log['quantityChanged']}',
-  //                                     ),
-  //                                     // Additional fields
-  //                                   ],
-  //                                 ),
-  //                               ),
-  //                               Icon(icon, color: iconColor, size: size),
-  //                             ],
-  //                           ),
-  //                         ),
-  //                       );
-  //                     }).toList(),
-  //                   )
-  //                 else
-  //                   const Center(child: Text('No inventory logs available')),
-  //               ],
-  //             ),
-  //           ),
-  //         ),
-  //         actions: [
-  //           TextButton(
-  //             onPressed: () => Navigator.of(context).pop(),
-  //             child: const Text('Close', style: TextStyle(color: Colors.white)),
-  //           ),
-  //         ],
-  //       );
-  //     },
-  //   );
-  // }
 }
 
 class LabelValueText extends StatelessWidget {

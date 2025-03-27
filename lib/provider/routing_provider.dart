@@ -1,19 +1,23 @@
+import 'dart:convert';
 import 'dart:developer';
+
+import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
 import 'package:inventory_management/constants/constants.dart';
-import 'package:logger/logger.dart';
-import 'package:flutter/material.dart';
 import 'package:inventory_management/model/orders_model.dart'; // Ensure you have the Order model defined here
+import 'package:logger/logger.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
 
 class RoutingProvider with ChangeNotifier {
   bool allSelected = false;
+
   // bool allSelectedFailed = false;
   int selectedItemsCount = 0;
+
   // int selectedFailedItemsCount = 0;
   List<bool> _selectedOrders = [];
+
   // List<bool> _selectedFailedOrders = [];
   List<Order> readyOrders = []; // List to store fetched ready orders
   // List<Order> failedOrders = []; // List to store fetched failed orders
@@ -27,6 +31,7 @@ class RoutingProvider with ChangeNotifier {
   String _expectedDeliveryDate = '';
   String _paymentDateTime = '';
   String _normalDate = '';
+
   // List<Order> readyOrders = [];
   // List<Order> failedOrders = [];
 
@@ -44,13 +49,21 @@ class RoutingProvider with ChangeNotifier {
   // List<Order> get failedOrder => _failedOrder;
 
   String? get selectedCourier => _selectedCourier;
+
   String? get selectedPayment => _selectedPayment;
+
   String? get selectedMarketplace => _selectedMarketplace;
+
   String? get selectedOrderType => _selectedOrderType;
+
   String? get selectedCustomerType => _selectedCustomerType;
+
   String? get selectedFilter => _selectedFilter;
+
   String get expectedDeliveryDate => _expectedDeliveryDate;
+
   String get paymentDateTime => _paymentDateTime;
+
   String get normalDate => _normalDate;
 
   bool isConfirm = false;
@@ -95,8 +108,7 @@ class RoutingProvider with ChangeNotifier {
 
   // Method to set an initial value for pre-filling
   void setInitialPaymentMode(String? paymentMode) {
-    _selectedPayment =
-        (paymentMode == null || paymentMode.isEmpty) ? null : paymentMode;
+    _selectedPayment = (paymentMode == null || paymentMode.isEmpty) ? null : paymentMode;
     notifyListeners();
   }
 
@@ -130,8 +142,7 @@ class RoutingProvider with ChangeNotifier {
 
   // Method to set an initial value for pre-filling
   void setInitialMarketplace(String? marketplace) {
-    _selectedMarketplace =
-        (marketplace == null || marketplace.isEmpty) ? null : marketplace;
+    _selectedMarketplace = (marketplace == null || marketplace.isEmpty) ? null : marketplace;
     notifyListeners();
   }
 
@@ -163,7 +174,7 @@ class RoutingProvider with ChangeNotifier {
   }
 
   Future<void> fetchOrders({int page = 1, DateTime? date}) async {
-    log('date: $date');
+    log('routing fetchOrders: $date');
     // Ensure the requested page number is valid
     if (page < 1 || page > totalReadyPages) {
       print('Invalid page number for orders: $page');
@@ -173,15 +184,17 @@ class RoutingProvider with ChangeNotifier {
     isLoading = true;
     notifyListeners();
 
-    String readyOrdersUrl =
-        '${await ApiUrls.getBaseUrl()}/orders/getHoldOrders?page=$page';
+    final prefs = await SharedPreferences.getInstance();
+    final warehouseId = prefs.getString('warehouseId') ?? '';
 
-    if (date != null || date == 'Select Date') {
-      String formattedDate = DateFormat('yyyy-MM-dd').format(date!);
+    String readyOrdersUrl = '${await Constants.getBaseUrl()}/orders/getHoldOrders?warehouse=$warehouseId&page=$page';
+
+    if (date != null) {
+      String formattedDate = DateFormat('yyyy-MM-dd').format(date);
       readyOrdersUrl += '&date=$formattedDate';
     }
 
-    log("url: $readyOrdersUrl");
+    log("routing url: $readyOrdersUrl");
 
     // Get the auth token
     final token = await _getToken();
@@ -190,29 +203,30 @@ class RoutingProvider with ChangeNotifier {
     if (token == null || token.isEmpty) {
       isLoading = false;
       notifyListeners();
-      print('Token is missing. Please log in again.');
+      log('Token is missing. Please log in again.');
       return; // Stop execution if there's no token
     }
 
     try {
       // Fetch ready orders
-      final response = await http.get(Uri.parse(readyOrdersUrl), headers: {
-        'Authorization': 'Bearer $token',
-        'Content-Type': 'application/json',
-      });
+      final response = await http.get(
+        Uri.parse(readyOrdersUrl),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+      );
 
       log('status: ${response.statusCode}');
       // log('body: ${response.body}');
 
       if (response.statusCode == 200) {
         final jsonData = json.decode(response.body);
-        readyOrders = (jsonData['orders'] as List)
-            .map((order) => Order.fromJson(order))
-            .toList();
+        readyOrders = (jsonData['orders'] as List).map((order) => Order.fromJson(order)).toList();
         totalReadyPages = jsonData['totalPages'] ?? 1; // Update total pages
         currentPageReady = page; // Update the current page for ready orders
 
-        log("readyOrders: $readyOrders");
+        log("routing orders: $readyOrders");
 
         // Reset selections
         resetSelections();
@@ -229,9 +243,8 @@ class RoutingProvider with ChangeNotifier {
     }
   }
 
-  Future<String> routeOrders(
-      BuildContext context, List<String> orderIds) async {
-    String baseUrl = await ApiUrls.getBaseUrl();
+  Future<String> routeOrders(BuildContext context, List<String> orderIds) async {
+    String baseUrl = await Constants.getBaseUrl();
     String url = '$baseUrl/orders/updateHoldOrders';
     final String? token = await _getToken();
     setConfirmStatus(true);
@@ -274,8 +287,7 @@ class RoutingProvider with ChangeNotifier {
         setConfirmStatus(false);
         notifyListeners(); // Notify the UI to rebuild
 
-        return responseData['message'] + "$orderIds" ??
-            'Orders Confirmed successfully';
+        return responseData['message'] + "$orderIds" ?? 'Orders Confirmed successfully';
       } else {
         return responseData['message'] ?? 'Failed to route orders';
       }
@@ -292,11 +304,8 @@ class RoutingProvider with ChangeNotifier {
 
   void toggleSelectAllReady(bool isSelected) {
     allSelected = isSelected;
-    selectedItemsCount = isSelected
-        ? readyOrders.length
-        : 0; // Update count based on selection state
-    _selectedOrders = List<bool>.filled(
-        readyOrders.length, isSelected); // Update selection list
+    selectedItemsCount = isSelected ? readyOrders.length : 0; // Update count based on selection state
+    _selectedOrders = List<bool>.filled(readyOrders.length, isSelected); // Update selection list
 
     notifyListeners();
   }
@@ -304,9 +313,7 @@ class RoutingProvider with ChangeNotifier {
   void toggleOrderSelectionReady(bool value, int index) {
     if (index >= 0 && index < _selectedOrders.length) {
       _selectedOrders[index] = value;
-      selectedItemsCount = _selectedOrders
-          .where((selected) => selected)
-          .length; // Update count of selected items
+      selectedItemsCount = _selectedOrders.where((selected) => selected).length; // Update count of selected items
 
       // Check if all selected
       allSelected = selectedItemsCount == readyOrders.length;
@@ -349,8 +356,10 @@ class RoutingProvider with ChangeNotifier {
   }
 
   Future<void> searchOrders(String orderId) async {
-    final url = Uri.parse(
-        '${await ApiUrls.getBaseUrl()}/orders/getHoldOrders?order_id=$orderId');
+    final prefs = await SharedPreferences.getInstance();
+    final warehouseId = prefs.getString('warehouseId') ?? '';
+    
+    final url = Uri.parse('${await Constants.getBaseUrl()}/orders/getHoldOrders?warehouse=$warehouseId&order_id=$orderId');
     final token = await _getToken();
     if (token == null) return;
 
@@ -369,7 +378,9 @@ class RoutingProvider with ChangeNotifier {
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         log('data: $data');
-        readyOrders = [Order.fromJson(data)];
+        readyOrders = [
+          Order.fromJson(data)
+        ];
         // log('readyOrders: $readyOrders');
       } else {
         readyOrders = [];
@@ -383,13 +394,11 @@ class RoutingProvider with ChangeNotifier {
     }
   }
 
-  Future<void> fetchOrdersByMarketplace(String marketplace, int page,
-      {DateTime? date}) async {
-    String baseUrl = await ApiUrls.getBaseUrl();
+  Future<void> fetchOrdersByMarketplace(String marketplace, int page, {DateTime? date}) async {
+    String baseUrl = await Constants.getBaseUrl();
 
     // Build URL with base parameters
-    String url =
-        '$baseUrl/orders/getHoldOrders?marketplace=$marketplace&page=$page';
+    String url = '$baseUrl/orders/getHoldOrders?marketplace=$marketplace&page=$page';
 
     // Add date parameter if provided
     if (date != null || date == 'Select Date') {
@@ -399,8 +408,7 @@ class RoutingProvider with ChangeNotifier {
 
     log("url: $url");
 
-    String? token =
-        await _getToken(); // Assuming you have a method to get the token
+    String? token = await _getToken(); // Assuming you have a method to get the token
     if (token == null) {
       print('Token is null, unable to fetch orders.');
       return;
@@ -427,16 +435,13 @@ class RoutingProvider with ChangeNotifier {
 
       if (response.statusCode == 200) {
         final jsonResponse = jsonDecode(response.body);
-        List<Order> orders = (jsonResponse['orders'] as List)
-            .map((orderJson) => Order.fromJson(orderJson))
-            .toList();
+        List<Order> orders = (jsonResponse['orders'] as List).map((orderJson) => Order.fromJson(orderJson)).toList();
 
         Logger().e("length: ${orders.length}");
 
         readyOrders = orders;
         currentPageReady = page; // Track current page for B2B
-        totalReadyPages =
-            jsonResponse['totalPages']; // Assuming API returns total pages
+        totalReadyPages = jsonResponse['totalPages']; // Assuming API returns total pages
         notifyListeners();
       } else if (response.statusCode == 401) {
         print('Unauthorized access - Token might be expired or invalid.');
@@ -449,7 +454,7 @@ class RoutingProvider with ChangeNotifier {
         throw Exception('Failed to load orders: ${response.statusCode}');
       }
     } catch (e) {
-      print('Error fetching orders: $e');
+      log('Error fetching orders: $e');
     } finally {
       isLoading = false;
       notifyListeners();

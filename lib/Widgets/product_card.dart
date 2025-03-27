@@ -14,181 +14,203 @@ class ProductCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      color: AppColors.lightGrey,
-      elevation: 0.5,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(8),
-      ),
-      margin: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 8.0),
-      child: Padding(
-        padding: const EdgeInsets.all(12.0),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildProductColumn(),
-            const SizedBox(width: 8.0),
-            Expanded(
-              child: _buildDetailsColumn(),
-            ),
-          ],
+    return SizedBox(
+      width: double.infinity,
+      child: Card(
+        color: AppColors.lightGrey,
+        elevation: 2,
+        margin: const EdgeInsets.symmetric(vertical: 4.0, horizontal: 8.0),
+        child: ExpansionTile(
+          title: _buildHeader(),
+          children: [_buildExpandedDetails()],
         ),
       ),
     );
   }
 
-  Column _buildProductColumn() {
-    return Column(
-      children: [
-        const Text(
-          'Product',
-          // 'Product ${index + 1}',
-          style: TextStyle(fontWeight: FontWeight.bold),
-          textAlign: TextAlign.center,
-        ),
-        const SizedBox(height: 2.0),
-        if (product.shopifyImage != null && product.shopifyImage!.isNotEmpty)
-          Image.network(
-            product.shopifyImage!,
-            key: ValueKey(product.shopifyImage),
-            width: 140,
-            height: 140,
-            fit: BoxFit.cover,
-            errorBuilder: (context, error, stackTrace) {
-              return const SizedBox(
-                width: 100,
-                height: 100,
-                child: Icon(
-                  Icons.image,
-                  size: 70,
-                  color: AppColors.grey,
-                ),
-              );
-            },
-          )
-        else
-          const SizedBox(
-            width: 100,
-            height: 100,
-            child: Icon(
-              Icons.image,
-              size: 70,
-              color: AppColors.grey,
-            ),
-          ),
-        const SizedBox(height: 5.0),
-        SizedBox(
-          width: 370,
-          child: Text(
-            product.displayName,
-            style: const TextStyle(
-              fontSize: 15,
-              color: Colors.black,
-            ),
-            textAlign: TextAlign.center,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-          ),
-        ),
-      ],
-    );
-  }
-
-  Column _buildDetailsColumn() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _buildInfoRow('SKU:', product.sku ?? ''),
-        _buildInfoRow('Description:', product.description ?? ''),
-        _buildInfoRow('Technical Name:', product.technicalName ?? ''),
-        _buildInfoRow('Parent SKU:', product.parentSku ?? ''),
-        const Divider(),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Expanded(
-              child: _buildFirstDetailsColumn(),
-            ),
-            const SizedBox(width: 8.0),
-            Expanded(
-              child: _buildSecondDetailsColumn(),
-            ),
-            const SizedBox(width: 8.0),
-            Expanded(
-              child: _buildThirdDetailsColumn(),
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-
-  Column _buildFirstDetailsColumn() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _buildInfoRow(
-          'Dimensions:',
-          product.dimensions != null
-              ? '${product.dimensions!.length ?? ''} x ${product.dimensions!.width ?? ''} x ${product.dimensions!.height ?? ''}'
-              : '',
-        ),
-        _buildInfoRow('Tax Rule:', product.taxRule ?? ''),
-        _buildInfoRow('Brand:', product.brand?.name ?? ''),
-        _buildInfoRow('MRP:', product.mrp != null ? 'Rs.${product.mrp}' : ''),
-        _buildInfoRow(
-            'Cost:', product.cost != null ? 'Rs.${product.cost}' : ''),
-      ],
-    );
-  }
-
-  Column _buildSecondDetailsColumn() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _buildInfoRow('EAN:', product.ean?.toString() ?? ''),
-        _buildInfoRow('Product Grade:', product.grade ?? ''),
-        _buildInfoRow(
-            'Active:', product.active != null ? product.active.toString() : ''),
-        _buildInfoRow('Label:', product.label?.name ?? ''),
-        _buildInfoRow('Category:', product.category?.name ?? ''),
-      ],
-    );
-  }
-
-  Column _buildThirdDetailsColumn() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // _buildInfoRow('Color:', product.color!.name ?? ''),
-        _buildInfoRow('Net Weight:',
-            product.netWeight != null ? '${product.netWeight} kg' : ''),
-        _buildInfoRow('Gross Weight:',
-            product.grossWeight != null ? '${product.grossWeight} kg' : ''),
-        // _buildInfoRow('Box Size:', product.boxSize?.boxName ?? ''),
-        _buildInfoRow('Outer Package Name:',
-            product.outerPackage?.outerPackageName ?? ''),
-        _buildInfoRow('Variant Name:', product.variantName ?? ''),
-      ],
-    );
-  }
-
-  Widget _buildInfoRow(String label, String value) {
+  Widget _buildHeader() {
     return Row(
       children: [
-        Text(
-          '$label ',
-          style: const TextStyle(fontWeight: FontWeight.bold),
-        ),
-        Flexible(
-          child: Text(
-            value,
-            style: const TextStyle(fontSize: 12),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
+        _buildProductImage(),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                product.displayName,
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+              const SizedBox(height: 4),
+              Text(
+                'SKU: ${product.sku ?? ''}',
+                style: const TextStyle(
+                  fontSize: 13,
+                  color: Colors.grey,
+                ),
+              ),
+              const SizedBox(height: 4),
+              _buildPriceRow(),
+            ],
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildProductImage() {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(8),
+      child: product.shopifyImage != null && product.shopifyImage!.isNotEmpty
+          ? Image.network(
+        product.shopifyImage!,
+        width: 80,
+        height: 80,
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) => _buildPlaceholderIcon(),
+      )
+          : _buildPlaceholderIcon(),
+    );
+  }
+
+  Widget _buildPlaceholderIcon() {
+    return Container(
+      width: 80,
+      height: 80,
+      color: Colors.grey[200],
+      child: const Icon(
+        Icons.image,
+        size: 40,
+        color: Colors.grey,
+      ),
+    );
+  }
+
+  Widget _buildPriceRow() {
+    return Row(
+      children: [
+        _buildInfoChip(
+          'MRP: Rs.${product.mrp ?? ''}',
+          Colors.green[100]!,
+        ),
+        const SizedBox(width: 8),
+        _buildInfoChip(
+          'Cost: Rs.${product.cost ?? ''}',
+          Colors.blue[100]!,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildInfoChip(String label, Color color) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: color,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Text(
+        label,
+        style: const TextStyle(fontSize: 12),
+      ),
+    );
+  }
+
+  Widget _buildExpandedDetails() {
+    return Padding(
+      padding: const EdgeInsets.all(8.0),
+      child: Column(
+        children: [
+          _buildDetailSection(
+            'Product Details',
+            {
+              'Brand': product.brand?.name ?? '',
+              'Description': product.description ?? '',
+              'Technical Name': product.technicalName ?? '',
+              'Parent SKU': product.parentSku ?? '',
+            },
+          ),
+          const Divider(height: 24),
+          _buildDetailSection(
+            'Specifications',
+            {
+              'Dimensions': product.dimensions != null
+                  ? '${product.dimensions!.length ?? ''} x ${product.dimensions!.width ?? ''} x ${product.dimensions!.height ?? ''}'
+                  : '',
+              'Net Weight': product.netWeight != null ? '${product.netWeight} kg' : '',
+              'Gross Weight': product.grossWeight != null ? '${product.grossWeight} kg' : '',
+              'Category': product.category?.name ?? '',
+              'Variant Name': product.variantName ?? '',
+            },
+          ),
+          const Divider(height: 24),
+          _buildDetailSection(
+            'Additional Information',
+            {
+              'EAN': product.ean?.toString() ?? '',
+              'Product Grade': product.grade ?? '',
+              'Active': product.active?.toString() ?? '',
+              'Label': product.label?.name ?? '',
+              'Tax Rule': product.taxRule ?? '',
+              'Outer Package': product.outerPackage?.outerPackageName ?? '',
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDetailSection(String title, Map<String, String> details) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          title,
+          style: const TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.bold,
+            color: Colors.grey,
+          ),
+        ),
+        const SizedBox(height: 8),
+        ...details.entries
+            .where((entry) => entry.value.isNotEmpty)
+            .map((entry) => _buildDetailRow(entry.key, entry.value)),
+      ],
+    );
+  }
+
+  Widget _buildDetailRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 4),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 100,
+            child: Text(
+              label,
+              style: const TextStyle(
+                fontSize: 13,
+                color: Colors.black54,
+              ),
+            ),
+          ),
+          Expanded(
+            child: Text(
+              value,
+              style: const TextStyle(fontSize: 13),
+              maxLines: 3,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

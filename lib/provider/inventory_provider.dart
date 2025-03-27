@@ -9,44 +9,35 @@ import '../Api/auth_provider.dart';
 import 'package:flutter/material.dart';
 
 class InventoryProvider with ChangeNotifier {
-  List<Map<String, dynamic>> inventory = [];
-  int currentPage = 1;
-  int rowsPerPage = 20;
-  int totalPages = 1;
-  bool isLoading = false;
+  List<Map<String, dynamic>> _inventory = [];
+  int _currentPage = 1;
+  int _rowsPerPage = 20;
+  int _totalPages = 1;
+  bool _isLoading = false;
   String? errorMessage;
+  String selectedSearchBy = 'productSku';
 
-  // late final String baseUrl;
+  List<Map<String, dynamic>> get inventory => _inventory;
+  int get currentPage => _currentPage;
+  int get rowsPerPage => _rowsPerPage;
+  int get totalPages => _totalPages;
+  bool get isLoading => _isLoading;
 
-  // InventoryProvider() {
-  //   initialize();
-  // }
-
-  // Future<void> initialize() async {
-  //   baseUrl = await ApiUrls.getBaseUrl();
-  // }
-
-  // Getters
-  // List<Map<String, dynamic>> get inventory => inventory;
-  // int get totalPages => totalPages;
-  // int get currentPage => currentPage;
-  // //int get totalPages => (_inventory.length / _rowsPerPage).ceil();
-  // bool get isLoading => isLoading;
-  // String? get errorMessage => errorMessage;
-
-  // Toggle loading state
-  void toggleLoading() {
-    isLoading = !isLoading;
+  void setSelectedSearchBy(String value) {
+    selectedSearchBy = value;
     notifyListeners();
   }
 
-  // Update current page
+  void setLoading(bool value) {
+    _isLoading = value;
+    notifyListeners();
+  }
+
   void updateCurrentPage(int page) {
-    currentPage = page;
+    _currentPage = page;
     notifyListeners();
   }
 
-  // Go to a specific page
   void goToPage(int page) {
     if (page >= 1 && page <= totalPages) {
       fetchInventory(page: page);
@@ -60,78 +51,25 @@ class InventoryProvider with ChangeNotifier {
   }
 
   Map<String, dynamic>? inventoryDetail;
-  // Map<String, dynamic>? get inventoryDetail => inventoryDetail;
   List<dynamic> inventoryD = [];
-  //bool isLoading = false;
-
-  // Future<void> fetchInventoryById(String inventoryId) async {
-  //   //_isLoading=true;
-  //   _errorMessage = null; // Reset error message
-  //   _inventoryDetail = null; // Reset the inventory detail
-  //   notifyListeners();
-  //   final url =
-  //       Uri.parse('$baseUrl/inventory/$inventoryId'); // URL for fetching by ID
-  //   try {
-  //     final token =
-  //         await AuthProvider().getToken(); // Get the authentication token
-  //     if (token == null) {
-  //       _errorMessage = 'No token found';
-  //       notifyListeners();
-  //       return;
-  //     }
-  //     final response = await http.get(
-  //       url,
-  //       headers: {
-  //         'Content-Type': 'application/json',
-  //         'Authorization': 'Bearer $token',
-  //       },
-  //     );
-  //     // Print the raw response for debugging purposes
-  //     // log('Response Status Code: ${response.statusCode}');
-  //     // log('Response Body: ${response.body}');
-  //     if (response.statusCode == 200) {
-  //       final data = json.decode(response.body);
-  //       // Check if the data contains what you're expecting
-  //       if (data != null && data is Map<String, dynamic>) {
-  //         log('Parsed Data: $data'); // Log parsed data for debugging
-  //         _inventoryDetail = data; // Store the fetched inventory detail
-  //         notifyListeners();
-  //       } else {
-  //         _errorMessage =
-  //             'No data found for this inventory ID or unexpected response structure';
-  //         log('Data structure issue: $data');
-  //       }
-  //     } else {
-  //       _errorMessage =
-  //           'Failed to fetch inventory. Status code: ${response.statusCode}';
-  //     }
-  //   } catch (error) {
-  //     _errorMessage = 'An error occurred: $error';
-  //     log('Error: $error');
-  //   } finally {
-  //     notifyListeners();
-  //   }
-  // }
 
   Future<void> fetchInventory({int page = 1}) async {
-    String baseUrl = await ApiUrls.getBaseUrl();
-    isLoading = true;
+    String baseUrl = await Constants.getBaseUrl();
+    setLoading(true);
     errorMessage = null;
-    notifyListeners();
 
     final pref = await SharedPreferences.getInstance();
     final warehouseId = pref.getString('warehouseId');
 
     log('ye hai id: $warehouseId');
 
-    final url = Uri.parse(
-        '$baseUrl/inventory/warehouse?warehouse=$warehouseId&page=$page&limit=20'); // Adjust limit as needed
+    final url = Uri.parse('$baseUrl/inventory/warehouse?warehouse=$warehouseId&page=$page&limit=20'); // Adjust limit as needed
 
     try {
       final token = await AuthProvider().getToken();
       if (token == null) {
         errorMessage = 'No token found';
-        isLoading = false;
+        setLoading(false);
         notifyListeners();
         return;
       }
@@ -148,31 +86,27 @@ class InventoryProvider with ChangeNotifier {
         final data = json.decode(response.body);
         if (data.containsKey('data')) {
           // Process inventory data with default values
-          List<Map<String, dynamic>> fetchedInventory =
-              List<Map<String, dynamic>>.from(data['data']['inventories'])
-                  .map((item) {
+          List<Map<String, dynamic>> fetchedInventory = List<Map<String, dynamic>>.from(data['data']['inventories']).map((item) {
             final inventoryId = item['_id'].toString() ?? '';
             final product = item['product_id'] ?? {};
             final category = product['category'] ?? {};
             final brand = product['brand'] ?? {};
             final boxsize = product['boxSize'] ?? {};
-            final subInventories = item['subInventory'];
-            log('subInventories: $subInventories');
+            final subInventories = item['subInventory'] ?? [];
+            // log('subInventories: $subInventories');
             List<dynamic> subData = subInventories.map((subInventory) {
               return {
-                'warehouseId': subInventory['warehouseId']['_id'],
-                'warehouseName': subInventory['warehouseId']['name'],
-                'thresholdQuantity': subInventory['thresholdQuantity'],
-                'quantity': subInventory['quantity']
+                'warehouseId': subInventory['warehouseId']?['_id'] ?? '',
+                'warehouseName': subInventory['warehouseId']?['name'] ?? '',
+                'thresholdQuantity': subInventory['thresholdQuantity'] ?? 0,
+                'quantity': subInventory['quantity'] ?? 0
               };
             }).toList();
-            log('subData: $subData');
+            // log('subData: $subData');
 
-            final thresholdQuantity = subData.firstWhere((element) =>
-                element['warehouseId'] == warehouseId)['thresholdQuantity'];
+            final thresholdQuantity = subData.firstWhere((element) => element['warehouseId'] == warehouseId)['thresholdQuantity'];
 
-            final quantity = subData.firstWhere(
-                (element) => element['warehouseId'] == warehouseId)['quantity'];
+            final quantity = subData.firstWhere((element) => element['warehouseId'] == warehouseId)['quantity'];
 
             return {
               'COMPANY NAME': 'KATYAYANI ORGANICS',
@@ -180,10 +114,8 @@ class InventoryProvider with ChangeNotifier {
               'IMAGE': product['shopifyImage']?.toString() ?? '-',
               'BRAND': brand['name']?.toString() ?? '-',
               'SKU': product['sku']?.toString() ?? '-',
-              'LABEL SKU': product['label'] != null &&
-                      product['label']['labelSku'] != null
-                  ? product['label']['labelSku']?.toString()
-                  : '-',
+              'LABEL SKU':
+                  product['label'] != null && product['label']['labelSku'] != null ? product['label']['labelSku']?.toString() : '-',
               'PRODUCT NAME': product['displayName']?.toString() ?? '-',
               'MRP': product['mrp']?.toString() ?? '-',
               'BOXSIZE': boxsize['box_name']?.toString() ?? '_',
@@ -196,49 +128,46 @@ class InventoryProvider with ChangeNotifier {
             };
           }).toList();
 
-          log('bhaai: $inventory');
+          // log('bhaai: $inventory');
           // log('fetchedInventory: $fetchedInventory');
 
-          inventory = fetchedInventory.reversed.toList();
-          totalPages = data['data']['totalPages'] ?? 1;
-          currentPage = page;
+          _inventory = fetchedInventory.reversed.toList();
+          _totalPages = data['data']['totalPages'] ?? 1;
+          _currentPage = page;
           notifyListeners();
         } else {
           errorMessage = 'Unexpected response format';
           log('Unexpected response format: $data');
         }
       } else {
-        errorMessage =
-            'Failed to fetch inventory. Status code: ${response.statusCode}';
+        errorMessage = 'Failed to fetch inventory. Status code: ${response.statusCode}';
         log('Failed to fetch inventory: ${response.statusCode}');
       }
-    } catch (error) {
+    } catch (error, s) {
       errorMessage = 'An error occurred: $error';
-      log('An error occurred: $error');
+      log('fetchInventory error: $error $s');
     } finally {
-      isLoading = false;
-      notifyListeners();
+      setLoading(false);
     }
   }
 
   final List<Map<String, dynamic>> replicationInventory = [];
 
-  Future<Map<String, dynamic>> searchByInventory(String query) async {
-    String baseUrl = await ApiUrls.getBaseUrl();
+  Future<Map<String, dynamic>> searchByInventory(String query, String searchBy) async {
+    String baseUrl = await Constants.getBaseUrl();
     log(query);
 
     final pref = await SharedPreferences.getInstance();
     final warehouseId = pref.getString('warehouseId');
 
-    final url = Uri.parse(
-        '$baseUrl/inventory/warehouse?warehouse=$warehouseId&productSku=$query');
+    String url = '$baseUrl/inventory/warehouse?warehouse=$warehouseId&$searchBy=$query';
 
-    log('url: $url');
+    log('searchByInventory url: $url');
 
     try {
       final token = await AuthProvider().getToken();
       final response = await http.post(
-        url,
+        Uri.parse(url),
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer $token',
@@ -249,9 +178,7 @@ class InventoryProvider with ChangeNotifier {
         final data = json.decode(response.body);
         if (data.containsKey('data')) {
           // Process fetched inventory data
-          final fetchedInventory =
-              List<Map<String, dynamic>>.from(data["data"]['inventories'])
-                  .map((item) {
+          final fetchedInventory = List<Map<String, dynamic>>.from(data["data"]['inventories']).map((item) {
             final product = item['product_id'] ?? {};
             final category = product['category'] ?? {};
             final brand = product['brand'] ?? {};
@@ -260,20 +187,18 @@ class InventoryProvider with ChangeNotifier {
             final subInventories = item['subInventory'] ?? [];
             List<dynamic> subData = subInventories.map((subInventory) {
               return {
-                'warehouseId': subInventory['warehouseId']['_id'],
-                'warehouseName': subInventory['warehouseId']['name'],
-                'thresholdQuantity': subInventory['thresholdQuantity'],
-                'quantity': subInventory['quantity'],
+                'warehouseId': subInventory['warehouseId']?['_id'] ?? '',
+                'warehouseName': subInventory['warehouseId']?['name'] ?? '',
+                'thresholdQuantity': subInventory['thresholdQuantity'] ?? 0,
+                'quantity': subInventory['quantity'] ?? 0
               };
             }).toList();
 
             log('inventoryId: $inventoryId');
 
-            final thresholdQuantity = subData.firstWhere((element) =>
-                element['warehouseId'] == warehouseId)['thresholdQuantity'];
+            final thresholdQuantity = subData.firstWhere((element) => element['warehouseId'] == warehouseId)['thresholdQuantity'];
 
-            final quantity = subData.firstWhere(
-                (element) => element['warehouseId'] == warehouseId)['quantity'];
+            final quantity = subData.firstWhere((element) => element['warehouseId'] == warehouseId)['quantity'];
 
             return {
               'COMPANY NAME': 'KATYAYANI ORGANICS',
@@ -281,10 +206,8 @@ class InventoryProvider with ChangeNotifier {
               'IMAGE': product['shopifyImage']?.toString() ?? '-',
               'BRAND': brand['name']?.toString() ?? '-',
               'SKU': product['sku']?.toString() ?? '-',
-              'LABEL SKU': product['label'] != null &&
-                      product['label']['labelSku'] != null
-                  ? product['label']['labelSku']?.toString()
-                  : '-',
+              'LABEL SKU':
+                  product['label'] != null && product['label']['labelSku'] != null ? product['label']['labelSku']?.toString() : '-',
               'PRODUCT NAME': product['displayName']?.toString() ?? '-',
               'MRP': product['mrp']?.toString() ?? '-',
               'BOXSIZE': boxsize['box_name']?.toString() ?? '-',
@@ -305,58 +228,42 @@ class InventoryProvider with ChangeNotifier {
           return {'success': false, 'message': 'Unexpected response format'};
         }
       } else {
-        return {
-          'success': false,
-          'message':
-              'Failed to fetch inventory with status code: ${response.statusCode}'
-        };
+        return {'success': false, 'message': 'Failed to fetch inventory with status code: ${response.statusCode}'};
       }
-    } catch (error) {
-      log('An error occurred: $error');
+    } catch (error, s) {
+      log('searchByInventory error: $error $s');
       return {'success': false, 'message': 'An error occurred: $error'};
     }
   }
 
-  bool isLoadings = false;
-
-  // bool get isLoadings => isLoadings;
-
-  void setLoading(bool loading) {
-    isLoadings = loading;
-    notifyListeners();
-  }
-
-  Future<void> filterInventory(String query) async {
+  Future<void> filterInventory(String query, String searchBy) async {
     setLoading(true);
     try {
-      if (query.isEmpty) {
-        inventory = List<Map<String, dynamic>>.from(
-            replicationInventory); // Load all inventory
+      final result = await searchByInventory(query, searchBy);
+      if (result['success']) {
+        _inventory = result["data"];
+        // log(result['data']['inventoryId']);
       } else {
-        final result = await searchByInventory(query);
-        if (result['success']) {
-          inventory = result["data"];
-          // log(result['data']['inventoryId']);
-        } else {
-          log(result['message']);
-        }
+        _inventory = [];
+        log(result['message']);
       }
+    } catch (e, s) {
+      _inventory = [];
+      log('filterInventory error: $e $s');
     } finally {
       setLoading(false);
     }
-    notifyListeners();
   }
 
   void cancelInventorySearch() {
     // Reset the inventory information to the original state
-    inventory = List<Map<String, dynamic>>.from(replicationInventory);
+    _inventory = List<Map<String, dynamic>>.from(replicationInventory);
     notifyListeners(); // Notify listeners about the change
   }
 
-  Future<void> updateInventoryQuantity(String inventoryId, int newQuantity,
-      String warehousId, String reason) async {
-    String baseUrl = await ApiUrls.getBaseUrl();
-    isLoading = true;
+  Future<void> updateInventoryQuantity(String inventoryId, int newQuantity, String warehousId, String reason) async {
+    String baseUrl = await Constants.getBaseUrl();
+    _isLoading = true;
     errorMessage = null;
     notifyListeners();
     log("Id $inventoryId");
@@ -368,7 +275,7 @@ class InventoryProvider with ChangeNotifier {
       final token = await AuthProvider().getToken();
       if (token == null) {
         errorMessage = 'No token found';
-        isLoading = false;
+        _isLoading = false;
         notifyListeners();
         return;
       }
@@ -380,9 +287,11 @@ class InventoryProvider with ChangeNotifier {
           'Authorization': 'Bearer $token',
         },
         body: json.encode({
-          'newTotal': newQuantity,
+          'quantityChange': newQuantity,
+          // 'newTotal': newQuantity,
           'warehouseId': warehousId,
           'additionalInfo': {'reason': reason},
+          'action': 'change'
         }),
       );
 
@@ -390,23 +299,21 @@ class InventoryProvider with ChangeNotifier {
         final data = json.decode(response.body);
         log('Inventory updated: $data');
 
-        final index =
-            inventory.indexWhere((item) => item['_id'] == inventoryId);
+        final index = inventory.indexWhere((item) => item['_id'] == inventoryId);
         if (index != -1) {
           inventory[index]['QUANTITY'] = newQuantity.toString();
           notifyListeners();
         }
       } else {
-        // Print error details for better debugging
-        errorMessage =
-            'Failed to update inventory. Status code: ${response.statusCode}. Response: ${response.body}';
+        // // print error details for better debugging
+        errorMessage = 'Failed to update inventory. Status code: ${response.statusCode}. Response: ${response.body}';
         log(errorMessage.toString());
       }
     } catch (error) {
       errorMessage = 'An error occurred: $error';
       log('An error occurred: $error');
     } finally {
-      isLoading = false;
+      _isLoading = false;
       notifyListeners();
     }
   }
@@ -415,8 +322,8 @@ class InventoryProvider with ChangeNotifier {
     String sku,
     int newQuantity,
   ) async {
-    String baseUrl = await ApiUrls.getBaseUrl();
-    isLoading = true;
+    String baseUrl = await Constants.getBaseUrl();
+    _isLoading = true;
     errorMessage = null;
     notifyListeners();
 
@@ -432,7 +339,7 @@ class InventoryProvider with ChangeNotifier {
       final token = await AuthProvider().getToken();
       if (token == null) {
         errorMessage = 'No token found';
-        isLoading = false;
+        _isLoading = false;
         notifyListeners();
         return;
       }
@@ -454,34 +361,35 @@ class InventoryProvider with ChangeNotifier {
         final data = json.decode(response.body);
         log('Inventory updated: $data');
 
-        final index =
-            inventory.indexWhere((item) => item['_id'] == warehouseId);
+        final index = inventory.indexWhere((item) => item['_id'] == warehouseId);
         if (index != -1) {
           inventory[index]['QUANTITY'] = newQuantity.toString();
           notifyListeners();
         }
       } else {
-        // Print error details for better debugging
-        errorMessage =
-            'Failed to update inventory. Status code: ${response.statusCode}. Response: ${response.body}';
+        // // print error details for better debugging
+        errorMessage = 'Failed to update inventory. Status code: ${response.statusCode}. Response: ${response.body}';
         log(errorMessage.toString());
       }
     } catch (error) {
       errorMessage = 'An error occurred: $error';
       log('An error occurred: $error');
     } finally {
-      isLoading = false;
+      _isLoading = false;
       notifyListeners();
     }
   }
 
   Future<String?> getInventoryItems() async {
-    String baseUrl = await ApiUrls.getBaseUrl();
+    String baseUrl = await Constants.getBaseUrl();
+    final prefs = await SharedPreferences.getInstance();
+    final warehouseId = prefs.getString('warehouseId') ?? '';
+
     // _isLoading = true;
     errorMessage = null;
     notifyListeners();
 
-    final url = Uri.parse('$baseUrl/inventory/download');
+    final url = Uri.parse('$baseUrl/inventory/download?warehouseId=$warehouseId');
 
     try {
       final token = await AuthProvider().getToken();
@@ -510,8 +418,7 @@ class InventoryProvider with ChangeNotifier {
           return null;
         }
       } else {
-        errorMessage =
-            'Failed to get download URL. Status code: ${response.statusCode}';
+        errorMessage = 'Failed to get download URL. Status code: ${response.statusCode}';
         log('Failed to get download URL: ${response.statusCode}');
         return null;
       }

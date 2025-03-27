@@ -15,30 +15,34 @@ class BinProductsPage extends StatefulWidget {
 }
 
 class _BinProductsPageState extends State<BinProductsPage> {
+  final _searchController = TextEditingController();
+
   @override
   void initState() {
-    context.read<BinApi>().fetchBinProducts(widget.binName);
-    context.read<BinApi>().setBinName(widget.binName);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<BinApi>().fetchBinProducts(widget.binName);
+      context.read<BinApi>().setBinName(widget.binName);
+    });
     super.initState();
   }
 
-  Widget _buildProductName(String name) {
-    return Text(
-      name ?? 'No Name',
-      style: const TextStyle(
-        fontWeight: FontWeight.w600,
-        fontSize: 14,
-        color: Colors.black87,
-      ),
-      maxLines: 2,
-      overflow: TextOverflow.ellipsis,
-    );
-  }
+  // Widget _buildProductName(String name) {
+  //   return Text(
+  //     name ?? 'No Name',
+  //     style: const TextStyle(
+  //       fontWeight: FontWeight.w600,
+  //       fontSize: 14,
+  //       color: Colors.black87,
+  //     ),
+  //     maxLines: 2,
+  //     overflow: TextOverflow.ellipsis,
+  //   );
+  // }
 
   @override
   Widget build(BuildContext context) {
     return Consumer<BinApi>(
-      builder: (context, b, child) {
+      builder: (context, provider, child) {
         return Padding(
           padding: const EdgeInsets.all(8.0),
           child: Column(
@@ -48,7 +52,7 @@ class _BinProductsPageState extends State<BinProductsPage> {
                   color: Colors.white,
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.grey.withOpacity(0.15),
+                      color: Colors.grey.withValues(alpha: 0.15),
                       spreadRadius: 2,
                       blurRadius: 8,
                       offset: const Offset(0, 2),
@@ -57,8 +61,7 @@ class _BinProductsPageState extends State<BinProductsPage> {
                   borderRadius: BorderRadius.circular(12),
                 ),
                 // margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
                 child: Row(
                   children: [
                     // Back button with hover effect
@@ -66,7 +69,7 @@ class _BinProductsPageState extends State<BinProductsPage> {
                       color: Colors.transparent,
                       child: InkWell(
                         borderRadius: BorderRadius.circular(8),
-                        onTap: () => b.toggle(true),
+                        onTap: () => provider.toggle(true),
                         child: Padding(
                           padding: const EdgeInsets.all(8.0),
                           child: Row(
@@ -80,10 +83,7 @@ class _BinProductsPageState extends State<BinProductsPage> {
                               const SizedBox(width: 8),
                               Text(
                                 'Back',
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .bodyMedium
-                                    ?.copyWith(
+                                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                                       color: AppColors.primaryBlue,
                                       fontWeight: FontWeight.w500,
                                     ),
@@ -105,12 +105,63 @@ class _BinProductsPageState extends State<BinProductsPage> {
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
+                    Container(
+                      width: 180,
+                      height: 35,
+                      decoration: BoxDecoration(
+                        border: Border.all(
+                          color: AppColors.primaryBlue,
+                          width: 1.5,
+                        ),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: TextField(
+                              controller: _searchController,
+                              decoration: const InputDecoration(
+                                hintText: 'Search Product',
+                                hintStyle: TextStyle(
+                                  color: Color.fromRGBO(117, 117, 117, 1),
+                                  fontSize: 16,
+                                ),
+                                border: InputBorder.none,
+                                contentPadding: EdgeInsets.symmetric(vertical: 11, horizontal: 8),
+                              ),
+                              style: const TextStyle(color: AppColors.black),
+                              onSubmitted: (value) {
+                                provider.searchProducts(widget.binName, value);
+                              },
+                              onChanged: (value) {
+                                if (value.isEmpty) {
+                                  provider.fetchBinProducts(widget.binName);
+                                }
+                              },
+                            ),
+                          ),
+                          if (_searchController.text.isNotEmpty)
+                            InkWell(
+                              child: Icon(
+                                Icons.close,
+                                size: 20,
+                                color: Colors.grey.shade600,
+                              ),
+                              onTap: () {
+                                _searchController.clear();
+                                provider.fetchBinProducts(widget.binName);
+                              },
+                            ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 8),
                     // Quantity indicator with custom container
                     Container(
                       // padding: const EdgeInsets.symmetric(
                       //     horizontal: 16, vertical: 8),
                       decoration: BoxDecoration(
-                        color: AppColors.primaryBlue.withOpacity(0.1),
+                        color: AppColors.primaryBlue.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Row(
@@ -123,11 +174,8 @@ class _BinProductsPageState extends State<BinProductsPage> {
                           ),
                           const SizedBox(width: 8),
                           Text(
-                            "${b.binQty ?? 0}",
-                            style: Theme.of(context)
-                                .textTheme
-                                .titleMedium
-                                ?.copyWith(
+                            "${provider.binQty ?? 0}",
+                            style: Theme.of(context).textTheme.titleMedium?.copyWith(
                                   fontWeight: FontWeight.w600,
                                   color: AppColors.primaryBlue,
                                 ),
@@ -138,7 +186,7 @@ class _BinProductsPageState extends State<BinProductsPage> {
                   ],
                 ),
               ),
-              if (b.isLoadingProducts)
+              if (provider.isLoadingProducts)
                 const Expanded(
                   child: Center(
                     child: LoadingAnimation(
@@ -149,7 +197,7 @@ class _BinProductsPageState extends State<BinProductsPage> {
                     ),
                   ),
                 )
-              else if (b.products.isEmpty)
+              else if (provider.products.isEmpty)
                 const Expanded(
                   child: Center(
                     child: Text(
@@ -168,9 +216,9 @@ class _BinProductsPageState extends State<BinProductsPage> {
                     child: ListView.builder(
                       shrinkWrap: true,
                       physics: const NeverScrollableScrollPhysics(),
-                      itemCount: b.products.length,
+                      itemCount: provider.products.length,
                       itemBuilder: (context, itemIndex) {
-                        final item = b.products[itemIndex];
+                        final item = provider.products[itemIndex];
                         return Container(
                           decoration: BoxDecoration(
                             color: Colors.white,
@@ -181,15 +229,14 @@ class _BinProductsPageState extends State<BinProductsPage> {
                             ),
                             boxShadow: [
                               BoxShadow(
-                                color: Colors.black.withOpacity(0.04),
+                                color: Colors.black.withValues(alpha: 0.04),
                                 offset: const Offset(0, 2),
                                 blurRadius: 4,
                                 spreadRadius: 0,
                               ),
                             ],
                           ),
-                          margin: const EdgeInsets.symmetric(
-                              vertical: 6.0, horizontal: 2.0),
+                          margin: const EdgeInsets.symmetric(vertical: 6.0, horizontal: 2.0),
                           child: Material(
                             color: Colors.transparent,
                             borderRadius: BorderRadius.circular(12),
@@ -199,18 +246,14 @@ class _BinProductsPageState extends State<BinProductsPage> {
                                 // Handle item tap
                               },
                               child: Padding(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 16.0, vertical: 12.0),
+                                padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     // Product Name
                                     Text(
                                       item['displayName'],
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .titleMedium
-                                          ?.copyWith(
+                                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
                                             fontWeight: FontWeight.w600,
                                             color: Colors.black87,
                                             height: 1.2,
@@ -221,8 +264,7 @@ class _BinProductsPageState extends State<BinProductsPage> {
                                     const SizedBox(height: 8),
                                     // SKU and Quantity Row
                                     Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.spaceBetween,
+                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                       children: [
                                         // SKU Container
                                         Container(
@@ -231,10 +273,8 @@ class _BinProductsPageState extends State<BinProductsPage> {
                                             vertical: 4,
                                           ),
                                           decoration: BoxDecoration(
-                                            color: AppColors.lightGrey
-                                                .withOpacity(0.3),
-                                            borderRadius:
-                                                BorderRadius.circular(6),
+                                            color: AppColors.lightGrey.withValues(alpha: 0.3),
+                                            borderRadius: BorderRadius.circular(6),
                                           ),
                                           child: Row(
                                             mainAxisSize: MainAxisSize.min,
@@ -242,8 +282,7 @@ class _BinProductsPageState extends State<BinProductsPage> {
                                               Text(
                                                 'SKU:',
                                                 style: TextStyle(
-                                                  color: Colors
-                                                      .blueAccent.shade700,
+                                                  color: Colors.blueAccent.shade700,
                                                   fontWeight: FontWeight.w500,
                                                   fontSize: 13,
                                                 ),
@@ -267,10 +306,8 @@ class _BinProductsPageState extends State<BinProductsPage> {
                                             vertical: 4,
                                           ),
                                           decoration: BoxDecoration(
-                                            color: Colors.blueAccent
-                                                .withOpacity(0.1),
-                                            borderRadius:
-                                                BorderRadius.circular(6),
+                                            color: Colors.blueAccent.withValues(alpha: 0.1),
+                                            borderRadius: BorderRadius.circular(6),
                                           ),
                                           child: Row(
                                             mainAxisSize: MainAxisSize.min,
@@ -278,15 +315,13 @@ class _BinProductsPageState extends State<BinProductsPage> {
                                               Icon(
                                                 Icons.inventory_2_outlined,
                                                 size: 16,
-                                                color:
-                                                    Colors.blueAccent.shade700,
+                                                color: Colors.blueAccent.shade700,
                                               ),
                                               const SizedBox(width: 4),
                                               Text(
                                                 item['qty'] ?? '0',
                                                 style: TextStyle(
-                                                  color: Colors
-                                                      .blueAccent.shade700,
+                                                  color: Colors.blueAccent.shade700,
                                                   fontWeight: FontWeight.w600,
                                                   fontSize: 14,
                                                 ),
@@ -307,33 +342,33 @@ class _BinProductsPageState extends State<BinProductsPage> {
                   ),
                 ),
               CustomPaginationFooter(
-                currentPage: b.currentPage,
-                totalPages: b.totalPages,
+                currentPage: provider.currentPage,
+                totalPages: provider.totalPages,
                 buttonSize: 30,
-                pageController: b.textEditingController,
+                pageController: provider.textEditingController,
                 onFirstPage: () {
-                  b.goToPage(1);
+                  provider.goToPage(1);
                 },
                 onLastPage: () {
-                  b.goToPage(b.totalPages);
+                  provider.goToPage(provider.totalPages);
                 },
                 onNextPage: () {
-                  if (b.currentPage < b.totalPages) {
-                    b.goToPage(b.currentPage + 1);
+                  if (provider.currentPage < provider.totalPages) {
+                    provider.goToPage(provider.currentPage + 1);
                   }
                 },
                 onPreviousPage: () {
-                  if (b.currentPage > 1) {
-                    b.goToPage(b.currentPage - 1);
+                  if (provider.currentPage > 1) {
+                    provider.goToPage(provider.currentPage - 1);
                   }
                 },
                 onGoToPage: (page) {
-                  b.goToPage(page);
+                  provider.goToPage(page);
                 },
                 onJumpToPage: () {
-                  final page = int.tryParse(b.textEditingController.text);
-                  if (page != null && page > 0 && page <= b.totalPages) {
-                    b.goToPage(page);
+                  final page = int.tryParse(provider.textEditingController.text);
+                  if (page != null && page > 0 && page <= provider.totalPages) {
+                    provider.goToPage(page);
                   }
                 },
               ),

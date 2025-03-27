@@ -6,229 +6,204 @@ import 'package:inventory_management/Custom-Files/colors.dart';
 class BigComboCard extends StatelessWidget {
   final List<Item> items;
   final int index;
-  // final String courierName;
 
   const BigComboCard({
     super.key,
     required this.items,
     required this.index,
-    // required this.courierName,
   });
 
   @override
   Widget build(BuildContext context) {
     if (items.isEmpty || index >= items.length) {
-      return const SizedBox.shrink(); // Return empty widget if data is invalid
+      return const SizedBox.shrink();
     }
 
-    return MouseRegion(
-      cursor: SystemMouseCursors.click,
-      child: GestureDetector(
-        onTap: () {
-          showDialog(
-            context: context,
-            builder: (BuildContext context) {
-              return AlertDialog(
-                title: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Flexible(
-                      child: Text(
-                        '${items[0].comboSku}: ${items[0].comboName!}',
-                        overflow: TextOverflow.ellipsis,
-                        maxLines: 1,
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    // Text(items[0].comboSku ?? ''),
-                    RichText(
-                      text: TextSpan(
-                        children: [
-                          const TextSpan(
-                            text: 'Amount: ',
-                            style: TextStyle(
-                              color: Colors.blueAccent,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          TextSpan(
-                            text:
-                                'Rs.${items[0].comboAmount?.toString() ?? '0'}',
-                            style: const TextStyle(
-                              color: Colors.black87,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-                actions: [
-                  TextButton(
-                    onPressed: () => Navigator.of(context).pop(),
-                    child: const Text(
-                      'Close',
-                      style: TextStyle(
-                          // color: AppColors.cardsred,
-                          ),
-                    ),
-                  ),
-                ],
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8.0)),
-                content: SizedBox(
-                  width: MediaQuery.of(context).size.width * 0.8,
-                  height: MediaQuery.of(context).size.height * 0.8,
-                  child: ListView.builder(
-                    shrinkWrap: true,
-                    itemCount: items.length,
-                    itemBuilder: (context, itemIndex) {
-                      final item = items[itemIndex];
-                      return ProductDetailsCard(
-                        item: item,
-                        index: itemIndex,
-                        // courierName: courierName,
-                      );
-                    },
-                  ),
-                ),
-              );
-            },
-          );
-        },
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            return Card(
-              elevation: 1.0,
-              margin:
-                  const EdgeInsets.symmetric(vertical: 8.0, horizontal: 12.0),
-              child: Padding(
-                padding: const EdgeInsets.all(12.0),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    SizedBox(
-                      width: 150,
-                      child: _buildProductColumn(),
-                    ),
-                    const SizedBox(width: 16.0),
-                    Expanded(
-                      child: _buildDetailsColumn(),
-                    ),
-                  ],
-                ),
-              ),
-            );
-          },
+    return Card(
+      elevation: 2,
+      color: Colors.white,
+      margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(4),
+        onTap: () => _showDetailsDialog(context),
+        child: Padding(
+          padding: const EdgeInsets.all(8),
+          child: Row(
+            children: [
+              _buildComboIcon(),
+              const SizedBox(width: 8),
+              Expanded(child: _buildComboDetails()),
+              _buildAmountChip(),
+            ],
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildProductColumn() {
+  Widget _buildComboIcon() {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        const Text(
-          'Combo',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            fontSize: 16,
+        Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: AppColors.primaryBlue.withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: const Icon(
+            Icons.inventory,
+            size: 24,
             color: AppColors.primaryBlue,
           ),
-          textAlign: TextAlign.center,
         ),
-        const SizedBox(height: 8.0),
-        const SizedBox(
-          width: 80,
-          height: 80,
-          child: Icon(
-            Icons.inventory,
-            size: 50,
+        const SizedBox(height: 4),
+        Text(
+          'Combo ${index + 1}',
+          style: const TextStyle(
+            fontSize: 12,
             color: AppColors.grey,
           ),
         ),
-        const SizedBox(height: 8.0),
+      ],
+    );
+  }
+
+  Widget _buildComboDetails() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
         Text(
           items[0].comboName ?? '',
           style: const TextStyle(
+            fontWeight: FontWeight.w600,
             fontSize: 14,
-            color: Colors.black,
           ),
-          textAlign: TextAlign.center,
-          maxLines: 2,
+          maxLines: 1,
           overflow: TextOverflow.ellipsis,
+        ),
+        const SizedBox(height: 4),
+        Text(
+          'SKU: ${items[0].comboSku ?? ''}',
+          style: const TextStyle(
+            fontSize: 12,
+            color: Colors.grey,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Row(
+          children: [
+            _buildDetailChip(
+              'Qty: ${items[0].qty ?? 0}',
+              Icons.shopping_basket_outlined,
+            ),
+            const SizedBox(width: 8),
+            _buildDetailChip(
+              '${items[0].comboWeight ?? 0} kg',
+              Icons.scale_outlined,
+            ),
+          ],
         ),
       ],
     );
   }
 
-  Widget _buildDetailsColumn() {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _buildInfoRow('SKU:', items[0].comboSku ?? ''),
-        _buildInfoRow('Quantity:', items[0].qty?.toString() ?? '0'),
-        _buildInfoRow(
-            'Amount:', 'Rs.${items[0].comboAmount?.toString() ?? '0'}'),
-        _buildInfoRow('Combo Weight:', items[0].comboWeight?.toString() ?? '0'),
-        if (items.isNotEmpty) ...[
-          const Divider(height: 8),
-          Flexible(
-            child: _buildProductsColumn(),
+  Widget _buildDetailChip(String label, IconData icon) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: Colors.grey.shade100,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 12, color: Colors.grey),
+          const SizedBox(width: 4),
+          Text(
+            label,
+            style: const TextStyle(fontSize: 12),
           ),
         ],
-      ],
+      ),
     );
   }
 
-  Widget _buildProductsColumn() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: items.asMap().entries.map((entry) {
-        final index = entry.key;
-        final item = entry.value;
-        return Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
+  Widget _buildAmountChip() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: AppColors.primaryBlue.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Text(
+        '₹${items[0].comboAmount ?? 0}',
+        style: TextStyle(
+          color: AppColors.primaryBlue,
+          fontWeight: FontWeight.w600,
+          fontSize: 13,
+        ),
+      ),
+    );
+  }
+
+  void _showDetailsDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            Flexible(
-              child:
-                  _buildInfoRow('SKU ${index + 1}:', item.product?.sku ?? ''),
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          items[0].comboName ?? '',
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        Text(
+                          items[0].comboSku ?? '',
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  _buildAmountChip(),
+                ],
+              ),
             ),
+            const Divider(height: 1),
             Flexible(
-              child: _buildInfoRow(
-                  'Product ${index + 1}:', item.product?.displayName ?? ''),
+              child: ListView.separated(
+                shrinkWrap: true,
+                itemCount: items.length,
+                separatorBuilder: (_, __) => const Divider(height: 1),
+                itemBuilder: (context, index) => ProductDetailsCard(
+                  item: items[index],
+                  index: index,
+                ),
+              ),
+            ),
+            const Divider(height: 1),
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Close'),
             ),
           ],
-        );
-      }).toList(),
-    );
-  }
-
-  Widget _buildInfoRow(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 6.0),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            '$label ',
-            style: const TextStyle(
-              fontWeight: FontWeight.bold,
-              fontSize: 14,
-            ),
-          ),
-          Flexible(
-            child: Text(
-              value,
-              style: const TextStyle(fontSize: 14),
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }

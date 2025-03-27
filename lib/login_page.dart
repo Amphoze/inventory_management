@@ -32,7 +32,12 @@ class LoginPage extends StatelessWidget {
                           Color(0xFF125F9D),
                           Colors.white,
                         ],
-                        stops: [0.1, 0.4, 0.7, 0.9],
+                        stops: [
+                          0.1,
+                          0.4,
+                          0.7,
+                          0.9
+                        ],
                       ),
                     ),
                     child: Stack(
@@ -80,7 +85,10 @@ class LoginPage extends StatelessWidget {
                 gradient: LinearGradient(
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
-                  colors: [Colors.white, Color(0xFF003560)],
+                  colors: [
+                    Colors.white,
+                    Color(0xFF003560)
+                  ],
                 ),
               ),
               child: SingleChildScrollView(
@@ -182,14 +190,12 @@ class _LoginFormState extends State<LoginForm> {
     final prefs = await SharedPreferences.getInstance();
     final warehouseId = prefs.getString('warehouseId');
 
-    if (!mounted) return;
+    if (!context.mounted) return;
 
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(
-        builder: (context) => warehouseId == null
-            ? const WarehousesPage()
-            : DashboardPage(warehouseId: warehouseId),
+        builder: (context) => warehouseId == null ? const WarehousesPage() : DashboardPage(warehouseId: warehouseId),
       ),
     );
   }
@@ -241,20 +247,23 @@ class _LoginFormState extends State<LoginForm> {
     return TextFormField(
       controller: _emailController,
       keyboardType: TextInputType.emailAddress,
-      autofillHints: const [AutofillHints.username, AutofillHints.email],
+      autofillHints: const [
+        AutofillHints.username,
+        AutofillHints.email
+      ],
       onEditingComplete: () => TextInput.finishAutofillContext(),
       // Add this handler for autofill
-      onChanged: (value) {
-        if (mounted) {
-          setState(() {
-            _emailController.text = value;
-            // Ensure cursor is at the end
-            _emailController.selection = TextSelection.fromPosition(
-              TextPosition(offset: _emailController.text.length),
-            );
-          });
-        }
-      },
+      // onChanged: (value) {
+      //   if (mounted) {
+      //     setState(() {
+      //       _emailController.text = value;
+      //       // Ensure cursor is at the end
+      //       _emailController.selection = TextSelection.fromPosition(
+      //         TextPosition(offset: _emailController.text.length),
+      //       );
+      //     });
+      //   }
+      // },
       validator: (value) {
         if (value?.isEmpty ?? true) {
           return 'Please enter your email';
@@ -283,20 +292,22 @@ class _LoginFormState extends State<LoginForm> {
     return TextFormField(
       controller: _passwordController,
       obscureText: _obscurePassword,
-      autofillHints: const [AutofillHints.password],
+      autofillHints: const [
+        AutofillHints.password
+      ],
       onEditingComplete: () => TextInput.finishAutofillContext(),
       // Add this handler for autofill
-      onChanged: (value) {
-        if (mounted) {
-          setState(() {
-            _passwordController.text = value;
-            // Ensure cursor is at the end
-            _passwordController.selection = TextSelection.fromPosition(
-              TextPosition(offset: _passwordController.text.length),
-            );
-          });
-        }
-      },
+      // onChanged: (value) {
+      //   if (mounted) {
+      //     setState(() {
+      //       _passwordController.text = value;
+      //       // Ensure cursor is at the end
+      //       _passwordController.selection = TextSelection.fromPosition(
+      //         TextPosition(offset: _passwordController.text.length),
+      //       );
+      //     });
+      //   }
+      // },
       validator: (value) {
         if (value?.isEmpty ?? true) {
           return 'Please enter your password';

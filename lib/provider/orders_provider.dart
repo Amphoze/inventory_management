@@ -1,12 +1,20 @@
-import 'dart:developer';
-import 'package:intl/intl.dart';
-import 'package:inventory_management/constants/constants.dart';
-import 'package:logger/logger.dart';
-import 'package:flutter/material.dart';
-import 'package:inventory_management/model/orders_model.dart'; // Ensure you have the Order model defined here
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'dart:developer';
+
+import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'package:intl/intl.dart';
+import 'package:inventory_management/Custom-Files/utils.dart';
+import 'package:inventory_management/constants/constants.dart';
+import 'package:inventory_management/model/orders_model.dart';
+import 'package:logger/logger.dart';
+import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:socket_io_client/socket_io_client.dart' as IO;
+
+import '../Api/auth_provider.dart';
+import '../dashboard.dart';
+import 'chat_provider.dart';
 
 class OrdersProvider with ChangeNotifier {
   bool allSelectedReady = false;
@@ -15,10 +23,12 @@ class OrdersProvider with ChangeNotifier {
   int selectedFailedItemsCount = 0;
   List<bool> _selectedReadyOrders = [];
   List<bool> _selectedFailedOrders = [];
-  List<Order> readyOrders = []; // List to store fetched ready orders
-  List<Order> failedOrders = []; // List to store fetched failed orders
-  int totalFailedPages = 1; // Default value 1
-  int totalReadyPages = 1;
+  List<Order> _readyOrders = [];
+  List<Order> _failedOrders = [];
+  int _currentPageReady = 1;
+  int _currentPageFailed = 1;
+  int _totalFailedPages = 1;
+  int _totalReadyPages = 1;
   String? _selectedCourier;
   String? _selectedPayment;
   String? _selectedFilter;
@@ -28,24 +38,36 @@ class OrdersProvider with ChangeNotifier {
   String _expectedDeliveryDate = '';
   String _paymentDateTime = '';
   String _normalDate = '';
-  // List<Order> readyOrders = [];
-  // List<Order> failedOrders = [];
+  bool confirmOrderByCSV = false;
+  String _progressMessage = '';
+  IO.Socket? _socket;
+  final ValueNotifier<double> progressNotifier = ValueNotifier<double>(0);
+  String selectedReadyDate = 'Select Date';
+  String selectedFailedDate = 'Select Date';
+  String selectedReadyCourier = 'All';
+  String selectedFailedCourier = 'All';
+  DateTime? readyPicked, failedPicked;
+  late TextEditingController searchControllerReady;
+  late TextEditingController searchControllerFailed;
 
-  int currentPage = 1;
-  int totalPages = 1;
-  int currentPageReady = 1;
-  int currentPageFailed = 1;
+  String get progressMessage => _progressMessage;
 
-  // Loading state
-  bool isLoading = false;
+  List<Order> get readyOrders => _readyOrders;
+  List<Order> get failedOrders => _failedOrders;
+  int get currentPageReady => _currentPageReady;
+  int get totalReadyPages => _totalReadyPages;
+  int get currentPageFailed => _currentPageFailed;
+  int get totalFailedPages => _totalFailedPages;
 
-  // Public getters for selected orders
+  bool _isReadyLoading = false;
+  bool _isFailedLoading = false;
+
+  bool get isReadyLoading => _isReadyLoading;
+  bool get isFailedLoading => _isFailedLoading;
+
   List<bool> get selectedFailedOrders => _selectedFailedOrders;
+
   List<bool> get selectedReadyOrders => _selectedReadyOrders;
-
-  final List<Order> _failedOrder = [];
-
-  List<Order> get failedOrder => _failedOrder;
 
   String? get selectedCourier => _selectedCourier;
   String? get selectedPayment => _selectedPayment;
@@ -60,6 +82,70 @@ class OrdersProvider with ChangeNotifier {
   bool isConfirm = false;
   bool isCancel = false;
   bool isUpdating = false;
+
+  bool _isCloning = false;
+  bool get isCloning => _isCloning;
+
+  OrdersProvider() {
+    searchControllerReady = TextEditingController();
+    searchControllerFailed = TextEditingController();
+  }
+
+  void resetProgress() {
+    _progressMessage = '';
+    notifyListeners();
+  }
+
+  void resetReadyFilterData() {
+    selectedReadyDate = 'Select Date';
+    selectedReadyCourier = 'All';
+    readyPicked = null;
+    notifyListeners();
+  }
+
+  void resetFailedFilterData() {
+    // searchControllerFailed.clear();
+    selectedFailedDate = 'Select Date';
+    selectedFailedCourier = 'All';
+    failedPicked = null;
+    notifyListeners();
+  }
+
+  void resetReady() {
+    _readyOrders = [];
+    _selectedReadyOrders = [];
+    _currentPageReady = 1;
+    _totalReadyPages = 1;
+    notifyListeners();
+  }
+
+  void resetFailed() {
+    _failedOrders = [];
+    _selectedFailedOrders = [];
+    _currentPageFailed = 1;
+    _totalFailedPages = 1;
+    notifyListeners();
+  }
+
+  void setCloning(bool value) {
+    _isCloning = value;
+    notifyListeners();
+  }
+
+  void setReadyLoading(bool value) {
+    _isReadyLoading = value;
+    notifyListeners();
+  }
+
+  void setFailedLoading(bool value) {
+    _isFailedLoading = value;
+    notifyListeners();
+  }
+
+  void toggleConfirmOrders(bool value) {
+    confirmOrderByCSV = value;
+    notifyListeners();
+  }
 
   void setUpdating(bool status) {
     isUpdating = status;
@@ -91,32 +177,26 @@ class OrdersProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  // Method to set the selected payment mode
-  void selectPayment(String? paymentMode) {
+  void selectPayment(String paymentMode) {
     _selectedPayment = paymentMode;
     notifyListeners();
   }
 
-  // Method to set an initial value for pre-filling
-  void setInitialPaymentMode(String? paymentMode) {
-    _selectedPayment =
-        (paymentMode == null || paymentMode.isEmpty) ? null : paymentMode;
+  void setInitialPaymentMode(String paymentMode) {
+    _selectedPayment = paymentMode ?? '';
     notifyListeners();
   }
 
-  // Method to set the selected filter
   void selectFilter(String? filter) {
     _selectedFilter = filter;
     notifyListeners();
   }
 
-  // Method to set an initial value for pre-filling
   void setInitialFilter(String? filter) {
     _selectedFilter = (filter == null || filter.isEmpty) ? null : filter;
     notifyListeners();
   }
 
-  // Method to set the selected Marketplace
   void selectMarketplace(String? marketplace) {
     _selectedMarketplace = marketplace;
     notifyListeners();
@@ -132,26 +212,21 @@ class OrdersProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  // Method to set an initial value for pre-filling
   void setInitialMarketplace(String? marketplace) {
-    _selectedMarketplace =
-        (marketplace == null || marketplace.isEmpty) ? null : marketplace;
+    _selectedMarketplace = (marketplace == null || marketplace.isEmpty) ? null : marketplace;
     notifyListeners();
   }
 
-  // Method to set the selected courier
   void selectCourier(String? courier) {
     _selectedCourier = courier;
     notifyListeners();
   }
 
-  // Method to set an initial value for pre-filling
   void setInitialCourier(String? courier) {
     _selectedCourier = (courier == null || courier.isEmpty) ? null : courier;
     notifyListeners();
   }
 
-  // New method to reset selections and counts
   void resetSelections() {
     allSelectedReady = false;
     allSelectedFailed = false;
@@ -159,27 +234,20 @@ class OrdersProvider with ChangeNotifier {
     selectedReadyOrders.fillRange(0, selectedReadyOrders.length, false);
     selectedFailedOrders.fillRange(0, selectedFailedOrders.length, false);
 
-    // Reset counts
     selectedReadyItemsCount = 0;
     selectedFailedItemsCount = 0;
 
     notifyListeners();
   }
 
-  // Function to update an order
-  Future<void> updateOrder(String id, Map<String, dynamic> updatedData) async {
-    // Get the auth token
+  Future<Map<String, dynamic>> updateOrder(String id, Map<String, dynamic> updatedData) async {
     final token = await _getToken();
 
-    // Check if the token is valid
     if (token == null || token.isEmpty) {
-      isLoading = false;
-      notifyListeners();
-      print('Token is missing. Please log in again.');
-      return;
+      return {"success": false, "message": "No auth token found"};
     }
 
-    final url = '${await ApiUrls.getBaseUrl()}/orders/$id';
+    final url = '${await Constants.getBaseUrl()}/orders/$id';
     try {
       final response = await http.put(
         Uri.parse(url),
@@ -192,13 +260,13 @@ class OrdersProvider with ChangeNotifier {
 
       log("response: ${response.statusCode}");
 
+      final res = jsonDecode(response.body);
+
       if (response.statusCode == 200) {
         Logger().e('Order updated successfully');
 
-        await fetchFailedOrders();
-        await fetchReadyOrders();
-
         notifyListeners();
+        return {"success": true, "message": res['message']};
       } else if (response.statusCode == 400) {
         final responseBody = json.decode(response.body);
         if (responseBody['message'] == 'orderId and status are required.') {
@@ -206,92 +274,116 @@ class OrdersProvider with ChangeNotifier {
         }
       } else {
         log('Failed to update order: ${response.body}');
-        return;
+        return {"success": false, "message": res['message']};
       }
-    } catch (error) {
-      log('Error updating order: $error');
-      rethrow;
+    } catch (error, s) {
+      log('Error updating order: $error \n\n$s');
+      return {"success": false, "message": "An error occurred: $error"};
+    } finally {
+      notifyListeners();
     }
-    notifyListeners();
+    return {};
   }
 
-  Future<String> writeRemark(String id, String msg) async {
-    // Get the auth token
+  Future<bool> writeRemark(String id, String msg) async {
     final token = await _getToken();
 
-    // Check if the token is valid
     if (token == null || token.isEmpty) {
-      isLoading = false;
-      notifyListeners();
-      print('Token is missing. Please log in again.');
-      return 'Token is missing. Please log in again.';
+      return false;
     }
 
-    final url = '${await ApiUrls.getBaseUrl()}/orders/$id';
+    final url = '${await Constants.getBaseUrl()}/orders?order_id=$id';
+
+    final prefs = await SharedPreferences.getInstance();
+    String? email = prefs.getString('email');
+
+    log('Writing Remark for order id $id at URL :- $url');
+
+    // final body = {
+    //   "messages": {
+    //     "confirmerMessage": msg,
+    //     "timestamp": DateTime.now().toIso8601String(),
+    //     "author": email ?? "Unknown",
+    //   }
+    // };
+
+    final body = {
+      "messages": {
+        "confirmerMessage": [
+          {
+            "message": msg,
+            "timestamp": DateTime.now().toIso8601String(),
+            "author": email ?? "Unknown",
+          }
+        ]
+      }
+    };
+
+    final payload = jsonEncode(body);
+
+    log('Remark Payload :- $payload');
+
     try {
       final response = await http.put(
         Uri.parse(url),
         headers: {
-          'Content-Type': 'application/json',
           'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
         },
-        body: json.encode({
-          "messages": {"confirmerMessage": msg}
-        }),
+        body: payload,
       );
 
-      log("response: ${response.statusCode}");
-
       if (response.statusCode == 200) {
-        // Logger().e('code: ${response.statusCode}');
-        // Logger().e('body: ${response.body}');
-
-        // await fetchReadyOrders();
-
-        notifyListeners();
-        return 'Remark added successfully';
+        log('Remark Submitted Successfully :)');
+        return true;
       } else {
-        log('Failed to update order: ${response.body}');
-        return 'Failed to add remark';
+        log('Failed to submit remark with status code ${response.statusCode} and response as ${response.body}');
+        return false;
       }
-    } catch (error) {
-      log('Error updating order: $error');
-      return 'Error updating order: $error';
+    } catch (error, s) {
+      log('Error submitting remark: $error\n$s');
+      return false;
+    } finally {
+      notifyListeners();
     }
   }
 
-  Future<void> fetchFailedOrders({int page = 1, DateTime? date}) async {
+  Future<void> fetchFailedOrders({int page = 1}) async {
+    searchControllerFailed.clear();
     log("called");
-    // Ensure the requested page number is valid
+
     if (page < 1 || page > totalFailedPages) {
-      print('Invalid page number for failed orders: $page');
-      return; // Exit if the page number is invalid
+      return;
     }
+    // if(searchControllerFailed.text.trim().isNotEmpty) {
+    //   searchFailedOrders(searchControllerFailed.text.trim());
+    //   return;
+    // }
+    setFailedLoading(true);
 
-    isLoading = true;
-    notifyListeners();
+    final prefs = await SharedPreferences.getInstance();
+    final warehouseId = prefs.getString('warehouseId') ?? '';
 
-    var failedOrdersUrl =
-        '${await ApiUrls.getBaseUrl()}/orders?orderStatus=0&page=$page';
+    var failedOrdersUrl = '${await Constants.getBaseUrl()}/orders?warehouse=$warehouseId&orderStatus=0&page=$page';
 
-    if (date != null || date == 'Select Date') {
-      String formattedDate = DateFormat('yyyy-MM-dd').format(date!);
+    if (failedPicked != null) {
+      String formattedDate = DateFormat('yyyy-MM-dd').format(failedPicked!);
       failedOrdersUrl += '&date=$formattedDate';
     }
 
-    // Get the auth token
+    if (selectedFailedCourier != 'All') {
+      failedOrdersUrl += '&marketplace=$selectedFailedCourier';
+    }
+
     final token = await _getToken();
 
-    // Check if the token is valid
     if (token == null || token.isEmpty) {
-      isLoading = false;
-      notifyListeners();
-      print('Token is missing. Please log in again.');
-      return; // Stop execution if there's no token
+      setFailedLoading(false);
+
+      return;
     }
 
     try {
-      // Fetch failed orders
       final responseFailed = await http.get(
         Uri.parse(failedOrdersUrl),
         headers: {
@@ -301,136 +393,66 @@ class OrdersProvider with ChangeNotifier {
       );
 
       if (responseFailed.statusCode == 200) {
-        // log("Status: ${responseFailed.statusCode}");
         final jsonData = json.decode(responseFailed.body);
 
-        // log("jsonData: $jsonData");
+        _failedOrders = (jsonData['orders'] as List).map((order) => Order.fromJson(order)).toList();
+        _totalFailedPages = (jsonData['totalPages'] as int?) ?? 1;
+        _currentPageFailed = page;
 
-        failedOrders = (jsonData['orders'] as List)
-            .map((order) => Order.fromJson(order))
-            .toList();
-
-        // Check for null values before assigning
-        totalFailedPages = (jsonData['totalPages'] as int?) ?? 1;
-
-        // totalFailedPages = jsonData['totalPages'] ?? 1; // Default to 1 if null
-        currentPageFailed = page; // Update the current page for failed orders
-
-        // log("failedOrders: $failedOrders");
-
-        // Reset selections
         resetSelections();
         _selectedFailedOrders = List<bool>.filled(failedOrders.length, false);
-        failedOrders = failedOrders;
+        // _failedOrders = failedOrders;
+        notifyListeners();
       } else {
-        throw Exception('Failed to load failed orders: ${responseFailed.body}');
+        resetFailed();
+        log('Failed to load failed orders: ${responseFailed.body}');
       }
     } catch (e) {
-      print('Error fetching failed orders: $e');
+      resetFailed();
+      log('Error fetching failed orders: $e');
     } finally {
-      isLoading = false;
-      notifyListeners();
+      setFailedLoading(false);
     }
   }
 
-  // Future<void> fetchFailedOrders({int page = 1}) async {
-  //   log("called");
-  //   // Ensure the requested page number is valid
-  //   if (page < 1 || page > totalFailedPages) {
-  //     print('Invalid page number for failed orders: $page');
-  //     return; // Exit if the page number is invalid
-  //   }
-
-  //   isLoading = true;
-  //   notifyListeners();
-
-  //   final String failedOrdersUrl =
-  //       '${await ApiUrls.getBaseUrl()}/orders?orderStatus=0&page=$page';
-
-  //   // Get the auth token
-  //   final token = await _getToken();
-
-  //   // Check if the token is valid
-  //   if (token == null || token.isEmpty) {
-  //     isLoading = false;
-  //     notifyListeners();
-  //     print('Token is missing. Please log in again.');
-  //     return; // Stop execution if there's no token
-  //   }
-
-  //   try {
-  //     // Fetch failed orders
-  //     final responseFailed = await http.get(
-  //       Uri.parse(failedOrdersUrl),
-  //       headers: {
-  //         'Authorization': 'Bearer $token',
-  //         'Content-Type': 'application/json',
-  //       },
-  //     );
-
-  //     if (responseFailed.statusCode == 200) {
-  //       log("Status: ${responseFailed.statusCode}");
-  //       final jsonData = json.decode(responseFailed.body);
-
-  //       log("jsonData: $jsonData");
-
-  //       failedOrders = (jsonData['orders'] as List)
-  //           .map((order) => Order.fromJson(order))
-  //           .toList();
-  //       totalFailedPages = jsonData['totalPages'] ?? 1; // Update total pages
-  //       currentPageFailed = page; // Update the current page for failed orders
-
-  //       log("failedOrders: $failedOrders");
-
-  //       // Reset selections
-  //       resetSelections();
-  //       _selectedFailedOrders = List<bool>.filled(failedOrders.length, false);
-  //       failedOrders = failedOrders;
-  //     } else {
-  //       throw Exception('Failed to load failed orders: ${responseFailed.body}');
-  //     }
-  //   } catch (e) {
-  //     print('Error fetching failed orders: $e');
-  //   } finally {
-  //     isLoading = false;
-  //     notifyListeners();
-  //   }
-  // }
-
-  Future<void> fetchReadyOrders({int page = 1, DateTime? date}) async {
-    log(date.toString());
-    // Ensure the requested page number is valid
+  Future<void> fetchReadyOrders({int page = 1}) async {
+    // searchControllerReady.clear();
+    log('fetchReadyOrders');
     if (page < 1 || page > totalReadyPages) {
-      print('Invalid page number for ready orders: $page');
-      return; // Exit if the page number is invalid
+      return;
+    }
+    // if(searchControllerReady.text.trim().isNotEmpty) {
+    //   searchReadyToConfirmOrders(searchControllerReady.text.trim());
+    //   return;
+    // }
+
+    setReadyLoading(true);
+
+    final prefs = await SharedPreferences.getInstance();
+    final warehouseId = prefs.getString('warehouseId') ?? '';
+
+    var readyOrdersUrl = '${await Constants.getBaseUrl()}/orders?warehouse=$warehouseId&orderStatus=1&page=$page&find=true';
+
+    if (readyPicked != null) {
+      String formattedDate = DateFormat('yyyy-MM-dd').format(readyPicked!);
+      readyOrdersUrl += '&date=$formattedDate';
     }
 
-    isLoading = true;
-    notifyListeners();
-
-    var readyOrdersUrl =
-        '${await ApiUrls.getBaseUrl()}/orders?orderStatus=1&page=$page';
-
-    if (date != null || date == 'Select Date') {
-      String formattedDate = DateFormat('yyyy-MM-dd').format(date!);
-      readyOrdersUrl += '&date=$formattedDate';
+    if (selectedReadyCourier != 'All') {
+      readyOrdersUrl += '&marketplace=$selectedReadyCourier';
     }
 
     log("readyOrdersUrl: $readyOrdersUrl");
 
-    // Get the auth token
     final token = await _getToken();
 
-    // Check if the token is valid
     if (token == null || token.isEmpty) {
-      isLoading = false;
-      notifyListeners();
-      print('Token is missing. Please log in again.');
-      return; // Stop execution if there's no token
+      setReadyLoading(false);
+
+      return;
     }
 
     try {
-      // Fetch ready orders
       final responseReady = await http.get(Uri.parse(readyOrdersUrl), headers: {
         'Authorization': 'Bearer $token',
         'Content-Type': 'application/json',
@@ -438,88 +460,216 @@ class OrdersProvider with ChangeNotifier {
 
       if (responseReady.statusCode == 200) {
         final jsonData = json.decode(responseReady.body);
-        readyOrders = (jsonData['orders'] as List)
-            .map((order) => Order.fromJson(order))
-            .toList();
-        totalReadyPages = jsonData['totalPages'] ?? 1; // Update total pages
-        currentPageReady = page; // Update the current page for ready orders
 
-        // log("readyOrders: $readyOrders");
+        List<Order> rOrders = [];
 
-        // Reset selections
+        List<dynamic> orders = jsonData['orders'] ?? [];
+
+        for (var order in orders) {
+          try {
+            rOrders.add(Order.fromJson(order));
+          } catch (e, s) {
+            log('Error parsing order :- $e\n$s');
+          }
+        }
+
+        // _readyOrders = (jsonData['orders'] as List).map((order) => Order.fromJson(order)).toList();
+        _readyOrders = rOrders;
+        _totalReadyPages = jsonData['totalPages'] ?? 1;
+        _currentPageReady = page;
+
         resetSelections();
         _selectedReadyOrders = List<bool>.filled(readyOrders.length, false);
-        readyOrders = readyOrders;
+
+        notifyListeners();
       } else {
-        throw Exception('Failed to load ready orders: ${responseReady.body}');
+        resetReady();
+        log('Failed to load ready orders: ${responseReady.body}');
       }
-    } catch (e) {
-      print('Error fetching ready orders: $e');
+    } catch (e, s) {
+      resetReady();
+      log('\nError fetching ready orders: $e\n\n$s\n\n');
     } finally {
-      isLoading = false;
-      notifyListeners();
+      setReadyLoading(false);
     }
   }
 
-  Future<String> confirmOrders(
-      BuildContext context, List<String> orderIds) async {
-    String baseUrl = await ApiUrls.getBaseUrl();
-    String confirmOrderUrl = '$baseUrl/orders/confirm';
+  Future<String> cloneOrders(BuildContext context, List<String> orderIds) async {
+    String baseUrl = await Constants.getBaseUrl();
+    String cloneOrderUrl = '$baseUrl/orders/clone';
     final String? token = await _getToken();
-    setConfirmStatus(true);
-    notifyListeners();
+    setCloning(true);
 
     if (token == null) {
+      setCloning(false);
       return 'No auth token found';
     }
 
-    // Headers for the API request
     final headers = {
       'Authorization': 'Bearer $token',
       'Content-Type': 'application/json',
     };
 
-    // Request body containing the order IDs
     final body = json.encode({
       'orderIds': orderIds,
     });
 
     try {
-      // Make the POST request to confirm the orders
       final response = await http.post(
-        Uri.parse(confirmOrderUrl),
+        Uri.parse(cloneOrderUrl),
         headers: headers,
         body: body,
       );
 
-      print('Response status: ${response.statusCode}');
-      //print('Response body: ${response.body}');
-
       final responseData = json.decode(response.body);
 
-      if (response.statusCode == 200) {
-        // After successful confirmation, fetch updated orders and notify listeners
-        await fetchReadyOrders(); // Assuming fetchOrders is a function that reloads the orders
-        resetSelections(); // Clear selected order IDs
-        setConfirmStatus(false);
-        notifyListeners(); // Notify the UI to rebuild
-
-        return responseData['message'] + "$orderIds" ??
-            'Orders Confirmed successfully';
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        await fetchReadyOrders();
+        resetSelections();
+        return responseData['message'] + ": ${responseData['newOrders'][0]['order_id']}" ?? 'Orders clone successfully';
       } else {
-        return responseData['message'] ?? 'Failed to confirm orders';
+        log('Cloning Response :- ${response.statusCode} ### ${response.body}');
+        return responseData['message'] ?? 'Failed to clone orders';
       }
-    } catch (error) {
-      setConfirmStatus(false);
-      notifyListeners();
-      Logger().e('Error during API request: $error');
+    } catch (error, s) {
+      log('Cloning Error: $error\n$s');
       return 'An error occurred: $error';
+    } finally {
+      setCloning(false);
+      notifyListeners();
     }
   }
 
-  Future<String> cancelOrders(
-      BuildContext context, List<String> orderIds) async {
-    String baseUrl = await ApiUrls.getBaseUrl();
+
+  void initializeSocket(BuildContext context) async {
+    _progressMessage = '';
+
+    if (_socket != null && _socket!.connected) {
+      log('Socket already connected. Skipping initialization.');
+      return;
+    }
+
+    try {
+      final baseUrl = await Constants.getBaseUrl();
+      final email = await AuthProvider().getEmail();
+
+      _socket ??= IO.io(
+        baseUrl,
+        IO.OptionBuilder().setTransports(['websocket']).disableAutoConnect().setQuery({'email': email}).build(),
+      );
+
+      _socket?.onConnect((_) {
+        log('Connected to Socket.IO');
+        _showSnackBar('Connected to server', color: Colors.green);
+      });
+
+      _socket?.on('csv-file-uploading-err', (data) {
+        setConfirmStatus(false);
+        _progressMessage = data['message'];
+        log('CSV Error: $_progressMessage');
+        _showSnackBar(_progressMessage, color: Colors.red);
+      });
+
+      _socket?.off('csv-file-uploading');
+      _socket?.on('csv-file-uploading', (data) {
+        setConfirmStatus(true);
+        _progressMessage = data['message'];
+        if (data['progress'] != null) {
+          double newProgress = double.tryParse(data['progress'].toString()) ?? 0;
+          progressNotifier.value = newProgress;
+        }
+      });
+
+      _socket?.on('csv-file-uploaded', (data) async {
+        _progressMessage = data['message'];
+        log('CSV file uploaded: $data'); // This is working
+        setConfirmStatus(false);
+        _showSnackBar(_progressMessage, color: Colors.green); // Debug this
+        resetSelections();
+        await fetchReadyOrders();
+      });
+
+      _socket?.connect();
+      log('Socket connection initiated');
+    } catch (e) {
+      log('Error in _initializeSocket: $e');
+      _showSnackBar('Failed to connect to server', color: Colors.red);
+    } finally {
+      notifyListeners();
+    }
+  }
+
+  void _showSnackBar(String message, {Color? color}) {
+    log('Attempting to show SnackBar: $message');
+    if (globalScaffoldKey.currentState == null) {
+      log('Error: ScaffoldMessengerState is null');
+      return;
+    }
+    log('Showing SnackBar with message: $message');
+    final context = globalScaffoldKey.currentState!.context;
+
+    Utils.showSnackBar(context, message, details: message, color: color);
+  }
+
+  @override
+  void dispose() {
+    _socket?.disconnect();
+    _socket?.dispose();
+    super.dispose();
+  }
+
+  Future<String> confirmOrders(BuildContext context, List<String> orderIds) async {
+    String baseUrl = await Constants.getBaseUrl();
+    String confirmOrderUrl = '$baseUrl/orders/confirm';
+    final String? token = await _getToken();
+
+    if (token == null) {
+      return 'No auth token found';
+    }
+
+    final headers = {
+      'Authorization': 'Bearer $token',
+      'Content-Type': 'application/json',
+    };
+
+    final body = json.encode({
+      'orderIds': orderIds,
+    });
+
+    log('Confirming Orders Payload :- $body');
+
+    final url = Uri.parse(confirmOrderUrl);
+
+    log('Confirming Order with URL :- $url');
+
+    try {
+      final response = await http.post(
+        url,
+        headers: headers,
+        body: body,
+      );
+
+      final responseData = json.decode(response.body);
+
+      log('Confirming Response :- $responseData');
+
+      if (response.statusCode == 200) {
+        log('Order Confirmed Successfully :)');
+        return responseData['message'] + "$orderIds" ?? 'Orders Confirmed successfully';
+      } else {
+        log('Failed to Confirm Order with Status Code ${response.statusCode} and Response as ${response.body}');
+        return responseData['errors'][0]['errors'][0] ?? 'Failed to confirm orders';
+      }
+    } catch (error) {
+      Logger().e('Error during API request: $error');
+      return 'An error occurred: $error';
+    } finally {
+      notifyListeners();
+    }
+  }
+
+  Future<String> cancelOrders(BuildContext context, List<String> orderIds) async {
+    String baseUrl = await Constants.getBaseUrl();
     String cancelOrderUrl = '$baseUrl/orders/cancel';
     final String? token = await _getToken();
     setCancelStatus(true);
@@ -529,67 +679,58 @@ class OrdersProvider with ChangeNotifier {
       return 'No auth token found';
     }
 
-    // Headers for the API request
     final headers = {
       'Authorization': 'Bearer $token',
       'Content-Type': 'application/json',
     };
 
-    // Request body containing the order IDs
     final body = json.encode({
       'orderIds': orderIds,
     });
 
     try {
-      // Make the POST request to confirm the orders
       final response = await http.post(
         Uri.parse(cancelOrderUrl),
         headers: headers,
         body: body,
       );
 
-      print('Response status: ${response.statusCode}');
-      //print('Response body: ${response.body}');
-
       final responseData = json.decode(response.body);
 
+      log('Cancelling Order Response :- $responseData with status code :- ${response.statusCode}');
+
       if (response.statusCode == 200) {
-        // After successful confirmation, fetch updated orders and notify listeners
-        await fetchReadyOrders(); // Assuming fetchOrders is a function that reloads the orders
-        resetSelections(); // Clear selected order IDs
-        setCancelStatus(false);
-        notifyListeners(); // Notify the UI to rebuild
+        await fetchReadyOrders();
+        resetSelections();
+        notifyListeners();
+
+        log('Order Cancelled Successfully :)');
 
         return responseData['message'] ?? 'Orders cancelled successfully';
       } else {
         return responseData['message'] ?? 'Failed to cancel orders';
       }
     } catch (error) {
-      setCancelStatus(false);
       notifyListeners();
-      print('Error during API request: $error');
+
       return 'An error occurred: $error';
+    } finally {
+      setCancelStatus(false);
     }
   }
 
   void toggleSelectAllReady(bool isSelected) {
     allSelectedReady = isSelected;
-    selectedReadyItemsCount = isSelected
-        ? readyOrders.length
-        : 0; // Update count based on selection state
-    _selectedReadyOrders = List<bool>.filled(
-        readyOrders.length, isSelected); // Update selection list
+    selectedReadyItemsCount = isSelected ? readyOrders.length : 0;
+    _selectedReadyOrders = List<bool>.filled(readyOrders.length, isSelected);
 
     notifyListeners();
   }
 
   void toggleSelectAllFailed(bool isSelected) {
     allSelectedFailed = isSelected;
-    selectedFailedItemsCount = isSelected
-        ? failedOrders.length
-        : 0; // Update count based on selection state
-    _selectedFailedOrders = List<bool>.filled(
-        failedOrders.length, isSelected); // Update selection list
+    selectedFailedItemsCount = isSelected ? failedOrders.length : 0;
+    _selectedFailedOrders = List<bool>.filled(failedOrders.length, isSelected);
 
     notifyListeners();
   }
@@ -597,11 +738,8 @@ class OrdersProvider with ChangeNotifier {
   void toggleOrderSelectionFailed(bool value, int index) {
     if (index >= 0 && index < _selectedFailedOrders.length) {
       _selectedFailedOrders[index] = value;
-      selectedFailedItemsCount = _selectedFailedOrders
-          .where((selected) => selected)
-          .length; // Update count of selected items
+      selectedFailedItemsCount = _selectedFailedOrders.where((selected) => selected).length;
 
-      // Check if all selected
       allSelectedFailed = selectedFailedItemsCount == failedOrders.length;
 
       notifyListeners();
@@ -611,29 +749,21 @@ class OrdersProvider with ChangeNotifier {
   void toggleOrderSelectionReady(bool value, int index) {
     if (index >= 0 && index < _selectedReadyOrders.length) {
       _selectedReadyOrders[index] = value;
-      selectedReadyItemsCount = _selectedReadyOrders
-          .where((selected) => selected)
-          .length; // Update count of selected items
+      selectedReadyItemsCount = _selectedReadyOrders.where((selected) => selected).length;
 
-      // Check if all selected
       allSelectedReady = selectedReadyItemsCount == readyOrders.length;
 
       notifyListeners();
     }
   }
 
-  // Update status for failed orders
   Future<void> approveFailedOrders(BuildContext context) async {
     setUpdating(true);
     notifyListeners();
     Logger().e('failedOrders: $failedOrders');
 
-    final List<String> failedOrderIds = failedOrders
-        .asMap()
-        .entries
-        .where((entry) => _selectedFailedOrders[entry.key])
-        .map((entry) => entry.value.orderId)
-        .toList();
+    final List<String> failedOrderIds =
+        failedOrders.asMap().entries.where((entry) => _selectedFailedOrders[entry.key]).map((entry) => entry.value.orderId).toList();
     Logger().e('failedOrderIds: $failedOrderIds');
 
     if (failedOrderIds.isEmpty) {
@@ -642,30 +772,21 @@ class OrdersProvider with ChangeNotifier {
     }
 
     for (String orderId in failedOrderIds) {
-      await updateOrderStatus(
-          context, orderId, 1); // Update status to 1 for failed orders
+      await updateOrderStatus(context, orderId, 1);
     }
 
-    // Reload orders after updating
-    await fetchFailedOrders(); // Refresh the orders after update
+    await fetchFailedOrders();
 
-    // Reset checkbox states
-    allSelectedFailed = false; // Reset "Select All" checkbox
-    _selectedFailedOrders =
-        List<bool>.filled(failedOrders.length, false); // Reset selection list
-    selectedFailedItemsCount = 0; // Reset selected items count
+    allSelectedFailed = false;
+    _selectedFailedOrders = List<bool>.filled(failedOrders.length, false);
+    selectedFailedItemsCount = 0;
     setUpdating(false);
-    notifyListeners(); // Notify listeners to update UI
+    notifyListeners();
   }
 
-// Update status for ready-to-confirm orders
   Future<void> updateReadyToConfirmOrders(BuildContext context) async {
-    final List<String> readyOrderIds = readyOrders
-        .asMap()
-        .entries
-        .where((entry) => _selectedReadyOrders[entry.key])
-        .map((entry) => entry.value.orderId)
-        .toList();
+    final List<String> readyOrderIds =
+        readyOrders.asMap().entries.where((entry) => _selectedReadyOrders[entry.key]).map((entry) => entry.value.orderId).toList();
 
     if (readyOrderIds.isEmpty) {
       _showSnackbar(context, 'No orders selected to update.');
@@ -673,84 +794,65 @@ class OrdersProvider with ChangeNotifier {
     }
 
     for (String orderId in readyOrderIds) {
-      await updateOrderStatus(context, orderId,
-          2); // Update status to 2 for ready-to-confirm orders
+      await updateOrderStatus(context, orderId, 2);
     }
 
-    // Reload orders after updating
-    await fetchReadyOrders(); // Refresh the orders after update
+    await fetchReadyOrders();
 
-    // Reset checkbox states
-    allSelectedReady = false; // Reset "Select All" checkbox
-    _selectedReadyOrders =
-        List<bool>.filled(readyOrders.length, false); // Reset selection list
-    selectedReadyItemsCount = 0; // Reset selected items count
+    allSelectedReady = false;
+    _selectedReadyOrders = List<bool>.filled(readyOrders.length, false);
+    selectedReadyItemsCount = 0;
 
-    notifyListeners(); // Notify listeners to update UI
+    notifyListeners();
   }
 
-  // Existing updateOrderStatus function
-  Future<void> updateOrderStatus(
-      BuildContext context, String orderId, int newStatus) async {
+  Future<void> updateOrderStatus(BuildContext context, String orderId, int newStatus) async {
     final String? token = await _getToken();
     if (token == null) {
       _showSnackbar(context, 'No auth token found');
       return;
     }
 
-    // Define the URL for the update with query parameters
-    final String url =
-        '${await ApiUrls.getBaseUrl()}/orders/ApprovedFailed?order_id=$orderId';
+    final String url = '${await Constants.getBaseUrl()}/orders/ApprovedFailed?order_id=$orderId';
 
-    // Set up the headers for the request
     final headers = {
       'Authorization': 'Bearer $token',
       'Content-Type': 'application/json',
     };
 
     try {
-      // Make the PUT request
       final response = await http.get(
         Uri.parse(url),
         headers: headers,
       );
 
       if (response.statusCode == 200) {
-        // Show snackbar and trigger fetchOrders in parallel
-        _showSnackbar(
-            context, 'Order status updated successfully with $orderId');
-        // Reload orders immediately after the snackbar is shown
-        await fetchFailedOrders(); // Refresh failed orders
-        await fetchReadyOrders(); // Refresh ready orders
+        _showSnackbar(context, 'Order status updated successfully with $orderId');
+
+        await fetchFailedOrders();
+        await fetchReadyOrders();
       } else {
         final errorResponse = json.decode(response.body);
-        String errorMessage =
-            errorResponse['message'] ?? 'Failed to update order status';
+        String errorMessage = errorResponse['message'] ?? 'Failed to update order status';
         _showSnackbar(context, errorMessage);
-        throw Exception(
-            'Failed to update order status: ${response.statusCode} ${response.body}');
+        log('Failed to update order status: ${response.statusCode} ${response.body}');
       }
     } catch (error) {
-      _showSnackbar(
-          context, 'An error occurred while updating the order status: $error');
-      throw Exception(
-          'An error occurred while updating the order status: $error');
+      _showSnackbar(context, 'An error occurred while updating the order status: $error');
+      log('An error occurred while updating the order status: $error');
     }
   }
 
-  // Method to display a snackbar
   void _showSnackbar(BuildContext context, String message) {
     final snackBar = SnackBar(content: Text(message));
     ScaffoldMessenger.of(context).showSnackBar(snackBar);
   }
 
-  // Method to get the token from shared preferences
   Future<String?> _getToken() async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getString('authToken');
   }
 
-  // Format date
   String formatDate(DateTime date) {
     String year = date.year.toString();
     String month = date.month.toString().padLeft(2, '0');
@@ -770,20 +872,25 @@ class OrdersProvider with ChangeNotifier {
   }
 
   void clearSearchResults() {
-    readyOrders = readyOrders;
-    failedOrders = failedOrders;
+    _readyOrders = [];
+    _failedOrders = [];
     notifyListeners();
   }
 
   Future<void> searchReadyToConfirmOrders(String orderId) async {
-    final url = Uri.parse(
-        '${await ApiUrls.getBaseUrl()}/orders?orderStatus=1&order_id=$orderId');
+    String encodedOrderId = Uri.encodeComponent(orderId.trim());
+
+    final prefs = await SharedPreferences.getInstance();
+    final warehouseId = prefs.getString('warehouseId') ?? '';
+
+    final url = Uri.parse('${await Constants.getBaseUrl()}/orders?warehouse=$warehouseId&orderStatus=1&order_id=$encodedOrderId&find=true');
     final token = await _getToken();
     if (token == null) return;
 
+    log('Ready to Confirm URL: $url');
+
     try {
-      isLoading = true;
-      notifyListeners();
+      setReadyLoading(true);
 
       final response = await http.get(
         url,
@@ -795,30 +902,34 @@ class OrdersProvider with ChangeNotifier {
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        log('data: $data');
-        readyOrders = [Order.fromJson(data)];
-        // log('readyOrders: $readyOrders');
+        // log('data: $data');
+        _readyOrders = (data['orders'] as List).map((order) => Order.fromJson(order)).toList();
+        // _readyOrders = [Order.fromJson(data)];
+        log('selectedReadyOrders: $selectedReadyOrders');
       } else {
-        readyOrders = [];
+        resetReady();
       }
     } catch (e) {
       log('Search ready orders error: $e');
-      readyOrders = [];
+      resetReady();
     } finally {
-      isLoading = false;
-      notifyListeners();
+      setReadyLoading(false);
     }
   }
 
   Future<void> searchFailedOrders(String orderId) async {
-    final url = Uri.parse(
-        '${await ApiUrls.getBaseUrl()}/orders?orderStatus=0&order_id=$orderId');
+    String encodedOrderId = Uri.encodeComponent(orderId.trim());
+    final prefs = await SharedPreferences.getInstance();
+    final warehouseId = prefs.getString('warehouseId') ?? '';
+
+    final url = Uri.parse('${await Constants.getBaseUrl()}/orders?warehouse=$warehouseId&orderStatus=0&order_id=$encodedOrderId');
     final token = await _getToken();
     if (token == null) return;
 
+    Logger().e('searchFailedOrders url: $url');
+
     try {
-      isLoading = true;
-      notifyListeners();
+      setFailedLoading(true);
 
       final response = await http.get(
         url,
@@ -829,107 +940,100 @@ class OrdersProvider with ChangeNotifier {
       );
 
       if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        print(response.body);
+        final res = jsonDecode(response.body);
 
-        failedOrders = [Order.fromJson(data)];
-        print(response.body);
+        _failedOrders = (res['orders'] as List).map((order) => Order.fromJson(order)).toList();
+        // _failedOrders = [Order.fromJson(res)];
       } else {
-        failedOrders = [];
+        resetFailed();
       }
     } catch (e) {
       Logger().e('Search failed orders error: $e');
-      failedOrders = [];
+      resetFailed();
     } finally {
-      isLoading = false;
-      notifyListeners();
+      setFailedLoading(false);
     }
   }
 
-  Future<void> fetchOrdersByMarketplace(
-      String marketplace, int orderStatus, int page,
-      {DateTime? date}) async {
-    String baseUrl = '${await ApiUrls.getBaseUrl()}/orders';
-
-    // Build URL with base parameters
-    String url =
-        '$baseUrl?orderStatus=$orderStatus&marketplace=$marketplace&page=$page';
-
-    // Add date parameter if provided
-    if (date != null || date == 'Select Date') {
-      String formattedDate = DateFormat('yyyy-MM-dd').format(date!);
-      url += '&date=$formattedDate';
-    }
-
-    log("url: $url");
-
-    String? token =
-        await _getToken(); // Assuming you have a method to get the token
-    if (token == null) {
-      print('Token is null, unable to fetch orders.');
-      return;
-    }
-
+  Future<bool> connectWithSupport(BuildContext context, String orderId, String message) async {
+    final token = await _getToken();
     try {
-      isLoading = true;
-      notifyListeners();
-
-      // Clear checkboxes when a new page is fetched
-      // clearSearchResults();
-
-      final response = await http.get(
-        Uri.parse(url),
+      var response = await http.post(
+        Uri.parse('${await Constants.getBaseUrl()}/orders/connectWithSupport'),
+        body: jsonEncode({
+          'orderIds': [orderId],
+          'message': message,
+        }),
         headers: {
           'Authorization': 'Bearer $token',
           'Content-Type': 'application/json',
         },
       );
 
-      // Log response for debugging
-      print('Response status: ${response.statusCode}');
-      print('Response body: ${response.body}');
+      final responseData = json.decode(response.body);
+
+      log('connect body: $responseData');
 
       if (response.statusCode == 200) {
-        final jsonResponse = jsonDecode(response.body);
-        List<Order> orders = (jsonResponse['orders'] as List)
-            .map((orderJson) => Order.fromJson(orderJson))
-            .toList();
-
-        Logger().e("length: ${orders.length}");
-
-        // Store fetched orders and update pagination state
-        if (orderStatus == 1) {
-          readyOrders = orders;
-          currentPageReady = page; // Track current page for B2B
-          totalReadyPages =
-              jsonResponse['totalPages']; // Assuming API returns total pages
-          notifyListeners();
-        } else {
-          failedOrders = orders;
-          currentPageFailed = page; // Track current page for B2C
-          totalFailedPages =
-              jsonResponse['totalPages']; // Assuming API returns total pages
-          notifyListeners();
-        }
-      } else if (response.statusCode == 401) {
-        print('Unauthorized access - Token might be expired or invalid.');
-      } else if (response.statusCode == 404) {
-        if (orderStatus == 1) {
-          readyOrders = [];
-          notifyListeners();
-        } else {
-          failedOrders = [];
-          notifyListeners();
-        }
-        print('Orders not found - Check the filter type.');
+        await Provider.of<ChatProvider>(context, listen: false).sendMessageForOrder(
+          orderId: orderId,
+          message: message,
+        );
+        return true;
       } else {
-        throw Exception('Failed to load orders: ${response.statusCode}');
+        return false;
       }
     } catch (e) {
-      print('Error fetching orders: $e');
-    } finally {
-      isLoading = false;
-      notifyListeners();
+      return false;
+    }
+  }
+
+  void showSnackBar(BuildContext context, String message, Color color) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        duration: const Duration(seconds: 3),
+        behavior: SnackBarBehavior.floating,
+        backgroundColor: color,
+      ),
+    );
+  }
+
+  Future<Map<String, dynamic>> splitOrder(String orderId, List<String> productSkus, {String weightLimit = ""}) async {
+    final token = await _getToken();
+    if (token == null || token.isEmpty) {
+      return {'success': false};
+    }
+
+    if (productSkus.isEmpty) {
+      return {'success': false};
+    }
+
+    try {
+      var response = await http.post(
+        Uri.parse('${await Constants.getBaseUrl()}/splitOrder?order_id=$orderId'),
+        body: jsonEncode({
+          'product_sku': productSkus,
+          'weightLimit': weightLimit,
+        }),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+      );
+
+      final responseData = json.decode(response.body);
+
+      log('split code: ${response.statusCode}');
+      log('split order body: $responseData');
+
+      if (response.statusCode == 200) {
+        return {'success': true, 'message': responseData['orders']};
+      } else {
+        return {'success': false, 'message': responseData['message']};
+      }
+    } catch (e) {
+      return {'success': false};
     }
   }
 }

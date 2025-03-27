@@ -5,7 +5,6 @@ import 'package:excel/excel.dart' as excel;
 import 'package:file_picker/file_picker.dart';
 import 'package:inventory_management/Custom-Files/colors.dart';
 import 'package:inventory_management/provider/label_data_provider.dart';
-// import 'package:path/path.dart';
 import 'package:provider/provider.dart';
 
 class ExcelFileUploader extends StatefulWidget {
@@ -29,91 +28,110 @@ class _ExcelFileUploaderState extends State<ExcelFileUploader> {
     final labelDataProvider = context.read<LabelDataProvider>();
 
     try {
-      FilePickerResult? result = await FilePicker.platform
-          .pickFiles(type: FileType.custom, allowedExtensions: ['xlsx']);
+      FilePickerResult? result = await FilePicker.platform.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: [
+          'xlsx'
+        ],
+      );
 
-      if (result != null && result.files.single.bytes != null) {
-        labelDataProvider.setLoadingDataGroups(true);
+      if (result == null || result.files.single.bytes == null) {
+        _showMessage(context, 'No file selected or invalid file.', isError: true);
+        return;
+      }
 
-        final Uint8List bytes = result.files.single.bytes!;
-        var excelFile = excel.Excel.decodeBytes(bytes);
+      labelDataProvider.setLoadingDataGroups(true);
 
-        if (excelFile.tables.containsKey(widget.sheetName)) {
-          List<List<dynamic>> rows =
-              excelFile.tables[widget.sheetName]?.rows ?? [];
+      final Uint8List bytes = result.files.single.bytes!;
+      var excelFile = excel.Excel.decodeBytes(bytes);
 
-          if (rows.isNotEmpty) {
-            List<String> headers =
-                rows.first.map((cell) => cell?.value.toString() ?? '').toList();
+      // if (!excelFile.tables.containsKey(widget.sheetName)) {
+      //   _showMessage(context, 'Sheet "${widget.sheetName}" not found in the uploaded file.', isError: true);
+      //   return;
+      // }
 
-            List<Map<String, String>> tempDataGroups = [];
-            for (var row in rows.skip(1)) {
-              if (_isRowEmptyOrInvalid(row)) continue;
+      var sheet = excelFile.tables[widget.sheetName]!;
+      List<List<dynamic>> rows = sheet.rows;
 
-              Map<String, String> dataMap = {};
-              bool hasValidValue = false;
+      if (rows.isEmpty) {
+        _showMessage(context, 'The uploaded sheet is empty.', isError: true);
+        return;
+      }
 
-              for (int i = 0; i < headers.length; i++) {
-                var cellValue = row.length > i && row[i] != null
-                    ? _cleanCellValue(row[i])
-                    : null;
-
-                if (cellValue != null) {
-                  hasValidValue = true;
-                }
-
-                dataMap[headers[i]] = cellValue ?? '';
-              }
-
-              if (hasValidValue) {
-                tempDataGroups.add(dataMap);
-                print('Uploaded data: $dataMap'); // Log uploaded data
-              }
-            }
-
-            widget.onUploadSuccess(tempDataGroups);
-            _showMessage(context, 'Excel file uploaded successfully!');
-            print('------------------------------');
-          } else {
-            labelDataProvider.setLoadingDataGroups(false);
-            _showMessage(
-                context, 'The uploaded sheet is empty. Please check your file.',
-                isError: true);
-            print('------------------------------');
-          }
-        } else {
-          labelDataProvider.setLoadingDataGroups(false);
-
-          _showMessage(context,
-              'Couldn\'t find "${widget.sheetName}" in the uploaded file. Please ensure it exists.',
-              isError: true);
-          print('------------------------------');
+      // Parse headers and ensure they're strings
+      List<String> headers = rows.first.map((cell) {
+        if (cell == null) return '';
+        if (cell is excel.Data) {
+          var value = cell.value;
+          if (value == null) return '';
+          return value.toString().trim();
         }
-      } else {
-        labelDataProvider.setLoadingDataGroups(false);
+        return cell.toString().trim();
+      }).toList();
 
-        _showMessage(
-            context, 'Please upload an Excel file (.xlsx) only. Try again.',
-            isError: true);
-        print('------------------------------');
+      List<Map<String, String>> tempDataGroups = [];
+
+      // Process data rows
+      for (var row in rows.skip(1)) {
+        if (_isRowEmptyOrInvalid(row)) continue;
+
+        Map<String, String> dataMap = {};
+        bool hasValidValue = false;
+
+        for (int i = 0; i < headers.length; i++) {
+          String? cellValue;
+          if (row.length > i) {
+            var cell = row[i];
+            if (cell is excel.Data) {
+              cellValue = _processExcelData(cell);
+            } else {
+              cellValue = _cleanCellValue(cell);
+            }
+          }
+
+          if (cellValue != null && cellValue.isNotEmpty) {
+            hasValidValue = true;
+          }
+          dataMap[headers[i]] = cellValue ?? '';
+        }
+
+        if (hasValidValue) tempDataGroups.add(dataMap);
+      }
+
+      if (tempDataGroups.isNotEmpty) {
+        widget.onUploadSuccess(tempDataGroups);
+        _showMessage(context, 'Excel file loaded successfully.');
+      } else {
+        _showMessage(context, 'No valid data found in the sheet.', isError: true);
       }
     } catch (e) {
-      labelDataProvider.setLoadingDataGroups(false);
-      log('error: $e');
-
-      widget.onError('An unexpected error occurred: ${e.toString()}');
-      _showMessage(context, 'An unexpected error occurred. Please try again.',
-          isError: true);
-      print('------------------------------');
+      log('Error parsing Excel file: $e');
+      widget.onError('An error occurred: ${e.toString()}');
+      _showMessage(context, 'An error occurred while processing the file.', isError: true);
     } finally {
       labelDataProvider.setLoadingDataGroups(false);
     }
   }
 
-  void _showMessage(BuildContext context, String message,
-      {bool isError = false}) {
-    print(message);
+  String? _processExcelData(excel.Data cell) {
+    var value = cell.value;
+    if (value == null) return null;
 
+    // Handle different data types
+    if (value is DateTime) {
+      return value.toString();
+    } else if (value is num) {
+      return value.toString();
+    } else if (value is bool) {
+      return value.toString();
+    } else if (value.runtimeType.toString() == 'String') {
+      // Important change here
+      return value as String;
+    }
+    return value.toString().trim();
+  }
+
+  void _showMessage(BuildContext context, String message, {bool isError = false}) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),
@@ -124,31 +142,25 @@ class _ExcelFileUploaderState extends State<ExcelFileUploader> {
   }
 
   bool _isRowEmptyOrInvalid(List<dynamic> row) {
-    for (var cell in row) {
-      var cellValue = cell?.toString().trim() ?? '';
-      if (cellValue.isNotEmpty && cellValue.toLowerCase() != 'n/a') {
-        return false;
+    return row.every((cell) {
+      if (cell is excel.Data) {
+        var value = cell.value;
+        if (value == null) return true;
+        var stringValue = value.toString().trim();
+        return stringValue.isEmpty || stringValue.toLowerCase() == 'n/a';
       }
-    }
-    return true;
+      return (cell?.toString().trim().isEmpty ?? true) || cell.toString().toLowerCase() == 'n/a';
+    });
   }
 
   String? _cleanCellValue(dynamic cell) {
-    if (cell == null) {
-      return null;
+    if (cell == null) return null;
+    if (cell is excel.Data) {
+      return _processExcelData(cell);
     }
-    if (cell is String) {
-      return cell.isNotEmpty ? cell.trim() : null;
-    } else if (cell is Map) {
-      return cell.toString().isNotEmpty ? cell.toString().trim() : null;
-    } else if (cell.toString().contains('Data(')) {
-      var cleanedValue = cell.toString().replaceAllMapped(
-            RegExp(r'Data\((.*?),.*\)'),
-            (match) => match.group(1) ?? '',
-          );
-      return cleanedValue.isNotEmpty ? cleanedValue : null;
-    }
-    return cell.toString().isNotEmpty ? cell.toString().trim() : null;
+    var stringValue = cell.toString().trim();
+    if (stringValue.isEmpty) return null;
+    return stringValue;
   }
 
   @override

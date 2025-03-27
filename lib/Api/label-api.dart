@@ -13,17 +13,7 @@ class LabelApi with ChangeNotifier {
   int _currentPage = 1;
   int _totalPage = 0;
   bool _loading = false;
-  // late final String _baseUrl;
-
-  // LabelApi() {
-  //   _initialize();
-  // }
-
-  // Future<void> _initialize() async {
-  //   _baseUrl = await ApiUrls.getBaseUrl();
-  // }
-
-  // Get all labels
+  
   List<Map<String, dynamic>> get labelInformation => _labelInformation;
   int get totalPage => _totalPage;
   int get currentPage => _currentPage;
@@ -50,11 +40,11 @@ class LabelApi with ChangeNotifier {
 
   Future<void> updateLabelQuantity(
       String labelId, int newQuantity, String reason) async {
-    String _baseUrl = await ApiUrls.getBaseUrl();
+    String baseUrl = await Constants.getBaseUrl();
     loadingStatus(true);
     log("Id $labelId");
 
-    final url = Uri.parse('$_baseUrl/label/$labelId');
+    final url = Uri.parse('$baseUrl/label/$labelId');
     log("Id 1: $labelId");
 
     final token = await AuthProvider().getToken();
@@ -106,10 +96,10 @@ class LabelApi with ChangeNotifier {
   }
 
   Future<Map<String, dynamic>> getLabel({int page = 1}) async {
-    String _baseUrl = await ApiUrls.getBaseUrl();
+    String baseUrl = await Constants.getBaseUrl();
     loadingStatus(true);
 
-    final url = Uri.parse('$_baseUrl/label?page=$page');
+    final url = Uri.parse('$baseUrl/label?page=$page');
 
     try {
       final token = await AuthProvider().getToken();
@@ -158,8 +148,10 @@ class LabelApi with ChangeNotifier {
 
   // Search by label
   Future<Map<String, dynamic>> searchByLabel(String lbl) async {
-    String _baseUrl = await ApiUrls.getBaseUrl();
-    final url = Uri.parse('$_baseUrl/label?labelSku=$lbl');
+    String baseUrl = await Constants.getBaseUrl();
+    final url = Uri.parse('$baseUrl/label?labelSku=$lbl');
+
+    log('searchByLabel url: $url');
     try {
       final token = await AuthProvider().getToken();
       final response = await http.get(
@@ -171,6 +163,9 @@ class LabelApi with ChangeNotifier {
       );
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
+
+        log('searchByLabel data: $data');
+
         if (data.containsKey('data')) {
           // _labelInformation.clear();
           // print("heeelo ${_labelInformation.length}   ${_replication.length}");

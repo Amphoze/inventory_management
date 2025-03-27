@@ -1,7 +1,14 @@
 // ignore_for_file: avoid_print
 
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:inventory_management/Api/auth_provider.dart';
+import 'package:logger/logger.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+import '../Custom-Files/colors.dart';
+import '../dashboard.dart';
 
 class LocationProvider with ChangeNotifier {
   final AuthProvider authProvider;
@@ -12,8 +19,7 @@ class LocationProvider with ChangeNotifier {
   List<Map<String, dynamic>> _filteredWarehouses = [];
   Map<String, dynamic>? warehouseData; // for get warehouse by ID
 
-  List<Map<String, dynamic>> get warehouses =>
-      _filteredWarehouses.isNotEmpty ? _filteredWarehouses : _warehouses;
+  List<Map<String, dynamic>> get warehouses => _filteredWarehouses.isNotEmpty ? _filteredWarehouses : _warehouses;
 
   bool _isCreatingNewLocation = false;
   int _selectedBillingCountryIndex = 0;
@@ -24,6 +30,9 @@ class LocationProvider with ChangeNotifier {
   bool? _holdsStock;
   bool? _copysku;
   bool _copyAddress = false;
+  int _currentPage = 1;
+  int _totalPages = 1;
+  final TextEditingController _textEditingController = TextEditingController();
 
   bool _isEditingLocation = false; // Add this property to track editing state
 
@@ -36,6 +45,10 @@ class LocationProvider with ChangeNotifier {
   bool? get holdsStock => _holdsStock;
   bool? get copysku => _copysku;
   bool get copyAddress => _copyAddress;
+  int get currentPage => _currentPage;
+  int get totalPages => _totalPages;
+  TextEditingController get textEditingController => _textEditingController;
+
 
   bool get isEditingLocation => _isEditingLocation;
 
@@ -54,6 +67,14 @@ class LocationProvider with ChangeNotifier {
   bool _isEmailValid = false;
 
   bool get isEmailValid => _isEmailValid;
+
+  void goToPage(int page) {
+    if (page < 1 || page > _totalPages) return;
+    _currentPage = page;
+    print('Current page set to: $_currentPage'); // Debugging line
+    fetchWarehouses(page: _currentPage);
+    notifyListeners();
+  }
 
   void setLoading(bool loading) {
     _isLoading = loading;
@@ -193,16 +214,38 @@ class LocationProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> fetchWarehouses() async {
+  Future<void> saveWarehouseData(BuildContext context, String warehouseId, String warehouseName, bool isPrimary) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('warehouseId', warehouseId);
+    await prefs.setString('warehouseName', warehouseName);
+    await prefs.setBool('isPrimary', isPrimary);
+
+    log('warehouseId: $warehouseId');
+    log('warehouseName: $warehouseName');
+
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Successfully signed in to $warehouseName'),
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          backgroundColor: AppColors.primaryBlue,
+        ),
+      );
+    }
+  }
+
+  Future<void> fetchWarehouses({int page = 1}) async {
     _isLoading = true;
     notifyListeners();
 
-    final result = await getAllWarehouses();
+    final result = await getAllWarehouses(page: page);
 
     if (result['success']) {
-      final warehousesData = result['data']['warehouses'];
+      final warehousesData = result['data']?['warehouses'] ?? [];
+      _totalPages = result['totalPages'];
 
-      if (warehousesData is List) {
+      if (warehousesData is List && warehousesData.isNotEmpty) {
         _warehouses = List<Map<String, dynamic>>.from(warehousesData);
       } else {
         _setError('Unexpected data format');
@@ -245,13 +288,12 @@ class LocationProvider with ChangeNotifier {
     _shippingCity = city;
     _shippingZipCode = zipCode;
     _shippingPhoneNumber = phoneNumber;
-    print(
-        "Shipping Address Updated: $_shippingAddress1, $_shippingCity, $_shippingZipCode, $_shippingPhoneNumber");
+    print("Shipping Address Updated: $_shippingAddress1, $_shippingCity, $_shippingZipCode, $_shippingPhoneNumber");
     notifyListeners();
   }
 
-  Future<Map<String, dynamic>> getAllWarehouses() async {
-    return await authProvider.getAllWarehouses();
+  Future<Map<String, dynamic>> getAllWarehouses({int page = 1}) async {
+    return await authProvider.getAllWarehouses(page: page);
   }
 
   Future<bool> createWarehouse(Map<String, dynamic> body) async {
@@ -260,18 +302,13 @@ class LocationProvider with ChangeNotifier {
           ? body['taxIdentificationNumber'] as int
           : int.tryParse(body['taxIdentificationNumber'].toString()) ?? 0;
 
-      final holdStocks = body['holdStocks'] is bool
-          ? body['holdStocks'] as bool
-          : body['holdStocks'] == 'true';
+      final holdStocks = body['holdStocks'] is bool ? body['holdStocks'] as bool : body['holdStocks'] == 'true';
 
-      final copyMasterSkuFromPrimary = body['copyMasterSkuFromPrimary'] is bool
-          ? body['copyMasterSkuFromPrimary'] as bool
-          : body['copyMasterSkuFromPrimary'] == 'true';
+      final copyMasterSkuFromPrimary =
+          body['copyMasterSkuFromPrimary'] is bool ? body['copyMasterSkuFromPrimary'] as bool : body['copyMasterSkuFromPrimary'] == 'true';
 
       // Extract pincodes from location if available
-      final List<String> pincodes = body['pincode'] is List<String>
-          ? List<String>.from(body['pincode'])
-          : [];
+      final List<String> pincodes = body['pincode'] is List<String> ? List<String>.from(body['pincode']) : [];
 
       final response = await authProvider.createWarehouse(warehouseData: body);
       // final response = await authProvider.createWarehouse(
@@ -326,8 +363,7 @@ class LocationProvider with ChangeNotifier {
       _filteredWarehouses = _warehouses.where((warehouse) {
         final name = warehouse['name']?.toLowerCase() ?? '';
         final email = warehouse['email']?.toLowerCase() ?? '';
-        return name.contains(query.toLowerCase()) ||
-            email.contains(query.toLowerCase());
+        return name.contains(query.toLowerCase()) || email.contains(query.toLowerCase());
       }).toList();
     }
     notifyListeners();
@@ -346,10 +382,8 @@ class LocationProvider with ChangeNotifier {
 
   void resetForm() {
     pincodes.clear();
-    _selectedBillingCountryIndex =
-        _selectedBillingStateIndex = _selectedLocationTypeIndex = 0;
-    _selectedShippingCountryIndex =
-        _selectedShippingStateIndex = _selectedLocationTypeIndex = 0;
+    _selectedBillingCountryIndex = _selectedBillingStateIndex = _selectedLocationTypeIndex = 0;
+    _selectedShippingCountryIndex = _selectedShippingStateIndex = _selectedLocationTypeIndex = 0;
     _holdsStock = _copysku = null;
     _copyAddress = false;
     validationMessage = _errorMessage = _successMessage = null;

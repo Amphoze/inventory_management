@@ -174,7 +174,7 @@ class _CreateLabelPageState extends State<CreateLabelPage> {
           style: GoogleFonts.daiBannaSil(
             fontSize: 20,
             fontWeight: FontWeight.w700,
-            color: Colors.purple.withOpacity(0.9),
+            color: Colors.purple.withValues(alpha: 0.9),
           ),
         ),
       ),
@@ -246,12 +246,12 @@ class _CreateLabelPageState extends State<CreateLabelPage> {
   //         popupProps: PopupProps.menu(
   //           menuProps: MenuProps(
   //               elevation: 10,
-  //               barrierColor: Colors.transparent.withOpacity(0.5),
+  //               barrierColor: Colors.transparent.withValues(alpha: 0.5),
   //               shape: RoundedRectangleBorder(
   //                   borderRadius: BorderRadius.circular(12),
   //                   side: BorderSide(
   //                       strokeAlign: BorderSide.strokeAlignInside,
-  //                       color: Colors.amber.withOpacity(0.2)))),
+  //                       color: Colors.amber.withValues(alpha: 0.2)))),
   //           itemBuilder: (con, val, tr) {
   //             return Padding(
   //               padding: const EdgeInsets.only(left: 30),
@@ -321,7 +321,7 @@ class _CreateLabelPageState extends State<CreateLabelPage> {
   //   );
   // }
 
-//   Widget dropDown() {
+  //   Widget dropDown() {
 //     return DropdownButtonHideUnderline(
 //       child: Card(
 //         elevation: 10,
@@ -360,12 +360,12 @@ class _CreateLabelPageState extends State<CreateLabelPage> {
 //           popupProps: PopupPropsMultiSelection.menu(
 //             menuProps: MenuProps(
 //               elevation: 10,
-//               barrierColor: Colors.transparent.withOpacity(0.5),
+//               barrierColor: Colors.transparent.withValues(alpha: 0.5),
 //               shape: RoundedRectangleBorder(
 //                 borderRadius: BorderRadius.circular(12),
 //                 side: BorderSide(
 //                   strokeAlign: BorderSide.strokeAlignInside,
-//                   color: Colors.amber.withOpacity(0.2),
+//                   color: Colors.amber.withValues(alpha: 0.2),
 //                 ),
 //               ),
 //             ),
@@ -419,7 +419,6 @@ class _CreateLabelPageState extends State<CreateLabelPage> {
 //           //     List<String> parts = newValue.split(':');
 //           //     int selectedIndex = int.parse(parts[0]);
 //           //     String displayName = parts[1];
-
 //           //     labelPageProvider!.updateSelectedIndex(selectedIndex);
 //           //     // var selectedProduct = labelPageProvider!.productDeatils[selectedIndex];
 //           //     // print("Full product details: $selectedProduct");

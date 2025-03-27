@@ -10,30 +10,25 @@ import 'package:flutter/material.dart';
 class OuterboxProvider with ChangeNotifier {
   List<Map<String, dynamic>> _boxsizes = [];
   int _currentPage = 1;
-  // final int _rowsPerPage = 20;
   int _totalPages = 1;
   bool _isLoading = false;
   String? _errorMessage;
   bool _isFormVisible = false;
-
-  // late final String _baseUrl;
-
-  // OuterboxProvider() {
-  //   _initialize();
-  // }
-
-  // Future<void> _initialize() async {
-  //   _baseUrl = await ApiUrls.getBaseUrl();
-  // }
+  String selectedSearchBy = 'outerPackage_name';
+  // outerPackage_name, occupied_weight, outerPackage_sku, outerPackage_type
 
   // Getters
   bool get isFormVisible => _isFormVisible;
   List<Map<String, dynamic>> get boxsizes => _boxsizes;
   int get totalPages => _totalPages;
   int get currentPage => _currentPage;
-  //int get totalPages => (_inventory.length / _rowsPerPage).ceil();
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
+
+  void setSelectedSearchBy(String value) {
+    selectedSearchBy = value;
+    notifyListeners();
+  }
 
   // Toggle loading state
   void toggleLoading() {
@@ -70,14 +65,14 @@ class OuterboxProvider with ChangeNotifier {
   List<dynamic> inventoryD = [];
 
   Future<void> fetchBoxsizes({int page = 1}) async {
-    String _baseUrl = await ApiUrls.getBaseUrl();
+    String baseUrl = await Constants.getBaseUrl();
     Logger().e('fetchBoxsizes called');
     _isLoading = true;
     _errorMessage = null;
     Logger().e('fetchBoxsizes called');
     notifyListeners();
 
-    final url = '$_baseUrl/boxsize?page=$page'; // Adjust limit as needed
+    final url = '$baseUrl/boxsize?page=$page'; // Adjust limit as needed
     
 
     try {
@@ -144,10 +139,10 @@ class OuterboxProvider with ChangeNotifier {
   final List<Map<String, dynamic>> _replicationBoxsize = [];
 
   Future<Map<String, dynamic>> searchBoxsize(String query) async {
-    String _baseUrl = await ApiUrls.getBaseUrl();
+    String baseUrl = await Constants.getBaseUrl();
     log(query);
 
-    final url = Uri.parse('$_baseUrl/boxsize?outerPackage_name=$query');
+    final url = Uri.parse('$baseUrl/boxsize?$selectedSearchBy=$query');
 
     log('url: $url');
 
@@ -180,7 +175,7 @@ class OuterboxProvider with ChangeNotifier {
             };
           }).toList();
 
-          log('fetchedBoxsizes: $fetchedBoxsizes');
+          // log('fetchedBoxsizes: $fetchedBoxsizes');
 
           return {'success': true, 'data': fetchedBoxsizes};
         } else {
@@ -201,12 +196,12 @@ class OuterboxProvider with ChangeNotifier {
   }
 
   Future<void> createBoxsize(Map<String, dynamic> boxsizeData) async {
-    String _baseUrl = await ApiUrls.getBaseUrl();
+    String baseUrl = await Constants.getBaseUrl();
     _isLoading = true;
     _errorMessage = null;
     notifyListeners();
 
-    final url = Uri.parse('$_baseUrl/boxsize');
+    final url = Uri.parse('$baseUrl/boxsize');
 
     log('url: $url');
 
@@ -283,13 +278,13 @@ class OuterboxProvider with ChangeNotifier {
 
   Future<void> updateBoxsizeQuantity(
       String id, int newQuantity, String reason) async {
-        String _baseUrl = await ApiUrls.getBaseUrl();
+        String baseUrl = await Constants.getBaseUrl();
     _isLoading = true;
     _errorMessage = null;
     notifyListeners();
     log("Id $id");
 
-    final url = Uri.parse('$_baseUrl/inventory/$id');
+    final url = Uri.parse('$baseUrl/inventory/$id');
     log("Id 1: $id");
 
     try {

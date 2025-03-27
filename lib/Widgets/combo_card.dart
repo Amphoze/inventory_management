@@ -16,98 +16,95 @@ class ComboCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MouseRegion(
-      cursor: SystemMouseCursors.click,
-      child: GestureDetector(
-        onTap: () {
-          showDialog(
-            context: context,
-            builder: (BuildContext context) {
-              return AlertDialog(
-                title: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Flexible(
-                      child: Text(
-                        '${combo.comboSku}: ${combo.name}',
-                        overflow: TextOverflow.ellipsis,
-                        maxLines: 1,
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    RichText(
-                      text: TextSpan(
-                        children: [
-                          const TextSpan(
-                            text: 'Amount: ',
-                            style: TextStyle(
-                              color: Colors.blueAccent,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          TextSpan(
-                            text: 'Rs.${combo.comboAmount}',
-                            style: const TextStyle(
-                              color: Colors.black87,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-                actions: [
-                  TextButton(
-                    onPressed: () => Navigator.of(context).pop(),
-                    child: const Text('Close'),
-                  ),
-                ],
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8.0),
-                ),
-                content: SizedBox(
-                  width: MediaQuery.of(context).size.width * 0.8,
-                  height: MediaQuery.of(context).size.height * 0.8,
-                  child: ListView.builder(
-                    shrinkWrap: true,
-                    itemCount: combo.products.length,
-                    itemBuilder: (context, index) {
-                      final product = combo.products[index];
-                      Logger().e('ppp: $product');
-                      return Card(
-                        child: ListTile(
-                          leading: const Icon(Icons.inventory),
-                          title: Text('SKU: ${product['sku']}'),
-                          subtitle: Text('Product: ${product['displayName']}'),
-                        ),
-                      );
-                    },
-                  ),
-                ),
-              );
-            },
-          );
-        },
-        child: Card(
-          elevation: 1.0,
-          margin: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 12.0),
-          child: Padding(
-            padding: const EdgeInsets.all(12.0),
-            child: IntrinsicHeight(
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
+    return InkWell(
+      onTap: () {
+        showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              title: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  SizedBox(
-                    width: 150,
-                    child: _buildProductColumn(),
+                  Flexible(
+                    child: Text(
+                      '${combo.comboSku}: ${combo.name}',
+                      overflow: TextOverflow.ellipsis,
+                      maxLines: 1,
+                    ),
                   ),
-                  const SizedBox(width: 16.0),
-                  Expanded(
-                    child: _buildDetailsColumn(),
+                  const SizedBox(width: 10),
+                  RichText(
+                    text: TextSpan(
+                      children: [
+                        const TextSpan(
+                          text: 'Amount: ',
+                          style: TextStyle(
+                            color: Colors.blueAccent,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        TextSpan(
+                          text: 'Rs.${combo.comboAmount}',
+                          style: const TextStyle(
+                            color: Colors.black87,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ],
               ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: const Text('Close'),
+                ),
+              ],
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8.0),
+              ),
+              content: SizedBox(
+                width: MediaQuery.of(context).size.width * 0.8,
+                height: MediaQuery.of(context).size.height * 0.8,
+                child: ListView.builder(
+                  shrinkWrap: true,
+                  itemCount: combo.products.length,
+                  itemBuilder: (context, index) {
+                    final product = combo.products[index];
+                    Logger().e('ppp: $product');
+                    return Card(
+                      child: ListTile(
+                        leading: const Icon(Icons.inventory),
+                        title: Text('SKU: ${product['sku']}'),
+                        subtitle: Text('Product: ${product['displayName']}'),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            );
+          },
+        );
+      },
+      child: Card(
+        elevation: 1.0,
+        margin: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 12.0),
+        child: Padding(
+          padding: const EdgeInsets.all(12.0),
+          child: IntrinsicHeight(
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                SizedBox(
+                  width: 150,
+                  child: _buildProductColumn(),
+                ),
+                const SizedBox(width: 16.0),
+                Expanded(
+                  child: _buildDetailsColumn(),
+                ),
+              ],
             ),
           ),
         ),

@@ -80,7 +80,7 @@ class CustomDropdownState extends State<CustomDropdown> {
   }
 
   void searchData(String brandName) async {
-    String baseUrl = await ApiUrls.getBaseUrl();
+    String baseUrl = await Constants.getBaseUrl();
 
     final token = await AuthProvider().getToken();
     final url = Uri.parse('$baseUrl/category?name=$brandName');
@@ -298,7 +298,7 @@ class _CustomDropdownMultipleState extends State<CustomDropdownMultiple> {
         // padding: const EdgeInsets.symmetric(horizontal: 16),
         decoration: BoxDecoration(
           // errorStyle:'',
-          border: Border.all(color: Colors.blue.withOpacity(0.2)),
+          border: Border.all(color: Colors.blue.withValues(alpha: 0.2)),
           borderRadius: BorderRadius.circular(8),
           color: Colors.blue.shade100,
         ),

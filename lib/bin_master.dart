@@ -3,6 +3,8 @@ import 'package:inventory_management/Api/bin_api.dart';
 import 'package:inventory_management/Custom-Files/colors.dart';
 import 'package:inventory_management/Custom-Files/loading_indicator.dart';
 import 'package:inventory_management/bin_products.dart';
+import 'package:inventory_management/create_bin_page.dart';
+import 'package:inventory_management/provider/location_provider.dart';
 import 'package:provider/provider.dart';
 
 class BinMasterPage extends StatefulWidget {
@@ -14,6 +16,7 @@ class BinMasterPage extends StatefulWidget {
 
 class _BinMasterPageState extends State<BinMasterPage> {
   String? selectedBin;
+  final _searchController = TextEditingController();
 
   void selectBin(String? binName) {
     setState(() {
@@ -23,89 +26,125 @@ class _BinMasterPageState extends State<BinMasterPage> {
 
   @override
   void initState() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<LocationProvider>().fetchWarehouses();
+      Provider.of<BinApi>(context, listen: false).fetchBins(context);
+      // getWarehouse();
+    });
     super.initState();
-    Provider.of<BinApi>(context, listen: false).fetchBins(context);
   }
 
   @override
   Widget build(BuildContext context) {
     return Consumer<BinApi>(
-      builder: (context, b, child) => Column(
+      builder: (context, provider, child) => Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // if (selectedBin != null)
-          // Container(
-          //   decoration: BoxDecoration(
-          //     color: Colors.white,
-          //     boxShadow: [
-          //       BoxShadow(
-          //         color: Colors.grey.withOpacity(0.1),
-          //         spreadRadius: 1,
-          //         blurRadius: 4,
-          //       ),
-          //     ],
-          //   ),
-          //   padding: const EdgeInsets.all(24.0),
-          //   child: Row(
-          //     children: [
-          //       IconButton(
-          //         icon: const Icon(Icons.arrow_back,
-          //             color: AppColors.primaryBlue),
-          //         onPressed: () => selectBin(null),
-          //         tooltip: 'Back to bins list',
-          //       ),
-          //       const SizedBox(width: 16),
-          //       Text(
-          //         selectedBin!,
-          //         style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-          //               fontWeight: FontWeight.bold,
-          //               color: AppColors.primaryBlue,
-          //             ),
-          //       ),
-          //     ],
-          //   ),
-          // ),
-          b.isLoadingBins
-              ? const Expanded(
-                  child: Center(
-                    child: LoadingAnimation(
-                      icon: Icons.archive,
-                      beginColor: Color.fromRGBO(189, 189, 189, 1),
-                      endColor: AppColors.primaryBlue,
-                      size: 100.0,
+          if (provider.toShowBins)
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Row(
+                // mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  SizedBox(
+                    width: 300,
+                    child: TextField(
+                      controller: _searchController,
+                      decoration: InputDecoration(
+                        hintText: 'Search bins by product...',
+                        prefixIcon: const Icon(Icons.search, color: AppColors.primaryBlue),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12.0),
+                          borderSide: const BorderSide(color: AppColors.primaryBlue),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12.0),
+                          borderSide: const BorderSide(color: AppColors.primaryBlue, width: 2),
+                        ),
+                      ),
+                      onSubmitted: (value) {
+                        provider.seearchBinsByProduct(context, value);
+                      },
+                      onChanged: (value) {
+                        if (value.isEmpty) {
+                          provider.fetchBins(context);
+                        }
+                      },
                     ),
                   ),
-                )
-              : Expanded(
-                  child: b.toShowBins
-                      ? Container(
-                          decoration: BoxDecoration(
-                            color: Colors.grey[50],
-                          ),
-                          child: GridView.builder(
-                            padding: const EdgeInsets.all(24.0),
-                            gridDelegate:
-                                SliverGridDelegateWithMaxCrossAxisExtent(
-                              maxCrossAxisExtent: 300,
-                              mainAxisSpacing: 16,
-                              crossAxisSpacing: 16,
-                              childAspectRatio:
-                                  MediaQuery.of(context).size.width > 600
-                                      ? 1.5
-                                      : 1.2,
-                            ),
-                            itemCount: b.bins.length,
-                            itemBuilder: (context, index) => BinCard(
-                              title: b.bins[index],
-                              onTap: () {
-                                selectBin(b
-                                    .bins[index]); // Set the selected bin first
-                                b.toggle(false);
-                              },
-                            ),
-                          ),
-                        )
-                      : BinProductsPage(binName: selectedBin ?? ''),
+                  const Spacer(),
+                  IconButton(
+                    tooltip: 'Refresh Bins',
+                    onPressed: () {
+                      provider.fetchBins(context);
+                    },
+                    icon: const Icon(
+                      Icons.refresh_rounded,
+                      color: AppColors.primaryBlue,
+                      size: 28,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  ElevatedButton(
+                    onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const CreateBinPage())),
+                    child: const Text('Create Bin'),
+                  ),
+                  const SizedBox(width: 8),
+
+                ],
+              ),
+            ),
+          if (provider.isLoadingBins)
+            const Expanded(
+              child: Center(
+                child: LoadingAnimation(
+                  icon: Icons.archive,
+                  beginColor: Color.fromRGBO(189, 189, 189, 1),
+                  endColor: AppColors.primaryBlue,
+                  size: 100.0,
                 ),
+              ),
+            )
+          else if (provider.bins.isEmpty)
+            Expanded(
+              child: Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(Icons.search_off, size: 60, color: Colors.grey),
+                    const SizedBox(height: 16),
+                    Text('No bins found for: ${_searchController.text}', style: const TextStyle(fontSize: 16, color: Colors.grey)),
+                  ],
+                ),
+              ),
+            )
+          else
+            Expanded(
+              child: provider.toShowBins
+                  ? Container(
+                      decoration: BoxDecoration(
+                        color: Colors.grey[50],
+                      ),
+                      child: GridView.builder(
+                        padding: const EdgeInsets.all(24.0),
+                        gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
+                          maxCrossAxisExtent: 300,
+                          mainAxisSpacing: 16,
+                          crossAxisSpacing: 16,
+                          childAspectRatio: MediaQuery.of(context).size.width > 600 ? 1.5 : 1.2,
+                        ),
+                        itemCount: provider.bins.length,
+                        itemBuilder: (context, index) => BinCard(
+                          binName: provider.bins[index],
+                          onTap: () {
+                            selectBin(provider.bins[index]); // Set the selected bin first
+                            provider.toggle(false);
+                          },
+                        ),
+                      ),
+                    )
+                  : BinProductsPage(binName: selectedBin ?? ''),
+            ),
         ],
       ),
     );
@@ -113,11 +152,11 @@ class _BinMasterPageState extends State<BinMasterPage> {
 }
 
 class BinCard extends StatelessWidget {
-  final String title;
+  final String binName;
   final VoidCallback onTap;
 
   const BinCard({
-    required this.title,
+    required this.binName,
     required this.onTap,
     super.key,
   });
@@ -126,7 +165,7 @@ class BinCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Card(
       elevation: 4.0,
-      shadowColor: Colors.black.withOpacity(0.2),
+      shadowColor: Colors.black.withValues(alpha: 0.2),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(20.0),
       ),
@@ -147,18 +186,18 @@ class BinCard extends StatelessWidget {
               stops: const [0.0, 0.6, 1.0],
             ),
           ),
-          padding: const EdgeInsets.all(24.0),
+          padding: const EdgeInsets.all(16.0),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Container(
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: AppColors.primaryBlue.withOpacity(0.12),
+                  color: AppColors.primaryBlue.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(16),
                   boxShadow: [
                     BoxShadow(
-                      color: AppColors.primaryBlue.withOpacity(0.1),
+                      color: AppColors.primaryBlue.withValues(alpha: 0.1),
                       blurRadius: 8,
                       offset: const Offset(0, 4),
                     ),
@@ -170,13 +209,13 @@ class BinCard extends StatelessWidget {
                   color: AppColors.primaryBlue,
                 ),
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 10),
               Text(
-                title,
+                binName,
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w700,
+                      // fontWeight: FontWeight.w700,
                       color: Colors.grey[850],
-                      letterSpacing: -0.5,
+                      letterSpacing: 0.5,
                     ),
                 textAlign: TextAlign.center,
               ),

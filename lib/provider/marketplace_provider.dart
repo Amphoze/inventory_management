@@ -37,9 +37,10 @@ class MarketplaceProvider with ChangeNotifier {
     try {
       // Fetch the list of marketplaces
       _marketplaces = await marketplaceApi.getMarketplaces();
-      //print(_marketplaces);
+      // log('_marketplaces: ${
+      //   _marketplaces.map((market) => market.toJson()).toList()
+      // }');
 
-      // Iterate over each marketplace to fetch product details
       for (var marketplace in _marketplaces) {
         for (var skuMap in marketplace.skuMap) {
           try {
@@ -53,10 +54,9 @@ class MarketplaceProvider with ChangeNotifier {
         }
       }
 
-      _loading = false;
-    } catch (e) {
+    } catch (e, s) {
       // Handle general errors
-      log('Error fetching marketplaces: $e');
+      log('Error fetching marketplaces: $e $s');
       _marketplaces = []; // Clear the list on error
     } finally {
       _loading = false;

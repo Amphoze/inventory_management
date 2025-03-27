@@ -32,7 +32,7 @@ class InvoiceProvider with ChangeNotifier {
   // }
 
   Future<void> fetchInvoices({int page = 1}) async {
-    String apiUrl = await ApiUrls.getBaseUrl();
+    String apiUrl = await Constants.getBaseUrl();
     _isLoading = true;
     _error = null;
     _currentPage = page;
@@ -55,15 +55,25 @@ class InvoiceProvider with ChangeNotifier {
           headers: headers);
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
-        final invoicesData = data['invoices'] as List<dynamic>;
+        final invoicesData = data['invoices'] as List;
         _invoices = invoicesData.map((json) => Invoice.fromJson(json)).toList();
         _totalInvoices = data['totalInvoices'];
         _totalPages = data['totalPages'];
+        _currentPage = data['currentPage'];
       } else {
         _error = 'Failed to load invoices';
+        _invoices = [];
+        _totalInvoices = 0;
+        _totalPages = 0;
+        _currentPage = 0;
       }
-    } catch (e) {
+    } catch (e, s) {
+      _invoices = [];
+      _totalInvoices = 0;
+      _totalPages = 0;
+      _currentPage = 0;
       _error = e.toString();
+      log('fetch invoice error: $e $s');
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -122,7 +132,7 @@ class InvoiceProvider with ChangeNotifier {
   //   }
   // }
   Future<void> searchInvoiceByNumber(String invoiceNumber) async {
-    String apiUrl = await ApiUrls.getBaseUrl();
+    String apiUrl = await Constants.getBaseUrl();
     _isLoading = true;
     _error = null;
     notifyListeners();
@@ -153,16 +163,28 @@ class InvoiceProvider with ChangeNotifier {
       log('Response: ${response.statusCode}');
 
       if (response.statusCode == 200) {
-        final List<dynamic> data = json.decode(response.body)['invoices'];
-        _invoices = data.map((json) => Invoice.fromJson(json)).toList();
+        final data = json.decode(response.body);
+        _invoices = (data['invoices'] as List).map((json) => Invoice.fromJson(json)).toList();
+        _totalInvoices = data['totalInvoices'];
+        _totalPages = data['totalPages'];
+        _currentPage = data['currentPage'];
 
         log('Invoices: $_invoices');
       } else {
+        _invoices = [];
+        _totalInvoices = 0;
+        _totalPages = 0;
+        _currentPage = 0;
         _error = 'No invoice found with that number';
         log("No invoice found with that number");
       }
-    } catch (e) {
+    } catch (e, s) {
+      _invoices = [];
+      _totalInvoices = 0;
+      _totalPages = 0;
+      _currentPage = 0;
       _error = e.toString();
+      log('search invoice error: $e $s');
     } finally {
       _isLoading = false;
       notifyListeners();

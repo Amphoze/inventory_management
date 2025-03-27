@@ -92,7 +92,7 @@ class _ComboUploadState extends State<ComboUpload> {
         log(mrp.toString());
         final cost = num.parse(_csvData[i][4].toString());
         log(cost.toString());
-        log("${await ApiUrls.getBaseUrl()}/combo?sku=$comboSku");
+        log("${await Constants.getBaseUrl()}/combo?sku=$comboSku");
         log({
           "comboSku": comboSku,
           "name": name,
@@ -102,7 +102,7 @@ class _ComboUploadState extends State<ComboUpload> {
         }.toString());
 
         final response = await http.post(
-          Uri.parse('${await ApiUrls.getBaseUrl()}/combo'),
+          Uri.parse('${await Constants.getBaseUrl()}/combo'),
           headers: {
             'Content-Type': 'application/json',
             'Authorization': 'Bearer $token',
@@ -206,6 +206,16 @@ class _ComboUploadState extends State<ComboUpload> {
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
+            const Row(
+              mainAxisAlignment: MainAxisAlignment.start,
+              children: [
+                Text(
+                  'Upload Combo',
+                  style: TextStyle(fontSize: 25, fontWeight: FontWeight.bold),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
             Row(
               children: [
                 Expanded(
@@ -266,7 +276,7 @@ class _ComboUploadState extends State<ComboUpload> {
                       children: [
                         DataTable(
                           headingRowColor: WidgetStateProperty.all(
-                              AppColors.primaryBlue.withOpacity(0.1)),
+                              AppColors.primaryBlue.withValues(alpha: 0.1)),
                           headingTextStyle: const TextStyle(
                             fontWeight: FontWeight.bold,
                             color: AppColors.primaryBlue,
@@ -341,7 +351,7 @@ class _ComboUploadState extends State<ComboUpload> {
                     scrollDirection: Axis.horizontal,
                     child: DataTable(
                       headingRowColor: WidgetStateProperty.all(
-                          AppColors.primaryBlue.withOpacity(0.1)),
+                          AppColors.primaryBlue.withValues(alpha: 0.1)),
                       headingTextStyle: const TextStyle(
                         fontWeight: FontWeight.bold,
                         color: AppColors.primaryBlue,

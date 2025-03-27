@@ -40,10 +40,10 @@ class MarketplaceApi {
 
   // Create a new marketplace
   Future<void> createMarketplace(Marketplace marketplace) async {
-    String baseUrl = await ApiUrls.getBaseUrl();
+    String baseUrl = await Constants.getBaseUrl();
     final headers = await _getHeaders(); // Get headers with token
     final response = await http.post(
-      Uri.parse(baseUrl),
+      Uri.parse("$baseUrl/marketplace"),
       headers: headers,
       body: jsonEncode(marketplace.toJson()), // Send marketplace as JSON
     );
@@ -55,7 +55,7 @@ class MarketplaceApi {
 
   // Get all marketplaces
   Future<List<Marketplace>> getMarketplaces() async {
-    String baseUrl = '${await ApiUrls.getBaseUrl()}/marketplace/';
+    String baseUrl = '${await Constants.getBaseUrl()}/marketplace';
     final headers = await _getHeaders(); // Get headers with token
     final response = await http.get(Uri.parse(baseUrl), headers: headers);
 
@@ -81,7 +81,7 @@ class MarketplaceApi {
 
   // Get marketplace by ID
   Future<Marketplace> getMarketplaceById(String id) async {
-    String baseUrl = await ApiUrls.getBaseUrl();
+    String baseUrl = await Constants.getBaseUrl();
     final headers = await _getHeaders(); // Get headers with token
     final response = await http.get(Uri.parse('$baseUrl$id'), headers: headers);
 
@@ -94,10 +94,10 @@ class MarketplaceApi {
 
   // Update marketplace by ID
   Future<void> updateMarketplace(String id, Marketplace marketplace) async {
-    String baseUrl = await ApiUrls.getBaseUrl();
+    String baseUrl = await Constants.getBaseUrl();
     final headers = await _getHeaders(); // Get headers with token
     final response = await http.put(
-      Uri.parse('$baseUrl$id'),
+      Uri.parse('$baseUrl/marketplace/$id'),
       headers: headers,
       body:
           jsonEncode(marketplace.toJson()), // Send updated marketplace as JSON
@@ -110,10 +110,10 @@ class MarketplaceApi {
 
   // Delete marketplace by ID
   Future<void> deleteMarketplace(String id) async {
-    String baseUrl = await ApiUrls.getBaseUrl();
+    String baseUrl = await Constants.getBaseUrl();
     final headers = await _getHeaders(); // Get headers with token
     final response =
-        await http.delete(Uri.parse('$baseUrl$id'), headers: headers);
+        await http.delete(Uri.parse('$baseUrl/marketplace/$id'), headers: headers);
 
     if (response.statusCode != 200) {
       throw Exception('Failed to delete marketplace: ${response.body}');

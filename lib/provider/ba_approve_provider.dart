@@ -1,12 +1,13 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:developer';
-import 'package:http/http.dart' as http;
+
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'package:intl/intl.dart';
 import 'package:inventory_management/constants/constants.dart';
 import 'package:inventory_management/model/orders_model.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:intl/intl.dart';
 
 class BaApproveProvider with ChangeNotifier {
   bool _isLoading = false;
@@ -19,23 +20,28 @@ class BaApproveProvider with ChangeNotifier {
   final PageController _pageController = PageController();
   final TextEditingController _textEditingController = TextEditingController();
   Timer? _debounce;
+  final TextEditingController searchController = TextEditingController();
 
   bool get selectAll => _selectAll;
   List<bool> get selectedProducts => _selectedProducts;
   List<Order> get orders => _orders;
   bool get isLoading => _isLoading;
-
   int get currentPage => _currentPage;
   int get totalPages => _totalPages;
   PageController get pageController => _pageController;
   TextEditingController get textEditingController => _textEditingController;
-
-  int get selectedCount =>
-      _selectedProducts.where((isSelected) => isSelected).length;
+  int get selectedCount => _selectedProducts.where((isSelected) => isSelected).length;
 
   bool isUpdatingOrder = false;
   bool isRefreshingOrders = false;
   bool isCancel = false;
+
+  void resetOrderData() {
+    _orders = [];
+    _currentPage = 1;
+    _totalPages = 1;
+    notifyListeners();
+  }
 
   void setCancelStatus(bool status) {
     isCancel = status;
@@ -68,8 +74,7 @@ class BaApproveProvider with ChangeNotifier {
 
   void toggleSelectAll(bool value) {
     _selectAll = value;
-    _selectedProducts =
-        List<bool>.generate(_orders.length, (index) => _selectAll);
+    _selectedProducts = List<bool>.generate(_orders.length, (index) => _selectAll);
     notifyListeners();
   }
 
@@ -105,9 +110,8 @@ class BaApproveProvider with ChangeNotifier {
     return prefs.getString('authToken') ?? '';
   }
 
-  Future<String> cancelOrders(
-      BuildContext context, List<String> orderIds) async {
-    String baseUrl = await ApiUrls.getBaseUrl();
+  Future<String> cancelOrders(BuildContext context, List<String> orderIds) async {
+    String baseUrl = await Constants.getBaseUrl();
     String cancelOrderUrl = '$baseUrl/orders/cancel';
     // final String? token = await _getToken();
 
@@ -159,38 +163,38 @@ class BaApproveProvider with ChangeNotifier {
     }
   }
 
-  Future<void> fetchOrdersWithStatus2({DateTime? date}) async {
+  Future<void> fetchOrdersWithStatus2({DateTime? date, String? market}) async {
+    // if(searchController.text.trim().isNotEmpty) {
+    //   searchOrders(searchController.text.trim());
+    //   return;
+    // }
     _isLoading = true;
     setRefreshingOrders(true);
     notifyListeners();
 
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('authToken') ?? '';
-    var url =
-        '${await ApiUrls.getBaseUrl()}/orders?orderStatus=2&ba_approve=false&page=';
+    final warehouseId = prefs.getString('warehouseId') ?? '';
 
-    if (date != null || date == 'Select Date') {
-      String formattedDate = DateFormat('yyyy-MM-dd').format(date!);
+    var url = '${await Constants.getBaseUrl()}/orders?warehouse=$warehouseId&orderStatus=2&ba_approve=false&page=$_currentPage';
+
+    if (date != null) {
+      String formattedDate = DateFormat('yyyy-MM-dd').format(date);
       url += '&date=$formattedDate';
+    }
+    if (market != 'All' && market != null) {
+      url += '&marketplace=$market';
     }
 
     try {
-      String requestUrl = '$url$_currentPage';
-      if (date != null || date == 'Select Date') {
-        String formattedDate = DateFormat('yyyy-MM-dd').format(date!);
-        requestUrl += '&date=$formattedDate';
-      }
-
-      final response = await http.get(Uri.parse(requestUrl), headers: {
+      final response = await http.get(Uri.parse(url), headers: {
         'Authorization': 'Bearer $token',
         'Content-Type': 'application/json',
       });
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
-        List<Order> orders = (data['orders'] as List)
-            .map((order) => Order.fromJson(order))
-            .toList();
+        List<Order> orders = (data['orders'] as List).map((order) => Order.fromJson(order)).toList();
 
         log('orders: $orders');
 
@@ -203,15 +207,11 @@ class BaApproveProvider with ChangeNotifier {
         // Print the total number of orders fetched from the current page
         print('Total Orders Fetched from Page $_currentPage: ${orders.length}');
       } else {
-        // Handle non-success responses
-        _orders = [];
-        _totalPages = 1; // Reset total pages if there’s an error
+        resetOrderData();
       }
     } catch (e) {
       log('Error fetching orders: $e');
-      // Handle errors
-      _orders = [];
-      _totalPages = 1; // Reset total pages if there’s an error
+      resetOrderData();
     } finally {
       _isLoading = false;
       setRefreshingOrders(false);
@@ -232,19 +232,21 @@ class BaApproveProvider with ChangeNotifier {
   }
 
   Future<List<Order>> searchOrders(String query) async {
-    if (query.isEmpty) {
-      await fetchOrdersWithStatus2();
-      return _orders;
-    }
+    // if (query.isEmpty) {
+    //   await fetchOrdersWithStatus2();
+    //   return _orders;
+    // }
 
     _isLoading = true;
     notifyListeners();
 
     final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString('authToken') ?? ''; // Fetch the token
+    final token = prefs.getString('authToken') ?? '';
+    final warehouseId = prefs.getString('warehouseId') ?? '';
 
-    final url =
-        '${await ApiUrls.getBaseUrl()}/orders?orderStatus=2&ba_approve=false&order_id=$query';
+    String encodedOrderId = Uri.encodeComponent(query.trim());
+
+    final url = '${await Constants.getBaseUrl()}/orders?warehouse=$warehouseId&orderStatus=2&ba_approve=false&order_id=$encodedOrderId';
 
     print('Searching orders with term: $query');
 
@@ -262,24 +264,24 @@ class BaApproveProvider with ChangeNotifier {
       if (response.statusCode == 200) {
         final jsonData = json.decode(response.body);
 
-        List<Order> orders = [];
-        // print('Response data: $jsonData');
-        if (jsonData != null) {
-          orders.add(Order.fromJson(jsonData));
-          print('Response data: $jsonData');
-        } else {
-          print('No data found in response.');
-        }
+        // List<Order> orders = [];
+        // // print('Response data: $jsonData');
+        // if (jsonData != null) {
+        //   orders.add(Order.fromJson(jsonData));
+        //   print('Response data: $jsonData');
+        // } else {
+        //   print('No data found in response.');
+        // }
 
-        _orders = orders;
+        _orders = (jsonData['orders'] as List).map((order) => Order.fromJson(order)).toList();
         print('Orders fetched: ${orders.length}');
       } else {
         print('Failed to load orders: ${response.statusCode}');
-        _orders = [];
+        resetOrderData();
       }
     } catch (error) {
       print('Error searching failed orders: $error');
-      _orders = [];
+      resetOrderData();
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -292,12 +294,7 @@ class BaApproveProvider with ChangeNotifier {
   Future<void> statusUpdate(BuildContext context) async {
     setUpdatingOrder(true);
     notifyListeners();
-    final selectedOrderIds = _orders
-        .asMap()
-        .entries
-        .where((entry) => _selectedProducts[entry.key])
-        .map((entry) => entry.value.orderId)
-        .toList();
+    final selectedOrderIds = _orders.asMap().entries.where((entry) => _selectedProducts[entry.key]).map((entry) => entry.value.orderId).toList();
 
     if (selectedOrderIds.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -309,7 +306,7 @@ class BaApproveProvider with ChangeNotifier {
 
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('authToken') ?? '';
-    String url = '${await ApiUrls.getBaseUrl()}/orders/ba_approve';
+    String url = '${await Constants.getBaseUrl()}/orders/ba_approve';
 
     try {
       final response = await http.post(
@@ -318,7 +315,9 @@ class BaApproveProvider with ChangeNotifier {
           'Authorization': 'Bearer $token',
           'Content-Type': 'application/json',
         },
-        body: jsonEncode({'orderIds': selectedOrderIds}),
+        body: jsonEncode({
+          'orderIds': selectedOrderIds
+        }),
       );
 
       if (response.statusCode == 200) {
@@ -344,20 +343,18 @@ class BaApproveProvider with ChangeNotifier {
     }
   }
 
-  Future<void> fetchOrdersByMarketplace(
-      String marketplace, int orderStatus, int page,
-      {DateTime? date}) async {
-    String baseUrl = '${await ApiUrls.getBaseUrl()}/orders';
-    String url =
-        '$baseUrl?orderStatus=$orderStatus&ba_approve=false&marketplace=$marketplace&page=$page';
-
-    if (date != null || date == 'Select Date') {
-      String formattedDate = DateFormat('yyyy-MM-dd').format(date!);
-      url += '&date=$formattedDate';
-    }
-
+  Future<void> fetchOrdersByMarketplace(String marketplace, int orderStatus, int page, {DateTime? date}) async {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('authToken') ?? '';
+    final warehouseId = prefs.getString('warehouseId') ?? '';
+
+    String baseUrl = '${await Constants.getBaseUrl()}/orders';
+    String url = '$baseUrl?warehouse=$warehouseId&orderStatus=$orderStatus&ba_approve=false&marketplace=$marketplace&page=$page';
+
+    if (date != null) {
+      String formattedDate = DateFormat('yyyy-MM-dd').format(date);
+      url += '&date=$formattedDate';
+    }
 
     try {
       _isLoading = true;
@@ -380,27 +377,20 @@ class BaApproveProvider with ChangeNotifier {
 
       if (response.statusCode == 200) {
         final jsonResponse = jsonDecode(response.body);
-        List<Order> orders = (jsonResponse['orders'] as List)
-            .map((orderJson) => Order.fromJson(orderJson))
-            .toList();
+        List<Order> orders = (jsonResponse['orders'] as List).map((orderJson) => Order.fromJson(orderJson)).toList();
 
         log("orders: $orders");
 
         _orders = orders;
         _currentPage = page; // Track current page for B2B
-        _totalPages =
-            jsonResponse['totalPages']; // Assuming API returns total pages
-      } else if (response.statusCode == 401) {
-        print('Unauthorized access - Token might be expired or invalid.');
-      } else if (response.statusCode == 404) {
-        _orders = [];
-        notifyListeners();
-        print('Orders not found - Check the filter type.');
+        _totalPages = jsonResponse['totalPages']; // Assuming API returns total pages
       } else {
+        resetOrderData();
         throw Exception('Failed to load orders: ${response.statusCode}');
       }
     } catch (e) {
       print('Error fetching orders: $e');
+      resetOrderData();
     } finally {
       _isLoading = false;
       notifyListeners();

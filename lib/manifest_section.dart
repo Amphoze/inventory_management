@@ -180,7 +180,8 @@ class _ManifestSectionState extends State<ManifestSection> {
                           final manifest = manifestProvider.manifests[index];
                           return Column(
                             children: [
-                              _buildManifest(manifest, index, manifestProvider),
+                              _buildManifest(
+                                  manifest, index, manifestProvider),
                               const Divider(thickness: 1, color: Colors.grey),
                             ],
                           );
@@ -265,14 +266,13 @@ class _ManifestSectionState extends State<ManifestSection> {
               color: Colors.black87,
             ),
           ),
-          if (subtitle != '')
-            Text(
-              subtitle,
-              style: const TextStyle(
-                fontSize: 18,
-                color: Colors.black87,
-              ),
+          Text(
+            subtitle,
+            style: const TextStyle(
+              fontSize: 18,
+              color: Colors.black87,
             ),
+          ),
         ],
       )),
     );
@@ -324,6 +324,22 @@ class _ManifestSectionState extends State<ManifestSection> {
             ),
             flex: 1,
           ),
+          // buildCell(
+          //   // Use the getOrderImage method to handle image display
+          //   order.getOrderImage(),
+          //   flex: 3,
+          // ),
+          // const SizedBox(width: 4),
+          // buildCell(
+          //   order.checkManifest!.approved
+          //       ? const Icon(
+          //           Icons.check_circle,
+          //           color: Colors.green,
+          //           size: 24,
+          //         )
+          //       : const SizedBox.shrink(),
+          //   flex: 2,
+          // ),
         ],
       ),
     );

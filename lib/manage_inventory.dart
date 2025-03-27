@@ -40,22 +40,21 @@ class _ManageInventoryPageState extends State<ManageInventoryPage> {
 
   @override
   void initState() {
-    super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      Provider.of<InventoryProvider>(context, listen: false)
-          .fetchInventory(page: 1); // Start at page 1
+      Provider.of<InventoryProvider>(context, listen: false).fetchInventory(page: 1); // Start at page 1
       Provider.of<ComboProvider>(context, listen: false).fetchProducts();
 
       getDropValueForProduct();
-      getDropValueForWarehouse(); // Fetch warehouse dropdown values
-    });
+      getDropValueForWarehouse();
 
-    searchController.addListener(() {
-      log("Search text: ${searchController.text}");
-      context.read<ComboProvider>().addMoreProducts(searchController.text);
-    });
+      searchController.addListener(() {
+        log("Search text: ${searchController.text}");
+        context.read<ComboProvider>().addMoreProducts(searchController.text);
+      });
 
-    _getInventoryItems();
+      _getInventoryItems();
+    });
+    super.initState();
   }
 
   void _getInventoryItems() async {
@@ -64,14 +63,12 @@ class _ManageInventoryPageState extends State<ManageInventoryPage> {
 
   void getDropValueForProduct() async {
     await Provider.of<ComboProvider>(context, listen: false).fetchProducts();
-    setState(() {});
   }
 
   void getDropValueForWarehouse() async {
     await Provider.of<ComboProvider>(context, listen: false).fetchWarehouses();
     List<DropdownMenuItem<String>> newItems = [];
-    ComboProvider comboProvider =
-        Provider.of<ComboProvider>(context, listen: false);
+    ComboProvider comboProvider = Provider.of<ComboProvider>(context, listen: false);
 
     for (var warehouse in comboProvider.warehouses) {
       newItems.add(DropdownMenuItem<String>(
@@ -127,7 +124,7 @@ class _ManageInventoryPageState extends State<ManageInventoryPage> {
     try {
       final token = await getToken();
       final response = await http.post(
-        Uri.parse('${await ApiUrls.getBaseUrl()}/inventory'),
+        Uri.parse('${await Constants.getBaseUrl()}/inventory'),
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer $token',
@@ -201,7 +198,7 @@ class _ManageInventoryPageState extends State<ManageInventoryPage> {
       final token = prefs.getString('authToken');
       final warehouseId = prefs.getString('warehouseId');
 
-      String baseUrl = await ApiUrls.getBaseUrl();
+      String baseUrl = await Constants.getBaseUrl();
 
       if (token == null || token.isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -229,8 +226,7 @@ class _ManageInventoryPageState extends State<ManageInventoryPage> {
       };
 
       final response = await http.post(
-        Uri.parse(
-            '$baseUrl/inventory/minimunThreshold?warehouseId=$warehouseId'),
+        Uri.parse('$baseUrl/inventory/minimunThreshold?warehouseId=$warehouseId'),
         headers: headers,
       );
 
@@ -271,8 +267,7 @@ class _ManageInventoryPageState extends State<ManageInventoryPage> {
           throw Exception('No download URL found');
         }
       } else {
-        throw Exception(
-            'Failed to load template: ${response.statusCode} ${response.body}');
+        throw Exception('Failed to load template: ${response.statusCode} ${response.body}');
       }
     } catch (error) {
       log('error: $error');
@@ -314,9 +309,9 @@ class _ManageInventoryPageState extends State<ManageInventoryPage> {
     try {
       final prefs = await SharedPreferences.getInstance();
       final token = prefs.getString('authToken');
-      final warehouseId = prefs.getString('warehouseId');
+      // final warehouseId = prefs.getString('warehouseId');
 
-      String baseUrl = await ApiUrls.getBaseUrl();
+      String baseUrl = await Constants.getBaseUrl();
 
       if (token == null || token.isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -344,8 +339,7 @@ class _ManageInventoryPageState extends State<ManageInventoryPage> {
       };
 
       final response = await http.post(
-        Uri.parse(
-            '$baseUrl/inventory/uploadQty?warehouseId=66fceb5163c6d5c106cfa809'),
+        Uri.parse('$baseUrl/inventory/uploadQty?warehouseId=66fceb5163c6d5c106cfa809'),
         headers: headers,
       );
 
@@ -386,8 +380,7 @@ class _ManageInventoryPageState extends State<ManageInventoryPage> {
           throw Exception('No download URL found');
         }
       } else {
-        throw Exception(
-            'Failed to load template: ${response.statusCode} ${response.body}');
+        throw Exception('Failed to load template: ${response.statusCode} ${response.body}');
       }
     } catch (error) {
       log('error: $error');
@@ -443,12 +436,7 @@ class _ManageInventoryPageState extends State<ManageInventoryPage> {
       'THRESHOLD QUANTITY',
       'THRESHOLD',
       'LABEL SKU',
-      // 'FLIPKART',
-      // 'SNAPDEAL',
-      // 'AMAZON.IN',
     ];
-
-    // final paginatedData = provider.getPaginatedData();
 
     return Scaffold(
       backgroundColor: AppColors.white,
@@ -458,9 +446,32 @@ class _ManageInventoryPageState extends State<ManageInventoryPage> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
+                SizedBox(
+                  width: 120,
+                  height: 34,
+                  child: DropdownButtonFormField<String>(
+                    isExpanded: true,
+                    value: provider.selectedSearchBy,
+                    decoration: const InputDecoration(
+                      border: OutlineInputBorder(),
+                      contentPadding: EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
+                    ),
+                    items: const [
+                      DropdownMenuItem(value: 'productSku', child: Text('SKU')),
+                      DropdownMenuItem(value: 'displayName', child: Text('Name')),
+                    ],
+                    onChanged: (value) {
+                      Logger().e('$value');
+                      setState(() {
+                        if (value != null) {
+                          provider.setSelectedSearchBy(value);
+                        }
+                      });
+                    },
+                  ),
+                ),
                 IconButton(
-                  icon: const Icon(Icons.arrow_left,
-                      color: AppColors.primaryBlue),
+                  icon: const Icon(Icons.arrow_left, color: AppColors.primaryBlue),
                   onPressed: () {
                     _scrollController.animateTo(
                       _scrollController.position.pixels - 200,
@@ -479,20 +490,30 @@ class _ManageInventoryPageState extends State<ManageInventoryPage> {
                         hintStyle: TextStyle(color: Colors.grey[600]),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(30),
-                          borderSide:
-                              const BorderSide(color: AppColors.primaryBlue),
+                          borderSide: const BorderSide(color: AppColors.primaryBlue),
                         ),
-                        contentPadding: const EdgeInsets.symmetric(
-                            vertical: 10, horizontal: 20),
+                        contentPadding: const EdgeInsets.symmetric(vertical: 10, horizontal: 20),
+                        prefixIcon: IconButton(
+                          tooltip: 'Search',
+                            icon: const Icon(Icons.search, color: AppColors.primaryBlue),
+                            onPressed: () {
+                              final value = _searchController.text.trim();
+                              Logger().e('$value ${provider.selectedSearchBy}');
+                              if (value.trim().isNotEmpty) {
+                                provider.filterInventory(value.trim(), provider.selectedSearchBy); // Fetch filtered data
+                              } else {
+                                provider.fetchInventory();
+                              }
+                            }),
                         suffixIcon: IconButton(
-                            icon: const Icon(Icons.search,
-                                color: AppColors.primaryBlue),
+                          tooltip: 'Clear',
+                            icon: const Icon(Icons.close, color: AppColors.cardsred),
                             onPressed: () {
                               final searchTerm = _searchController.text.trim();
                               if (searchTerm.isNotEmpty) {
-                                provider.filterInventory(
-                                    searchTerm); // Fetch filtered data
-                              } else {
+                                setState(() {
+                                  _searchController.clear();
+                                });
                                 provider.fetchInventory();
                               }
                             }),
@@ -501,26 +522,20 @@ class _ManageInventoryPageState extends State<ManageInventoryPage> {
                         if (value.isEmpty) {
                           provider.fetchInventory(); // Load all inventory
                         }
-                        // else {
-                        //   provider
-                        //       .filterInventory(value); // Fetch filtered data
-                        // }
                       },
                       onSubmitted: (value) {
-                        Logger().e('Submitted: $value');
-                        if (value.isEmpty) {
-                          provider.fetchInventory(); // Load all inventory
+                        Logger().e('$value ${provider.selectedSearchBy}');
+                        if (value.trim().isNotEmpty) {
+                          provider.filterInventory(value.trim(), provider.selectedSearchBy); // Fetch filtered data
                         } else {
-                          provider
-                              .filterInventory(value); // Fetch filtered data
+                          provider.fetchInventory();
                         }
                       },
                     ),
                   ),
                 ),
                 IconButton(
-                  icon: const Icon(Icons.arrow_right,
-                      color: AppColors.primaryBlue),
+                  icon: const Icon(Icons.arrow_right, color: AppColors.primaryBlue),
                   onPressed: () {
                     _scrollController.animateTo(
                       _scrollController.position.pixels + 200,
@@ -566,7 +581,6 @@ class _ManageInventoryPageState extends State<ManageInventoryPage> {
                 const SizedBox(width: 10),
                 ElevatedButton(
                   onPressed: () async {
-                    // Show loading dialog
                     showDialog(
                       context: context,
                       barrierDismissible: false,
@@ -584,9 +598,7 @@ class _ManageInventoryPageState extends State<ManageInventoryPage> {
                     );
 
                     // Fetch the download URL
-                    downloadUrl = await context
-                        .read<InventoryProvider>()
-                        .getInventoryItems();
+                    downloadUrl = await context.read<InventoryProvider>().getInventoryItems();
 
                     // Close loading dialog
                     if (context.mounted) {
@@ -633,8 +645,7 @@ class _ManageInventoryPageState extends State<ManageInventoryPage> {
                 Consumer<ComboProvider>(builder: (context, provider, child) {
                   return provider.isFormVisible
                       ? ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.red),
+                          style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
                           onPressed: () {
                             provider.toggleFormVisibility(); // Hide form
                           },
@@ -655,40 +666,28 @@ class _ManageInventoryPageState extends State<ManageInventoryPage> {
                       children: [
                         if (comboProvider.isFormVisible) ...[
                           const SizedBox(height: 16),
-                          const Text("Manage Inventory",
-                              style: TextStyle(
-                                  fontSize: 24, fontWeight: FontWeight.bold)),
+                          const Text("Manage Inventory", style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
                           const SizedBox(height: 16),
 
-                          const Text("Product",
-                              style: TextStyle(
-                                  fontWeight: FontWeight.bold, fontSize: 16)),
+                          const Text("Product", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                           const SizedBox(height: 10),
 
                           DropdownSearch<String>(
                             items: comboProvider.products
-                                .where((product) =>
-                                    product.displayName?.toLowerCase().contains(
-                                        searchController.text.toLowerCase()) ??
-                                    false)
-                                .map((product) =>
-                                    '${product.sku}: ${product.displayName}' ??
-                                    'Unknown')
+                                .where(
+                                    (product) => product.displayName?.toLowerCase().contains(searchController.text.toLowerCase()) ?? false)
+                                .map((product) => '${product.sku}: ${product.displayName}' ?? 'Unknown')
                                 .toList(),
                             onChanged: (String? newValue) {
                               final selectedProduct = comboProvider.products
-                                  .firstWhere((product) =>
-                                      product.displayName == newValue ||
-                                      product.sku == newValue);
+                                  .firstWhere((product) => product.displayName == newValue || product.sku == newValue);
                               setState(() {
                                 selectedProductId = selectedProduct.id;
-                                selectedProductName =
-                                    selectedProduct.displayName;
+                                selectedProductName = selectedProduct.displayName;
                               });
                             },
                             selectedItem: selectedProductName,
-                            dropdownDecoratorProps:
-                                const DropDownDecoratorProps(
+                            dropdownDecoratorProps: const DropDownDecoratorProps(
                               dropdownSearchDecoration: InputDecoration(
                                 labelText: 'Search and Select Product',
                                 border: OutlineInputBorder(),
@@ -711,8 +710,7 @@ class _ManageInventoryPageState extends State<ManageInventoryPage> {
                           // SubInventory List
                           ...List.generate(subInventories.length, (index) {
                             return Padding(
-                              padding:
-                                  const EdgeInsets.symmetric(vertical: 8.0),
+                              padding: const EdgeInsets.symmetric(vertical: 8.0),
                               child: Container(
                                 padding: const EdgeInsets.all(16.0),
                                 decoration: BoxDecoration(
@@ -725,9 +723,7 @@ class _ManageInventoryPageState extends State<ManageInventoryPage> {
                                   children: [
                                     Text(
                                       'SubInventory ${index + 1}',
-                                      style: const TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 16),
+                                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                                     ),
                                     const SizedBox(height: 16),
 
@@ -735,13 +731,11 @@ class _ManageInventoryPageState extends State<ManageInventoryPage> {
                                     DropdownButtonFormField<String>(
                                       hint: const Text('Select Warehouse'),
                                       isExpanded: true,
-                                      value: subInventories[index]
-                                          ['warehouseId'],
+                                      value: subInventories[index]['warehouseId'],
                                       items: dropdownItemsForWarehouses,
                                       onChanged: (String? newValue) {
                                         setState(() {
-                                          subInventories[index]['warehouseId'] =
-                                              newValue;
+                                          subInventories[index]['warehouseId'] = newValue;
                                         });
                                       },
                                       decoration: const InputDecoration(
@@ -760,8 +754,7 @@ class _ManageInventoryPageState extends State<ManageInventoryPage> {
                                       keyboardType: TextInputType.number,
                                       onChanged: (value) {
                                         setState(() {
-                                          subInventories[index]['quantity'] =
-                                              int.tryParse(value) ?? 0;
+                                          subInventories[index]['quantity'] = int.tryParse(value) ?? 0;
                                         });
                                       },
                                     ),
@@ -771,11 +764,8 @@ class _ManageInventoryPageState extends State<ManageInventoryPage> {
                                         onPressed: () {
                                           removeSubInventory(index);
                                         },
-                                        icon: const Icon(Icons.delete,
-                                            color: Colors.red),
-                                        label: const Text("Remove",
-                                            style:
-                                                TextStyle(color: Colors.red)),
+                                        icon: const Icon(Icons.delete, color: Colors.red),
+                                        label: const Text("Remove", style: TextStyle(color: Colors.red)),
                                       ),
                                     ),
                                   ],
@@ -801,16 +791,14 @@ class _ManageInventoryPageState extends State<ManageInventoryPage> {
                               ElevatedButton(
                                 onPressed: () async {
                                   if (selectedProductId == null) {
-                                    ScaffoldMessenger.of(context)
-                                        .showSnackBar(const SnackBar(
+                                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
                                       content: Text("Please select a product"),
                                     ));
                                   } else {
                                     // Show loading dialog
                                     showDialog(
                                       context: context,
-                                      barrierDismissible:
-                                          false, // Prevent dismissing the dialog
+                                      barrierDismissible: false, // Prevent dismissing the dialog
                                       builder: (BuildContext context) {
                                         return const AlertDialog(
                                           content: Row(
@@ -857,8 +845,7 @@ class _ManageInventoryPageState extends State<ManageInventoryPage> {
                                       height: 500, // Set appropriate height
                                       child: LoadingAnimation(
                                         icon: Icons.inventory_2,
-                                        beginColor:
-                                            Color.fromRGBO(189, 189, 189, 1),
+                                        beginColor: Color.fromRGBO(189, 189, 189, 1),
                                         endColor: AppColors.primaryBlue,
                                         size: 80.0,
                                       ),

@@ -90,7 +90,7 @@ class _ManageLabelPageState extends State<ManageLabelPage> {
         }.toString());
 
         final response = await http.put(
-          Uri.parse('${await ApiUrls.getBaseUrl()}/label?labelSku=$sku'),
+          Uri.parse('${await Constants.getBaseUrl()}/label?labelSku=$sku'),
           headers: {
             'Content-Type': 'application/json',
             'Authorization': 'Bearer $token',
@@ -144,6 +144,16 @@ class _ManageLabelPageState extends State<ManageLabelPage> {
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
+            const Row(
+              mainAxisAlignment: MainAxisAlignment.start,
+              children: [
+                Text(
+                  'Manage Labels',
+                  style: TextStyle(fontSize: 25, fontWeight: FontWeight.bold),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
             Row(
               children: [
                 Expanded(
@@ -222,7 +232,7 @@ class _ManageLabelPageState extends State<ManageLabelPage> {
                     scrollDirection: Axis.horizontal,
                     child: DataTable(
                       // headingRowColor: WidgetStateProperty.all(
-                      //     AppColors.primaryBlue.withOpacity(0.1)),
+                      //     AppColors.primaryBlue.withValues(alpha: 0.1)),
                       headingTextStyle: const TextStyle(
                         fontWeight: FontWeight.bold,
                         color: AppColors.primaryBlue,

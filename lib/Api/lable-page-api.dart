@@ -26,16 +26,6 @@ class LabelPageApi with ChangeNotifier {
   // New controller for DropdownSearch
   List<String> _selectedProducts = [];
 
-  // late final String baseUrl;
-
-  // LabelPageApi() {
-  //   _initialize();
-  // }
-
-  // Future<void> _initialize() async {
-  //   baseUrl = await ApiUrls.getBaseUrl();
-  // }
-
   //getter for all controller
   TextEditingController get nameController => _nameController;
   TextEditingController get labelSkuController => _labelSkuController;
@@ -93,7 +83,7 @@ class LabelPageApi with ChangeNotifier {
 
   //create label
   Future<Map<String, dynamic>> createLabel() async {
-    String baseUrl = await ApiUrls.getBaseUrl();
+    String baseUrl = await Constants.getBaseUrl();
     log("create label");
     printControllerValues();
 
@@ -103,14 +93,6 @@ class LabelPageApi with ChangeNotifier {
     if (labelSkuController.text.trim().isEmpty) {
       return {};
     }
-
-    // List<Map<String, String>> productIdMap = [];
-    // for (int i = 0; i < _selectedIndex.length; i++) {
-    //   print("heeeli ${_productDetails[_selectedIndex[i]]['_id'].toString()}");
-    //   productIdMap.add(
-    //       {'productId': _productDetails[_selectedIndex[i]]['_id'].toString()});
-    // }
-    // print("lenght ${productIdMap.length}");
     final url = Uri.parse('$baseUrl/label/');
     final body = {
       'name': nameController.text.trim(),
@@ -150,7 +132,7 @@ class LabelPageApi with ChangeNotifier {
 
   //get product details
   Future getProductDetails() async {
-    String baseUrl = await ApiUrls.getBaseUrl();
+    String baseUrl = await Constants.getBaseUrl();
     final token = await AuthProvider().getToken();
     var response = await http.get(
       Uri.parse("$baseUrl/products"),

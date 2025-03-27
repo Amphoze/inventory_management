@@ -27,13 +27,13 @@ class UpdateQuantityBySku with ChangeNotifier {
   }
 
   Future updateQuantityBySku(Map<String, Map<String, dynamic>> data) async {
-    String _baseUrl = await ApiUrls.getBaseUrl();
+    String baseUrl = await Constants.getBaseUrl();
     int count = 0;
     String? token = await AuthProvider().getToken();
     try {
       for (var label in data.keys) {
         count++;
-        Uri url = Uri.parse('$_baseUrl/inventory?sku=$label');
+        Uri url = Uri.parse('$baseUrl/inventory?sku=$label');
         var response = await http.put(url,
             headers: {
               'Content-Type': 'application/json',

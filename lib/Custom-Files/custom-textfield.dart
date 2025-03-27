@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 class CustomTextField extends StatelessWidget {
   final int maxLines;
@@ -12,7 +13,8 @@ class CustomTextField extends StatelessWidget {
   final TextEditingController controller;
   final String? Function(String?)? validator;
 
-  const CustomTextField({super.key, 
+  const CustomTextField({
+    super.key,
     this.maxLines = 1,
     this.height = 52,
     this.width = 550,
@@ -35,9 +37,10 @@ class CustomTextField extends StatelessWidget {
         controller: controller,
         maxLines: maxLines,
         keyboardType: keyboardType,
+        inputFormatters: keyboardType == TextInputType.number ? [FilteringTextInputFormatter.digitsOnly] : null,
         decoration: InputDecoration(
-          isDense:true,
-          isCollapsed:true,
+          isDense: true,
+          isCollapsed: true,
           prefixIcon: icon != null && prefix == null
               ? Padding(
                   padding: const EdgeInsets.all(8.0),
@@ -57,8 +60,8 @@ class CustomTextField extends StatelessWidget {
           fillColor: Colors.blue.shade50,
           filled: true,
           hintText: label ?? '',
-          label:Text(label ?? ''),
-          labelStyle:const TextStyle(fontSize:15),
+          label: Text(label ?? ''),
+          labelStyle: const TextStyle(fontSize: 15),
           hintStyle: TextStyle(color: Colors.grey.shade500),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(10.0),
@@ -72,8 +75,7 @@ class CustomTextField extends StatelessWidget {
             borderRadius: BorderRadius.circular(10.0),
             borderSide: BorderSide(color: Colors.blue.shade800, width: 2.0),
           ),
-          contentPadding: const EdgeInsets.symmetric(vertical: 15.0,horizontal:8),
-          
+          contentPadding: const EdgeInsets.symmetric(vertical: 15.0, horizontal: 8),
         ),
         validator: validator,
       ),

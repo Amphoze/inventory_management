@@ -51,9 +51,7 @@ class ComboProvider with ChangeNotifier {
 
   // Method to remove selected image
   void removeSelectedImage(int index) {
-    if (selectedImages != null &&
-        index >= 0 &&
-        index < selectedImages!.length) {
+    if (selectedImages != null && index >= 0 && index < selectedImages!.length) {
       selectedImages!.removeAt(index);
       imageNames.removeAt(index); // Remove corresponding name
       notifyListeners(); // Update listeners
@@ -86,7 +84,7 @@ class ComboProvider with ChangeNotifier {
   }
 
   void addCombo(Combo combo) {
-    print(combo.products);
+    // print(combo.products);
     _comboList.add(combo);
     // _saveCombos();
     notifyListeners();
@@ -94,15 +92,21 @@ class ComboProvider with ChangeNotifier {
 
   final comboApi = ComboApi();
 
-  Future<void> createCombo(
-      Combo combo, List<Uint8List>? images, List<String> productIds) async {
+  Future<void> createCombo(Combo combo, List<Uint8List>? images, List<String> productIds) async {
     try {
-      final createdCombo =
-          await comboApi.createCombo(combo, images, productIds);
+      final createdCombo = await comboApi.createCombo(combo, images, productIds);
       _combo = combo;
       notifyListeners();
     } catch (e) {
       print('Failed to create combo: $e');
+    }
+  }
+
+  Future<String> updateCombo(String comboId, String name, String weight) async {
+    try {
+      return await comboApi.updateCombo(comboId, name, weight);
+    } catch (e) {
+      return 'Failed to create combo: $e';
     }
   }
 
@@ -148,58 +152,56 @@ class ComboProvider with ChangeNotifier {
   }
 
   Future<int?> fetchQuantityBySku(String query) async {
-  try {
-    String baseUrl = await ApiUrls.getBaseUrl();
-    final pref = await SharedPreferences.getInstance();
-    final warehouseId = pref.getString('warehouseId');
+    try {
+      String baseUrl = await Constants.getBaseUrl();
+      final pref = await SharedPreferences.getInstance();
+      final warehouseId = pref.getString('warehouseId');
 
-    if (warehouseId == null) {
-      log('Warehouse ID is not set in preferences.');
-      return null;
-    }
-
-    final url = Uri.parse(
-        '$baseUrl/inventory/warehouse?warehouse=$warehouseId&productSku=$query');
-    log('URL: $url');
-
-    final token = await AuthProvider().getToken();
-    final response = await http.post(
-      url,
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $token',
-      },
-    );
-
-    if (response.statusCode == 200) {
-      final data = json.decode(response.body);
-      if (data.containsKey('data')) {
-        final inventories = List<Map<String, dynamic>>.from(data["data"]['inventories']);
-
-        for (var item in inventories) {
-          final subInventories = item['subInventory'] ?? [];
-          for (var subInventory in subInventories) {
-            if (subInventory['warehouseId']['_id'] == warehouseId) {
-              return subInventory['quantity']; // Return quantity directly
-            }
-          }
-        }
-        log('No matching warehouseId found.');
-        return null;
-      } else {
-        log('Unexpected response format: $data');
+      if (warehouseId == null) {
+        log('Warehouse ID is not set in preferences.');
         return null;
       }
-    } else {
-      log('Failed to fetch inventory: Status code ${response.statusCode}');
+
+      final url = Uri.parse('$baseUrl/inventory/warehouse?warehouse=$warehouseId&productSku=$query');
+      log('URL: $url');
+
+      final token = await AuthProvider().getToken();
+      final response = await http.post(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        if (data.containsKey('data')) {
+          final inventories = List<Map<String, dynamic>>.from(data["data"]['inventories']);
+
+          for (var item in inventories) {
+            final subInventories = item['subInventory'] ?? [];
+            for (var subInventory in subInventories) {
+              if (subInventory['warehouseId']['_id'] == warehouseId) {
+                return subInventory['quantity']; // Return quantity directly
+              }
+            }
+          }
+          log('No matching warehouseId found.');
+          return null;
+        } else {
+          log('Unexpected response format: $data');
+          return null;
+        }
+      } else {
+        log('Failed to fetch inventory: Status code ${response.statusCode}');
+        return null;
+      }
+    } catch (e) {
+      log('Error occurred: $e');
       return null;
     }
-  } catch (e) {
-    log('Error occurred: $e');
-    return null;
   }
-}
-
 
   Future<void> searchCombos(String query) async {
     _loading = true;
@@ -220,15 +222,13 @@ class ComboProvider with ChangeNotifier {
   Future<void> _loadCombos() async {
     final prefs = await SharedPreferences.getInstance();
     final jsonList = prefs.getStringList('combos') ?? [];
-    _comboList =
-        jsonList.map((json) => Combo.fromJson(jsonDecode(json))).toList();
+    _comboList = jsonList.map((json) => Combo.fromJson(jsonDecode(json))).toList();
     notifyListeners();
   }
 
   Future<void> _saveCombos() async {
     final prefs = await SharedPreferences.getInstance();
-    final jsonList =
-        _comboList.map((combo) => jsonEncode(combo.toJson())).toList();
+    final jsonList = _comboList.map((combo) => jsonEncode(combo.toJson())).toList();
     await prefs.setStringList('combos', jsonList);
   }
 
@@ -252,18 +252,17 @@ class ComboProvider with ChangeNotifier {
 
       if (response.containsKey('products') && response['products'] is List) {
         final productList = response['products'];
-        print("Raw productList in provider: $productList");
+        // print("Raw productList in provider: $productList");
 
-        _products =
-            productList.map<Product>((json) => Product.fromJson(json)).toList();
-        log("Mapped products in provider: $_products");
+        _products = productList.map<Product>((json) => Product.fromJson(json)).toList();
+        // log("Mapped products in provider: $_products");
       } else {
-        print("Error: 'products' key not found or not a list in response.");
+        // print("Error: 'products' key not found or not a list in response.");
       }
     } catch (e, stacktrace) {
       // Log error details
-      print('Error fetching products: $e');
-      print('Stacktrace: $stacktrace');
+      log('Error fetching products: $e');
+      log('Stacktrace: $stacktrace');
     } finally {
       _loading = false;
       notifyListeners();
@@ -283,11 +282,11 @@ class ComboProvider with ChangeNotifier {
 
       if (response['success'] == true) {
         final warehouseList = response['data']['warehouses'];
-        print("Raw warehouseList in provider: $warehouseList");
+        // print("Raw warehouseList in provider: $warehouseList");
 
         _warehouses = warehouseList;
 
-        print("Mapped warehouses in provider: $_warehouses");
+        // print("Mapped warehouses in provider: $_warehouses");
       } else {
         print("Error: ${response['message']}");
       }
@@ -302,16 +301,14 @@ class ComboProvider with ChangeNotifier {
 
   // Method to select products by IDs
   void selectProductsByIds(List<String?> productIds) {
-    _selectedProducts =
-        _products.where((product) => productIds.contains(product.id)).toList();
+    _selectedProducts = _products.where((product) => productIds.contains(product.id)).toList();
     notifyListeners();
   }
 
   void addMoreProducts(String displayName) async {
     log("displayName: $displayName");
-    String baseUrl = await ApiUrls.getBaseUrl();
-    String url =
-        '$baseUrl/products?displayName=${Uri.encodeComponent(displayName)}';
+    String baseUrl = await Constants.getBaseUrl();
+    String url = '$baseUrl/products?displayName=${Uri.encodeComponent(displayName)}';
 
     try {
       final token = await getToken();
@@ -326,21 +323,19 @@ class ComboProvider with ChangeNotifier {
       // Check the response status code
       if (response.statusCode == 200) {
         print("Response Status: ${response.statusCode}");
-        log("Response Body: ${response.body}");
+        // log("Response Body: ${response.body}");
 
         final productList = json.decode(response.body)['products'];
-        final newProducts =
-            productList.map<Product>((json) => Product.fromJson(json)).toList();
+        final newProducts = productList.map<Product>((json) => Product.fromJson(json)).toList();
         _products.addAll(newProducts);
 
         notifyListeners();
 
-        log(_products.toString());
+        // log(_products.toString());
       }
     } catch (error) {
       log("catched: $error");
     }
-
     notifyListeners();
   }
 }

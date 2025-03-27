@@ -7,6 +7,7 @@ class Manifest {
   final String manifestId;
   final String deliveryPartner;
   final List<Order> orders;
+  final String date;
 
   Manifest({
     this.id = '',
@@ -15,6 +16,7 @@ class Manifest {
     this.manifestId = '',
     this.deliveryPartner = '',
     required this.orders,
+    this.date = '',
   });
 
   // Utility function to safely parse a string from any data type
@@ -35,10 +37,8 @@ class Manifest {
       image: json['manifestImage']['image'] ?? [],
       manifestId: _parseString(json['manifestId']),
       deliveryPartner: _parseString(json['deliveryPartner']),
-      orders: (json['orders'] as List?)
-              ?.map((order) => Order.fromJson(order['orderCollectionId']))
-              .toList() ??
-          [],
+      orders: (json['orders'] as List?)?.map((order) => Order.fromJson(order['orderCollectionId'])).toList() ?? [],
+      date: _parseString(json['date']),
     );
   }
 }

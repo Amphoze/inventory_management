@@ -20,8 +20,8 @@ class ProductApi {
 
   Future<Map<String, dynamic>> searchProductsByDisplayName(
       String displayName) async {
-    String _baseUrl = await ApiUrls.getBaseUrl();
-    final url = '$_baseUrl?displayName=${Uri.encodeComponent(displayName)}';
+    String baseUrl = await Constants.getBaseUrl();
+    final url = '$baseUrl?displayName=${Uri.encodeComponent(displayName)}';
 
     try {
       final token = await getToken();

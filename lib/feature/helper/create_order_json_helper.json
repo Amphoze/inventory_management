@@ -1,0 +1,58 @@
+{
+  "order_id": "TEST-PK-02",
+  "customer": {
+    "first_name": "Test",
+    "last_name": "",
+    "email": "",
+    "phone": "7788788788"
+  },
+  "billing_addr": {
+    "first_name": "Test",
+    "last_name": "",
+    "email": "",
+    "address1": "",
+    "address2": "",
+    "phone": "7896541230",
+    "city": "Bhopal",
+    "pincode": "462010",
+    "state": "Madhya Pradesh",
+    "country": "India",
+    "country_code": "IN"
+  },
+  "shipping_addr": {
+    "first_name": "Test",
+    "last_name": "",
+    "email": "",
+    "address1": "",
+    "address2": "",
+    "phone": "7896541230",
+    "city": "Bhopal",
+    "pincode": "462010",
+    "state": "Madhya Pradesh",
+    "country": "India",
+    "country_code": "IN"
+  },
+  "payment_mode": "COD",
+  "currency_code": "INR",
+  "items": [
+    {
+      "id": "672f02e863f2a807f621c8e2",
+      "qty": 5,
+      "sku": "K-360",
+      "amount": 1000
+    }
+  ],
+  "total_amt": 900,
+  "coin": 0,
+  "cod_amount": 100,
+  "prepaid_amount": 800,
+  "discount_code": "",
+  "discount_percent": 10,
+  "discount_amount": 100,
+  "tax_percent": 0,
+  "total_quantity": 5,
+  "marketplace": "Offline",
+  "source": "other",
+  "agent": "",
+  "notes": ""
+}

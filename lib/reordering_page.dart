@@ -62,7 +62,7 @@ class _ReorderingPageState extends State<ReorderingPage> {
       final prefs = await SharedPreferences.getInstance();
       final token = prefs.getString('authToken');
 
-      String baseUrl = await ApiUrls.getBaseUrl();
+      String baseUrl = await Constants.getBaseUrl();
 
       final startDate = DateFormat('yyyy-MM-dd').format(_startDate!);
       final endDate = DateFormat('yyyy-MM-dd').format(_endDate);
@@ -165,7 +165,7 @@ class _ReorderingPageState extends State<ReorderingPage> {
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(
-                  color: Colors.grey.withOpacity(0.1),
+                  color: Colors.grey.withValues(alpha: 0.1),
                   width: 1,
                 ),
               ),

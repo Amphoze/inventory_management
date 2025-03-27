@@ -1,0 +1,187 @@
+{
+  "error": "Error creating order",
+  "details": "Document failed validation",
+  "message": {
+    "errorResponse": {
+      "index": 0,
+      "code": 121,
+      "errmsg": "Document failed validation",
+      "errInfo": {
+        "failingDocumentId": "67e55a9619633ca6cada4e8d",
+        "details": {
+          "operatorName": "$jsonSchema",
+          "schemaRulesNotSatisfied": [
+            {
+              "operatorName": "properties",
+              "propertiesNotSatisfied": [
+                {
+                  "propertyName": "customer",
+                  "details": [
+                    {
+                      "operatorName": "properties",
+                      "propertiesNotSatisfied": [
+                        {
+                          "propertyName": "email",
+                          "description": "Optional, Must be a valid email (customer)",
+                          "details": [
+                            {
+                              "operatorName": "pattern",
+                              "specifiedAs": {
+                                "pattern": "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$"
+                              },
+                              "reason": "regular expression did not match",
+                              "consideredValue": ""
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "propertyName": "billing_addr",
+                  "description": "Billing address - Either Pincode or ZipCode must be provided (billing_addr)",
+                  "details": [
+                    {
+                      "operatorName": "properties",
+                      "propertiesNotSatisfied": [
+                        {
+                          "propertyName": "email",
+                          "description": "Optional, Must be a valid email (billing_addr)",
+                          "details": [
+                            {
+                              "operatorName": "pattern",
+                              "specifiedAs": {
+                                "pattern": "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$"
+                              },
+                              "reason": "regular expression did not match",
+                              "consideredValue": ""
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "propertyName": "shipping_addr",
+                  "description": "Billing address - Either Pincode or ZipCode must be provided (shipping_addr)",
+                  "details": [
+                    {
+                      "operatorName": "properties",
+                      "propertiesNotSatisfied": [
+                        {
+                          "propertyName": "email",
+                          "description": "Optional, Must be a valid email (shipping_addr)",
+                          "details": [
+                            {
+                              "operatorName": "pattern",
+                              "specifiedAs": {
+                                "pattern": "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$"
+                              },
+                              "reason": "regular expression did not match",
+                              "consideredValue": ""
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      }
+    },
+    "index": 0,
+    "code": 121,
+    "errInfo": {
+      "failingDocumentId": "67e55a9619633ca6cada4e8d",
+      "details": {
+        "operatorName": "$jsonSchema",
+        "schemaRulesNotSatisfied": [
+          {
+            "operatorName": "properties",
+            "propertiesNotSatisfied": [
+              {
+                "propertyName": "customer",
+                "details": [
+                  {
+                    "operatorName": "properties",
+                    "propertiesNotSatisfied": [
+                      {
+                        "propertyName": "email",
+                        "description": "Optional, Must be a valid email (customer)",
+                        "details": [
+                          {
+                            "operatorName": "pattern",
+                            "specifiedAs": {
+                              "pattern": "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$"
+                            },
+                            "reason": "regular expression did not match",
+                            "consideredValue": ""
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "propertyName": "billing_addr",
+                "description": "Billing address - Either Pincode or ZipCode must be provided (billing_addr)",
+                "details": [
+                  {
+                    "operatorName": "properties",
+                    "propertiesNotSatisfied": [
+                      {
+                        "propertyName": "email",
+                        "description": "Optional, Must be a valid email (billing_addr)",
+                        "details": [
+                          {
+                            "operatorName": "pattern",
+                            "specifiedAs": {
+                              "pattern": "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$"
+                            },
+                            "reason": "regular expression did not match",
+                            "consideredValue": ""
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "propertyName": "shipping_addr",
+                "description": "Billing address - Either Pincode or ZipCode must be provided (shipping_addr)",
+                "details": [
+                  {
+                    "operatorName": "properties",
+                    "propertiesNotSatisfied": [
+                      {
+                        "propertyName": "email",
+                        "description": "Optional, Must be a valid email (shipping_addr)",
+                        "details": [
+                          {
+                            "operatorName": "pattern",
+                            "specifiedAs": {
+                              "pattern": "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$"
+                            },
+                            "reason": "regular expression did not match",
+                            "consideredValue": ""
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    }
+  }
+}

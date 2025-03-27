@@ -2,11 +2,13 @@ import 'dart:developer';
 
 import 'package:flutter/material.dart';
 import 'package:inventory_management/dashboard.dart';
+import 'package:inventory_management/provider/location_provider.dart';
 import 'package:provider/provider.dart';
-import 'package:inventory_management/provider/warehouses_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:inventory_management/Custom-Files/colors.dart';
 import 'package:shimmer/shimmer.dart';
+
+import 'Custom-Files/custom_pagination.dart';
 
 class WarehousesPage extends StatefulWidget {
   const WarehousesPage({super.key});
@@ -15,10 +17,10 @@ class WarehousesPage extends StatefulWidget {
   State<WarehousesPage> createState() => _WarehousesPageState();
 }
 
-class _WarehousesPageState extends State<WarehousesPage>
-    with SingleTickerProviderStateMixin {
+class _WarehousesPageState extends State<WarehousesPage> with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _fadeAnimation;
+  bool? isGGV = false;
 
   @override
   void initState() {
@@ -31,9 +33,7 @@ class _WarehousesPageState extends State<WarehousesPage>
       CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
     );
     _controller.forward();
-    Future.microtask(() =>
-        Provider.of<WarehousesProvider>(context, listen: false)
-            .fetchWarehouses());
+    Future.microtask(() => Provider.of<LocationProvider>(context, listen: false).fetchWarehouses());
   }
 
   @override
@@ -42,8 +42,14 @@ class _WarehousesPageState extends State<WarehousesPage>
     super.dispose();
   }
 
-  Future<void> _storeWarehouseId(
-      String warehouseId, String warehouseName, bool isPrimary) async {
+  void checkGGV() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      isGGV = prefs.getBool('_isGGVAssigned');
+    });
+  }
+
+  Future<void> _storeWarehouseId(String warehouseId, String warehouseName, bool isPrimary) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('warehouseId', warehouseId);
     await prefs.setString('warehouseName', warehouseName);
@@ -57,8 +63,7 @@ class _WarehousesPageState extends State<WarehousesPage>
         SnackBar(
           content: Text('Successfully signed in to $warehouseName'),
           behavior: SnackBarBehavior.floating,
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
           backgroundColor: AppColors.primaryBlue,
         ),
       );
@@ -82,21 +87,6 @@ class _WarehousesPageState extends State<WarehousesPage>
         selectionControls: DesktopTextSelectionControls(),
         child: Stack(
           children: [
-            // Simplified background gradient
-            // Container(
-            //   decoration: const BoxDecoration(
-            //     gradient: LinearGradient(
-            //       begin: Alignment.topLeft,
-            //       end: Alignment.bottomRight,
-            //       colors: [
-            //         AppColors.lightGrey,
-            //         AppColors.greyBackground,
-            //       ],
-            //     ),
-            //   ),
-            // ),
-
-            // Content
             FadeTransition(
               opacity: _fadeAnimation,
               child: Column(
@@ -120,8 +110,7 @@ class _WarehousesPageState extends State<WarehousesPage>
                       child: ConstrainedBox(
                         constraints: const BoxConstraints(maxWidth: 1200),
                         child: Card(
-                          margin: const EdgeInsets.symmetric(
-                              horizontal: 24, vertical: 16),
+                          margin: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
                           elevation: 8,
                           shadowColor: AppColors.shadowblack1,
                           shape: RoundedRectangleBorder(
@@ -155,7 +144,7 @@ class _WarehousesPageState extends State<WarehousesPage>
 
                               // Updated table styles
                               Expanded(
-                                child: Consumer<WarehousesProvider>(
+                                child: Consumer<LocationProvider>(
                                   builder: (context, provider, child) {
                                     if (provider.isLoading) {
                                       return Padding(
@@ -164,19 +153,14 @@ class _WarehousesPageState extends State<WarehousesPage>
                                           baseColor: Colors.grey[300]!,
                                           highlightColor: Colors.grey[100]!,
                                           child: ListView.builder(
-                                            itemCount:
-                                                5, // Number of shimmer items
+                                            itemCount: 5, // Number of shimmer items
                                             itemBuilder: (context, index) {
                                               return Container(
-                                                margin: const EdgeInsets.only(
-                                                    bottom: 8.0),
-                                                padding:
-                                                    const EdgeInsets.all(16.0),
+                                                margin: const EdgeInsets.only(bottom: 8.0),
+                                                padding: const EdgeInsets.all(16.0),
                                                 decoration: BoxDecoration(
                                                   color: Colors.white,
-                                                  borderRadius:
-                                                      BorderRadius.circular(
-                                                          8.0),
+                                                  borderRadius: BorderRadius.circular(8.0),
                                                 ),
                                                 child: Row(
                                                   children: [
@@ -184,12 +168,9 @@ class _WarehousesPageState extends State<WarehousesPage>
                                                       flex: 2,
                                                       child: Container(
                                                         height: 20,
-                                                        decoration:
-                                                            BoxDecoration(
+                                                        decoration: BoxDecoration(
                                                           color: Colors.white,
-                                                          borderRadius:
-                                                              BorderRadius
-                                                                  .circular(4),
+                                                          borderRadius: BorderRadius.circular(4),
                                                         ),
                                                       ),
                                                     ),
@@ -198,12 +179,9 @@ class _WarehousesPageState extends State<WarehousesPage>
                                                       flex: 2,
                                                       child: Container(
                                                         height: 20,
-                                                        decoration:
-                                                            BoxDecoration(
+                                                        decoration: BoxDecoration(
                                                           color: Colors.white,
-                                                          borderRadius:
-                                                              BorderRadius
-                                                                  .circular(4),
+                                                          borderRadius: BorderRadius.circular(4),
                                                         ),
                                                       ),
                                                     ),
@@ -212,12 +190,9 @@ class _WarehousesPageState extends State<WarehousesPage>
                                                       flex: 2,
                                                       child: Container(
                                                         height: 20,
-                                                        decoration:
-                                                            BoxDecoration(
+                                                        decoration: BoxDecoration(
                                                           color: Colors.white,
-                                                          borderRadius:
-                                                              BorderRadius
-                                                                  .circular(4),
+                                                          borderRadius: BorderRadius.circular(4),
                                                         ),
                                                       ),
                                                     ),
@@ -226,12 +201,9 @@ class _WarehousesPageState extends State<WarehousesPage>
                                                       flex: 1,
                                                       child: Container(
                                                         height: 36,
-                                                        decoration:
-                                                            BoxDecoration(
+                                                        decoration: BoxDecoration(
                                                           color: Colors.white,
-                                                          borderRadius:
-                                                              BorderRadius
-                                                                  .circular(8),
+                                                          borderRadius: BorderRadius.circular(8),
                                                         ),
                                                       ),
                                                     ),
@@ -264,65 +236,43 @@ class _WarehousesPageState extends State<WarehousesPage>
                                                 children: [
                                                   _buildHeaderCell('ID'),
                                                   _buildHeaderCell('Name'),
-                                                  _buildHeaderCell(
-                                                      'Warehouse Pincode'),
+                                                  _buildHeaderCell('Warehouse Pincode'),
                                                   _buildHeaderCell('Actions'),
                                                 ],
                                               ),
-                                              ...provider.warehouses
-                                                  .map((warehouse) {
+                                              ...provider.warehouses.where((warehouse) {
+                                                if (isGGV == true) {
+                                                  return warehouse['country'] != 'india';
+                                                }
+                                                return true; // Show all warehouses for other roles
+                                              }).map((warehouse) {
                                                 return TableRow(
                                                   decoration: BoxDecoration(
                                                     color: Colors.white,
                                                     border: Border(
                                                       bottom: BorderSide(
-                                                        color: Colors
-                                                            .grey.shade200,
+                                                        color: Colors.grey.shade200,
                                                       ),
                                                     ),
                                                   ),
                                                   children: [
-                                                    _buildDataCell(
-                                                        warehouse['id']),
-                                                    _buildDataCell(
-                                                        warehouse['name']),
-                                                    _buildDataCell(warehouse[
-                                                        'warehousePincode']),
+                                                    _buildDataCell(warehouse['_id'] ?? ''),
+                                                    _buildDataCell(warehouse['name'] ?? ''),
+                                                    _buildDataCell(warehouse['warehousePincode'] ?? ''),
                                                     Padding(
-                                                      padding:
-                                                          const EdgeInsets.all(
-                                                              12),
+                                                      padding: const EdgeInsets.all(12),
                                                       child: ElevatedButton(
                                                         onPressed: () =>
-                                                            _storeWarehouseId(
-                                                                warehouse['id'],
-                                                                warehouse[
-                                                                    'name'],
-                                                                warehouse[
-                                                                    'isPrimary']),
-                                                        style: ElevatedButton
-                                                            .styleFrom(
-                                                          backgroundColor:
-                                                              AppColors
-                                                                  .primaryBlue,
-                                                          foregroundColor:
-                                                              AppColors.white,
-                                                          padding:
-                                                              const EdgeInsets
-                                                                  .symmetric(
-                                                                  horizontal:
-                                                                      16,
-                                                                  vertical: 12),
-                                                          shape:
-                                                              RoundedRectangleBorder(
-                                                            borderRadius:
-                                                                BorderRadius
-                                                                    .circular(
-                                                                        8),
+                                                            _storeWarehouseId(warehouse['_id'], warehouse['name'], warehouse['isPrimary'] ?? false),
+                                                        style: ElevatedButton.styleFrom(
+                                                          backgroundColor: AppColors.primaryBlue,
+                                                          foregroundColor: AppColors.white,
+                                                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                                                          shape: RoundedRectangleBorder(
+                                                            borderRadius: BorderRadius.circular(8),
                                                           ),
                                                         ),
-                                                        child: const Text(
-                                                            'Sign In'),
+                                                        child: const Text('Sign In'),
                                                       ),
                                                     ),
                                                   ],
@@ -336,6 +286,40 @@ class _WarehousesPageState extends State<WarehousesPage>
                                   },
                                 ),
                               ),
+
+                              Consumer<LocationProvider>(builder: (context, pro, child) {
+                                return CustomPaginationFooter(
+                                  currentPage: pro.currentPage,
+                                  totalPages: pro.totalPages,
+                                  buttonSize: 30,
+                                  pageController: pro.textEditingController,
+                                  onFirstPage: () {
+                                    pro.goToPage(1);
+                                  },
+                                  onLastPage: () {
+                                    pro.goToPage(pro.totalPages);
+                                  },
+                                  onNextPage: () {
+                                    if (pro.currentPage < pro.totalPages) {
+                                      pro.goToPage(pro.currentPage + 1);
+                                    }
+                                  },
+                                  onPreviousPage: () {
+                                    if (pro.currentPage > 1) {
+                                      pro.goToPage(pro.currentPage - 1);
+                                    }
+                                  },
+                                  onGoToPage: (page) {
+                                    pro.goToPage(page);
+                                  },
+                                  onJumpToPage: () {
+                                    final page = int.tryParse(pro.textEditingController.text);
+                                    if (page != null && page > 0 && page <= pro.totalPages) {
+                                      pro.goToPage(page);
+                                    }
+                                  },
+                                );
+                              }),
                             ],
                           ),
                         ),

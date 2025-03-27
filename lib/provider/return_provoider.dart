@@ -30,8 +30,7 @@ class ReturnProvider with ChangeNotifier {
   // PageController get pageController => pageController;
   // TextEditingController get textEditingController => textEditingController;
 
-  int get selectedCount =>
-      selectedProducts.where((isSelected) => isSelected).length;
+  int get selectedCount => selectedProducts.where((isSelected) => isSelected).length;
 
   bool isRefreshingOrders = false;
 
@@ -42,8 +41,7 @@ class ReturnProvider with ChangeNotifier {
 
   void toggleSelectAll(bool value) {
     selectAll = value;
-    selectedProducts =
-        List<bool>.generate(orders.length, (index) => selectAll);
+    selectedProducts = List<bool>.generate(orders.length, (index) => selectAll);
     notifyListeners();
   }
 
@@ -54,7 +52,9 @@ class ReturnProvider with ChangeNotifier {
 
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('authToken') ?? '';
-    String url = '${await ApiUrls.getBaseUrl()}/orders?orderStatus=11&page=';
+    final warehouseId = prefs.getString('warehouseId') ?? '';
+
+    String url = '${await Constants.getBaseUrl()}/orders?warehouse=$warehouseId&orderStatus=11&page=';
 
     try {
       final response = await http.get(Uri.parse('$url$currentPage'), headers: {
@@ -65,9 +65,7 @@ class ReturnProvider with ChangeNotifier {
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         log("cancel data: $data");
-        List<Order> orders = (data['orders'] as List)
-            .map((order) => Order.fromJson(order))
-            .toList();
+        List<Order> orders = (data['orders'] as List).map((order) => Order.fromJson(order)).toList();
         initializeSelection();
 
         totalPages = data['totalPages']; // Get total pages from response
@@ -164,7 +162,7 @@ class ReturnProvider with ChangeNotifier {
     }
 
     if (selectedOrderIds.isNotEmpty) {
-      String url = '${await ApiUrls.getBaseUrl()}/orders/return';
+      String url = '${await Constants.getBaseUrl()}/orders/return';
 
       try {
         final body = json.encode({
@@ -190,8 +188,7 @@ class ReturnProvider with ChangeNotifier {
           print('Orders returned successfully!');
           // Update local order tracking status
           for (int i = 0; i < orders.length; i++) {
-            if (selectedProducts[i] &&
-                (orders[i].trackingStatus?.isEmpty ?? true)) {
+            if (selectedProducts[i] && (orders[i].trackingStatus?.isEmpty ?? true)) {
               orders[i].trackingStatus = 'return'; // Update locally
             }
           }
@@ -234,9 +231,9 @@ class ReturnProvider with ChangeNotifier {
 
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('authToken') ?? '';
+    final warehouseId = prefs.getString('warehouseId') ?? '';
 
-    final url =
-        '${await ApiUrls.getBaseUrl()}/orders?orderStatus=11&order_id=$query';
+    final url = '${await Constants.getBaseUrl()}/orders?warehouse=$warehouseId&orderStatus=11&order_id=$query';
 
     print('Searching failed orders with term: $query');
 

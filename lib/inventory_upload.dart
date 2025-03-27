@@ -83,16 +83,9 @@ class _InventoryUploadState extends State<InventoryUpload> {
 
         final sku = _csvData[i][0].toString();
         final quantity = num.parse(_csvData[i][1].toString());
-        final binName = num.parse(_csvData[i][2].toString());
-        // log("${await ApiUrls.getBaseUrl()}/inventory?sku=$sku");
-        // log({
-        //   "newTotal": quantity,
-        //   "warehouseId": warehouse,
-        //   "additionalInfo": {"reason": "Excel update"}
-        // }.toString());
 
         final response = await http.put(
-          Uri.parse('${await ApiUrls.getBaseUrl()}/inventory?sku=$sku'),
+          Uri.parse('${await Constants.getBaseUrl()}/inventory?sku=$sku'),
           headers: {
             'Content-Type': 'application/json',
             'Authorization': 'Bearer $token',
@@ -101,7 +94,6 @@ class _InventoryUploadState extends State<InventoryUpload> {
             "action": type,
             "quantityChange": quantity,
             "warehouseId": warehouse,
-            "binName": binName
           }),
         );
 
@@ -148,6 +140,16 @@ class _InventoryUploadState extends State<InventoryUpload> {
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
+            const Row(
+              mainAxisAlignment: MainAxisAlignment.start,
+              children: [
+                Text(
+                  'Upload Inventory',
+                  style: TextStyle(fontSize: 25, fontWeight: FontWeight.bold),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
             Row(
               children: [
                 Expanded(
@@ -226,7 +228,7 @@ class _InventoryUploadState extends State<InventoryUpload> {
                     scrollDirection: Axis.horizontal,
                     child: DataTable(
                       // headingRowColor: WidgetStateProperty.all(
-                      //     AppColors.primaryBlue.withOpacity(0.1)),
+                      //     AppColors.primaryBlue.withValues(alpha: 0.1)),
                       headingTextStyle: const TextStyle(
                         fontWeight: FontWeight.bold,
                         color: AppColors.primaryBlue,
@@ -248,6 +250,12 @@ class _InventoryUploadState extends State<InventoryUpload> {
                             child: Text('Quantity'),
                           ),
                         ),
+                        // DataColumn(
+                        //   label: Padding(
+                        //     padding: EdgeInsets.symmetric(horizontal: 8.0),
+                        //     child: Text('Bin Name'),
+                        //   ),
+                        // ),
                       ],
                       rows: _csvData.skip(1).map((row) {
                         return DataRow(
@@ -262,6 +270,11 @@ class _InventoryUploadState extends State<InventoryUpload> {
                                   const EdgeInsets.symmetric(horizontal: 8.0),
                               child: Text(row[1].toString()),
                             )),
+                            // DataCell(Padding(
+                            //   padding:
+                            //       const EdgeInsets.symmetric(horizontal: 8.0),
+                            //   child: Text(row[2].toString()),
+                            // )),
                           ],
                         );
                       }).toList(),
