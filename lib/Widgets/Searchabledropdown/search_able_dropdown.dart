@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'dart:developer';
 
 import 'package:flutter/material.dart';
@@ -5,23 +6,25 @@ import 'package:flutter_typeahead/flutter_typeahead.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 
-import '../Api/auth_provider.dart';
-import '../constants/constants.dart';
-import 'colors.dart';
+import '../../Api/auth_provider.dart';
+import '../../Custom-Files/colors.dart';
+import '../../constants/constants.dart';
 
-class LabelSearchableTextField extends StatefulWidget {
+
+
+class searchabletestfeild extends StatefulWidget {
   final bool isRequired;
   final TextEditingController? controller;
   final TextEditingController? nameController;
   final bool isEditProduct;
-
-  const LabelSearchableTextField({super.key, required this.isRequired, this.controller, this.nameController, this.isEditProduct = false});
+  final String lable;
+  const searchabletestfeild({super.key, required this.isRequired, this.controller, this.nameController, this.isEditProduct = false, required this.lable});
 
   @override
-  _LabelSearchableTextFieldState createState() => _LabelSearchableTextFieldState();
+  State<searchabletestfeild> createState() => _searchabletestfeildState();
 }
 
-class _LabelSearchableTextFieldState extends State<LabelSearchableTextField> {
+class _searchabletestfeildState extends State<searchabletestfeild> {
   late TextEditingController _typeAheadController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   int _currentPage = 1;
@@ -105,7 +108,7 @@ class _LabelSearchableTextFieldState extends State<LabelSearchableTextField> {
   @override
   Widget build(BuildContext context) {
     return Container(
-    decoration:  widget.isEditProduct ?
+      decoration:  widget.isEditProduct ?
       BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
@@ -134,7 +137,7 @@ class _LabelSearchableTextFieldState extends State<LabelSearchableTextField> {
               autofocus: false,
               decoration:  InputDecoration(
 
-                labelText: 'Label${widget.isRequired ? ' *' : ''}',
+                labelText: '${widget.lable} ${widget.isRequired ? ' *' : ''}',
                 border: widget.isEditProduct ? InputBorder.none  : OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                 enabledBorder:  widget.isEditProduct ? InputBorder.none  : OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
@@ -167,8 +170,8 @@ class _LabelSearchableTextFieldState extends State<LabelSearchableTextField> {
             },
             itemBuilder: (context, suggestion) {
               return ListTile(
-                title: Text(suggestion['labelSku'] ?? ''),
-                subtitle: Text(suggestion['name'] ?? ''),
+                title: Text(suggestion['outerPackage_sku'] ?? ''),
+                subtitle: Text(suggestion['outerPackage_name'] ?? ''),
               );
             },
             onSelected: (suggestion) {
@@ -176,13 +179,14 @@ class _LabelSearchableTextFieldState extends State<LabelSearchableTextField> {
               log('Selected data:  ${suggestion}');
 
 
-              _typeAheadController.text = suggestion['labelSku'] ?? '';
+              _typeAheadController.text =
+              "${suggestion['outerPackage_sku'] ?? ''} (${suggestion['outerPackage_name'] ?? ''})";
               formFieldState.didChange(_typeAheadController.text);
-              debugPrint('Selected: ${suggestion['labelSku']}');
+              debugPrint('Selected: ${suggestion['outerPackage_sku']}');
 
-              if (widget.nameController != null) {
-                widget.nameController!.text = suggestion['name'] ?? '';
-              }
+              // if (widget.nameController != null) {
+              //   widget.nameController!.text = suggestion['outerPackage_name'] ?? '';
+              // }
             },
             loadingBuilder: (context) => const Padding(
               padding: EdgeInsets.all(8.0),
@@ -234,9 +238,9 @@ Future<Map<String, dynamic>> searchByLabel(String query, {int page = 1}) async {
   String url;
 
   if (query.contains(RegExp(r'[0-9]'))) {
-    url = '$baseUrl/label?page=$page&labelSku=$query';
+    url = '$baseUrl/boxsize?page=$page&labelSku=$query';
   } else {
-    url = '$baseUrl/label?page=$page&name=$query';
+    url = '$baseUrl/boxsize?page=$page&outerPackage_name=$query';
   }
 
   try {
@@ -247,6 +251,7 @@ Future<Map<String, dynamic>> searchByLabel(String query, {int page = 1}) async {
 
     log('response---> and Url --> $url and $token');
 
+
     final response = await http.get(
       Uri.parse(url),
       headers: {
@@ -255,10 +260,11 @@ Future<Map<String, dynamic>> searchByLabel(String query, {int page = 1}) async {
       },
     );
 
+
     if (response.statusCode == 200) {
       final data = json.decode(response.body);
       if (data.containsKey('data')) {
-        final labels = List<Map<String, dynamic>>.from(data["data"]['labels']);
+        final labels = List<Map<String, dynamic>>.from(data["data"]['boxsizes']);
         return {
           'success': true,
           'data': labels,

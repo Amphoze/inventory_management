@@ -6,6 +6,7 @@ import 'package:inventory_management/provider/marketplace_provider.dart';
 import 'package:provider/provider.dart';
 import '../Custom-Files/colors.dart';
 
+
 class StatusDetailsPage extends StatefulWidget {
   final DateTime? startDate;
   final DateTime? endDate;
@@ -20,9 +21,12 @@ class StatusDetailsPage extends StatefulWidget {
     required this.selectedStatuses,
   });
 
+
   @override
   State<StatusDetailsPage> createState() => _StatusDetailsPageState();
+
 }
+
 
 class _StatusDetailsPageState extends State<StatusDetailsPage> {
   DateTime? startDate;
