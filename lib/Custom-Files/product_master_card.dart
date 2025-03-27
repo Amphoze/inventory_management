@@ -108,6 +108,8 @@ class ProductMasterCard extends StatelessWidget {
                       const SizedBox(width: 8),
                       AddBinButton(productSku: product.sku),
                       const SizedBox(width: 8),
+
+                      const SizedBox(width: 8),
                       ElevatedButton(
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.primaryBlue,

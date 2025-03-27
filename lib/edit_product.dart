@@ -290,6 +290,8 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:inventory_management/constants/constants.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'Custom-Files/label_search_field.dart';
+import 'Widgets/Searchabledropdown/search_able_dropdown.dart';
 import 'model/product_master_model.dart';
 
 class EditProductPage extends StatefulWidget {
@@ -325,6 +327,8 @@ class _EditProductPageState extends State<EditProductPage> {
   late TextEditingController heightController;
 
   bool _isLoading = false;
+
+  final formKey = GlobalKey<FormState>();
 
   @override
   void initState() {
@@ -414,7 +418,9 @@ class _EditProductPageState extends State<EditProductPage> {
       final token = prefs.getString('authToken');
 
       final response = await http.put(
+
         url,
+        
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer $token',
@@ -473,45 +479,79 @@ class _EditProductPageState extends State<EditProductPage> {
     required String label,
     required TextEditingController controller,
     bool readOnly = false,
+    bool isRequired = false,
     TextInputType keyboardType = TextInputType.text,
   }) {
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 300),
-      margin: const EdgeInsets.symmetric(vertical: 10),
-      padding: const EdgeInsets.all(4),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withValues(alpha: 0.3),
-            offset: const Offset(4, 4),
-            blurRadius: 8,
-          ),
-          BoxShadow(
-            color: Colors.white.withValues(alpha: 0.8),
-            offset: const Offset(-4, -4),
-            blurRadius: 8,
-          ),
-        ],
-      ),
-      child: TextField(
-        controller: controller,
-        readOnly: readOnly,
-        keyboardType: keyboardType,
-        style: const TextStyle(color: Colors.black87, fontSize: 16),
-        decoration: InputDecoration(
-          labelText: label,
-          labelStyle: TextStyle(color: Colors.blueGrey[700]),
-          border: InputBorder.none,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          suffixIcon: readOnly
-              ? Icon(Icons.lock, color: Colors.grey[400], size: 20)
-              : null,
-        ),
-      ),
+    return FormField<String>(
+      validator: isRequired
+          ? (value) {
+        if (controller.text.trim().isEmpty) {
+          return 'This field is required';
+        }
+        return null;
+      }
+          : null,
+      builder: (FormFieldState<String> formFieldState) {
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 300),
+              margin: const EdgeInsets.symmetric(vertical: 10),
+              padding: const EdgeInsets.all(4),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: formFieldState.hasError ? Colors.red : Colors.transparent,
+                  width: formFieldState.hasError ? 2 : 0,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.grey.withOpacity(0.3),
+                    offset: const Offset(4, 4),
+                    blurRadius: 8,
+                  ),
+                  BoxShadow(
+                    color: Colors.white.withOpacity(0.8),
+                    offset: const Offset(-4, -4),
+                    blurRadius: 8,
+                  ),
+                ],
+              ),
+              child: TextField(
+                controller: controller,
+                readOnly: readOnly,
+                keyboardType: keyboardType,
+                style: const TextStyle(color: Colors.black87, fontSize: 16),
+                decoration: InputDecoration(
+                  labelText: "$label ${isRequired ? ' *' : ''}",
+                  labelStyle: TextStyle(color: Colors.blueGrey[700]),
+                  border: InputBorder.none,
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  suffixIcon: readOnly
+                      ? Icon(Icons.lock, color: Colors.grey[400], size: 20)
+                      : null,
+                ),
+                onChanged: (value) {
+                  formFieldState.didChange(value); // Updates form field state
+                },
+              ),
+            ),
+            if (formFieldState.hasError) // Show error message outside the box
+              Padding(
+                padding: const EdgeInsets.only(left: 8, top: 4),
+                child: Text(
+                  formFieldState.errorText ?? '',
+                  style: const TextStyle(color: Colors.red, fontSize: 12),
+                ),
+              ),
+          ],
+        );
+      },
     );
   }
+
 
   Widget _buildSectionTitle(String title) {
     return Padding(
@@ -537,7 +577,9 @@ class _EditProductPageState extends State<EditProductPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Container(
+      body: Form(
+        key: formKey,
+        child:  Container(
         color: Colors.white,
         child: Stack(
           children: [
@@ -590,7 +632,11 @@ class _EditProductPageState extends State<EditProductPage> {
                             valueColor: AlwaysStoppedAnimation<Color>(Colors.blueAccent),
                           )
                               : ElevatedButton.icon(
-                            onPressed: _saveProduct,
+                            onPressed: () {
+                              if (formKey.currentState!.validate()) {
+                                _saveProduct();
+                              }
+                            },
                             icon: const Icon(Icons.save, color: Colors.white),
                             label: const Text(
                               'Save Changes',
@@ -606,9 +652,9 @@ class _EditProductPageState extends State<EditProductPage> {
                           ),
                         ],
                       ),
+
                       const SizedBox(height: 32),
 
-                      // Card Container with subtle elevation
                       Container(
                         padding: const EdgeInsets.all(24),
                         decoration: BoxDecoration(
@@ -631,24 +677,26 @@ class _EditProductPageState extends State<EditProductPage> {
                               children: [
                                 Expanded(
                                   child: _buildNeumorphicTextField(
-                                    label: 'SKU',
-                                    controller: skuController,
-                                    readOnly: true,
+                                      label: 'SKU',
+                                      controller: skuController,
+                                      readOnly: true,
+                                      isRequired: true
                                   ),
                                 ),
                                 const SizedBox(width: 16),
                                 Expanded(
                                   child: _buildNeumorphicTextField(
-                                    label: 'Parent SKU',
-                                    controller: parentSkuController,
-                                    readOnly: true,
+                                      label: 'Parent SKU',
+                                      controller: parentSkuController,
+                                      readOnly: true,
+                                      isRequired: true
                                   ),
                                 ),
                               ],
                             ),
-                            _buildNeumorphicTextField(label: 'Display Name', controller: displayNameController),
+                            _buildNeumorphicTextField(label: 'Display Name', controller: displayNameController, isRequired: true),
                             _buildNeumorphicTextField(label: 'Description', controller: descriptionController),
-                            _buildNeumorphicTextField(label: 'Category Name', controller: categoryNameController),
+                            _buildNeumorphicTextField(label: 'Category Name', controller: categoryNameController, isRequired: true),
 
                             // Product Details Section
                             _buildSectionTitle('Product Details'),
@@ -673,17 +721,19 @@ class _EditProductPageState extends State<EditProductPage> {
                               children: [
                                 Expanded(
                                   child: _buildNeumorphicTextField(
-                                    label: 'Net Weight',
-                                    controller: netWeightController,
-                                    keyboardType: TextInputType.number,
+                                      label: 'Net Weight',
+                                      controller: netWeightController,
+                                      keyboardType: TextInputType.number,
+                                      isRequired: true
                                   ),
                                 ),
                                 const SizedBox(width: 16),
                                 Expanded(
                                   child: _buildNeumorphicTextField(
-                                    label: 'Gross Weight',
-                                    controller: grossWeightController,
-                                    keyboardType: TextInputType.number,
+                                      label: 'Gross Weight',
+                                      controller: grossWeightController,
+                                      keyboardType: TextInputType.number,
+                                      isRequired: true
                                   ),
                                 ),
                               ],
@@ -691,21 +741,33 @@ class _EditProductPageState extends State<EditProductPage> {
 
                             // Packaging Section
                             _buildSectionTitle('Packaging'),
-                            _buildNeumorphicTextField(label: 'Label SKU', controller: labelSkuController),
+
+                            LabelSearchableTextField(isRequired: true, controller: labelSkuController,isEditProduct:  true, ),
+                            // _buildNeumorphicTextField(label: 'Label SKU', controller: labelSkuController),
                             Row(
                               children: [
+                                // Expanded(
+                                //   child: _buildNeumorphicTextField(
+                                //     label: 'Outer Package Name',
+                                //     controller: outerPackageNameController,
+                                //   ),
+                                // ),
+
                                 Expanded(
-                                  child: _buildNeumorphicTextField(
-                                    label: 'Outer Package Name',
+                                  child: searchabletestfeild(
+                                    isRequired: true,
                                     controller: outerPackageNameController,
+                                    isEditProduct: true,
+                                    lable: 'search Outer Packaging',
                                   ),
                                 ),
                                 const SizedBox(width: 16),
                                 Expanded(
                                   child: _buildNeumorphicTextField(
-                                    label: 'Outer Package Quantity',
-                                    controller: outerPackageQuantityController,
-                                    keyboardType: TextInputType.number,
+                                      label: 'Outer Package Quantity',
+                                      controller: outerPackageQuantityController,
+                                      keyboardType: TextInputType.number,
+                                      isRequired: true
                                   ),
                                 ),
                               ],
@@ -740,25 +802,28 @@ class _EditProductPageState extends State<EditProductPage> {
                               children: [
                                 Expanded(
                                   child: _buildNeumorphicTextField(
-                                    label: 'Length',
-                                    controller: lengthController,
-                                    keyboardType: TextInputType.number,
+                                      label: 'Length',
+                                      controller: lengthController,
+                                      keyboardType: TextInputType.number,
+                                      isRequired: true
                                   ),
                                 ),
                                 const SizedBox(width: 16),
                                 Expanded(
                                   child: _buildNeumorphicTextField(
-                                    label: 'Width',
-                                    controller: widthController,
-                                    keyboardType: TextInputType.number,
+                                      label: 'Width',
+                                      controller: widthController,
+                                      keyboardType: TextInputType.number,
+                                      isRequired: true
                                   ),
                                 ),
                                 const SizedBox(width: 16),
                                 Expanded(
                                   child: _buildNeumorphicTextField(
-                                    label: 'Height',
-                                    controller: heightController,
-                                    keyboardType: TextInputType.number,
+                                      label: 'Height',
+                                      controller: heightController,
+                                      keyboardType: TextInputType.number,
+                                      isRequired: true
                                   ),
                                 ),
                               ],
@@ -767,11 +832,12 @@ class _EditProductPageState extends State<EditProductPage> {
                             // Additional Info Section
                             _buildSectionTitle('Additional Information'),
                             // _buildNeumorphicTextField(label: 'EAN', controller: eanController),
-                            _buildNeumorphicTextField(label: 'Technical Name', controller: technicalNameController),
+                            _buildNeumorphicTextField(label: 'Technical Name', controller: technicalNameController, isRequired: true),
                             // _buildNeumorphicTextField(label: 'Grade', controller: gradeController),
                           ],
                         ),
                       ),
+
                     ],
                   ),
                 ),
@@ -779,7 +845,7 @@ class _EditProductPageState extends State<EditProductPage> {
             ),
           ],
         ),
-      ),
+      ),)
     );
   }
 }
