@@ -20,6 +20,8 @@ class LabelFormPage extends StatefulWidget {
 }
 
 class LabelFormPageState extends State<LabelFormPage> with SingleTickerProviderStateMixin {
+
+
   late TabController _tabController;
   final _labelInFormKey = GlobalKey<FormState>();
   final _labelOutFormKey = GlobalKey<FormState>();
@@ -36,6 +38,8 @@ class LabelFormPageState extends State<LabelFormPage> with SingleTickerProviderS
   TextEditingController remarkController = TextEditingController();
   TextEditingController packagingTypeController = TextEditingController();
 
+  TextEditingController nameController = TextEditingController();
+
   String? receivingPlace;
   String? deliveredTo;
   bool _isLoading = false;
@@ -44,6 +48,7 @@ class LabelFormPageState extends State<LabelFormPage> with SingleTickerProviderS
   final FocusNode _labelSkuFocus = FocusNode();
   final FocusNode _qtyFocus = FocusNode();
   final FocusNode _costFocus = FocusNode();
+  final FocusNode _nameFocus = FocusNode();
   final FocusNode _vendorNameFocus = FocusNode();
   final FocusNode _vendorAddressFocus = FocusNode();
   final FocusNode _vendorPhoneFocus = FocusNode();
@@ -61,6 +66,7 @@ class LabelFormPageState extends State<LabelFormPage> with SingleTickerProviderS
       labelSkuController.clear();
       qtyController.clear();
       packagingSizeController.clear();
+      nameController.clear();
       costController.clear();
       vendorNameController.clear();
       vendorAddressController.clear();
@@ -84,6 +90,7 @@ class LabelFormPageState extends State<LabelFormPage> with SingleTickerProviderS
     labelSkuController.dispose();
     qtyController.dispose();
     packagingSizeController.dispose();
+    nameController.clear();
     costController.dispose();
     vendorNameController.dispose();
     vendorAddressController.dispose();
@@ -96,6 +103,7 @@ class LabelFormPageState extends State<LabelFormPage> with SingleTickerProviderS
     _labelSkuFocus.dispose();
     _qtyFocus.dispose();
     _costFocus.dispose();
+    _nameFocus.dispose();
     _vendorNameFocus.dispose();
     _vendorAddressFocus.dispose();
     _vendorPhoneFocus.dispose();
@@ -119,13 +127,13 @@ class LabelFormPageState extends State<LabelFormPage> with SingleTickerProviderS
       return;
     }
 
-    if (_tabController.index == 1) {
-      if (receivingPlace == deliveredTo) {
-        showErrorSnackbar('Receiving Place and Delivered To cannot be the same.');
-        setState(() => _isLoading = false);
-        return;
-      }
-    }
+    // if (_tabController.index == 1) {
+    //   if (receivingPlace == deliveredTo) {
+    //     showErrorSnackbar('Receiving Place and Delivered To cannot be the same.');
+    //     setState(() => _isLoading = false);
+    //     return;
+    //   }
+    // }
 
     setState(() => _isLoading = true);
 
@@ -153,9 +161,9 @@ class LabelFormPageState extends State<LabelFormPage> with SingleTickerProviderS
         : {
             "labelSku": labelSkuController.text.trim(),
             "qty": qty,
-            "Receiving_place": receivingPlace,
+            // "Receiving_place": receivingPlace,
             "remark": remarkController.text.trim(),
-            "warehouseTo": deliveredTo,
+            // "warehouseTo": deliveredTo,
           };
 
     try {
@@ -187,6 +195,7 @@ class LabelFormPageState extends State<LabelFormPage> with SingleTickerProviderS
         });
 
         showSuccessDialog(responseData['data']['orderNumber']);
+
       } else {
         Map<String, dynamic> errorData = {};
         try {
@@ -278,64 +287,6 @@ class LabelFormPageState extends State<LabelFormPage> with SingleTickerProviderS
     );
   }
 
-  Widget _buildTextField({
-    required TextEditingController controller,
-    required String label,
-    TextInputType? keyboardType,
-    String? Function(String?)? validator,
-    FocusNode? focusNode,
-    FocusNode? nextFocus,
-    bool isRequired = false,
-    int maxLines = 1,
-    IconData? prefixIcon,
-    Widget? suffix,
-  }) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 16.0),
-      child: TextFormField(
-        controller: controller,
-        focusNode: focusNode,
-        maxLength: label == 'Vendor Phone' ? 10 : null,
-        inputFormatters: [
-          if (label == 'Vendor Phone' || label == 'Quantity')
-            FilteringTextInputFormatter.digitsOnly
-          else if (label == 'Cost')
-            FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*')),
-        ],
-        decoration: InputDecoration(
-          labelText: isRequired ? '$label *' : label,
-          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide(color: Colors.grey[300]!),
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide(color: AppColors.primaryBlue, width: 2),
-          ),
-          errorBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide(color: Colors.red, width: 1),
-          ),
-          filled: true,
-          fillColor: Colors.grey[50],
-          contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-          prefixIcon: prefixIcon != null ? Icon(prefixIcon) : null,
-          suffixIcon: suffix,
-          errorStyle: TextStyle(color: Colors.red[700]),
-        ),
-        keyboardType: keyboardType,
-        validator: _autoValidate ? validator : null,
-        maxLines: maxLines,
-        onFieldSubmitted: (_) {
-          if (nextFocus != null) {
-            FocusScope.of(context).requestFocus(nextFocus);
-          }
-        },
-      ),
-    );
-  }
-
   Widget _buildSectionTitle(String title) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 16.0),
@@ -417,8 +368,21 @@ class LabelFormPageState extends State<LabelFormPage> with SingleTickerProviderS
                         child: LabelSearchableTextField(
                       isRequired: true,
                       controller: labelSkuController,
+                          nameController: nameController,
                     )),
+
                     const SizedBox(width: 8),
+                    Expanded(
+                      child: _buildTextField(
+                        controller: nameController,
+                        label: 'Name',
+                        prefixIcon: Icons.production_quantity_limits,
+                        isRequired: true,
+                        focusNode: _nameFocus,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+
                     Expanded(
                       child: _buildTextField(
                         controller: qtyController,
@@ -435,146 +399,89 @@ class LabelFormPageState extends State<LabelFormPage> with SingleTickerProviderS
                         },
                       ),
                     ),
-                    if (_tabController.index == 0) ...[
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: _buildTextField(
-                          controller: costController,
-                          label: 'Cost',
-                          keyboardType: TextInputType.number,
-                          prefixIcon: Icons.currency_rupee,
-                          isRequired: true,
-                          focusNode: _costFocus,
-                          nextFocus: _vendorNameFocus,
-                          validator: (value) {
-                            if (value!.isEmpty) return 'Cost is required';
-                            if (int.tryParse(value) == null) return 'Enter a valid number';
-                            if (int.parse(value) < 0) return 'Cost cannot be negative';
-                            return null;
-                          },
-                        ),
-                      ),
-                    ],
                   ],
                 ),
                 if (_tabController.index == 0) ...[
                   _buildDivider(),
-                  Row(
-                    children: [
-                      _buildSectionTitle('Vendor Details '),
-                      const Text("(Enter the VENDOR NAME only. We'll fetch its other details for you.)",
-                          style: TextStyle(color: Colors.red)),
-                    ],
-                  ),
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Expanded(
-                      //   child: _buildTextField(
-                      //     controller: vendorNameController,
-                      //     label: 'Vendor Name',
-                      //     prefixIcon: Icons.business,
-                      //     isRequired: true,
-                      //     focusNode: _vendorNameFocus,
-                      //     nextFocus: _vendorAddressFocus,
-                      //     validator: (value) => value!.isEmpty ? 'Vendor Name is required' : null,
-                      //   ),
-                      // ),
-                      Expanded(
-                        child: VendorSearchableTextField(
-                          isRequired: true,
-                          onSelected: (vendor) {
-                            if (vendor != null) {
-                              setState(() {
-                                vendorNameController.text = vendor.name;
-                                vendorPhoneController.text = vendor.phone.toString();
-                                vendorAddressController.text = vendor.address;
-                                vendorEmailController.text = vendor.email;
-                              });
-                              debugPrint('Vendor Details - Phone: ${vendor.phone}, '
-                                  'Address: ${vendor.address}, Email: ${vendor.email}');
-                            }
-                          },
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: _buildTextField(
-                          controller: vendorPhoneController,
-                          label: 'Vendor Phone',
-                          keyboardType: TextInputType.phone,
-                          prefixIcon: Icons.phone,
-                          isRequired: true,
-                          focusNode: _vendorPhoneFocus,
-                          nextFocus: _vendorEmailFocus,
-                          validator: (value) {
-                            if (value!.isEmpty) return 'Phone number is required';
-                            if (!RegExp(r'^\d{10,15}$').hasMatch(value) && value.length != 10) {
-                              return 'Enter a valid phone number (10-15 digits)';
-                            }
-                            return null;
-                          },
-                        ),
-                      ),
-                    ],
-                  ),
-                  _buildTextField(
-                    controller: vendorAddressController,
-                    label: 'Vendor Address',
-                    prefixIcon: Icons.location_on,
-                    maxLines: 2,
-                    focusNode: _vendorAddressFocus,
-                    nextFocus: _vendorPhoneFocus,
-                  ),
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Expanded(
-                        child: _buildTextField(
-                          controller: vendorEmailController,
-                          label: 'Vendor Email',
-                          keyboardType: TextInputType.emailAddress,
-                          prefixIcon: Icons.email,
-                          focusNode: _vendorEmailFocus,
-                          validator: (value) {
-                            if (value!.isNotEmpty && !EmailValidator.validate(value)) {
-                              return 'Enter a valid email address';
-                            }
-                            return null;
-                          },
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: _buildTextField(
-                          controller: shopNameController,
-                          label: 'Shop Name',
-                          prefixIcon: Icons.store,
-                        ),
-                      ),
-                    ],
-                  ),
-                  _buildDivider(),
+
+
                   _buildSectionTitle('Additional Information'),
+
                   Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Expanded(
-                        child: _buildTextField(
+                        child: TextFormField(
                           controller: packagingSizeController,
-                          label: 'Packaging Size',
-                          prefixIcon: Icons.straighten,
+                          decoration: InputDecoration(
+                            labelText: 'Packaging Size',
+                            prefixIcon: Icon(Icons.straighten),
+                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: BorderSide(color: Colors.grey[300]!),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: BorderSide(color: AppColors.primaryBlue, width: 2),
+                            ),
+                            errorBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: BorderSide(color: Colors.red, width: 1),
+                            ),
+                            filled: true,
+                            fillColor: Colors.grey[50],
+                            contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                          ),
                         ),
                       ),
+
                       SizedBox(width: 16),
+
                       Expanded(
-                        child: _buildTextField(
-                          controller: packagingTypeController,
-                          label: 'Packaging Type',
-                          prefixIcon: Icons.inventory_2,
+                        child: DropdownButtonFormField<String>(
+                          value: packagingTypeController.text.isNotEmpty ? packagingTypeController.text : null,
+                          items: [
+                            'BOX', 'STICKER', 'LABEL', 'PAPER POUCH', 'PRINTED POUCH', 'SILVER POUCH', 'ZIP POUCH',
+                          ].map((type) {
+                            return DropdownMenuItem<String>(
+                              value: type,
+                              child: Text(type, style: TextStyle(fontSize: 16)),
+                            );
+                          }).toList(),
+                          onChanged: (value) {
+                            if (value != null) {
+                              packagingTypeController.text = value;
+                            }
+                          },
+                          decoration: InputDecoration(
+                            labelText: 'Packaging Type',
+                            prefixIcon: Icon(Icons.inventory_2),
+                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: BorderSide(color: Colors.grey[300]!),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: BorderSide(color: AppColors.primaryBlue, width: 2),
+                            ),
+                            errorBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: BorderSide(color: Colors.red, width: 1),
+                            ),
+                            filled: true,
+                            fillColor: Colors.grey[50],
+                            contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 16), // important
+                            errorStyle: TextStyle(color: Colors.red[700]),
+                          ),
                         ),
                       ),
                     ],
                   ),
+
+                  SizedBox(height: 16),
+
                 ],
                 if (_tabController.index == 1) ...[
                   _buildTextField(
@@ -582,53 +489,39 @@ class LabelFormPageState extends State<LabelFormPage> with SingleTickerProviderS
                     label: 'Remark',
                     prefixIcon: Icons.comment,
                     maxLines: 3,
+                    isRequired: true,
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Required';
+                      }
+                      return null;
+                    },
                   ),
                 ],
                 Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Expanded(
-                      child: Consumer<LocationProvider>(
-                        builder: (context, pro, child) {
-                          return _buildDropdown(
-                            value: receivingPlace,
-                            icon: Icons.store,
-                            label: 'Receiving Place*',
-                            items: pro.warehouses.map((e) => e['name'].toString()).toList(),
-                            onChanged: (value) => setState(() => receivingPlace = value ?? ''),
-                            validator: (value) {
-                              if (value == null || value.isEmpty) {
-                                return 'Required';
-                              }
-                              return null;
-                            },
-                          );
-                        },
-                      ),
-                    ),
-                    if (_tabController.index == 1) ...[
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Consumer<LocationProvider>(
-                          builder: (context, pro, child) {
-                            return _buildDropdown(
-                              value: deliveredTo,
-                              icon: Icons.store,
-                              label: 'Delivered To Warehouse*',
-                              items: pro.warehouses.map((e) => e['name'].toString()).toList(),
-                              onChanged: (value) => setState(() => deliveredTo = value ?? ''),
-                              validator: (value) {
-                                if (value == null || value.isEmpty) {
-                                  return 'Required';
-                                }
-                                return null;
-                              },
-                            );
-                          },
-                        ),
-                      ),
-                    ],
+
+    if (_tabController.index == 0) ...[
+      Expanded(
+        child: Consumer<LocationProvider>(
+          builder: (context, pro, child) {
+            return _buildDropdown(
+              value: receivingPlace,
+              icon: Icons.store,
+              label: 'Receiving Place',
+              items: pro.warehouses.map((e) => e['name'].toString()).toList(),
+              onChanged: (value) => setState(() => receivingPlace = value ?? ''),
+              isRequired: true,
+            );
+          },
+        ),
+      ),
+    ]
+
                   ],
                 ),
+
                 const SizedBox(height: 24),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -761,13 +654,13 @@ class LabelFormPageState extends State<LabelFormPage> with SingleTickerProviderS
     required String label,
     required List<String> items,
     required void Function(String?) onChanged,
-    String? Function(String?)? validator,
+    bool isRequired = false,
     IconData icon = Icons.list,
   }) {
     return DropdownButtonFormField<String>(
       value: value,
       decoration: InputDecoration(
-        labelText: label,
+        labelText: isRequired ? '$label *' : label,
         prefixIcon: Icon(icon, color: Colors.grey[700]),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
@@ -786,8 +679,79 @@ class LabelFormPageState extends State<LabelFormPage> with SingleTickerProviderS
       ),
       items: items.map((item) => DropdownMenuItem(value: item, child: Text(item))).toList(),
       onChanged: onChanged,
-      validator: validator,
+      validator: (value) {
+        if (isRequired && (value == null || value.isEmpty)) {
+          return '$label is required';
+        }
+        return null;
+      },
       hint: Text('Select $label'),
     );
   }
+
+
+  Widget _buildTextField({
+    required TextEditingController controller,
+    required String label,
+    TextInputType? keyboardType,
+    String? Function(String?)? validator,
+    FocusNode? focusNode,
+    FocusNode? nextFocus,
+    bool isRequired = false,
+    int maxLines = 1,
+    IconData? prefixIcon,
+    Widget? suffix,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16.0),
+      child: TextFormField(
+        controller: controller,
+        focusNode: focusNode,
+        maxLength: label == 'Vendor Phone' ? 10 : null,
+        inputFormatters: [
+          if (label == 'Vendor Phone' || label == 'Quantity')
+            FilteringTextInputFormatter.digitsOnly
+        ],
+        decoration: InputDecoration(
+          labelText: isRequired ? '$label *' : label,
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(color: Colors.grey[300]!),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(color: AppColors.primaryBlue, width: 2),
+          ),
+          errorBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(color: Colors.red, width: 1),
+          ),
+          filled: true,
+          fillColor: Colors.grey[50],
+          contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+          prefixIcon: prefixIcon != null ? Icon(prefixIcon) : null,
+          suffixIcon: suffix,
+          errorStyle: TextStyle(color: Colors.red[700]),
+        ),
+        keyboardType: keyboardType,
+        validator: (value) {
+          if (isRequired && (value == null || value.trim().isEmpty)) {
+            return '$label is required';
+          }
+          if (validator != null) {
+            return validator(value);
+          }
+          return null;
+        },
+        maxLines: maxLines,
+        onFieldSubmitted: (_) {
+          if (nextFocus != null) {
+            FocusScope.of(context).requestFocus(nextFocus);
+          }
+        },
+      ),
+    );
+  }
+
 }

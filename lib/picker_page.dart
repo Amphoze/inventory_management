@@ -120,7 +120,7 @@ class _PickerPageState extends State<PickerPage> {
 
                                           try {
                                             final authPro = context.read<AuthProvider>();
-                                            final res = await authPro.reverseOrder(filteredIds[index]);
+                                            final res = await authPro.reverseOrder(filteredIds[index], '', '');
 
                                             Navigator.pop(context);
 

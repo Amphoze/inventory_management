@@ -15,7 +15,7 @@ class AllOrdersPage extends StatefulWidget {
   const AllOrdersPage({super.key});
 
   @override
-  _AllOrdersPageState createState() => _AllOrdersPageState();
+  State<AllOrdersPage> createState() => _AllOrdersPageState();
 }
 
 class _AllOrdersPageState extends State<AllOrdersPage> with SingleTickerProviderStateMixin {

@@ -17,6 +17,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'Custom-Files/colors.dart';
 import 'Custom-Files/custom_pagination.dart';
 import 'Custom-Files/loading_indicator.dart';
+import 'Widgets/revert_icon.dart';
 import 'orders/widgets/write_remark_dialog.dart';
 
 class AccountsPage extends StatefulWidget {
@@ -627,67 +628,74 @@ class _AccountsPageState extends State<AccountsPage> {
                                           ),
                                           if ((isSuperAdmin ?? false) || (isAdmin ?? false)) ...[
                                             const SizedBox(width: 8),
-                                            IconButton(
-                                              tooltip: 'Revert Order',
-                                              icon: const Icon(Icons.undo),
-                                              onPressed: () async {
-                                                showDialog(
-                                                  context: context,
-                                                  builder: (context) {
-                                                    return AlertDialog(
-                                                      title: const Text('Revert Order'),
-                                                      content: Text('Are you sure you want to revert ${order.orderId} to READY TO CONFIRM'),
-                                                      actions: [
-                                                        TextButton(
-                                                          onPressed: () {
-                                                            Navigator.of(context).pop();
-                                                          },
-                                                          child: const Text('Cancel'),
-                                                        ),
-                                                        TextButton(
-                                                          onPressed: () async {
-                                                            Navigator.pop(context);
+                                            // IconButton(
+                                            //   tooltip: 'Revert Order',
+                                            //   icon: const Icon(Icons.undo),
+                                            //   onPressed: () async {
+                                            //     showDialog(
+                                            //       context: context,
+                                            //       builder: (context) {
+                                            //         return AlertDialog(
+                                            //           title: const Text('Revert Order'),
+                                            //           content: Text('Are you sure you want to revert ${order.orderId} to READY TO CONFIRM'),
+                                            //           actions: [
+                                            //             TextButton(
+                                            //               onPressed: () {
+                                            //                 Navigator.of(context).pop();
+                                            //               },
+                                            //               child: const Text('Cancel'),
+                                            //             ),
+                                            //             TextButton(
+                                            //               onPressed: () async {
+                                            //                 Navigator.pop(context);
+                                            //
+                                            //                 showDialog(
+                                            //                   barrierDismissible: false,
+                                            //                   context: context,
+                                            //                   builder: (context) {
+                                            //                     return const AlertDialog(
+                                            //                       content: Row(
+                                            //                         children: [
+                                            //                           CircularProgressIndicator(),
+                                            //                           SizedBox(width: 8),
+                                            //                           Text('Reversing'),
+                                            //                         ],
+                                            //                       ),
+                                            //                     );
+                                            //                   },
+                                            //                 );
+                                            //
+                                            //                 try {
+                                            //                   final authPro = context.read<AuthProvider>();
+                                            //                   final res = await authPro.reverseOrder(order.orderId);
+                                            //
+                                            //                   Navigator.pop(context);
+                                            //
+                                            //                   if (res['success'] == true) {
+                                            //                     Utils.showInfoDialog(
+                                            //                         context, "${res['message']}\nNew Order ID: ${res['newOrderId']}", true);
+                                            //                   } else {
+                                            //                     Utils.showInfoDialog(context, res['message'], false);
+                                            //                   }
+                                            //                 } catch (e) {
+                                            //                   Navigator.pop(context);
+                                            //                   Utils.showInfoDialog(context, 'An error occurred: $e', false);
+                                            //                 }
+                                            //               },
+                                            //               child: const Text('Submit'),
+                                            //             ),
+                                            //           ],
+                                            //         );
+                                            //       },
+                                            //     );
+                                            //   },
+                                            // ),
 
-                                                            showDialog(
-                                                              barrierDismissible: false,
-                                                              context: context,
-                                                              builder: (context) {
-                                                                return const AlertDialog(
-                                                                  content: Row(
-                                                                    children: [
-                                                                      CircularProgressIndicator(),
-                                                                      SizedBox(width: 8),
-                                                                      Text('Reversing'),
-                                                                    ],
-                                                                  ),
-                                                                );
-                                                              },
-                                                            );
-
-                                                            try {
-                                                              final authPro = context.read<AuthProvider>();
-                                                              final res = await authPro.reverseOrder(order.orderId);
-
-                                                              Navigator.pop(context);
-
-                                                              if (res['success'] == true) {
-                                                                Utils.showInfoDialog(
-                                                                    context, "${res['message']}\nNew Order ID: ${res['newOrderId']}", true);
-                                                              } else {
-                                                                Utils.showInfoDialog(context, res['message'], false);
-                                                              }
-                                                            } catch (e) {
-                                                              Navigator.pop(context);
-                                                              Utils.showInfoDialog(context, 'An error occurred: $e', false);
-                                                            }
-                                                          },
-                                                          child: const Text('Submit'),
-                                                        ),
-                                                      ],
-                                                    );
-                                                  },
-                                                );
-                                              },
+                                            RevertOrderWidget(
+                                              dropdownEnabled: false,
+                                              orderid: order.orderId,
+                                              status: 'READY TO CONFIRM',
+                                              revertStatus: '1',
                                             ),
                                           ]
                                         ],

@@ -7,6 +7,9 @@ import 'package:http/http.dart' as http;
 import 'package:inventory_management/constants/constants.dart';
 import 'package:inventory_management/provider/location_provider.dart';
 import 'package:inventory_management/provider/marketplace_provider.dart';
+import 'package:multi_select_flutter/chip_display/multi_select_chip_display.dart';
+import 'package:multi_select_flutter/dialog/multi_select_dialog_field.dart';
+import 'package:multi_select_flutter/util/multi_select_item.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:intl/intl.dart';
@@ -27,12 +30,19 @@ class PlanningScreen extends StatefulWidget {
   _PlanningScreenState createState() => _PlanningScreenState();
 }
 
+
 class _PlanningScreenState extends State<PlanningScreen> with SingleTickerProviderStateMixin {
   int selectedMonth = DateTime.now().month;
   int selectedYear = DateTime.now().year;
+
+
   String? selectedWarehouse;
-  String? selectedMarketplace;
+  List<String> selectedMarketplaces = [];
+  TextEditingController days = TextEditingController();
+
   bool isLoading = false;
+  bool showPreview = false;
+  List<dynamic> csvPreviewData = [];
   String statusMessage = '';
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
@@ -56,24 +66,44 @@ class _PlanningScreenState extends State<PlanningScreen> with SingleTickerProvid
     super.dispose();
   }
 
+  void clearPlanningFilters() {
+    setState(() {
+      selectedMonth = DateTime.now().month;
+      selectedYear = DateTime.now().year;
+      selectedWarehouse = null;
+      selectedMarketplaces.clear();
+      days.clear();
+
+      _formKey.currentState?.reset();
+
+      showPreview = false;
+      statusMessage = '';
+    });
+  }
+
+
   Future<void> _fetchPlanningData() async {
     if (!_formKey.currentState!.validate()) {
-      setState(() {
-        statusMessage = "Please fill all required fields.";
-      });
+      setState(() => statusMessage = "Please fill all required fields.");
       return;
     }
 
     setState(() {
       isLoading = true;
       statusMessage = '';
+      showPreview = false;
     });
 
     SharedPreferences prefs = await SharedPreferences.getInstance();
     String? token = prefs.getString("authToken");
 
-    var payload = {"month": selectedMonth, "year": selectedYear, "warehouse": selectedWarehouse};
-    if (selectedMarketplace != null) payload["marketplace"] = selectedMarketplace;
+    var payload = {
+      "month": selectedMonth,
+      "days" : days.text.trim(),
+      "year": selectedYear,
+      "warehouse": selectedWarehouse,
+      "marketplace": selectedMarketplaces,
+    };
 
     log('Payload: $payload');
 
@@ -87,15 +117,14 @@ class _PlanningScreenState extends State<PlanningScreen> with SingleTickerProvid
 
       if (response.statusCode == 200) {
         var responseData = jsonDecode(response.body);
-        if (responseData["success"] == true) {
-          if (responseData["data"] == null || (responseData['data'] as List).isEmpty) {
-            setState(() => statusMessage = "No data found for the selected filters.");
-            return;
-          }
-          _downloadCsv(responseData["data"]);
-          setState(() => statusMessage = "CSV downloaded successfully!");
+        if (responseData["success"] == true && responseData["data"] != null) {
+          setState(() {
+            csvPreviewData = responseData["data"];
+            showPreview = true;
+          });
+          _showPreviewDialog();
         } else {
-          setState(() => statusMessage = "Something went wrong. Please try again.");
+          setState(() => statusMessage = "No data found for the selected filters.");
         }
       } else {
         setState(() => statusMessage = "Server error (${response.statusCode}). Please try later.");
@@ -107,29 +136,7 @@ class _PlanningScreenState extends State<PlanningScreen> with SingleTickerProvid
     }
   }
 
-  void _downloadCsv(List<dynamic> data) {
-    if (data.isEmpty) {
-      setState(() => statusMessage = "No data available to download.");
-      return;
-    }
-
-    List<List<String>> csvData = [
-      ["SKU", "Total Quantity Sold", "Required", "Total Quantity In Warehouse"]
-    ];
-    for (var item in data) {
-      csvData.add([
-        item["sku"].toString(),
-        item["totalQuantitySold"].toString(),
-        item["required"].toString(),
-        item["totalQuantityInWarehouse"].toString(),
-      ]);
-    }
-
-    String csvString = csvData.map((e) => e.join(",")).join("\n");
-    _triggerDownload(csvString, "planning_${selectedMonth}_${selectedYear}.csv");
-  }
-
-  void _triggerDownload(String csvContent, String fileName) {
+    void _triggerDownload(String csvContent, String fileName) {
     final csvWithBom = '\uFEFF$csvContent';
     final bytes = Uint8List.fromList(utf8.encode(csvWithBom));
     final blob = web.Blob(
@@ -144,11 +151,32 @@ class _PlanningScreenState extends State<PlanningScreen> with SingleTickerProvid
     web.URL.revokeObjectURL(url);
   }
 
+  void _downloadCsv() {
+    if (csvPreviewData.isEmpty) return;
+
+    List<List<String>> csvData = [
+      ["SKU", "Total Quantity Sold", "Required", "Total Quantity In Warehouse"]
+    ];
+    for (var item in csvPreviewData) {
+      csvData.add([
+        item["sku"].toString(),
+        item["totalQuantitySold"].toString(),
+        item["required"].toString(),
+        item["totalQuantityInWarehouse"].toString(),
+      ]);
+    }
+
+    String csvString = csvData.map((e) => e.join(",")).join("\n");
+    _triggerDownload(csvString, "planning_${selectedMonth}_${selectedYear}.csv");
+  }
+
   @override
   Widget build(BuildContext context) {
-    final int currentYear = DateTime.now().year; // Get current year dynamically
+
+    final int currentYear = DateTime.now().year;
 
     return Scaffold(
+
       backgroundColor: Colors.grey[100],
       appBar: AppBar(
         title: const Text(
@@ -168,17 +196,32 @@ class _PlanningScreenState extends State<PlanningScreen> with SingleTickerProvid
           ),
         ),
       ),
+
       body: Center(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+          padding: const EdgeInsets.all(24),
           child: Form(
             key: _formKey,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
+
+
                 _buildRow([
+
+
+                  _buildSelectionCard(
+                    title: "Choose Days",
+
+                    child: _buildTextField(
+                      controller: days,
+                       label: 'Days',
+                    ),
+                  ),
+
                   _buildSelectionCard(
                     title: "Select Month",
+
                     child: _buildStyledDropdown<int>(
                       value: selectedMonth,
                       items: List.generate(12, (index) => index + 1),
@@ -186,12 +229,13 @@ class _PlanningScreenState extends State<PlanningScreen> with SingleTickerProvid
                       onChanged: (value) => setState(() => selectedMonth = value!),
                     ),
                   ),
+
                   _buildSelectionCard(
                     title: "Select Year",
                     child: _buildStyledDropdown<int>(
                       value: selectedYear,
                       items: List.generate(
-                        currentYear - (currentYear - 5) + 1, // Generate years from 5 years ago to current year
+                        currentYear - (currentYear - 5) + 1,
                             (index) => currentYear - 5 + index,
                       ),
                       itemBuilder: (item) => item.toString(),
@@ -200,6 +244,7 @@ class _PlanningScreenState extends State<PlanningScreen> with SingleTickerProvid
                   ),
                 ]),
                 const SizedBox(height: UIConstants.spacing),
+
                 _buildRow([
                   _buildSelectionCard(
                     title: "Select Warehouse",
@@ -213,19 +258,74 @@ class _PlanningScreenState extends State<PlanningScreen> with SingleTickerProvid
                       ),
                     ),
                   ),
+
                   _buildSelectionCard(
                     title: "Select Marketplace",
-                    child: Consumer<MarketplaceProvider>(
-                      builder: (context, pro, child) => _buildStyledDropdown<String>(
-                        value: selectedMarketplace,
-                        items: pro.marketplaces.map((e) => e.name).toList(),
-                        itemBuilder: (item) => item,
-                        onChanged: (value) => setState(() => selectedMarketplace = value),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        border: Border.all(color: AppColors.primaryBlue.withAlpha(120)),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
+                      child: MultiSelectDialogField(
+                        items: Provider.of<MarketplaceProvider>(context, listen: false)
+                            .marketplaces
+                            .map((e) => MultiSelectItem(e.name, e.name))
+                            .toList(),
+                        title: const Text("Select Marketplace", style: TextStyle(color: AppColors.primaryBlue)),
+                        buttonText: const Text("Choose Marketplaces", style: TextStyle(color: AppColors.primaryBlue)),
+                        buttonIcon: const Icon(Icons.arrow_drop_down_outlined, color: AppColors.black),
+                        initialValue: selectedMarketplaces,
+                        onConfirm: (values) => setState(() => selectedMarketplaces = List.from(values)),
+
+                        decoration: BoxDecoration(
+                          border: Border.all(color: Colors.transparent),
+                          color: Colors.white,
+
+                        ),
+
+                        chipDisplay: MultiSelectChipDisplay.none(),
+                      ),
+                    ),
+                  )
+
+                ]),
+
+                if (selectedMarketplaces.isNotEmpty)
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: Container(
+                      height: 100,
+                      width: MediaQuery.of(context).size.width * 0.4,
+                      padding: const EdgeInsets.symmetric(horizontal: 8),
+                      // decoration: BoxDecoration(
+                      //   border: Border.all(color: Colors.grey.shade300),
+                      //   borderRadius: BorderRadius.circular(6),
+                      // ),
+                      child: SingleChildScrollView(
+                        scrollDirection: Axis.vertical,
+                        child: Wrap(
+                          spacing: 6,
+                          runSpacing: 6,
+                          children: selectedMarketplaces
+                              .map((marketplace) => Chip(
+                            label: Text(
+                              marketplace,
+                              style: TextStyle(color: Colors.white),
+                            ),
+                            backgroundColor: Colors.blueAccent,
+                          ))
+                              .toList(),
+                        ),
                       ),
                     ),
                   ),
-                ]),
+
                 const SizedBox(height: UIConstants.spacing),
+
+
+
                 ElevatedButton(
                   onPressed: isLoading ? null : _fetchPlanningData,
                   style: ElevatedButton.styleFrom(
@@ -244,7 +344,7 @@ class _PlanningScreenState extends State<PlanningScreen> with SingleTickerProvid
                       child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
                     )
                         : const Text(
-                      "Download CSV",
+                      "Start Planing",
                       style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
                     ),
                   ),
@@ -271,6 +371,7 @@ class _PlanningScreenState extends State<PlanningScreen> with SingleTickerProvid
                       ),
                     ),
                   ),
+
               ],
             ),
           ),
@@ -279,14 +380,9 @@ class _PlanningScreenState extends State<PlanningScreen> with SingleTickerProvid
     );
   }
 
-  Widget _buildRow(List<Widget> children) {
-    return Row(
-      children: children.map((child) => Expanded(child: Padding(padding: const EdgeInsets.symmetric(horizontal: 4), child: child))).toList(),
-    );
-  }
-
   Widget _buildSelectionCard({required String title, required Widget child}) {
     return Card(
+
       elevation: 4,
       shape: RoundedRectangleBorder(borderRadius: UIConstants.defaultBorderRadius),
       child: Padding(
@@ -305,6 +401,43 @@ class _PlanningScreenState extends State<PlanningScreen> with SingleTickerProvid
       ),
     );
   }
+
+
+  Widget _buildPreviewTable() {
+    return DataTable(
+      decoration: BoxDecoration(
+        border: Border.all(color: Colors.grey, width: 1),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      columns: const [
+        DataColumn(label: Text("SKU", style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white))),
+        DataColumn(label: Text("Total Sold", style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white))),
+        DataColumn(label: Text("Required", style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white))),
+        DataColumn(label: Text("In Warehouse", style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white))),
+      ],
+      rows: csvPreviewData.map((item) => DataRow(
+        color: MaterialStateProperty.resolveWith<Color?>((Set<MaterialState> states) {
+          return states.contains(MaterialState.selected) ? Colors.blue.shade100 : null;
+        }),
+        cells: [
+          DataCell(Text(item["sku"].toString())),
+          DataCell(Text(item["totalQuantitySold"].toString())),
+          DataCell(Text(item["required"].toString())),
+          DataCell(Text(item["totalQuantityInWarehouse"].toString())),
+        ],
+      )).toList(),
+      border: TableBorder.all(color: Colors.black45, width: 1),
+      columnSpacing: 20,
+      headingRowColor: MaterialStateProperty.all(AppColors.primaryBlue),
+    );
+  }
+
+  Widget _buildRow(List<Widget> children) {
+    return Row(
+      children: children.map((child) => Expanded(child: Padding(padding: const EdgeInsets.symmetric(horizontal: 4), child: child))).toList(),
+    );
+  }
+
 
   Widget _buildStyledDropdown<T>({
     required T? value,
@@ -333,6 +466,132 @@ class _PlanningScreenState extends State<PlanningScreen> with SingleTickerProvid
       items: items.map((item) => DropdownMenuItem(value: item, child: Text(itemBuilder(item)))).toList(),
       onChanged: onChanged,
       validator: validator,
+    );
+  }
+
+
+
+  void _showPreviewDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+
+        title: const Text("Material Planning"),
+        content: SingleChildScrollView(
+          child: SizedBox(
+            width: MediaQuery.of(context).size.width * 0.5,
+            child:  Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                _buildPreviewTable(),
+                const SizedBox(height: 20),
+              ],
+            ),
+          )
+        ),
+        actions: [
+
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 24),
+              backgroundColor: AppColors.primaryBlue,
+              shape: RoundedRectangleBorder(borderRadius: UIConstants.defaultBorderRadius),
+              elevation: 4,
+              shadowColor: AppColors.primaryBlue.withOpacity(0.4),
+            ),
+            onPressed: () {
+              _downloadCsv();
+
+              clearPlanningFilters();
+
+              Navigator.of(context).pop();
+            },
+            child: const Text(
+              "Download CSV",
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
+            ),
+          ),
+
+          SizedBox(width: 18,),
+
+
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 24),
+              backgroundColor: AppColors.primaryBlue,
+              shape: RoundedRectangleBorder(borderRadius: UIConstants.defaultBorderRadius),
+              elevation: 4,
+              shadowColor: AppColors.primaryBlue.withOpacity(0.4),
+            ),
+            onPressed: () {
+              Navigator.of(context).pop();
+            },
+            child: const Text(
+              "Closed",
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
+            ),
+          ),
+
+          // TextButton(
+          //   style: Bu,
+          //   onPressed: () => Navigator.of(context).pop(),
+          //   child: const Text("Close"),
+          // ),
+        ],
+      ),
+    );
+
+  }
+
+  Widget _buildTextField({
+    required TextEditingController controller,
+    required String label,
+    TextInputType? keyboardType,
+    String? Function(String?)? validator,
+    FocusNode? focusNode,
+    FocusNode? nextFocus,
+    bool isRequired = false,
+    int maxLines = 1,
+    IconData? prefixIcon,
+    Widget? suffix,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 0.0),
+      child: TextFormField(
+        controller: controller,
+        focusNode: focusNode,
+        // maxLength: label == 'Vendor Phone' ? 10 : null,
+        decoration: InputDecoration(
+          hintText: isRequired ? '$label *' : label,
+          hintStyle: TextStyle(color: AppColors.primaryBlue),
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(color: AppColors.primaryBlue.withAlpha(120)),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(color: AppColors.primaryBlue.withAlpha(120), width: 2),
+          ),
+          errorBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(color: Colors.red, width: 1),
+          ),
+          filled: true,
+          fillColor: Colors.white,
+          // contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+          prefixIcon: prefixIcon != null ? Icon(prefixIcon) : null,
+          suffixIcon: suffix,
+          errorStyle: TextStyle(color: Colors.red[700]),
+        ),
+        keyboardType: keyboardType,
+        maxLines: maxLines,
+        onFieldSubmitted: (_) {
+          if (nextFocus != null) {
+            FocusScope.of(context).requestFocus(nextFocus);
+          }
+        },
+      ),
     );
   }
 }
