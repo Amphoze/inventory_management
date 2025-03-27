@@ -34,11 +34,16 @@ class ProductPageApi {
     }
   }
 
-  Future<Map<String, dynamic>> getAllBrandName({int page = 1, int limit = 20, String? name}) => _fetchData('/brand/', page: page, limit: limit, name: name);
-  Future<Map<String, dynamic>> getLabel({int page = 1, int limit = 20, String? name}) => _fetchData('/label/', page: page, limit: limit, name: name);
-  Future<Map<String, dynamic>> getBoxSize({int page = 1, int limit = 20, String? name}) => _fetchData('/boxsize/', page: page, limit: limit, name: name);
-  Future<Map<String, dynamic>> getColorDrop({int page = 1, int limit = 20, String? name}) => _fetchData('/color/', page: page, limit: limit, name: name);
-  Future<Map<String, dynamic>> getParentSku({int page = 1, int limit = 20, String? name}) => _fetchData('/products/', page: page, limit: limit, name: name);
+  Future<Map<String, dynamic>> getAllBrandName({int page = 1, int limit = 20, String? name}) =>
+      _fetchData('/brand/', page: page, limit: limit, name: name);
+  Future<Map<String, dynamic>> getLabel({int page = 1, int limit = 20, String? name}) =>
+      _fetchData('/label/', page: page, limit: limit, name: name);
+  Future<Map<String, dynamic>> getBoxSize({int page = 1, int limit = 20, String? name}) =>
+      _fetchData('/boxsize/', page: page, limit: limit, name: name);
+  Future<Map<String, dynamic>> getColorDrop({int page = 1, int limit = 20, String? name}) =>
+      _fetchData('/color/', page: page, limit: limit, name: name);
+  Future<Map<String, dynamic>> getParentSku({int page = 1, int limit = 20, String? name}) =>
+      _fetchData('/products/', page: page, limit: limit, name: name);
 
   Future<http.Response> createProduct({
     BuildContext? context,
@@ -62,52 +67,62 @@ class ProductPageApi {
     required bool active,
     required String labelSku,
     required String outerPackage_sku,
-    required String categoryName,
+    required String category,
+    required String sub_category,
     required String grade,
     required String shopifyImage,
     required String variant_name,
     required String itemQty,
   }) async {
     final baseUrl = await Constants.getBaseUrl();
-    final url = Uri.parse('$baseUrl/products/');
+    final url = Uri.parse('$baseUrl/products');
     try {
-      double? parseDouble(String value) => value.isEmpty ? null : double.tryParse(value.replaceAll(RegExp(r'[^0-9.]'), '')) ?? (throw Exception('Invalid number: $value'));
-      int? parseInt(String value) => value.isEmpty ? null : int.tryParse(value.replaceAll(RegExp(r'[^0-9]'), '')) ?? (throw Exception('Invalid integer: $value'));
+      double? parseDouble(String value) =>
+          value.isEmpty ? null : double.tryParse(value.replaceAll(RegExp(r'[^0-9.]'), '')) ?? (throw Exception('Invalid number: $value'));
+      int? parseInt(String value) =>
+          value.isEmpty ? null : int.tryParse(value.replaceAll(RegExp(r'[^0-9]'), '')) ?? (throw Exception('Invalid integer: $value'));
 
       final netWeightNum = parseDouble(netWeight) ?? (throw Exception('Net weight is required'));
       final grossWeightNum = parseDouble(grossWeight) ?? (throw Exception('Gross weight is required'));
       final mrpNum = parseDouble(mrp);
       final costNum = parseDouble(cost);
       final itemQtyNum = parseInt(itemQty) ?? (throw Exception('Item quantity is required'));
+      final body = {
+        'displayName': displayName,
+        'parentSku': parentSku,
+        'sku': sku,
+        'ean': ean,
+        'brand_id': brand_id,
+        // outerPackage_quantity,
+        // color_id,
+        'description': description,
+        'technicalName': technicalName,
+        // label_quantity,
+        'tax_rule': tax_rule,
+        'length': length,
+        'width': width,
+        'height': height,
+        'netWeight': netWeightNum.toString(),
+        'grossWeight': grossWeightNum.toString(),
+        'mrp': mrpNum?.toString() ?? '',
+        'cost': costNum?.toString() ?? '',
+        'active': active.toString(),
+        'labelSku': labelSku,
+        'outerPackage_sku': outerPackage_sku,
+        'category': category,
+        'grade': grade,
+        'shopifyImage': shopifyImage,
+        'variant_name': variant_name,
+        'itemQty': itemQtyNum.toString(),
+        'sub_category': sub_category
+      };
+
+      log("create product body: $body");
 
       final token = await AuthProvider().getToken();
       final request = http.MultipartRequest('POST', url)
         ..headers.addAll({'Authorization': 'Bearer $token'})
-        ..fields.addAll({
-          'displayName': displayName,
-          'parentSku': parentSku,
-          'sku': sku,
-          'ean': ean,
-          'brand': brand_id,
-          'description': description,
-          'technicalName': technicalName,
-          'tax_rule': tax_rule,
-          'length': length,
-          'width': width,
-          'height': height,
-          'netWeight': netWeightNum.toString(),
-          'grossWeight': grossWeightNum.toString(),
-          'mrp': mrpNum?.toString() ?? '',
-          'cost': costNum?.toString() ?? '',
-          'active': active.toString(),
-          'labelSku': labelSku,
-          'outerPackage_sku': outerPackage_sku,
-          'categoryName': categoryName,
-          'grade': grade,
-          'shopifyImage': shopifyImage,
-          'variant_name': variant_name,
-          'itemQty': itemQtyNum.toString(),
-        });
+        ..fields.addAll(body);
 
       final streamedResponse = await request.send();
       final response = await http.Response.fromStream(streamedResponse);

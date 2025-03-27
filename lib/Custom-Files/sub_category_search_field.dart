@@ -171,12 +171,6 @@ class _SubCategorySearchableTextFieldState extends State<SubCategorySearchableTe
             onChanged: (value) {
               formFieldState.didChange(value);
             },
-            // onSubmitted: (value) {
-            //   final suggestionsController = SuggestionsController.of<SubCategory>(context);
-            //   if (suggestionsController?.selected.value != null) {
-            //     widget.onSelected?.call(suggestionsController!.selected.value);
-            //   }
-            // },
           ),
           suggestionsCallback: (query) async {
             return await _fetchSuggestions(query);

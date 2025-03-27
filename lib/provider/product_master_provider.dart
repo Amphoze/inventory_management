@@ -47,7 +47,7 @@ class ProductMasterProvider with ChangeNotifier {
       final response = await authProvider!.getAllProducts(
           page: _currentPage, itemsPerPage: _itemsPerPage);
 
-      log('loadMoreProducts response: $response');
+      // log('loadMoreProducts response: $response');
 
       if (response['success'] == true) {
         final List<dynamic> productData = response['data'];

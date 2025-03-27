@@ -13,9 +13,10 @@ class PaginatedSearchDropdown extends StatefulWidget {
   final bool isBoxSize;
   final bool isBrand;
   final bool isLabel;
-  final Future<Map<String, dynamic>> Function(String searchKey, int page)
-      fetchItems;
-  final ValueChanged<String> onItemSelected;
+  // final Future<Map<String, dynamic>> Function(String searchKey, int page) fetchItems;
+  // final ValueChanged<String> onItemSelected;
+  final Future<Map<String, dynamic>> Function(String searchKey, int page) fetchItems;
+  final ValueChanged<Map<String, String>> onItemSelected;
   final bool returnId;
   final bool isParentSku;
 
@@ -34,8 +35,7 @@ class PaginatedSearchDropdown extends StatefulWidget {
   });
 
   @override
-  _PaginatedSearchDropdownState createState() =>
-      _PaginatedSearchDropdownState();
+  _PaginatedSearchDropdownState createState() => _PaginatedSearchDropdownState();
 }
 
 class _PaginatedSearchDropdownState extends State<PaginatedSearchDropdown> {
@@ -95,9 +95,7 @@ class _PaginatedSearchDropdownState extends State<PaginatedSearchDropdown> {
             ),
             child: NotificationListener<ScrollNotification>(
               onNotification: (scrollInfo) {
-                if (!isLoading &&
-                    scrollInfo.metrics.pixels ==
-                        scrollInfo.metrics.maxScrollExtent) {
+                if (!isLoading && scrollInfo.metrics.pixels == scrollInfo.metrics.maxScrollExtent) {
                   _fetchItems(searchController.text);
                 }
                 return true;
@@ -167,15 +165,44 @@ class _PaginatedSearchDropdownState extends State<PaginatedSearchDropdown> {
     });
   }
 
+  // void _handleItemSelection(dynamic item) {
+  //   setState(() {
+  //     selectedItemName = widget.isParentSku
+  //         ? item['parentsku']?.toString()
+  //         : widget.isLabel
+  //             ? item['labelSku']?.toString()
+  //             : widget.isBoxSize
+  //                 ? item['outerPackage_sku']?.toString()
+  //                 : item['name']?.toString();
+  //     searchController.text = selectedItemName ?? '';
+  //     isDropdownOpen = false;
+  //   });
+  //
+  //   log("selectedItemName: $selectedItemName");
+  //
+  //   if (selectedItemName != null) {
+  //     if (widget.isBrand || widget.isParentSku) {
+  //       if (widget.isParentSku) {
+  //         return widget.onItemSelected(item['parentsku']?.toString() ?? '');
+  //       }
+  //       return widget.onItemSelected(item['_id']?.toString() ?? '');
+  //     }
+  //     return widget.onItemSelected(selectedItemName!);
+  //   } else {
+  //     log("Warning: Selected value is null");
+  //     widget.onItemSelected('');
+  //   }
+  // }
+
   void _handleItemSelection(dynamic item) {
     setState(() {
       selectedItemName = widget.isParentSku
           ? item['parentsku']?.toString()
           : widget.isLabel
-              ? item['labelSku']?.toString()
-              : widget.isBoxSize
-                  ? item['outerPackage_sku']?.toString()
-                  : item['name']?.toString();
+          ? item['labelSku']?.toString()
+          : widget.isBoxSize
+          ? item['outerPackage_sku']?.toString()
+          : item['name']?.toString();
       searchController.text = selectedItemName ?? '';
       isDropdownOpen = false;
     });
@@ -183,16 +210,26 @@ class _PaginatedSearchDropdownState extends State<PaginatedSearchDropdown> {
     log("selectedItemName: $selectedItemName");
 
     if (selectedItemName != null) {
-      if (widget.isBrand || widget.isParentSku) {
-        if (widget.isParentSku) {
-          return widget.onItemSelected(item['parentsku']?.toString() ?? '');
-        }
-        return widget.onItemSelected(item['_id']?.toString() ?? '');
-      }
-      return widget.onItemSelected(selectedItemName!);
+      // Prepare the result map with both _id and the original value
+      String id = item['_id']?.toString() ?? '';
+      String value = widget.isParentSku
+          ? item['parentsku']?.toString() ?? ''
+          : widget.isLabel
+          ? item['labelSku']?.toString() ?? ''
+          : widget.isBoxSize
+          ? item['outerPackage_sku']?.toString() ?? ''
+          : item['name']?.toString() ?? '';
+
+      Map<String, String> result = {
+        'id': id,
+        'value': value,
+      };
+
+      log("Selected result: $result");
+      widget.onItemSelected(result); // Pass the map with both id and value
     } else {
       log("Warning: Selected value is null");
-      widget.onItemSelected('');
+      widget.onItemSelected({'id': '', 'value': ''}); // Default empty map
     }
   }
 
@@ -203,10 +240,8 @@ class _PaginatedSearchDropdownState extends State<PaginatedSearchDropdown> {
   }
 }
 
-Future<Map<String, dynamic>> fetchCategoryFromApi(
-    String searchKey, int page) async {
-  final url =
-      Uri.parse('${await Constants.getBaseUrl()}/category?name=$searchKey');
+Future<Map<String, dynamic>> fetchCategoryFromApi(String searchKey, int page) async {
+  final url = Uri.parse('${await Constants.getBaseUrl()}/category?name=$searchKey');
   final prefs = await SharedPreferences.getInstance();
   final token = prefs.getString('authToken') ?? '';
   try {
@@ -242,12 +277,10 @@ Future<Map<String, dynamic>> fetchCategoryFromApi(
   }
 }
 
-// DONE
 Future<Map<String, dynamic>> fetchBrandsFromApi(String query, int page) async {
   final prefs = await SharedPreferences.getInstance();
   final token = prefs.getString('authToken') ?? '';
-  final url = Uri.parse(
-      '${await Constants.getBaseUrl()}/brand?name=$query'); // Assume pagination and search parameters
+  final url = Uri.parse('${await Constants.getBaseUrl()}/brand?name=$query'); // Assume pagination and search parameters
 
   try {
     final response = await http.get(url, headers: {
@@ -257,8 +290,7 @@ Future<Map<String, dynamic>> fetchBrandsFromApi(String query, int page) async {
 
     if (response.statusCode == 200) {
       final data = json.decode(response.body);
-      final brands =
-          data['brands']; // Assume 'brands' is the key containing the data
+      final brands = data['brands']; // Assume 'brands' is the key containing the data
       log("brands: $brands");
       return {
         'success': true,
@@ -282,8 +314,7 @@ Future<Map<String, dynamic>> fetchBrandsFromApi(String query, int page) async {
 Future<Map<String, dynamic>> fetchLabelFromApi(String query, int page) async {
   final prefs = await SharedPreferences.getInstance();
   final token = prefs.getString('authToken') ?? '';
-  final url = Uri.parse(
-      '${await Constants.getBaseUrl()}/label?labelSku=$query'); // Assume pagination and search parameters
+  final url = Uri.parse('${await Constants.getBaseUrl()}/label?labelSku=$query'); // Assume pagination and search parameters
 
   try {
     final response = await http.get(url, headers: {
@@ -318,8 +349,7 @@ Future<Map<String, dynamic>> fetchLabelFromApi(String query, int page) async {
 Future<Map<String, dynamic>> fetchBoxSizeFromApi(String query, int page) async {
   final prefs = await SharedPreferences.getInstance();
   final token = prefs.getString('authToken') ?? '';
-  final url = Uri.parse(
-      '${await Constants.getBaseUrl()}/boxsize?outerPackage_name=$query');
+  final url = Uri.parse('${await Constants.getBaseUrl()}/boxsize?outerPackage_name=$query');
 
   try {
     final response = await http.get(
@@ -354,12 +384,10 @@ Future<Map<String, dynamic>> fetchBoxSizeFromApi(String query, int page) async {
   }
 }
 
-Future<Map<String, dynamic>> fetchParentSkusFromApi(
-    String query, int page) async {
+Future<Map<String, dynamic>> fetchParentSkusFromApi(String query, int page) async {
   final prefs = await SharedPreferences.getInstance();
   final token = prefs.getString('authToken') ?? '';
-  final url =
-      Uri.parse('${await Constants.getBaseUrl()}/products/fetch-products/$query');
+  final url = Uri.parse('${await Constants.getBaseUrl()}/products/fetch-products/$query');
 
   try {
     final response = await http.get(

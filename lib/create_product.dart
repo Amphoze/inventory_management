@@ -68,12 +68,17 @@ class _CreateProductState extends State<CreateProduct> {
 
   String? selectedItemName;
   String? selectedBrandId;
-  String? selectedCategory;
+  String? selectedBrandName;
+  String? selectedCategoryId;
+  String? selectedCategoryName;
   String? selectedLabelSku;
+  String? selectedLabelId;
   String? selectedBoxName;
+  String? selectedBoxId;
   String? selectedGrade;
   String? selectedParentSku;
   String? selectedSubCategoryName;
+  String? selectedSubCategoryId;
 
   @override
   void dispose() {
@@ -148,13 +153,18 @@ class _CreateProductState extends State<CreateProduct> {
       _parentSkuController.clear();
 
       selectedBrandId = null;
-      selectedCategory = null;
+      selectedBrandName = null;
+      selectedCategoryId = null;
+      selectedCategoryName = null;
       selectedLabelSku = null;
+      selectedLabelId = null;
       selectedBoxName = null;
+      selectedBoxId = null;
       selectedParentSku = null;
       selectedGrade = null;
       selectedItemName = null;
       selectedSubCategoryName = null;
+      selectedSubCategoryId = null;
 
       activeStatus = false;
 
@@ -162,7 +172,7 @@ class _CreateProductState extends State<CreateProduct> {
     });
   }
 
-  ProductProvider? productProvider;
+  late ProductProvider productProvider;
   int selectedIndexOfBrand = 0;
   int selectedIndexOfCategory = 0;
   int selectedIndexOfLabel = 0;
@@ -171,14 +181,17 @@ class _CreateProductState extends State<CreateProduct> {
   bool activeStatus = false;
   @override
   void initState() {
+    productProvider = Provider.of<ProductProvider>(context, listen: false);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      getData();
+    });
     super.initState();
-    getData();
   }
 
   void getData() async {
     try {
       productProvider = Provider.of<ProductProvider>(context, listen: false);
-      await productProvider!.getCategories();
+      await productProvider.getCategories();
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(backgroundColor: Colors.red, content: Text("some error ${e.toString()}")));
       productProvider!.update();
@@ -461,8 +474,9 @@ class _CreateProductState extends State<CreateProduct> {
       var res = await ProductPageApi().createProduct(
         context: context,
         displayName: _productNameController.text.trim(),
-        parentSku:
-            productProvider!.selectedProductCategory == 'Create Simple Product' ? _skuController.text.trim().replaceAll(RegExp(r'\s+'), '') : selectedParentSku?.replaceAll(RegExp(r'\s+'), '') ?? '',
+        parentSku: productProvider.selectedProductCategory == 'Create Simple Product'
+            ? _skuController.text.trim().replaceAll(RegExp(r'\s+'), '')
+            : selectedParentSku?.replaceAll(RegExp(r'\s+'), '') ?? '',
         sku: _skuController.text.trim().replaceAll(RegExp(r'\s+'), ''),
         ean: _eanUpcController.text.trim(),
         brand_id: selectedBrandId ?? '',
@@ -479,22 +493,15 @@ class _CreateProductState extends State<CreateProduct> {
         mrp: _mrpController.text.trim(),
         cost: _costController.text.trim(),
         active: productProvider!.activeStatus,
-        labelSku: selectedLabelSku ?? '',
+        labelSku: selectedLabelId ?? '',
         outerPackage_sku: selectedBoxName ?? '',
-        categoryName: selectedCategory ?? '',
+        category: selectedCategoryId ?? '',
+        sub_category: selectedSubCategoryId ?? '',
         grade: selectedGrade ?? 'A',
         shopifyImage: _shopifyController.text.trim(),
         variant_name: _variantNameController.text.trim(),
         itemQty: _itemQtyController.text.trim() ?? '',
       );
-
-      log('''
-      Sending to API:
-      Brand ID: $selectedBrandId
-      Category: $selectedCategory
-      Label SKU: $selectedLabelSku
-      Box Name: $selectedBoxName
-      ''');
 
       final responseData = jsonDecode(res.body);
 
@@ -519,7 +526,7 @@ class _CreateProductState extends State<CreateProduct> {
   }
 
   bool _validateDropdowns() {
-    if (selectedCategory == null) {
+    if (selectedCategoryId == null) {
       _scrollToField('Category');
       return false;
     }
@@ -583,11 +590,11 @@ class _CreateProductState extends State<CreateProduct> {
                       fetchItems: fetchParentSkusFromApi,
                       dropdownWidth: 550,
                       isParentSku: true,
-                      onItemSelected: (id) {
+                      onItemSelected: (data) {
                         setState(() {
-                          selectedParentSku = id;
+                          selectedParentSku = data['value'];
                         });
-                        log('Selected Parent SKU: $id');
+                        // log('Selected Parent SKU: $id');
                       },
                     ),
                   ),
@@ -633,11 +640,12 @@ class _CreateProductState extends State<CreateProduct> {
                     fetchItems: fetchBrandsFromApi,
                     dropdownWidth: 550,
                     isBrand: true,
-                    onItemSelected: (id) {
+                    onItemSelected: (data) {
                       setState(() {
-                        selectedBrandId = id;
+                        selectedBrandId = data['id'];
+                        selectedBrandName = data['value'];
                       });
-                      debugPrint('Selected Brand ID: $id');
+                      // debugPrint('Selected Brand ID: $id');
                     },
                   ),
                 ),
@@ -653,11 +661,12 @@ class _CreateProductState extends State<CreateProduct> {
                         hintText: 'Search Category...',
                         fetchItems: fetchCategoryFromApi,
                         dropdownWidth: 550,
-                        onItemSelected: (id) {
+                        onItemSelected: (data) {
                           setState(() {
-                            selectedCategory = id;
+                            selectedCategoryId = data['id'];
+                            selectedCategoryName = data['value'];
                           });
-                          log('Selected Category ID: $id');
+                          // log('Selected Category ID: $id');
                         },
                       ),
                     ),
@@ -673,6 +682,7 @@ class _CreateProductState extends State<CreateProduct> {
                     if (subCategory != null) {
                       setState(() {
                         selectedSubCategoryName = subCategory.name;
+                        selectedSubCategoryId = subCategory.id;
                       });
                       print('Selected: ${subCategory.name}, ID: ${subCategory.id}, Category: ${subCategory.category}');
                     }
@@ -700,11 +710,12 @@ class _CreateProductState extends State<CreateProduct> {
                     isLabel: true,
                     fetchItems: fetchLabelFromApi,
                     dropdownWidth: 550,
-                    onItemSelected: (id) {
+                    onItemSelected: (data) {
                       setState(() {
-                        selectedLabelSku = id;
+                        selectedLabelId = data['id'];
+                        selectedLabelSku = data['value'];
                       });
-                      log('Selected Label ID: $id');
+                      // log('Selected Label ID: $id');
                     },
                   ),
                 ),
@@ -840,12 +851,12 @@ class _CreateProductState extends State<CreateProduct> {
                     fetchItems: fetchBoxSizeFromApi,
                     dropdownWidth: 550,
                     isBoxSize: true,
-                    onItemSelected: (id) {
-                      Logger().e(id);
+                    onItemSelected: (data) {
+                      Logger().e(data);
                       setState(() {
-                        selectedBoxName = id;
+                        selectedBoxName = data['value'];
                       });
-                      log('Selected Box Size ID: $id');
+                      // log('Selected Box Size ID: $id');
                     },
                   ),
                 ),
