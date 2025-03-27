@@ -107,7 +107,7 @@ class _AllOrdersPageState extends State<AllOrdersPage> with SingleTickerProvider
               Consumer<AllOrdersProvider>(
                 builder: (context, provider, _) {
 
-                  int selectedCount = provider.ordersBooked.where((order) => order.isSelected).length;
+                  int selectedCount = provider.selectedItems.keys.where((orderId) => provider.selectedItems[orderId] ?? false).toList().length;
 
                   return SizedBox(
                     width: 140,
@@ -115,9 +115,9 @@ class _AllOrdersPageState extends State<AllOrdersPage> with SingleTickerProvider
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Checkbox(
-                          value: provider.selectAll,
+                          value: provider.isAllSelected(),
                           onChanged: (value) {
-                            provider.toggleSelectAll(value!);
+                            provider.toggleSelectAll();
                           },
                         ),
                         Text("Select All ($selectedCount)"),
@@ -151,7 +151,7 @@ class _AllOrdersPageState extends State<AllOrdersPage> with SingleTickerProvider
                   ),
                 )
                     :
-                provider.ordersBooked.isEmpty
+                provider.orders.isEmpty
                     ?
                 const Center(
                   child: Text(
@@ -165,10 +165,10 @@ class _AllOrdersPageState extends State<AllOrdersPage> with SingleTickerProvider
                 )
                     :
                 ListView.builder(
-                  itemCount: provider.ordersBooked.length,
+                  itemCount: provider.orders.length,
                   itemBuilder: (context, index) {
 
-                    final order = provider.ordersBooked[index];
+                    final order = provider.orders[index];
 
                     String orderStatus = (order.orderStatusMap.isNotEmpty)
                         ? order.orderStatusMap.last.status
@@ -191,22 +191,20 @@ class _AllOrdersPageState extends State<AllOrdersPage> with SingleTickerProvider
                                 margin: EdgeInsets.zero,
                                 toShowBy: true,
                                 toShowOrderDetails: true,
-                                checkboxWidget:  SizedBox(
-                                  width: 30,
-                                  height: 30,
-                                  child: Transform.scale(
-                                    scale: 0.9,
-                                    child: Checkbox(
-                                      value: order.isSelected,
-                                      onChanged: (value) {
-                                        allOrdersProvider.handleRowCheckboxChangeBooked(
-                                          order.orderId,
-                                          value!,
-                                        );
-                                      },
-                                    ),
-                                  ),
-                                ),
+                                checkboxWidget: Consumer<AllOrdersProvider>(
+                                  builder: (context, provider, _) {
+                                    return SizedBox(
+                                      height: 30,
+                                      width: 30,
+                                      child: Checkbox(
+                                        value: provider.selectedItems[order.orderId] ?? false,
+                                        onChanged: (value) {
+                                          provider.toggleSelectItems(order.orderId);
+                                        },
+                                      ),
+                                    );
+                                  }
+                                )
                               ),
                             ),
 
@@ -406,90 +404,88 @@ class _AllOrdersPageState extends State<AllOrdersPage> with SingleTickerProvider
   }
 
   Widget _buildConfirmButtons() {
-    final allOrdersProvider = Provider.of<AllOrdersProvider>(context, listen: false);
-
     return Align(
       alignment: Alignment.topRight,
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.end,
-          children: [
-            Column(
+        child: Consumer<AllOrdersProvider>(
+          builder: (context, provider, _) {
+            return Row(
+              mainAxisAlignment: MainAxisAlignment.end,
               children: [
-                Text(
-                  _selectedDate,
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: _selectedDate == 'Select Date' ? Colors.grey : AppColors.primaryBlue,
-                  ),
-                ),
-                IconButton(
-                  tooltip: 'Filter by date',
-                  onPressed: () async {
-                    picked = await showDatePicker(
-                      context: context,
-                      initialDate: DateTime.now(),
-                      firstDate: DateTime(2020),
-                      lastDate: DateTime.now(),
-                      builder: (context, child) {
-                        return Theme(
-                          data: Theme.of(context).copyWith(
-                            colorScheme: const ColorScheme.light(
-                              primary: AppColors.primaryBlue,
-                              onPrimary: Colors.white,
-                              surface: Colors.white,
-                              onSurface: Colors.black,
-                            ),
-                          ),
-                          child: child!,
-                        );
-                      },
-                    );
-
-                    if (picked != null) {
-                      String formattedDate = DateFormat('yyyy-MM-dd').format(picked!);
-                      setState(() {
-                        _selectedDate = formattedDate;
-                      });
-
-                      allOrdersProvider.fetchAllOrders(
-                          page: allOrdersProvider.currentPage,
-                          date: picked,
-                          status: statuses.firstWhere((map) => map.containsKey(selectedStatus), orElse: () => {})[selectedStatus]!,
-                          marketplace: selectedCourier
-                      );
-                    }
-                  },
-                  icon: const Icon(Icons.date_range),
-                ),
-                if (_selectedDate != 'Select Date')
-                  Tooltip(
-                    message: 'Clear selected Date',
-                    child: InkWell(
-                      onTap: () async {
-                        setState(() {
-                          _selectedDate = 'Select Date';
-                          picked = null;
-                        });
-                        allOrdersProvider.fetchAllOrders();
-                      },
-                      child: const Icon(
-                        Icons.clear,
-                        size: 12,
-                        color: AppColors.primaryBlue,
+                Column(
+                  children: [
+                    Text(
+                      _selectedDate,
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: _selectedDate == 'Select Date' ? Colors.grey : AppColors.primaryBlue,
                       ),
                     ),
-                  ),
-              ],
-            ),
-            const SizedBox(width: 16),
-            Column(
-              children: [
-                Text(selectedStatus),
-                Consumer<AllOrdersProvider>(
-                  builder: (context, provider, child) {
-                    return PopupMenuButton<String>(
+                    IconButton(
+                      tooltip: 'Filter by date',
+                      onPressed: () async {
+                        picked = await showDatePicker(
+                          context: context,
+                          initialDate: DateTime.now(),
+                          firstDate: DateTime(2020),
+                          lastDate: DateTime.now(),
+                          builder: (context, child) {
+                            return Theme(
+                              data: Theme.of(context).copyWith(
+                                colorScheme: const ColorScheme.light(
+                                  primary: AppColors.primaryBlue,
+                                  onPrimary: Colors.white,
+                                  surface: Colors.white,
+                                  onSurface: Colors.black,
+                                ),
+                              ),
+                              child: child!,
+                            );
+                          },
+                        );
+
+                        if (picked != null) {
+                          String formattedDate = DateFormat('yyyy-MM-dd').format(picked!);
+                          setState(() {
+                            _selectedDate = formattedDate;
+                          });
+
+                          provider.fetchAllOrders(
+                              page: provider.currentPage,
+                              date: picked,
+                              status: statuses.firstWhere((map) => map.containsKey(selectedStatus), orElse: () => {})[selectedStatus]!,
+                              marketplace: selectedCourier
+                          );
+                        }
+                      },
+                      icon: const Icon(Icons.date_range),
+                    ),
+                    if (_selectedDate != 'Select Date')
+                      Tooltip(
+                        message: 'Clear selected Date',
+                        child: InkWell(
+                          onTap: () async {
+                            setState(() {
+                              _selectedDate = 'Select Date';
+                              picked = null;
+                            });
+                            provider.fetchAllOrders();
+                          },
+                          child: const Icon(
+                            Icons.clear,
+                            size: 12,
+                            color: AppColors.primaryBlue,
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+                const SizedBox(width: 16),
+                Column(
+                  children: [
+                    Text(selectedStatus),
+                    PopupMenuButton<String>(
                       tooltip: 'Filter by Status',
                       initialValue: selectedStatus,
                       onSelected: (String value) {
@@ -498,16 +494,16 @@ class _AllOrdersPageState extends State<AllOrdersPage> with SingleTickerProvider
                         });
                         final status = statuses.firstWhere((map) => map.containsKey(value), orElse: () => {})[value]!;
                         Logger().e('status is: $status');
-                        allOrdersProvider.fetchAllOrders(
-                            page: allOrdersProvider.currentPage, date: picked, status: status, marketplace: selectedCourier);
+                        provider.fetchAllOrders(
+                            page: provider.currentPage, date: picked, status: status, marketplace: selectedCourier);
                       },
                       itemBuilder: (BuildContext context) {
                         List<String> temp = statuses.map((item) => item.keys.first).toList();
                         return <PopupMenuEntry<String>>[
                           ...temp.map((status) => PopupMenuItem<String>(
-                                value: status.toString(),
-                                child: Text(status.toString()),
-                              )),
+                            value: status.toString(),
+                            child: Text(status.toString()),
+                          )),
                           // const PopupMenuItem<String>(
                           //   value: 'All',
                           //   child: Text('All'),
@@ -521,157 +517,160 @@ class _AllOrdersPageState extends State<AllOrdersPage> with SingleTickerProvider
                         ),
                         icon: const Icon(Icons.hourglass_empty, size: 30),
                       ),
-                    );
-                  },
+                    )
+                  ],
                 ),
-              ],
-            ),
-            const SizedBox(width: 16),
-            Column(
-              children: [
-                Text(
-                  selectedCourier,
-                ),
-                Consumer<MarketplaceProvider>(
-                  builder: (context, marketPro, child) {
-                    return PopupMenuButton<String>(
-                      tooltip: 'Filter by Marketplace',
-                      onSelected: (String value) {
-                        final status = statuses.firstWhere((map) => map.containsKey(selectedStatus), orElse: () => {})[selectedStatus]!;
-                        log('marketplace value: $value');
-                        log('date value: $picked');
-                        log('status value: $status');
-                        setState(() {
-                          selectedCourier = value;
-                        });
-                        allOrdersProvider.fetchAllOrders(
-                            page: allOrdersProvider.currentPage, date: picked, status: status, marketplace: value);
-                      },
-                      itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
-                        ...marketPro.marketplaces.map((marketplace) => PopupMenuItem<String>(
+                const SizedBox(width: 16),
+                Column(
+                  children: [
+                    Text(
+                      selectedCourier,
+                    ),
+                    Consumer<MarketplaceProvider>(
+                      builder: (context, marketPro, child) {
+                        return PopupMenuButton<String>(
+                          tooltip: 'Filter by Marketplace',
+                          onSelected: (String value) {
+                            final status = statuses.firstWhere((map) => map.containsKey(selectedStatus), orElse: () => {})[selectedStatus]!;
+                            log('marketplace value: $value');
+                            log('date value: $picked');
+                            log('status value: $status');
+                            setState(() {
+                              selectedCourier = value;
+                            });
+                            provider.fetchAllOrders(
+                                page: provider.currentPage, date: picked, status: status, marketplace: value);
+                          },
+                          itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
+                            ...marketPro.marketplaces.map((marketplace) => PopupMenuItem<String>(
                               value: marketplace.name,
                               child: Text(marketplace.name),
                             )), // Fetched marketplaces
-                        const PopupMenuItem<String>(
-                          value: 'All', // Hardcoded marketplace
-                          child: Text('All'),
+                            const PopupMenuItem<String>(
+                              value: 'All', // Hardcoded marketplace
+                              child: Text('All'),
+                            ),
+                          ],
+                          child: const IconButton(
+                            onPressed: null,
+                            icon: Icon(
+                              Icons.filter_alt_outlined,
+                              size: 30,
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ],
+                ),
+                const SizedBox(width: 16),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.cardsred,
+                  ),
+                  onPressed: provider.isCancelling
+                      ? null
+                      : () async {
+
+                    final provider = Provider.of<AllOrdersProvider>(context, listen: false);
+
+                    // List<String> selectedOrderIds = provider.orders
+                    //     .asMap()
+                    //     .entries
+                    //     .where((entry) {
+                    //   log('Entry Key is ${entry.key}');
+                    //   log('Entry Value is ${entry.value}');
+                    //   return provider.selectedProducts[entry.key];
+                    // })
+                    //     .map((entry) => entry.value.orderId)
+                    //     .toList();
+
+                    List<String> selectedOrderIds = provider.selectedItems.keys.where((orderId) => provider.selectedItems[orderId] ?? false).toList();
+
+                    if (selectedOrderIds.isEmpty) {
+                      ScaffoldMessenger.of(context).removeCurrentSnackBar();
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('No orders selected'),
+                          backgroundColor: AppColors.cardsred,
                         ),
-                      ],
-                      child: const IconButton(
-                        onPressed: null,
-                        icon: Icon(
-                          Icons.filter_alt_outlined,
-                          size: 30,
+                      );
+                    } else {
+                      provider.setCancelStatus(true);
+
+                      String resultMessage = await provider.cancelOrders(context, selectedOrderIds);
+
+                      provider.setCancelStatus(false);
+
+                      Color snackBarColor;
+                      if (resultMessage.contains('success')) {
+                        snackBarColor = AppColors.green;
+                      } else if (resultMessage.contains('error') || resultMessage.contains('failed')) {
+                        snackBarColor = AppColors.cardsred;
+                      } else {
+                        snackBarColor = AppColors.orange;
+                      }
+
+                      ScaffoldMessenger.of(context).removeCurrentSnackBar();
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(resultMessage),
+                          backgroundColor: snackBarColor,
                         ),
-                      ),
-                    );
+                      );
+                    }
                   },
+                  child: provider.isCancelling
+                      ? const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(color: Colors.white),
+                  )
+                      : const Text(
+                    'Cancel Orders',
+                    style: TextStyle(color: Colors.white),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.orange.shade300,
+                  ),
+                  onPressed: () {
+                    setState(() {
+                      selectedCourier = 'All';
+                      _selectedDate = 'Select Date';
+                      selectedStatus = 'All';
+                      picked = null;
+                    });
+                    _refreshOrders();
+                  },
+                  child: const Text('Reset Filters'),
+                ),
+                const SizedBox(width: 8),
+                IconButton(
+                  onPressed: provider.isRefreshingOrders
+                      ? null
+                      : () async {
+
+                    final status = statuses.firstWhere((map) => map.containsKey(selectedStatus), orElse: () => {})[selectedStatus]!;
+
+                    provider.fetchAllOrders(page: provider.currentPage, date: picked, status: status, marketplace: selectedCourier);
+                  },
+                  icon: provider.isRefreshingOrders
+                      ? const SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(
+                      color: Colors.white,
+                      strokeWidth: 2,
+                    ),
+                  )
+                      : const Icon(Icons.refresh),
                 ),
               ],
-            ),
-            const SizedBox(width: 16),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.cardsred,
-              ),
-              onPressed: allOrdersProvider.isCancel
-                  ? null
-                  : () async {
-                      log("B2C");
-                      final provider = Provider.of<AllOrdersProvider>(context, listen: false);
-
-                      List<String> selectedOrderIds = provider.ordersBooked
-                          .asMap()
-                          .entries
-                          .where((entry) => provider.selectedProducts[entry.key])
-                          .map((entry) => entry.value.orderId)
-                          .toList();
-
-                      if (selectedOrderIds.isEmpty) {
-                        ScaffoldMessenger.of(context).removeCurrentSnackBar();
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('No orders selected'),
-                            backgroundColor: AppColors.cardsred,
-                          ),
-                        );
-                      } else {
-                        provider.setCancelStatus(true);
-
-                        String resultMessage = await provider.cancelOrders(context, selectedOrderIds);
-
-                        provider.setCancelStatus(false);
-
-                        Color snackBarColor;
-                        if (resultMessage.contains('success')) {
-                          snackBarColor = AppColors.green;
-                        } else if (resultMessage.contains('error') || resultMessage.contains('failed')) {
-                          snackBarColor = AppColors.cardsred;
-                        } else {
-                          snackBarColor = AppColors.orange;
-                        }
-
-                        ScaffoldMessenger.of(context).removeCurrentSnackBar();
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(resultMessage),
-                            backgroundColor: snackBarColor,
-                          ),
-                        );
-                      }
-                    },
-              child: allOrdersProvider.isCancel
-                  ? const SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(color: Colors.white),
-                    )
-                  : const Text(
-                      'Cancel Orders',
-                      style: TextStyle(color: Colors.white),
-                    ),
-            ),
-            const SizedBox(width: 8),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.orange.shade300,
-              ),
-              onPressed: () {
-                setState(() {
-                  selectedCourier = 'All';
-                  _selectedDate = 'Select Date';
-                  selectedStatus = 'All';
-                  picked = null;
-                });
-                _refreshOrders();
-              },
-              child: const Text('Reset Filters'),
-            ),
-            const SizedBox(width: 8),
-            IconButton(
-              onPressed: allOrdersProvider.isRefreshingOrders
-                  ? null
-                  : () async {
-                      log('refresh selectedCourier: $selectedCourier');
-                      log('refresh _selectedDate: $_selectedDate');
-                      log('refresh selectedStatus: $selectedStatus');
-                      log('refresh picked: $picked');
-                      final status = statuses.firstWhere((map) => map.containsKey(selectedStatus), orElse: () => {})[selectedStatus]!;
-
-                      allOrdersProvider.fetchAllOrders(page: allOrdersProvider.currentPage, date: picked, status: status, marketplace: selectedCourier);
-              },
-              icon: allOrdersProvider.isRefreshingOrders
-                  ? const SizedBox(
-                      width: 16,
-                      height: 16,
-                      child: CircularProgressIndicator(
-                        color: Colors.white,
-                        strokeWidth: 2,
-                      ),
-                    )
-                  : const Icon(Icons.refresh),
-            ),
-          ],
+            );
+          },
         ),
       ),
     );

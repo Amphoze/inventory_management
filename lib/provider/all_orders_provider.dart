@@ -12,36 +12,26 @@ import 'package:shared_preferences/shared_preferences.dart';
 class AllOrdersProvider with ChangeNotifier {
   final TextEditingController searchController = TextEditingController();
   bool _isLoading = false;
-  bool _selectAll = false;
-  final List<bool> _selectedProducts = [];
   int selectedItemsCount = 0;
   List<Order> _orders = [];
   int _currentPage = 1;
   int _totalPages = 1;
   final PageController _pageController = PageController();
   final TextEditingController _textEditingController = TextEditingController();
-  Timer? _debounce;
   bool isUpdatingOrder = false;
   bool isRefreshingOrders = false;
-  bool isCancel = false;
+  bool isCancelling = false;
   List<Map<String, String>> statuses = [];
-
-  bool get selectAll => _selectAll;
-  List<bool> get selectedProducts => _selectedProducts;
-
   bool get isLoading => _isLoading;
   int get currentPage => _currentPage;
   int get totalPages => _totalPages;
   PageController get pageController => _pageController;
   TextEditingController get textEditingController => _textEditingController;
 
-  int get selectedCount => _selectedProducts.where((isSelected) => isSelected).length;
-
-  List<bool> selectedItems = List.generate(40, (index) => false);
-  List<Order> get ordersBooked => _orders;
+  List<Order> get orders => _orders;
 
   void setCancelStatus(bool status) {
-    isCancel = status;
+    isCancelling = status;
     notifyListeners();
   }
 
@@ -63,15 +53,19 @@ class AllOrdersProvider with ChangeNotifier {
       'orderIds': orderIds,
     });
 
+    final url = Uri.parse(Uri.encodeFull(cancelOrderUrl));
+
+    log('Cancelling Orders with URL :- $url');
+
     try {
+
       final response = await http.post(
-        Uri.parse(Uri.encodeFull(cancelOrderUrl)),
+        url,
         headers: headers,
         body: body,
       );
 
-      print('Response status: ${response.statusCode}');
-      //print('Response body: ${response.body}');
+      log("Cancelling Response status: ${response.body}");
 
       final responseData = json.decode(response.body);
 
@@ -92,8 +86,6 @@ class AllOrdersProvider with ChangeNotifier {
       return 'An error occurred: $error';
     }
   }
-
-  ///////////////////////////////////////////////////////////////////////////////
 
   void setRefreshingOrders(bool value) {
     isRefreshingOrders = value;
@@ -233,8 +225,6 @@ class AllOrdersProvider with ChangeNotifier {
       setRefreshingOrders(true);
       notifyListeners();
 
-      clearAllSelections();
-
       final uri = Uri.parse(Uri.encodeFull(url));
 
       final response = await http.get(
@@ -371,33 +361,6 @@ class AllOrdersProvider with ChangeNotifier {
     }
   }
 
-  void handleRowCheckboxChangeBooked(String? orderId, bool isSelected) {
-    int index;
-    index = ordersBooked.indexWhere((order) => order.orderId == orderId);
-    if (index != -1) {
-      selectedItems[index] = isSelected;
-      ordersBooked[index].isSelected = isSelected;
-    }
-
-    _selectAll = selectedProducts.every((item) => item);
-    notifyListeners();
-  }
-
-  void toggleSelectAll(bool? value) {
-    _selectAll = value!;
-    _selectedProducts.fillRange(0, _selectedProducts.length, _selectAll);
-    for (int i = 0; i < _orders.length; i++) {
-      _orders[i].isSelected = _selectAll;
-    }
-    notifyListeners();
-  }
-
-  void clearAllSelections() {
-    selectedItems.fillRange(0, selectedItems.length, false);
-    _selectAll = false;
-    notifyListeners();
-  }
-
   void goToPage(int page, {DateTime? date, String? status, String? marketplace}) {
     if (page < 1 || page > totalPages) return;
     _currentPage = page;
@@ -444,4 +407,41 @@ class AllOrdersProvider with ChangeNotifier {
       notifyListeners();
     }
   }
+
+  final Map<String, bool> _selectedItems = {};
+  Map<String, bool> get selectedItems => _selectedItems;
+
+  void toggleSelectItems(String orderId) {
+    log('Order Id is $orderId');
+     bool value = _selectedItems[orderId] ?? false;
+    _selectedItems[orderId] = !value;
+    notifyListeners();
+    log('Selected Items :- $_selectedItems');
+  }
+
+  bool isAllSelected() {
+    for (var order in orders) {
+      bool value = selectedItems[order.orderId] ?? false;
+      if (!value) return false;
+    }
+    return true;
+  }
+
+  void toggleSelectAll() {
+
+    bool status = false;
+
+    if (isAllSelected()) {
+      status = false;
+    } else {
+      status = true;
+    }
+
+    for (var order in orders) {
+      _selectedItems[order.orderId] = status;
+    }
+
+    notifyListeners();
+  }
+
 }
