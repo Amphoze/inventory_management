@@ -14,6 +14,8 @@ class OuterboxProvider with ChangeNotifier {
   bool _isLoading = false;
   String? _errorMessage;
   bool _isFormVisible = false;
+  String selectedSearchBy = 'outerPackage_name';
+  // outerPackage_name, occupied_weight, outerPackage_sku, outerPackage_type
 
   // Getters
   bool get isFormVisible => _isFormVisible;
@@ -22,6 +24,11 @@ class OuterboxProvider with ChangeNotifier {
   int get currentPage => _currentPage;
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
+
+  void setSelectedSearchBy(String value) {
+    selectedSearchBy = value;
+    notifyListeners();
+  }
 
   // Toggle loading state
   void toggleLoading() {
@@ -135,7 +142,7 @@ class OuterboxProvider with ChangeNotifier {
     String baseUrl = await Constants.getBaseUrl();
     log(query);
 
-    final url = Uri.parse('$baseUrl/boxsize?outerPackage_name=$query');
+    final url = Uri.parse('$baseUrl/boxsize?$selectedSearchBy=$query');
 
     log('url: $url');
 
@@ -168,7 +175,7 @@ class OuterboxProvider with ChangeNotifier {
             };
           }).toList();
 
-          log('fetchedBoxsizes: $fetchedBoxsizes');
+          // log('fetchedBoxsizes: $fetchedBoxsizes');
 
           return {'success': true, 'data': fetchedBoxsizes};
         } else {

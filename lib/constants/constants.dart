@@ -8,7 +8,7 @@ class Constants {
   static Future<String> getBaseUrl() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     final String firebaseUrl = prefs.getString('value') ?? 'https://inventory-api.ko-tech.in';
-    log('baseUrl: $firebaseUrl');
+    // log('baseUrl: $firebaseUrl');
 
     String? env = dotenv.env['STOCKSHIP_ENV'];
 
