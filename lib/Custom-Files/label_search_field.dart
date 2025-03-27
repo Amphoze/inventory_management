@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_typeahead/flutter_typeahead.dart';
 import 'dart:convert';
@@ -10,8 +12,9 @@ import 'colors.dart';
 class LabelSearchableTextField extends StatefulWidget {
   final bool isRequired;
   final TextEditingController? controller;
+  final TextEditingController? nameController;
 
-  const LabelSearchableTextField({super.key, required this.isRequired, this.controller});
+  const LabelSearchableTextField({super.key, required this.isRequired, this.controller, this.nameController});
 
   @override
   _LabelSearchableTextFieldState createState() => _LabelSearchableTextFieldState();
@@ -149,9 +152,17 @@ class _LabelSearchableTextFieldState extends State<LabelSearchableTextField> {
             );
           },
           onSelected: (suggestion) {
+
+            log('Selected data:  ${suggestion}');
+
+
             _typeAheadController.text = suggestion['labelSku'] ?? '';
-            formFieldState.didChange(_typeAheadController.text); // Update form state
+            formFieldState.didChange(_typeAheadController.text);
             debugPrint('Selected: ${suggestion['labelSku']}');
+
+            if (widget.nameController != null) {
+              widget.nameController!.text = suggestion['name'] ?? '';
+            }
           },
           loadingBuilder: (context) => const Padding(
             padding: EdgeInsets.all(8.0),
@@ -201,7 +212,6 @@ Future<Map<String, dynamic>> searchByLabel(String query, {int page = 1}) async {
   String baseUrl = await Constants.getBaseUrl();
   String url;
 
-  // Check if query contains numbers to determine if searching by labelSku
   if (query.contains(RegExp(r'[0-9]'))) {
     url = '$baseUrl/label?page=$page&labelSku=$query';
   } else {
@@ -213,6 +223,8 @@ Future<Map<String, dynamic>> searchByLabel(String query, {int page = 1}) async {
     if (token == null) {
       return {'success': false, 'message': 'Authentication token not found'};
     }
+
+    log('response---> and Url --> $url and $token');
 
     final response = await http.get(
       Uri.parse(url),
