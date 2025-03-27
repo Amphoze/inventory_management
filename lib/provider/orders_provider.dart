@@ -238,14 +238,11 @@ class OrdersProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> updateOrder(String id, Map<String, dynamic> updatedData) async {
+  Future<Map<String, dynamic>> updateOrder(String id, Map<String, dynamic> updatedData) async {
     final token = await _getToken();
 
     if (token == null || token.isEmpty) {
-      setReadyLoading(true);
-      setFailedLoading(true);
-
-      return;
+      return {"success": false, "message": "No auth token found"};
     }
 
     final url = '${await Constants.getBaseUrl()}/orders/$id';
@@ -261,13 +258,13 @@ class OrdersProvider with ChangeNotifier {
 
       log("response: ${response.statusCode}");
 
+      final res = jsonDecode(response.body);
+
       if (response.statusCode == 200) {
         Logger().e('Order updated successfully');
 
-        await fetchFailedOrders();
-        await fetchReadyOrders();
-
         notifyListeners();
+        return {"success": true, "message": res['message']};
       } else if (response.statusCode == 400) {
         final responseBody = json.decode(response.body);
         if (responseBody['message'] == 'orderId and status are required.') {
@@ -275,16 +272,15 @@ class OrdersProvider with ChangeNotifier {
         }
       } else {
         log('Failed to update order: ${response.body}');
-        return;
+        return {"success": false, "message": res['message']};
       }
     } catch (error, s) {
       log('Error updating order: $error \n\n$s');
-      rethrow;
+      return {"success": false, "message": "An error occurred: $error"};
     } finally {
-      setReadyLoading(false);
-      setFailedLoading(false);
+      notifyListeners();
     }
-    notifyListeners();
+    return {};
   }
 
   Future<bool> writeRemark(String id, String msg) async {
@@ -311,8 +307,7 @@ class OrdersProvider with ChangeNotifier {
 
     final body = {
       "messages": {
-        "confirmerMessage":
-        [
+        "confirmerMessage": [
           {
             "message": msg,
             "timestamp": DateTime.now().toIso8601String(),
@@ -656,7 +651,7 @@ class OrdersProvider with ChangeNotifier {
 
     log('Confirming Orders Payload :- $body');
 
-    final url =  Uri.parse(confirmOrderUrl);
+    final url = Uri.parse(confirmOrderUrl);
 
     log('Confirming Order with URL :- $url');
 

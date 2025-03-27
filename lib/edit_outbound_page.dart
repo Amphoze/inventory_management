@@ -568,16 +568,53 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
     return prefs.getString('authToken');
   }
 
-  Future<void> _saveChanges() async {
-    if (double.parse(_codAmountController.text) + double.parse(_prepaidAmountController.text) != double.parse(_totalAmtController.text)) {
-      Utils.showSnackBar(context, "Total amount must be equal to the sum of cod amount and prepaid amount");
+  // Helper function to safely parse a string to double
+  double? _parseDouble(String text) {
+    if (text.trim().isEmpty) return null; // Handle empty input
+    return double.tryParse(text); // Returns null if invalid
+  }
+
+  void _validateAmounts(BuildContext context) {
+    // Parse all amounts safely
+    final codAmount = _parseDouble(_codAmountController.text);
+    final prepaidAmount = _parseDouble(_prepaidAmountController.text);
+    final totalAmount = _parseDouble(_totalAmtController.text);
+    final originalAmount = _parseDouble(_originalAmtController.text);
+
+    // Check if any parsing failed
+    if (codAmount == null || prepaidAmount == null || totalAmount == null || originalAmount == null) {
+      Utils.showSnackBar(context, "Please enter valid numeric amounts");
       return;
     }
 
-    if (double.parse(_totalAmtController.text) > double.parse(_originalAmtController.text)) {
+    // Check if total amount equals cod + prepaid
+    if (codAmount + prepaidAmount != totalAmount) {
+      Utils.showSnackBar(context, "Total amount must be equal to the sum of COD amount and prepaid amount");
+      return;
+    }
+
+    // Check if total amount exceeds original amount
+    if (totalAmount > originalAmount) {
       Utils.showSnackBar(context, "Total amount cannot be greater than original amount");
       return;
     }
+
+    // If all validations pass, proceed with your logic
+    // e.g., save data or navigate
+  }
+
+  Future<void> _saveChanges() async {
+    // if (double.parse(_codAmountController.text) + double.parse(_prepaidAmountController.text) != double.parse(_totalAmtController.text)) {
+    //   Utils.showSnackBar(context, "Total amount must be equal to the sum of cod amount and prepaid amount");
+    //   return;
+    // }
+    //
+    // if (double.parse(_totalAmtController.text) > double.parse(_originalAmtController.text)) {
+    //   Utils.showSnackBar(context, "Total amount cannot be greater than original amount");
+    //   return;
+    // }
+
+    _validateAmounts(context);
 
     if ((_billingStateController.text.trim().length < 3) || (_shippingStateController.text.trim().length < 3)) {
       Utils.showSnackBar(context, 'State name must be at least 3 characters long');
@@ -738,9 +775,9 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
           const SnackBar(content: Text('Order updated successfully!')),
         );
 
-        final ordersProvider = Provider.of<OrdersProvider>(context, listen: false);
-        ordersProvider.fetchReadyOrders();
-        ordersProvider.fetchFailedOrders();
+        // final ordersProvider = Provider.of<OrdersProvider>(context, listen: false);
+        // ordersProvider.fetchReadyOrders();
+        // ordersProvider.fetchFailedOrders();
         context.read<AccountsProvider>().fetchOrdersWithStatus2();
         context.read<BookProvider>().fetchPaginatedOrdersB2B(1);
         context.read<BookProvider>().fetchPaginatedOrdersB2C(1);

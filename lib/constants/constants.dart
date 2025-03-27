@@ -19,6 +19,8 @@ class Constants {
 
     // return 'https://stockship-3.onrender.com';
 
+    return 'https://beta.api.stockship.ko-tech.in';
+
     return baseUrl; // firebase url
   }
 }

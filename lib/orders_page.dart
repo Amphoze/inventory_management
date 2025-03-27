@@ -724,7 +724,7 @@ class _OrdersNewPageState extends State<OrdersNewPage> with TickerProviderStateM
                                         ),
                                         Row(
                                           children: [
-                                            if (order.totalWeight > 20 && (remainingItems.isNotEmpty || comboItemGroups.isNotEmpty))
+                                            if (order.totalWeight > 20)
                                               const Chip(
                                                 // color: WidgetStatePropertyAll(Colors.red),
                                                 label: Text(
@@ -855,7 +855,8 @@ class _OrdersNewPageState extends State<OrdersNewPage> with TickerProviderStateM
                                               },
                                               icon: const Icon(Icons.edit_location_alt_outlined),
                                             ),
-                                            if (order.totalWeight > 20 && (remainingItems.isNotEmpty || comboItemGroups.isNotEmpty)) ...[
+                                            // if (order.totalWeight > 20 && (remainingItems.isNotEmpty || comboItemGroups.isNotEmpty))
+                                            ...[
                                               const SizedBox(width: 8),
                                               IconButton(
                                                 tooltip: 'Split Order',
