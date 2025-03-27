@@ -73,6 +73,8 @@ import 'Custom-Files/colors.dart';
 import 'Custom-Files/switch_warehouse.dart';
 import 'check_orders/check_orders_page.dart';
 
+final globalScaffoldKey = GlobalKey<ScaffoldState>();
+
 class DashboardPage extends StatefulWidget {
   final String warehouseId;
 
@@ -90,7 +92,7 @@ class _DashboardPageState extends State<DashboardPage> {
   // bool isCreateOrderPage = false;
   // String? selectedWarehouse;
 
-  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+  // final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   List<Map<String, String>> statuses = [];
   List<String> temp = [];
 
@@ -238,7 +240,7 @@ class _DashboardPageState extends State<DashboardPage> {
           bool isSmallScreen = constraints.maxWidth < 800;
 
           return Scaffold(
-            key: _scaffoldKey,
+            key: globalScaffoldKey,
             drawer: isSmallScreen
                 ? SizedBox(
                     width: 220,
@@ -275,7 +277,7 @@ class _DashboardPageState extends State<DashboardPage> {
                               IconButton(
                                 icon: const Icon(Icons.menu, color: AppColors.grey),
                                 onPressed: () {
-                                  _scaffoldKey.currentState?.openDrawer();
+                                  Scaffold.of(context).openDrawer();
                                 },
                               ),
                           ],
