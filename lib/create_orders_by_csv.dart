@@ -7,6 +7,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:inventory_management/Api/inventory_api.dart';
+import 'package:inventory_management/Custom-Files/utils.dart';
 import 'package:inventory_management/constants/constants.dart';
 import 'package:logger/logger.dart';
 import 'package:socket_io_client/socket_io_client.dart' as IO;
@@ -35,6 +36,7 @@ class _CreateOrdersByCSVState extends State<CreateOrdersByCSV> {
   String _progressMessage = '';
 
   final ValueNotifier<double> _progressNotifier = ValueNotifier<double>(0);
+
   IO.Socket? _socket;
 
   void _initializeSocket() async {
@@ -54,17 +56,15 @@ class _CreateOrdersByCSVState extends State<CreateOrdersByCSV> {
       );
 
       _socket?.onConnect((_) {
-        debugPrint('Connected to Socket.IO');
-        _showSnackbar('Connected to server', Colors.green);
+        Utils.showSnackBar(context, 'Connected to server', color: Colors.green);
       });
 
       _socket?.off('csv-file-uploading-err');
       _socket?.on('csv-file-uploading-err', (data) {
-        debugPrint('Error Data: $data');
         setState(() {
           _progressMessage = data['message'] ?? 'An error occurred';
         });
-        _showSnackbar(_progressMessage, Colors.red);
+        Utils.showSnackBar(context, _progressMessage, color: Colors.red);
       });
 
       _socket?.off('csv-file-uploading');
@@ -78,7 +78,9 @@ class _CreateOrdersByCSVState extends State<CreateOrdersByCSV> {
 
       _socket?.off('csv-file-uploaded');
       _socket?.once('csv-file-uploaded', (data) {
+
         log('CSV file uploaded: $data');
+
         setState(() {
           _progressMessage = data['message'] ?? 'File uploaded successfully';
           _isCreating = false;
@@ -87,7 +89,8 @@ class _CreateOrdersByCSVState extends State<CreateOrdersByCSV> {
           _isCreateEnabled = false;
           _selectedFile = null;
         });
-        _showSnackbar(_progressMessage, Colors.green);
+
+        Utils.showSnackBar(context, _progressMessage, color: Colors.green);
 
         if (data['downloadLink'] != null) {
           log('Download link: ${data['downloadLink']}');
@@ -97,29 +100,18 @@ class _CreateOrdersByCSVState extends State<CreateOrdersByCSV> {
 
       _socket?.connect();
     } catch (e) {
-      log('Error in _initializeSocket: $e');
-      _showSnackbar('Failed to connect to server', Colors.red);
-    }
-  }
 
-  void _showSnackbar(String message, Color color) {
-    if (context.mounted) {
-      ScaffoldMessenger.of(context).removeCurrentSnackBar();
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(message),
-          backgroundColor: color,
-          duration: const Duration(seconds: 3),
-        ),
-      );
+      log('Error in initialising socket: $e');
+
+      Utils.showSnackBar(context, 'Failed to connect to server', color: Colors.red);
     }
   }
 
   @override
   void initState() {
+    super.initState();
     _initializeSocket();
     _verticalScrollController.addListener(_scrollListener);
-    super.initState();
   }
 
   @override
@@ -178,9 +170,13 @@ class _CreateOrdersByCSVState extends State<CreateOrdersByCSV> {
       FilePickerResult? result = await FilePicker.platform.pickFiles(
         type: FileType.custom,
         allowedExtensions: ['csv'],
+        withData: true,
+        // withReadStream: true,
+        // readSequential: true,
+        allowMultiple: false,
       );
 
-      log('_pickAndReadCSV result: $result');
+      log('_pickAndReadCSV result: ${result?.count}');
 
       if (result != null) {
         final file = result.files.first;
@@ -188,20 +184,19 @@ class _CreateOrdersByCSVState extends State<CreateOrdersByCSV> {
         setState(() {
           _isProcessingFile = true;
           _isPickingFile = false;
+          _selectedFile = file;
         });
 
-        _selectedFile = file;
         await _processCSVInChunks(file.bytes!);
+
       } else {
         setState(() {
           _isPickingFile = false;
         });
       }
-    } catch (e) {
-      log('pick error: $e');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error reading CSV file: $e')),
-      );
+    } catch (e, s) {
+      log('Error picking file:- $e\n$s');
+      Utils.showSnackBar(context, 'Error reading CSV file: $e', color: Colors.red);
       setState(() {
         _isPickingFile = false;
         _isProcessingFile = false;
@@ -212,7 +207,7 @@ class _CreateOrdersByCSVState extends State<CreateOrdersByCSV> {
   Future<void> _processCSVInChunks(List<int> bytes) async {
     log('_processCSVInChunks');
     try {
-      final csvString = String.fromCharCodes(bytes);
+      String csvString = String.fromCharCodes(bytes);
       final rawData = const CsvToListConverter().convert(csvString);
 
       final filteredData = rawData.where((row) {
@@ -226,6 +221,13 @@ class _CreateOrdersByCSVState extends State<CreateOrdersByCSV> {
       setState(() {
         _csvData = filteredData;
         log('_csvData: $_csvData');
+
+        log('Total Length of CSV Data is ${_csvData.length}');
+
+        for (int i=0; i<_csvData.length; i++) {
+          log('${i+1}) ${_csvData[i]}');
+        }
+
         _rowCount = _csvData.isNotEmpty ? _csvData.length - 1 : 0;
         _isCreateEnabled = _rowCount > 0;
         _isProcessingFile = false;
@@ -397,8 +399,9 @@ class _CreateOrdersByCSVState extends State<CreateOrdersByCSV> {
   }
 
   Widget _buildDataTable() {
-    log('_buildDataTable');
+
     if (_csvData.isEmpty) return const SizedBox();
+
     log('_csvData after: $_csvData');
 
     final headers = _csvData.first;
