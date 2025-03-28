@@ -12,6 +12,8 @@ class MarketplacePage extends StatefulWidget {
 }
 
 class _MarketplacePageState extends State<MarketplacePage> {
+  final _searchController = TextEditingController();
+
   @override
   void initState() {
     super.initState();
@@ -27,21 +29,73 @@ class _MarketplacePageState extends State<MarketplacePage> {
     final provider = Provider.of<MarketplaceProvider>(context);
 
     return Scaffold(
+      backgroundColor: Colors.white,
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: provider.isFormVisible
-                  ? AppColors.cardsred
-                  : AppColors.primaryBlue,
-            ),
-            onPressed: () {
-              provider.toggleForm(); // Toggle the form visibility
-            },
-            child: provider.isFormVisible
-                ? const Text('Cancel')
-                : const Text('Create Marketplace'),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            mainAxisSize: MainAxisSize.max,
+            children: [
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: provider.isFormVisible ? AppColors.cardsred : AppColors.primaryBlue,
+                ),
+                onPressed: () {
+                  provider.toggleForm(); // Toggle the form visibility
+                },
+                child: provider.isFormVisible ? const Text('Cancel') : const Text('Create Marketplace'),
+              ),
+              if (!provider.isFormVisible)
+                Container(
+                  width: 200,
+                  height: 35,
+                  decoration: BoxDecoration(
+                    border: Border.all(
+                      color: AppColors.primaryBlue,
+                      width: 1.5,
+                    ),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          controller: _searchController,
+                          decoration: const InputDecoration(
+                            hintText: 'Search Marketplaces',
+                            hintStyle: TextStyle(
+                              color: Color.fromRGBO(117, 117, 117, 1),
+                              fontSize: 16,
+                            ),
+                            border: InputBorder.none,
+                            contentPadding: EdgeInsets.symmetric(vertical: 11, horizontal: 8),
+                          ),
+                          style: const TextStyle(color: AppColors.black),
+                          onSubmitted: (value) {
+                            provider.updateSearchQuery(value);
+                          },
+                          onChanged: (value) {
+                            provider.updateSearchQuery(value);
+                          },
+                        ),
+                      ),
+                      if (_searchController.text.isNotEmpty)
+                        InkWell(
+                          child: Icon(
+                            Icons.close,
+                            size: 20,
+                            color: Colors.grey.shade600,
+                          ),
+                          onTap: () {
+                            _searchController.clear();
+                            provider.updateSearchQuery('');
+                          },
+                        ),
+                    ],
+                  ),
+                ),
+            ],
           ),
           const SizedBox(height: 8),
           if (provider.isFormVisible) ...[
@@ -85,15 +139,13 @@ class _MarketplacePageState extends State<MarketplacePage> {
                             children: [
                               Expanded(
                                 child: TextField(
-                                  controller: TextEditingController(
-                                      text: skuMap.mktpSku),
+                                  controller: TextEditingController(text: skuMap.mktpSku),
                                   decoration: const InputDecoration(
                                     labelText: 'SKU',
                                     border: OutlineInputBorder(),
                                   ),
                                   onChanged: (value) {
-                                    provider.updateSkuMap(
-                                        index, value, skuMap.product);
+                                    provider.updateSkuMap(index, value, skuMap.product);
                                   },
                                 ),
                               ),
@@ -101,16 +153,11 @@ class _MarketplacePageState extends State<MarketplacePage> {
                               Expanded(
                                 child: CustomDropdown(
                                   option: options,
-                                  selectedIndex: skuMap.product != null
-                                      ? options.indexWhere((option) =>
-                                          option['product'] == skuMap.product)
-                                      : 0,
+                                  selectedIndex:
+                                      skuMap.product != null ? options.indexWhere((option) => option['product'] == skuMap.product) : 0,
                                   onSelectedChanged: (selectedIndex) {
-                                    final selectedProduct = options.isNotEmpty
-                                        ? options[selectedIndex]['product']
-                                        : null;
-                                    provider.updateSkuMap(
-                                        index, skuMap.mktpSku, selectedProduct);
+                                    final selectedProduct = options.isNotEmpty ? options[selectedIndex]['product'] : null;
+                                    provider.updateSkuMap(index, skuMap.mktpSku, selectedProduct);
                                   },
                                 ),
                               ),
@@ -129,8 +176,7 @@ class _MarketplacePageState extends State<MarketplacePage> {
                   const SizedBox(height: 8),
                   ElevatedButton(
                     onPressed: () {
-                      provider
-                          .addSkuMapRow(); // Adds a new empty row for SKU Map
+                      provider.addSkuMapRow(); // Adds a new empty row for SKU Map
                     },
                     child: const Text('Add New Row'),
                   ),
@@ -139,16 +185,13 @@ class _MarketplacePageState extends State<MarketplacePage> {
                     onPressed: provider.isSaving
                         ? null // Disable button while saving
                         : () async {
-                            await provider
-                                .saveMarketplace(); // Save marketplace
+                            await provider.saveMarketplace(); // Save marketplace
                           },
                     child: provider.isSaving
                         ? const CircularProgressIndicator(
-                            color: Colors
-                                .purple, // Show progress indicator while saving
+                            color: Colors.purple, // Show progress indicator while saving
                           )
-                        : const Text(
-                            'Save Marketplace'), // Normal text when not saving
+                        : const Text('Save Marketplace'), // Normal text when not saving
                   ),
                 ],
               ),
@@ -177,15 +220,13 @@ class _MarketplacePageState extends State<MarketplacePage> {
                   }
 
                   return ListView.builder(
-                    itemCount: provider.marketplaces.length,
+                    itemCount: provider.filteredMarketplaces.length,
                     itemBuilder: (context, index) {
-                      final marketplace = provider.marketplaces[index];
+                      final marketplace = provider.filteredMarketplaces[index];
 
                       return Card(
-                        margin: const EdgeInsets.symmetric(
-                            vertical: 12, horizontal: 16),
-                        elevation:
-                            6, // Enhanced shadow for better card visibility
+                        margin: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                        elevation: 6, // Enhanced shadow for better card visibility
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(15),
                         ),
@@ -196,8 +237,7 @@ class _MarketplacePageState extends State<MarketplacePage> {
                             children: [
                               // Marketplace title with delete option
                               Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                 children: [
                                   Text(
                                     marketplace.name,
@@ -208,18 +248,15 @@ class _MarketplacePageState extends State<MarketplacePage> {
                                     ),
                                   ),
                                   IconButton(
-                                    icon: const Icon(Icons.delete,
-                                        color: Colors.blueGrey),
+                                    icon: const Icon(Icons.delete, color: Colors.blueGrey),
                                     onPressed: () {
                                       // Confirm deletion dialog
                                       showDialog(
                                         context: context,
                                         builder: (BuildContext context) {
                                           return AlertDialog(
-                                            title: const Text(
-                                                'Delete Marketplace'),
-                                            content: const Text(
-                                                'Are you sure you want to delete this marketplace?'),
+                                            title: const Text('Delete Marketplace'),
+                                            content: const Text('Are you sure you want to delete this marketplace?'),
                                             actions: [
                                               TextButton(
                                                 onPressed: () {
@@ -229,13 +266,10 @@ class _MarketplacePageState extends State<MarketplacePage> {
                                               ),
                                               TextButton(
                                                 onPressed: () {
-                                                  provider.deleteMarketplace(
-                                                      marketplace.id!);
+                                                  provider.deleteMarketplace(marketplace.id!);
                                                   Navigator.of(context).pop();
                                                 },
-                                                child: const Text('Delete',
-                                                    style: TextStyle(
-                                                        color: Colors.red)),
+                                                child: const Text('Delete', style: TextStyle(color: Colors.red)),
                                               ),
                                             ],
                                           );
@@ -256,12 +290,7 @@ class _MarketplacePageState extends State<MarketplacePage> {
                                     final product = skuMap.product;
 
                                     // Fetch the product image if it exists
-                                    final imageUrl =
-                                        (product?.images as List<dynamic>?)
-                                                    ?.isNotEmpty ==
-                                                true
-                                            ? product!.images![0]
-                                            : null;
+                                    final imageUrl = (product?.images as List<dynamic>?)?.isNotEmpty == true ? product!.images![0] : null;
 
                                     return Padding(
                                       padding: const EdgeInsets.only(right: 12.0),
@@ -274,8 +303,7 @@ class _MarketplacePageState extends State<MarketplacePage> {
                                         child: Padding(
                                           padding: const EdgeInsets.all(12.0),
                                           child: Row(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
+                                            crossAxisAlignment: CrossAxisAlignment.start,
                                             children: [
                                               // Display product image or a placeholder icon if no image is found
                                               imageUrl != null
@@ -284,21 +312,14 @@ class _MarketplacePageState extends State<MarketplacePage> {
                                                       width: 80,
                                                       height: 80,
                                                       fit: BoxFit.cover,
-                                                      errorBuilder: (context,
-                                                              error,
-                                                              stackTrace) =>
-                                                          const Icon(Icons.image,
-                                                              size: 80,
-                                                              color: Colors.grey),
+                                                      errorBuilder: (context, error, stackTrace) =>
+                                                          const Icon(Icons.image, size: 80, color: Colors.grey),
                                                     )
-                                                  : const Icon(Icons.image,
-                                                      size: 80,
-                                                      color: Colors.grey),
+                                                  : const Icon(Icons.image, size: 80, color: Colors.grey),
 
                                               const SizedBox(width: 12),
                                               Column(
-                                                crossAxisAlignment:
-                                                    CrossAxisAlignment.start,
+                                                crossAxisAlignment: CrossAxisAlignment.start,
                                                 children: [
                                                   Text(
                                                     'SKU: ${skuMap.mktpSku}',
@@ -313,9 +334,7 @@ class _MarketplacePageState extends State<MarketplacePage> {
                                                     'Product Name: ${product?.displayName ?? 'Unknown'}',
                                                     style: TextStyle(
                                                       fontSize: 16,
-                                                      color: product != null
-                                                          ? Colors.black87
-                                                          : Colors.grey,
+                                                      color: product != null ? Colors.black87 : Colors.grey,
                                                     ),
                                                   ),
                                                   const SizedBox(height: 4),
@@ -323,9 +342,7 @@ class _MarketplacePageState extends State<MarketplacePage> {
                                                     'Product SKU: ${product?.sku ?? 'N/A'}',
                                                     style: TextStyle(
                                                       fontSize: 14,
-                                                      color: product != null
-                                                          ? Colors.black54
-                                                          : Colors.grey,
+                                                      color: product != null ? Colors.black54 : Colors.grey,
                                                     ),
                                                   ),
                                                 ],
@@ -356,8 +373,7 @@ class _MarketplacePageState extends State<MarketplacePage> {
       floatingActionButton: FloatingActionButton(
         onPressed: () {
           // Call the method to fetch marketplaces
-          Provider.of<MarketplaceProvider>(context, listen: false)
-              .fetchMarketplaces();
+          Provider.of<MarketplaceProvider>(context, listen: false).fetchMarketplaces();
         },
         backgroundColor: Colors.blue,
         tooltip: 'Fetch Marketplaces',

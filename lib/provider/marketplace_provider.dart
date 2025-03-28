@@ -11,6 +11,8 @@ class MarketplaceProvider with ChangeNotifier {
   TextEditingController nameController = TextEditingController();
   final List<SkuMap> _skuMaps = [];
   List<Marketplace> _marketplaces = [];
+  List<Marketplace> _filteredMarketplaces = [];
+  String _searchQuery = '';
 
   List<Product> _products = [];
   Product? _selectedProduct;
@@ -19,6 +21,8 @@ class MarketplaceProvider with ChangeNotifier {
   bool isSaving = false;
 
   bool get isFormVisible => _isFormVisible;
+  List<Marketplace> get filteredMarketplaces => _filteredMarketplaces;
+  String get searchQuery => _searchQuery;
   List<Marketplace> get marketplaces => _marketplaces;
   List<SkuMap> get skuMaps => _skuMaps;
 
@@ -35,24 +39,19 @@ class MarketplaceProvider with ChangeNotifier {
     notifyListeners();
 
     try {
-      // Fetch the list of marketplaces
       _marketplaces = await marketplaceApi.getMarketplaces();
-      // log('_marketplaces: ${
-      //   _marketplaces.map((market) => market.toJson()).toList()
-      // }');
 
       for (var marketplace in _marketplaces) {
         for (var skuMap in marketplace.skuMap) {
           try {
             skuMap.product = await comboApi.getProductById(skuMap.productId);
           } catch (e) {
-            // Handle individual product fetch errors
-            //print(skuMap.mktpSku);
-            //print('Error fetching product with ID ${skuMap.productId}: $e');
-            skuMap.product = null; // Or handle as appropriate
+            skuMap.product = null;
           }
         }
       }
+
+      _filteredMarketplaces = _marketplaces;
 
     } catch (e, s) {
       // Handle general errors
@@ -162,6 +161,21 @@ class MarketplaceProvider with ChangeNotifier {
 
   void toggleForm() {
     _isFormVisible = !_isFormVisible;
+    notifyListeners();
+  }
+
+  void updateSearchQuery(String query) {
+    _searchQuery = query;
+    filterMarketplaces();
+    notifyListeners();
+  }
+
+  void filterMarketplaces() {
+    if (_searchQuery.isEmpty) {
+      _filteredMarketplaces = _marketplaces;
+    } else {
+      _filteredMarketplaces = _marketplaces.where((marketplace) => marketplace.name.toLowerCase().contains(_searchQuery.toLowerCase())).toList();
+    }
     notifyListeners();
   }
 

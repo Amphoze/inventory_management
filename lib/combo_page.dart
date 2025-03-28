@@ -1,6 +1,7 @@
 // ignore_for_file: avoid_print
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:inventory_management/Api/combo_api.dart';
 import 'package:inventory_management/Custom-Files/colors.dart';
 import 'package:inventory_management/Custom-Files/loading_indicator.dart';
@@ -52,9 +53,7 @@ class _ComboPageState extends State<ComboPage> {
 
     // Map selected products to IDs
     List<Map<String, String>> selectedProductIds = selectedProducts.map((product) {
-      return {
-        'product': product['sku'] ?? ''
-      };
+      return {'product': product['sku'] ?? ''};
     }).toList();
 
     for (int i = 0; i < selectedProductIds.length; i++) {
@@ -324,7 +323,7 @@ class _ComboPageState extends State<ComboPage> {
                             const SizedBox(height: 16),
                             TextFormField(
                               controller: _nameController,
-                              decoration: const InputDecoration(labelText: 'Name'),
+                              decoration: const InputDecoration(labelText: 'Name', border: OutlineInputBorder()),
                               validator: (value) {
                                 if (value == null || value.isEmpty) {
                                   return 'Please enter Combo Name';
@@ -351,13 +350,15 @@ class _ComboPageState extends State<ComboPage> {
                             const SizedBox(height: 16),
                             Wrap(
                               spacing: 8.0,
+                              runSpacing: 8.0,
+                              // alignment: WrapAlignment.center,
                               children: selectedProducts.map((product) {
                                 return Chip(
                                   label: Text(
                                     '${product['sku']}: ${product['name']}',
-                                    style: const TextStyle(color: Colors.black),
+                                    style: const TextStyle(color: Colors.white),
                                   ),
-                                  backgroundColor: Colors.yellow,
+                                  backgroundColor: AppColors.primaryBlue,
                                   deleteIcon: Container(
                                     decoration: const BoxDecoration(
                                       shape: BoxShape.circle,
@@ -382,51 +383,76 @@ class _ComboPageState extends State<ComboPage> {
                               }).toList(),
                             ),
                             const SizedBox(height: 16),
-                            TextFormField(
-                              controller: _weightController,
-                              decoration: const InputDecoration(labelText: 'Weight'),
-                              keyboardType: TextInputType.number,
-                              validator: (value) {
-                                if (value == null || value.isEmpty) {
-                                  return 'Please enter combo weight';
-                                }
-                                return null;
-                              },
+                            Row(
+                              children: [
+                                Flexible(
+                                  child: TextFormField(
+                                    controller: _weightController,
+                                    inputFormatters: [
+                                      FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*')),
+                                    ],
+                                    decoration: const InputDecoration(labelText: 'Weight', border: OutlineInputBorder()),
+                                    keyboardType: TextInputType.number,
+                                    validator: (value) {
+                                      if (value == null || value.isEmpty) {
+                                        return 'Please enter combo weight';
+                                      }
+                                      return null;
+                                    },
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Flexible(
+                                  child: TextFormField(
+                                    controller: _mrpController,
+                                    inputFormatters: [
+                                      FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*')),
+                                    ],
+                                    decoration: const InputDecoration(labelText: 'MRP', border: OutlineInputBorder()),
+                                    keyboardType: TextInputType.number,
+                                    validator: (value) {
+                                      if (value == null || value.isEmpty) {
+                                        return 'Please enter MRP';
+                                      }
+                                      return null;
+                                    },
+                                  ),
+                                ),
+                              ],
                             ),
                             const SizedBox(height: 16),
-                            TextFormField(
-                              controller: _mrpController,
-                              decoration: const InputDecoration(labelText: 'MRP'),
-                              keyboardType: TextInputType.number,
-                              validator: (value) {
-                                if (value == null || value.isEmpty) {
-                                  return 'Please enter MRP';
-                                }
-                                return null;
-                              },
-                            ),
-                            const SizedBox(height: 16),
-                            TextFormField(
-                              controller: _costController,
-                              decoration: const InputDecoration(labelText: 'Cost'),
-                              keyboardType: TextInputType.number,
-                              validator: (value) {
-                                if (value == null || value.isEmpty) {
-                                  return 'Please enter Cost';
-                                }
-                                return null;
-                              },
-                            ),
-                            const SizedBox(height: 16),
-                            TextFormField(
-                              controller: _skuController,
-                              decoration: const InputDecoration(labelText: 'SKU'),
-                              validator: (value) {
-                                if (value == null || value.isEmpty) {
-                                  return 'Please enter SKU';
-                                }
-                                return null;
-                              },
+                            Row(
+                              children: [
+                                Flexible(
+                                  child: TextFormField(
+                                    controller: _costController,
+                                    inputFormatters: [
+                                      FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*')),
+                                    ],
+                                    decoration: const InputDecoration(labelText: 'Cost', border: OutlineInputBorder()),
+                                    keyboardType: TextInputType.number,
+                                    validator: (value) {
+                                      if (value == null || value.isEmpty) {
+                                        return 'Please enter Cost';
+                                      }
+                                      return null;
+                                    },
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Flexible(
+                                  child: TextFormField(
+                                    controller: _skuController,
+                                    decoration: const InputDecoration(labelText: 'SKU', border: OutlineInputBorder()),
+                                    validator: (value) {
+                                      if (value == null || value.isEmpty) {
+                                        return 'Please enter SKU';
+                                      }
+                                      return null;
+                                    },
+                                  ),
+                                ),
+                              ],
                             ),
                             const SizedBox(height: 16),
                             ElevatedButton(
@@ -535,14 +561,16 @@ class _ComboPageState extends State<ComboPage> {
                                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                             children: [
                                               Expanded(
-                                                child: Text(
-                                                  combo['name'] ?? 'N/A',
-                                                  maxLines: 2,
-                                                  style: const TextStyle(
-                                                    fontSize: 20,
-                                                    fontWeight: FontWeight.bold,
-                                                    color: Colors.black87,
-                                                    overflow: TextOverflow.ellipsis
+                                                child: Tooltip(
+                                                  message: combo['name'] ?? 'N/A',
+                                                  child: Text(
+                                                    combo['name'] ?? 'N/A',
+                                                    maxLines: 2,
+                                                    style: const TextStyle(
+                                                        fontSize: 16,
+                                                        fontWeight: FontWeight.bold,
+                                                        color: Colors.black87,
+                                                        overflow: TextOverflow.ellipsis),
                                                   ),
                                                 ),
                                               ),
@@ -557,7 +585,8 @@ class _ComboPageState extends State<ComboPage> {
                                                     child: ElevatedButton(
                                                       onPressed: () async {
                                                         final nameController = TextEditingController(text: combo['name'] ?? '');
-                                                        final weightController = TextEditingController(text: combo['comboWeight']?.toString() ?? '');
+                                                        final weightController =
+                                                            TextEditingController(text: combo['comboWeight']?.toString() ?? '');
 
                                                         try {
                                                           await showDialog(
@@ -574,10 +603,14 @@ class _ComboPageState extends State<ComboPage> {
                                                                       hintText: 'Enter combo name',
                                                                     ),
                                                                     textInputAction: TextInputAction.next,
-                                                                    validator: (value) => value?.isEmpty ?? true ? 'Name is required' : null,
+                                                                    validator: (value) =>
+                                                                        value?.isEmpty ?? true ? 'Name is required' : null,
                                                                   ),
                                                                   const SizedBox(height: 16),
                                                                   TextFormField(
+                                                                    inputFormatters: [
+                                                                      FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*')),
+                                                                    ],
                                                                     controller: weightController,
                                                                     decoration: const InputDecoration(
                                                                       labelText: 'Weight',
