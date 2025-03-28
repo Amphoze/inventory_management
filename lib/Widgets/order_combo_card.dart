@@ -153,6 +153,7 @@ class _OrderComboCardState extends State<OrderComboCard> {
                     const Spacer(),
                     Row(
                       children: [
+
                         if (widget.isBookPage) ...[
                           // IconButton(
                           //   tooltip: 'Recalculate Freight Charges',
@@ -220,6 +221,7 @@ class _OrderComboCardState extends State<OrderComboCard> {
                           //   },
                           // ),
                           // const SizedBox(width: 8),
+
                           IconButton(
                             tooltip: 'Edit Order',
                             onPressed: () async {
@@ -242,7 +244,9 @@ class _OrderComboCardState extends State<OrderComboCard> {
                             },
                             icon: const Icon(Icons.edit_note),
                           ),
+
                           const SizedBox(width: 8),
+
                           IconButton(
                             tooltip: 'Edit Warehouse',
                             onPressed: () {

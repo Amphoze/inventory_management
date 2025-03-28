@@ -1432,7 +1432,7 @@ class AuthProvider with ChangeNotifier {
           {
             'order_id': orderId,
             'order_status': revertStatus,
-            'reason' : remark
+            'reason' : remark,
           },
         ),
       );
