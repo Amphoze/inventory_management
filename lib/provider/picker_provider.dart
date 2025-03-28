@@ -181,12 +181,10 @@ class PickerProvider with ChangeNotifier {
       if (response.statusCode == 200) {
         final jsonData = json.decode(response.body);
 
-        // List<Order> orders = [];
+        List<dynamic> orders = jsonData['orders'] ?? [];
 
-        if (jsonData != null) {
-          // _orders = (jsonData['orders'] as List).map((order) => Order.fromJson(order)).toList();
-          orders.add(Order.fromJson(jsonData));
-        }
+        _orders = orders.map((e) => Order.fromJson(e)).toList();
+
 
       } else {
         _orders = [];

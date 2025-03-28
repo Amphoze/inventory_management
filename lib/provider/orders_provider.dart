@@ -248,6 +248,7 @@ class OrdersProvider with ChangeNotifier {
     }
 
     final url = '${await Constants.getBaseUrl()}/orders/$id';
+
     try {
       final response = await http.put(
         Uri.parse(url),
@@ -258,31 +259,31 @@ class OrdersProvider with ChangeNotifier {
         body: json.encode(updatedData),
       );
 
-      log("response: ${response.statusCode}");
+      log('Editing Order Response Status :- ${response.statusCode}');
 
-      final res = jsonDecode(response.body);
+      log("Response for editing order :- ${response.body}");
 
       if (response.statusCode == 200) {
-        Logger().e('Order updated successfully');
-
-        notifyListeners();
-        return {"success": true, "message": res['message']};
-      } else if (response.statusCode == 400) {
-        final responseBody = json.decode(response.body);
-        if (responseBody['message'] == 'orderId and status are required.') {
-          log('Error: Order ID and status are required.');
-        }
+        return {"success": true, "message": "Order updated successfully"};
       } else {
-        log('Failed to update order: ${response.body}');
-        return {"success": false, "message": res['message']};
+
+        final json = jsonDecode(response.body);
+
+        final message = json['message'] ?? '';
+
+        return {"success": false, "message": message.isEmpty ? "Failed to update order" : message};
       }
-    } catch (error, s) {
-      log('Error updating order: $error \n\n$s');
-      return {"success": false, "message": "An error occurred: $error"};
+
+
+    } catch (e, s) {
+
+      log('Error while editing order :- $e\n$s');
+
+      return {"success": false, "message": e.toString()};
+
     } finally {
       notifyListeners();
     }
-    return {};
   }
 
   Future<bool> writeRemark(String id, String msg) async {
@@ -618,7 +619,15 @@ class OrdersProvider with ChangeNotifier {
     super.dispose();
   }
 
-  Future<String> confirmOrders(BuildContext context, List<String> orderIds) async {
+  final Map<String, String> _outerPackagingOrders = {};
+  Map<String, String> get outerPackagingOrders => _outerPackagingOrders;
+  void setOuterPackagingOrders(String orderId, String sku) {
+    _outerPackagingOrders[orderId] = sku;
+    log('Outer Packaging Orders: $_outerPackagingOrders');
+    notifyListeners();
+  }
+
+  Future<String> confirmOrders(BuildContext context, List<String> orderIds, {bool hasPackaging = false}) async {
     String baseUrl = await Constants.getBaseUrl();
     String confirmOrderUrl = '$baseUrl/orders/confirm';
     final String? token = await _getToken();
@@ -632,11 +641,17 @@ class OrdersProvider with ChangeNotifier {
       'Content-Type': 'application/json',
     };
 
-    final body = json.encode({
+    Map<String, dynamic> body = {
       'orderIds': orderIds,
-    });
+    };
 
-    log('Confirming Orders Payload :- $body');
+    if (hasPackaging) {
+      body['outerPackage'] = outerPackagingOrders;
+    }
+
+    final payload = jsonEncode(body);
+
+    log('Confirming Orders Payload :- $payload');
 
     final url = Uri.parse(confirmOrderUrl);
 
@@ -646,7 +661,7 @@ class OrdersProvider with ChangeNotifier {
       final response = await http.post(
         url,
         headers: headers,
-        body: body,
+        body: payload,
       );
 
       final responseData = json.decode(response.body);
