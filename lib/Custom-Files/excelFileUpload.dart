@@ -24,7 +24,9 @@ class ExcelFileUploader extends StatefulWidget {
 }
 
 class _ExcelFileUploaderState extends State<ExcelFileUploader> {
+
   Future<void> _pickFile(BuildContext context) async {
+
     final labelDataProvider = context.read<LabelDataProvider>();
 
     try {
@@ -50,8 +52,16 @@ class _ExcelFileUploaderState extends State<ExcelFileUploader> {
       //   return;
       // }
 
-      var sheet = excelFile.tables[widget.sheetName]!;
-      List<List<dynamic>> rows = sheet.rows;
+      var sheet = excelFile.sheets.values.toList();
+
+      // var sheet = excelFile.tables[widget.sheetName]!;
+
+      if (sheet.isEmpty) {
+        _showMessage(context, 'Sheet not found in the uploaded file.', isError: true);
+        return;
+      }
+
+      List<List<dynamic>> rows = sheet.first.rows;
 
       if (rows.isEmpty) {
         _showMessage(context, 'The uploaded sheet is empty.', isError: true);

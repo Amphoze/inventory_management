@@ -5,6 +5,7 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:intl/intl.dart';
 import 'package:inventory_management/Api/auth_provider.dart';
 import 'package:inventory_management/accounts_page.dart';
+import 'package:inventory_management/check_invoice_by_csv.dart';
 import 'package:inventory_management/invoiced_orders.dart';
 import 'package:inventory_management/all_orders_page.dart';
 import 'package:inventory_management/ba_approve_page.dart';
@@ -1206,6 +1207,7 @@ class _DashboardPageState extends State<DashboardPage> {
           "Confirm Outbound",
           "Merge Orders",
           "Create Invoice",
+          "Check Invoice",
           "Book Orders",
           "Upload Products",
           "Upload Marketplace SKU",
@@ -1305,6 +1307,22 @@ class _DashboardPageState extends State<DashboardPage> {
               isSelected: selectedDrawerItem == 'Create Invoice',
               onTap: () => isAccounts == true || isSuperAdmin == true || isAdmin == true
                   ? _onDrawerItemTapped('Create Invoice', isSmallScreen)
+                  : ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text("You are not authorized to view this page.")),
+                    ),
+              isIndented: true,
+              iconSize: 20,
+              fontSize: 14,
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.only(left: 10.0),
+            child: _buildDrawerItem(
+              icon: FontAwesomeIcons.fileInvoice,
+              text: 'Update Invoice',
+              isSelected: selectedDrawerItem == 'Check Invoice',
+              onTap: () => isAccounts == true || isSuperAdmin == true || isAdmin == true
+                  ? _onDrawerItemTapped('Check Invoice', isSmallScreen)
                   : ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(content: Text("You are not authorized to view this page.")),
                     ),
@@ -1630,6 +1648,8 @@ class _DashboardPageState extends State<DashboardPage> {
         return const MergeOrdersByCsv();
       case 'Create Invoice':
         return const CreateInvoiceByCSV();
+      case 'Check Invoice':
+        return const CheckInvoiceByCsv();
       case 'Book Orders':
         return const BookOrdersByCsv();
       case 'Upload Products':

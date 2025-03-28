@@ -896,7 +896,7 @@ class AuthProvider with ChangeNotifier {
   Future<Map<String, dynamic>?> createProduct(List<Map<String, dynamic>> productData) async {
     String baseUrl = await Constants.getBaseUrl();
 
-    final url = Uri.parse('$baseUrl/products/');
+    final url = Uri.parse('$baseUrl/products');
     try {
       final token = await getToken();
       final response = await http.post(
