@@ -581,56 +581,52 @@ class _ManageOuterboxState extends State<ManageOuterbox> {
               padding: const EdgeInsets.all(16.0),
               child: SingleChildScrollView(
                 child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        if (provider.isFormVisible) ...[
-                          const SizedBox(height: 16),
-                          provider.isFormVisible
-                              ? ElevatedButton(
-                                  style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-                                  onPressed: () {
-                                    provider.toggleFormVisibility(); // Hide form
-                                  },
-                                  child: const Text('Cancel'),
-                                )
-                              : Container(),
-                          const Text("Create Outerbox", style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
-                          const SizedBox(height: 16),
-                          const OuterPackageForm(),
-                        ],
+                    if (provider.isFormVisible) ...[
+                      const SizedBox(height: 16),
+                      provider.isFormVisible
+                          ? ElevatedButton(
+                              style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+                              onPressed: () {
+                                provider.toggleFormVisibility(); // Hide form
+                              },
+                              child: const Text('Cancel'),
+                            )
+                          : Container(),
+                      const Text("Create Outerbox", style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+                      const SizedBox(height: 16),
+                      const OuterPackageForm(),
+                    ],
 
-                        const SizedBox(height: 30),
-                        // Table and pagination
-                        if (!provider.isFormVisible) ...[
-                          SingleChildScrollView(
-                            child: provider.isLoading
+                    const SizedBox(height: 30),
+                    // Table and pagination
+                    if (!provider.isFormVisible) ...[
+                      SingleChildScrollView(
+                        child: provider.isLoading
+                            ? const Center(
+                                child: SizedBox(
+                                  width: 100, // Set appropriate width
+                                  height: 500, // Set appropriate height
+                                  child: LoadingAnimation(
+                                    icon: Icons.outbox,
+                                    beginColor: Color.fromRGBO(189, 189, 189, 1),
+                                    endColor: AppColors.primaryBlue,
+                                    size: 80.0,
+                                  ),
+                                ),
+                              )
+                            : paginatedData.isEmpty
                                 ? const Center(
-                                    child: SizedBox(
-                                      width: 100, // Set appropriate width
-                                      height: 500, // Set appropriate height
-                                      child: LoadingAnimation(
-                                        icon: Icons.outbox,
-                                        beginColor: Color.fromRGBO(189, 189, 189, 1),
-                                        endColor: AppColors.primaryBlue,
-                                        size: 80.0,
-                                      ),
-                                    ),
+                                    child: Text('No data found'),
                                   )
-                                : paginatedData.isEmpty
-                                    ? const Center(
-                                        child: Text('No data found'),
-                                      )
-                                    : OuterboxDataTable(
-                                        columnNames: columnNames,
-                                        rowsData: paginatedData,
-                                        scrollController: _scrollController,
-                                      ),
-                          ),
-                        ],
-                      ],
-                    ),
+                                : OuterboxDataTable(
+                                    columnNames: columnNames,
+                                    rowsData: paginatedData,
+                                    scrollController: _scrollController,
+                                  ),
+                      ),
+                    ],
                   ],
                 ),
               ),

@@ -723,16 +723,16 @@ class _OrdersNewPageState extends State<OrdersNewPage> with TickerProviderStateM
                                         Row(
                                           children: [
 
-                                            if (order.totalWeight > 20)
-                                              const Chip(
-                                                // color: WidgetStatePropertyAll(Colors.red),
-                                                label: Text(
-                                                  'To be split',
-                                                  style: TextStyle(color: Colors.red),
-                                                ),
-                                              ),
-
-                                            const SizedBox(width: 8),
+                                            // if (order.totalWeight > 20)
+                                            //   const Chip(
+                                            //     // color: WidgetStatePropertyAll(Colors.red),
+                                            //     label: Text(
+                                            //       'To be split',
+                                            //       style: TextStyle(color: Colors.red),
+                                            //     ),
+                                            //   ),
+                                            //
+                                            // const SizedBox(width: 8),
 
                                             IconButton(
                                               tooltip: 'Edit Order',

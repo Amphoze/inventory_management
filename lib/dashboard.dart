@@ -65,7 +65,6 @@ import 'package:inventory_management/upload_inner.dart';
 import 'package:inventory_management/upload_marketplace_sku.dart';
 import 'package:inventory_management/upload_warehouse.dart';
 import 'package:inventory_management/uploadproduct-quantity.dart';
-import 'package:logger/logger.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -956,7 +955,7 @@ class _DashboardPageState extends State<DashboardPage> {
             padding: const EdgeInsets.only(left: 10.0),
             child: _buildDrawerItem(
               icon: Icons.outbox,
-              text: 'Manage Inner Packaging',
+              text: 'Manage Inner Packing',
               isSelected: selectedDrawerItem == 'Manage Inner Packaging',
               onTap: () => isConfirmer == true || isAccounts == true || isBooker == true || isSuperAdmin == true || isAdmin == true
                   ? _onDrawerItemTapped('Manage Inner Packaging', isSmallScreen)

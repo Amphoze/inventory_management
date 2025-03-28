@@ -52,8 +52,8 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
 
   final Map<String, List<Item>> groupedComboItems = {};
 
-  List<List<Item>>? comboItemGroups;
-  List<Item>? remainingItems;
+  List<List<Item>> comboItemGroups = [];
+  List<Item> remainingItems = [];
 
   void getProductsAndCombos() {
     for (var item in widget.order.items) {
@@ -867,11 +867,20 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
           setState(() {
             productList.removeAt(index);
 
-            _totalWeightController.text =
-                (double.parse(_totalWeightController.text) - fetchedProduct.grossWeight! ?? 0.0).toStringAsFixed(2);
-            _totalAmtController.text = (double.parse(_totalAmtController.text) -
-                    double.parse(_productRateControllers[index].text) * int.parse(_productQuantityControllers[index].text))
-                .toStringAsFixed(2);
+            final totalWeight = double.tryParse(_totalWeightController.text) ?? 0;
+            final grossWeight = fetchedProduct.grossWeight ?? 0;
+            final totalAmt = double.tryParse(_totalAmtController.text) ?? 0;
+            final rate = double.tryParse(_productRateControllers[index].text) ?? 0;
+            final qty = int.tryParse(_productQuantityControllers[index].text) ?? 1;
+
+            _totalWeightController.text = (totalWeight - grossWeight).toStringAsFixed(2);
+            _totalAmtController.text = (totalAmt - (rate * qty)).toStringAsFixed(2);
+
+            // _totalWeightController.text =
+            //     (double.parse(_totalWeightController.text) - fetchedProduct.grossWeight! ?? 0.0).toStringAsFixed(2);
+            // _totalAmtController.text = (double.parse(_totalAmtController.text) -
+            //         double.parse(_productRateControllers[index].text) * int.parse(_productQuantityControllers[index].text))
+            //     .toStringAsFixed(2);
 
             remainingItems!.removeAt(index);
 
@@ -904,14 +913,21 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
             // Remove from addedProductList
             addedProductList.removeAt(index);
 
-            // Update totals
-            _totalWeightController.text =
-                (double.parse(_totalWeightController.text) - (fetchedProduct.grossWeight ?? 0.0)).toStringAsFixed(2);
-            _totalAmtController.text = (double.parse(_totalAmtController.text) -
-                    double.parse(_addedProductRateControllers[index].text) * int.parse(_addedProductQuantityControllers[index].text))
-                .toStringAsFixed(2);
+            final totalWeight = double.tryParse(_totalWeightController.text) ?? 0;
+            final grossWeight = fetchedProduct.grossWeight ?? 0;
+            final totalAmt = double.tryParse(_totalAmtController.text) ?? 0;
+            final rate = double.tryParse(_addedProductRateControllers[index].text) ?? 0;
+            final qty = int.tryParse(_addedProductQuantityControllers[index].text) ?? 1;
 
-            // Remove controllers
+            _totalWeightController.text = (totalWeight - grossWeight).toStringAsFixed(2);
+            _totalAmtController.text = (totalAmt - (rate * qty)).toStringAsFixed(2);
+
+            // _totalWeightController.text =
+            //     (double.parse(_totalWeightController.text) - (fetchedProduct.grossWeight ?? 0.0)).toStringAsFixed(2);
+            // _totalAmtController.text = (double.parse(_totalAmtController.text) -
+            //         double.parse(_addedProductRateControllers[index].text) * int.parse(_addedProductQuantityControllers[index].text))
+            //     .toStringAsFixed(2);
+
             _addedProductQuantityControllers.removeAt(index);
             _addedProductRateControllers.removeAt(index);
 
@@ -1029,15 +1045,22 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
       if (fetchedCombo != null) {
         if (index < addedComboList.length) {
           setState(() {
-            // Remove from addedComboList
             addedComboList.removeAt(index);
 
-            // Update totals
-            _totalWeightController.text =
-                (double.parse(_totalWeightController.text) - (fetchedCombo.comboWeight ?? 0.0)).toStringAsFixed(2);
-            _totalAmtController.text = (double.parse(_totalAmtController.text) -
-                    double.parse(_addedComboRateControllers[index].text) * int.parse(_addedComboQuantityControllers[index].text))
-                .toStringAsFixed(2);
+            final totalWeight = double.tryParse(_totalWeightController.text) ?? 0;
+            final grossWeight = fetchedCombo.comboWeight ?? 0;
+            final totalAmt = double.tryParse(_totalAmtController.text) ?? 0;
+            final rate = double.tryParse(_addedComboRateControllers[index].text) ?? 0;
+            final qty = int.tryParse(_addedComboQuantityControllers[index].text) ?? 1;
+
+            _totalWeightController.text = (totalWeight - grossWeight).toStringAsFixed(2);
+            _totalAmtController.text = (totalAmt - (rate * qty)).toStringAsFixed(2);
+
+            // _totalWeightController.text =
+            //     (double.parse(_totalWeightController.text) - (fetchedCombo.comboWeight ?? 0.0)).toStringAsFixed(2);
+            // _totalAmtController.text = (double.parse(_totalAmtController.text) -
+            //         double.parse(_addedComboRateControllers[index].text) * int.parse(_addedComboQuantityControllers[index].text))
+            //     .toStringAsFixed(2);
 
             // Remove controllers
             _addedComboQuantityControllers.removeAt(index);
@@ -1072,14 +1095,23 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
           setState(() {
             comboList.removeAt(index);
 
-            _totalWeightController.text = (double.parse(_totalWeightController.text) - fetchedCombo.comboWeight! ?? 0.0).toStringAsFixed(2);
-            _totalAmtController.text = (double.parse(_totalAmtController.text) -
-                    double.parse(_comboRateControllers[index].text) * int.parse(_comboQuantityControllers[index].text))
-                .toStringAsFixed(2);
+            final totalWeight = double.tryParse(_totalWeightController.text) ?? 0;
+            final grossWeight = fetchedCombo.comboWeight ?? 0;
+            final totalAmt = double.tryParse(_totalAmtController.text) ?? 0;
+            final rate = double.tryParse(_comboRateControllers[index].text) ?? 0;
+            final qty = int.tryParse(_comboQuantityControllers[index].text) ?? 1;
+
+            _totalWeightController.text = (totalWeight - grossWeight).toStringAsFixed(2);
+            _totalAmtController.text = (totalAmt - (rate * qty)).toStringAsFixed(2);
+
+            // _totalWeightController.text = (double.parse(_totalWeightController.text) - fetchedCombo.comboWeight! ?? 0.0).toStringAsFixed(2);
+            // _totalAmtController.text = (double.parse(_totalAmtController.text) -
+            //         double.parse(_comboRateControllers[index].text) * int.parse(_comboQuantityControllers[index].text))
+            //     .toStringAsFixed(2);
 
             _comboQuantityControllers.removeAt(index);
             _comboRateControllers.removeAt(index);
-            comboItemGroups!.removeAt(index);
+            comboItemGroups.removeAt(index);
           });
         }
       }

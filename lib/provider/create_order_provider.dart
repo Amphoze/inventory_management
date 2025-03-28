@@ -321,11 +321,18 @@ class CreateOrderProvider with ChangeNotifier {
       if (index < addedProductList.length) {
         addedProductList.removeAt(index);
 
-        totalAmtController.text =
-            (double.parse(totalAmtController.text) -
-                double.parse(addedProductRateControllers[index].text) *
-                    int.parse(addedProductQuantityControllers[index].text))
-                .toStringAsFixed(2);
+        final totalAmt = double.tryParse(totalAmtController.text) ?? 0;
+        final addedProductRate = double.tryParse(addedProductRateControllers[index].text) ?? 0;
+        final addedProductQuantity = int.tryParse(addedProductQuantityControllers[index].text) ?? 1;
+        final amount = addedProductRate * addedProductQuantity;
+
+        totalAmtController.text = (totalAmt - amount).toStringAsFixed(2);
+
+        // totalAmtController.text =
+        //     (double.parse(totalAmtController.text) -
+        //         double.parse(addedProductRateControllers[index].text) *
+        //             int.parse(addedProductQuantityControllers[index].text))
+        //         .toStringAsFixed(2);
 
         addedProductQuantityControllers.removeAt(index);
         addedProductRateControllers.removeAt(index);
@@ -349,8 +356,8 @@ class CreateOrderProvider with ChangeNotifier {
   Future<void> addCombo(BuildContext context, Map<String, String> selected) async {
     if (selected['id'] == null) return;
 
-    bool comboExists = addedComboList.any((item) => item['id'] == selected['id']) ||
-        addedComboList.any((item) => item['id'] == selected['id']);
+    bool comboExists =
+        addedComboList.any((item) => item['id'] == selected['id']) || addedComboList.any((item) => item['id'] == selected['id']);
 
     if (comboExists) {
       Utils.showSnackBar(context, 'Combo already added', color: Colors.red);
@@ -376,7 +383,7 @@ class CreateOrderProvider with ChangeNotifier {
 
       if (fetchedCombo.comboAmount != null && fetchedCombo.comboAmount != '0') {
         totalAmtController.text = (double.parse(totalAmtController.text) +
-            (100 - double.parse(discountPercentController.text)) * (double.parse(fetchedCombo.comboAmount!) ?? 0))
+                (100 - double.parse(discountPercentController.text)) * (double.parse(fetchedCombo.comboAmount!) ?? 0))
             .toStringAsFixed(2);
         codAmountController.text = totalAmtController.text;
       }
@@ -407,14 +414,13 @@ class CreateOrderProvider with ChangeNotifier {
       Logger().e('fetched c: $fetchedCombo');
 
       if (index < addedComboList.length) {
-        final qty = int.parse(addedComboQuantityControllers[index].text);
-        final rate = double.parse(addedComboRateControllers[index].text);
+        final qty = int.tryParse(addedComboQuantityControllers[index].text) ?? 1;
+        final rate = double.tryParse(addedComboRateControllers[index].text) ?? 0;
+        final totalAmt = double.tryParse(totalAmtController.text) ?? 0;
 
         addedComboList.removeAt(index);
 
-        totalAmtController.text =
-            (double.parse(totalAmtController.text) - (rate * qty))
-                .toStringAsFixed(2);
+        totalAmtController.text = (totalAmt - (rate * qty)).toStringAsFixed(2);
         codAmountController.text = totalAmtController.text;
 
         addedComboQuantityControllers.removeAt(index);
