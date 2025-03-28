@@ -1439,7 +1439,8 @@ class AuthProvider with ChangeNotifier {
 
       final data = jsonDecode(response.body);
 
-      log('reverse status: ${response.statusCode}');
+      log('Reversing Order Status: ${response.statusCode}');
+      log('Reversing Order Response: ${response.body}');
       // Logger().e('reverseOrder body: $data');
 
       if (response.statusCode == 200) {

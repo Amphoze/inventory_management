@@ -699,6 +699,7 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
     log('itemsList: $itemsList');
 
     if (_formKey.currentState!.validate()) {
+
       Map<String, dynamic> updatedData = {
         'date': parseDate(_dateController.text)?.toIso8601String(),
         'payment_mode': _ordersProvider.selectedPayment,
@@ -789,10 +790,11 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
         // context.read<AccountsProvider>().fetchOrdersWithStatus2();
         // context.read<BookProvider>().fetchPaginatedOrdersB2B(1);
         // context.read<BookProvider>().fetchPaginatedOrdersB2C(1);
-      } catch (error) {
+      } catch (error, s) {
         // ScaffoldMessenger.of(context).showSnackBar(
         //   const SnackBar(content: Text('Failed to update order.')),
         // );
+        log('Error while editting order :- $error\n$s');
         Utils.showSnackBar(context, "Error: $error", color: Colors.red);
       } finally {
         setState(() {

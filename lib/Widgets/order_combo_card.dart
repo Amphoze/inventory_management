@@ -482,6 +482,7 @@ class _OrderComboCardState extends State<OrderComboCard> {
                             dropdownOptions: ["READY-TO-CONFIRM", "READY-TO-ACCOUNT"],
                             orderid: widget.order.orderId,
                           ),
+
                         if (widget.isBookPage) ...[
                           const SizedBox(width: 8),
                           IconButton(

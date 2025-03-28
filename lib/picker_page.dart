@@ -78,7 +78,9 @@ class _PickerPageState extends State<PickerPage> {
                     title: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
+
                         Text(filteredIds[index]),
+
                         if ((isSuperAdmin ?? false) || (isAdmin ?? false))
                           IconButton(
                             tooltip: 'Revert Order',
@@ -91,16 +93,16 @@ class _PickerPageState extends State<PickerPage> {
                                     title: const Text('Revert Order'),
                                     content: Text('Are you sure you want to revert ${filteredIds[index]} to READY TO CONFIRM'),
                                     actions: [
+
                                       TextButton(
                                         onPressed: () {
-                                          Navigator.of(context).pop();
+                                          Navigator.pop(context);
                                         },
                                         child: const Text('Cancel'),
                                       ),
+
                                       TextButton(
                                         onPressed: () async {
-                                          Navigator.pop(context);
-                                          Navigator.pop(context);
 
                                           showDialog(
                                             barrierDismissible: false,
@@ -119,7 +121,9 @@ class _PickerPageState extends State<PickerPage> {
                                           );
 
                                           try {
+
                                             final authPro = context.read<AuthProvider>();
+
                                             final res = await authPro.reverseOrder(filteredIds[index], '', '');
 
                                             Navigator.pop(context);
@@ -130,8 +134,11 @@ class _PickerPageState extends State<PickerPage> {
                                               Utils.showInfoDialog(context, res['message'], false);
                                             }
                                           } catch (e) {
-                                            Navigator.pop(context);
                                             Utils.showInfoDialog(context, 'An error occurred: $e', false);
+                                          } finally {
+                                            Navigator.pop(context);
+                                            Navigator.pop(context);
+                                            Navigator.pop(context);
                                           }
                                         },
                                         child: const Text('Submit'),
