@@ -365,7 +365,7 @@ class OrdersProvider with ChangeNotifier {
     final prefs = await SharedPreferences.getInstance();
     final warehouseId = prefs.getString('warehouseId') ?? '';
 
-    var failedOrdersUrl = '${await Constants.getBaseUrl()}/orders?warehouse=$warehouseId&orderStatus=0&page=$page';
+    var failedOrdersUrl = '${await Constants.getBaseUrl()}/orders?warehouse=$warehouseId&orderStatus=0,-1&page=$page';
 
     if (failedPicked != null) {
       String formattedDate = DateFormat('yyyy-MM-dd').format(failedPicked!);
@@ -937,7 +937,7 @@ class OrdersProvider with ChangeNotifier {
     final prefs = await SharedPreferences.getInstance();
     final warehouseId = prefs.getString('warehouseId') ?? '';
 
-    final url = Uri.parse('${await Constants.getBaseUrl()}/orders?warehouse=$warehouseId&orderStatus=0&order_id=$encodedOrderId');
+    final url = Uri.parse('${await Constants.getBaseUrl()}/orders?warehouse=$warehouseId&orderStatus=0,-1&order_id=$encodedOrderId');
     final token = await _getToken();
     if (token == null) return;
 
