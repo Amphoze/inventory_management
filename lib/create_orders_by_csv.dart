@@ -48,20 +48,17 @@ class _CreateOrdersByCSVState extends State<CreateOrdersByCSV> {
       log('Base URL in _initializeSocket: $baseUrl');
       final email = await AuthProvider().getEmail();
 
-      // Initialize socket if not already initialized
       _socket ??= IO.io(
         baseUrl,
         IO.OptionBuilder().setTransports(['websocket']).disableAutoConnect().setQuery({'email': email}).build(),
       );
 
-      // On successful connection
       _socket?.onConnect((_) {
         debugPrint('Connected to Socket.IO');
         _showSnackbar('Connected to server', Colors.green);
       });
 
-      // On error during file upload
-      _socket?.off('csv-file-uploading-err'); // Clear previous listeners
+      _socket?.off('csv-file-uploading-err');
       _socket?.on('csv-file-uploading-err', (data) {
         debugPrint('Error Data: $data');
         setState(() {
@@ -70,7 +67,6 @@ class _CreateOrdersByCSVState extends State<CreateOrdersByCSV> {
         _showSnackbar(_progressMessage, Colors.red);
       });
 
-      // On file upload progress
       _socket?.off('csv-file-uploading');
       _socket?.on('csv-file-uploading', (data) {
         Logger().e('Data progress: ${data['progress']}');
@@ -80,7 +76,6 @@ class _CreateOrdersByCSVState extends State<CreateOrdersByCSV> {
         }
       });
 
-      // On successful file upload - Use `.once()` to trigger only once
       _socket?.off('csv-file-uploaded');
       _socket?.once('csv-file-uploaded', (data) {
         log('CSV file uploaded: $data');
@@ -94,7 +89,6 @@ class _CreateOrdersByCSVState extends State<CreateOrdersByCSV> {
         });
         _showSnackbar(_progressMessage, Colors.green);
 
-        // Launch download URL if available
         if (data['downloadLink'] != null) {
           log('Download link: ${data['downloadLink']}');
           _launchDownloadUrl(data['downloadLink']);
@@ -108,7 +102,6 @@ class _CreateOrdersByCSVState extends State<CreateOrdersByCSV> {
     }
   }
 
-// Helper function to show snackbars
   void _showSnackbar(String message, Color color) {
     if (context.mounted) {
       ScaffoldMessenger.of(context).removeCurrentSnackBar();
@@ -163,7 +156,7 @@ class _CreateOrdersByCSVState extends State<CreateOrdersByCSV> {
   List<List<dynamic>> _getPagedData() {
     if (_csvData.isEmpty) return [];
 
-    const startIndex = 1; // Skip header row
+    const startIndex = 1;
     final endIndex = startIndex + (_currentPage + 1) * _pageSize;
     return _csvData.sublist(
       startIndex,
@@ -172,9 +165,13 @@ class _CreateOrdersByCSVState extends State<CreateOrdersByCSV> {
   }
 
   Future<void> _pickAndReadCSV() async {
+    log('_pickAndReadCSV _progressMessage: $_progressMessage');
     setState(() {
       _isPickingFile = true;
       _currentPage = 0;
+      _progressNotifier.value = 0;
+      _progressMessage = '';
+      log('_pickAndReadCSV _progressMessage: $_progressMessage');
     });
 
     try {
@@ -247,11 +244,10 @@ class _CreateOrdersByCSVState extends State<CreateOrdersByCSV> {
   Future<void> _createOrders() async {
     if (_selectedFile == null) return;
 
-    Logger().e('1');
-
     setState(() {
       _isCreating = true;
-      // _failedOrders = [];
+      _progressNotifier.value = 0;
+      _progressMessage = 'Uploading file...';
     });
 
     try {
@@ -291,9 +287,6 @@ class _CreateOrdersByCSVState extends State<CreateOrdersByCSV> {
       Logger().e('Create Csv Body: $responseBody, Status Code: ${response.statusCode}');
 
       if (response.statusCode == 200 || response.statusCode == 201) {
-        // ScaffoldMessenger.of(context).showSnackBar(
-        //   SnackBar(content: Text("${jsonData['message']}")),
-        // );
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text("${jsonData['message']}")),
@@ -364,9 +357,7 @@ class _CreateOrdersByCSVState extends State<CreateOrdersByCSV> {
               Text(_isPickingFile ? 'Selecting file...' : 'Processing file...'),
               const SizedBox(height: 16),
             ],
-
             Text('Number of items: $_rowCount'),
-
             if (_rowCount > 0) ...[
               const SizedBox(height: 16),
               ValueListenableBuilder<double>(
@@ -396,7 +387,6 @@ class _CreateOrdersByCSVState extends State<CreateOrdersByCSV> {
               ),
               const SizedBox(height: 50),
               Expanded(
-                // flex: 2,
                 child: _buildDataTable(),
               ),
             ],

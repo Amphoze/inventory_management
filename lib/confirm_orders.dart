@@ -175,6 +175,8 @@ class _ConfirmOrdersState extends State<ConfirmOrders> {
     setState(() {
       _isPickingFile = true;
       _currentPage = 0;
+      _progressNotifier.value = 0; // Reset progress
+      _progressMessage = ''; // Reset message
     });
 
     try {
@@ -244,6 +246,8 @@ class _ConfirmOrdersState extends State<ConfirmOrders> {
 
     setState(() {
       _isCreating = true;
+      _progressNotifier.value = 0; // Reset progress before upload
+      _progressMessage = 'Uploading file...'; // Initial message
     });
 
     try {

@@ -211,7 +211,7 @@ class AllOrdersProvider with ChangeNotifier {
       url += '&date=$formattedDate';
     }
 
-    if (status != null) {
+    if (status != null && status != 'all') {
       url += '&orderStatus=$status';
     }
 

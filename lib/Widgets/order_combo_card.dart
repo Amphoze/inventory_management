@@ -154,72 +154,53 @@ class _OrderComboCardState extends State<OrderComboCard> {
                     Row(
                       children: [
                         if (widget.isBookPage) ...[
-                          // IconButton(
-                          //   tooltip: 'Recalculate Freight Charges',
-                          //   icon: const Icon(Icons.undo),
-                          //   onPressed: () async {
-                          //     showDialog(
-                          //       context: context,
-                          //       builder: (context) {
-                          //         return AlertDialog(
-                          //           title: Text(widget.order.orderId),
-                          //           content: Text('Are you sure you want to recalculate freight charges for ${widget.order.orderId} (${widget.order.warehouseName
-                          //           })'),
-                          //           actions: [
-                          //             TextButton(
-                          //               onPressed: () {
-                          //                 Navigator.of(context).pop();
-                          //               },
-                          //               child: const Text('Cancel'),
-                          //             ),
-                          //             TextButton(
-                          //               onPressed: () async {
-                          //                 // close confirm dialog
-                          //                 Navigator.pop(context);
-                          //
-                          //                 showDialog(
-                          //                   barrierDismissible: false,
-                          //                   context: context,
-                          //                   builder: (context) {
-                          //                     return const AlertDialog(
-                          //                       content: Row(
-                          //                         children: [
-                          //                           CircularProgressIndicator(),
-                          //                           SizedBox(width: 8),
-                          //                           Text('Reversing'),
-                          //                         ],
-                          //                       ),
-                          //                     );
-                          //                   },
-                          //                 );
-                          //
-                          //                 try {
-                          //                   log('in revert try');
-                          //                   final authPro = context.read<AuthProvider>();
-                          //                   final res = await authPro.reverseOrder(widget.order.orderId);
-                          //
-                          //                   Navigator.pop(context);
-                          //
-                          //                   if (res['success'] == true) {
-                          //                     Utils.showInfoDialog(context, "${res['message']}\nNew Order ID: ${res['newOrderId']}", true);
-                          //                   } else {
-                          //                     Utils.showInfoDialog(context, res['message'], false);
-                          //                   }
-                          //                 } catch (e, s) {
-                          //                   log('in revert catch: $e $s');
-                          //                   Navigator.pop(context);
-                          //                   Utils.showInfoDialog(context, 'An error occurred: $e', false);
-                          //                 }
-                          //               },
-                          //               child: const Text('Submit'),
-                          //             ),
-                          //           ],
-                          //         );
-                          //       },
-                          //     );
-                          //   },
-                          // ),
-                          // const SizedBox(width: 8),
+                          IconButton(
+                            tooltip: 'Recalculate Freight Charges',
+                            icon: const Icon(Icons.calculate_outlined),
+                            onPressed: () async {
+                              showDialog(
+                                context: context,
+                                builder: (context) {
+                                  return AlertDialog(
+                                    title: Text(widget.order.orderId),
+                                    content: Text(
+                                        'Are you sure you want to recalculate freight charges for ${widget.order.orderId} (${widget.order.warehouseName})'),
+                                    actions: [
+                                      TextButton(
+                                        onPressed: () {
+                                          Navigator.of(context).pop();
+                                        },
+                                        child: const Text('Cancel'),
+                                      ),
+                                      TextButton(
+                                        onPressed: () async {
+                                          // close confirm dialog
+
+                                          Utils.showLoadingDialog(context, 'Recalculating');
+
+                                          final pro = Provider.of<BookProvider>(context, listen: false);
+                                          final res = await pro.reCalculateDeliveryCharges(widget.order.orderId, widget.order.warehouseName ?? '');
+
+                                          Navigator.pop(context);
+                                          Navigator.pop(context);
+
+                                          if (res['success'] == true) {
+                                            Utils.showInfoDialog(context, res['message'], true);
+                                            pro.fetchPaginatedOrdersB2C(pro.currentPageB2C);
+                                            pro.fetchPaginatedOrdersB2B(pro.currentPageB2B);
+                                          } else {
+                                            Utils.showInfoDialog(context, res['message'], false);
+                                          }
+                                        },
+                                        child: const Text('Submit'),
+                                      ),
+                                    ],
+                                  );
+                                },
+                              );
+                            },
+                          ),
+                          const SizedBox(width: 8),
                           IconButton(
                             tooltip: 'Edit Order',
                             onPressed: () async {

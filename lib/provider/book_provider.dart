@@ -176,8 +176,7 @@ class BookProvider with ChangeNotifier {
           'Authorization': 'Bearer $token',
         },
         body: json.encode({
-          "messages": {"bookerMessage": msg, "timestamp": DateTime.now().toIso8601String(),
-            "author": email}
+          "messages": {"bookerMessage": msg, "timestamp": DateTime.now().toIso8601String(), "author": email}
         }),
       );
 
@@ -406,7 +405,7 @@ class BookProvider with ChangeNotifier {
     }
   }
 
-  Future<Map<String,dynamic>> bookOrders(BuildContext context, List<Map<String, String>> orderIds, String courier) async {
+  Future<Map<String, dynamic>> bookOrders(BuildContext context, List<Map<String, String>> orderIds, String courier) async {
     log('courier: $courier');
     setLoading(courier, true);
     String baseUrl = await Constants.getBaseUrl();
@@ -419,7 +418,7 @@ class BookProvider with ChangeNotifier {
     }
 
     log('list: $orderIds');
-    Map<String,dynamic> res = {};
+    Map<String, dynamic> res = {};
     if (courier == 'Shiprocket') {
       for (int i = 0; i < orderIds.length; i++) {
         String orderId = orderIds[i]['orderId']!;
@@ -459,7 +458,11 @@ class BookProvider with ChangeNotifier {
         // setLoading(courier, false);
 
         notifyListeners();
-        return {"success": true, "message": "${responseData['message'] ?? ''} - (${responseData["serviceResponse"][0]["orderCreationResponse"]["pickup_location"]["name"] ?? ''})"};
+        return {
+          "success": true,
+          "message":
+              "${responseData['message'] ?? ''} - (${responseData["serviceResponse"][0]["orderCreationResponse"]["pickup_location"]["name"] ?? ''})"
+        };
       } else {
         // setLoading(courier, false);
         return {"success": false, "message": "${responseData['message'] ?? 'Error while booking orders'}"};
@@ -1013,7 +1016,8 @@ class BookProvider with ChangeNotifier {
       Logger().e(responseData);
 
       if (response.statusCode == 200) {
-        return await reCalculateDeliveryCharges(orderId, warehouse);
+        final res = await reCalculateDeliveryCharges(orderId, warehouse);
+        return res['success'];
       } else {
         return false;
       }
@@ -1025,7 +1029,8 @@ class BookProvider with ChangeNotifier {
     }
   }
 
-  Future<bool> reCalculateDeliveryCharges(String orderId, String newWarehouseName) async {
+  Future<Map<String, dynamic>>
+  reCalculateDeliveryCharges(String orderId, String newWarehouseName) async {
     log('reCalculateDeliveryCharges called');
     String baseUrl = await Constants.getBaseUrl();
     String url = '$baseUrl/orders/reCalculateDeliverCharges';
@@ -1051,14 +1056,17 @@ class BookProvider with ChangeNotifier {
         headers: headers,
         body: body,
       );
+
+      final res = json.decode(response.body);
+
       if (response.statusCode == 200 || response.statusCode == 201) {
-        return true;
+        return {"success": true, "message": "Delivery charges recalculated successfully"};
       } else {
-        return false;
+        return {"success": false, "message": res['error'] ?? 'Failed to recalculate delivery charges'};
       }
     } catch (error) {
       log('Error during API request: $error');
-      return false;
+      return {"success": false, "message": "Error: $error"};
     } finally {
       notifyListeners();
     }
