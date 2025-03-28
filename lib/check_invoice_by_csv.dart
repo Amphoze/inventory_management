@@ -54,11 +54,11 @@ class _CheckInvoiceByCsvState extends State<CheckInvoiceByCsv> {
       _socket ??= IO.io(baseUrl, IO.OptionBuilder().setTransports(['websocket']).disableAutoConnect().setQuery({'email': email}).build());
 
       _socket?.onConnect((_) {
-        debugPrint('Connected to Socket.IO');
+        log('Connected to Socket.IO: ${_socket?.id ?? ''}');
         _showSnackbar('Connected to server', Colors.green);
       });
 
-      _socket?.off('csv-file-uploading-err');
+      // _socket?.off('csv-file-uploading-err');
       _socket?.on('csv-file-uploading-err', (data) {
         debugPrint('Error Data: $data');
         setState(() {
@@ -67,7 +67,7 @@ class _CheckInvoiceByCsvState extends State<CheckInvoiceByCsv> {
         _showSnackbar(_progressMessage, Colors.red);
       });
 
-      _socket?.off('csv-file-uploading');
+      // _socket?.off('csv-file-uploading');
       _socket?.on('csv-file-uploading', (data) {
         Logger().e('Data progress: ${data['progress']}');
         if (data['progress'] != null) {
@@ -76,8 +76,8 @@ class _CheckInvoiceByCsvState extends State<CheckInvoiceByCsv> {
         }
       });
 
-      _socket?.off('csv-file-uploaded');
-      _socket?.once('csv-file-uploaded', (data) {
+      // _socket?.off('csv-file-uploaded');
+      _socket?.on('csv-file-uploaded', (data) {
         log('CSV file uploaded: $data');
         setState(() {
           _progressMessage = data['message'] ?? 'File uploaded successfully';
