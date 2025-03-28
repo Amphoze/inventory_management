@@ -209,7 +209,6 @@ class _CreateOrdersByCSVState extends State<CreateOrdersByCSV> {
   }
 
   Future<void> _processCSVInChunks(List<int> bytes) async {
-    log('_processCSVInChunks');
     try {
       String csvString = String.fromCharCodes(bytes);
       final rawData = const CsvToListConverter().convert(csvString);
@@ -220,7 +219,13 @@ class _CreateOrdersByCSVState extends State<CreateOrdersByCSV> {
 
       log('filteredData: $filteredData');
 
-      if (filteredData.isEmpty) throw Exception('No valid data found in the CSV file.');
+      if (filteredData.length <= 1) {
+        Utils.showSnackBar(context, 'Invalid CSV Format or Empty File. Please make sure the values for any order should not contain any extra spaces, tabs or multiple lines', color: Colors.red);
+        setState(() {
+          _isProcessingFile = false;
+        });
+        return;
+      }
 
       setState(() {
         _csvData = filteredData;
@@ -236,11 +241,10 @@ class _CreateOrdersByCSVState extends State<CreateOrdersByCSV> {
         _isCreateEnabled = _rowCount > 0;
         _isProcessingFile = false;
       });
-    } catch (e) {
-      log('Error processing CSV: $e');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error processing CSV file: $e')),
-      );
+
+    } catch (e, s) {
+      log('Error processing CSV: $e\n$s');
+      Utils.showSnackBar(context, 'Error processing CSV file: $e', color: Colors.red);
       setState(() {
         _isProcessingFile = false;
       });
@@ -269,8 +273,6 @@ class _CreateOrdersByCSVState extends State<CreateOrdersByCSV> {
         'POST',
         Uri.parse('${await Constants.getBaseUrl()}/orders/createOrderByCsv'),
       );
-
-      Logger().e('2');
 
       request.files.add(
         http.MultipartFile.fromBytes(
@@ -363,7 +365,7 @@ class _CreateOrdersByCSVState extends State<CreateOrdersByCSV> {
               Text(_isPickingFile ? 'Selecting file...' : 'Processing file...'),
               const SizedBox(height: 16),
             ],
-            Text('Number of items: $_rowCount'),
+            Text('Number of Orders: $_rowCount'),
             if (_rowCount > 0) ...[
               const SizedBox(height: 16),
               ValueListenableBuilder<double>(
