@@ -364,8 +364,10 @@ class _CreateOrdersByCSVState extends State<CreateOrdersByCSV> {
               Text(_isPickingFile ? 'Selecting file...' : 'Processing file...'),
               const SizedBox(height: 16),
             ],
+
+            Text('Number of items: $_rowCount'),
+
             if (_rowCount > 0) ...[
-              Text('Number of items: $_rowCount'),
               const SizedBox(height: 16),
               ValueListenableBuilder<double>(
                 valueListenable: _progressNotifier,
