@@ -1,12 +1,12 @@
 import 'dart:developer';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:inventory_management/Api/auth_provider.dart';
+import 'package:inventory_management/constants/constants.dart';
 import 'package:inventory_management/stockship_version_control/version_controller.dart';
 import 'package:logger/logger.dart';
 import 'package:provider/provider.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'crm_developer_notes_dialog.dart';
 import 'crm_update_version_dialog.dart';
 import 'model/development_notes_model.dart';
 
@@ -15,6 +15,9 @@ class CrmUpdatedDateWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+
+    String? env = dotenv.env['STOCKSHIP_ENV'];
+
     List<DevelopmentNotesModel> releaseNotes = [];
 
     Future<void> showUpdateDialog(BuildContext context) async {
@@ -41,7 +44,11 @@ class CrmUpdatedDateWidget extends StatelessWidget {
               //   );
               // }
             },
-            child: StreamBuilder<QuerySnapshot>(
+            child: env == 'beta'
+                ?
+            _buildBetaVersionCard()
+                :
+            StreamBuilder<QuerySnapshot>(
               stream: FirebaseFirestore.instance.collectionGroup('ReleaseNotes').snapshots(),
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
@@ -90,6 +97,25 @@ class CrmUpdatedDateWidget extends StatelessWidget {
           ),
         );
       },
+    );
+  }
+
+  Widget _buildBetaVersionCard() {
+    return Container(
+      padding: const EdgeInsets.all(8),
+      decoration: BoxDecoration(
+        color: Colors.blue.shade50,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.blue.shade100),
+      ),
+      child: Text(
+        Constants.betaVersion,
+        style: TextStyle(
+          fontSize: 14,
+          fontWeight: FontWeight.w600,
+          color: Colors.blue.shade700,
+        ),
+      ),
     );
   }
 
