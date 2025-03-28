@@ -56,11 +56,13 @@ class _CreateOrdersByCSVState extends State<CreateOrdersByCSV> {
       );
 
       _socket?.onConnect((_) {
-        Utils.showSnackBar(context, 'Connected to server', color: Colors.green);
+        // Utils.showSnackBar(context, 'Connected to server', color: Colors.green);
+        log('Connected to server :)');
       });
 
       _socket?.off('csv-file-uploading-err');
       _socket?.on('csv-file-uploading-err', (data) {
+        log('CSV file uploading error: $data');
         setState(() {
           _progressMessage = data['message'] ?? 'An error occurred';
         });
@@ -69,7 +71,9 @@ class _CreateOrdersByCSVState extends State<CreateOrdersByCSV> {
 
       _socket?.off('csv-file-uploading');
       _socket?.on('csv-file-uploading', (data) {
-        Logger().e('Data progress: ${data['progress']}');
+
+        log('CSV file uploading: $data');
+
         if (data['progress'] != null) {
           double newProgress = double.tryParse(data['progress'].toString()) ?? 0;
           _progressNotifier.value = newProgress;
