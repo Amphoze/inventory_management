@@ -18,6 +18,8 @@ class _ProductDataDisplayState extends State<ProductDataDisplay> {
   List<Map<String, dynamic>> failedProducts = [];
   bool showFailedProducts = false;
 
+  bool downloadingTemplate = false;
+
   Future<void> _uploadProducts(BuildContext context) async {
     final authProvider = AuthProvider();
     final productDataProvider = Provider.of<ProductDataProvider>(context, listen: false);
@@ -216,8 +218,18 @@ class _ProductDataDisplayState extends State<ProductDataDisplay> {
                 ],
                 const SizedBox(width: 16),
                 ElevatedButton(
-                  onPressed: () => AuthProvider().downloadTemplate(context, 'product'),
-                  child: const Text('Download Template'),
+                  onPressed: () async {
+                    setState(() {
+                      downloadingTemplate = true;
+                    });
+
+                    await AuthProvider().downloadTemplate(context, 'product');
+
+                    setState(() {
+                      downloadingTemplate = false;
+                    });
+                  },
+                  child: downloadingTemplate ? const CircularProgressIndicator(color: Colors.white) : const Text('Download Template'),
                 ),
                 const SizedBox(width: 16.0),
                 ElevatedButton(

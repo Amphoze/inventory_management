@@ -894,9 +894,11 @@ class AuthProvider with ChangeNotifier {
   }
 
   Future<Map<String, dynamic>?> createProduct(List<Map<String, dynamic>> productData) async {
+
     String baseUrl = await Constants.getBaseUrl();
 
     final url = Uri.parse('$baseUrl/products');
+
     try {
       final token = await getToken();
       final response = await http.post(
@@ -921,8 +923,11 @@ class AuthProvider with ChangeNotifier {
           'successfulProducts': responseData['successfulProducts'],
           'failedProducts': responseData['failedProducts'],
         };
-      } else {
+      }
+      else {
+
         final errorResponse = json.decode(response.body);
+
         String errorMessage;
 
         if (response.statusCode == 400) {
@@ -937,8 +942,8 @@ class AuthProvider with ChangeNotifier {
 
         return {
           'message': errorMessage,
-          'successfulProducts': [],
-          'failedProducts': [],
+          'successfulProducts': errorResponse['successfulProducts'] ?? [],
+          'failedProducts': errorResponse['failedProducts'] ?? [],
         };
       }
     } catch (e) {
