@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import 'package:inventory_management/Custom-Files/colors.dart';
 import 'package:inventory_management/Custom-Files/custom_pagination.dart';
 import 'package:inventory_management/Custom-Files/loading_indicator.dart';
+import 'package:inventory_management/Custom-Files/outer_packaging_search_field.dart';
 import 'package:inventory_management/Custom-Files/utils.dart';
 import 'package:inventory_management/Widgets/big_combo_card.dart';
 import 'package:inventory_management/Widgets/order_info.dart';
@@ -348,78 +349,312 @@ class _OrdersNewPageState extends State<OrdersNewPage> with TickerProviderStateM
                             ),
                     ),
                     const SizedBox(width: 8),
+
                     ElevatedButton(
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.primaryBlue,
                       ),
-                      onPressed: ordersProvider.isConfirm
-                          ? null
-                          : () async {
-                              List<String> selectedOrderIds = provider.readyOrders
-                                  .asMap()
-                                  .entries
-                                  .where((entry) => provider.selectedReadyOrders[entry.key])
-                                  .map((entry) => entry.value.orderId)
-                                  .toList();
+                      onPressed: () async {
 
-                              if (selectedOrderIds.isEmpty) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text('No orders selected'),
-                                    backgroundColor: AppColors.cardsred,
+                        if (ordersProvider.isConfirm) return;
+
+                        List<String> selectedOrderIds = provider.readyOrders
+                            .asMap()
+                            .entries
+                            .where((entry) => provider.selectedReadyOrders[entry.key])
+                            .map((entry) => entry.value.orderId)
+                            .toList();
+
+                        log('Selected Order IDs: $selectedOrderIds');
+
+                        if (selectedOrderIds.isEmpty) {
+                          Utils.showSnackBar(context, 'No orders selected', color: Colors.red);
+                          return;
+                        }
+
+                        List<Order> orders = ordersProvider.readyOrders.where((order) => selectedOrderIds.contains(order.orderId)).toList();
+
+                        List<Order> ordersWithWeightAbove20 = orders.where((order) => order.totalWeight > 20).toList();
+
+                        if (ordersWithWeightAbove20.isEmpty) {
+                          Utils.showSnackBar(context, 'Confirmation Started!!', color: Colors.green);
+                          await ordersProvider.confirmOrders(context, selectedOrderIds);
+                          return;
+                        }
+
+                        // Ask to Split Order or Edit Packaging
+                        bool editOuterPackaging = await showDialog<bool?>(
+                            context: context,
+                            builder: (context) {
+                              return Dialog(
+                                backgroundColor: Colors.white,
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 15),
+                                  width: MediaQuery.of(context).size.width * 0.35,
+                                  constraints: BoxConstraints(
+                                    maxHeight: MediaQuery.of(context).size.height * 0.5,
                                   ),
-                                );
-                              } else {
-                                Utils.showSnackBar(context, 'Confirmation Started!!');
-
-                                // String resultMessage =
-                                await provider.confirmOrders(context, selectedOrderIds);
-
-                                // Color snackBarColor;
-                                // if (resultMessage.contains('success')) {
-                                //   snackBarColor = AppColors.green; // Success: Green
-                                // } else if (resultMessage.contains('error') || resultMessage.contains('failed')) {
-                                //   snackBarColor = AppColors.cardsred; // Error: Red
-                                // } else {
-                                //   snackBarColor = AppColors.orange; // Other: Orange
-                                // }
-                                //
-                                // ScaffoldMessenger.of(context).showSnackBar(
-                                //   SnackBar(
-                                //     content: Text(resultMessage),
-                                //     backgroundColor: snackBarColor,
-                                //   ),
-                                // );
-                              }
-                            },
-                      child: ordersProvider.isConfirm
-                          ?
-                          // const SizedBox(
-                          //   width: 20,
-                          //   height: 20,
-                          //   child: CircularProgressIndicator(color: Colors.white),
-                          // )
-                          ValueListenableBuilder<double>(
-                              valueListenable: ordersProvider.progressNotifier,
-                              builder: (context, value, child) {
-                                return Text.rich(
-                                  TextSpan(
-                                    text: 'Progress: ',
+                                  decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    borderRadius: BorderRadius.circular(15),
+                                  ),
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    mainAxisSize: MainAxisSize.min,
                                     children: [
-                                      TextSpan(
-                                        text: '${value.toStringAsFixed(2)}%',
-                                        style: const TextStyle(fontWeight: FontWeight.normal),
+                                      const Text(
+                                        'Warning',
+                                        style: TextStyle(
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.bold,
+                                          color: Colors.red
+                                        ),
+                                      ),
+
+                                      const SizedBox(height: 20),
+
+                                      const Text(
+                                        'Cannot confirm orders with weight above 20 KG..! Either split below orders or edit packaging to confirm them.',
+                                        style: TextStyle(
+                                          fontSize: 16,
+                                          color: Colors.black,
+                                        ),
+                                      ),
+
+                                      const SizedBox(height: 10),
+
+                                      Text(
+                                        ordersWithWeightAbove20.map((order) => order.orderId).toList().join(', '),
+                                        style: const TextStyle(
+                                          fontSize: 14,
+                                          color: Colors.black
+                                        ),
+                                      ),
+
+                                      const SizedBox(height: 25),
+
+                                      Row(
+                                        mainAxisAlignment: MainAxisAlignment.end,
+                                        children: [
+
+                                          TextButton(
+                                            onPressed: () {
+                                              Navigator.pop(context, true);
+                                            },
+                                            style: TextButton.styleFrom(
+                                                backgroundColor: Colors.white
+                                            ),
+                                            child: const Text(
+                                              'Edit Packing',
+                                              style: TextStyle(
+                                                fontSize: 14,
+                                                fontWeight: FontWeight.bold,
+                                                color: AppColors.primaryBlue,
+                                              ),
+                                            )
+                                          ),
+
+                                          const SizedBox(width: 20),
+
+                                          TextButton(
+                                            onPressed: () {
+                                              Navigator.pop(context, false);
+                                            },
+                                            style: TextButton.styleFrom(
+                                              backgroundColor: Colors.white
+                                            ),
+                                            child: const Text(
+                                              'OK',
+                                              style: TextStyle(
+                                                fontSize: 14,
+                                                fontWeight: FontWeight.bold,
+                                                color: AppColors.primaryBlue,
+                                              ),
+                                            )
+                                          ),
+                                        ],
                                       ),
                                     ],
-                                    style: const TextStyle(fontWeight: FontWeight.bold),
                                   ),
-                                );
-                              },
-                            )
-                          : const Text(
-                              'Confirm Orders',
-                              style: TextStyle(color: Colors.white),
+                                ),
+                              );
+                            }
+                          ) ?? false;
+
+                        if (!editOuterPackaging) {
+                          return;
+                        }
+
+                        bool isConfirmed = await showDialog<bool?>(
+                            context: context,
+                            builder: (context) {
+                              return Dialog(
+                                backgroundColor: Colors.white,
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 15),
+                                  width: MediaQuery.of(context).size.width * 0.6,
+                                  constraints: BoxConstraints(
+                                    maxHeight: MediaQuery.of(context).size.height * 0.6,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    borderRadius: BorderRadius.circular(15),
+                                  ),
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      const Text(
+                                        'Edit Outer Packaging',
+                                        style: TextStyle(
+                                            fontSize: 18,
+                                            fontWeight: FontWeight.bold,
+                                            color: Colors.red
+                                        ),
+                                      ),
+
+                                      const SizedBox(height: 20),
+
+                                      ListView.builder(
+                                          shrinkWrap: true,
+                                          itemCount: ordersWithWeightAbove20.length,
+                                          itemBuilder: (context, index) {
+                                            final order = ordersWithWeightAbove20[index];
+                                            return Padding(
+                                              padding: const EdgeInsets.symmetric(vertical: 5),
+                                              child: Row(
+                                                children: [
+
+                                                  SizedBox(
+                                                    width: MediaQuery.of(context).size.width * 0.2,
+                                                    child: Text(
+                                                      order.orderId,
+                                                      style: const TextStyle(
+                                                          fontSize: 14,
+                                                          fontWeight: FontWeight.bold,
+                                                          color: Colors.black54
+                                                      ),
+                                                    ),
+                                                  ),
+
+                                                  const SizedBox(width: 15),
+
+                                                  Expanded(
+                                                    child: OuterPackagingSearchableTextField(
+                                                      isRequired: true,
+                                                      onSelected: (packaging) {
+                                                        final sku = packaging?.outerPackageSku ?? '';
+
+                                                        ordersProvider.setOuterPackagingOrders(order.orderId, sku);
+                                                      },
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            );
+                                          }
+                                      ),
+
+                                      const SizedBox(height: 20),
+
+                                      Row(
+                                        mainAxisAlignment: MainAxisAlignment.end,
+                                        children: [
+
+                                          TextButton(
+                                              onPressed: () {
+                                                Navigator.pop(context, false);
+                                              },
+                                              style: TextButton.styleFrom(
+                                                  backgroundColor: Colors.white
+                                              ),
+                                              child: const Text(
+                                                'Cancel',
+                                                style: TextStyle(
+                                                  fontSize: 14,
+                                                  fontWeight: FontWeight.bold,
+                                                  color: Colors.red,
+                                                ),
+                                              )
+                                          ),
+
+                                          const SizedBox(width: 20),
+
+                                          TextButton(
+                                              onPressed: () {
+                                                Navigator.pop(context, true);
+                                              },
+                                              style: TextButton.styleFrom(
+                                                  backgroundColor: Colors.white
+                                              ),
+                                              child: const Text(
+                                                'Confirm',
+                                                style: TextStyle(
+                                                  fontSize: 14,
+                                                  fontWeight: FontWeight.bold,
+                                                  color: AppColors.primaryBlue,
+                                                ),
+                                              )
+                                          ),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              );
+                            }
+                        ) ?? false;
+
+                        if (!isConfirmed) {
+                          Utils.showSnackBar(context, 'Cannot Confirm Order without outer packaging..!', color: Colors.red);
+                          return;
+                        }
+
+                        bool canConfirm = true;
+
+                        log('Order for outer packaging :- ${ordersProvider.outerPackagingOrders}');
+
+                        for (var order in ordersWithWeightAbove20) {
+                          String packagingSku = ordersProvider.outerPackagingOrders[order.orderId] ?? '';
+                          if (packagingSku.isEmpty) {
+                            canConfirm = false;
+                            break;
+                          }
+                        }
+
+                        if (!canConfirm) {
+                          Utils.showSnackBar(context, 'Please enter outer packaging for all orders..!', color: Colors.red);
+                          return;
+                        }
+
+                        Utils.showSnackBar(context, 'Confirmation Started!!', color: Colors.green);
+                        await ordersProvider.confirmOrders(context, selectedOrderIds, hasPackaging: true);
+
+                      },
+                      child: ordersProvider.isConfirm
+                          ?
+                      ValueListenableBuilder<double>(
+                        valueListenable: ordersProvider.progressNotifier,
+                        builder: (context, value, child) {
+                          return Text.rich(
+                            TextSpan(
+                              text: 'Progress: ',
+                              children: [
+                                TextSpan(
+                                  text: '${value.toStringAsFixed(2)}%',
+                                  style: const TextStyle(fontWeight: FontWeight.normal),
+                                ),
+                              ],
+                              style: const TextStyle(fontWeight: FontWeight.bold),
                             ),
+                          );
+                        },
+                      )
+                          :
+                      const Text(
+                        'Confirm Orders',
+                        style: TextStyle(color: Colors.white),
+                      ),
                     ),
                     const SizedBox(width: 8),
                     ElevatedButton(

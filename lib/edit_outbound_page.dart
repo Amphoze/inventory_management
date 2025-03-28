@@ -1349,12 +1349,12 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
                                     label: 'Transaction Number',
                                     icon: Icons.confirmation_number,
                                   ),
-                                  // const SizedBox(height: 10),
-                                  // _buildTextField(
-                                  //   controller: _calcEntryNumberController,
-                                  //   label: 'Calculation Entry Number',
-                                  //   icon: Icons.calculate,
-                                  // ),
+                                  const SizedBox(height: 10),
+                                  _buildTextField(
+                                    controller: _calcEntryNumberController,
+                                    label: 'Calculation Entry Number',
+                                    icon: Icons.calculate,
+                                  ),
                                   const SizedBox(height: 10),
                                   Consumer<OrdersProvider>(
                                     builder: (context, ordersProvider, child) {

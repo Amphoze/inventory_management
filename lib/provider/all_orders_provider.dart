@@ -420,6 +420,9 @@ class AllOrdersProvider with ChangeNotifier {
   }
 
   bool isAllSelected() {
+
+    if (orders.isEmpty) return false;
+
     for (var order in orders) {
       bool value = selectedItems[order.orderId] ?? false;
       if (!value) return false;

@@ -619,7 +619,15 @@ class OrdersProvider with ChangeNotifier {
     super.dispose();
   }
 
-  Future<String> confirmOrders(BuildContext context, List<String> orderIds) async {
+  final Map<String, String> _outerPackagingOrders = {};
+  Map<String, String> get outerPackagingOrders => _outerPackagingOrders;
+  void setOuterPackagingOrders(String orderId, String sku) {
+    _outerPackagingOrders[orderId] = sku;
+    log('Outer Packaging Orders: $_outerPackagingOrders');
+    notifyListeners();
+  }
+
+  Future<String> confirmOrders(BuildContext context, List<String> orderIds, {bool hasPackaging = false}) async {
     String baseUrl = await Constants.getBaseUrl();
     String confirmOrderUrl = '$baseUrl/orders/confirm';
     final String? token = await _getToken();
@@ -633,11 +641,17 @@ class OrdersProvider with ChangeNotifier {
       'Content-Type': 'application/json',
     };
 
-    final body = json.encode({
+    Map<String, dynamic> body = {
       'orderIds': orderIds,
-    });
+    };
 
-    log('Confirming Orders Payload :- $body');
+    if (hasPackaging) {
+      body['outerPackage'] = outerPackagingOrders;
+    }
+
+    final payload = jsonEncode(body);
+
+    log('Confirming Orders Payload :- $payload');
 
     final url = Uri.parse(confirmOrderUrl);
 
@@ -647,7 +661,7 @@ class OrdersProvider with ChangeNotifier {
       final response = await http.post(
         url,
         headers: headers,
-        body: body,
+        body: payload,
       );
 
       final responseData = json.decode(response.body);
