@@ -6,7 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 class Constants {
 
-  static const String betaVersion = 'Beta 1.0.3';
+  static const String betaVersion = 'Beta 1.0.4';
 
   static Future<String> getBaseUrl() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();

@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:inventory_management/Custom-Files/colors.dart';
@@ -147,6 +149,8 @@ class _SearchableDropdownState extends State<SearchableDropdown> {
     final isCombo = widget.isCombo;
     final baseUrl = await Constants.getBaseUrl();
     final url = Uri.parse('$baseUrl${isCombo ? '/combo' : '/products'}?page=$page&limit=$itemsPerPage');
+
+    log('Fetching Products from url :- $url');
 
     try {
       final prefs = await SharedPreferences.getInstance();

@@ -795,6 +795,7 @@ class _CreateOrderPageState extends State<CreateOrderPage> {
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
+
                 Container(
                   width: 150,
                   margin: const EdgeInsets.only(right: 16),
@@ -815,6 +816,7 @@ class _CreateOrderPageState extends State<CreateOrderPage> {
                     },
                   ),
                 ),
+
                 Expanded(
                   child: SearchableDropdown(
                     key: ValueKey(provider.selectedItemType),
@@ -832,6 +834,7 @@ class _CreateOrderPageState extends State<CreateOrderPage> {
                     },
                   ),
                 ),
+
               ],
             ),
             const SizedBox(height: 10),
@@ -906,6 +909,7 @@ class _CreateOrderPageState extends State<CreateOrderPage> {
                       );
                     },
                   ),
+
                   ListView.builder(
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
@@ -971,7 +975,7 @@ class _CreateOrderPageState extends State<CreateOrderPage> {
                         ),
                       );
                     },
-                  )
+                  ),
                 ],
               ),
           ],
