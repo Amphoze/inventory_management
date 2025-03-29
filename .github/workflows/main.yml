@@ -1,0 +1,17 @@
+name: Flutter Web Build and Deploy
+
+on:
+  push:
+    branches:
+      - beta-deployed
+
+jobs:
+  build:
+    runs-on: beta-hosted-runner
+
+    steps:
+    - name: Ensure we're in the correct directory
+      run: |
+        cd /home/ec2-user/
+        echo "Current directory: $(pwd)"
+        ./deploy-stockship-ui.sh
