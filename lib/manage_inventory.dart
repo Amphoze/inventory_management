@@ -7,12 +7,14 @@ import 'package:inventory_management/Custom-Files/utils.dart';
 import 'package:inventory_management/constants/constants.dart';
 import 'package:inventory_management/provider/combo_provider.dart';
 import 'package:inventory_management/provider/inventory_provider.dart';
+import 'package:inventory_management/provider/location_provider.dart';
 import 'package:logger/logger.dart';
 import 'package:provider/provider.dart';
 import 'package:inventory_management/Custom-Files/colors.dart';
 import 'package:http/http.dart' as http;
 import 'package:dropdown_search/dropdown_search.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'Api/auth_provider.dart';
 import 'Api/inventory_api.dart';
 import 'Custom-Files/custom_pagination.dart';
 import 'Custom-Files/data_table.dart';
@@ -32,7 +34,9 @@ class _ManageInventoryPageState extends State<ManageInventoryPage> {
   final ScrollController _scrollController = ScrollController();
   final TextEditingController _searchController = TextEditingController();
   final TextEditingController _pageController = TextEditingController();
-  List<Map<String, dynamic>> subInventories = [];
+  List<Map<String, dynamic>> subInventories = [
+    {'warehouseId': null, 'thresholdQuantity': null}
+  ];
   List<DropdownMenuItem<String>> dropdownItemsForWarehouses = [];
   String? selectedProductId;
   String? selectedProductName;
@@ -47,7 +51,7 @@ class _ManageInventoryPageState extends State<ManageInventoryPage> {
       Provider.of<InventoryProvider>(context, listen: false).fetchInventory(page: 1);
       Provider.of<ComboProvider>(context, listen: false).fetchProducts();
 
-      getDropValueForWarehouse();
+      // getDropValueForWarehouse();
 
       searchController.addListener(() {
         log("Search text: ${searchController.text}");
@@ -63,40 +67,34 @@ class _ManageInventoryPageState extends State<ManageInventoryPage> {
     downloadUrl = await context.read<InventoryProvider>().getInventoryItems();
   }
 
-  void getDropValueForWarehouse() async {
-    await Provider.of<ComboProvider>(context, listen: false).fetchWarehouses();
-    List<DropdownMenuItem<String>> newItems = [];
-    ComboProvider comboProvider = Provider.of<ComboProvider>(context, listen: false);
-
-    for (var warehouse in comboProvider.warehouses) {
-      newItems.add(DropdownMenuItem<String>(
-        value: warehouse['_id'],
-        child: Text(warehouse['name'] ?? 'Unknown'),
-      ));
-    }
-
-    setState(() {
-      dropdownItemsForWarehouses = newItems;
-      subInventories.add({'warehouseId': null, 'quantity': null});
-    });
-  }
+  // void getDropValueForWarehouse() async {
+  //   await Provider.of<ComboProvider>(context, listen: false).fetchWarehouses();
+  //   List<DropdownMenuItem<String>> newItems = [];
+  //   ComboProvider comboProvider = Provider.of<ComboProvider>(context, listen: false);
+  //
+  //   for (var warehouse in comboProvider.warehouses) {
+  //     newItems.add(DropdownMenuItem<String>(
+  //       value: warehouse['_id'],
+  //       child: Text(warehouse['name'] ?? 'Unknown'),
+  //     ));
+  //   }
+  //
+  //   setState(() {
+  //     dropdownItemsForWarehouses = newItems;
+  //     subInventories.add({'warehouseId': null, 'quantity': null});
+  //   });
+  // }
 
   void addSubInventory() {
     setState(() {
-      subInventories.add({'warehouseId': null, 'quantity': null});
+      subInventories.add({'warehouseId': null, 'thresholdQuantity': null});
     });
   }
 
-  // Remove SubInventory entry
   void removeSubInventory(int index) {
     setState(() {
       subInventories.removeAt(index);
     });
-  }
-
-  void cancelForm() {
-    final comboProvider = Provider.of<ComboProvider>(context, listen: false);
-    comboProvider.toggleFormVisibility(); // Hide the form
   }
 
   Future<void> saveInventoryToApi(BuildContext context) async {
@@ -133,7 +131,6 @@ class _ManageInventoryPageState extends State<ManageInventoryPage> {
       print('Response status: ${response.statusCode}');
       print('Response body: ${response.body}');
 
-
       final responseData = jsonDecode(response.body);
 
       if (response.statusCode == 201) {
@@ -147,7 +144,6 @@ class _ManageInventoryPageState extends State<ManageInventoryPage> {
       final details = responseData['details'] ?? 'Status Code: ${response.statusCode}';
 
       Utils.showSnackBar(context, message, details: details, color: Colors.red);
-
     } catch (e) {
       Utils.showSnackBar(context, 'Error occured while creating inventory..!', details: e.toString(), color: Colors.red);
     }
@@ -399,13 +395,9 @@ class _ManageInventoryPageState extends State<ManageInventoryPage> {
 
   @override
   Widget build(BuildContext context) {
-
     final provider = Provider.of<InventoryProvider>(context);
     final comboProvider = Provider.of<ComboProvider>(context);
-
     final paginatedData = provider.inventory;
-
-    // log('rows: $paginatedData');
 
     List<String> columnNames = [
       'COMPANY NAME',
@@ -479,7 +471,7 @@ class _ManageInventoryPageState extends State<ManageInventoryPage> {
                         ),
                         contentPadding: const EdgeInsets.symmetric(vertical: 10, horizontal: 20),
                         prefixIcon: IconButton(
-                          tooltip: 'Search',
+                            tooltip: 'Search',
                             icon: const Icon(Icons.search, color: AppColors.primaryBlue),
                             onPressed: () {
                               final value = _searchController.text.trim();
@@ -491,7 +483,7 @@ class _ManageInventoryPageState extends State<ManageInventoryPage> {
                               }
                             }),
                         suffixIcon: IconButton(
-                          tooltip: 'Clear',
+                            tooltip: 'Clear',
                             icon: const Icon(Icons.close, color: AppColors.cardsred),
                             onPressed: () {
                               final searchTerm = _searchController.text.trim();
@@ -651,7 +643,7 @@ class _ManageInventoryPageState extends State<ManageInventoryPage> {
                       children: [
                         if (comboProvider.isFormVisible) ...[
                           const SizedBox(height: 16),
-                          const Text("Manage Inventory", style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+                          const Text("Create Inventory", style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
                           const SizedBox(height: 16),
 
                           const Text("Product", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
@@ -668,7 +660,6 @@ class _ManageInventoryPageState extends State<ManageInventoryPage> {
                               }
                             },
                           ),
-
                           const SizedBox(height: 16),
 
                           // SubInventory List
@@ -690,39 +681,80 @@ class _ManageInventoryPageState extends State<ManageInventoryPage> {
                                       style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                                     ),
                                     const SizedBox(height: 16),
+                                    Row(
+                                      children: [
+                                        Expanded(
+                                          child: Consumer<LocationProvider>(
+                                            builder: (context, pro, child) {
+                                              return _buildDropdown(
+                                                value: subInventories[index]['warehouseId'],
+                                                label: 'Warehouse',
+                                                items: pro.warehouses.map((e) => e['name'].toString()).toList(),
+                                                onChanged: (value) async {
+                                                  if (value != null) {
+                                                    final tempWarehouse = pro.warehouses.firstWhere((e) => e['name'] == value);
+                                                    final id = tempWarehouse['_id'].toString();
+                                                    subInventories[index]['warehouseId'] = id;
 
-                                    // Warehouse Dropdown
-                                    DropdownButtonFormField<String>(
-                                      hint: const Text('Select Warehouse'),
-                                      isExpanded: true,
-                                      value: subInventories[index]['warehouseId'],
-                                      items: dropdownItemsForWarehouses,
-                                      onChanged: (String? newValue) {
-                                        setState(() {
-                                          subInventories[index]['warehouseId'] = newValue;
-                                        });
-                                      },
-                                      decoration: const InputDecoration(
-                                        labelText: 'Warehouse',
-                                        border: OutlineInputBorder(),
-                                      ),
+                                                    await _fetchBins(id);
+                                                  }
+                                                },
+                                                validator: (value) => value == null ? 'Please select a warehouse' : null,
+                                              );
+                                            },
+                                          ),
+                                        ),
+                                        const SizedBox(width: 8),
+                                        // Quantity Input
+                                        Expanded(
+                                          child: TextFormField(
+                                            decoration: const InputDecoration(
+                                              labelText: 'Threshold Quantity',
+                                              border: OutlineInputBorder(),
+                                            ),
+                                            keyboardType: TextInputType.number,
+                                            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                                            onChanged: (value) {
+                                              setState(() {
+                                                subInventories[index]['thresholdQuantity'] = int.tryParse(value) ?? 0;
+                                              });
+                                            },
+                                          ),
+                                        ),
+                                      ],
                                     ),
                                     const SizedBox(height: 16),
-
-                                    // Quantity Input
-                                    TextFormField(
-                                      decoration: const InputDecoration(
-                                        labelText: 'Quantity',
-                                        border: OutlineInputBorder(),
-                                      ),
-                                      keyboardType: TextInputType.number,
-                                      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                                      onChanged: (value) {
+                                    isLoadingBins
+                                        ? const CircularProgressIndicator()
+                                        : _buildDropdown(
+                                      value: bins.isNotEmpty && bins.contains(_binNameController.text)
+                                          ? _binNameController.text
+                                          : null,
+                                      label: 'Bin Name',
+                                      items: bins.isEmpty ? ['No bins available'] : bins,
+                                      onChanged: bins.isEmpty
+                                          ? null
+                                          : (value) {
                                         setState(() {
-                                          subInventories[index]['quantity'] = int.tryParse(value) ?? 0;
+                                          _binNameController.text = value ?? '';
                                         });
                                       },
+                                      validator: (value) =>
+                                      value == null || value.isEmpty ? 'Please select a bin' : null,
                                     ),
+                                    const SizedBox(height: 8),
+                                    TextFormField(
+                                      controller: _binQtyController,
+                                      decoration: const InputDecoration(labelText: 'Bin Quantity'),
+                                      keyboardType: TextInputType.number,
+                                      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                                      validator: (value) {
+                                        if (value == null || value.isEmpty) return 'Please enter Bin Quantity';
+                                        if (int.tryParse(value) == null) return 'Please enter a valid number';
+                                        return null;
+                                      },
+                                    ),
+                                    const SizedBox(height: 16),
                                     Align(
                                       alignment: Alignment.centerRight,
                                       child: TextButton.icon(
@@ -789,7 +821,7 @@ class _ManageInventoryPageState extends State<ManageInventoryPage> {
 
                               // Cancel button
                               ElevatedButton(
-                                onPressed: cancelForm,
+                                onPressed: comboProvider.toggleFormVisibility,
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: Colors.red,
                                 ),
@@ -857,6 +889,76 @@ class _ManageInventoryPageState extends State<ManageInventoryPage> {
             ),
         ],
       ),
+    );
+  }
+
+  List<String> bins = [];
+  bool isLoadingBins = false;
+  final TextEditingController _binNameController = TextEditingController();
+  final  TextEditingController _binQtyController = TextEditingController();
+
+  Future<void> _fetchBins(String warehouseId) async {
+    setState(() => isLoadingBins = true);
+    String baseUrl = await Constants.getBaseUrl();
+    final url = Uri.parse('$baseUrl/bin/$warehouseId');
+
+    try {
+      final token = await Provider.of<AuthProvider>(context, listen: false).getToken();
+      final response = await http.get(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      print('Bins API Response: ${response.body}');
+      final res = json.decode(response.body);
+      if (response.statusCode == 200 && res.containsKey('bins')) {
+        setState(() {
+          bins = List<String>.from(res['bins'].map((bin) => bin['binName'].toString()));
+          _binNameController.clear();
+          print('Fetched bins: $bins');
+        });
+      } else {
+        print('No bins key in response');
+        setState(() => bins = []);
+      }
+    } catch (error) {
+      print('Error fetching bins: $error');
+      // Show SnackBar after dialog is closed
+      if (mounted) {
+        Navigator.of(context).pop(); // Close any open dialog
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to fetch bins: $error'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      setState(() => isLoadingBins = false);
+    }
+  }
+
+  Widget _buildDropdown({
+    required String? value,
+    required String label,
+    required List<String> items,
+    required void Function(String?)? onChanged,
+    String? Function(String?)? validator,
+  }) {
+    print('Building dropdown with value: $value, items: $items');
+    return DropdownButtonFormField<String>(
+      value: value,
+      decoration: InputDecoration(
+        label: Text(label, style: const TextStyle(color: Colors.black)),
+      ),
+      items: items.map((item) => DropdownMenuItem(value: item, child: Text(item))).toList(),
+      onChanged: onChanged,
+      validator: validator,
+      hint: Text('Select $label'),
+      isExpanded: true,
     );
   }
 }

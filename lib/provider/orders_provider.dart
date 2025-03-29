@@ -772,55 +772,6 @@ class OrdersProvider with ChangeNotifier {
     }
   }
 
-  Future<void> approveFailedOrders(BuildContext context) async {
-    setUpdating(true);
-    notifyListeners();
-    Logger().e('failedOrders: $failedOrders');
-
-    final List<String> failedOrderIds =
-        failedOrders.asMap().entries.where((entry) => _selectedFailedOrders[entry.key]).map((entry) => entry.value.orderId).toList();
-    Logger().e('failedOrderIds: $failedOrderIds');
-
-    if (failedOrderIds.isEmpty) {
-      _showSnackbar(context, 'No orders selected to update.');
-      return;
-    }
-
-    for (String orderId in failedOrderIds) {
-      await updateOrderStatus(context, orderId, 1);
-    }
-
-    await fetchFailedOrders();
-
-    allSelectedFailed = false;
-    _selectedFailedOrders = List<bool>.filled(failedOrders.length, false);
-    selectedFailedItemsCount = 0;
-    setUpdating(false);
-    notifyListeners();
-  }
-
-  Future<void> updateReadyToConfirmOrders(BuildContext context) async {
-    final List<String> readyOrderIds =
-        readyOrders.asMap().entries.where((entry) => _selectedReadyOrders[entry.key]).map((entry) => entry.value.orderId).toList();
-
-    if (readyOrderIds.isEmpty) {
-      _showSnackbar(context, 'No orders selected to update.');
-      return;
-    }
-
-    for (String orderId in readyOrderIds) {
-      await updateOrderStatus(context, orderId, 2);
-    }
-
-    await fetchReadyOrders();
-
-    allSelectedReady = false;
-    _selectedReadyOrders = List<bool>.filled(readyOrders.length, false);
-    selectedReadyItemsCount = 0;
-
-    notifyListeners();
-  }
-
   Future<void> updateOrderStatus(BuildContext context, String orderId, int newStatus) async {
     final String? token = await _getToken();
     if (token == null) {
@@ -859,6 +810,33 @@ class OrdersProvider with ChangeNotifier {
       _showSnackbar(context, 'An error occurred while updating the order status: $error');
       log('An error occurred while updating the order status: $error');
     }
+  }
+
+  Future<void> approveFailedOrders(BuildContext context) async {
+    setUpdating(true);
+    notifyListeners();
+    Logger().e('failedOrders: $failedOrders');
+
+    final List<String> failedOrderIds =
+        failedOrders.asMap().entries.where((entry) => _selectedFailedOrders[entry.key]).map((entry) => entry.value.orderId).toList();
+    Logger().e('failedOrderIds: $failedOrderIds');
+
+    if (failedOrderIds.isEmpty) {
+      _showSnackbar(context, 'No orders selected to update.');
+      return;
+    }
+
+    for (String orderId in failedOrderIds) {
+      await updateOrderStatus(context, orderId, 1);
+    }
+
+    await fetchFailedOrders();
+
+    allSelectedFailed = false;
+    _selectedFailedOrders = List<bool>.filled(failedOrders.length, false);
+    selectedFailedItemsCount = 0;
+    setUpdating(false);
+    notifyListeners();
   }
 
   void _showSnackbar(BuildContext context, String message) {

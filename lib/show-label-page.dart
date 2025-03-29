@@ -349,7 +349,12 @@ class _ShowLabelPageState extends State<ShowLabelPage> {
   }
 
   String _formatProductSkus(List<dynamic> products) {
-    return products.map((product) => product['productSku'].toString()).join(', ');
+    if (products.isEmpty) return '';
+    return products.map((product) {
+      if (product['sku']?.toString().isNotEmpty ?? false) {
+        return product['sku']?.toString() ?? '';
+      }
+    }).join(', ');
   }
 
   void _showUpdateQuantityDialog(BuildContext context, Map<String, dynamic> data) {
@@ -1250,7 +1255,6 @@ class _LabelButtonsState extends State<LabelButtons> {
       }
 
       if (res["res"] == "success") {
-
         setState(() {
           labelProvider.clearControllers(widget.dropdownKey);
           showLabelForm = false;
@@ -1262,7 +1266,6 @@ class _LabelButtonsState extends State<LabelButtons> {
             backgroundColor: Colors.green,
           ),
         );
-
       } else {
         throw res["res"] ?? 'Unknown error occurred';
       }

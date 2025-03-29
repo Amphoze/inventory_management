@@ -1,10 +1,18 @@
 {
-  "message": "0 order processed successfully.",
-  "updatedOrders": [],
-  "failedOrders": [
+  "product_id": "TEST-1001",
+  "subInventory": [
     {
-      "orderId": "TEST-PK-20",
-      "reason": "Invoice creation failed"
+      "warehouseId": "66fceb5163c6d5c106cfa809",
+      "thresholdQuantity": 10,
+      "bin": [
+        {
+          "binName": "test|A",
+          "binQty": 50,
+          "binPriority": 1
+        }
+      ]
     }
-  ]
+  ],
+  "actionType": "INTERNAL_UPDATE",
+  "additionalInfo": {}
 }
