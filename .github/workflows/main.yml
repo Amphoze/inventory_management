@@ -7,40 +7,11 @@ on:
 
 jobs:
   build:
-    runs-on: amazonlinux-2023
+    runs-on: beta-hosted-runner
 
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
-      with:
-        fetch-depth: 0
-
     - name: Ensure we're in the correct directory
       run: |
-        cd /home/ec2-user/stockship-ui
+        cd /home/ec2-user/
         echo "Current directory: $(pwd)"
-        ls -al  # List files to verify it's the correct repo
-
-    - name: Update Git repository
-      run: |
-        cd /home/ec2-user/stockship-ui
-        git checkout beta-deployed
-        git pull origin beta-deployed
-
-    - name: Install dependencies
-      run: |
-        cd /home/ec2-user/stockship-ui
-        flutter pub get
-
-    - name: Build Flutter Web
-      run: |
-        cd /home/ec2-user/stockship-ui
-        flutter build web --release
-
-    - name: Copy build to /var/www/mybuild/html/
-      run: |
-        sudo cp -r /home/ec2-user/stockship-ui/build/web/* /var/www/stockship/html/
-
-    - name: Restart Nginx
-      run: |
-        sudo nginx -s reload
+        ./deploy-stockship-ui.sh
