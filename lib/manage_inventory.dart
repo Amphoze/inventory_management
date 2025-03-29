@@ -35,7 +35,13 @@ class _ManageInventoryPageState extends State<ManageInventoryPage> {
   final TextEditingController _searchController = TextEditingController();
   final TextEditingController _pageController = TextEditingController();
   List<Map<String, dynamic>> subInventories = [
-    {'warehouseId': null, 'thresholdQuantity': null}
+    {
+      'warehouseId': null,
+      'thresholdQuantity': null,
+      "bin": [
+        {"binName": null, "binQty": null, "binPriority": 1}
+      ]
+    }
   ];
   List<DropdownMenuItem<String>> dropdownItemsForWarehouses = [];
   String? selectedProductId;
@@ -67,32 +73,22 @@ class _ManageInventoryPageState extends State<ManageInventoryPage> {
     downloadUrl = await context.read<InventoryProvider>().getInventoryItems();
   }
 
-  // void getDropValueForWarehouse() async {
-  //   await Provider.of<ComboProvider>(context, listen: false).fetchWarehouses();
-  //   List<DropdownMenuItem<String>> newItems = [];
-  //   ComboProvider comboProvider = Provider.of<ComboProvider>(context, listen: false);
-  //
-  //   for (var warehouse in comboProvider.warehouses) {
-  //     newItems.add(DropdownMenuItem<String>(
-  //       value: warehouse['_id'],
-  //       child: Text(warehouse['name'] ?? 'Unknown'),
-  //     ));
-  //   }
-  //
-  //   setState(() {
-  //     dropdownItemsForWarehouses = newItems;
-  //     subInventories.add({'warehouseId': null, 'quantity': null});
-  //   });
-  // }
-
   void addSubInventory() {
     setState(() {
-      subInventories.add({'warehouseId': null, 'thresholdQuantity': null});
+      warehouse.add(null);
+      subInventories.add({
+        'warehouseId': null,
+        'thresholdQuantity': null,
+        "bin": [
+          {"binName": null, "binQty": null, "binPriority": 1}
+        ]
+      });
     });
   }
 
   void removeSubInventory(int index) {
     setState(() {
+      warehouse.removeAt(index);
       subInventories.removeAt(index);
     });
   }
@@ -110,12 +106,15 @@ class _ManageInventoryPageState extends State<ManageInventoryPage> {
       "subInventory": subInventories.map((subInventory) {
         return {
           "warehouseId": subInventory['warehouseId'],
-          "quantity": subInventory['quantity'],
+          "thresholdQuantity": subInventory['thresholdQuantity'],
+          "bin": subInventory['bin'],
         };
       }).toList(),
     };
 
-    //print("Data to send: $requestData");
+    final payload = jsonEncode(requestData);
+
+    log('Payload is: $payload');
 
     try {
       final token = await getToken();
@@ -125,7 +124,7 @@ class _ManageInventoryPageState extends State<ManageInventoryPage> {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer $token',
         },
-        body: jsonEncode(requestData),
+        body: payload,
       );
 
       print('Response status: ${response.statusCode}');
@@ -687,14 +686,20 @@ class _ManageInventoryPageState extends State<ManageInventoryPage> {
                                           child: Consumer<LocationProvider>(
                                             builder: (context, pro, child) {
                                               return _buildDropdown(
-                                                value: subInventories[index]['warehouseId'],
+                                                value: warehouse[index],
                                                 label: 'Warehouse',
                                                 items: pro.warehouses.map((e) => e['name'].toString()).toList(),
                                                 onChanged: (value) async {
                                                   if (value != null) {
                                                     final tempWarehouse = pro.warehouses.firstWhere((e) => e['name'] == value);
                                                     final id = tempWarehouse['_id'].toString();
-                                                    subInventories[index]['warehouseId'] = id;
+                                                    setState(() {
+                                                      warehouse[index] = value;
+                                                      subInventories[index]['warehouseId'] = id;
+                                                    });
+
+                                                    log('ID: $id');
+                                                    log('Warehouse ID: ${subInventories[index]['warehouseId']}');
 
                                                     await _fetchBins(id);
                                                   }
@@ -727,30 +732,34 @@ class _ManageInventoryPageState extends State<ManageInventoryPage> {
                                     isLoadingBins
                                         ? const CircularProgressIndicator()
                                         : _buildDropdown(
-                                      value: bins.isNotEmpty && bins.contains(_binNameController.text)
-                                          ? _binNameController.text
-                                          : null,
-                                      label: 'Bin Name',
-                                      items: bins.isEmpty ? ['No bins available'] : bins,
-                                      onChanged: bins.isEmpty
-                                          ? null
-                                          : (value) {
-                                        setState(() {
-                                          _binNameController.text = value ?? '';
-                                        });
-                                      },
-                                      validator: (value) =>
-                                      value == null || value.isEmpty ? 'Please select a bin' : null,
-                                    ),
+                                            value: subInventories[index]['bin'][0]['binName'],
+                                            label: 'Bin Name',
+                                            items: bins.isEmpty ? ['No bins available'] : bins,
+                                            onChanged: bins.isEmpty
+                                                ? null
+                                                : (value) {
+                                                    log("1. Sub Inventory at $index is ${subInventories}");
+                                                    setState(() {
+                                                      subInventories[index]['bin'][0]['binName'] = value;
+                                                    });
+                                                    log("2. Sub Inventory at $index is ${subInventories[index]}");
+                                                  },
+                                            validator: (value) => value == null || value.isEmpty ? 'Please select a bin' : null,
+                                          ),
                                     const SizedBox(height: 8),
                                     TextFormField(
-                                      controller: _binQtyController,
+                                      // controller: _binQtyController,
+                                      onChanged: (value) {
+                                        setState(() {
+                                          subInventories[index]['bin'][0]['binQty'] = value.trim();
+                                        });
+                                      },
                                       decoration: const InputDecoration(labelText: 'Bin Quantity'),
                                       keyboardType: TextInputType.number,
                                       inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                                       validator: (value) {
                                         if (value == null || value.isEmpty) return 'Please enter Bin Quantity';
-                                        if (int.tryParse(value) == null) return 'Please enter a valid number';
+                                        // if (int.tryParse(value) == null) return 'Please enter a valid number';
                                         return null;
                                       },
                                     ),
@@ -893,9 +902,11 @@ class _ManageInventoryPageState extends State<ManageInventoryPage> {
   }
 
   List<String> bins = [];
+  List<String?> warehouse = [null];
   bool isLoadingBins = false;
-  final TextEditingController _binNameController = TextEditingController();
-  final  TextEditingController _binQtyController = TextEditingController();
+
+  // final TextEditingController _binNameController = TextEditingController();
+  // final TextEditingController _binQtyController = TextEditingController();
 
   Future<void> _fetchBins(String warehouseId) async {
     setState(() => isLoadingBins = true);
@@ -912,13 +923,13 @@ class _ManageInventoryPageState extends State<ManageInventoryPage> {
         },
       );
 
-      print('Bins API Response: ${response.body}');
+      // print('Bins API Response: ${response.body}');
       final res = json.decode(response.body);
       if (response.statusCode == 200 && res.containsKey('bins')) {
         setState(() {
           bins = List<String>.from(res['bins'].map((bin) => bin['binName'].toString()));
-          _binNameController.clear();
-          print('Fetched bins: $bins');
+          // _binNameController.clear();
+          log('Fetched bins: $bins');
         });
       } else {
         print('No bins key in response');

@@ -1,18 +1,37 @@
-{
-  "product_id": "TEST-1001",
-  "subInventory": [
-    {
-      "warehouseId": "66fceb5163c6d5c106cfa809",
-      "thresholdQuantity": 10,
-      "bin": [
-        {
-          "binName": "test|A",
-          "binQty": 50,
-          "binPriority": 1
-        }
-      ]
-    }
-  ],
-  "actionType": "INTERNAL_UPDATE",
-  "additionalInfo": {}
-}
+[
+  {
+    "product_id": "TEST-1001",
+    "subInventory": [
+      {
+        "warehouseId": "66fceb5163c6d5c106cfa809",
+        "thresholdQuantity": 10,
+        "bin": [
+          {
+            "binName": "test|A",
+            "binQty": 50,
+            "binPriority": 1
+          }
+        ]
+      }
+    ]
+  },
+
+
+  {
+    "product_id": "67e7a05dd7c1d856b123a289",
+    "subInventory": [
+      {
+        "warehouseId": "674872800a3c153036bc00f0",
+        "thresholdQuantity": 50,
+        "bin": [
+          {
+            "binName": null,
+            "binQty": null,
+            "binPriority": 1
+          }
+        ]
+      }
+    ]
+  }
+
+]
