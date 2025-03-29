@@ -1,11 +1,16 @@
 // inner_packing_form.dart
+import 'dart:developer';
+import 'package:provider/provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
 import 'package:inventory_management/constants/constants.dart';
+import 'package:inventory_management/provider/inner_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+import 'Custom-Files/product_search_field.dart';
 
 class InnerPackingForm extends StatefulWidget {
   const InnerPackingForm({super.key});
@@ -28,9 +33,18 @@ class _InnerPackingFormState extends State<InnerPackingForm> {
 
     setState(() => _isLoading = true);
 
-    final token = await SharedPreferences.getInstance().then(
-      (prefs) => prefs.getString('token'),
-    );
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('authToken');
+
+    final body = {
+      'innerPackingSku': _skuController.text,
+      'name': _nameController.text,
+      'description': _descriptionController.text,
+      'product': _productController.text,
+      'quantity': int.parse(_quantityController.text),
+    };
+
+    log('create inner body: $body');
 
     try {
       final response = await http.post(
@@ -39,14 +53,11 @@ class _InnerPackingFormState extends State<InnerPackingForm> {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer $token',
         },
-        body: jsonEncode({
-          'innerPackingSku': _skuController.text,
-          'name': _nameController.text,
-          'description': _descriptionController.text,
-          'product': _productController.text,
-          'quantity': int.parse(_quantityController.text),
-        }),
+        body: jsonEncode(body),
       );
+
+      log('create inner response: ${response.body}');
+      log('create inner response: ${response.statusCode}');
 
       if (response.statusCode == 201) {
         if (!mounted) return;
@@ -57,11 +68,13 @@ class _InnerPackingFormState extends State<InnerPackingForm> {
           ),
         );
         _resetForm();
+        context.read<InnerPackagingProvider>().toggleFormVisibility();
       } else {
         throw Exception('Failed to create inner packing');
       }
-    } catch (e) {
+    } catch (e, s) {
       if (!mounted) return;
+      log('create inner error: $e \n\n$s');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Error: ${e.toString()}'),
@@ -172,24 +185,33 @@ class _InnerPackingFormState extends State<InnerPackingForm> {
                           },
                         ),
                         const SizedBox(height: 16),
-                        TextFormField(
-                          controller: _productController,
-                          decoration: const InputDecoration(
-                            labelText: 'Product SKU',
-                            hintText: 'Enter product SKU (e.g., K-167)',
-                            border: OutlineInputBorder(),
-                            prefixIcon: Icon(Icons.category),
-                          ),
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return 'Please enter a product SKU';
-                            }
-                            if (!value.contains('-')) {
-                              return 'Product SKU must contain a hyphen';
-                            }
-                            return null;
+                        ProductSearchableTextField(
+                          isRequired: true,
+                          onSelected: (product) {
+                            setState(() {
+                              _productController.text = product?.sku ?? '';
+                            });
+                            log("_productController.text: ${_productController.text}");
                           },
                         ),
+                        // TextFormField(
+                        //   controller: _productController,
+                        //   decoration: const InputDecoration(
+                        //     labelText: 'Product SKU',
+                        //     hintText: 'Enter product SKU (e.g., K-167)',
+                        //     border: OutlineInputBorder(),
+                        //     prefixIcon: Icon(Icons.category),
+                        //   ),
+                        //   validator: (value) {
+                        //     if (value == null || value.isEmpty) {
+                        //       return 'Please enter a product SKU';
+                        //     }
+                        //     if (!value.contains('-')) {
+                        //       return 'Product SKU must contain a hyphen';
+                        //     }
+                        //     return null;
+                        //   },
+                        // ),
                         const SizedBox(height: 16),
                         TextFormField(
                           controller: _quantityController,

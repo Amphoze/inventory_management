@@ -28,6 +28,7 @@ class _RoutingPageState extends State<RoutingPage> with TickerProviderStateMixin
   final TextEditingController pageController = TextEditingController();
   String _selectedDate = 'Select Date';
   String selectedCourier = 'All';
+  DateTime? picked;
 
   @override
   void initState() {
@@ -62,6 +63,14 @@ class _RoutingPageState extends State<RoutingPage> with TickerProviderStateMixin
     _pageController.dispose();
     pageController.dispose();
     super.dispose();
+  }
+
+  void resetFilters() {
+    setState(() {
+      _selectedDate = 'Select Date';
+      selectedCourier = 'All';
+      picked = null;
+    });
   }
 
   void _reloadOrders() {
@@ -114,57 +123,46 @@ class _RoutingPageState extends State<RoutingPage> with TickerProviderStateMixin
                               color: _selectedDate == 'Select Date' ? Colors.grey : AppColors.primaryBlue,
                             ),
                           ),
-                          Tooltip(
-                            message: 'Filter by Date',
-                            child: IconButton(
-                              onPressed: () async {
-                                final DateTime? picked = await showDatePicker(
-                                  context: context,
-                                  initialDate: DateTime.now(),
-                                  firstDate: DateTime(2020),
-                                  lastDate: DateTime.now(),
-                                  builder: (context, child) {
-                                    return Theme(
-                                      data: Theme.of(context).copyWith(
-                                        colorScheme: const ColorScheme.light(
-                                          primary: AppColors.primaryBlue,
-                                          onPrimary: Colors.white,
-                                          surface: Colors.white,
-                                          onSurface: Colors.black,
-                                        ),
-                                      ),
-                                      child: child!,
-                                    );
-                                  },
-                                );
-
-                                if (picked != null) {
-                                  String formattedDate = DateFormat('dd-MM-yyyy').format(picked);
-                                  setState(() {
-                                    _selectedDate = formattedDate;
-                                  });
-
-                                  if (selectedCourier != 'All') {
-                                    pro.fetchOrdersByMarketplace(
-                                      selectedCourier,
-                                      pro.currentPageReady,
-                                      date: picked,
-                                    );
-                                  } else {
-                                    pro.fetchOrders(
-                                      page: pro.currentPageReady,
-                                      date: picked,
-                                    );
-                                  }
-                                }
-                              },
-                              icon: const Icon(
-                                Icons.calendar_today,
-                                size: 30,
-                                color: AppColors.primaryBlue,
-                              ),
-                            ),
-                          ),
+                          // Tooltip(
+                          //   message: 'Filter by Date',
+                          //   child: IconButton(
+                          //     onPressed: () async {
+                          //       picked = await showDatePicker(
+                          //         context: context,
+                          //         initialDate: DateTime.now(),
+                          //         firstDate: DateTime(2020),
+                          //         lastDate: DateTime.now(),
+                          //         builder: (context, child) {
+                          //           return Theme(
+                          //             data: Theme.of(context).copyWith(
+                          //               colorScheme: const ColorScheme.light(
+                          //                 primary: AppColors.primaryBlue,
+                          //                 onPrimary: Colors.white,
+                          //                 surface: Colors.white,
+                          //                 onSurface: Colors.black,
+                          //               ),
+                          //             ),
+                          //             child: child!,
+                          //           );
+                          //         },
+                          //       );
+                          //
+                          //       if (picked != null) {
+                          //         String formattedDate = DateFormat('dd-MM-yyyy').format(picked!);
+                          //         setState(() {
+                          //           _selectedDate = formattedDate;
+                          //         });
+                          //
+                          //         pro.fetchOrders(date: picked, market: selectedCourier);
+                          //       }
+                          //     },
+                          //     icon: const Icon(
+                          //       Icons.calendar_today,
+                          //       size: 30,
+                          //       color: AppColors.primaryBlue,
+                          //     ),
+                          //   ),
+                          // ),
                         ],
                       ),
                       const SizedBox(width: 8),
@@ -182,40 +180,20 @@ class _RoutingPageState extends State<RoutingPage> with TickerProviderStateMixin
                                     selectedCourier = value;
                                   });
 
-                                  // String formattedDate =
-                                  //     DateFormat('dd-MM-yyyy').format(picked);
-                                  // setState(() {
-                                  //   _selectedReadyDate = formattedDate;
-                                  // });
-
-                                  if (value == 'All') {
-                                    log("value: $value");
-                                    log("selectedCourier: $selectedCourier");
-                                    log("selectedDate: $_selectedDate");
-                                    pro.fetchOrders(
-                                      page: pro.currentPageReady,
-                                      date: _selectedDate == 'Select Date' ? null : DateTime.parse(_selectedDate),
-                                    );
-                                  } else {
-                                    DateTime? selectedDate;
-                                    if (_selectedDate != 'Select Date') {
-                                      selectedDate = DateFormat('yyyy-MM-dd').parse(_selectedDate);
-                                    }
-
-                                    log("selectedDate: $selectedDate");
-
-                                    pro.fetchOrdersByMarketplace(
-                                      value,
-                                      pro.currentPageReady,
-                                      date: selectedDate,
-                                    );
-                                  }
+                                  log("value: $value");
+                                  log("selectedCourier: $selectedCourier");
+                                  log("selectedDate: $_selectedDate");
+                                  pro.fetchOrders(
+                                    page: pro.currentPageReady,
+                                    date: picked,
+                                    market: selectedCourier,
+                                  );
                                 },
                                 itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
                                   ...provider.marketplaces.map((marketplace) => PopupMenuItem<String>(
-                                    value: marketplace.name,
-                                    child: Text(marketplace.name),
-                                  )),
+                                        value: marketplace.name,
+                                        child: Text(marketplace.name),
+                                      )),
                                   const PopupMenuItem<String>(
                                     value: 'All',
                                     child: Text('All'),
@@ -241,113 +219,97 @@ class _RoutingPageState extends State<RoutingPage> with TickerProviderStateMixin
                         onPressed: pro.isConfirm
                             ? null // Disable button while loading
                             : () async {
-                          final provider = Provider.of<RoutingProvider>(context, listen: false);
+                                final provider = Provider.of<RoutingProvider>(context, listen: false);
 
-                          // Collect selected order IDs
-                          List<String> selectedOrderIds = provider.readyOrders
-                              .asMap()
-                              .entries
-                              .where((entry) => provider.selectedOrders[entry.key])
-                              .map((entry) => entry.value.orderId)
-                              .toList();
+                                // Collect selected order IDs
+                                List<String> selectedOrderIds = provider.readyOrders
+                                    .asMap()
+                                    .entries
+                                    .where((entry) => provider.selectedOrders[entry.key])
+                                    .map((entry) => entry.value.orderId)
+                                    .toList();
 
-                          log('selectedOrderIds: $selectedOrderIds');
+                                log('selectedOrderIds: $selectedOrderIds');
 
-                          if (selectedOrderIds.isEmpty) {
-                            // Show an error message if no orders are selected
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('No orders selected'),
-                                backgroundColor: AppColors.cardsred,
-                              ),
-                            );
-                          } else {
-                            // Set loading status to true before starting the operation
-                            // provider.setConfirmStatus(true);
+                                if (selectedOrderIds.isEmpty) {
+                                  // Show an error message if no orders are selected
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text('No orders selected'),
+                                      backgroundColor: AppColors.cardsred,
+                                    ),
+                                  );
+                                } else {
+                                  // Set loading status to true before starting the operation
+                                  // provider.setConfirmStatus(true);
 
-                            // Call confirmOrders method with selected IDs
-                            String resultMessage = await provider.routeOrders(context, selectedOrderIds);
+                                  // Call confirmOrders method with selected IDs
+                                  String resultMessage = await provider.routeOrders(context, selectedOrderIds);
 
-                            log('resultMessage: $resultMessage');
+                                  log('resultMessage: $resultMessage');
 
-                            // Set loading status to false after operation completes
-                            // provider.setConfirmStatus(false);
+                                  // Set loading status to false after operation completes
+                                  // provider.setConfirmStatus(false);
 
-                            // Determine the background color based on the result
-                            Color snackBarColor;
-                            if (resultMessage.contains('success')) {
-                              snackBarColor = AppColors.green; // Success: Green
-                            } else if (resultMessage.contains('error') || resultMessage.contains('failed')) {
-                              snackBarColor = AppColors.cardsred; // Error: Red
-                            } else {
-                              snackBarColor = AppColors.orange; // Other: Orange
-                            }
+                                  // Determine the background color based on the result
+                                  Color snackBarColor;
+                                  if (resultMessage.contains('success')) {
+                                    snackBarColor = AppColors.green; // Success: Green
+                                  } else if (resultMessage.contains('error') || resultMessage.contains('failed')) {
+                                    snackBarColor = AppColors.cardsred; // Error: Red
+                                  } else {
+                                    snackBarColor = AppColors.orange; // Other: Orange
+                                  }
 
-                            // Show feedback based on the result
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text(resultMessage),
-                                backgroundColor: snackBarColor,
-                              ),
-                            );
-                          }
-                        },
+                                  // Show feedback based on the result
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(resultMessage),
+                                      backgroundColor: snackBarColor,
+                                    ),
+                                  );
+                                }
+                              },
                         child: pro.isConfirm
                             ? const SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(color: Colors.white),
-                        )
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(color: Colors.white),
+                              )
                             : const Text(
-                          'Route',
-                          style: TextStyle(color: Colors.white),
-                        ),
+                                'Route',
+                                style: TextStyle(color: Colors.white),
+                              ),
                       ),
                       const SizedBox(width: 8),
-
                       ElevatedButton(
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.orange.shade300,
                         ),
                         onPressed: () async {
-                          setState(() {
-                            selectedCourier = 'All';
-                            _selectedDate = 'Select Date';
-                          });
+                          resetFilters();
                           Provider.of<RoutingProvider>(context, listen: false).fetchOrders();
                           Provider.of<RoutingProvider>(context, listen: false).resetSelections();
-                          pro.clearSearchResults();
+                          // pro.clearSearchResults();
                         },
                         child: const Text('Reset Filters'),
                       ),
-
                       const SizedBox(width: 8),
-
                       IconButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.white,
-                        ),
-                        onPressed: () async {
-
-                          DateTime? selectedDate;
-                          if (_selectedDate != 'Select Date') {
-                            selectedDate = DateFormat('yyyy-MM-dd').parse(_selectedDate);
-                          }
-
-                          log("selectedDate: $selectedDate");
-
-                          pro.fetchOrdersByMarketplace(
-                            selectedCourier,
-                            pro.currentPageReady,
-                            date: selectedDate,
-                          );
-                        },
-                        icon: const Icon(
-                          Icons.refresh,
-                          color: AppColors.primaryBlue,
-                        )
-                      ),
-
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.white,
+                          ),
+                          onPressed: () async {
+                            pro.fetchOrders(
+                              page: pro.currentPageReady,
+                              date: picked,
+                              market: selectedCourier,
+                            );
+                          },
+                          icon: const Icon(
+                            Icons.refresh,
+                            color: AppColors.primaryBlue,
+                          )),
                       const SizedBox(width: 8),
                       Container(
                         width: 200,
@@ -412,241 +374,242 @@ class _RoutingPageState extends State<RoutingPage> with TickerProviderStateMixin
               Expanded(
                 child: pro.isLoading
                     ? const Center(
-                  child: LoadingAnimation(
-                    icon: Icons.shopping_cart,
-                    beginColor: Color.fromRGBO(189, 189, 189, 1),
-                    endColor: AppColors.primaryBlue,
-                    size: 80.0,
-                  ),
-                )
-                    : pro.readyOrders.isEmpty
-                    ? const Center(
-                  child: Text(
-                    "No orders found",
-                    style: TextStyle(color: Colors.grey, fontSize: 16),
-                  ),
-                )
-                    : ListView.builder(
-                  itemCount: pro.readyOrders.length,
-                  itemBuilder: (context, index) {
-                    final order = pro.readyOrders[index];
-                    //////////////////////////////////////////////////////////////
-                    final Map<String, List<Item>> groupedComboItems = {};
-                    for (var item in order.items) {
-                      if (item.isCombo == true && item.comboSku != null) {
-                        if (!groupedComboItems.containsKey(item.comboSku)) {
-                          groupedComboItems[item.comboSku!] = [];
-                        }
-                        groupedComboItems[item.comboSku]!.add(item);
-                      }
-                    }
-                    final List<List<Item>> comboItemGroups = groupedComboItems.values.where((items) => items.length > 1).toList();
-
-                    final List<Item> remainingItems = order.items
-                        .where((item) =>
-                    !(item.isCombo == true && item.comboSku != null && groupedComboItems[item.comboSku]!.length > 1))
-                        .toList();
-                    //////////////////////////////////////////////////////////
-                    return Card(
-                      surfaceTintColor: Colors.white,
-                      color: pro.selectedOrders[index] ? Colors.grey[300] : Colors.grey[100],
-                      elevation: 2,
-                      margin: const EdgeInsets.all(8.0),
-                      child: Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Checkbox(
-                                  value: pro.selectedOrders[index],
-                                  onChanged: (value) => pro.toggleOrderSelectionReady(value ?? false, index),
-                                ),
-                                Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    const Text(
-                                      'Order ID: ',
-                                      style: TextStyle(fontWeight: FontWeight.bold),
-                                    ),
-                                    Text(
-                                      order.orderId ?? 'N/A',
-                                      style: const TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        color: AppColors.primaryBlue,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    const Text(
-                                      'Date: ',
-                                      style: TextStyle(fontWeight: FontWeight.bold),
-                                    ),
-                                    Text(
-                                      pro.formatDate(order.date!),
-                                      style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.primaryBlue),
-                                    ),
-                                  ],
-                                ),
-                                Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    const Text(
-                                      'Total Amount: ',
-                                      style: TextStyle(fontWeight: FontWeight.bold),
-                                    ),
-                                    Text(
-                                      'Rs. ${order.totalAmount ?? ''}',
-                                      style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.primaryBlue),
-                                    ),
-                                  ],
-                                ),
-                                Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    const Text(
-                                      'Total Items: ',
-                                      style: TextStyle(fontWeight: FontWeight.bold),
-                                    ),
-                                    Text(
-                                      '${order.items.fold(0, (total, item) => total + item.qty!)}',
-                                      style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.primaryBlue),
-                                    ),
-                                  ],
-                                ),
-                                Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    const Text(
-                                      'Total Weight: ',
-                                      style: TextStyle(fontWeight: FontWeight.bold),
-                                    ),
-                                    Text(
-                                      '${order.totalWeight ?? ''}',
-                                      style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.primaryBlue),
-                                    ),
-                                  ],
-                                ),
-                              ],
-                            ),
-                            const Divider(
-                              thickness: 1,
-                              color: AppColors.grey,
-                            ),
-                            OrderInfo(order: order, pro: pro),
-                            const SizedBox(height: 8),
-                            Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                              child: Text.rich(
-                                TextSpan(
-                                  text: "Warehouse ID: ",
-                                  children: [
-                                    TextSpan(
-                                      text: order.warehouseId ?? '',
-                                      style: const TextStyle(
-                                        fontWeight: FontWeight.normal,
-                                      ),
-                                    ),
-                                  ],
-                                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
-                                ),
-                              ),
-                            ),
-                            Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                              child: Text.rich(
-                                TextSpan(
-                                  text: "Warehouse Name: ",
-                                  children: [
-                                    TextSpan(
-                                      text: order.warehouseName ?? '',
-                                      style: const TextStyle(
-                                        fontWeight: FontWeight.normal,
-                                      ),
-                                    ),
-                                  ],
-                                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
-                                ),
-                              ),
-                            ),
-                            Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                              child: Text.rich(
-                                TextSpan(
-                                  text: "Hold: ",
-                                  children: [
-                                    TextSpan(
-                                      text: order.isHold.toString() ?? '',
-                                      style: const TextStyle(
-                                        fontWeight: FontWeight.normal,
-                                      ),
-                                    ),
-                                  ],
-                                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
-                                ),
-                              ),
-                            ),
-                            Padding(
-                              padding: const EdgeInsets.all(8.0),
-                              child: Text.rich(
-                                TextSpan(
-                                    text: "Updated on: ",
-                                    children: [
-                                      TextSpan(
-                                          text: DateFormat('yyyy-MM-dd\',\' hh:mm a').format(
-                                            DateTime.parse("${order.updatedAt}"),
-                                          ),
-                                          style: const TextStyle(
-                                            fontWeight: FontWeight.normal,
-                                          )),
-                                    ],
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                    )),
-                              ),
-                            ),
-                            const Divider(
-                              thickness: 1,
-                              color: AppColors.grey,
-                            ),
-                            // Nested cards for each item in the order
-                            const SizedBox(height: 6),
-                            ListView.builder(
-                              shrinkWrap: true,
-                              physics: const NeverScrollableScrollPhysics(),
-                              itemCount: comboItemGroups.length,
-                              itemBuilder: (context, comboIndex) {
-                                final combo = comboItemGroups[comboIndex];
-                                return BigComboCard(
-                                  items: combo,
-                                  index: comboIndex,
-                                );
-                              },
-                            ),
-                            ListView.builder(
-                              shrinkWrap: true,
-                              physics: const NeverScrollableScrollPhysics(),
-                              itemCount: remainingItems.length,
-                              itemBuilder: (context, itemIndex) {
-                                final item = remainingItems[itemIndex];
-                                print('Item $itemIndex: ${item.product?.displayName.toString() ?? ''}, Quantity: ${item.qty ?? 0}');
-                                return ProductDetailsCard(
-                                  item: item,
-                                  index: itemIndex,
-                                );
-                              },
-                            ),
-                          ],
+                        child: LoadingAnimation(
+                          icon: Icons.shopping_cart,
+                          beginColor: Color.fromRGBO(189, 189, 189, 1),
+                          endColor: AppColors.primaryBlue,
+                          size: 80.0,
                         ),
-                      ),
-                    );
-                  },
-                ),
+                      )
+                    : pro.readyOrders.isEmpty
+                        ? const Center(
+                            child: Text(
+                              "No orders found",
+                              style: TextStyle(color: Colors.grey, fontSize: 16),
+                            ),
+                          )
+                        : ListView.builder(
+                            itemCount: pro.readyOrders.length,
+                            itemBuilder: (context, index) {
+                              final order = pro.readyOrders[index];
+                              //////////////////////////////////////////////////////////////
+                              final Map<String, List<Item>> groupedComboItems = {};
+                              for (var item in order.items) {
+                                if (item.isCombo == true && item.comboSku != null) {
+                                  if (!groupedComboItems.containsKey(item.comboSku)) {
+                                    groupedComboItems[item.comboSku!] = [];
+                                  }
+                                  groupedComboItems[item.comboSku]!.add(item);
+                                }
+                              }
+                              final List<List<Item>> comboItemGroups = groupedComboItems.values.where((items) => items.length > 1).toList();
+
+                              final List<Item> remainingItems = order.items
+                                  .where((item) =>
+                                      !(item.isCombo == true && item.comboSku != null && groupedComboItems[item.comboSku]!.length > 1))
+                                  .toList();
+                              //////////////////////////////////////////////////////////
+                              return Card(
+                                surfaceTintColor: Colors.white,
+                                color: pro.selectedOrders[index] ? Colors.grey[300] : Colors.grey[100],
+                                elevation: 2,
+                                margin: const EdgeInsets.all(8.0),
+                                child: Padding(
+                                  padding: const EdgeInsets.all(8.0),
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Row(
+                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Checkbox(
+                                            value: pro.selectedOrders[index],
+                                            onChanged: (value) => pro.toggleOrderSelectionReady(value ?? false, index),
+                                          ),
+                                          Column(
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            children: [
+                                              const Text(
+                                                'Order ID: ',
+                                                style: TextStyle(fontWeight: FontWeight.bold),
+                                              ),
+                                              Text(
+                                                order.orderId ?? 'N/A',
+                                                style: const TextStyle(
+                                                  fontWeight: FontWeight.bold,
+                                                  color: AppColors.primaryBlue,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                          Column(
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            children: [
+                                              const Text(
+                                                'Date: ',
+                                                style: TextStyle(fontWeight: FontWeight.bold),
+                                              ),
+                                              Text(
+                                                pro.formatDate(order.date!),
+                                                style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.primaryBlue),
+                                              ),
+                                            ],
+                                          ),
+                                          Column(
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            children: [
+                                              const Text(
+                                                'Total Amount: ',
+                                                style: TextStyle(fontWeight: FontWeight.bold),
+                                              ),
+                                              Text(
+                                                'Rs. ${order.totalAmount ?? ''}',
+                                                style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.primaryBlue),
+                                              ),
+                                            ],
+                                          ),
+                                          Column(
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            children: [
+                                              const Text(
+                                                'Total Items: ',
+                                                style: TextStyle(fontWeight: FontWeight.bold),
+                                              ),
+                                              Text(
+                                                '${order.items.fold(0, (total, item) => total + item.qty!)}',
+                                                style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.primaryBlue),
+                                              ),
+                                            ],
+                                          ),
+                                          Column(
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            children: [
+                                              const Text(
+                                                'Total Weight: ',
+                                                style: TextStyle(fontWeight: FontWeight.bold),
+                                              ),
+                                              Text(
+                                                '${order.totalWeight ?? ''}',
+                                                style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.primaryBlue),
+                                              ),
+                                            ],
+                                          ),
+                                        ],
+                                      ),
+                                      const Divider(
+                                        thickness: 1,
+                                        color: AppColors.grey,
+                                      ),
+                                      OrderInfo(order: order, pro: pro),
+                                      const SizedBox(height: 8),
+                                      Padding(
+                                        padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                                        child: Text.rich(
+                                          TextSpan(
+                                            text: "Warehouse ID: ",
+                                            children: [
+                                              TextSpan(
+                                                text: order.warehouseId ?? '',
+                                                style: const TextStyle(
+                                                  fontWeight: FontWeight.normal,
+                                                ),
+                                              ),
+                                            ],
+                                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
+                                          ),
+                                        ),
+                                      ),
+                                      Padding(
+                                        padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                                        child: Text.rich(
+                                          TextSpan(
+                                            text: "Warehouse Name: ",
+                                            children: [
+                                              TextSpan(
+                                                text: order.warehouseName ?? '',
+                                                style: const TextStyle(
+                                                  fontWeight: FontWeight.normal,
+                                                ),
+                                              ),
+                                            ],
+                                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
+                                          ),
+                                        ),
+                                      ),
+                                      Padding(
+                                        padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                                        child: Text.rich(
+                                          TextSpan(
+                                            text: "Hold: ",
+                                            children: [
+                                              TextSpan(
+                                                text: order.isHold.toString() ?? '',
+                                                style: const TextStyle(
+                                                  fontWeight: FontWeight.normal,
+                                                ),
+                                              ),
+                                            ],
+                                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
+                                          ),
+                                        ),
+                                      ),
+                                      Padding(
+                                        padding: const EdgeInsets.all(8.0),
+                                        child: Text.rich(
+                                          TextSpan(
+                                              text: "Updated on: ",
+                                              children: [
+                                                TextSpan(
+                                                    text: DateFormat('yyyy-MM-dd\',\' hh:mm a').format(
+                                                      DateTime.parse("${order.updatedAt}"),
+                                                    ),
+                                                    style: const TextStyle(
+                                                      fontWeight: FontWeight.normal,
+                                                    )),
+                                              ],
+                                              style: const TextStyle(
+                                                fontWeight: FontWeight.bold,
+                                              )),
+                                        ),
+                                      ),
+                                      const Divider(
+                                        thickness: 1,
+                                        color: AppColors.grey,
+                                      ),
+                                      // Nested cards for each item in the order
+                                      const SizedBox(height: 6),
+                                      ListView.builder(
+                                        shrinkWrap: true,
+                                        physics: const NeverScrollableScrollPhysics(),
+                                        itemCount: comboItemGroups.length,
+                                        itemBuilder: (context, comboIndex) {
+                                          final combo = comboItemGroups[comboIndex];
+                                          return BigComboCard(
+                                            items: combo,
+                                            index: comboIndex,
+                                          );
+                                        },
+                                      ),
+                                      ListView.builder(
+                                        shrinkWrap: true,
+                                        physics: const NeverScrollableScrollPhysics(),
+                                        itemCount: remainingItems.length,
+                                        itemBuilder: (context, itemIndex) {
+                                          final item = remainingItems[itemIndex];
+                                          print(
+                                              'Item $itemIndex: ${item.product?.displayName.toString() ?? ''}, Quantity: ${item.qty ?? 0}');
+                                          return ProductDetailsCard(
+                                            item: item,
+                                            index: itemIndex,
+                                          );
+                                        },
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
               ),
               CustomPaginationFooter(
                 currentPage: pro.currentPageReady,
