@@ -1993,18 +1993,18 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
                                 const SizedBox(width: 10),
                                 Expanded(
                                   child: _buildTextField(
-                                    controller: _customerEmailController,
-                                    label: 'Email',
-                                    icon: Icons.email,
-                                    validator: (value) {
-                                      if (value != null) {
+                                      controller: _customerEmailController,
+                                      label: 'Email',
+                                      icon: Icons.email,
+                                      validator: (value) {
+                                        if (value == null || value.trim().isEmpty) return null;
+
                                         if (!value.contains('@') || !value.contains('.')) {
                                           return 'Enter a valid email';
                                         }
-                                      }
-                                      return null;
-                                    },
-                                  ),
+
+                                        return null;
+                                      }),
                                 ),
                               ],
                             ),
@@ -2162,11 +2162,12 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
                                     label: 'Email',
                                     icon: Icons.email,
                                     validator: (value) {
-                                      if (value != null) {
-                                        if (!value.contains('@') || !value.contains('.')) {
-                                          return 'Enter a valid email';
-                                        }
+                                      if (value == null || value.trim().isEmpty) return null;
+
+                                      if (!value.contains('@') || !value.contains('.')) {
+                                        return 'Enter a valid email';
                                       }
+
                                       return null;
                                     },
                                   ),
@@ -2305,11 +2306,12 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
                                     label: 'Email',
                                     icon: Icons.email,
                                     validator: (value) {
-                                      if (value != null) {
-                                        if (!value.contains('@') || !value.contains('.')) {
-                                          return 'Enter a valid email';
-                                        }
+                                      if (value == null || value.trim().isEmpty) return null;
+
+                                      if (!value.contains('@') || !value.contains('.')) {
+                                        return 'Enter a valid email';
                                       }
+
                                       return null;
                                     },
                                   ),
