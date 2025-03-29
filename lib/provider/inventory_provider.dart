@@ -3,7 +3,10 @@ import 'dart:developer';
 
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
+import 'package:inventory_management/Custom-Files/utils.dart';
 import 'package:inventory_management/constants/constants.dart';
+import 'package:inventory_management/model/SubInventory.dart';
+import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../Api/auth_provider.dart';
 import 'package:flutter/material.dart';
@@ -432,4 +435,242 @@ class InventoryProvider with ChangeNotifier {
     //   notifyListeners();
     // }
   }
+
+
+  /// CREATE PRODUCT
+
+
+  String? _selectedProductId;
+  String? get selectedProductId => _selectedProductId;
+  void setSelectedProductId(String value) {
+    _selectedProductId = value;
+    notifyListeners();
+  }
+
+  List<SubInventoryModel> _subInventories = [];
+  List<SubInventoryModel> get subInventories => _subInventories;
+
+  void addCreateInventoryModel() {
+    SubInventoryModel subInventory = SubInventoryModel(
+      warehouseId: null,
+      warehouseName: null,
+      thresholdQuantity: null,
+      bin: InventoryBin(
+        binName: null,
+        binQuantity: null,
+      ),
+    );
+    _fetchingBins.add(false);
+    _bins.add([]);
+    _subInventories.add(subInventory);
+    notifyListeners();
+  }
+
+  void removeCreateInventoryModel(int index) {
+    _fetchingBins.removeAt(index);
+    _bins.removeAt(index);
+    _subInventories.removeAt(index);
+    notifyListeners();
+  }
+
+  void updateSubInventory({
+    required int index,
+    String? warehouseId,
+    String? warehouseName,
+    String? thresholdQuantity,
+    InventoryBin? bin,
+  }) {
+    _subInventories[index] = _subInventories[index].copyWith(
+      warehouseId: warehouseId,
+      thresholdQuantity: thresholdQuantity,
+      warehouseName: warehouseName,
+      bin: bin,
+    );
+
+    notifyListeners();
+  }
+
+  List<List<String>> _bins = [];
+  List<List<String>> get bins => _bins;
+  void setBins(int index, List<String> value) {
+    _bins[index] = value;
+    notifyListeners();
+    log('Bins are :- $bins');
+    log('Fetching Bins Status :- $fetchingBins');
+  }
+
+  List<bool> _fetchingBins = [];
+  List<bool> get fetchingBins => _fetchingBins;
+  void setFetchingBins(int index, bool value) {
+    _fetchingBins[index] = value;
+    notifyListeners();
+  }
+
+  Future<void> fetchBins(BuildContext context, String warehouseId, int index) async {
+
+    setFetchingBins(index, true);
+
+    String baseUrl = await Constants.getBaseUrl();
+    final url = Uri.parse('$baseUrl/bin/$warehouseId');
+
+    try {
+
+      final token = await Provider.of<AuthProvider>(context, listen: false).getToken();
+
+      final response = await http.get(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      final res = json.decode(response.body);
+
+      if (response.statusCode == 200 && res.containsKey('bins')) {
+        final bin = List<String>.from(res['bins'].map((bin) => bin['binName'].toString()));
+        setBins(index, bin);
+      } else {
+        setBins(index, []);
+      }
+    } catch (error) {
+      setBins(index, []);
+    } finally {
+      setFetchingBins(index, false);
+    }
+  }
+
+  bool _isCreatingInventory = false;
+  bool get isCreatingInventory => _isCreatingInventory;
+  void setCreatingInventory(bool value) {
+    _isCreatingInventory = value;
+    notifyListeners();
+  }
+
+  Future<void> createInventory(BuildContext context) async {
+    try {
+
+      if (selectedProductId == null) {
+        Utils.showSnackBar(context, 'Please Select Product..!');
+        return;
+      }
+
+      final body = {
+        "product_id": selectedProductId,
+        "subInventory": subInventories.map((subInventory) {
+
+          final binQty = subInventory.bin.binQuantity ?? '';
+
+          return {
+            "warehouseId": subInventory.warehouseId,
+            "thresholdQuantity": int.tryParse(subInventory.thresholdQuantity ?? '') ?? null,
+            "bin": [{
+              "binName": subInventory.bin.binName,
+              "binQty": int.tryParse(binQty) ?? 1,
+              "binPriority": subInventory.bin.binPriority,
+            }]
+          };
+        }).toList(),
+      };
+
+      final payload = jsonEncode(body);
+
+      log('Creating Inventory Payload :- $payload');
+
+      try {
+        final token = await Provider.of<AuthProvider>(context, listen: false).getToken();
+
+        final response = await http.post(
+          Uri.parse('${await Constants.getBaseUrl()}/inventory'),
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer $token',
+          },
+          body: payload,
+        );
+
+        final responseData = jsonDecode(response.body);
+
+        log('Creating Inventory Response :- ${response.body}');
+
+        if (response.statusCode == 201) {
+          if (responseData['success'] == true) {
+            Utils.showSnackBar(context, 'Inventory created successfully!', color: Colors.green);
+            return;
+          }
+        }
+
+        final message = responseData['error'] ?? 'Failed to create inventory..!';
+        final details = responseData['details'] ?? 'Status Code: ${response.statusCode}';
+
+        Utils.showSnackBar(context, message, details: details, color: Colors.red);
+      } catch (e) {
+        Utils.showSnackBar(context, 'Error occured while creating inventory..!', details: e.toString(), color: Colors.red);
+      }
+
+    } catch (e, s) {
+      log('Error creating Inventory :- $e\n$s');
+      Utils.showSnackBar(context, 'Error creating Inventory :- ${e.toString()}');
+    }
+  }
+
+  void initCreateInventory() {
+    _selectedProductId = null;
+    _bins = [];
+    _fetchingBins = [];
+    _subInventories = [];
+    addCreateInventoryModel();
+  }
+}
+
+
+class SubInventoryModel {
+  final String? warehouseId;
+  final String? warehouseName;
+  final String? thresholdQuantity;
+  final InventoryBin bin;
+
+  SubInventoryModel({
+    required this.warehouseId,
+    required this.warehouseName,
+    required this.thresholdQuantity,
+    required this.bin,
+  });
+
+  SubInventoryModel copyWith({
+    String? warehouseId,
+    String? warehouseName,
+    String? thresholdQuantity,
+    InventoryBin? bin,
+  }) {
+    return SubInventoryModel(
+      warehouseId: warehouseId ?? this.warehouseId,
+      warehouseName: warehouseName ?? this.warehouseName,
+      thresholdQuantity: thresholdQuantity ?? this.thresholdQuantity,
+      bin: bin ?? this.bin,
+    );
+  }
+}
+
+class InventoryBin {
+  final String? binName;
+  final String? binQuantity;
+  final int binPriority;
+
+  InventoryBin({
+    required this.binName,
+    required this.binQuantity,
+    this.binPriority = 1,
+  });
+
+  InventoryBin copyWith({
+    String? binName,
+    String? binQuantity,
+  }) {
+    return InventoryBin(
+      binName: binName ?? this.binName,
+      binQuantity: binQuantity ?? this.binQuantity,
+    );
+  }
+
 }
