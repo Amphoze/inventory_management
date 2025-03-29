@@ -310,8 +310,8 @@ class TransferOrderProvider with ChangeNotifier {
   Future<void> addCombo(BuildContext context, Map<String, String> selected) async {
     if (selected['id'] == null) return;
 
-    bool comboExists = addedComboList.any((item) => item['id'] == selected['id']) ||
-        addedComboList.any((item) => item['id'] == selected['id']);
+    bool comboExists =
+        addedComboList.any((item) => item['id'] == selected['id']) || addedComboList.any((item) => item['id'] == selected['id']);
 
     if (comboExists) {
       Utils.showSnackBar(context, 'Combo already added', color: Colors.red);
@@ -641,16 +641,19 @@ class TransferOrderProvider with ChangeNotifier {
         } else {
           log('No location details found for the provided pincode :- ${response.body}');
           Utils.showSnackBar(context, 'No location details found for the provided pincode.');
+          clearLocationDetails(isBilling: isBilling);
           // return;
         }
       } else {
         log('Failed to load location details :- ${response.body}');
         Utils.showSnackBar(context, 'Failed to load location details. Please check your internet connection.');
+        clearLocationDetails(isBilling: isBilling);
         // return;
       }
     } catch (e, stace) {
       log('Error to fetch location details :- $e\n$stace');
       Utils.showSnackBar(context, 'Failed to load location details. Please check your internet connection.');
+      clearLocationDetails(isBilling: isBilling);
       // return;
     } finally {
       Navigator.pop(context);

@@ -724,16 +724,19 @@ class CreateOrderProvider with ChangeNotifier {
         } else {
           log('No location details found for the provided pincode :- ${response.body}');
           Utils.showSnackBar(context, 'No location details found for the provided pincode.');
+          clearLocationDetails(isBilling: isBilling);
           // return;
         }
       } else {
         log('Failed to load location details :- ${response.body}');
         Utils.showSnackBar(context, 'Failed to load location details. Please check your internet connection.');
+        clearLocationDetails(isBilling: isBilling);
         // return;
       }
     } catch (e, stace) {
       log('Error to fetch location details :- $e\n$stace');
       Utils.showSnackBar(context, 'Failed to load location details. Please check your internet connection.');
+      clearLocationDetails(isBilling: isBilling);
       // return;
     } finally {
       Navigator.of(context).pop();

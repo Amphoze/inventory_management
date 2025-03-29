@@ -762,6 +762,7 @@ class _TransferOrderPageState extends State<TransferOrderPage> {
   }) {
     return TextFormField(
       controller: phoneController,
+      maxLength: 13,
       enabled: enabled,
       keyboardType: TextInputType.phone,
       inputFormatters: [
@@ -772,9 +773,10 @@ class _TransferOrderPageState extends State<TransferOrderPage> {
             if (value != null) {
               if (value.isEmpty) {
                 return 'Required';
-              } else if (value.length != 10) {
-                return 'Invalid phone number';
               }
+              // else if (value.length != 10) {
+              //   return 'Invalid phone number';
+              // }
             }
             return null;
           },

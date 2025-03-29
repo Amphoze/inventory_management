@@ -433,6 +433,14 @@ class _CreateOrderPageState extends State<CreateOrderPage> {
                   controller: provider.customerEmailController,
                   label: 'Email',
                   icon: Icons.email,
+                  validator: (value) {
+                    if (value != null) {
+                      if (!value.contains('@') || !value.contains('.')) {
+                        return 'Enter a valid email';
+                      }
+                    }
+                    return null;
+                  },
                 ),
                 const SizedBox(height: 10),
                 _buildPhoneField(
@@ -493,6 +501,14 @@ class _CreateOrderPageState extends State<CreateOrderPage> {
                         label: 'Email',
                         icon: Icons.email,
                         enabled: !provider.isBillingSameAsShipping,
+                        validator: (value) {
+                          if (value != null) {
+                            if (!value.contains('@') || !value.contains('.')) {
+                              return 'Enter a valid email';
+                            }
+                          }
+                          return null;
+                        },
                       ),
                     ),
                   ],
@@ -530,7 +546,7 @@ class _CreateOrderPageState extends State<CreateOrderPage> {
                         icon: Icons.code,
                         validator: (value) => (value?.isEmpty ?? false) ? 'Required' : null,
                         onSubmitted: (value) {
-                          if (value.isEmpty) {
+                          if (value.trim().isEmpty) {
                             context.read<CreateOrderProvider>().clearLocationDetails(isBilling: true);
                           }
                           // if (value.length == 6) {
@@ -653,6 +669,14 @@ class _CreateOrderPageState extends State<CreateOrderPage> {
                         controller: provider.shippingEmailController,
                         label: 'Email',
                         icon: Icons.email,
+                        validator: (value) {
+                          if (value != null) {
+                            if (!value.contains('@') || !value.contains('.')) {
+                              return 'Enter a valid email';
+                            }
+                          }
+                          return null;
+                        },
                       ),
                     ),
                   ],
