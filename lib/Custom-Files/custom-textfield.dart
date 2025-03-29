@@ -37,7 +37,7 @@ class CustomTextField extends StatelessWidget {
         controller: controller,
         maxLines: maxLines,
         keyboardType: keyboardType,
-        inputFormatters: keyboardType == TextInputType.number ? [FilteringTextInputFormatter.digitsOnly] : null,
+        inputFormatters: keyboardType == TextInputType.number ? [FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*'))] : null,
         decoration: InputDecoration(
           isDense: true,
           isCollapsed: true,
