@@ -56,23 +56,23 @@ class _CreateOrdersByCSVState extends State<CreateOrdersByCSV> {
       );
 
       _socket?.onConnect((_) {
-        // Utils.showSnackBar(context, 'Connected to server', color: Colors.green);
-        log('Connected to server :)');
+        Utils.showSnackBar(context, 'Connected to server', color: Colors.green);
+        log('Connected to server: ${_socket?.id}');
       });
 
-      _socket?.off('csv-file-uploading-err');
+      // _socket?.off('csv-file-uploading-err');
       _socket?.on('csv-file-uploading-err', (data) {
-        log('CSV file uploading error: $data');
+        Logger().e('CSV file uploading error: $data');
         setState(() {
           _progressMessage = data['message'] ?? 'An error occurred';
         });
         Utils.showSnackBar(context, _progressMessage, color: Colors.red);
       });
 
-      _socket?.off('csv-file-uploading');
+      // _socket?.off('csv-file-uploading');
       _socket?.on('csv-file-uploading', (data) {
 
-        log('CSV file uploading: $data');
+        Logger().e('CSV file uploading: $data');
 
         if (data['progress'] != null) {
           double newProgress = double.tryParse(data['progress'].toString()) ?? 0;
@@ -80,10 +80,10 @@ class _CreateOrdersByCSVState extends State<CreateOrdersByCSV> {
         }
       });
 
-      _socket?.off('csv-file-uploaded');
+      // _socket?.off('csv-file-uploaded');
       _socket?.once('csv-file-uploaded', (data) {
 
-        log('CSV file uploaded: $data');
+        Logger().e('CSV file uploaded: $data');
 
         setState(() {
           _progressMessage = data['message'] ?? 'File uploaded successfully';
