@@ -223,7 +223,7 @@ class OuterboxProvider with ChangeNotifier {
         body: json.encode(boxsizeData),
       );
 
-      if (response.statusCode == 200) {
+      if (response.statusCode == 200 || response.statusCode == 201) {
         final data = json.decode(response.body);
         log('Boxsize created: $data');
         await fetchBoxsizes(); // Refresh the list

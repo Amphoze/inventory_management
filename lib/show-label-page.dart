@@ -152,10 +152,7 @@ class _ShowLabelPageState extends State<ShowLabelPage> {
                           itemCount: labelLogs.length,
                           itemBuilder: (context, index) {
                             final log = labelLogs[index];
-                            final (
-                              icon,
-                              iconColor
-                            ) = _getIconProperties(log['changeType']);
+                            final (icon, iconColor) = _getIconProperties(log['changeType']);
 
                             return Card(
                               margin: const EdgeInsets.symmetric(vertical: 8),
@@ -307,26 +304,14 @@ class _ShowLabelPageState extends State<ShowLabelPage> {
     );
   }
 
-  (
-    IconData,
-    Color
-  ) _getIconProperties(String changeType) {
+  (IconData, Color) _getIconProperties(String changeType) {
     switch (changeType) {
       case 'Addition':
-        return (
-          Icons.add_circle_outline,
-          Colors.green
-        );
+        return (Icons.add_circle_outline, Colors.green);
       case 'Subtraction':
-        return (
-          Icons.remove_circle_outline,
-          Colors.red
-        );
+        return (Icons.remove_circle_outline, Colors.red);
       default:
-        return (
-          Icons.info_outline,
-          Colors.blue
-        );
+        return (Icons.info_outline, Colors.blue);
     }
   }
 
@@ -481,13 +466,7 @@ class _ShowLabelPageState extends State<ShowLabelPage> {
 
   @override
   Widget build(BuildContext context) {
-    final columns = [
-      'IMAGE',
-      'Label SKU',
-      'Name',
-      'Quantity',
-      'Product SKU'
-    ];
+    final columns = ['IMAGE', 'Label SKU', 'Name', 'Quantity', 'Product SKU'];
     return Consumer<LabelApi>(
       builder: (context, l, child) => Scaffold(
         body: l.labelInformation.isNotEmpty && l.loading == false
@@ -499,53 +478,55 @@ class _ShowLabelPageState extends State<ShowLabelPage> {
                     // 171757177781
                     child: Row(
                       children: [
-                        Padding(
-                          padding: const EdgeInsets.all(16.0),
-                          child: Center(
-                            child: SizedBox(
-                              width: 300,
-                              child: TextField(
-                                controller: searchController,
-                                decoration: InputDecoration(
-                                  hintText: 'Search...',
-                                  prefixIcon: const Icon(Icons.search, color: Colors.grey),
-                                  border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(30.0),
-                                    borderSide: BorderSide.none, // No border line
-                                  ),
-                                  filled: true,
-                                  fillColor: Colors.white,
-                                  contentPadding: const EdgeInsets.symmetric(vertical: 15.0, horizontal: 20.0),
-                                  focusedBorder: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(30.0),
-                                    borderSide: const BorderSide(
-                                      color: AppColors.primaryBlue, // Border color when focused
-                                      width: 2.0,
+                        if (!showLabelForm) ...[
+                          Padding(
+                            padding: const EdgeInsets.all(16.0),
+                            child: Center(
+                              child: SizedBox(
+                                width: 300,
+                                child: TextField(
+                                  controller: searchController,
+                                  decoration: InputDecoration(
+                                    hintText: 'Search...',
+                                    prefixIcon: const Icon(Icons.search, color: Colors.grey),
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(30.0),
+                                      borderSide: BorderSide.none, // No border line
                                     ),
-                                  ),
-                                  enabledBorder: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(30.0),
-                                    borderSide: BorderSide(
-                                      color: Colors.grey.withValues(alpha: 0.5), // Border color when enabled
-                                      width: 1.0,
+                                    filled: true,
+                                    fillColor: Colors.white,
+                                    contentPadding: const EdgeInsets.symmetric(vertical: 15.0, horizontal: 20.0),
+                                    focusedBorder: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(30.0),
+                                      borderSide: const BorderSide(
+                                        color: AppColors.primaryBlue, // Border color when focused
+                                        width: 2.0,
+                                      ),
                                     ),
+                                    enabledBorder: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(30.0),
+                                      borderSide: BorderSide(
+                                        color: Colors.grey.withValues(alpha: 0.5), // Border color when enabled
+                                        width: 1.0,
+                                      ),
+                                    ),
+                                    hintStyle: TextStyle(color: Colors.grey[600]),
                                   ),
-                                  hintStyle: TextStyle(color: Colors.grey[600]),
+                                  onChanged: (value) async {
+                                    l.searchByLabel(value);
+                                  },
                                 ),
-                                onChanged: (value) async {
-                                  l.searchByLabel(value);
-                                },
                               ),
                             ),
                           ),
-                        ),
-                        InkWell(
-                          child: const Icon(Icons.restart_alt),
-                          onTap: () {
-                            l.cancel();
-                            // l.getLabel();
-                          },
-                        ),
+                          InkWell(
+                            child: const Icon(Icons.restart_alt),
+                            onTap: () {
+                              l.cancel();
+                              // l.getLabel();
+                            },
+                          ),
+                        ],
                         const SizedBox(width: 10),
                         ElevatedButton(
                           style: ElevatedButton.styleFrom(
@@ -564,19 +545,20 @@ class _ShowLabelPageState extends State<ShowLabelPage> {
                           ),
                         ),
                         const SizedBox(width: 10),
-                        ElevatedButton(
-                          onPressed: downloadCsv,
-                          child: isDownloadingCsv
-                              ? const SizedBox(
-                                  width: 16,
-                                  height: 16,
-                                  child: CircularProgressIndicator(
-                                    color: AppColors.white,
-                                    strokeWidth: 2,
-                                  ),
-                                )
-                              : const Text('Download Label CSV'),
-                        ),
+                        if (!showLabelForm)
+                          ElevatedButton(
+                            onPressed: downloadCsv,
+                            child: isDownloadingCsv
+                                ? const SizedBox(
+                                    width: 16,
+                                    height: 16,
+                                    child: CircularProgressIndicator(
+                                      color: AppColors.white,
+                                      strokeWidth: 2,
+                                    ),
+                                  )
+                                : const Text('Download Label CSV'),
+                          ),
                       ],
                     ),
                   ),
@@ -646,7 +628,9 @@ class _ShowLabelPageState extends State<ShowLabelPage> {
                                   // Image column
                                   DataCell(
                                     Image.network(
-                                      item['images']?.isNotEmpty ?? false ? item['images'][0] : "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAKIAAACUCAMAAAAnDwKZAAAAaVBMVEX///9NTU1JSUnJycne3t7q6uouLS5jY2NCQkJgYGDw8PD7+/vh4eFGRkZzc3MnJyd9fX2EhIQ1NTU7OzukpKTQ0NCUlJRra2vAwMDX19eurq6amppWVla6uroaGhq0tLSMjIwAAAALCwuxY5kvAAAFIElEQVR4nO2b6ZKrKhSFUUJEcEDBAcXo6fd/yItmjsPpToGdU5fvR6raIFmuzd4g2gA4HA6Hw+FwOBwOh8PhcDgcvwCtoU0KExJTzyJx8vESfWMSfSsYlRjYwZzEmCFig8g3KJEa6GgO+XyJyEk0gAu0CZyLJvgHJLpAm2APF2kEuwK93fUOLkaZl3Ou2nc9ti8xivG05MOMvNe19UCTKr4snXn5XtfWXaz5bXnP3xuPtiXSAd8k5v1bXdsONE3im0TcvtW1dRfZXSJv3uraerqI+1jM5aqKrWS3ni7SvyqMw1UhItvo2n5d7C82+v6qiQXeGgM7TIACc/0jPF7fl1Gxr6LVb/dYRkRtqKpmvSi2fHPX5gMWY3DKeb5akX5/MUaDc1ny1wbC70u8Tj9xsDIUfj3Q8FY3MVtu8dsuosC/l/Z6sclvu5jdJx/NYamJTRe/oRgeHxXiRSUWJRbLpjz9eug/SvS4WGhkL9ARxuovtwKPi8mLjwuVx5qLkTYID9uxrvmLQs+v5ldly8UojjenjBE0U6jPmFceSy6iy5TBl+vI+ZQsnkv0criPRHS77Vud1u6rtJdQq9cksxJoEtzSYHVa0+m0pHCsPC8D2IaLhD38Oq5WzkhWJM4qjwWJJHmKIB8WTxBrCvVwfB4c5iXS7GWMxUu3z1L5y/rG4Rg8VR7jY5GWM3viWZICEC5l821wDFYllvM89fEsZUS+ofBlzWM60GKpksTJy5whNwVq1MNFGZa4qHA2Z5BgK8yvF2U20JSt5Onx6T65Xb6Qp4u6Vx6zLtJsrZT4DylTrNebO/ltkjHs4rrE+0z49zBPJ9y2V/Zy0YvVdV5rv2OirjzXTd3dJOobvLPG4rja5JnjpfLsFWjvugP6ei+wxbny7OeiztJON5xPPqtcZtQdXZzuTOD2tPJyTVPl2dNFvT6Q3vfDPGo87C3RO78Y9H2myrNroH/OWHn2dfHncPjpLo4PQv4BiR8faOMushyb5WjaRYAiwxyIWRcjZANpTqLnhXb4/BdVfZMSrWFG4p+jRdLQhER5sMn6Q0yHw/F/RQQEIO9h001tPNBYxuuouuyrdN74ScKF3dP3KfMSoJMuYPSyMyLGN0ro5e/zwcs3160T+vBsYNzBaSU9wfPh5jS2IuNeKH3nMfciLY4PKI2AZNV5NyYrSNZULQwYArAKBgq6ijUCRCxoJtVNUDVk0DcniTwkYRYBVtAjpEIfBg0WgZgk9lWy+vbMDykrFqAUHXDZecN44NihrxLmYaFKknSQ15ILmGcUD3LaoS+UFCkZQiCUycrIa8Gpp6mUYdGcSJ/2NW4ohzCvG+/9V0hfJB7yJkddDsbf1AfyDqUFiDvAGEDdgLsmpoBlUdr2YTCeIZskJ0V8SFpAOuGXINUSoT7MjqQ/ARAMJIelapovE/96NUoMQBnnqOf0LjGXVEvMGArbQnW9lphoiaKGYxZAXHecAMViRJNEVpPEo4R+U+eTxGogvBjCrq5NuRgCitMo4i30psGYahcl5aOL8lR0vEd46LkOdCnDcQNK8KhNEehPFUCx0ANkDPRJCk+KLx1oUXOtGBZ53SlDEptBl4ogAkWlyikHK4iqA00gaFvaKpE1OpMEY1QmYTm6rNNGMAlIpS3tVSZaWkEaHBCr9OE6E6qlJCmACIPa5NvY9/pyrjdPdaaoOqJa8FB07p9Ty0vzh1Me+9sDWoaKffrKD6EdHXE4HA6Hw+FwOBwOh8PhcHw6/wFnwnFzLAiC/AAAAABJRU5ErkJggg==",
+                                      item['images']?.isNotEmpty ?? false
+                                          ? item['images'][0]
+                                          : "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAKIAAACUCAMAAAAnDwKZAAAAaVBMVEX///9NTU1JSUnJycne3t7q6uouLS5jY2NCQkJgYGDw8PD7+/vh4eFGRkZzc3MnJyd9fX2EhIQ1NTU7OzukpKTQ0NCUlJRra2vAwMDX19eurq6amppWVla6uroaGhq0tLSMjIwAAAALCwuxY5kvAAAFIElEQVR4nO2b6ZKrKhSFUUJEcEDBAcXo6fd/yItmjsPpToGdU5fvR6raIFmuzd4g2gA4HA6Hw+FwOBwOh8PhcDgcvwCtoU0KExJTzyJx8vESfWMSfSsYlRjYwZzEmCFig8g3KJEa6GgO+XyJyEk0gAu0CZyLJvgHJLpAm2APF2kEuwK93fUOLkaZl3Ou2nc9ti8xivG05MOMvNe19UCTKr4snXn5XtfWXaz5bXnP3xuPtiXSAd8k5v1bXdsONE3im0TcvtW1dRfZXSJv3uraerqI+1jM5aqKrWS3ni7SvyqMw1UhItvo2n5d7C82+v6qiQXeGgM7TIACc/0jPF7fl1Gxr6LVb/dYRkRtqKpmvSi2fHPX5gMWY3DKeb5akX5/MUaDc1ny1wbC70u8Tj9xsDIUfj3Q8FY3MVtu8dsuosC/l/Z6sclvu5jdJx/NYamJTRe/oRgeHxXiRSUWJRbLpjz9eug/SvS4WGhkL9ARxuovtwKPi8mLjwuVx5qLkTYID9uxrvmLQs+v5ldly8UojjenjBE0U6jPmFceSy6iy5TBl+vI+ZQsnkv0criPRHS77Vud1u6rtJdQq9cksxJoEtzSYHVa0+m0pHCsPC8D2IaLhD38Oq5WzkhWJM4qjwWJJHmKIB8WTxBrCvVwfB4c5iXS7GWMxUu3z1L5y/rG4Rg8VR7jY5GWM3viWZICEC5l821wDFYllvM89fEsZUS+ofBlzWM60GKpksTJy5whNwVq1MNFGZa4qHA2Z5BgK8yvF2U20JSt5Onx6T65Xb6Qp4u6Vx6zLtJsrZT4DylTrNebO/ltkjHs4rrE+0z49zBPJ9y2V/Zy0YvVdV5rv2OirjzXTd3dJOobvLPG4rja5JnjpfLsFWjvugP6ei+wxbny7OeiztJON5xPPqtcZtQdXZzuTOD2tPJyTVPl2dNFvT6Q3vfDPGo87C3RO78Y9H2myrNroH/OWHn2dfHncPjpLo4PQv4BiR8faOMushyb5WjaRYAiwxyIWRcjZANpTqLnhXb4/BdVfZMSrWFG4p+jRdLQhER5sMn6Q0yHw/F/RQQEIO9h001tPNBYxuuouuyrdN74ScKF3dP3KfMSoJMuYPSyMyLGN0ro5e/zwcs3160T+vBsYNzBaSU9wfPh5jS2IuNeKH3nMfciLY4PKI2AZNV5NyYrSNZULQwYArAKBgq6ijUCRCxoJtVNUDVk0DcniTwkYRYBVtAjpEIfBg0WgZgk9lWy+vbMDykrFqAUHXDZecN44NihrxLmYaFKknSQ15ILmGcUD3LaoS+UFCkZQiCUycrIa8Gpp6mUYdGcSJ/2NW4ohzCvG+/9V0hfJB7yJkddDsbf1AfyDqUFiDvAGEDdgLsmpoBlUdr2YTCeIZskJ0V8SFpAOuGXINUSoT7MjqQ/ARAMJIelapovE/96NUoMQBnnqOf0LjGXVEvMGArbQnW9lphoiaKGYxZAXHecAMViRJNEVpPEo4R+U+eTxGogvBjCrq5NuRgCitMo4i30psGYahcl5aOL8lR0vEd46LkOdCnDcQNK8KhNEehPFUCx0ANkDPRJCk+KLx1oUXOtGBZ53SlDEptBl4ogAkWlyikHK4iqA00gaFvaKpE1OpMEY1QmYTm6rNNGMAlIpS3tVSZaWkEaHBCr9OE6E6qlJCmACIPa5NvY9/pyrjdPdaaoOqJa8FB07p9Ty0vzh1Me+9sDWoaKffrKD6EdHXE4HA6Hw+FwOBwOh8PhcHw6/wFnwnFzLAiC/AAAAABJRU5ErkJggg==",
                                       width: 50,
                                       height: 50,
                                       errorBuilder: (context, error, stackTrace) {
@@ -747,7 +731,8 @@ class _ShowLabelPageState extends State<ShowLabelPage> {
         children: [
           SizedBox(
             width: width,
-            child: Align(alignment: Alignment.topLeft, child: Text(filTitle, style: GoogleFonts.daiBannaSil(fontSize: 20, fontWeight: fontWeight))),
+            child: Align(
+                alignment: Alignment.topLeft, child: Text(filTitle, style: GoogleFonts.daiBannaSil(fontSize: 20, fontWeight: fontWeight))),
           ),
           const Text(":", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, fontFamily: 'googlefont')),
           show
@@ -1063,16 +1048,20 @@ class _LabelFormFieldsState extends State<LabelFormFields> {
               //   prefixIcon: const Icon(Icons.image),
               //   keyboardType: TextInputType.url,
               // ),
-              _buildCardTextField(controller: widget.labelPageProvider!.descriptionController, label: "Description", validator: (value) => _requiredFieldValidator(value, 'a Description'), prefixIcon: const Icon(Icons.description), maxLines: 3, required: true),
+              _buildCardTextField(
+                  controller: widget.labelPageProvider!.descriptionController,
+                  label: "Description",
+                  validator: (value) => _requiredFieldValidator(value, 'a Description'),
+                  prefixIcon: const Icon(Icons.description),
+                  maxLines: 3,
+                  required: true),
               _buildCardTextField(
                   controller: widget.labelPageProvider!.quantityController,
                   label: "Quantity",
                   validator: (value) => _requiredFieldValidator(value, 'a Quantity'),
                   prefixIcon: const Icon(Icons.numbers),
                   keyboardType: TextInputType.number,
-                  inputFormatters: [
-                    FilteringTextInputFormatter.digitsOnly
-                  ],
+                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                   required: true),
             ],
           ),

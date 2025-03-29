@@ -6,8 +6,6 @@ import 'package:inventory_management/create_inner.dart';
 import 'package:inventory_management/provider/inner_provider.dart';
 import 'package:provider/provider.dart';
 
-bool showInnerPackForm = false;
-
 class ManageInner extends StatefulWidget {
   const ManageInner({super.key});
 
@@ -16,12 +14,6 @@ class ManageInner extends StatefulWidget {
 }
 
 class _ManageInnerState extends State<ManageInner> {
-  void _toggleFormVisibility() {
-    setState(() {
-      showInnerPackForm = !showInnerPackForm;
-    });
-  }
-
   @override
   void initState() {
     super.initState();
@@ -51,12 +43,7 @@ class _ManageInnerState extends State<ManageInner> {
 
   @override
   Widget build(BuildContext context) {
-    final columns = [
-      'SKU',
-      'Name',
-      'Quantity',
-      'Product SKU'
-    ];
+    final columns = ['SKU', 'Name', 'Quantity', 'Product SKU'];
     return Consumer<InnerPackagingProvider>(
       builder: (context, provider, child) => Scaffold(
         body: provider.innerPackings.isNotEmpty && !provider.isLoading
@@ -83,19 +70,19 @@ class _ManageInnerState extends State<ManageInner> {
                             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                           ),
                           onPressed: () {
-                            _toggleFormVisibility();
+                            provider.toggleFormVisibility();
                           },
                           child: Text(
-                            showInnerPackForm ? 'Back' : 'Create Inner Packing',
+                            provider.showInnerPackForm ? 'Back' : 'Create Inner Packing',
                             style: const TextStyle(fontSize: 16, color: Colors.white),
                           ),
                         ),
                       ],
                     ),
                   ),
-                  if (showInnerPackForm) const InnerPackingForm(),
+                  if (provider.showInnerPackForm) const InnerPackingForm(),
                   const SizedBox(height: 10),
-                  if (!showInnerPackForm) ...[
+                  if (!provider.showInnerPackForm) ...[
                     Expanded(
                       child: Card(
                         elevation: 2,
@@ -396,10 +383,7 @@ class _ManageInnerState extends State<ManageInner> {
                           itemCount: labelLogs.length,
                           itemBuilder: (context, index) {
                             final log = labelLogs[index];
-                            final (
-                              icon,
-                              iconColor
-                            ) = _getIconProperties(log['changeType']);
+                            final (icon, iconColor) = _getIconProperties(log['changeType']);
 
                             return Card(
                               margin: const EdgeInsets.symmetric(vertical: 8),
@@ -551,26 +535,14 @@ class _ManageInnerState extends State<ManageInner> {
     );
   }
 
-  (
-    IconData,
-    Color
-  ) _getIconProperties(String changeType) {
+  (IconData, Color) _getIconProperties(String changeType) {
     switch (changeType) {
       case 'Addition':
-        return (
-          Icons.add_circle_outline,
-          Colors.green
-        );
+        return (Icons.add_circle_outline, Colors.green);
       case 'Subtraction':
-        return (
-          Icons.remove_circle_outline,
-          Colors.red
-        );
+        return (Icons.remove_circle_outline, Colors.red);
       default:
-        return (
-          Icons.info_outline,
-          Colors.blue
-        );
+        return (Icons.info_outline, Colors.blue);
     }
   }
 

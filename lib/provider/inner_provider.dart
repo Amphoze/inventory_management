@@ -37,6 +37,12 @@ class InnerPackagingProvider with ChangeNotifier {
     notifyListeners();
   }
 
+  bool showInnerPackForm = false;
+  void toggleFormVisibility() {
+    showInnerPackForm = !showInnerPackForm;
+    notifyListeners();
+  }
+
   // POST /innerPacking
   Future<void> createInnerPacking(Map<String, dynamic> packingData) async {
     String baseUrl = await Constants.getBaseUrl();
@@ -179,9 +185,7 @@ class InnerPackagingProvider with ChangeNotifier {
         body: json.encode({
           'action': 'change',
           'quantityChanged': quantityChanged,
-          'reason': {
-            'reason': reason
-          },
+          'reason': {'reason': reason},
         }),
       );
 

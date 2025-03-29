@@ -1,6 +1,7 @@
 import 'dart:convert'; // For JSON encoding/decoding
 import 'dart:developer';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:inventory_management/constants/constants.dart';
 import 'package:inventory_management/provider/combo_provider.dart';
 import 'package:inventory_management/provider/inventory_provider.dart';
@@ -752,6 +753,7 @@ class _ManageInventoryPageState extends State<ManageInventoryPage> {
                                         border: OutlineInputBorder(),
                                       ),
                                       keyboardType: TextInputType.number,
+                                      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                                       onChanged: (value) {
                                         setState(() {
                                           subInventories[index]['quantity'] = int.tryParse(value) ?? 0;
