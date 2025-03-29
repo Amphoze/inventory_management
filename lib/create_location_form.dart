@@ -1,5 +1,6 @@
+import 'dart:convert';
 import 'dart:developer';
-
+import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:inventory_management/Custom-Files/custom-dropdown.dart';
@@ -8,6 +9,8 @@ import 'package:inventory_management/provider/location_provider.dart';
 import 'package:inventory_management/Custom-Files/custom-button.dart';
 import 'package:inventory_management/Custom-Files/colors.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+import 'Custom-Files/utils.dart';
 
 class NewLocationForm extends StatefulWidget {
   final bool isEditing;
@@ -29,22 +32,29 @@ class _NewLocationFormState extends State<NewLocationForm> {
 
   final _warehouseNameController = TextEditingController();
   final _warehouseIDController = TextEditingController();
+
   final _userEmailController = TextEditingController();
+
   final _taxIdController = TextEditingController();
+
   final _billingAddress1Controller = TextEditingController();
   final _billingAddress2Controller = TextEditingController();
+  final _billingCountryCodeController = TextEditingController();
   final _billingCountryController = TextEditingController();
   final _billingStateController = TextEditingController();
-  final _cityController = TextEditingController();
-  final _zipCodeController = TextEditingController();
-  final _phoneNumberController = TextEditingController();
+  final _billingCityController = TextEditingController();
+  final _billingZipCodeController = TextEditingController();
+  final _billingPhoneNumberController = TextEditingController();
+
   final _shippingAddress1Controller = TextEditingController();
   final _shippingAddress2Controller = TextEditingController();
+  final _shippingCountryCodeController = TextEditingController();
   final _shippingCountryController = TextEditingController();
   final _shippingStateController = TextEditingController();
   final _shippingCityController = TextEditingController();
   final _shippingZipCodeController = TextEditingController();
   final _shippingPhoneNumberController = TextEditingController();
+
   final _warehousePincodeController = TextEditingController();
   final _pincodeController = TextEditingController();
 
@@ -112,9 +122,9 @@ class _NewLocationFormState extends State<NewLocationForm> {
             locationProvider.selectLocationType(selectedLocationTypeIndex);
           }
 
-          _cityController.text = widget.warehouseData!['location']['billingAddress']['city'] ?? '';
-          _zipCodeController.text = widget.warehouseData!['location']['billingAddress']['zipCode']?.toString() ?? '';
-          _phoneNumberController.text = widget.warehouseData!['location']['billingAddress']['phoneNumber']?.toString() ?? '';
+          _billingCityController.text = widget.warehouseData!['location']['billingAddress']['city'] ?? '';
+          _billingZipCodeController.text = widget.warehouseData!['location']['billingAddress']['zipCode']?.toString() ?? '';
+          _billingPhoneNumberController.text = widget.warehouseData!['location']['billingAddress']['phoneNumber']?.toString() ?? '';
           _shippingAddress1Controller.text = widget.warehouseData!['location']['shippingAddress']['addressLine1'] ?? '';
           _shippingAddress2Controller.text = widget.warehouseData!['location']['shippingAddress']['addressLine2'] ?? '';
           _shippingCityController.text = widget.warehouseData!['location']['shippingAddress']['city'] ?? '';
@@ -139,9 +149,9 @@ class _NewLocationFormState extends State<NewLocationForm> {
     _taxIdController.dispose();
     _billingAddress1Controller.dispose();
     _billingAddress2Controller.dispose();
-    _cityController.dispose();
-    _zipCodeController.dispose();
-    _phoneNumberController.dispose();
+    _billingCityController.dispose();
+    _billingZipCodeController.dispose();
+    _billingPhoneNumberController.dispose();
     _shippingAddress1Controller.dispose();
     _shippingAddress2Controller.dispose();
     _shippingCityController.dispose();
@@ -153,12 +163,12 @@ class _NewLocationFormState extends State<NewLocationForm> {
   }
 
   final List<PincodeData> _pincodeList = [PincodeData()];
+
   bool _isPrimary = false;
 
   @override
   Widget build(BuildContext context) {
     final locationProvider = Provider.of<LocationProvider>(context);
-    final isWideScreen = MediaQuery.of(context).size.width > 800;
 
     final isEmailValid = Provider.of<LocationProvider>(context).isEmailValid;
 
@@ -200,125 +210,70 @@ class _NewLocationFormState extends State<NewLocationForm> {
                 ],
               ),
               const SizedBox(height: 16),
-              if (isWideScreen)
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          labelWithRequiredSymbol('Warehouse Name'),
-                          const SizedBox(height: 8),
-                          TextFormField(
-                            controller: _warehouseNameController,
-                            decoration: InputDecoration(
-                              labelText: 'Warehouse Name',
-                              hintText: 'Warehouse Name',
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              floatingLabelBehavior: FloatingLabelBehavior.never,
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        labelWithRequiredSymbol('Warehouse Name'),
+                        const SizedBox(height: 8),
+                        TextFormField(
+                          controller: _warehouseNameController,
+                          decoration: InputDecoration(
+                            labelText: 'Warehouse Name',
+                            hintText: 'Warehouse Name',
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(8),
                             ),
-                            validator: (value) {
-                              if (value == null || value.isEmpty) {
-                                return 'Please enter warehouse name';
-                              }
-                              return null;
-                            },
+                            floatingLabelBehavior: FloatingLabelBehavior.never,
                           ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            'User Email',
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: AppColors.black,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          TextFormField(
-                            controller: _userEmailController,
-                            onChanged: (text) {
-                              Provider.of<LocationProvider>(context, listen: false).validateEmail(text);
-                            },
-                            decoration: InputDecoration(
-                              labelText: 'User Email',
-                              hintText: 'User Email',
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              floatingLabelBehavior: FloatingLabelBehavior.never,
-                              suffixIcon: isEmailValid
-                                  ? const Icon(Icons.check_circle, color: Colors.green)
-                                  : const Icon(Icons.error, color: Colors.red),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                )
-              else ...[
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    labelWithRequiredSymbol('Warehouse Name'),
-                    const SizedBox(height: 8),
-                    TextFormField(
-                      controller: _warehouseNameController,
-                      decoration: InputDecoration(
-                        labelText: 'Warehouse Name',
-                        hintText: 'Warehouse Name',
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return 'Please enter warehouse name';
+                            }
+                            return null;
+                          },
                         ),
-                        floatingLabelBehavior: FloatingLabelBehavior.never,
-                      ),
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Please enter warehouse name';
-                        }
-                        return null;
-                      },
+                      ],
                     ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'User Email',
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: AppColors.black,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    TextFormField(
-                      controller: _userEmailController,
-                      decoration: InputDecoration(
-                        labelText: 'User Email',
-                        hintText: 'User Email',
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        labelWithRequiredSymbol('Email'),
+
+                        TextFormField(
+                          controller: _userEmailController,
+                          onChanged: (text) {
+                            Provider.of<LocationProvider>(context, listen: false).validateEmail(text);
+                          },
+                          validator: (string) {
+                            if (string == null || string.isEmpty) {
+                              return "Email is Required..!";
+                            }
+                            return null;
+                          },
+                          decoration: InputDecoration(
+                            labelText: 'Email',
+                            hintText: 'Email',
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            floatingLabelBehavior: FloatingLabelBehavior.never,
+                            suffixIcon: isEmailValid
+                                ? const Icon(Icons.check_circle, color: Colors.green)
+                                : const Icon(Icons.error, color: Colors.red),
+                          ),
                         ),
-                        floatingLabelBehavior: FloatingLabelBehavior.never,
-                        suffixIcon:
-                            isEmailValid ? const Icon(Icons.check_circle, color: Colors.green) : const Icon(Icons.error, color: Colors.red),
-                      ),
+                      ],
                     ),
-                  ],
-                ),
-              ],
+                  ),
+                ],
+              ),
               const SizedBox(height: 24),
               const Text(
                 'Enter Other Details',
@@ -348,95 +303,11 @@ class _NewLocationFormState extends State<NewLocationForm> {
                 ],
               ),
               const SizedBox(height: 24),
-              const Text(
-                'Billing Address',
-                style: TextStyle(
-                  fontSize: 14,
-                  color: AppColors.black,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Divider(
-                color: Colors.grey.shade400,
-                thickness: 3,
-              ),
-              const SizedBox(height: 16),
-              TextFormField(
-                controller: _billingAddress1Controller,
-                decoration: InputDecoration(
-                  labelText: 'Address Line 1',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-              TextFormField(
-                controller: _billingAddress2Controller,
-                decoration: InputDecoration(
-                  labelText: 'Address Line 2',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-              TextFormField(
-                controller: _billingCountryController,
-                decoration: InputDecoration(
-                  labelText: 'Country',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 8),
-              TextFormField(
-                controller: _billingStateController,
-                decoration: InputDecoration(
-                  labelText: 'State',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-              TextFormField(
-                controller: _cityController,
-                decoration: InputDecoration(
-                  labelText: 'City',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-              TextFormField(
-                controller: _zipCodeController,
-                decoration: InputDecoration(
-                  labelText: 'ZIP Code/Postal Code',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-              TextFormField(
-                controller: _phoneNumberController,
-                keyboardType: TextInputType.phone,
-                inputFormatters: [
-                  FilteringTextInputFormatter.digitsOnly,
-                ],
-                maxLength: 13,
-                decoration: InputDecoration(
-                  labelText: 'Phone Number',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                ),
-              ),
+
+              _buildBillingAddress(),
+
               const SizedBox(height: 24),
+
               Consumer<LocationProvider>(
                 builder: (context, locationProvider, child) {
                   return Row(
@@ -444,39 +315,31 @@ class _NewLocationFormState extends State<NewLocationForm> {
                       Checkbox(
                         value: locationProvider.copyAddress,
                         onChanged: (bool? value) {
+
                           locationProvider.updateCopyAddress(value ?? false);
 
                           if (value == true) {
                             _shippingAddress1Controller.text = _billingAddress1Controller.text;
                             _shippingAddress2Controller.text = _billingAddress2Controller.text;
-                            _shippingCityController.text = _cityController.text;
-                            _shippingZipCodeController.text = _zipCodeController.text;
-                            _shippingPhoneNumberController.text = _phoneNumberController.text;
-
-                            locationProvider.updateShippingAddress(
-                              address1: _billingAddress1Controller.text,
-                              address2: _billingAddress2Controller.text,
-                              city: _cityController.text,
-                              zipCode: _zipCodeController.text,
-                              phoneNumber: _phoneNumberController.text,
-                            );
+                            _shippingCountryController.text = _billingCountryController.text;
+                            _shippingCountryCodeController.text = _billingCountryCodeController.text;
+                            _shippingStateController.text = _billingStateController.text;
+                            _shippingCityController.text = _billingCityController.text;
+                            _shippingZipCodeController.text = _billingZipCodeController.text;
+                            _shippingPhoneNumberController.text = _billingPhoneNumberController.text;
                           } else {
                             _shippingAddress1Controller.clear();
                             _shippingAddress2Controller.clear();
+                            _shippingCountryController.clear();
+                            _shippingCountryCodeController.clear();
+                            _shippingStateController.clear();
                             _shippingCityController.clear();
                             _shippingZipCodeController.clear();
                             _shippingPhoneNumberController.clear();
-
-                            locationProvider.updateShippingAddress(
-                              address1: '',
-                              address2: '',
-                              city: '',
-                              zipCode: '',
-                              phoneNumber: '',
-                            );
                           }
                         },
                       ),
+
                       const Text(
                         'Copy Billing Address to Shipping Address',
                         style: TextStyle(
@@ -489,96 +352,20 @@ class _NewLocationFormState extends State<NewLocationForm> {
                   );
                 },
               ),
+
               const SizedBox(height: 16),
-              const Text(
-                'Shipping Address',
-                style: TextStyle(
-                  fontSize: 14,
-                  color: AppColors.black,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 8),
+
+              _buildShippingAddress(),
+
+              const SizedBox(height: 16),
+
               Divider(
                 color: Colors.grey.shade400,
                 thickness: 3,
               ),
+
               const SizedBox(height: 16),
-              TextFormField(
-                controller: _shippingAddress1Controller,
-                decoration: InputDecoration(
-                  labelText: 'Address Line 1',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-              TextFormField(
-                controller: _shippingAddress2Controller,
-                decoration: InputDecoration(
-                  labelText: 'Address Line 2',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-              TextFormField(
-                controller: _shippingCountryController,
-                decoration: InputDecoration(
-                  labelText: 'Country',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-              TextFormField(
-                controller: _shippingStateController,
-                decoration: InputDecoration(
-                  labelText: 'State',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-              TextFormField(
-                controller: _shippingCityController,
-                decoration: InputDecoration(
-                  labelText: 'City',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-              TextFormField(
-                controller: _shippingZipCodeController,
-                decoration: InputDecoration(
-                  labelText: 'ZIP Code/Postal Code',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-              TextFormField(
-                controller: _shippingPhoneNumberController,
-                decoration: InputDecoration(
-                  labelText: 'Phone Number',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-              Divider(
-                color: Colors.grey.shade400,
-                thickness: 3,
-              ),
-              const SizedBox(height: 16),
+
               const Text(
                 'Warehouse Type',
                 style: TextStyle(
@@ -587,7 +374,9 @@ class _NewLocationFormState extends State<NewLocationForm> {
                   fontWeight: FontWeight.bold,
                 ),
               ),
+
               const SizedBox(height: 8),
+
               CustomDropdown(
                 option: locationProvider.locationTypes,
                 selectedIndex: locationProvider.selectedLocationTypeIndex,
@@ -595,9 +384,13 @@ class _NewLocationFormState extends State<NewLocationForm> {
                   locationProvider.selectLocationType(locationType);
                 },
               ),
+
               const SizedBox(height: 16),
+
               labelWithRequiredSymbol('Warehouse Pincode'),
+
               const SizedBox(height: 8),
+
               TextFormField(
                 inputFormatters: [
                   FilteringTextInputFormatter.digitsOnly
@@ -618,6 +411,7 @@ class _NewLocationFormState extends State<NewLocationForm> {
                   return null;
                 },
               ),
+
               if (isSuperAdmin == true) ...[
                 const SizedBox(height: 16),
                 Row(
@@ -634,9 +428,13 @@ class _NewLocationFormState extends State<NewLocationForm> {
                   ],
                 ),
               ],
+
               const SizedBox(height: 16),
+
               labelWithRequiredSymbol('Pincodes'),
+
               const SizedBox(height: 8),
+
               Column(
                 children: [
                   ..._pincodeList.asMap().entries.map((entry) {
@@ -673,12 +471,14 @@ class _NewLocationFormState extends State<NewLocationForm> {
                       ),
                     );
                   }),
+
                   ElevatedButton(
                     onPressed: () => setState(() => _pincodeList.add(PincodeData())),
                     child: const Text('Add Pincode'),
                   ),
                 ],
               ),
+
               if (locationProvider.validationMessage != null)
                 Padding(
                   padding: const EdgeInsets.only(top: 4.0),
@@ -690,7 +490,9 @@ class _NewLocationFormState extends State<NewLocationForm> {
                     ),
                   ),
                 ),
+
               const SizedBox(height: 16),
+
               Row(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
@@ -720,58 +522,60 @@ class _NewLocationFormState extends State<NewLocationForm> {
                     onTap: () async {
                       if (_formKey.currentState?.validate() ?? false) {
                         final body = {
-                          'name': _warehouseNameController.text,
-                          'email': _userEmailController.text,
+                          'name': _warehouseNameController.text.trim(),
+                          'email': _userEmailController.text.trim(),
                           'location': {
                             'otherDetails': {
-                              'taxIdentificationNumber': int.tryParse(_taxIdController.text) ?? 0,
+                              'taxIdentificationNumber': int.tryParse(_taxIdController.text.trim()) ?? 0,
                             },
                             'billingAddress': {
-                              'addressLine1': _billingAddress1Controller.text,
-                              'addressLine2': _billingAddress2Controller.text,
-                              'country': _billingCountryController.text.toString() ?? '',
-                              'state': _billingStateController.text.toString() ?? '',
-                              'city': _cityController.text,
-                              'zipCode': int.tryParse(_zipCodeController.text) ?? 0,
-                              'phoneNumber': int.tryParse(_phoneNumberController.text) ?? 0,
+                              'addressLine1': _billingAddress1Controller.text.trim(),
+                              'addressLine2': _billingAddress2Controller.text.trim(),
+                              'country': _billingCountryController.text.trim(),
+                              'country_code': _billingCountryCodeController.text.trim(),
+                              'state': _billingStateController.text.trim(),
+                              'city': _billingCityController.text.trim(),
+                              'zipCode': int.tryParse(_billingZipCodeController.text.trim()) ?? 0,
+                              'phoneNumber': int.tryParse(_billingPhoneNumberController.text.trim()) ?? 0,
                             },
                             'shippingAddress': {
-                              'addressLine1': _shippingAddress1Controller.text,
-                              'addressLine2': _shippingAddress2Controller.text,
-                              'country': _shippingCountryController.text.toString() ?? '',
-                              'state': _shippingStateController.text.toString() ?? '',
-                              'city': _shippingCityController.text,
-                              'zipCode': int.tryParse(_shippingZipCodeController.text) ?? 0,
-                              'phoneNumber': int.tryParse(_shippingPhoneNumberController.text) ?? 0,
+                              'addressLine1': _shippingAddress1Controller.text.trim(),
+                              'addressLine2': _shippingAddress2Controller.text.trim(),
+                              'country': _shippingCountryController.text.trim(),
+                              'country_code': _shippingCountryCodeController.text.trim(),
+                              'state': _shippingStateController.text.trim(),
+                              'city': _shippingCityController.text.trim(),
+                              'zipCode': int.tryParse(_shippingZipCodeController.text.trim()) ?? 0,
+                              'phoneNumber': int.tryParse(_shippingPhoneNumberController.text.trim()) ?? 0,
                             },
-                            'locationType': locationProvider.selectedLocationTypeIndex.toString() ?? '',
+                            'locationType': locationProvider.selectedLocationTypeIndex.toString(),
                           },
-                          "pinCodes": _pincodeList.map((pincode) => pincode.controller.text).toList(),
+                          "pinCodes": _pincodeList.map((pincode) => pincode.controller.text.trim()).toList(),
                           "isPrimary": _isPrimary,
                           'warehouse_id': ''
                         };
 
-                        log('Body: $body');
+                        log('Create Warehouse Payload: $body');
 
-                        // final success = await locationProvider.createWarehouse(body);
+                        final success = await locationProvider.createWarehouse(body);
 
-                        // final snackBar = success
-                        //     ? const SnackBar(
-                        //         content: Text('Warehouse created successfully!'),
-                        //         backgroundColor: Colors.green,
-                        //       )
-                        //     : SnackBar(
-                        //         content: Text('Failed to create warehouse: ${locationProvider.errorMessage}'),
-                        //         backgroundColor: Colors.red,
-                        //       );
-                        //
-                        // ScaffoldMessenger.of(context).showSnackBar(snackBar);
-                        //
-                        // if (success) {
-                        //   locationProvider.refreshContent();
-                        //   _formKey.currentState?.reset();
-                        //   locationProvider.toggleCreatingNewLocation();
-                        // }
+                        final snackBar = success
+                            ? const SnackBar(
+                                content: Text('Warehouse created successfully!'),
+                                backgroundColor: Colors.green,
+                              )
+                            : SnackBar(
+                                content: Text('Failed to create warehouse: ${locationProvider.errorMessage}'),
+                                backgroundColor: Colors.red,
+                              );
+
+                        ScaffoldMessenger.of(context).showSnackBar(snackBar);
+
+                        if (success) {
+                          locationProvider.refreshContent();
+                          _formKey.currentState?.reset();
+                          locationProvider.toggleCreatingNewLocation();
+                        }
                       }
                     },
                     color: AppColors.primaryGreen,
@@ -782,13 +586,323 @@ class _NewLocationFormState extends State<NewLocationForm> {
                   ),
                 ],
               ),
-              const SizedBox(
-                height: 25,
-              ),
+
+              const SizedBox(height: 25),
             ],
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildBillingAddress() {
+    return Column(
+      children: [
+        labelWithRequiredSymbol('Billing Address'),
+        const SizedBox(height: 8),
+        Divider(
+          color: Colors.grey.shade400,
+          thickness: 3,
+        ),
+        const SizedBox(height: 16),
+        TextFormField(
+          controller: _billingAddress1Controller,
+          validator: (string) {
+            if (string == null || string.isEmpty) {
+              return "Address is Required..!";
+            }
+            return null;
+          },
+          decoration: InputDecoration(
+            labelText: 'Address Line 1',
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
+          ),
+        ),
+        const SizedBox(height: 16),
+        TextFormField(
+          controller: _billingAddress2Controller,
+          decoration: InputDecoration(
+            labelText: 'Address Line 2',
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
+          ),
+        ),
+        const SizedBox(height: 16),
+        Row(
+          children: [
+            Flexible(
+              child: TextFormField(
+                controller: _billingCountryCodeController,
+                validator: (string) {
+                  if (string == null || string.isEmpty) {
+                    return "Country Code is Required..!";
+                  }
+                  return null;
+                },
+                decoration: InputDecoration(
+                  labelText: 'Country Code',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+              ),
+            ),
+
+            const SizedBox(width: 10),
+
+            Flexible(
+              flex: 5,
+              child: TextFormField(
+                controller: _billingCountryController,
+                validator: (string) {
+                  if (string == null || string.isEmpty) {
+                    return "Country is Required..!";
+                  }
+                  return null;
+                },
+                decoration: InputDecoration(
+                  labelText: 'Country',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        TextFormField(
+          controller: _billingStateController,
+          validator: (string) {
+            if (string == null || string.isEmpty) {
+              return "State is Required..!";
+            }
+            return null;
+          },
+          decoration: InputDecoration(
+            labelText: 'State',
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
+          ),
+        ),
+        const SizedBox(height: 16),
+        TextFormField(
+          controller: _billingCityController,
+          validator: (string) {
+            if (string == null || string.isEmpty) {
+              return "City is Required..!";
+            }
+            return null;
+          },
+          decoration: InputDecoration(
+            labelText: 'City',
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
+          ),
+        ),
+        const SizedBox(height: 16),
+        TextFormField(
+          controller: _billingZipCodeController,
+          validator: (string) {
+            if (string == null || string.isEmpty) {
+              return "ZIP/Postal Code is Required..!";
+            }
+            return null;
+          },
+          onChanged: (string) {
+            if (string.length == 6) {
+              getLocationDetails(context: context, pincode: string, isBilling: true);
+            }
+          },
+          onFieldSubmitted: (string) {
+            getLocationDetails(context: context, pincode: string, isBilling: true);
+          },
+          inputFormatters: [
+            FilteringTextInputFormatter.digitsOnly,
+          ],
+          decoration: InputDecoration(
+            labelText: 'ZIP Code/Postal Code',
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
+          ),
+        ),
+        const SizedBox(height: 16),
+        TextFormField(
+          controller: _billingPhoneNumberController,
+          keyboardType: TextInputType.phone,
+          inputFormatters: [
+            FilteringTextInputFormatter.digitsOnly,
+          ],
+          maxLength: 13,
+          decoration: InputDecoration(
+            labelText: 'Phone Number',
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildShippingAddress() {
+    return Column(
+      children: [
+        labelWithRequiredSymbol('Shipping Address'),
+        const SizedBox(height: 8),
+        Divider(
+          color: Colors.grey.shade400,
+          thickness: 3,
+        ),
+        const SizedBox(height: 16),
+        TextFormField(
+          controller: _shippingAddress1Controller,
+          validator: (string) {
+            if (string == null || string.isEmpty) {
+              return "Address is Required..!";
+            }
+            return null;
+          },
+          decoration: InputDecoration(
+            labelText: 'Address Line 1',
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
+          ),
+        ),
+        const SizedBox(height: 16),
+        TextFormField(
+          controller: _shippingAddress2Controller,
+          decoration: InputDecoration(
+            labelText: 'Address Line 2',
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
+          ),
+        ),
+        const SizedBox(height: 16),
+        Row(
+          children: [
+
+            Flexible(
+              child: TextFormField(
+                controller: _shippingCountryCodeController,
+                validator: (string) {
+                  if (string == null || string.isEmpty) {
+                    return "Country Code is Required..!";
+                  }
+                  return null;
+                },
+                decoration: InputDecoration(
+                  labelText: 'Country',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+              ),
+            ),
+
+            const SizedBox(width: 10),
+
+            Flexible(
+              flex: 5,
+              child: TextFormField(
+                controller: _shippingCountryController,
+                validator: (string) {
+                  if (string == null || string.isEmpty) {
+                    return "Country is Required..!";
+                  }
+                  return null;
+                },
+                decoration: InputDecoration(
+                  labelText: 'Country',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+        TextFormField(
+          controller: _shippingStateController,
+          validator: (string) {
+            if (string == null || string.isEmpty) {
+              return "State is Required..!";
+            }
+            return null;
+          },
+          decoration: InputDecoration(
+            labelText: 'State',
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
+          ),
+        ),
+        const SizedBox(height: 16),
+        TextFormField(
+          controller: _shippingCityController,
+          validator: (string) {
+            if (string == null || string.isEmpty) {
+              return "City is Required..!";
+            }
+            return null;
+          },
+          decoration: InputDecoration(
+            labelText: 'City',
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
+          ),
+        ),
+        const SizedBox(height: 16),
+        TextFormField(
+          controller: _shippingZipCodeController,
+          validator: (string) {
+            if (string == null || string.isEmpty) {
+              return "ZIP/Postal Code is Required..!";
+            }
+            return null;
+          },
+          onChanged: (string) {
+            if (string.length == 6) {
+              getLocationDetails(context: context, pincode: string, isBilling: false);
+            }
+          },
+          onFieldSubmitted: (string) {
+            getLocationDetails(context: context, pincode: string, isBilling: false);
+          },
+          inputFormatters: [
+            FilteringTextInputFormatter.digitsOnly,
+          ],
+          decoration: InputDecoration(
+            labelText: 'ZIP Code/Postal Code',
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
+          ),
+        ),
+        const SizedBox(height: 16),
+        TextFormField(
+          controller: _shippingPhoneNumberController,
+          inputFormatters: [
+            FilteringTextInputFormatter.digitsOnly,
+          ],
+          decoration: InputDecoration(
+            labelText: 'Phone Number',
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
+          ),
+        ),
+      ],
     );
   }
 
@@ -812,6 +926,74 @@ class _NewLocationFormState extends State<NewLocationForm> {
         ),
       ],
     );
+  }
+
+  void clearLocationDetails({bool isBilling = true}) {
+    if (isBilling) {
+      _billingCountryController.clear();
+      _billingStateController.clear();
+      _billingCityController.clear();
+      _billingCountryCodeController.clear();
+    } else {
+      _shippingCountryController.clear();
+      _shippingStateController.clear();
+      _shippingCityController.clear();
+      _shippingCountryCodeController.clear();
+    }
+  }
+
+  Future<void> getLocationDetails({required BuildContext context, required String pincode, bool isBilling = true}) async {
+    Utils.showLoadingDialog(context, 'Fetching Address');
+
+    try {
+      Uri url = Uri.parse('https://api.opencagedata.com/geocode/v1/json?q=$pincode&key=55710109e7c24fbc98c86377005c0612');
+
+      final response = await http.get(url);
+
+      if (response.statusCode == 200) {
+        final data = await jsonDecode(response.body);
+
+        if (data['results'] != null && data['results'].isNotEmpty) {
+          final components = data['results'][0]['components'];
+
+          log('Components - $components');
+
+          String country = components['country'] ?? '';
+          String state = components['state'] ?? '';
+          String city = components['city_district'] ?? components['state_district'] ?? components['_normalized_city'] ?? '';
+          String countryCode = components['country_code'].toString().toUpperCase() ?? '';
+
+          if (isBilling) {
+            _billingCountryController.text = country;
+            _billingStateController.text = state;
+            _billingCityController.text = city;
+            _billingCountryCodeController.text = countryCode;
+          } else {
+            _shippingCountryController.text = country;
+            _shippingStateController.text = state;
+            _shippingCityController.text = city;
+            _shippingCountryCodeController.text = countryCode;
+          }
+
+          setState(() {});
+
+        } else {
+          log('No location details found for the provided pincode :- ${response.body}');
+          Utils.showSnackBar(context, 'No location details found for the provided pincode.');
+          clearLocationDetails(isBilling: isBilling);
+        }
+      } else {
+        log('Failed to load location details :- ${response.body}');
+        Utils.showSnackBar(context, 'Failed to load location details. Please check your internet connection.');
+        clearLocationDetails(isBilling: isBilling);
+      }
+    } catch (e, stace) {
+      log('Error to fetch location details :- $e\n$stace');
+      Utils.showSnackBar(context, 'Failed to load location details. Please check your internet connection.');
+      clearLocationDetails(isBilling: isBilling);
+    } finally {
+      Navigator.pop(context);
+    }
   }
 }
 

@@ -16,6 +16,7 @@ class LocationMaster extends StatefulWidget {
 }
 
 class _LocationMasterState extends State<LocationMaster> {
+
   @override
   void initState() {
     super.initState();
@@ -315,89 +316,4 @@ class _LocationMasterState extends State<LocationMaster> {
       ),
     );
   }
-}
-
-void _showDetailsDialog(BuildContext context, Map<String, dynamic> warehouse) {
-  final location = warehouse['location'];
-  final billingAddress = location is Map<String, dynamic> ? location['billingAddress'] : {};
-  final shippingAddress = location is Map<String, dynamic> ? location['shippingAddress'] : {};
-  final otherDetails = location is Map<String, dynamic> ? location['otherDetails'] : {};
-
-  String getDisplayValue(dynamic value) {
-    return value == null || (value is String && value.isEmpty) ? 'N/A' : value.toString();
-  }
-
-  print(warehouse);
-
-  showDialog(
-    context: context,
-    builder: (BuildContext context) {
-      return AlertDialog(
-        contentPadding: const EdgeInsets.all(16.0),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12.0),
-        ),
-        title: Text('Details for ${getDisplayValue(warehouse['name'])}'),
-        content: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildListTile(Icons.key, 'Warehouse Key:', getDisplayValue(warehouse['_id'])),
-              _buildListTile(Icons.pin_drop, 'Warehouse Pincode:', getDisplayValue(warehouse['warehousePincode'])),
-              _buildListTile(Icons.list, 'Pincode List:',
-                  getDisplayValue(warehouse['pincode'] is List ? warehouse['pincode'].join(', ') : warehouse['pincode'])),
-              const SizedBox(height: 20),
-              const Text('Billing Address:', style: TextStyle(fontWeight: FontWeight.bold)),
-              const SizedBox(height: 5),
-              _buildListTile(Icons.home, 'Address Line 1:', getDisplayValue(billingAddress['addressLine1'])),
-              _buildListTile(Icons.home, 'Address Line 2:', getDisplayValue(billingAddress['addressLine2'])),
-              _buildListTile(Icons.location_city, 'City:', getDisplayValue(billingAddress['city'])),
-              _buildListTile(Icons.location_on, 'State:', getDisplayValue(billingAddress['state'])),
-              _buildListTile(Icons.flag, 'Country:', getDisplayValue(billingAddress['country'])),
-              _buildListTile(Icons.code, 'Zip Code:', getDisplayValue(billingAddress['zipCode'])),
-              _buildListTile(Icons.phone, 'Phone Number:', getDisplayValue(billingAddress['phoneNumber'])),
-              const SizedBox(height: 20),
-              const Text('Shipping Address:', style: TextStyle(fontWeight: FontWeight.bold)),
-              const SizedBox(height: 5),
-              _buildListTile(Icons.home, 'Address Line 1:', getDisplayValue(shippingAddress['addressLine1'])),
-              _buildListTile(Icons.home, 'Address Line 2:', getDisplayValue(shippingAddress['addressLine2'])),
-              _buildListTile(Icons.location_city, 'City:', getDisplayValue(shippingAddress['city'])),
-              _buildListTile(Icons.location_on, 'State:', getDisplayValue(shippingAddress['state'])),
-              _buildListTile(Icons.flag, 'Country:', getDisplayValue(shippingAddress['country'])),
-              _buildListTile(Icons.code, 'Zip Code:', getDisplayValue(shippingAddress['zipCode'])),
-              _buildListTile(Icons.phone, 'Phone Number:', getDisplayValue(shippingAddress['phoneNumber'])),
-              const SizedBox(height: 20),
-              const Text('Other Details:', style: TextStyle(fontWeight: FontWeight.bold)),
-              const SizedBox(height: 5),
-              _buildListTile(Icons.assignment, 'Tax Identification Number:', getDisplayValue(otherDetails['taxIdentificationNumber'])),
-              const SizedBox(height: 20),
-              _buildListTile(
-                  Icons.category, 'Location Type:', getDisplayValue(location is Map<String, dynamic> ? location['locationType'] : null)),
-              _buildListTile(Icons.check, 'Hold Stocks:',
-                  getDisplayValue(location is Map<String, dynamic> ? (location['holdStocks'] ? 'Yes' : 'No') : 'N/A')),
-              _buildListTile(Icons.copy, 'Copy Master SKU from Primary:',
-                  getDisplayValue(location is Map<String, dynamic> ? (location['copyMasterSkuFromPrimary'] ? 'Yes' : 'No') : 'N/A')),
-            ],
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.of(context).pop();
-            },
-            child: const Text('Close'),
-          ),
-        ],
-      );
-    },
-  );
-}
-
-Widget _buildListTile(IconData icon, String title, String value) {
-  return ListTile(
-    contentPadding: const EdgeInsets.symmetric(vertical: 4.0),
-    leading: Icon(icon, color: AppColors.primaryGreen),
-    title: Text(title),
-    subtitle: Text(value),
-  );
 }

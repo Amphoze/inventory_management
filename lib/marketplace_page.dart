@@ -46,6 +46,7 @@ class _MarketplacePageState extends State<MarketplacePage> {
                 },
                 child: provider.isFormVisible ? const Text('Cancel') : const Text('Create Marketplace'),
               ),
+
               if (!provider.isFormVisible)
                 Container(
                   width: 200,
@@ -153,8 +154,7 @@ class _MarketplacePageState extends State<MarketplacePage> {
                               Expanded(
                                 child: CustomDropdown(
                                   option: options,
-                                  selectedIndex:
-                                      skuMap.product != null ? options.indexWhere((option) => option['product'] == skuMap.product) : 0,
+                                  selectedIndex: skuMap.product != null ? options.indexWhere((option) => option['product'] == skuMap.product) : 0,
                                   onSelectedChanged: (selectedIndex) {
                                     final selectedProduct = options.isNotEmpty ? options[selectedIndex]['product'] : null;
                                     provider.updateSkuMap(index, skuMap.mktpSku, selectedProduct);

@@ -1261,10 +1261,10 @@ class _LabelButtonsState extends State<LabelButtons> {
       }
 
       if (res["res"] == "success") {
-        // Clear form and show success message
+
         setState(() {
           labelProvider.clearControllers(widget.dropdownKey);
-          // showLabelForm = false;
+          showLabelForm = false;
         });
 
         ScaffoldMessenger.of(context).showSnackBar(
@@ -1273,6 +1273,7 @@ class _LabelButtonsState extends State<LabelButtons> {
             backgroundColor: Colors.green,
           ),
         );
+
       } else {
         throw res["res"] ?? 'Unknown error occurred';
       }

@@ -40,7 +40,7 @@ class _ProductMasterPageState extends State<ProductMasterPage> {
                   Expanded(
                     child: Consumer<ProductMasterProvider>(
                       builder: (context, provider, child) =>
-                          !provider.showCreateProduct ? _buildProductList(context) : const CreateProduct(),
+                          !provider.showCreateProduct ? _buildProductList(context) : CreateProduct(onCreated: provider.toggleCreateProduct),
                     ),
                   ),
                 ],

@@ -116,6 +116,8 @@ class LabelPageApi with ChangeNotifier {
         body: json.encode(body),
       );
 
+      log('Creating Label Response with status is ${response.statusCode} and Response as ${response.body}');
+
       if (response.statusCode == 201 || response.statusCode == 200) {
         log("respose body is here ${response.body.toString()}");
         return {"res": "success"};

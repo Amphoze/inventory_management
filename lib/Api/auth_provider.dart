@@ -794,6 +794,8 @@ class AuthProvider with ChangeNotifier {
         body: jsonEncode(warehouseData),
       );
 
+      log('Warehouse Response :- ${response.body}');
+
       if (response.statusCode == 200 || response.statusCode == 201) {
         return jsonDecode(response.body);
       } else {
