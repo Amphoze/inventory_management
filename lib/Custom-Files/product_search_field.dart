@@ -53,7 +53,9 @@ class _ProductSearchableTextFieldState extends State<ProductSearchableTextField>
 
     try {
       final response = await search(query, page: _currentPage);
+
       if (response['success'] == true) {
+
         final List<Product> newProducts = (response['products'] as List).map((v) => Product.fromJson(v)).toList();
 
         setState(() {
