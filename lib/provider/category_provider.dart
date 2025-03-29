@@ -51,7 +51,10 @@ class CategoryProvider with ChangeNotifier {
 
       if (result['success']) {
         final List<dynamic> products = result['products'];
-        _categoryProducts = products.map((product) => Product.fromJson(product)).toList();
+        _categoryProducts = products.map((product) {
+          log('shopify image is ${product['shopifyImage']}');
+          return Product.fromJson(product);
+        }).toList();
         _currentProductsPage = result['currentPage'];
         _totalProductsPages = result['totalPages'];
         _totalCategoryProducts = result['totalProducts'];
@@ -63,12 +66,12 @@ class CategoryProvider with ChangeNotifier {
         _totalCategoryProducts = 0;
         log('Failed to fetch category products: ${result['message']}');
       }
-    } catch (e) {
+    } catch (e, s) {
       _categoryProducts = [];
       _currentProductsPage = 1;
       _totalProductsPages = 1;
       _totalCategoryProducts = 0;
-      log('Exception occurred while fetching category products: $e');
+      log('Exception occurred while fetching category products: $e $s');
     } finally {
       setFetchingProducts(false);
       notifyListeners();

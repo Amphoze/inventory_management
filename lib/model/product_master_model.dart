@@ -78,7 +78,7 @@ class Product {
       cost: data['cost']?.toString() ?? '',
       taxRule: data['tax_rule']?.toString() ?? '',
       shopifyImage: data['shopifyImage'] ?? '',
-      images: data['images'] ?? [],
+    images: List<String>.from(data['images'] ?? []),
       createdDate: data['createdAt'] ?? '',
       lastUpdated: data['updatedAt'] ?? '',
       displayName: data['displayName'] ?? '',
