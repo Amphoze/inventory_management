@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:developer';
 import 'package:http/http.dart' as http;
 import 'package:inventory_management/constants/constants.dart';
 import 'package:inventory_management/model/marketplace_model.dart';
@@ -48,6 +49,9 @@ class MarketplaceApi {
       body: jsonEncode(marketplace.toJson()), // Send marketplace as JSON
     );
 
+    log('Create Market Place Status Code :- ${response.statusCode}');
+    log('Create Market Place Response :- ${response.body}');
+
     if (response.statusCode != 201) {
       throw Exception('Failed to create marketplace: ${response.body}');
     }
@@ -55,9 +59,12 @@ class MarketplaceApi {
 
   // Get all marketplaces
   Future<List<Marketplace>> getMarketplaces() async {
-    String baseUrl = '${await Constants.getBaseUrl()}/marketplace';
+    String baseUrl = '${await Constants.getBaseUrl()}/marketplace?limit=100';
+    final url = Uri.parse(baseUrl);
+    log('Getting Market Places from URL :- $url');
     final headers = await _getHeaders(); // Get headers with token
-    final response = await http.get(Uri.parse(baseUrl), headers: headers);
+    final response = await http.get(url, headers: headers);
+
 
     if (response.statusCode == 200) {
       // Decode the response as a Map (JSON object)

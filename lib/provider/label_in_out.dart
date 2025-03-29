@@ -613,9 +613,12 @@ class LabelFormPageState extends State<LabelFormPage> with SingleTickerProviderS
               ],
             ),
             child: TabBar(
+              indicatorWeight: 3,
+              indicatorSize: TabBarIndicatorSize.tab,
               controller: _tabController,
               indicatorColor: AppColors.primaryBlue,
-              indicatorWeight: 3,
+              isScrollable: false,
+              physics: const NeverScrollableScrollPhysics(),
               labelColor: AppColors.primaryBlue,
               unselectedLabelColor: Colors.grey[600],
               tabs: const [
@@ -638,6 +641,7 @@ class LabelFormPageState extends State<LabelFormPage> with SingleTickerProviderS
             color: Colors.grey[50],
             child: TabBarView(
               controller: _tabController,
+              physics: NeverScrollableScrollPhysics(),
               children: [
                 buildForm(_labelInFormKey),
                 buildForm(_labelOutFormKey),

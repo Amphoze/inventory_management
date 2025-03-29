@@ -699,7 +699,6 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
     log('itemsList: $itemsList');
 
     if (_formKey.currentState!.validate()) {
-
       Map<String, dynamic> updatedData = {
         'date': parseDate(_dateController.text)?.toIso8601String(),
         'payment_mode': _ordersProvider.selectedPayment,
@@ -1994,18 +1993,18 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
                                 const SizedBox(width: 10),
                                 Expanded(
                                   child: _buildTextField(
-                                    controller: _customerEmailController,
-                                    label: 'Email',
-                                    icon: Icons.email,
-                                    validator: (value) {
-                                      if (value != null) {
+                                      controller: _customerEmailController,
+                                      label: 'Email',
+                                      icon: Icons.email,
+                                      validator: (value) {
+                                        if (value == null || value.trim().isEmpty) return null;
+
                                         if (!value.contains('@') || !value.contains('.')) {
                                           return 'Enter a valid email';
                                         }
-                                      }
-                                      return null;
-                                    },
-                                  ),
+
+                                        return null;
+                                      }),
                                 ),
                               ],
                             ),
@@ -2163,11 +2162,12 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
                                     label: 'Email',
                                     icon: Icons.email,
                                     validator: (value) {
-                                      if (value != null) {
-                                        if (!value.contains('@') || !value.contains('.')) {
-                                          return 'Enter a valid email';
-                                        }
+                                      if (value == null || value.trim().isEmpty) return null;
+
+                                      if (!value.contains('@') || !value.contains('.')) {
+                                        return 'Enter a valid email';
                                       }
+
                                       return null;
                                     },
                                   ),
@@ -2306,11 +2306,12 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
                                     label: 'Email',
                                     icon: Icons.email,
                                     validator: (value) {
-                                      if (value != null) {
-                                        if (!value.contains('@') || !value.contains('.')) {
-                                          return 'Enter a valid email';
-                                        }
+                                      if (value == null || value.trim().isEmpty) return null;
+
+                                      if (!value.contains('@') || !value.contains('.')) {
+                                        return 'Enter a valid email';
                                       }
+
                                       return null;
                                     },
                                   ),
@@ -3302,6 +3303,18 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
     );
   }
 
+  void clearLocationDetails({required bool isBilling}) {
+    if (isBilling) {
+      _billingCountryController.clear();
+      _billingStateController.clear();
+      _billingCityController.clear();
+    } else {
+      _shippingCountryController.clear();
+      _shippingStateController.clear();
+      _shippingCityController.clear();
+    }
+  }
+
   Future<void> getLocationDetails({required BuildContext context, required String pincode, required bool isBilling}) async {
     Utils.showLoadingDialog(context, 'Fetching Address');
 
@@ -3339,16 +3352,19 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
         } else {
           log('No location details found for the provided pincode :- ${response.body}');
           Utils.showSnackBar(context, 'No location details found for the provided pincode.');
+          clearLocationDetails(isBilling: isBilling);
           // return;
         }
       } else {
         log('Failed to load location details :- ${response.body}');
         Utils.showSnackBar(context, 'Failed to load location details. Please check your internet connection.');
+        clearLocationDetails(isBilling: isBilling);
         // return;
       }
     } catch (e, stace) {
       log('Error to fetch location details :- $e\n$stace');
       Utils.showSnackBar(context, 'Failed to load location details. Please check your internet connection.');
+      clearLocationDetails(isBilling: isBilling);
       // return;
     } finally {
       Navigator.pop(context);

@@ -1,14 +1,10 @@
 {
-  "message": "Products creation process completed",
-  "successfulProducts": [],
-  "failedProducts": [
+  "message": "0 order processed successfully.",
+  "updatedOrders": [],
+  "failedOrders": [
     {
-      "sku": "TEST-1011",
-      "reason": "Document failed validation"
-    },
-    {
-      "sku": "TEST-1022",
-      "reason": "Document failed validation"
+      "orderId": "TEST-PK-20",
+      "reason": "Invoice creation failed"
     }
   ]
 }

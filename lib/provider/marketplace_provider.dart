@@ -185,8 +185,7 @@ class MarketplaceProvider with ChangeNotifier {
     notifyListeners(); // Notify UI to show progress indicator
 
     // Validate SKU maps
-    final invalidSkuMaps =
-        skuMaps.where((skuMap) => skuMap.mktpSku.isEmpty).toList();
+    final invalidSkuMaps = skuMaps.where((skuMap) => skuMap.mktpSku.isEmpty).toList();
 
     if (invalidSkuMaps.isNotEmpty) {
       // Show an error message or handle invalid data

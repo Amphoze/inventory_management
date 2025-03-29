@@ -88,18 +88,18 @@ class CreateOrderProvider with ChangeNotifier {
     paymentModeController = TextEditingController();
     currencyCodeController = TextEditingController(text: 'INR');
     coinController = TextEditingController();
-    codAmountController = TextEditingController(text: '0.00');
+    codAmountController = TextEditingController(text: '0');
     prepaidAmountController = TextEditingController();
     discountCodeController = TextEditingController();
     discountPercentController = TextEditingController(text: '0');
-    discountAmountController = TextEditingController(text: '0.00');
+    discountAmountController = TextEditingController(text: '0');
     taxPercentController = TextEditingController();
     marketplaceController = TextEditingController();
     totalQuantityController = TextEditingController();
     agentController = TextEditingController();
     notesController = TextEditingController();
-    totalAmtController = TextEditingController(text: '0.00');
-    originalAmtController = TextEditingController(text: '0.00');
+    totalAmtController = TextEditingController(text: '0');
+    originalAmtController = TextEditingController(text: '0');
 
     customerFirstNameController = TextEditingController();
     customerLastNameController = TextEditingController();
@@ -289,13 +289,13 @@ class CreateOrderProvider with ChangeNotifier {
       final newItem = {
         'id': fetchedProduct.id,
         'qty': 1,
-        'amount': 0.0,
+        'amount': '0',
         'sku': fetchedProduct.sku ?? '',
       };
 
       addedProductList.add(newItem);
       addedProductQuantityControllers.add(TextEditingController(text: '1'));
-      addedProductRateControllers.add(TextEditingController(text: '0.00'));
+      addedProductRateControllers.add(TextEditingController(text: '0'));
       _productsFuture.add(fetchedProduct);
       setTotalQuantity();
     } catch (e, s) {
@@ -724,16 +724,19 @@ class CreateOrderProvider with ChangeNotifier {
         } else {
           log('No location details found for the provided pincode :- ${response.body}');
           Utils.showSnackBar(context, 'No location details found for the provided pincode.');
+          clearLocationDetails(isBilling: isBilling);
           // return;
         }
       } else {
         log('Failed to load location details :- ${response.body}');
         Utils.showSnackBar(context, 'Failed to load location details. Please check your internet connection.');
+        clearLocationDetails(isBilling: isBilling);
         // return;
       }
     } catch (e, stace) {
       log('Error to fetch location details :- $e\n$stace');
       Utils.showSnackBar(context, 'Failed to load location details. Please check your internet connection.');
+      clearLocationDetails(isBilling: isBilling);
       // return;
     } finally {
       Navigator.of(context).pop();

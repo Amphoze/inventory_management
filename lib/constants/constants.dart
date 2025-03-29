@@ -6,7 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 class Constants {
 
-  static const String betaVersion = 'Beta 1.0.3';
+  static const String betaVersion = 'Beta 1.0.4';
 
   static Future<String> getBaseUrl() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -18,7 +18,7 @@ class Constants {
     if (env == 'beta') {
       return 'https://beta.api.stockship.ko-tech.in';
     } else if (env == 'dev') {
-      return 'http://localhost:3001';
+      return 'http://192.168.107.199:3001';
     }
 
     return firebaseUrl;

@@ -326,7 +326,7 @@ Future<Map<String, dynamic>> fetchLabelFromApi(String query, int page) async {
       final data = json.decode(response.body);
       final labels = data['data']['labels'];
 
-      log("labels: $labels");
+      // log("labels: $labels");
       return {
         'success': true,
         'data': labels,

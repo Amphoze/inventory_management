@@ -14,6 +14,8 @@ class OuterPackageForm extends StatefulWidget {
 }
 
 class _OuterPackageFormState extends State<OuterPackageForm> {
+  final List<String> _typeOptions = ['Bag ', 'Barrel ', 'Bucket ', 'CARBA', 'Cane ', 'Carba ', 'Corogated Box', 'WHITE BAG'];
+  String? _selectedType;
   final _formKey = GlobalKey<FormState>();
   final _skuController = TextEditingController();
   final _nameController = TextEditingController();
@@ -120,6 +122,36 @@ class _OuterPackageFormState extends State<OuterPackageForm> {
     );
   }
 
+  Widget _buildDropdown({
+    required String label,
+    required List<String> items,
+    String? selectedValue,
+    required void Function(String?) onChanged,
+    required String? Function(String?)? validator,
+    bool required = false,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      child: DropdownButtonFormField<String>(
+        decoration: InputDecoration(
+          labelText: label + (required ? ' *' : ''),
+          border: const OutlineInputBorder(),
+          filled: true,
+          fillColor: Colors.white,
+        ),
+        value: selectedValue,
+        onChanged: onChanged,
+        validator: validator,
+        items: items.map<DropdownMenuItem<String>>((String value) {
+          return DropdownMenuItem<String>(
+            value: value,
+            child: Text(value),
+          );
+        }).toList(),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final pro = context.read<OuterboxProvider>();
@@ -153,37 +185,59 @@ class _OuterPackageFormState extends State<OuterPackageForm> {
           _buildFormSection(
             'Package Information',
             [
-              _buildTextField(
-                controller: _skuController,
-                label: 'Outer Package SKU',
-                prefixIcon: const Icon(Icons.qr_code),
-                validator: (value) => _requiredFieldValidator(value, 'SKU'),
-                required: true,
-              ),
-              _buildTextField(
-                controller: _nameController,
-                label: 'Package Name',
-                prefixIcon: const Icon(Icons.inventory_2),
-                validator: (value) => _requiredFieldValidator(value, 'name'),
-                required: true,
-              ),
-              _buildTextField(
-                controller: _typeController,
-                label: 'Package Type',
-                prefixIcon: const Icon(Icons.category),
-                validator: (value) => _requiredFieldValidator(value, 'type'),
-                required: true,
-              ),
-              _buildTextField(
-                controller: _qtyController,
-                label: 'Outerpackage Quantity',
-                prefixIcon: const Icon(Icons.inventory),
-                validator: (value) => _numberValidator(value, 'quantity'),
-                keyboardType: TextInputType.number,
-                inputFormatters: [
-                  FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*')),
+              Row(
+                children: [
+                  Expanded(
+                    child: _buildTextField(
+                      controller: _skuController,
+                      label: 'Outer Package SKU',
+                      prefixIcon: const Icon(Icons.qr_code),
+                      validator: (value) => _requiredFieldValidator(value, 'SKU'),
+                      required: true,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: _buildTextField(
+                      controller: _nameController,
+                      label: 'Package Name',
+                      prefixIcon: const Icon(Icons.inventory_2),
+                      validator: (value) => _requiredFieldValidator(value, 'name'),
+                      required: true,
+                    ),
+                  ),
                 ],
-                required: true,
+              ),
+              Row(
+                children: [
+                  Expanded(
+                      child: _buildDropdown(
+                    label: 'Outer Package Type',
+                    items: _typeOptions,
+                    selectedValue: _selectedType,
+                    onChanged: (String? newValue) {
+                      setState(() {
+                        _selectedType = newValue;
+                      });
+                    },
+                    validator: (value) => _requiredFieldValidator(value, 'type'),
+                    required: true,
+                  )),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: _buildTextField(
+                      controller: _qtyController,
+                      label: 'Outerpackage Quantity',
+                      prefixIcon: const Icon(Icons.inventory),
+                      validator: (value) => _numberValidator(value, 'quantity'),
+                      keyboardType: TextInputType.number,
+                      inputFormatters: [
+                        FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*')),
+                      ],
+                      required: true,
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
@@ -195,13 +249,12 @@ class _OuterPackageFormState extends State<OuterPackageForm> {
                   Expanded(
                     child: _buildTextField(
                       controller: _lengthController,
-                      label: 'Length',
+                      label: 'Length (cm)',
                       prefixIcon: const Icon(Icons.straighten),
                       validator: (value) => _numberValidator(value, 'length'),
                       keyboardType: TextInputType.number,
                       inputFormatters: [
-                        FilteringTextInputFormatter.allow(
-                            RegExp(r'^\d*\.?\d*')),
+                        FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*')),
                       ],
                       required: true,
                     ),
@@ -210,13 +263,12 @@ class _OuterPackageFormState extends State<OuterPackageForm> {
                   Expanded(
                     child: _buildTextField(
                       controller: _widthController,
-                      label: 'Width',
+                      label: 'Width (cm)',
                       prefixIcon: const Icon(Icons.straighten),
                       validator: (value) => _numberValidator(value, 'width'),
                       keyboardType: TextInputType.number,
                       inputFormatters: [
-                        FilteringTextInputFormatter.allow(
-                            RegExp(r'^\d*\.?\d*')),
+                        FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*')),
                       ],
                       required: true,
                     ),
@@ -225,13 +277,12 @@ class _OuterPackageFormState extends State<OuterPackageForm> {
                   Expanded(
                     child: _buildTextField(
                       controller: _heightController,
-                      label: 'Height',
+                      label: 'Height (cm)',
                       prefixIcon: const Icon(Icons.height),
                       validator: (value) => _numberValidator(value, 'height'),
                       keyboardType: TextInputType.number,
                       inputFormatters: [
-                        FilteringTextInputFormatter.allow(
-                            RegExp(r'^\d*\.?\d*')),
+                        FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*')),
                       ],
                       required: true,
                     ),
@@ -273,7 +324,7 @@ class _OuterPackageFormState extends State<OuterPackageForm> {
                             final packageData = {
                               'outerPackage_sku': _skuController.text,
                               'outerPackage_name': _nameController.text,
-                              'outerPackage_type': _typeController.text,
+                              'outerPackage_type': _selectedType,
                               'dimension': {
                                 'length': int.parse(_lengthController.text),
                                 'breadth': int.parse(_widthController.text),
@@ -281,10 +332,8 @@ class _OuterPackageFormState extends State<OuterPackageForm> {
                               },
                               'length_unit': _selectedUnit,
                               "weight_unit": "kg",
-                              'occupied_weight':
-                                  double.parse(_weightController.text),
-                              "outerPackage_quantity":
-                                  int.parse(_qtyController.text)
+                              'occupied_weight': double.parse(_weightController.text),
+                              "outerPackage_quantity": int.parse(_qtyController.text)
                             };
 
                             log('data: $packageData');
@@ -301,8 +350,7 @@ class _OuterPackageFormState extends State<OuterPackageForm> {
                                 pro.toggleFormVisibility();
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   const SnackBar(
-                                    content:
-                                        Text('Box size created successfully'),
+                                    content: Text('Box size created successfully'),
                                     backgroundColor: Colors.green,
                                   ),
                                 );
@@ -323,17 +371,14 @@ class _OuterPackageFormState extends State<OuterPackageForm> {
                           height: 20,
                           child: CircularProgressIndicator(
                             strokeWidth: 2,
-                            valueColor:
-                                AlwaysStoppedAnimation<Color>(Colors.white),
+                            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                           ),
                         )
                       : const Text('Submit'),
                 ),
                 const SizedBox(width: 16),
                 ElevatedButton(
-                  onPressed: pro.isLoading || _isSubmitting
-                      ? null
-                      : pro.toggleFormVisibility,
+                  onPressed: pro.isLoading || _isSubmitting ? null : pro.toggleFormVisibility,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.red,
                   ),

@@ -17,7 +17,10 @@ import 'package:provider/provider.dart';
 import 'Custom-Files/sub_category_search_field.dart';
 
 class CreateProduct extends StatefulWidget {
-  const CreateProduct({super.key});
+
+  final VoidCallback onCreated;
+
+  const CreateProduct({super.key, required this.onCreated});
 
   @override
   State<CreateProduct> createState() => _CreateProductState();
@@ -117,12 +120,12 @@ class _CreateProductState extends State<CreateProduct> {
       selectedIndexOfBoxSize = 0;
       selectedIndexOfColorDrop = 0;
 
-      dropdownKey.currentState!.reset();
-      categoryKey.currentState!.reset();
-      labelKey.currentState!.reset();
-      colorKey.currentState!.reset();
-      sizeKey.currentState!.reset();
-      gradeKey.currentState!.reset();
+      // dropdownKey.currentState!.reset();
+      // categoryKey.currentState!.reset();
+      // labelKey.currentState!.reset();
+      // colorKey.currentState!.reset();
+      // sizeKey.currentState!.reset();
+      // gradeKey.currentState!.reset();
 
       _productNameController.clear();
       _productIdentifierController.clear();
@@ -170,6 +173,8 @@ class _CreateProductState extends State<CreateProduct> {
 
       webImages?.clear();
     });
+
+    widget.onCreated.call();
   }
 
   late ProductProvider productProvider;

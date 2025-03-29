@@ -263,52 +263,23 @@ class LocationProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  // Shipping address fields
-  String? _shippingAddress1;
-  String? _shippingAddress2;
-  String? _shippingCity;
-  String? _shippingZipCode;
-  String? _shippingPhoneNumber;
-
-  String? get shippingAddress1 => _shippingAddress1;
-  String? get shippingAddress2 => _shippingAddress2;
-  String? get shippingCity => _shippingCity;
-  String? get shippingZipCode => _shippingZipCode;
-  String? get shippingPhoneNumber => _shippingPhoneNumber;
-
-  void updateShippingAddress({
-    String? address1,
-    String? address2,
-    String? city,
-    String? zipCode,
-    String? phoneNumber,
-  }) {
-    _shippingAddress1 = address1;
-    _shippingAddress2 = address2;
-    _shippingCity = city;
-    _shippingZipCode = zipCode;
-    _shippingPhoneNumber = phoneNumber;
-    print("Shipping Address Updated: $_shippingAddress1, $_shippingCity, $_shippingZipCode, $_shippingPhoneNumber");
-    notifyListeners();
-  }
-
   Future<Map<String, dynamic>> getAllWarehouses({int page = 1}) async {
     return await authProvider.getAllWarehouses(page: page);
   }
 
   Future<bool> createWarehouse(Map<String, dynamic> body) async {
     try {
-      final taxIdentificationNumber = body['taxIdentificationNumber'] is int
-          ? body['taxIdentificationNumber'] as int
-          : int.tryParse(body['taxIdentificationNumber'].toString()) ?? 0;
+      // final taxIdentificationNumber = body['taxIdentificationNumber'] is int
+      //     ? body['taxIdentificationNumber'] as int
+      //     : int.tryParse(body['taxIdentificationNumber'].toString()) ?? 0;
 
-      final holdStocks = body['holdStocks'] is bool ? body['holdStocks'] as bool : body['holdStocks'] == 'true';
+      // final holdStocks = body['holdStocks'] is bool ? body['holdStocks'] as bool : body['holdStocks'] == 'true';
 
-      final copyMasterSkuFromPrimary =
-          body['copyMasterSkuFromPrimary'] is bool ? body['copyMasterSkuFromPrimary'] as bool : body['copyMasterSkuFromPrimary'] == 'true';
+      // final copyMasterSkuFromPrimary =
+      //     body['copyMasterSkuFromPrimary'] is bool ? body['copyMasterSkuFromPrimary'] as bool : body['copyMasterSkuFromPrimary'] == 'true';
 
       // Extract pincodes from location if available
-      final List<String> pincodes = body['pincode'] is List<String> ? List<String>.from(body['pincode']) : [];
+      // final List<String> pincodes = body['pincode'] is List<String> ? List<String>.from(body['pincode']) : [];
 
       final response = await authProvider.createWarehouse(warehouseData: body);
       // final response = await authProvider.createWarehouse(

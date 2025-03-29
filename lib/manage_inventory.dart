@@ -1,6 +1,9 @@
 import 'dart:convert'; // For JSON encoding/decoding
 import 'dart:developer';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:inventory_management/Custom-Files/product_search_field.dart';
+import 'package:inventory_management/Custom-Files/utils.dart';
 import 'package:inventory_management/constants/constants.dart';
 import 'package:inventory_management/provider/combo_provider.dart';
 import 'package:inventory_management/provider/inventory_provider.dart';
@@ -41,10 +44,9 @@ class _ManageInventoryPageState extends State<ManageInventoryPage> {
   @override
   void initState() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      Provider.of<InventoryProvider>(context, listen: false).fetchInventory(page: 1); // Start at page 1
+      Provider.of<InventoryProvider>(context, listen: false).fetchInventory(page: 1);
       Provider.of<ComboProvider>(context, listen: false).fetchProducts();
 
-      getDropValueForProduct();
       getDropValueForWarehouse();
 
       searchController.addListener(() {
@@ -59,10 +61,6 @@ class _ManageInventoryPageState extends State<ManageInventoryPage> {
 
   void _getInventoryItems() async {
     downloadUrl = await context.read<InventoryProvider>().getInventoryItems();
-  }
-
-  void getDropValueForProduct() async {
-    await Provider.of<ComboProvider>(context, listen: false).fetchProducts();
   }
 
   void getDropValueForWarehouse() async {
@@ -135,38 +133,23 @@ class _ManageInventoryPageState extends State<ManageInventoryPage> {
       print('Response status: ${response.statusCode}');
       print('Response body: ${response.body}');
 
+
+      final responseData = jsonDecode(response.body);
+
       if (response.statusCode == 201) {
-        final responseData = jsonDecode(response.body);
         if (responseData['success'] == true) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text("Inventory created successfully!"),
-              backgroundColor: Colors.green,
-            ),
-          );
-        } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text("Failed to create inventory"),
-              backgroundColor: Colors.red,
-            ),
-          );
+          Utils.showSnackBar(context, 'Inventory created successfully!', color: Colors.green);
+          return;
         }
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text("Failed to save inventory"),
-            backgroundColor: Colors.red,
-          ),
-        );
       }
+
+      final message = responseData['error'] ?? 'Failed to create inventory..!';
+      final details = responseData['details'] ?? 'Status Code: ${response.statusCode}';
+
+      Utils.showSnackBar(context, message, details: details, color: Colors.red);
+
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text("Error saving inventory: $e"),
-          backgroundColor: Colors.red,
-        ),
-      );
+      Utils.showSnackBar(context, 'Error occured while creating inventory..!', details: e.toString(), color: Colors.red);
     }
   }
 
@@ -416,8 +399,10 @@ class _ManageInventoryPageState extends State<ManageInventoryPage> {
 
   @override
   Widget build(BuildContext context) {
+
     final provider = Provider.of<InventoryProvider>(context);
     final comboProvider = Provider.of<ComboProvider>(context);
+
     final paginatedData = provider.inventory;
 
     // log('rows: $paginatedData');
@@ -672,37 +657,16 @@ class _ManageInventoryPageState extends State<ManageInventoryPage> {
                           const Text("Product", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                           const SizedBox(height: 10),
 
-                          DropdownSearch<String>(
-                            items: comboProvider.products
-                                .where(
-                                    (product) => product.displayName?.toLowerCase().contains(searchController.text.toLowerCase()) ?? false)
-                                .map((product) => '${product.sku}: ${product.displayName}' ?? 'Unknown')
-                                .toList(),
-                            onChanged: (String? newValue) {
-                              final selectedProduct = comboProvider.products
-                                  .firstWhere((product) => product.displayName == newValue || product.sku == newValue);
-                              setState(() {
-                                selectedProductId = selectedProduct.id;
-                                selectedProductName = selectedProduct.displayName;
-                              });
+                          ProductSearchableTextField(
+                            isRequired: true,
+                            onSelected: (product) {
+                              if (product != null) {
+                                setState(() {
+                                  selectedProductId = product.id;
+                                  selectedProductName = product.displayName;
+                                });
+                              }
                             },
-                            selectedItem: selectedProductName,
-                            dropdownDecoratorProps: const DropDownDecoratorProps(
-                              dropdownSearchDecoration: InputDecoration(
-                                labelText: 'Search and Select Product',
-                                border: OutlineInputBorder(),
-                              ),
-                            ),
-                            popupProps: PopupProps.dialog(
-                              showSearchBox: true,
-                              searchFieldProps: TextFieldProps(
-                                controller: searchController,
-                                decoration: const InputDecoration(
-                                  labelText: 'Search Product',
-                                  border: OutlineInputBorder(),
-                                ),
-                              ),
-                            ),
                           ),
 
                           const SizedBox(height: 16),
@@ -752,6 +716,7 @@ class _ManageInventoryPageState extends State<ManageInventoryPage> {
                                         border: OutlineInputBorder(),
                                       ),
                                       keyboardType: TextInputType.number,
+                                      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                                       onChanged: (value) {
                                         setState(() {
                                           subInventories[index]['quantity'] = int.tryParse(value) ?? 0;
