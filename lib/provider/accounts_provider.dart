@@ -413,11 +413,13 @@ class AccountsProvider with ChangeNotifier {
 
       final res = jsonDecode(response.body);
 
+      log('Account Section Status Update Response :- ${response.body}');
+
       if (response.statusCode == 200) {
-        Utils.showSnackBar(context, res['message'], color: Colors.green);
+        Utils.showSnackBar(context, res['message'] ?? '', color: Colors.green);
         return true;
       } else {
-        Utils.showSnackBar(context, res['message'], color: Colors.red);
+        Utils.showSnackBar(context, res['message'] ?? '', color: Colors.red);
         return false;
       }
     } catch (error) {
