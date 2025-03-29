@@ -114,57 +114,57 @@ class _RoutingPageState extends State<RoutingPage> with TickerProviderStateMixin
                   ),
                   Row(
                     children: [
-                      Column(
-                        children: [
-                          Text(
-                            _selectedDate,
-                            style: TextStyle(
-                              fontSize: 11,
-                              color: _selectedDate == 'Select Date' ? Colors.grey : AppColors.primaryBlue,
-                            ),
-                          ),
-                          // Tooltip(
-                          //   message: 'Filter by Date',
-                          //   child: IconButton(
-                          //     onPressed: () async {
-                          //       picked = await showDatePicker(
-                          //         context: context,
-                          //         initialDate: DateTime.now(),
-                          //         firstDate: DateTime(2020),
-                          //         lastDate: DateTime.now(),
-                          //         builder: (context, child) {
-                          //           return Theme(
-                          //             data: Theme.of(context).copyWith(
-                          //               colorScheme: const ColorScheme.light(
-                          //                 primary: AppColors.primaryBlue,
-                          //                 onPrimary: Colors.white,
-                          //                 surface: Colors.white,
-                          //                 onSurface: Colors.black,
-                          //               ),
-                          //             ),
-                          //             child: child!,
-                          //           );
-                          //         },
-                          //       );
-                          //
-                          //       if (picked != null) {
-                          //         String formattedDate = DateFormat('dd-MM-yyyy').format(picked!);
-                          //         setState(() {
-                          //           _selectedDate = formattedDate;
-                          //         });
-                          //
-                          //         pro.fetchOrders(date: picked, market: selectedCourier);
-                          //       }
-                          //     },
-                          //     icon: const Icon(
-                          //       Icons.calendar_today,
-                          //       size: 30,
-                          //       color: AppColors.primaryBlue,
-                          //     ),
-                          //   ),
-                          // ),
-                        ],
-                      ),
+                      // Column(
+                      //   children: [
+                      //     Text(
+                      //       _selectedDate,
+                      //       style: TextStyle(
+                      //         fontSize: 11,
+                      //         color: _selectedDate == 'Select Date' ? Colors.grey : AppColors.primaryBlue,
+                      //       ),
+                      //     ),
+                      //     Tooltip(
+                      //       message: 'Filter by Date',
+                      //       child: IconButton(
+                      //         onPressed: () async {
+                      //           picked = await showDatePicker(
+                      //             context: context,
+                      //             initialDate: DateTime.now(),
+                      //             firstDate: DateTime(2020),
+                      //             lastDate: DateTime.now(),
+                      //             builder: (context, child) {
+                      //               return Theme(
+                      //                 data: Theme.of(context).copyWith(
+                      //                   colorScheme: const ColorScheme.light(
+                      //                     primary: AppColors.primaryBlue,
+                      //                     onPrimary: Colors.white,
+                      //                     surface: Colors.white,
+                      //                     onSurface: Colors.black,
+                      //                   ),
+                      //                 ),
+                      //                 child: child!,
+                      //               );
+                      //             },
+                      //           );
+                      //
+                      //           if (picked != null) {
+                      //             String formattedDate = DateFormat('dd-MM-yyyy').format(picked!);
+                      //             setState(() {
+                      //               _selectedDate = formattedDate;
+                      //             });
+                      //
+                      //             pro.fetchOrders(date: picked, market: selectedCourier);
+                      //           }
+                      //         },
+                      //         icon: const Icon(
+                      //           Icons.calendar_today,
+                      //           size: 30,
+                      //           color: AppColors.primaryBlue,
+                      //         ),
+                      //       ),
+                      //     ),
+                      //   ],
+                      // ),
                       const SizedBox(width: 8),
                       Column(
                         children: [

@@ -64,6 +64,7 @@ void main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
+
   runApp(MultiProvider(
     providers: [
       ChangeNotifierProvider(create: (context) => LabelApi()),
