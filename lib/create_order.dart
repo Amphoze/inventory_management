@@ -112,17 +112,15 @@ class _CreateOrderPageState extends State<CreateOrderPage> {
                         padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
                       ),
                       child: provider.isSavingOrder
-                          ?
-                      const CircularProgressIndicator(color: Colors.white)
-                          :
-                      const Text(
-                        'Create',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                        ),
-                      ),
+                          ? const CircularProgressIndicator(color: Colors.white)
+                          : const Text(
+                              'Create',
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
+                            ),
                     ),
                   ],
                 ),
@@ -433,14 +431,15 @@ class _CreateOrderPageState extends State<CreateOrderPage> {
                   controller: provider.customerEmailController,
                   label: 'Email',
                   icon: Icons.email,
-                  validator: (value) {
-                    if (value != null) {
-                      if (!value.contains('@') || !value.contains('.')) {
-                        return 'Enter a valid email';
-                      }
-                    }
-                    return null;
-                  },
+                  // validator: (value) {
+                  //   if (value == null || value.trim().isEmpty) return null;
+                  //
+                  //   if (!value.contains('@') || !value.contains('.')) {
+                  //     return 'Enter a valid email';
+                  //   }
+                  //
+                  //   return null;
+                  // },
                 ),
                 const SizedBox(height: 10),
                 _buildPhoneField(
@@ -501,14 +500,15 @@ class _CreateOrderPageState extends State<CreateOrderPage> {
                         label: 'Email',
                         icon: Icons.email,
                         enabled: !provider.isBillingSameAsShipping,
-                        validator: (value) {
-                          if (value != null) {
-                            if (!value.contains('@') || !value.contains('.')) {
-                              return 'Enter a valid email';
-                            }
-                          }
-                          return null;
-                        },
+                        // validator: (value) {
+                        //   if (value == null || value.trim().isEmpty) return null;
+                        //
+                        //   if (!value.contains('@') || !value.contains('.')) {
+                        //     return 'Enter a valid email';
+                        //   }
+                        //
+                        //   return null;
+                        // },
                       ),
                     ),
                   ],
@@ -669,14 +669,15 @@ class _CreateOrderPageState extends State<CreateOrderPage> {
                         controller: provider.shippingEmailController,
                         label: 'Email',
                         icon: Icons.email,
-                        validator: (value) {
-                          if (value != null) {
-                            if (!value.contains('@') || !value.contains('.')) {
-                              return 'Enter a valid email';
-                            }
-                          }
-                          return null;
-                        },
+                        // validator: (value) {
+                        //   if (value == null || value.trim().isEmpty) return null;
+                        //
+                        //   if (!value.contains('@') || !value.contains('.')) {
+                        //     return 'Enter a valid email';
+                        //   }
+                        //
+                        //   return null;
+                        // },
                       ),
                     ),
                   ],
@@ -795,7 +796,6 @@ class _CreateOrderPageState extends State<CreateOrderPage> {
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-
                 Container(
                   width: 150,
                   margin: const EdgeInsets.only(right: 16),
@@ -816,7 +816,6 @@ class _CreateOrderPageState extends State<CreateOrderPage> {
                     },
                   ),
                 ),
-
                 Expanded(
                   child: SearchableDropdown(
                     key: ValueKey(provider.selectedItemType),
@@ -834,7 +833,6 @@ class _CreateOrderPageState extends State<CreateOrderPage> {
                     },
                   ),
                 ),
-
               ],
             ),
             const SizedBox(height: 10),
@@ -909,7 +907,6 @@ class _CreateOrderPageState extends State<CreateOrderPage> {
                       );
                     },
                   ),
-
                   ListView.builder(
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
@@ -1011,10 +1008,10 @@ class _CreateOrderPageState extends State<CreateOrderPage> {
       enabled: enabled,
       validator: label == 'Email'
           ? (value) {
-              if (value != null && value.isNotEmpty) {
-                if (!value.contains('@') || !value.contains('.')) {
-                  return 'Enter a valid email';
-                }
+              if (value == null || value.trim().isEmpty) return null;
+
+              if (!value.contains('@') || !value.contains('.')) {
+                return 'Enter a valid email';
               }
               return null;
             }
