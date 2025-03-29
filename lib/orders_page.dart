@@ -1750,9 +1750,7 @@ class _OrdersNewPageState extends State<OrdersNewPage> with TickerProviderStateM
                       onPressed: ordersProvider.isUpdating
                           ? null
                           : () async {
-                              ordersProvider.setUpdating(true);
                               await ordersProvider.approveFailedOrders(context);
-                              ordersProvider.setUpdating(false);
                             },
                       child: ordersProvider.isUpdating
                           ? const SizedBox(
