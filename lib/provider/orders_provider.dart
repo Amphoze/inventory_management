@@ -773,22 +773,15 @@ class OrdersProvider with ChangeNotifier {
   }
 
   Future<void> approveFailedOrders(BuildContext context) async {
-    setUpdating(true);
-    notifyListeners();
-    Logger().e('failedOrders: $failedOrders');
 
-    final List<String> failedOrderIds =
-        failedOrders.asMap().entries.where((entry) => _selectedFailedOrders[entry.key]).map((entry) => entry.value.orderId).toList();
-    Logger().e('failedOrderIds: $failedOrderIds');
+    final List<String> failedOrderIds = failedOrders.asMap().entries.where((entry) => _selectedFailedOrders[entry.key]).map((entry) => entry.value.orderId).toList();
 
     if (failedOrderIds.isEmpty) {
       _showSnackbar(context, 'No orders selected to update.');
       return;
     }
 
-    for (String orderId in failedOrderIds) {
-      await updateOrderStatus(context, orderId, 1);
-    }
+    await updateOrderStatus(context, failedOrderIds, 1);
 
     await fetchFailedOrders();
 
@@ -799,36 +792,14 @@ class OrdersProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> updateReadyToConfirmOrders(BuildContext context) async {
-    final List<String> readyOrderIds =
-        readyOrders.asMap().entries.where((entry) => _selectedReadyOrders[entry.key]).map((entry) => entry.value.orderId).toList();
-
-    if (readyOrderIds.isEmpty) {
-      _showSnackbar(context, 'No orders selected to update.');
-      return;
-    }
-
-    for (String orderId in readyOrderIds) {
-      await updateOrderStatus(context, orderId, 2);
-    }
-
-    await fetchReadyOrders();
-
-    allSelectedReady = false;
-    _selectedReadyOrders = List<bool>.filled(readyOrders.length, false);
-    selectedReadyItemsCount = 0;
-
-    notifyListeners();
-  }
-
-  Future<void> updateOrderStatus(BuildContext context, String orderId, int newStatus) async {
+  Future<void> updateOrderStatus(BuildContext context, List<String> orderIds, int newStatus) async {
     final String? token = await _getToken();
     if (token == null) {
       _showSnackbar(context, 'No auth token found');
       return;
     }
 
-    final String url = '${await Constants.getBaseUrl()}/orders/ApprovedFailed?order_id=${Uri.encodeComponent(orderId)}';
+    final String url = '${await Constants.getBaseUrl()}/orders/ApprovedFailed';
 
     log('Approving Failed order at url :- $url');
 
@@ -839,20 +810,45 @@ class OrdersProvider with ChangeNotifier {
 
     try {
 
-      final response = await http.get(
+      final payload = jsonEncode({
+        'orderIds': orderIds,
+      });
+
+      log('Approving Failed Orders Payload :- $payload');
+
+      final response = await http.post(
         Uri.parse(url),
         headers: headers,
+        body: payload,
       );
 
-      if (response.statusCode == 200) {
-        _showSnackbar(context, 'Order status updated successfully with $orderId');
+      if (response.statusCode == 200 || response.statusCode == 201) {
 
-        await fetchFailedOrders();
+        final res = jsonDecode(response.body);
+
+        final message = res['message'] ?? '';
+        final successCount = res['successCount']?.toString();
+        final failedCount = res['failedCount']?.toString();
+
+        String successMessage = "$successCount out of ${orderIds.length} orders approved successfully.";
+
+        if (failedCount != '0') {
+          successMessage += " Failed to approve $failedCount orders..!";
+        }
+
+        Utils.showSnackBar(context, successMessage, color: Colors.green);
+
         await fetchReadyOrders();
+        await fetchFailedOrders();
+
       } else {
+
         final errorResponse = json.decode(response.body);
+
         String errorMessage = errorResponse['message'] ?? 'Failed to update order status';
-        _showSnackbar(context, errorMessage);
+        String details = errorResponse['details'] ?? errorMessage;
+
+        Utils.showSnackBar(context, errorMessage, color: Colors.red, details: details);
         log('Failed to update order status: ${response.statusCode} ${response.body}');
       }
     } catch (error) {
