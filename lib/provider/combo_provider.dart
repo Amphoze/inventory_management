@@ -14,7 +14,7 @@ import '../Api/inventory_api.dart';
 
 class ComboProvider with ChangeNotifier {
   Combo? _combo;
-  bool _isFormVisible = true;
+  bool _isFormVisible = false;
   List<Combo> _comboList = [];
   final List<DropdownItem<String>> _items = [];
   List<DropdownItem<String>> get item => _items;

@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:inventory_management/Custom-Files/product_search_field.dart';
 import 'package:inventory_management/Custom-Files/utils.dart';
 import 'package:inventory_management/constants/constants.dart';
+import 'package:inventory_management/create_inventory_screen.dart';
 import 'package:inventory_management/provider/combo_provider.dart';
 import 'package:inventory_management/provider/inventory_provider.dart';
 import 'package:inventory_management/provider/location_provider.dart';
@@ -613,7 +614,8 @@ class _ManageInventoryPageState extends State<ManageInventoryPage> {
                 const SizedBox(width: 10),
                 ElevatedButton(
                   onPressed: () {
-                    comboProvider.toggleFormVisibility();
+                    // comboProvider.toggleFormVisibility();
+                    Navigator.push(context, MaterialPageRoute(builder: (_) => const CreateInventoryScreen()));
                   },
                   child: const Text('Create Inventory'),
                 ),
