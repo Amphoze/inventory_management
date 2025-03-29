@@ -7,7 +7,7 @@ on:
 
 jobs:
   build:
-    runs-on: beta-hosted-runner
+    runs-on: beta-server
 
     steps:
     - name: Ensure we're in the correct directory
