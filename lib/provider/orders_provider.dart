@@ -828,7 +828,9 @@ class OrdersProvider with ChangeNotifier {
       return;
     }
 
-    final String url = '${await Constants.getBaseUrl()}/orders/ApprovedFailed?order_id=$orderId';
+    final String url = '${await Constants.getBaseUrl()}/orders/ApprovedFailed?order_id=${Uri.encodeComponent(orderId)}';
+
+    log('Approving Failed order at url :- $url');
 
     final headers = {
       'Authorization': 'Bearer $token',
@@ -836,6 +838,7 @@ class OrdersProvider with ChangeNotifier {
     };
 
     try {
+
       final response = await http.get(
         Uri.parse(url),
         headers: headers,
