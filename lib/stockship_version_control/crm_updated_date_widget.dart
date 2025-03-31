@@ -15,8 +15,7 @@ class CrmUpdatedDateWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-
-    String? env = dotenv.env['STOCKSHIP_ENV'];
+    // String? env = dotenv.env['STOCKSHIP_ENV'];
 
     List<DevelopmentNotesModel> releaseNotes = [];
 
@@ -44,11 +43,11 @@ class CrmUpdatedDateWidget extends StatelessWidget {
               //   );
               // }
             },
-            child: env == 'beta'
-                ?
-            _buildBetaVersionCard()
-                :
-            StreamBuilder<QuerySnapshot>(
+            // child: env == 'beta'
+            //     ?
+            // _buildBetaVersionCard()
+            //     :
+            child: StreamBuilder<QuerySnapshot>(
               stream: FirebaseFirestore.instance.collectionGroup('ReleaseNotes').snapshots(),
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
@@ -100,24 +99,24 @@ class CrmUpdatedDateWidget extends StatelessWidget {
     );
   }
 
-  Widget _buildBetaVersionCard() {
-    return Container(
-      padding: const EdgeInsets.all(8),
-      decoration: BoxDecoration(
-        color: Colors.blue.shade50,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.blue.shade100),
-      ),
-      child: Text(
-        Constants.betaVersion,
-        style: TextStyle(
-          fontSize: 14,
-          fontWeight: FontWeight.w600,
-          color: Colors.blue.shade700,
-        ),
-      ),
-    );
-  }
+  // Widget _buildBetaVersionCard() {
+  //   return Container(
+  //     padding: const EdgeInsets.all(8),
+  //     decoration: BoxDecoration(
+  //       color: Colors.blue.shade50,
+  //       borderRadius: BorderRadius.circular(8),
+  //       border: Border.all(color: Colors.blue.shade100),
+  //     ),
+  //     child: Text(
+  //       Constants.betaVersion,
+  //       style: TextStyle(
+  //         fontSize: 14,
+  //         fontWeight: FontWeight.w600,
+  //         color: Colors.blue.shade700,
+  //       ),
+  //     ),
+  //   );
+  // }
 
   Widget _buildVersionContainer({
     bool loading = false,

@@ -1,7 +1,8 @@
 {
   "projects": {
-    "default": "inventory-management-29c58",
-    "prod": "inventory-management-7a979"
+    "default": "inventory-management-7a979",
+    "prod": "inventory-management-7a979",
+    "stockship": "inventory-management-7a979"
   },
   "targets": {},
   "etags": {}

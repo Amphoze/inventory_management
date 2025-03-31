@@ -64,9 +64,9 @@ class InventoryProvider with ChangeNotifier {
     final pref = await SharedPreferences.getInstance();
     final warehouseId = pref.getString('warehouseId');
 
-    log('ye hai id: $warehouseId');
-
     final url = Uri.parse('$baseUrl/inventory/warehouse?warehouse=$warehouseId&page=$page&limit=20'); // Adjust limit as needed
+
+    log("fetchInventory url: $url");
 
     try {
       final token = await AuthProvider().getToken();
