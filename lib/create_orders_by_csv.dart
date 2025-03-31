@@ -56,13 +56,13 @@ class _CreateOrdersByCSVState extends State<CreateOrdersByCSV> {
       );
 
       _socket?.onConnect((_) {
-        // Utils.showSnackBar(context, 'Connected to server', color: Colors.green);
-        log('Connected to server :)');
+        Utils.showSnackBar(context, 'Connected to server', color: Colors.green);
+        log('Connected to server: ${_socket?.id}');
       });
 
       _socket?.off('csv-file-uploading-err');
       _socket?.on('csv-file-uploading-err', (data) {
-        log('CSV file uploading error: $data');
+        Logger().e('CSV file uploading error: $data');
         setState(() {
           _progressMessage = data['message'] ?? 'An error occurred';
         });
@@ -71,8 +71,7 @@ class _CreateOrdersByCSVState extends State<CreateOrdersByCSV> {
 
       _socket?.off('csv-file-uploading');
       _socket?.on('csv-file-uploading', (data) {
-
-        log('CSV file uploading: $data');
+        Logger().e('CSV file uploading: $data');
 
         if (data['progress'] != null) {
           double newProgress = double.tryParse(data['progress'].toString()) ?? 0;
@@ -82,8 +81,7 @@ class _CreateOrdersByCSVState extends State<CreateOrdersByCSV> {
 
       _socket?.off('csv-file-uploaded');
       _socket?.once('csv-file-uploaded', (data) {
-
-        log('CSV file uploaded: $data');
+        Logger().e('CSV file uploaded: $data');
 
         setState(() {
           _progressMessage = data['message'] ?? 'File uploaded successfully';
@@ -104,7 +102,6 @@ class _CreateOrdersByCSVState extends State<CreateOrdersByCSV> {
 
       _socket?.connect();
     } catch (e) {
-
       log('Error in initialising socket: $e');
 
       Utils.showSnackBar(context, 'Failed to connect to server', color: Colors.red);
@@ -192,7 +189,6 @@ class _CreateOrdersByCSVState extends State<CreateOrdersByCSV> {
         });
 
         await _processCSVInChunks(file.bytes!);
-
       } else {
         setState(() {
           _isPickingFile = false;
@@ -220,7 +216,9 @@ class _CreateOrdersByCSVState extends State<CreateOrdersByCSV> {
       log('filteredData: $filteredData');
 
       if (filteredData.length <= 1) {
-        Utils.showSnackBar(context, 'Invalid CSV Format or Empty File. Please make sure the values for any order should not contain any extra spaces, tabs or multiple lines', color: Colors.red);
+        Utils.showSnackBar(context,
+            'Invalid CSV Format or Empty File. Please make sure the values for any order should not contain any extra spaces, tabs or multiple lines',
+            color: Colors.red);
         setState(() {
           _isProcessingFile = false;
         });
@@ -233,15 +231,14 @@ class _CreateOrdersByCSVState extends State<CreateOrdersByCSV> {
 
         log('Total Length of CSV Data is ${_csvData.length}');
 
-        for (int i=0; i<_csvData.length; i++) {
-          log('${i+1}) ${_csvData[i]}');
+        for (int i = 0; i < _csvData.length; i++) {
+          log('${i + 1}) ${_csvData[i]}');
         }
 
         _rowCount = _csvData.isNotEmpty ? _csvData.length - 1 : 0;
         _isCreateEnabled = _rowCount > 0;
         _isProcessingFile = false;
       });
-
     } catch (e, s) {
       log('Error processing CSV: $e\n$s');
       Utils.showSnackBar(context, 'Error processing CSV file: $e', color: Colors.red);
@@ -295,6 +292,7 @@ class _CreateOrdersByCSVState extends State<CreateOrdersByCSV> {
       Logger().e('Create Csv Body: $responseBody, Status Code: ${response.statusCode}');
 
       if (response.statusCode == 200 || response.statusCode == 201) {
+        Utils.showSnackBar(context, jsonData['message'] ?? 'Uploading...');
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text("${jsonData['message']}")),
@@ -405,10 +403,9 @@ class _CreateOrdersByCSVState extends State<CreateOrdersByCSV> {
   }
 
   Widget _buildDataTable() {
-
     if (_csvData.isEmpty) return const SizedBox();
 
-    log('_csvData after: $_csvData');
+    // log('_csvData after: $_csvData');
 
     final headers = _csvData.first;
     final pagedData = _getPagedData();

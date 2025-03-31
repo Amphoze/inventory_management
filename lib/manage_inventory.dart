@@ -1,4 +1,4 @@
-import 'dart:convert'; // For JSON encoding/decoding
+import 'dart:convert';
 import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -57,8 +57,6 @@ class _ManageInventoryPageState extends State<ManageInventoryPage> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       Provider.of<InventoryProvider>(context, listen: false).fetchInventory(page: 1);
       Provider.of<ComboProvider>(context, listen: false).fetchProducts();
-
-      // getDropValueForWarehouse();
 
       searchController.addListener(() {
         log("Search text: ${searchController.text}");
@@ -160,7 +158,7 @@ class _ManageInventoryPageState extends State<ManageInventoryPage> {
     final provider = Provider.of<InventoryProvider>(context, listen: false);
     int page = int.tryParse(_pageController.text) ?? 1;
     if (page >= 1 && page <= provider.totalPages) {
-      _goToPage(page - 1); // Go to the user-input page
+      _goToPage(page - 1);
     }
   }
 
@@ -222,7 +220,6 @@ class _ManageInventoryPageState extends State<ManageInventoryPage> {
           if (canLaunch) {
             await launchUrl(Uri.parse(downloadUrl));
 
-            // Show success message
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
                 content: Row(
@@ -252,7 +249,6 @@ class _ManageInventoryPageState extends State<ManageInventoryPage> {
       log('error: $error');
       log('Error during report generation: $error');
 
-      // Show error message
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Row(
@@ -288,7 +284,6 @@ class _ManageInventoryPageState extends State<ManageInventoryPage> {
     try {
       final prefs = await SharedPreferences.getInstance();
       final token = prefs.getString('authToken');
-      // final warehouseId = prefs.getString('warehouseId');
 
       String baseUrl = await Constants.getBaseUrl();
 
@@ -335,7 +330,6 @@ class _ManageInventoryPageState extends State<ManageInventoryPage> {
           if (canLaunch) {
             await launchUrl(Uri.parse(downloadUrl));
 
-            // Show success message
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
                 content: Row(
@@ -365,7 +359,6 @@ class _ManageInventoryPageState extends State<ManageInventoryPage> {
       log('error: $error');
       log('Error during report generation: $error');
 
-      // Show error message
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Row(
@@ -477,7 +470,7 @@ class _ManageInventoryPageState extends State<ManageInventoryPage> {
                               final value = _searchController.text.trim();
                               Logger().e('$value ${provider.selectedSearchBy}');
                               if (value.trim().isNotEmpty) {
-                                provider.filterInventory(value.trim(), provider.selectedSearchBy); // Fetch filtered data
+                                provider.filterInventory(value.trim(), provider.selectedSearchBy);
                               } else {
                                 provider.fetchInventory();
                               }
@@ -497,13 +490,13 @@ class _ManageInventoryPageState extends State<ManageInventoryPage> {
                       ),
                       onChanged: (value) {
                         if (value.isEmpty) {
-                          provider.fetchInventory(); // Load all inventory
+                          provider.fetchInventory();
                         }
                       },
                       onSubmitted: (value) {
                         Logger().e('$value ${provider.selectedSearchBy}');
                         if (value.trim().isNotEmpty) {
-                          provider.filterInventory(value.trim(), provider.selectedSearchBy); // Fetch filtered data
+                          provider.filterInventory(value.trim(), provider.selectedSearchBy);
                         } else {
                           provider.fetchInventory();
                         }
@@ -574,15 +567,12 @@ class _ManageInventoryPageState extends State<ManageInventoryPage> {
                       },
                     );
 
-                    // Fetch the download URL
                     downloadUrl = await context.read<InventoryProvider>().getInventoryItems();
 
-                    // Close loading dialog
                     if (context.mounted) {
                       Navigator.pop(context);
                     }
 
-                    // Launch URL if available
                     if (downloadUrl != null) {
                       final Uri url = Uri.parse(downloadUrl!);
                       if (await canLaunchUrl(url)) {
@@ -625,7 +615,7 @@ class _ManageInventoryPageState extends State<ManageInventoryPage> {
                       ? ElevatedButton(
                           style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
                           onPressed: () {
-                            provider.toggleFormVisibility(); // Hide form
+                            provider.toggleFormVisibility();
                           },
                           child: const Text('Cancel'),
                         )
@@ -646,10 +636,8 @@ class _ManageInventoryPageState extends State<ManageInventoryPage> {
                           const SizedBox(height: 16),
                           const Text("Create Inventory", style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
                           const SizedBox(height: 16),
-
                           const Text("Product", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                           const SizedBox(height: 10),
-
                           ProductSearchableTextField(
                             isRequired: true,
                             onSelected: (product) {
@@ -662,8 +650,6 @@ class _ManageInventoryPageState extends State<ManageInventoryPage> {
                             },
                           ),
                           const SizedBox(height: 16),
-
-                          // SubInventory List
                           ...List.generate(subInventories.length, (index) {
                             return Padding(
                               padding: const EdgeInsets.symmetric(vertical: 8.0),
@@ -712,7 +698,6 @@ class _ManageInventoryPageState extends State<ManageInventoryPage> {
                                           ),
                                         ),
                                         const SizedBox(width: 8),
-                                        // Quantity Input
                                         Expanded(
                                           child: TextFormField(
                                             decoration: const InputDecoration(
@@ -740,17 +725,22 @@ class _ManageInventoryPageState extends State<ManageInventoryPage> {
                                             onChanged: bins.isEmpty
                                                 ? null
                                                 : (value) {
-                                                    log("1. Sub Inventory at $index is ${subInventories}");
-                                                    setState(() {
-                                                      subInventories[index]['bin'][0]['binName'] = value;
-                                                    });
+                                                    log("1. Sub Inventory at $index is $subInventories $value");
+                                                    log("value type 1: ${value.runtimeType}");
+                                                    try {
+                                                      setState(() {
+                                                        subInventories[index]['bin'][0]['binName'] = value;
+                                                      });
+                                                    } catch (e, s) {
+                                                      log("Error while selecting bin name: $e $s");
+                                                    }
+                                                    log("value type 2: ${subInventories[index]['bin'][0]['binName'].runtimeType}");
                                                     log("2. Sub Inventory at $index is ${subInventories[index]}");
                                                   },
                                             validator: (value) => value == null || value.isEmpty ? 'Please select a bin' : null,
                                           ),
                                     const SizedBox(height: 8),
                                     TextFormField(
-                                      // controller: _binQtyController,
                                       onChanged: (value) {
                                         setState(() {
                                           subInventories[index]['bin'][0]['binQty'] = value.trim();
@@ -761,7 +751,7 @@ class _ManageInventoryPageState extends State<ManageInventoryPage> {
                                       inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                                       validator: (value) {
                                         if (value == null || value.isEmpty) return 'Please enter Bin Quantity';
-                                        // if (int.tryParse(value) == null) return 'Please enter a valid number';
+
                                         return null;
                                       },
                                     ),
@@ -781,7 +771,6 @@ class _ManageInventoryPageState extends State<ManageInventoryPage> {
                               ),
                             );
                           }),
-
                           const SizedBox(height: 16),
                           ElevatedButton.icon(
                             onPressed: addSubInventory,
@@ -795,7 +784,6 @@ class _ManageInventoryPageState extends State<ManageInventoryPage> {
                           const SizedBox(height: 16),
                           Row(
                             children: [
-                              // Save button
                               ElevatedButton(
                                 onPressed: () async {
                                   if (selectedProductId == null) {
@@ -803,10 +791,9 @@ class _ManageInventoryPageState extends State<ManageInventoryPage> {
                                       content: Text("Please select a product"),
                                     ));
                                   } else {
-                                    // Show loading dialog
                                     showDialog(
                                       context: context,
-                                      barrierDismissible: false, // Prevent dismissing the dialog
+                                      barrierDismissible: false,
                                       builder: (BuildContext context) {
                                         return const AlertDialog(
                                           content: Row(
@@ -822,15 +809,12 @@ class _ManageInventoryPageState extends State<ManageInventoryPage> {
 
                                     await saveInventoryToApi(context);
 
-                                    // Close the loading dialog after saving
                                     Navigator.of(context).pop();
                                   }
                                 },
                                 child: const Text('Save Inventory'),
                               ),
                               const SizedBox(width: 16),
-
-                              // Cancel button
                               ElevatedButton(
                                 onPressed: comboProvider.toggleFormVisibility,
                                 style: ElevatedButton.styleFrom(
@@ -841,16 +825,14 @@ class _ManageInventoryPageState extends State<ManageInventoryPage> {
                             ],
                           ),
                         ],
-
                         const SizedBox(height: 30),
-                        // Table and pagination
                         if (!comboProvider.isFormVisible) ...[
                           SingleChildScrollView(
                             child: provider.isLoading
                                 ? const Center(
                                     child: SizedBox(
-                                      width: 100, // Set appropriate width
-                                      height: 500, // Set appropriate height
+                                      width: 100,
+                                      height: 500,
                                       child: LoadingAnimation(
                                         icon: Icons.inventory_2,
                                         beginColor: Color.fromRGBO(189, 189, 189, 1),
@@ -907,9 +889,6 @@ class _ManageInventoryPageState extends State<ManageInventoryPage> {
   List<String?> warehouse = [null];
   bool isLoadingBins = false;
 
-  // final TextEditingController _binNameController = TextEditingController();
-  // final TextEditingController _binQtyController = TextEditingController();
-
   Future<void> _fetchBins(String warehouseId) async {
     setState(() => isLoadingBins = true);
     String baseUrl = await Constants.getBaseUrl();
@@ -925,12 +904,11 @@ class _ManageInventoryPageState extends State<ManageInventoryPage> {
         },
       );
 
-      // print('Bins API Response: ${response.body}');
       final res = json.decode(response.body);
       if (response.statusCode == 200 && res.containsKey('bins')) {
         setState(() {
           bins = List<String>.from(res['bins'].map((bin) => bin['binName'].toString()));
-          // _binNameController.clear();
+
           log('Fetched bins: $bins');
         });
       } else {
@@ -939,9 +917,10 @@ class _ManageInventoryPageState extends State<ManageInventoryPage> {
       }
     } catch (error) {
       print('Error fetching bins: $error');
-      // Show SnackBar after dialog is closed
+
+      setState(() => bins = []);
       if (mounted) {
-        Navigator.of(context).pop(); // Close any open dialog
+        Navigator.of(context).pop();
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Failed to fetch bins: $error'),
