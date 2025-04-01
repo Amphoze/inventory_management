@@ -369,7 +369,7 @@ class _CheckInvoiceByCsvState extends State<CheckInvoiceByCsv> {
                 ),
                 const SizedBox(width: 16),
                 ElevatedButton(
-                  onPressed: _isPickingFile || _isProcessingFile ? null : () => AuthProvider().downloadTemplate(context, 'confirm'),
+                  onPressed: _isPickingFile || _isProcessingFile ? null : () => AuthProvider().downloadTemplate(context, 'invoiceNumber'),
                   child: const Text('Download Template'),
                 ),
                 const SizedBox(width: 16),
@@ -377,7 +377,7 @@ class _CheckInvoiceByCsvState extends State<CheckInvoiceByCsv> {
                   Expanded(
                     child: ElevatedButton(
                       onPressed: _isCreateEnabled && !_isCreating && !_isPickingFile && !_isProcessingFile ? _checkInvoice : null,
-                      child: const Text('Check'),
+                      child: const Text('Update'),
                     ),
                   ),
               ],
