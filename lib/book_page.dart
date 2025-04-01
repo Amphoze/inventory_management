@@ -715,7 +715,11 @@ class _BookPageState extends State<BookPage> with SingleTickerProviderStateMixin
 
   Future<bool> _checkOrderWeightAndShowDialog(BuildContext context, List<Map<String, dynamic>> selectedOrders) async {
     // Find orders with weight > 20
-    List<Map<String, dynamic>> ordersWithWeightAbove20 = selectedOrders.where((order) => (order['totalWeight'] ?? 0) > 20).toList();
+    try {} catch (e, s) {
+      print(s);
+    }
+    List<Map<String, dynamic>> ordersWithWeightAbove20 =
+        selectedOrders.where((order) => (double.tryParse(order['totalWeight']) ?? 0) > 20).toList();
 
     if (ordersWithWeightAbove20.isEmpty) {
       return true; // No orders > 20kg, proceed with booking
@@ -740,7 +744,7 @@ class _BookPageState extends State<BookPage> with SingleTickerProviderStateMixin
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const Text(
-                'Cannot book orders with weight above 20 KG. Please split or edit the following orders:',
+                'Cannot book orders with weight above 20 KG. Please edit outer-packages for the following orders:',
                 style: TextStyle(fontSize: 16, color: Colors.black),
               ),
               const SizedBox(height: 10),
@@ -753,23 +757,12 @@ class _BookPageState extends State<BookPage> with SingleTickerProviderStateMixin
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(dialogContext, false), // Cancel booking
+            onPressed: () => Navigator.pop(dialogContext, false), // Proceed anyway (for now)
             child: const Text(
-              'Cancel',
+              'Ok',
               style: TextStyle(
                 fontSize: 14,
-                fontWeight: FontWeight.bold,
-                color: Colors.red,
-              ),
-            ),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext, true), // Proceed anyway (for now)
-            child: const Text(
-              'Proceed Anyway',
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.bold,
+                // fontWeight: FontWeight.bold,
                 color: AppColors.primaryBlue,
               ),
             ),
@@ -833,40 +826,42 @@ class _BookPageState extends State<BookPage> with SingleTickerProviderStateMixin
     setState(() {
       selectedOrderIds = (orderType == 'B2B' ? bookProvider.ordersB2B : bookProvider.ordersB2C)
           .where((order) => order.isSelected)
-          .map((order) =>
-              {'orderId': order.orderId, 'courierId': order.selectedCourierId ?? '', 'selectedCourier': order.selectedCourier ?? ''})
+          .map((order) => {
+                'orderId': order.orderId,
+                'courierId': order.selectedCourierId ?? '',
+                'selectedCourier': order.selectedCourier ?? '',
+                'totalWeight': order.totalWeight.toString(), // Ensure this field exists in your Order model
+              })
           .toList();
     });
 
     if (selectedOrderIds.isEmpty) {
-      ScaffoldMessenger.of(context).removeCurrentSnackBar();
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('No orders selected'),
           backgroundColor: AppColors.orange,
         ),
       );
-      setState(() {
-        isLoading = false;
-      });
+      setState(() => isLoading = false);
       return;
     }
 
+    // Check weights and show dialog if needed
     bool canProceed = await _checkOrderWeightAndShowDialog(context, selectedOrderIds);
     if (!canProceed) {
       setState(() => isLoading = false);
       return;
     }
 
-    log('Selected Orders: $selectedOrderIds');
+    // Original Shiprocket validation
     if (courier == 'Shiprocket' &&
         selectedOrderIds.every((order) => (order['courierId']?.isEmpty ?? false) || (order['selectedCourier']?.isEmpty ?? false))) {
       Utils.showSnackBar(context, 'Selected Delivery Courier', color: Colors.red);
-      setState(() {
-        isLoading = false;
-      });
+      setState(() => isLoading = false);
       return;
     }
+
+    log('Selected Orders: $selectedOrderIds');
 
     Map<String, dynamic> res = await bookProvider.bookOrders(context, selectedOrderIds, courier);
     ScaffoldMessenger.of(context).clearSnackBars();
@@ -881,6 +876,62 @@ class _BookPageState extends State<BookPage> with SingleTickerProviderStateMixin
       Utils.showSnackBar(context, res['message'], color: Colors.red);
     }
   }
+
+  // Future<void> _handleBooking(String courier, String orderType) async {
+  //   final bookProvider = Provider.of<BookProvider>(context, listen: false);
+  //   List<Map<String, String>> selectedOrderIds = [];
+  //
+  //   setState(() {
+  //     selectedOrderIds = (orderType == 'B2B' ? bookProvider.ordersB2B : bookProvider.ordersB2C)
+  //         .where((order) => order.isSelected)
+  //         .map((order) =>
+  //             {'orderId': order.orderId, 'courierId': order.selectedCourierId ?? '', 'selectedCourier': order.selectedCourier ?? ''})
+  //         .toList();
+  //   });
+  //
+  //   if (selectedOrderIds.isEmpty) {
+  //     ScaffoldMessenger.of(context).removeCurrentSnackBar();
+  //     ScaffoldMessenger.of(context).showSnackBar(
+  //       const SnackBar(
+  //         content: Text('No orders selected'),
+  //         backgroundColor: AppColors.orange,
+  //       ),
+  //     );
+  //     setState(() {
+  //       isLoading = false;
+  //     });
+  //     return;
+  //   }
+  //
+  //   bool canProceed = await _checkOrderWeightAndShowDialog(context, selectedOrderIds);
+  //   if (!canProceed) {
+  //     setState(() => isLoading = false);
+  //     return;
+  //   }
+  //
+  //   log('Selected Orders: $selectedOrderIds');
+  //   if (courier == 'Shiprocket' &&
+  //       selectedOrderIds.every((order) => (order['courierId']?.isEmpty ?? false) || (order['selectedCourier']?.isEmpty ?? false))) {
+  //     Utils.showSnackBar(context, 'Selected Delivery Courier', color: Colors.red);
+  //     setState(() {
+  //       isLoading = false;
+  //     });
+  //     return;
+  //   }
+  //
+  //   Map<String, dynamic> res = await bookProvider.bookOrders(context, selectedOrderIds, courier);
+  //   ScaffoldMessenger.of(context).clearSnackBars();
+  //
+  //   if (res['success'] == true) {
+  //     Utils.showSnackBar(context, res['message'], color: Colors.green);
+  //     await bookProvider.fetchOrders(
+  //       orderType,
+  //       orderType == 'B2B' ? bookProvider.currentPageB2B : bookProvider.currentPageB2C,
+  //     );
+  //   } else {
+  //     Utils.showSnackBar(context, res['message'], color: Colors.red);
+  //   }
+  // }
 
   Widget _buildTableHeader(String orderType, int selectedCount) {
     final bookProvider = Provider.of<BookProvider>(context);
