@@ -713,6 +713,74 @@ class _BookPageState extends State<BookPage> with SingleTickerProviderStateMixin
     );
   }
 
+  Future<bool> _checkOrderWeightAndShowDialog(BuildContext context, List<Map<String, dynamic>> selectedOrders) async {
+    // Find orders with weight > 20
+    List<Map<String, dynamic>> ordersWithWeightAbove20 = selectedOrders.where((order) => (order['totalWeight'] ?? 0) > 20).toList();
+
+    if (ordersWithWeightAbove20.isEmpty) {
+      return true; // No orders > 20kg, proceed with booking
+    }
+
+    // Show dialog if there are orders > 20kg
+    bool? proceed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text(
+          'Warning',
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+            color: Colors.red,
+          ),
+        ),
+        content: SizedBox(
+          width: MediaQuery.of(context).size.width * 0.35,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Cannot book orders with weight above 20 KG. Please split or edit the following orders:',
+                style: TextStyle(fontSize: 16, color: Colors.black),
+              ),
+              const SizedBox(height: 10),
+              Text(
+                ordersWithWeightAbove20.map((order) => order['orderId']).join(', '),
+                style: const TextStyle(fontSize: 14, color: Colors.black),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false), // Cancel booking
+            child: const Text(
+              'Cancel',
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+                color: Colors.red,
+              ),
+            ),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, true), // Proceed anyway (for now)
+            child: const Text(
+              'Proceed Anyway',
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+                color: AppColors.primaryBlue,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    return proceed ?? false; // Default to false if dialog is dismissed
+  }
+
   bool isLoading = false;
 
   Widget _buildBookButton(
@@ -770,15 +838,6 @@ class _BookPageState extends State<BookPage> with SingleTickerProviderStateMixin
           .toList();
     });
 
-    if (courier == 'Shiprocket' &&
-        selectedOrderIds.every((order) => (order['courierId']?.isEmpty ?? false) || (order['selectedCourier']?.isEmpty ?? false))) {
-      Utils.showSnackBar(context, 'Selected Delivery Courier', color: Colors.red);
-      setState(() {
-        isLoading = false;
-      });
-      return;
-    }
-
     if (selectedOrderIds.isEmpty) {
       ScaffoldMessenger.of(context).removeCurrentSnackBar();
       ScaffoldMessenger.of(context).showSnackBar(
@@ -793,7 +852,21 @@ class _BookPageState extends State<BookPage> with SingleTickerProviderStateMixin
       return;
     }
 
+    bool canProceed = await _checkOrderWeightAndShowDialog(context, selectedOrderIds);
+    if (!canProceed) {
+      setState(() => isLoading = false);
+      return;
+    }
+
     log('Selected Orders: $selectedOrderIds');
+    if (courier == 'Shiprocket' &&
+        selectedOrderIds.every((order) => (order['courierId']?.isEmpty ?? false) || (order['selectedCourier']?.isEmpty ?? false))) {
+      Utils.showSnackBar(context, 'Selected Delivery Courier', color: Colors.red);
+      setState(() {
+        isLoading = false;
+      });
+      return;
+    }
 
     Map<String, dynamic> res = await bookProvider.bookOrders(context, selectedOrderIds, courier);
     ScaffoldMessenger.of(context).clearSnackBars();

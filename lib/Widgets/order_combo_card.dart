@@ -15,6 +15,7 @@ import 'package:inventory_management/provider/packer_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../Custom-Files/outerpackage_selector_button.dart';
 import '../orders/widgets/write_remark_dialog.dart';
 import '../provider/orders_provider.dart';
 import '../provider/support_provider.dart';
@@ -160,6 +161,18 @@ class _OrderComboCardState extends State<OrderComboCard> {
                     Row(
                       children: [
                         if (widget.isBookPage) ...[
+                          OuterPackageSelectorButton(
+                            orderId: widget.order.orderId,
+                            onSuccess: () {
+                              log('Outerpackage edited successfully!!');
+                            },
+                            onRefresh: () {
+                              final pro = Provider.of<BookProvider>(context, listen: false);
+                              pro.fetchPaginatedOrdersB2C(pro.currentPageB2C);
+                              pro.fetchPaginatedOrdersB2B(pro.currentPageB2B);
+                            },
+                          ),
+                          const SizedBox(width: 8),
                           IconButton(
                             tooltip: 'Recalculate Freight Charges',
                             icon: const Icon(Icons.calculate_outlined),

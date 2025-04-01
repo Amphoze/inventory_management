@@ -73,7 +73,6 @@ class OuterboxProvider with ChangeNotifier {
     notifyListeners();
 
     final url = '$baseUrl/boxsize?page=$page'; // Adjust limit as needed
-    
 
     try {
       final token = await AuthProvider().getToken();
@@ -96,9 +95,7 @@ class OuterboxProvider with ChangeNotifier {
         final res = json.decode(response.body);
         if (res.containsKey('data')) {
           // Process inventory data with default values
-          List<Map<String, dynamic>> fetchedBoxsizes =
-              List<Map<String, dynamic>>.from(res['data']['boxsizes'])
-                  .map((boxsize) {
+          List<Map<String, dynamic>> fetchedBoxsizes = List<Map<String, dynamic>>.from(res['data']['boxsizes']).map((boxsize) {
             return {
               'ID': boxsize['_id']?.toString() ?? '-',
               'SKU': boxsize['outerPackage_sku']?.toString() ?? '-',
@@ -123,8 +120,7 @@ class OuterboxProvider with ChangeNotifier {
           log('Unexpected response format: $res');
         }
       } else {
-        _errorMessage =
-            'Failed to fetch inventory. Status code: ${response.statusCode}';
+        _errorMessage = 'Failed to fetch inventory. Status code: ${response.statusCode}';
         log('Failed to fetch inventory: ${response.body}');
       }
     } catch (error) {
@@ -160,9 +156,7 @@ class OuterboxProvider with ChangeNotifier {
         final data = json.decode(response.body);
         if (data.containsKey('data')) {
           // Process inventory data with default values
-          List<Map<String, dynamic>> fetchedBoxsizes =
-              List<Map<String, dynamic>>.from(data['data']['boxsizes'])
-                  .map((boxsize) {
+          List<Map<String, dynamic>> fetchedBoxsizes = List<Map<String, dynamic>>.from(data['data']['boxsizes']).map((boxsize) {
             return {
               'DIMENSION': boxsize['dimension'] ?? {},
               'ID': boxsize['_id']?.toString() ?? '-',
@@ -183,11 +177,7 @@ class OuterboxProvider with ChangeNotifier {
           return {'success': false, 'message': 'Unexpected response format'};
         }
       } else {
-        return {
-          'success': false,
-          'message':
-              'Failed to fetch inventory with status code: ${response.statusCode}'
-        };
+        return {'success': false, 'message': 'Failed to fetch inventory with status code: ${response.statusCode}'};
       }
     } catch (error) {
       log('An error occurred: $error');
@@ -223,12 +213,12 @@ class OuterboxProvider with ChangeNotifier {
         body: json.encode(boxsizeData),
       );
 
+      final data = json.decode(response.body);
+      log('Outerbox response: $data');
       if (response.statusCode == 200 || response.statusCode == 201) {
-        final data = json.decode(response.body);
-        log('Boxsize created: $data');
         await fetchBoxsizes(); // Refresh the list
       } else {
-        _errorMessage = 'Failed to create boxsize: ${response.body}';
+        _errorMessage = 'Failed to create boxsize: ${data['error'] ?? 'Unknown error'}';
         log(_errorMessage.toString());
       }
     } catch (error) {
@@ -253,8 +243,7 @@ class OuterboxProvider with ChangeNotifier {
     setLoading(true);
     try {
       if (query.isEmpty) {
-        _boxsizes = List<Map<String, dynamic>>.from(
-            _replicationBoxsize); // Load all inventory
+        _boxsizes = List<Map<String, dynamic>>.from(_replicationBoxsize); // Load all inventory
       } else {
         final result = await searchBoxsize(query);
         if (result['success']) {
@@ -276,9 +265,8 @@ class OuterboxProvider with ChangeNotifier {
   //   notifyListeners(); // Notify listeners about the change
   // }
 
-  Future<void> updateBoxsizeQuantity(
-      String id, int newQuantity, String reason) async {
-        String baseUrl = await Constants.getBaseUrl();
+  Future<void> updateBoxsizeQuantity(String id, int newQuantity, String reason) async {
+    String baseUrl = await Constants.getBaseUrl();
     _isLoading = true;
     _errorMessage = null;
     notifyListeners();
@@ -320,8 +308,7 @@ class OuterboxProvider with ChangeNotifier {
         }
       } else {
         // Print error details for better debugging
-        _errorMessage =
-            'Failed to update inventory. Status code: ${response.statusCode}. Response: ${response.body}';
+        _errorMessage = 'Failed to update inventory. Status code: ${response.statusCode}. Response: ${response.body}';
         log(_errorMessage.toString());
       }
     } catch (error) {

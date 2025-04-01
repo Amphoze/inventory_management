@@ -64,7 +64,7 @@ class _ManageOuterboxState extends State<ManageOuterbox> {
 
   void getDropValueForProduct() async {
     await Provider.of<ComboProvider>(context, listen: false).fetchProducts();
-    setState(() {});
+    // setState(() {});
   }
 
   void getDropValueForWarehouse() async {
