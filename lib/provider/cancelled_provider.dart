@@ -252,12 +252,14 @@ class CancelledProvider with ChangeNotifier {
         final jsonData = json.decode(response.body);
         print('Response data: $jsonData');
 
-        List<Order> orders = [];
-        if (jsonData != null) {
-          orders.add(Order.fromJson(jsonData));
-        } else {
-          print('No data found in response.');
-        }
+        // List<Order> orders = [];
+        List<Order> orders = (jsonData['orders'] as List).map((order) => Order.fromJson(order)).toList();
+
+        // if (jsonData != null) {
+        //   orders.add(Order.fromJson(jsonData));
+        // } else {
+        //   print('No data found in response.');
+        // }
 
         orders0 = orders;
         print('Orders fetched: ${orders.length}');

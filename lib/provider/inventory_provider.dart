@@ -77,7 +77,7 @@ class InventoryProvider with ChangeNotifier {
         return;
       }
 
-      final response = await http.post(
+      final response = await http.get(
         url,
         headers: {
           'Content-Type': 'application/json',
@@ -169,7 +169,7 @@ class InventoryProvider with ChangeNotifier {
 
     try {
       final token = await AuthProvider().getToken();
-      final response = await http.post(
+      final response = await http.get(
         Uri.parse(url),
         headers: {
           'Content-Type': 'application/json',

@@ -14,10 +14,6 @@ import 'chat_provider.dart';
 
 class SupportProvider with ChangeNotifier {
 
-  SupportProvider() {
-
-  }
-
   bool _isLoading = false;
   bool _selectAll = false;
   List<bool> _selectedProducts = [];
@@ -232,14 +228,16 @@ class SupportProvider with ChangeNotifier {
       if (response.statusCode == 200) {
         final jsonData = json.decode(response.body);
 
-        List<Order> orders = [];
+        // List<Order> orders = [];
+        List<Order> orders = (jsonData['orders'] as List).map((order) => Order.fromJson(order)).toList();
+
         // print('Response data: $jsonData');
-        if (jsonData != null) {
-          orders.add(Order.fromJson(jsonData));
-          print('Response data: $jsonData');
-        } else {
-          print('No data found in response.');
-        }
+        // if (jsonData != null) {
+        //   orders.add(Order.fromJson(jsonData));
+        //   print('Response data: $jsonData');
+        // } else {
+        //   print('No data found in response.');
+        // }
 
         _orders = orders;
         print('Orders fetched: ${orders.length}');

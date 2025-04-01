@@ -65,11 +65,11 @@ class ReturnProvider with ChangeNotifier {
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         log("cancel data: $data");
-        List<Order> orders = (data['orders'] as List).map((order) => Order.fromJson(order)).toList();
+        List<Order> orderss = (data['orders'] as List).map((order) => Order.fromJson(order)).toList();
         initializeSelection();
 
         totalPages = data['totalPages']; // Get total pages from response
-        orders = orders; // Set the orders for the current page
+        orders = orderss; // Set the orders for the current page
 
         Logger().e(orders);
 
@@ -252,14 +252,16 @@ class ReturnProvider with ChangeNotifier {
         final jsonData = json.decode(response.body);
         print('Response data: $jsonData');
 
-        List<Order> orders = [];
-        if (jsonData != null) {
-          orders.add(Order.fromJson(jsonData));
-        } else {
-          print('No data found in response.');
-        }
+        // List<Order> orders = [];
+        List<Order> orderss = (jsonData['orders'] as List).map((order) => Order.fromJson(order)).toList();
 
-        orders = orders;
+        // if (jsonData != null) {
+        //   orders.add(Order.fromJson(jsonData));
+        // } else {
+        //   print('No data found in response.');
+        // }
+
+        orders = orderss;
         print('Orders fetched: ${orders.length}');
       } else {
         print('Failed to load orders: ${response.statusCode}');

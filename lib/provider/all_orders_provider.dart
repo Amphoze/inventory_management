@@ -58,7 +58,6 @@ class AllOrdersProvider with ChangeNotifier {
     log('Cancelling Orders with URL :- $url');
 
     try {
-
       final response = await http.post(
         url,
         headers: headers,
@@ -162,7 +161,7 @@ class AllOrdersProvider with ChangeNotifier {
   Future<String> fetchShiprocketTrackingStatus(String awb) async {
     String token = await fetchShiprocketToken();
 
-    if(token.isEmpty) return '';
+    if (token.isEmpty) return '';
 
     String shipURL = 'https://apiv2.shiprocket.in/v1/external/courier/track/awb/$awb';
 
@@ -334,11 +333,11 @@ class AllOrdersProvider with ChangeNotifier {
         final data = jsonDecode(response.body);
         Logger().e('this is order id: ${data['order_id']}');
 
-        if(data['orders'] is List) {
-          _orders = (data['orders'] as List).map((order) => Order.fromJson(order)).toList();
-        } else {
-          _orders = [Order.fromJson(data)];
-        }
+        // if(data['orders'] is List) {
+        _orders = (data['orders'] as List).map((order) => Order.fromJson(order)).toList();
+        // } else {
+        //   _orders = [Order.fromJson(data)];
+        // }
 
         _currentPage = data['currentPage'];
         _totalPages = data['totalPages'];
@@ -413,14 +412,13 @@ class AllOrdersProvider with ChangeNotifier {
 
   void toggleSelectItems(String orderId) {
     log('Order Id is $orderId');
-     bool value = _selectedItems[orderId] ?? false;
+    bool value = _selectedItems[orderId] ?? false;
     _selectedItems[orderId] = !value;
     notifyListeners();
     log('Selected Items :- $_selectedItems');
   }
 
   bool isAllSelected() {
-
     if (orders.isEmpty) return false;
 
     for (var order in orders) {
@@ -431,7 +429,6 @@ class AllOrdersProvider with ChangeNotifier {
   }
 
   void toggleSelectAll() {
-
     bool status = false;
 
     if (isAllSelected()) {
@@ -446,5 +443,4 @@ class AllOrdersProvider with ChangeNotifier {
 
     notifyListeners();
   }
-
 }

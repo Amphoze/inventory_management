@@ -135,9 +135,7 @@ class ReturnEntryProvider with ChangeNotifier {
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        _orders = [
-          Order.fromJson(data)
-        ];
+        _orders = (data['orders'] as List?)?.map((order) => Order.fromJson(order)).toList() ?? [];
         Logger().e('return orders: $_orders');
       } else {
         _orders = [];
@@ -161,10 +159,7 @@ class ReturnEntryProvider with ChangeNotifier {
       final badQty = int.tryParse(item['badQty'].text) ?? 0;
       if (goodQty + badQty > item['total']) {
         showMessageDialog(context, 'Good + Bad quantity cannot exceed total for ${item['sku']}', Colors.red);
-        return {
-          'success': false,
-          'message': 'Validation failed'
-        };
+        return {'success': false, 'message': 'Validation failed'};
       }
     }
 
@@ -192,10 +187,7 @@ class ReturnEntryProvider with ChangeNotifier {
     final token = await _getToken();
 
     if (token == null || token.isEmpty) {
-      return {
-        'success': false,
-        'message': 'Authentication failed'
-      };
+      return {'success': false, 'message': 'Authentication failed'};
     }
 
     try {
@@ -245,23 +237,14 @@ class ReturnEntryProvider with ChangeNotifier {
         Logger().e('return orders: $data');
         clearImages(isGood: true);
         clearImages(isGood: false);
-        return {
-          'success': true,
-          'message': data['message']
-        };
+        return {'success': true, 'message': data['message']};
       } else {
         Logger().e('return orders error: ${response.statusCode}');
-        return {
-          'success': false,
-          'message': data['message'] ?? 'Failed to submit quality check'
-        };
+        return {'success': false, 'message': data['message'] ?? 'Failed to submit quality check'};
       }
     } catch (e, s) {
       log('catched error: $e $s');
-      return {
-        'success': false,
-        'message': 'An error occurred while uploading: $e'
-      };
+      return {'success': false, 'message': 'An error occurred while uploading: $e'};
     } finally {
       _isLoading = false;
       notifyListeners();
