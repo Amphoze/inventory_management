@@ -111,7 +111,7 @@ class OuterboxProvider with ChangeNotifier {
             };
           }).toList();
 
-          log('bhaai: $_boxsizes');
+          // log('bhaai: $_boxsizes');
           // log('fetchedInventory: $fetchedInventory');
 
           _boxsizes = fetchedBoxsizes.toList();

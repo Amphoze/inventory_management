@@ -21,19 +21,15 @@ class _CheckerPageState extends State<CheckerPage> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      Provider.of<CheckerProvider>(context, listen: false)
-          .fetchOrdersWithStatus6();
+      Provider.of<CheckerProvider>(context, listen: false).fetchOrdersWithStatus6();
     });
-    Provider.of<CheckerProvider>(context, listen: false)
-        .textEditingController
-        .clear();
+    Provider.of<CheckerProvider>(context, listen: false).textEditingController.clear();
   }
 
   void _onSearchButtonPressed() {
     final query = _searchController.text.trim();
     if (query.isNotEmpty) {
-      Provider.of<CheckerProvider>(context, listen: false)
-          .onSearchChanged(query);
+      Provider.of<CheckerProvider>(context, listen: false).onSearchChanged(query);
     }
   }
 
@@ -53,7 +49,7 @@ class _CheckerPageState extends State<CheckerPage> {
                     // Search TextField
                     Container(
                       height: 35,
-                      width:200,
+                      width: 200,
                       decoration: BoxDecoration(
                         border: Border.all(
                           color: const Color.fromARGB(183, 6, 90, 216),
@@ -71,18 +67,13 @@ class _CheckerPageState extends State<CheckerPage> {
                         ),
                         onChanged: (query) {
                           // Trigger a rebuild to show/hide the search button
-                          setState(() {
-                            // Update search focus
-                          });
+                          // setState(() {
+                          //   // Update search focus
+                          // });
                           if (query.isEmpty) {
                             // Reset to all orders if search is cleared
                             checkerProvider.fetchOrdersWithStatus6();
                           }
-                        },
-                        onTap: () {
-                          setState(() {
-                            // Mark the search field as focused
-                          });
                         },
                         onSubmitted: (query) {
                           if (query.isNotEmpty) {
@@ -91,25 +82,22 @@ class _CheckerPageState extends State<CheckerPage> {
                         },
                         onEditingComplete: () {
                           // Mark it as not focused when done
-                          FocusScope.of(context)
-                              .unfocus(); // Dismiss the keyboard
+                          FocusScope.of(context).unfocus(); // Dismiss the keyboard
                         },
                       ),
                     ),
-                    const SizedBox(width: 8),
-                    // Search Button
-                    ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primaryBlue,
-                      ),
-                      onPressed: _searchController.text.isNotEmpty
-                          ? _onSearchButtonPressed
-                          : null,
-                      child: const Text(
-                        'Search',
-                        style: TextStyle(color: Colors.white),
-                      ),
-                    ),
+                    // const SizedBox(width: 8),
+                    // // Search Button
+                    // ElevatedButton(
+                    //   style: ElevatedButton.styleFrom(
+                    //     backgroundColor: AppColors.primaryBlue,
+                    //   ),
+                    //   onPressed: _searchController.text.isNotEmpty ? _onSearchButtonPressed : null,
+                    //   child: const Text(
+                    //     'Search',
+                    //     style: TextStyle(color: Colors.white),
+                    //   ),
+                    // ),
                     const Spacer(),
                     //   ElevatedButton(
                     //   style: ElevatedButton.styleFrom(
@@ -121,7 +109,6 @@ class _CheckerPageState extends State<CheckerPage> {
                     //           final provider = Provider.of<CheckerProvider>(
                     //               context,
                     //               listen: false);
-
                     //           // Collect selected order IDs
                     //           List<String> selectedOrderIds = provider.orders
                     //               .asMap()
@@ -130,7 +117,6 @@ class _CheckerPageState extends State<CheckerPage> {
                     //                   provider.selectedProducts[entry.key])
                     //               .map((entry) => entry.value.orderId)
                     //               .toList();
-
                     //           if (selectedOrderIds.isEmpty) {
                     //             // Show an error message if no orders are selected
                     //             ScaffoldMessenger.of(context).showSnackBar(
@@ -142,14 +128,11 @@ class _CheckerPageState extends State<CheckerPage> {
                     //           } else {
                     //             // Set loading status to true before starting the operation
                     //             provider.setCancelStatus(true);
-
                     //             // Call confirmOrders method with selected IDs
                     //             String resultMessage = await provider
                     //                 .cancelOrders(context, selectedOrderIds);
-
                     //             // Set loading status to false after operation completes
                     //             provider.setCancelStatus(false);
-
                     //             // Determine the background color based on the result
                     //             Color snackBarColor;
                     //             if (resultMessage.contains('success')) {
@@ -163,7 +146,6 @@ class _CheckerPageState extends State<CheckerPage> {
                     //               snackBarColor =
                     //                   AppColors.orange; // Other: Orange
                     //             }
-
                     //             // Show feedback based on the result
                     //             ScaffoldMessenger.of(context).showSnackBar(
                     //               SnackBar(
@@ -255,8 +237,7 @@ class _CheckerPageState extends State<CheckerPage> {
                 ),
               ),
               CustomPaginationFooter(
-                currentPage:
-                    checkerProvider.currentPage, // Ensure correct currentPage
+                currentPage: checkerProvider.currentPage, // Ensure correct currentPage
                 totalPages: checkerProvider.totalPages,
                 buttonSize: 30,
                 pageController: checkerProvider.textEditingController,
@@ -267,17 +248,14 @@ class _CheckerPageState extends State<CheckerPage> {
                   checkerProvider.goToPage(checkerProvider.totalPages);
                 },
                 onNextPage: () {
-                  if (checkerProvider.currentPage <
-                      checkerProvider.totalPages) {
-                    print(
-                        'Navigating to page: ${checkerProvider.currentPage + 1}');
+                  if (checkerProvider.currentPage < checkerProvider.totalPages) {
+                    print('Navigating to page: ${checkerProvider.currentPage + 1}');
                     checkerProvider.goToPage(checkerProvider.currentPage + 1);
                   }
                 },
                 onPreviousPage: () {
                   if (checkerProvider.currentPage > 1) {
-                    print(
-                        'Navigating to page: ${checkerProvider.currentPage - 1}');
+                    print('Navigating to page: ${checkerProvider.currentPage - 1}');
                     checkerProvider.goToPage(checkerProvider.currentPage - 1);
                   }
                 },
@@ -285,11 +263,8 @@ class _CheckerPageState extends State<CheckerPage> {
                   checkerProvider.goToPage(page);
                 },
                 onJumpToPage: () {
-                  final page =
-                      int.tryParse(checkerProvider.textEditingController.text);
-                  if (page != null &&
-                      page > 0 &&
-                      page <= checkerProvider.totalPages) {
+                  final page = int.tryParse(checkerProvider.textEditingController.text);
+                  if (page != null && page > 0 && page <= checkerProvider.totalPages) {
                     checkerProvider.goToPage(page);
                   }
                 },
@@ -307,12 +282,12 @@ class _CheckerPageState extends State<CheckerPage> {
       padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
       child: Row(
         children: [
-          buildHeader('ORDERS', flex: 9),
-          buildHeader('CUSTOMER', flex: 3),
-          buildHeader('DATE', flex: 3),
-          buildHeader('TOTAL', flex: 2),
-          // buildHeader('WEIGHT', flex: 2),
-          buildHeader('CONFIRM', flex: 2),
+          buildHeader('ORDERS', flex: 5),
+          buildHeader('CUSTOMER', flex: 2),
+          buildHeader('DATE', flex: 1),
+          buildHeader('TOTAL', flex: 1),
+          buildHeader('WEIGHT', flex: 1),
+          // buildHeader('CONFIRM', flex: 1),
         ],
       ),
     );
@@ -334,23 +309,23 @@ class _CheckerPageState extends State<CheckerPage> {
     );
   }
 
-  Widget _buildOrderCard(
-      Order order, int index, CheckerProvider checkerProvider) {
+  Widget _buildOrderCard(Order order, int index, CheckerProvider checkerProvider) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 2.0, horizontal: 8.0),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Expanded(
-            flex: 9,
+            flex: 5,
             child: OrderComboCard(
               order: order,
               toShowBy: false,
               toShowOrderDetails: false,
             ),
           ),
-          const SizedBox(width: 4),
+          // const SizedBox(width: 4),
           buildCell(
+            flex: 2,
             Column(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
@@ -397,43 +372,42 @@ class _CheckerPageState extends State<CheckerPage> {
                 ],
               ],
             ),
-            flex: 3,
           ),
-          const SizedBox(width: 4),
+          // const SizedBox(width: 4),
           buildCell(
+            flex: 1,
             Text(
               checkerProvider.formatDate(order.date!),
               style: const TextStyle(fontSize: 16),
             ),
-            flex: 3,
           ),
-          const SizedBox(width: 4),
+          // const SizedBox(width: 4),
           buildCell(
+            flex: 1,
             Text(
               'Rs.${order.totalAmount!}',
               style: const TextStyle(fontSize: 16),
             ),
-            flex: 2,
           ),
-          const SizedBox(width: 4),
+          // const SizedBox(width: 4),
           buildCell(
+            flex: 1,
             Text(
               '${order.totalWeight}',
               style: const TextStyle(fontSize: 16),
             ),
-            flex: 2,
           ),
-          const SizedBox(width: 4),
-          buildCell(
-            order.checker!.approved
-                ? const Icon(
-                    Icons.check_circle,
-                    color: Colors.green,
-                    size: 24,
-                  )
-                : const SizedBox.shrink(),
-            flex: 2,
-          ),
+          // const SizedBox(width: 4),
+          // buildCell(
+          //   flex: 1,
+          //   (order.checker?.approved ?? false)
+          //       ? const Icon(
+          //           Icons.check_circle,
+          //           color: Colors.green,
+          //           size: 24,
+          //         )
+          //       : const SizedBox.shrink(),
+          // ),
         ],
       ),
     );

@@ -77,7 +77,7 @@ class InventoryProvider with ChangeNotifier {
         return;
       }
 
-      final response = await http.get(
+      final response = await http.post(
         url,
         headers: {
           'Content-Type': 'application/json',

@@ -78,9 +78,7 @@ class _PickerPageState extends State<PickerPage> {
                     title: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-
                         Text(filteredIds[index]),
-
                         if ((isSuperAdmin ?? false) || (isAdmin ?? false))
                           IconButton(
                             tooltip: 'Revert Order',
@@ -93,17 +91,14 @@ class _PickerPageState extends State<PickerPage> {
                                     title: const Text('Revert Order'),
                                     content: Text('Are you sure you want to revert ${filteredIds[index]} to READY TO CONFIRM'),
                                     actions: [
-
                                       TextButton(
                                         onPressed: () {
                                           Navigator.pop(context);
                                         },
                                         child: const Text('Cancel'),
                                       ),
-
                                       TextButton(
                                         onPressed: () async {
-
                                           showDialog(
                                             barrierDismissible: false,
                                             context: context,
@@ -121,7 +116,6 @@ class _PickerPageState extends State<PickerPage> {
                                           );
 
                                           try {
-
                                             final authPro = context.read<AuthProvider>();
 
                                             final res = await authPro.reverseOrder(filteredIds[index], '', '');
@@ -200,13 +194,10 @@ class _PickerPageState extends State<PickerPage> {
                         contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 12.0),
                       ),
                       onChanged: (query) {
-                        setState(() {});
+                        // setState(() {});
                         if (query.isEmpty) {
                           pickerProvider.fetchOrdersWithStatus4();
                         }
-                      },
-                      onTap: () {
-                        setState(() {});
                       },
                       onSubmitted: (query) {
                         if (query.isNotEmpty) {
@@ -220,17 +211,17 @@ class _PickerPageState extends State<PickerPage> {
                       },
                     ),
                   ),
-                  const SizedBox(width: 8),
-                  ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primaryBlue,
-                    ),
-                    onPressed: _searchController.text.isNotEmpty ? () => pickerProvider.searchOrders(_searchController.text) : null,
-                    child: const Text(
-                      'Search',
-                      style: TextStyle(color: Colors.white),
-                    ),
-                  ),
+                  // const SizedBox(width: 8),
+                  // ElevatedButton(
+                  //   style: ElevatedButton.styleFrom(
+                  //     backgroundColor: AppColors.primaryBlue,
+                  //   ),
+                  //   onPressed: _searchController.text.isNotEmpty ? () => pickerProvider.searchOrders(_searchController.text) : null,
+                  //   child: const Text(
+                  //     'Search',
+                  //     style: TextStyle(color: Colors.white),
+                  //   ),
+                  // ),
                   const Spacer(),
                   ElevatedButton(
                     style: ElevatedButton.styleFrom(
@@ -500,8 +491,8 @@ class _PickerPageState extends State<PickerPage> {
       padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
       child: Row(
         children: [
-          buildHeader('PRODUCTS', flex: 9),
-          buildHeader('QUANTITY', flex: 2),
+          buildHeader('PRODUCTS', flex: 8),
+          buildHeader('QUANTITY', flex: 1),
           buildHeader('ID', flex: 2),
         ],
       ),
@@ -540,35 +531,38 @@ class _PickerPageState extends State<PickerPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            InkWell(
-              onTap: () => _showOrderIdsDialog(picklist),
-              child: Text.rich(
-                TextSpan(
-                    text: "Order ID: ",
-                    children: [
-                      TextSpan(
-                        text: (picklist.orderIds).join(', '),
-                        style: const TextStyle(
-                          fontWeight: FontWeight.normal,
+            Tooltip(
+              message: 'Click to view all Order IDs',
+              child: InkWell(
+                onTap: () => _showOrderIdsDialog(picklist),
+                child: Text.rich(
+                  TextSpan(
+                      text: "Order ID: ",
+                      children: [
+                        TextSpan(
+                          text: (picklist.orderIds).join(', '),
+                          style: const TextStyle(
+                            fontWeight: FontWeight.normal,
+                          ),
                         ),
-                      ),
-                      TextSpan(
-                        text: " (${picklist.orderIds.length})",
-                      ),
-                    ],
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      overflow: TextOverflow.ellipsis,
-                    )),
-                maxLines: 3,
+                        TextSpan(
+                          text: " (${picklist.orderIds.length})",
+                        ),
+                      ],
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        overflow: TextOverflow.ellipsis,
+                      )),
+                  maxLines: 3,
+                ),
               ),
             ),
             const SizedBox(height: 8),
             Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Expanded(
-                  flex: 15,
+                  flex: 5,
                   child: SizedBox(
                     child: ListView.builder(
                       shrinkWrap: true,
@@ -715,8 +709,9 @@ class _PickerPageState extends State<PickerPage> {
                     ),
                   ),
                 ),
-                const SizedBox(width: 4),
+                // const SizedBox(width: 4),
                 buildCell(
+                  flex: 1,
                   Text(
                     picklist.picklistId,
                     style: const TextStyle(
@@ -725,7 +720,6 @@ class _PickerPageState extends State<PickerPage> {
                       color: Colors.blueAccent,
                     ),
                   ),
-                  flex: 3,
                 ),
               ],
             ),
@@ -807,7 +801,7 @@ class _PickerPageState extends State<PickerPage> {
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 Expanded(
-                  flex: 15,
+                  flex: 5,
                   child: SizedBox(
                     child: ListView.builder(
                       shrinkWrap: true,
@@ -954,8 +948,9 @@ class _PickerPageState extends State<PickerPage> {
                     ),
                   ),
                 ),
-                const SizedBox(width: 4),
+                // const SizedBox(width: 4),
                 buildCell(
+                  flex: 1,
                   Text(
                     order.picklistId,
                     style: const TextStyle(
@@ -964,7 +959,6 @@ class _PickerPageState extends State<PickerPage> {
                       color: Colors.blueAccent,
                     ),
                   ),
-                  flex: 3,
                 ),
               ],
             ),
@@ -972,24 +966,24 @@ class _PickerPageState extends State<PickerPage> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                if(order.createdAt != null)
-                Text.rich(
-                  TextSpan(
-                      text: "Created on: ",
-                      children: [
-                        TextSpan(
-                          text: DateFormat('yyyy-MM-dd, hh:mm a').format(
-                            order.createdAt!.toLocal(),
+                if (order.createdAt != null)
+                  Text.rich(
+                    TextSpan(
+                        text: "Created on: ",
+                        children: [
+                          TextSpan(
+                            text: DateFormat('yyyy-MM-dd, hh:mm a').format(
+                              order.createdAt!.toLocal(),
+                            ),
+                            style: const TextStyle(
+                              fontWeight: FontWeight.normal,
+                            ),
                           ),
-                          style: const TextStyle(
-                            fontWeight: FontWeight.normal,
-                          ),
-                        ),
-                      ],
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                      )),
-                ),
+                        ],
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                        )),
+                  ),
                 // if (picklist['messages']!['confirmerMessage'].toString().isNotEmpty) ...[
                 //   Utils().showMessage(context, 'Confirmer Remark', picklist['messages']!['confirmerMessage'].toString())
                 // ],

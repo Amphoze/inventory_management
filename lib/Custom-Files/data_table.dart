@@ -990,7 +990,7 @@ class _OuterboxDataTableState extends State<OuterboxDataTable> {
                 } else if (columnName == 'DIMENSION') {
                   return DataCell(
                     Text(
-                        '${cellData['length']} x ${cellData['width']} x ${cellData['height']}'),
+                        '${cellData['length'] ?? ''} x ${cellData['breadth'] ?? ''} x ${cellData['height'] ?? ''}'),
                   );
                 } else if (cellData is Widget) {
                   return DataCell(cellData);

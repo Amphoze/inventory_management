@@ -1207,7 +1207,7 @@ class _DashboardPageState extends State<DashboardPage> {
           "Confirm Outbound",
           "Merge Orders",
           "Create Invoice",
-          "Check Invoice",
+          "Update Invoice",
           "Book Orders",
           "Upload Products",
           "Upload Marketplace SKU",
@@ -1318,11 +1318,11 @@ class _DashboardPageState extends State<DashboardPage> {
           Padding(
             padding: const EdgeInsets.only(left: 10.0),
             child: _buildDrawerItem(
-              icon: FontAwesomeIcons.fileInvoice,
+              icon: FontAwesomeIcons.receipt,
               text: 'Update Invoice',
-              isSelected: selectedDrawerItem == 'Check Invoice',
+              isSelected: selectedDrawerItem == 'Update Invoice',
               onTap: () => isAccounts == true || isSuperAdmin == true || isAdmin == true
-                  ? _onDrawerItemTapped('Check Invoice', isSmallScreen)
+                  ? _onDrawerItemTapped('Update Invoice', isSmallScreen)
                   : ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(content: Text("You are not authorized to view this page.")),
                     ),
@@ -1648,7 +1648,7 @@ class _DashboardPageState extends State<DashboardPage> {
         return const MergeOrdersByCsv();
       case 'Create Invoice':
         return const CreateInvoiceByCSV();
-      case 'Check Invoice':
+      case 'Update Invoice':
         return const CheckInvoiceByCsv();
       case 'Book Orders':
         return const BookOrdersByCsv();

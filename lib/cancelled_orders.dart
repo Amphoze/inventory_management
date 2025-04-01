@@ -251,7 +251,7 @@ class _CancelledOrdersState extends State<CancelledOrders> {
                     width: 200), // Add some spacing between the elements
 
                 Text(
-                  '${order.trackingStatus?.isEmpty ?? true ? "NA" : order.trackingStatus}', // Display "NA" if null or empty
+                  '${(order.trackingStatus?.isEmpty ?? true) ? "NA" : order.trackingStatus}', // Display "NA" if null or empty
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
                     color: order.trackingStatus == 'return'
@@ -290,8 +290,8 @@ class _CancelledOrdersState extends State<CancelledOrders> {
             'Select All(${cancelProvider.selectedCount})',
             style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
           ),
-          buildHeader('ORDERS', flex: 8),
-          buildHeader('Tracking Status', flex: 3),
+          buildHeader('ORDERS', flex: 3),
+          buildHeader('Tracking Status', flex: 1),
         ],
       ),
     );

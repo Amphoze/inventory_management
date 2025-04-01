@@ -142,12 +142,18 @@ class _OrderComboCardState extends State<OrderComboCard> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     if (widget.checkboxWidget != null) widget.checkboxWidget!,
-                    Text(
-                      'Order ID: ${widget.order.orderId}',
+                    Text.rich(
+                      TextSpan(text: 'Order ID: ', children: [
+                        TextSpan(
+                          text: widget.order.orderId,
+                          style: const TextStyle(
+                            color: Colors.blueAccent,
+                          ),
+                        )
+                      ]),
                       style: const TextStyle(
-                        fontWeight: FontWeight.bold,
                         fontSize: 15,
-                        color: Colors.blueAccent,
+                        color: Colors.black,
                       ),
                     ),
                     const Spacer(),
@@ -179,7 +185,8 @@ class _OrderComboCardState extends State<OrderComboCard> {
                                           Utils.showLoadingDialog(context, 'Recalculating');
 
                                           final pro = Provider.of<BookProvider>(context, listen: false);
-                                          final res = await pro.reCalculateDeliveryCharges(widget.order.orderId, widget.order.warehouseName ?? '');
+                                          final res =
+                                              await pro.reCalculateDeliveryCharges(widget.order.orderId, widget.order.warehouseName ?? '');
 
                                           Navigator.pop(context);
                                           Navigator.pop(context);

@@ -78,18 +78,13 @@ class _PackerPageState extends State<PackerPage> {
                         ),
                         onChanged: (query) {
                           // Trigger a rebuild to show/hide the search button
-                          setState(() {
-                            // Update search focus
-                          });
+                          // setState(() {
+                          //   // Update search focus
+                          // });
                           if (query.isEmpty) {
                             // Reset to all orders if search is cleared
                             packerProvider.fetchOrdersWithStatus5();
                           }
-                        },
-                        onTap: () {
-                          setState(() {
-                            // Mark the search field as focused
-                          });
                         },
                         onSubmitted: (query) {
                           if (query.isNotEmpty) {
@@ -102,18 +97,18 @@ class _PackerPageState extends State<PackerPage> {
                         },
                       ),
                     ),
-                    const SizedBox(width: 8),
-                    // Search Button
-                    ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primaryBlue,
-                      ),
-                      onPressed: _searchController.text.isNotEmpty ? _onSearchButtonPressed : null,
-                      child: const Text(
-                        'Search',
-                        style: TextStyle(color: Colors.white),
-                      ),
-                    ),
+                    // const SizedBox(width: 8),
+                    // // Search Button
+                    // ElevatedButton(
+                    //   style: ElevatedButton.styleFrom(
+                    //     backgroundColor: AppColors.primaryBlue,
+                    //   ),
+                    //   onPressed: _searchController.text.isNotEmpty ? _onSearchButtonPressed : null,
+                    //   child: const Text(
+                    //     'Search',
+                    //     style: TextStyle(color: Colors.white),
+                    //   ),
+                    // ),
                     const Spacer(),
                     //   ElevatedButton(
                     //   style: ElevatedButton.styleFrom(
@@ -422,10 +417,10 @@ class _PackerPageState extends State<PackerPage> {
         children: [
           buildHeader('Orders', flex: 7),
           buildHeader('Customer', flex: 2),
-          buildHeader('Date', flex: 2),
+          buildHeader('Date', flex: 1),
           buildHeader('Total', flex: 1),
           buildHeader('Package Name', flex: 2),
-          buildHeader('Confirm', flex: 1),
+          // buildHeader('Confirm', flex: 1),
         ],
       ),
     );
@@ -463,7 +458,7 @@ class _PackerPageState extends State<PackerPage> {
               isPacked: true,
             ),
           ),
-          const SizedBox(width: 4),
+          // const SizedBox(width: 4),
           buildCell(
             flex: 2,
             Column(
@@ -513,15 +508,15 @@ class _PackerPageState extends State<PackerPage> {
               ],
             ),
           ),
-          const SizedBox(width: 4),
+          // const SizedBox(width: 4),
           buildCell(
-            flex: 2,
+            flex: 1,
             Text(
               packerProvider.formatDate(order.date!),
               style: const TextStyle(fontSize: 16),
             ),
           ),
-          const SizedBox(width: 4),
+          // const SizedBox(width: 4),
           buildCell(
             flex: 1,
             Text(
@@ -529,7 +524,7 @@ class _PackerPageState extends State<PackerPage> {
               style: const TextStyle(fontSize: 16),
             ),
           ),
-          const SizedBox(width: 4),
+          // const SizedBox(width: 4),
           // buildCell(
           //   Text(
           //     order.boxSize,
@@ -551,17 +546,17 @@ class _PackerPageState extends State<PackerPage> {
                   .toList(),
             ) : const SizedBox(),
           ),
-          const SizedBox(width: 4),
-          buildCell(
-            order.isPackerFullyScanned
-                ? const Icon(
-                    Icons.check_circle,
-                    color: Colors.green,
-                    size: 24,
-                  )
-                : const SizedBox.shrink(),
-            flex: 1,
-          ),
+          // const SizedBox(width: 4),
+          // buildCell(
+          //   order.isPackerFullyScanned
+          //       ? const Icon(
+          //           Icons.check_circle,
+          //           color: Colors.green,
+          //           size: 24,
+          //         )
+          //       : const SizedBox.shrink(),
+          //   flex: 1,
+          // ),
         ],
       ),
     );
