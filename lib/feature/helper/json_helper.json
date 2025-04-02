@@ -1,51 +1,15 @@
-[
-  {
-    "product_id": "TEST-1001",
-    "subInventory": [
-      {
-        "warehouseId": "66fceb5163c6d5c106cfa809",
-        "thresholdQuantity": 10,
-        "bin": [
-          {
-            "binName": "test|A",
-            "binQty": 50,
-            "binPriority": 1
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "product_id": "67e54bda4bd0521f72504d12",
-    "subInventory": [
-      {
-        "warehouseId": "66fceb5163c6d5c106cfa809",
-        "thresholdQuantity": null,
-        "bin": [
-          {
-            "binName": "test|t",
-            "binQty": "50",
-            "binPriority": 1
-          }
-        ]
-      }
-    ]
-  },
-
-  {
-    "product_id": "67e7a05dd7c1d856b123a289",
-    "subInventory": [
-      {
-        "warehouseId": "66fceb5163c6d5c106cfa809",
-        "thresholdQuantity": "10",
-        "bin": [
-          {
-            "binName": "test|t",
-            "binQty": 5,
-            "binPriority": 1
-          }
-        ]
-      }
+{
+  "message": "0 order(s) successfully updated to status 3 (booked). 1 order(s) failed to update.",
+  "updatedOrders": [],
+  "failedOrders": [
+    "K-912746"
+  ],
+  "service": "others",
+  "serviceResponse": {
+    "message": "Processed orders with existing AWB numbers",
+    "updatedOrders": [],
+    "failedOrders": [
+      "K-912746"
     ]
   }
-]
+}

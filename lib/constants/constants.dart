@@ -12,13 +12,13 @@ class Constants {
 
     final String firebaseUrl = prefs.getString('value') ?? 'https://inventory-api.ko-tech.in';
 
-    String? env = dotenv.env['STOCKSHIP_ENV'];
-
-    if (env == 'beta') {
-      return 'https://beta.api.stockship.ko-tech.in';
-    } else if (env == 'dev') {
-      return 'http://192.168.107.199:3001';
-    }
+    // String? env = dotenv.env['STOCKSHIP_ENV'];
+    //
+    // if (env == 'beta') {
+    //   return 'https://beta.api.stockship.ko-tech.in';
+    // } else if (env == 'dev') {
+    //   return 'http://192.168.107.199:3001';
+    // }
 
     return firebaseUrl;
 

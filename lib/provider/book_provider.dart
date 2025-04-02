@@ -461,15 +461,15 @@ class BookProvider with ChangeNotifier {
         return {
           "success": true,
           "message":
-              "${responseData['message'] ?? ''} - (${responseData["serviceResponse"][0]["orderCreationResponse"]["pickup_location"]["name"] ?? ''})"
+              "${responseData['message'] ?? ''} - (${responseData["serviceResponse"]?[0]?["orderCreationResponse"]?["pickup_location"]?["name"] ?? ''})"
         };
       } else {
         // setLoading(courier, false);
         return {"success": false, "message": "${responseData['message'] ?? 'Error while booking orders'}"};
       }
-    } catch (error) {
-      log('Error during API request: $error');
-      return {"success": false, "message": "'An error occurred: $error'"};
+    } catch (error, s) {
+      log('Error booking orders: $error \n\n$s');
+      return {"success": false, "message": "An error occurred: $error"};
     } finally {
       setLoading(courier, false);
       notifyListeners();
