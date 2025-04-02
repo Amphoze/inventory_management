@@ -461,7 +461,7 @@ class BookProvider with ChangeNotifier {
         return {
           "success": true,
           "message":
-              "${responseData['message'] ?? ''} - (${responseData["serviceResponse"][0]["orderCreationResponse"]["pickup_location"]["name"] ?? ''})"
+              "${responseData['message'] ?? ''} - (${responseData["serviceResponse"]?[0]?["orderCreationResponse"]?["pickup_location"]?["name"] ?? ''})"
         };
       } else {
         // setLoading(courier, false);
