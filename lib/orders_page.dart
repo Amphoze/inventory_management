@@ -23,7 +23,6 @@ import 'package:logger/logger.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-
 class OrdersNewPage extends StatefulWidget {
   const OrdersNewPage({super.key});
 
@@ -349,13 +348,11 @@ class _OrdersNewPageState extends State<OrdersNewPage> with TickerProviderStateM
                             ),
                     ),
                     const SizedBox(width: 8),
-
                     ElevatedButton(
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.primaryBlue,
                       ),
                       onPressed: () async {
-
                         if (ordersProvider.isConfirm) return;
 
                         List<String> selectedOrderIds = provider.readyOrders
@@ -629,32 +626,29 @@ class _OrdersNewPageState extends State<OrdersNewPage> with TickerProviderStateM
 
                         Utils.showSnackBar(context, 'Confirmation Started!!', color: Colors.green);
                         await ordersProvider.confirmOrders(context, selectedOrderIds, hasPackaging: true);
-
                       },
                       child: ordersProvider.isConfirm
-                          ?
-                      ValueListenableBuilder<double>(
-                        valueListenable: ordersProvider.progressNotifier,
-                        builder: (context, value, child) {
-                          return Text.rich(
-                            TextSpan(
-                              text: 'Progress: ',
-                              children: [
-                                TextSpan(
-                                  text: '${value.toStringAsFixed(2)}%',
-                                  style: const TextStyle(fontWeight: FontWeight.normal),
-                                ),
-                              ],
-                              style: const TextStyle(fontWeight: FontWeight.bold),
+                          ? ValueListenableBuilder<double>(
+                              valueListenable: ordersProvider.progressNotifier,
+                              builder: (context, value, child) {
+                                return Text.rich(
+                                  TextSpan(
+                                    text: 'Progress: ',
+                                    children: [
+                                      TextSpan(
+                                        text: '${value.toStringAsFixed(2)}%',
+                                        style: const TextStyle(fontWeight: FontWeight.normal),
+                                      ),
+                                    ],
+                                    style: const TextStyle(fontWeight: FontWeight.bold),
+                                  ),
+                                );
+                              },
+                            )
+                          : const Text(
+                              'Confirm Orders',
+                              style: TextStyle(color: Colors.white),
                             ),
-                          );
-                        },
-                      )
-                          :
-                      const Text(
-                        'Confirm Orders',
-                        style: TextStyle(color: Colors.white),
-                      ),
                     ),
                     const SizedBox(width: 8),
                     ElevatedButton(
@@ -957,7 +951,6 @@ class _OrdersNewPageState extends State<OrdersNewPage> with TickerProviderStateM
                                         ),
                                         Row(
                                           children: [
-
                                             // if (order.totalWeight > 20)
                                             //   const Chip(
                                             //     // color: WidgetStatePropertyAll(Colors.red),

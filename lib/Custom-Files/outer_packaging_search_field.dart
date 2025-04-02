@@ -155,7 +155,8 @@ class _OuterPackagingSearchableTextFieldState extends State<OuterPackagingSearch
             );
           },
           onSelected: (outerPackaging) {
-            _typeAheadController.text = outerPackaging.outerPackageName;
+            _typeAheadController.text = '';
+            // _typeAheadController.text = outerPackaging.outerPackageName;
             formFieldState.didChange(outerPackaging.outerPackageName);
             widget.onSelected?.call(outerPackaging);
             debugPrint('Selected Outer Packaging: ${outerPackaging.outerPackageName}');

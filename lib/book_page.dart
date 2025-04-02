@@ -744,7 +744,7 @@ class _BookPageState extends State<BookPage> with SingleTickerProviderStateMixin
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const Text(
-                'Cannot book orders with weight above 20 KG. Please edit outer-packages for the following orders:',
+                'Cannot book orders with weight above 20 KG.\nPlease edit outer-packages for the following orders:',
                 style: TextStyle(fontSize: 16, color: Colors.black),
               ),
               const SizedBox(height: 10),

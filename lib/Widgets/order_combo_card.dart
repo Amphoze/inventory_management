@@ -161,6 +161,7 @@ class _OrderComboCardState extends State<OrderComboCard> {
                     Row(
                       children: [
                         if (widget.isBookPage) ...[
+                          if(widget.order.filter == 'B2B' && widget.order.totalWeight > 20)
                           OuterPackageSelectorButton(
                             orderId: widget.order.orderId,
                             onSuccess: () {
