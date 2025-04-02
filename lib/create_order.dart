@@ -27,9 +27,9 @@ class _CreateOrderPageState extends State<CreateOrderPage> {
   void initState() {
     provider = context.read<CreateOrderProvider>();
     provider.initializeControllers();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<MarketplaceProvider>().fetchMarketplaces();
-    });
+    // WidgetsBinding.instance.addPostFrameCallback((_) {
+    //   context.read<MarketplaceProvider>().fetchMarketplaces();
+    // });
     super.initState();
   }
 

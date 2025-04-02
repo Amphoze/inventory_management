@@ -52,7 +52,7 @@ class _AccountsPageState extends State<AccountsPage> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       accountsProvider.resetFilterData();
       Provider.of<AccountsProvider>(context, listen: false).fetchOrdersWithStatus2();
-      context.read<MarketplaceProvider>().fetchMarketplaces();
+      // context.read<MarketplaceProvider>().fetchMarketplaces();
     });
   }
 

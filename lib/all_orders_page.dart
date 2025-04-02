@@ -42,7 +42,7 @@ class _AllOrdersPageState extends State<AllOrdersPage> with SingleTickerProvider
       // _selectedDate = 'Select Date';
       // picked = null;
       allOrdersProvider.fetchAllOrders(page: allOrdersProvider.currentPage);
-      context.read<MarketplaceProvider>().fetchMarketplaces();
+      // context.read<MarketplaceProvider>().fetchMarketplaces();
       fetchStatuses();
     });
   }

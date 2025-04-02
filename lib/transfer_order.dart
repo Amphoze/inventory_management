@@ -28,9 +28,9 @@ class _TransferOrderPageState extends State<TransferOrderPage> {
   void initState() {
     provider = context.read<TransferOrderProvider>();
     provider.initializeControllers();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<MarketplaceProvider>().fetchMarketplaces();
-    });
+    // WidgetsBinding.instance.addPostFrameCallback((_) {
+    //   context.read<MarketplaceProvider>().fetchMarketplaces();
+    // });
     super.initState();
   }
 

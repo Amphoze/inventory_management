@@ -47,7 +47,7 @@ class _InvoicedOrdersState extends State<InvoicedOrders> with SingleTickerProvid
     WidgetsBinding.instance.addPostFrameCallback((_) {
       provider.resetFilterData();
       provider.fetchInvoicedOrders(provider.currentPage);
-      context.read<MarketplaceProvider>().fetchMarketplaces();
+      // context.read<MarketplaceProvider>().fetchMarketplaces();
       _fetchUserRole();
     });
     super.initState();

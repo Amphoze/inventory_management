@@ -31,7 +31,7 @@ class Utils {
 
   static showSnackBar(BuildContext context, String message, {String? details, Color? color}) {
 
-    ScaffoldMessenger.of(context).clearSnackBars();
+    // ScaffoldMessenger.of(context).removeCurrentSnackBar();
 
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
       content: Text(message),

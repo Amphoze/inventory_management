@@ -54,7 +54,7 @@ class _BookedPageState extends State<BookedPage> with SingleTickerProviderStateM
       final bookProvider = Provider.of<BookProvider>(context, listen: false);
       bookProvider.resetFilterData();
       bookProvider.fetchBookedOrders(bookProvider.currentPageBooked);
-      context.read<MarketplaceProvider>().fetchMarketplaces();
+      // context.read<MarketplaceProvider>().fetchMarketplaces();
       _fetchUserRole();
     });
     super.initState();

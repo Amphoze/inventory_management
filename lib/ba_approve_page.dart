@@ -38,7 +38,7 @@ class _BaApprovePageState extends State<BaApprovePage> {
     baApproveProvider.searchController.clear();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       baApproveProvider.fetchOrdersWithStatus2(date: picked, market: selectedCourier);
-      context.read<MarketplaceProvider>().fetchMarketplaces();
+      // context.read<MarketplaceProvider>().fetchMarketplaces();
     });
     super.initState();
   }

@@ -62,7 +62,7 @@ class _BookPageState extends State<BookPage> with SingleTickerProviderStateMixin
       bookProvider.resetFilterData();
       bookProvider.fetchOrders('B2B', bookProvider.currentPageB2B);
       bookProvider.fetchOrders('B2C', bookProvider.currentPageB2C);
-      context.read<MarketplaceProvider>().fetchMarketplaces();
+      // context.read<MarketplaceProvider>().fetchMarketplaces();
       context.read<LocationProvider>().fetchWarehouses();
       _fetchUserRole();
     });

@@ -194,7 +194,8 @@ Future<Map<String, dynamic>> searchOuterPackaging(String query, {int page = 1}) 
   String baseUrl = await Constants.getBaseUrl();
   String url;
   // Search by outerPackage_sku if query contains numbers, otherwise by outerPackage_name
-  if (query.contains(RegExp(r'[0-9]'))) {
+  if (query.contains('-')) {
+  // if (query.contains(RegExp(r'[0-9]'))) {
     url = '$baseUrl/boxsize?page=$page&outerPackage_sku=$query';
   } else {
     url = '$baseUrl/boxsize?page=$page&outerPackage_name=$query';

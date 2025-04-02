@@ -49,7 +49,7 @@ class _RoutingPageState extends State<RoutingPage> with TickerProviderStateMixin
     });
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<MarketplaceProvider>().fetchMarketplaces();
+      // context.read<MarketplaceProvider>().fetchMarketplaces();
       _reloadOrders();
     });
   }

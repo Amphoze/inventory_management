@@ -169,7 +169,7 @@ class InventoryProvider with ChangeNotifier {
 
     try {
       final token = await AuthProvider().getToken();
-      final response = await http.get(
+      final response = await http.post(
         Uri.parse(url),
         headers: {
           'Content-Type': 'application/json',

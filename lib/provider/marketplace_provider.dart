@@ -33,7 +33,6 @@ class MarketplaceProvider with ChangeNotifier {
   final marketplaceApi = MarketplaceApi();
   final comboApi = ComboApi();
 
-  // Fetch marketplaces
   Future<void> fetchMarketplaces() async {
     _loading = true;
     notifyListeners();
@@ -41,20 +40,23 @@ class MarketplaceProvider with ChangeNotifier {
     try {
       _marketplaces = await marketplaceApi.getMarketplaces();
 
-      for (var marketplace in _marketplaces) {
-        for (var skuMap in marketplace.skuMap) {
-          try {
-            skuMap.product = await comboApi.getProductById(skuMap.productId);
-          } catch (e) {
-            skuMap.product = null;
-          }
-        }
-      }
+      log("under fetchMarketplaces try: $_marketplaces");
+
+      // for (var marketplace in _marketplaces) {
+      //   for (var skuMap in marketplace.skuMap) {
+      //     try {
+      //       skuMap.product = await comboApi.getProductById(skuMap.productId);
+      //     } catch (e) {
+      //       skuMap.product = null;
+      //     }
+      //   }
+      // }
 
       _filteredMarketplaces = _marketplaces;
 
+      log("_filteredMarketplaces: $_filteredMarketplaces");
+
     } catch (e, s) {
-      // Handle general errors
       log('Error fetching marketplaces: $e $s');
       _marketplaces = []; // Clear the list on error
     } finally {
@@ -69,28 +71,17 @@ class MarketplaceProvider with ChangeNotifier {
     try {
       final api = ComboApi();
 
-      // Fetch the full response (which contains the 'products' array)
       final response = await api.getAllProducts();
 
-      // Extract the 'products' array from the response
-      final productList = response['products'];
-
-      // Print raw productList for debugging
-      print("productList in provider: $productList");
-
-      // Map the 'products' array into the Product model list
+      final productList = response['products'] ?? [];
       _products =
           productList.map<Product>((json) => Product.fromJson(json)).toList();
 
-      // Print the mapped products for debugging
-      print("products in provider: $_products");
-    } catch (e, stacktrace) {
-      // Log error details
-      print('Error fetching products: $e');
-      print('Stacktrace: $stacktrace');
+    } catch (e, s) {
+      log('Error fetching products: $e\n\n$s');
     } finally {
-      _loading = false; // Stop loading once the process is done
-      notifyListeners(); // Notify listeners to hide loading state and update UI
+      _loading = false;
+      notifyListeners();
     }
   }
 

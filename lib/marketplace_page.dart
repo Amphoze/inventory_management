@@ -189,9 +189,9 @@ class _MarketplacePageState extends State<MarketplacePage> {
                           },
                     child: provider.isSaving
                         ? const CircularProgressIndicator(
-                            color: Colors.purple, // Show progress indicator while saving
+                            color: Colors.purple,
                           )
-                        : const Text('Save Marketplace'), // Normal text when not saving
+                        : const Text('Save Marketplace'),
                   ),
                 ],
               ),

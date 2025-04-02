@@ -104,7 +104,6 @@ class _DashboardPageState extends State<DashboardPage> {
     _fetchUserRole();
     _loadSelectedDrawerItem();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _fetchData();
       context.read<LocationProvider>().fetchWarehouses();
       context.read<MarketplaceProvider>().fetchMarketplaces();
     });
@@ -128,9 +127,9 @@ class _DashboardPageState extends State<DashboardPage> {
     await FirebaseMessaging.instance.subscribeToTopic(sanitizedEmail);
   }
 
-  Future<void> _fetchData() async {
-    await context.read<MarketplaceProvider>().fetchMarketplaces();
-  }
+  // Future<void> _fetchData() async {
+  //   await context.read<MarketplaceProvider>().fetchMarketplaces();
+  // }
 
   void _loadSelectedDrawerItem() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();

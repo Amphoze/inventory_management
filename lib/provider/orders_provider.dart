@@ -564,6 +564,7 @@ class OrdersProvider with ChangeNotifier {
         _showSnackBar('Connected to server', color: Colors.green);
       });
 
+      _socket?.off('csv-file-uploading-err');
       _socket?.on('csv-file-uploading-err', (data) {
         setConfirmStatus(false);
         _progressMessage = data['message'];
@@ -627,7 +628,7 @@ class OrdersProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  Future<String> confirmOrders(BuildContext context, List<String> orderIds, {bool hasPackaging = false}) async {
+  Future<String> confirmOrders(BuildContext context, List<String> orderIds) async {
     String baseUrl = await Constants.getBaseUrl();
     String confirmOrderUrl = '$baseUrl/orders/confirm';
     final String? token = await _getToken();
@@ -644,10 +645,6 @@ class OrdersProvider with ChangeNotifier {
     Map<String, dynamic> body = {
       'orderIds': orderIds,
     };
-
-    if (hasPackaging) {
-      body['outerPackage'] = outerPackagingOrders;
-    }
 
     final payload = jsonEncode(body);
 
