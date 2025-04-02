@@ -309,7 +309,7 @@ class _RackedPageState extends State<RackedPage> {
           buildHeader('ORDERS', flex: 9),
           buildHeader('CUSTOMER', flex: 3),
           buildHeader('DATE', flex: 3),
-          buildHeader('TOTAL', flex: 2),
+          buildHeader('AMOUNT', flex: 2),
           buildHeader('WEIGHT', flex: 2),
           buildHeader('CONFIRM', flex: 2),
         ],

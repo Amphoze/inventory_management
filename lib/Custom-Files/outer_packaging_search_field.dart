@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_typeahead/flutter_typeahead.dart';
 import 'dart:convert';
@@ -197,6 +199,10 @@ Future<Map<String, dynamic>> searchOuterPackaging(String query, {int page = 1}) 
   } else {
     url = '$baseUrl/boxsize?page=$page&outerPackage_name=$query';
   }
+
+  // outerPackage_name, occupied_weight, outerPackage_sku, outerPackage_type
+
+  log("searchOuterPackaging url: $url");
 
   try {
     final token = await AuthProvider().getToken();

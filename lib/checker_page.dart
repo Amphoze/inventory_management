@@ -285,7 +285,7 @@ class _CheckerPageState extends State<CheckerPage> {
           buildHeader('ORDERS', flex: 5),
           buildHeader('CUSTOMER', flex: 2),
           buildHeader('DATE', flex: 1),
-          buildHeader('TOTAL', flex: 1),
+          buildHeader('AMOUNT', flex: 1),
           buildHeader('WEIGHT', flex: 1),
           // buildHeader('CONFIRM', flex: 1),
         ],

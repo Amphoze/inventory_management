@@ -418,7 +418,7 @@ class _PackerPageState extends State<PackerPage> {
           buildHeader('Orders', flex: 7),
           buildHeader('Customer', flex: 2),
           buildHeader('Date', flex: 1),
-          buildHeader('Total', flex: 1),
+          buildHeader('Amount', flex: 1),
           buildHeader('Package Name', flex: 2),
           // buildHeader('Confirm', flex: 1),
         ],
