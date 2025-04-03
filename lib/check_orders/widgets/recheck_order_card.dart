@@ -214,7 +214,7 @@ class RecheckOrderCard extends StatelessWidget {
                 final provider = Provider.of<CheckOrdersProvider>(context, listen: false);
                 await provider.updateCheckStatus(
                   orderId: order.orderId,
-                  packListId: order.packListId,
+                  pickListId: order.packListId,
                   check: checkStatus,
                 );
                 Navigator.of(context).pop();

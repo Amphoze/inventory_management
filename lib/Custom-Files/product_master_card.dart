@@ -104,8 +104,8 @@ class ProductMasterCard extends StatelessWidget {
                   const Spacer(),
                   Row(
                     children: [
-                      UpdateBinButton(productSku: product.sku),
-                      const SizedBox(width: 8),
+                      // UpdateBinButton(productSku: product.sku),
+                      // const SizedBox(width: 8),
                       AddBinButton(productSku: product.sku),
                       const SizedBox(width: 8),
 

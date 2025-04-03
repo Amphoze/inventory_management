@@ -3,6 +3,7 @@ import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
+import 'package:inventory_management/Custom-Files/utils.dart';
 import 'dart:convert';
 import 'package:inventory_management/constants/constants.dart';
 import 'package:provider/provider.dart';
@@ -23,7 +24,7 @@ class _AddBinButtonState extends State<AddBinButton> {
   late TextEditingController _productSkuController;
   late TextEditingController _warehouseIdController;
   late TextEditingController _binNameController;
-  late TextEditingController _binQtyController;
+  // late TextEditingController _binQtyController;
   String? warehouse;
   List<String> bins = [];
   bool isLoadingBins = false;
@@ -54,25 +55,21 @@ class _AddBinButtonState extends State<AddBinButton> {
       } else {
         print('No bins key in response');
         setState(() => bins = []);
+        Utils.showInfoDialog(context, 'No bins found for $warehouse', false);
       }
-    } catch (error) {
-      print('Error fetching bins: $error');
+    } catch (error,s) {
+      log('Error fetching bins: $error $s');
       // Show SnackBar after dialog is closed
       if (mounted) {
-        Navigator.of(context).pop(); // Close any open dialog
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to fetch bins: $error'),
-            backgroundColor: Colors.red,
-          ),
-        );
+        Navigator.of(context).pop();
+        Utils.showInfoDialog(context, 'Failed to fetch bins: $error', false);
       }
     } finally {
       setState(() => isLoadingBins = false);
     }
   }
 
-  Future<void> _submitBinData(BuildContext dialogContext) async {
+  Future<void> _submitBinData(BuildContext dialogContext, {bool isApproval = false}) async {
     if (_formKey.currentState!.validate()) {
       // Show loading dialog
       showDialog(
@@ -97,7 +94,11 @@ class _AddBinButtonState extends State<AddBinButton> {
         'productSku': _productSkuController.text,
         'warehouseId': _warehouseIdController.text,
         'binName': _binNameController.text,
-        'binQty': int.parse(_binQtyController.text),
+        // 'binQty': int.parse(_binQtyController.text),
+        if (isApproval) ...{
+          'status': true,
+          'statusWarehouse': true,
+        },
       });
 
       log('add bin body: $body');
@@ -118,6 +119,34 @@ class _AddBinButtonState extends State<AddBinButton> {
 
         // Close loading dialog
         Navigator.of(dialogContext).pop();
+
+        if (response.statusCode == 409) {
+          // Show approval dialog
+          final approvalResult = await showDialog<bool>(
+            context: dialogContext,
+            builder: (context) => AlertDialog(
+              title: const Text('Approval Required'),
+              content: Text(responseData['error'] ?? 'This action requires approval. Do you want to proceed?'),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context, false),
+                  child: const Text('Cancel'),
+                ),
+                ElevatedButton(
+                  onPressed: () => Navigator.pop(context, true),
+                  child: const Text('Approve'),
+                ),
+              ],
+            ),
+          );
+
+          if (approvalResult == true) {
+            // Resubmit with approval parameters
+            await _submitBinData(dialogContext, isApproval: true);
+          }
+          return;
+        }
+
         // Close add bin dialog
         Navigator.of(dialogContext).pop(true);
 
@@ -167,7 +196,7 @@ class _AddBinButtonState extends State<AddBinButton> {
         return StatefulBuilder(
           builder: (dialogContext, dialogSetState) {
             return AlertDialog(
-              title: const Text('Add New Bin'),
+              title: const Text('Manage Bin'),
               content: Form(
                 key: _formKey,
                 child: SingleChildScrollView(
@@ -176,6 +205,7 @@ class _AddBinButtonState extends State<AddBinButton> {
                     children: [
                       TextFormField(
                         controller: _productSkuController,
+                        enabled: false,
                         decoration: const InputDecoration(labelText: 'Product SKU'),
                         validator: (value) => value?.isEmpty ?? true ? 'Please enter Product SKU' : null,
                       ),
@@ -206,33 +236,30 @@ class _AddBinButtonState extends State<AddBinButton> {
                       isLoadingBins
                           ? const CircularProgressIndicator()
                           : _buildDropdown(
-                        value: bins.isNotEmpty && bins.contains(_binNameController.text)
-                            ? _binNameController.text
-                            : null,
-                        label: 'Bin Name',
-                        items: bins.isEmpty ? ['No bins available'] : bins,
-                        onChanged: bins.isEmpty
-                            ? null
-                            : (value) {
-                          dialogSetState(() {
-                            _binNameController.text = value ?? '';
-                          });
-                        },
-                        validator: (value) =>
-                        value == null || value.isEmpty ? 'Please select a bin' : null,
-                      ),
-                      const SizedBox(height: 8),
-                      TextFormField(
-                        controller: _binQtyController,
-                        decoration: const InputDecoration(labelText: 'Bin Quantity'),
-                        keyboardType: TextInputType.number,
-                        inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                        validator: (value) {
-                          if (value == null || value.isEmpty) return 'Please enter Bin Quantity';
-                          if (int.tryParse(value) == null) return 'Please enter a valid number';
-                          return null;
-                        },
-                      ),
+                              value: bins.isNotEmpty && bins.contains(_binNameController.text) ? _binNameController.text : null,
+                              label: 'Bin Name',
+                              items: bins.isEmpty ? ['No bins available'] : bins,
+                              onChanged: bins.isEmpty
+                                  ? null
+                                  : (value) {
+                                      dialogSetState(() {
+                                        _binNameController.text = value ?? '';
+                                      });
+                                    },
+                              validator: (value) => value == null || value.isEmpty ? 'Please select a bin' : null,
+                            ),
+                      // const SizedBox(height: 8),
+                      // TextFormField(
+                      //   controller: _binQtyController,
+                      //   decoration: const InputDecoration(labelText: 'Bin Quantity'),
+                      //   keyboardType: TextInputType.number,
+                      //   inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                      //   validator: (value) {
+                      //     if (value == null || value.isEmpty) return 'Please enter Bin Quantity';
+                      //     if (int.tryParse(value) == null) return 'Please enter a valid number';
+                      //     return null;
+                      //   },
+                      // ),
                     ],
                   ),
                 ),
@@ -261,12 +288,11 @@ class _AddBinButtonState extends State<AddBinButton> {
   }
 
   @override
-  void initState() {
-    _productSkuController = TextEditingController(text: widget.productSku);
-    _warehouseIdController = TextEditingController();
-    _binNameController = TextEditingController();
-    _binQtyController = TextEditingController();
-    super.initState();
+  void didUpdateWidget(AddBinButton oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.productSku != widget.productSku) {
+      _productSkuController.text = widget.productSku ?? '';
+    }
   }
 
   @override
@@ -274,15 +300,24 @@ class _AddBinButtonState extends State<AddBinButton> {
     _productSkuController.dispose();
     _warehouseIdController.dispose();
     _binNameController.dispose();
-    _binQtyController.dispose();
+    // _binQtyController.dispose();
     super.dispose();
+  }
+
+  @override
+  void initState() {
+    _productSkuController = TextEditingController(text: widget.productSku);
+    _warehouseIdController = TextEditingController();
+    _binNameController = TextEditingController();
+    // _binQtyController = TextEditingController();
+    super.initState();
   }
 
   @override
   Widget build(BuildContext context) {
     return ElevatedButton(
       onPressed: _showAddBinDialog,
-      child: const Text('Add Bin'),
+      child: const Text('Manage Bin'),
     );
   }
 

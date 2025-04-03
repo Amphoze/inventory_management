@@ -113,7 +113,7 @@ class CheckOrdersProvider with ChangeNotifier {
 
   Future<bool> updateCheckStatus({
     required String orderId,
-    required String packListId,
+    required String pickListId,
     required bool check,
   }) async {
     setCheckingOrders(true);
@@ -123,7 +123,7 @@ class CheckOrdersProvider with ChangeNotifier {
     try {
       final Map<String, dynamic> body = {
         "orderId": orderId,
-        "packListId": packListId,
+        "packListId": pickListId,
         "check": check,
       };
       final http.Response response = await http.put(

@@ -91,12 +91,15 @@ class BinApi with ChangeNotifier {
 
           notifyListeners();
         } else {
+          _bins = [];
           throw Exception('Unexpected response format');
         }
       } else {
+        _bins = [];
         throw Exception('${res['message']}: ${response.statusCode}');
       }
     } catch (error) {
+      _bins = [];
       log('error hai: $error');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(

@@ -1,13 +1,13 @@
 // Updated CheckOrderModel class to match the response structure
 class CheckOrderModel {
   final String orderId;
-  final String packListId;
+  final String pickListId;
   final List<Item> items;
   final List<OrderPic> orderPics;
 
   CheckOrderModel({
     required this.orderId,
-    required this.packListId,
+    required this.pickListId,
     required this.items,
     required this.orderPics,
   });
@@ -15,7 +15,7 @@ class CheckOrderModel {
   factory CheckOrderModel.fromJson(Map<String, dynamic> json) {
     return CheckOrderModel(
       orderId: json['order_id'] ?? '',
-      packListId: json['packListId'] ?? '',
+      pickListId: json['pickListId'] ?? '',
       items: (json['items'] as List<dynamic>)
           .map((item) => Item.fromJson(item))
           .toList(),

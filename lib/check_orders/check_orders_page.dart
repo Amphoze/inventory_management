@@ -26,6 +26,7 @@ class _CheckOrdersPageState extends State<CheckOrdersPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       body: Padding(
         padding: const EdgeInsets.all(8.0),
         child: Column(
@@ -109,7 +110,7 @@ class _CheckOrdersPageState extends State<CheckOrdersPage> {
                         orderId: order.orderId,
                         items: order.items,
                         orderPics: order.orderPics,
-                        packListId: order.packListId,
+                        pickListId: order.pickListId,
                       );
                     },
                   );

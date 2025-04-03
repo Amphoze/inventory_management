@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:inventory_management/Custom-Files/utils.dart';
 import 'package:photo_view/photo_view.dart';
 import 'package:provider/provider.dart';
 import '../models/check_order_model.dart';
@@ -8,14 +9,14 @@ class CheckOrderCard extends StatelessWidget {
   final String orderId;
   final List<Item> items;
   final List<OrderPic> orderPics;
-  final String packListId;
+  final String pickListId;
 
   const CheckOrderCard({
     super.key,
     required this.orderId,
     required this.items,
     required this.orderPics,
-    required this.packListId,
+    required this.pickListId,
   });
 
   @override
@@ -42,7 +43,7 @@ class CheckOrderCard extends StatelessWidget {
                   children: [
                     Expanded(child: _buildInfoColumn('Order ID', orderId)),
                     const SizedBox(width: 16),
-                    Expanded(child: _buildInfoColumn('Packlist ID', packListId)),
+                    Expanded(child: _buildInfoColumn('Picklist ID', pickListId)),
                   ],
                 ),
                 const SizedBox(height: 12),
@@ -68,7 +69,7 @@ class CheckOrderCard extends StatelessWidget {
                     children: [
                       _buildInfoColumn('Order ID', orderId),
                       const SizedBox(width: 24),
-                      _buildInfoColumn('Packlist ID', packListId),
+                      _buildInfoColumn('Picklist ID', pickListId),
                     ],
                   ),
                 ),
@@ -149,11 +150,12 @@ class CheckOrderCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'SKU: ${item.sku}',
-            style: const TextStyle(fontSize: 16, color: Colors.grey),
-            overflow: TextOverflow.ellipsis,
-          ),
+          // Text(
+          //   'SKU: ${item.sku}',
+          //   style: const TextStyle(fontSize: 16, color: Colors.grey),
+          //   overflow: TextOverflow.ellipsis,
+          // ),
+          Utils.richText('SKU: ', item.sku),
           const SizedBox(height: 12),
           // Make image layout responsive
           isSmallScreen
@@ -305,7 +307,7 @@ class CheckOrderCard extends StatelessWidget {
               final provider = Provider.of<CheckOrdersProvider>(context, listen: false);
               final res = await provider.updateCheckStatus(
                 orderId: orderId,
-                packListId: packListId,
+                pickListId: pickListId,
                 check: checkStatus,
               );
               Navigator.pop(context);

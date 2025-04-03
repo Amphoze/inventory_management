@@ -1320,6 +1320,8 @@ class AuthProvider with ChangeNotifier {
 
   Future<String> getTemplateURL(BuildContext context, String title) async {
     // Retrieve the token from shared preferences
+    log("template title is: $title");
+
     String baseUrl = await Constants.getBaseUrl();
     final token = await getToken();
 
@@ -1340,12 +1342,12 @@ class AuthProvider with ChangeNotifier {
 
       // Print the received response for debugging
       //print('Response status: ${response.statusCode}');
-      print('Response body: ${response.body}');
+      log('Response body: ${response.body}');
 
       if (response.statusCode == 200) {
         final jsonBody = json.decode(response.body);
 
-        log("jsonBody: $jsonBody");
+        // log("jsonBody: $jsonBody");
 
         // Check if the response has an "orders" key
         return jsonBody['data']['url'];
