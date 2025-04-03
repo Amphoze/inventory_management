@@ -467,9 +467,9 @@ class BookProvider with ChangeNotifier {
         // setLoading(courier, false);
         return {"success": false, "message": "${responseData['message'] ?? 'Error while booking orders'}"};
       }
-    } catch (error) {
-      log('Error during API request: $error');
-      return {"success": false, "message": "'An error occurred: $error'"};
+    } catch (error, s) {
+      log('Error booking orders: $error \n\n$s');
+      return {"success": false, "message": "An error occurred: $error"};
     } finally {
       setLoading(courier, false);
       notifyListeners();
