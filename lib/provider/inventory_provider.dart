@@ -102,7 +102,9 @@ class InventoryProvider with ChangeNotifier {
                 'warehouseId': subInventory['warehouseId']?['_id'] ?? '',
                 'warehouseName': subInventory['warehouseId']?['name'] ?? '',
                 'thresholdQuantity': subInventory['thresholdQuantity'] ?? 0,
-                'quantity': subInventory['quantity'] ?? 0
+                'quantity': subInventory['quantity'] ?? 0,
+                'binName': subInventory['bin']?[0]['binName'],
+                'binQty': subInventory['bin']?[0]['binQty'],
               };
             }).toList();
             // log('subData: $subData');
@@ -193,7 +195,9 @@ class InventoryProvider with ChangeNotifier {
                 'warehouseId': subInventory['warehouseId']?['_id'] ?? '',
                 'warehouseName': subInventory['warehouseId']?['name'] ?? '',
                 'thresholdQuantity': subInventory['thresholdQuantity'] ?? 0,
-                'quantity': subInventory['quantity'] ?? 0
+                'quantity': subInventory['quantity'] ?? 0,
+                'binName': subInventory['bin']?[0]['binName'],
+                'binQty': subInventory['bin']?[0]['binQty'],
               };
             }).toList();
 

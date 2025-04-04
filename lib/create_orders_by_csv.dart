@@ -343,7 +343,7 @@ class _CreateOrdersByCSVState extends State<CreateOrdersByCSV> {
                 ),
                 const SizedBox(width: 16),
                 ElevatedButton(
-                  onPressed: _isPickingFile || _isProcessingFile ? null : () => AuthProvider().downloadTemplate(context, 'create'),
+                  onPressed: _isPickingFile || _isProcessingFile ? null : () => AuthProvider().downloadTemplate(context, 'createOrder'),
                   child: const Text('Download Template'),
                 ),
                 const SizedBox(width: 16),

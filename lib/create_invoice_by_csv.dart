@@ -339,7 +339,7 @@ class _CreateInvoiceByCSVState extends State<CreateInvoiceByCSV> {
                 ),
                 const SizedBox(width: 16),
                 ElevatedButton(
-                  onPressed: _isPickingFile || _isProcessingFile ? null : () => AuthProvider().downloadTemplate(context, 'confirm'),
+                  onPressed: _isPickingFile || _isProcessingFile ? null : () => AuthProvider().downloadTemplate(context, 'confirmOrder'),
                   child: const Text('Download Template'),
                 ),
                 const SizedBox(width: 16),

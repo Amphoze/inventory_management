@@ -35,6 +35,6 @@ class Constants {
 
     // return 'http://192.168.107.199:3001';
 
-    // return 'http://192.168.29.149:3001';
+    // return 'http://localhost:3001';
   }
 }
