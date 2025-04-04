@@ -123,9 +123,11 @@ class CheckOrdersProvider with ChangeNotifier {
     try {
       final Map<String, dynamic> body = {
         "orderId": orderId,
-        "packListId": pickListId,
+        // "packListId": '',
         "check": check,
       };
+
+      log("check order body: $body");
       final http.Response response = await http.put(
         uri,
         headers: {
@@ -134,6 +136,8 @@ class CheckOrdersProvider with ChangeNotifier {
         },
         body: jsonEncode(body),
       );
+
+      log("check order response: ${response.body}");
 
       if (response.statusCode == 200) {
         log("Check status updated successfully");
