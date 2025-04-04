@@ -319,7 +319,7 @@ class _BinProductsPageState extends State<BinProductsPage> {
                                               ),
                                               const SizedBox(width: 4),
                                               Text(
-                                                item['qty'] ?? '0',
+                                                item['qty'].toString(),
                                                 style: TextStyle(
                                                   color: Colors.blueAccent.shade700,
                                                   fontWeight: FontWeight.w600,

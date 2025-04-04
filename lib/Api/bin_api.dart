@@ -193,18 +193,18 @@ class BinApi with ChangeNotifier {
       if (response.statusCode == 200) {
         final res = json.decode(response.body);
         Logger().e('searchProducts body: $res');
-        if (res.containsKey('data')) {
+        if (res.containsKey('data') && (res['data'] as List).isNotEmpty) {
           _products = (res['data'][0]['products'] as List)
               .map((product) => {
-                    'sku': product['product']['parentSku'].toString(),
-                    'displayName': product['product']['displayName'].toString(),
-                    'qty': product['qty'].toString(),
-                  })
+            'sku': product['product']?['parentSku']?.toString() ?? '',
+            'displayName': product['product']?['displayName']?.toString() ?? '',
+            'qty': product['qty']?.toString() ?? 0,
+          })
               .toList();
 
-          _binQty = res['data'][0]['binQty'] as int;
-          _currentPage = res['data'][0]['currentPage'] as int;
-          _totalPages = res['data'][0]['totalPages'] as int;
+          _binQty = res['data']?[0]?['binQty'] ?? 0;
+          _currentPage = res['data']?[0]?['currentPage'] ?? 1;
+          _totalPages = res['data']?[0]?['totalPages'] ?? 1;
 
           log("products: $_products");
 
@@ -248,18 +248,18 @@ class BinApi with ChangeNotifier {
 
       if (response.statusCode == 200) {
         final res = json.decode(response.body);
-        if (res.containsKey('data')) {
+        if (res.containsKey('data') && (res['data'] as List).isNotEmpty) {
           _products = (res['data'][0]['products'] as List)
               .map((product) => {
-                    'sku': product['product']['parentSku'].toString(),
-                    'displayName': product['product']['displayName'].toString(),
-                    'qty': product['qty'].toString(),
+                    'sku': product['product']?['parentSku']?.toString() ?? '',
+                    'displayName': product['product']?['displayName']?.toString() ?? '',
+                    'qty': product['qty']?.toString() ?? 0,
                   })
               .toList();
 
-          _binQty = res['data'][0]['binQty'] as int;
-          _currentPage = res['data'][0]['currentPage'] as int;
-          _totalPages = res['data'][0]['totalPages'] as int;
+          _binQty = res['data']?[0]?['binQty'] ?? 0;
+          _currentPage = res['data']?[0]?['currentPage'] ?? 1;
+          _totalPages = res['data']?[0]?['totalPages'] ?? 1;
 
           log("products: $_products");
 
