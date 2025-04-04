@@ -115,6 +115,7 @@ class _AddBinButtonState extends State<AddBinButton> {
 
         final responseData = json.decode(response.body);
 
+        log('add bin status: ${response.statusCode}');
         log('add bin response: $responseData');
 
         // Close loading dialog

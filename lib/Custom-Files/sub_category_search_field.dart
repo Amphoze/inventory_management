@@ -2,13 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_typeahead/flutter_typeahead.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'dart:ui' show LogicalKeyboardKey;
-
 import '../Api/auth_provider.dart';
 import '../constants/constants.dart';
 import 'colors.dart';
 
-// Define a SubCategory class to handle the API response
 class SubCategory {
   final String id;
   final String name;
@@ -37,11 +34,13 @@ class SubCategory {
 
 class SubCategorySearchableTextField extends StatefulWidget {
   final bool isRequired;
+  final String? categoryName;
   final void Function(SubCategory? subCategory)? onSelected;
 
   const SubCategorySearchableTextField({
     super.key,
     required this.isRequired,
+    this.categoryName,
     this.onSelected,
   });
 
@@ -63,10 +62,41 @@ class _SubCategorySearchableTextFieldState extends State<SubCategorySearchableTe
   void initState() {
     super.initState();
     _scrollController.addListener(_onScroll);
+    if (widget.categoryName != null) {
+      _fetchSuggestions('');
+    }
+  }
+
+  @override
+  void didUpdateWidget(SubCategorySearchableTextField oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.categoryName != oldWidget.categoryName) {
+      debugPrint('Category changed from ${oldWidget.categoryName} to ${widget.categoryName}');
+      setState(() {
+        _suggestions.clear();
+        _typeAheadController.clear();
+        _currentPage = 1;
+        _hasMore = true;
+        _lastQuery = '';
+      });
+      if (widget.categoryName != null) {
+        debugPrint('Triggering fetch for new category: ${widget.categoryName}');
+        _fetchSuggestions('');
+      } else {
+        debugPrint('No category provided, clearing suggestions');
+      }
+    }
   }
 
   Future<List<SubCategory>> _fetchSuggestions(String query) async {
-    if (_isFetching && query == _lastQuery) return _suggestions;
+    if (_isFetching && query == _lastQuery) {
+      debugPrint('Skipping fetch: already fetching for query "$query"');
+      return _suggestions;
+    }
+    if (widget.categoryName == null) {
+      debugPrint('No categoryName, returning empty suggestions');
+      return [];
+    }
 
     setState(() {
       if (query != _lastQuery) {
@@ -78,7 +108,8 @@ class _SubCategorySearchableTextFieldState extends State<SubCategorySearchableTe
     });
 
     try {
-      final response = await searchSubCategories(query, page: _currentPage);
+      debugPrint('Fetching subcategories for category: ${widget.categoryName}, query: $query, page: $_currentPage');
+      final response = await searchSubCategories(widget.categoryName!, query, page: _currentPage);
       if (response['success'] == true) {
         final List<SubCategory> newSubCategories =
         (response['subcategories'] as List).map((s) => SubCategory.fromJson(s)).toList();
@@ -89,15 +120,18 @@ class _SubCategorySearchableTextFieldState extends State<SubCategorySearchableTe
           } else {
             _suggestions.addAll(newSubCategories);
           }
-          _hasMore = response['currentPage'] < response['totalPages'];
+          _hasMore = newSubCategories.isNotEmpty;
           _isFetching = false;
           _lastQuery = query;
+          debugPrint('Updated suggestions: ${_suggestions.map((s) => s.name).toList()}');
         });
 
         if (_hasMore && query == _lastQuery) _currentPage++;
         return _suggestions;
+      } else {
+        debugPrint('Fetch failed: ${response['message']}');
+        return _suggestions;
       }
-      return _suggestions;
     } catch (e) {
       debugPrint('Error fetching subcategories: $e');
       return _suggestions;
@@ -137,6 +171,7 @@ class _SubCategorySearchableTextFieldState extends State<SubCategorySearchableTe
       initialValue: _typeAheadController.text,
       builder: (FormFieldState<String> formFieldState) {
         return TypeAheadField<SubCategory>(
+          key: ValueKey(widget.categoryName), // Force rebuild when category changes
           controller: _typeAheadController,
           focusNode: _focusNode,
           builder: (context, controller, focusNode) => TextField(
@@ -165,7 +200,6 @@ class _SubCategorySearchableTextFieldState extends State<SubCategorySearchableTe
               filled: true,
               fillColor: Colors.grey[50],
               contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-              // prefixIcon: const Icon(Icons.category),
               errorText: formFieldState.errorText,
             ),
             onChanged: (value) {
@@ -173,7 +207,9 @@ class _SubCategorySearchableTextFieldState extends State<SubCategorySearchableTe
             },
           ),
           suggestionsCallback: (query) async {
-            return await _fetchSuggestions(query);
+            final suggestions = await _fetchSuggestions(query);
+            debugPrint('Suggestions callback triggered with query "$query", returning ${suggestions.length} items');
+            return suggestions;
           },
           itemBuilder: (context, subCategory) {
             return ListTile(
@@ -226,16 +262,18 @@ class _SubCategorySearchableTextFieldState extends State<SubCategorySearchableTe
   }
 }
 
-Future<Map<String, dynamic>> searchSubCategories(String query, {int page = 1}) async {
+Future<Map<String, dynamic>> searchSubCategories(String categoryName, String query, {int page = 1}) async {
   String baseUrl = await Constants.getBaseUrl();
-  final url = Uri.parse('$baseUrl/subCategory?page=$page${query.isNotEmpty ? '&name=$query' : ''}');
+  final url = Uri.parse('$baseUrl/subCategory/fetch/subcategory?categoryName=$categoryName${query.isNotEmpty ? '&name=$query' : ''}');
 
   try {
     final token = await AuthProvider().getToken();
     if (token == null) {
+      debugPrint('No token found');
       return {'success': false, 'message': 'Authentication token not found'};
     }
 
+    debugPrint('Making API call to: $url');
     final response = await http.get(
       url,
       headers: {
@@ -244,13 +282,16 @@ Future<Map<String, dynamic>> searchSubCategories(String query, {int page = 1}) a
       },
     );
 
+    debugPrint('API Response Status: ${response.statusCode}');
+    debugPrint('API Response Body: ${response.body}');
+
     if (response.statusCode == 200) {
       final data = json.decode(response.body);
       return {
         'success': true,
         'subcategories': data['subcategories'],
-        'totalPages': data['totalPages'],
-        'currentPage': data['currentPage'],
+        'totalPages': 1, // Update if pagination is supported
+        'currentPage': 1,
       };
     }
     return {'success': false, 'message': 'Failed with status: ${response.statusCode}'};

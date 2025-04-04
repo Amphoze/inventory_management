@@ -78,7 +78,7 @@ class _LocationMasterState extends State<LocationMaster> {
     final locationProvider = Provider.of<LocationProvider>(context);
     final screenWidth = MediaQuery.of(context).size.width;
 
-    // Fixed sizes for large screens
+    // // Fixed sizes for large screens
     const fixedButtonWidth = 160.0;
     const fixedButtonHeight = 30.0;
     const fixedFontSize = 13.0;
@@ -158,30 +158,30 @@ class _LocationMasterState extends State<LocationMaster> {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           CustomButton(
-            width: buttonWidth,
-            height: buttonHeight,
+            width: 180,
+            height: 30,
             onTap: () {
               Provider.of<LocationProvider>(context, listen: false).toggleCreatingNewLocation();
             },
             color: AppColors.white,
             textColor: AppColors.primaryGreen,
             fontSize: fontSize,
-            text: 'Create New Location',
+            text: 'Create New Warehouse',
             borderRadius: BorderRadius.circular(8),
           ),
-          const SizedBox(width: 16),
-          CustomButton(
-            width: buttonWidth,
-            height: buttonHeight,
-            onTap: () {
-              // Implement bulk locations upload functionality here
-            },
-            color: AppColors.white,
-            textColor: AppColors.primaryGreen,
-            fontSize: fontSize,
-            text: 'Bulk Locations Upload',
-            borderRadius: BorderRadius.circular(8),
-          ),
+          // const SizedBox(width: 16),
+          // CustomButton(
+          //   width: buttonWidth,
+          //   height: buttonHeight,
+          //   onTap: () {
+          //     // Implement bulk locations upload functionality here
+          //   },
+          //   color: AppColors.white,
+          //   textColor: AppColors.primaryGreen,
+          //   fontSize: fontSize,
+          //   text: 'Bulk Locations Upload',
+          //   borderRadius: BorderRadius.circular(8),
+          // ),
           const SizedBox(width: 16),
           CustomButton(
             width: buttonWidth * 0.75,

@@ -96,18 +96,19 @@ class InventoryProvider with ChangeNotifier {
             final brand = product['brand'] ?? {};
             final boxsize = product['boxSize'] ?? {};
             final subInventories = item['subInventory'] ?? [];
-            // log('subInventories: $subInventories');
+            log('subInventories: ${jsonEncode(subInventories)}');
             List<dynamic> subData = subInventories.map((subInventory) {
-              return {
-                'warehouseId': subInventory['warehouseId']?['_id'] ?? '',
-                'warehouseName': subInventory['warehouseId']?['name'] ?? '',
-                'thresholdQuantity': subInventory['thresholdQuantity'] ?? 0,
-                'quantity': subInventory['quantity'] ?? 0,
-                'binName': subInventory['bin']?[0]['binName'],
-                'binQty': subInventory['bin']?[0]['binQty'],
-              };
-            }).toList();
-            // log('subData: $subData');
+                  return {
+                    'warehouseId': subInventory?['warehouseId']?['_id'] ?? '',
+                    'warehouseName': subInventory?['warehouseId']?['name'] ?? '',
+                    'thresholdQuantity': subInventory?['thresholdQuantity'] ?? 0,
+                    'quantity': subInventory?['quantity'] ?? 0,
+                    'binName': ((subInventory?['bin'] as List?)?.isNotEmpty ?? false) ? subInventory?['bin'][0]?['binName'] ?? '' : '',
+                    'binQty': ((subInventory?['bin'] as List?)?.isNotEmpty ?? false) ? subInventory?['bin'][0]?['binQty'] ?? '' : '',
+                  };
+                }).toList() ??
+                [];
+            log('subData: $subData');
 
             final thresholdQuantity = subData.firstWhere((element) => element['warehouseId'] == warehouseId)['thresholdQuantity'];
 
@@ -132,9 +133,6 @@ class InventoryProvider with ChangeNotifier {
               'inventoryId': inventoryId,
             };
           }).toList();
-
-          // log('bhaai: $inventory');
-          // log('fetchedInventory: $fetchedInventory');
 
           _inventory = fetchedInventory.reversed.toList();
           _totalPages = data['data']['totalPages'] ?? 1;
@@ -191,17 +189,16 @@ class InventoryProvider with ChangeNotifier {
             final inventoryId = item['_id'].toString() ?? '';
             final subInventories = item['subInventory'] ?? [];
             List<dynamic> subData = subInventories.map((subInventory) {
-              return {
-                'warehouseId': subInventory['warehouseId']?['_id'] ?? '',
-                'warehouseName': subInventory['warehouseId']?['name'] ?? '',
-                'thresholdQuantity': subInventory['thresholdQuantity'] ?? 0,
-                'quantity': subInventory['quantity'] ?? 0,
-                'binName': subInventory['bin']?[0]['binName'],
-                'binQty': subInventory['bin']?[0]['binQty'],
-              };
-            }).toList();
-
-            log('inventoryId: $inventoryId');
+                  return {
+                    'warehouseId': subInventory?['warehouseId']?['_id'] ?? '',
+                    'warehouseName': subInventory?['warehouseId']?['name'] ?? '',
+                    'thresholdQuantity': subInventory?['thresholdQuantity'] ?? 0,
+                    'quantity': subInventory?['quantity'] ?? 0,
+                    'binName': ((subInventory?['bin'] as List?)?.isNotEmpty ?? false) ? subInventory?['bin'][0]?['binName'] ?? '' : '',
+                    'binQty': ((subInventory?['bin'] as List?)?.isNotEmpty ?? false) ? subInventory?['bin'][0]?['binQty'] ?? '' : '',
+                  };
+                }).toList() ??
+                [];
 
             final thresholdQuantity = subData.firstWhere((element) => element['warehouseId'] == warehouseId)['thresholdQuantity'];
 
@@ -440,9 +437,7 @@ class InventoryProvider with ChangeNotifier {
     // }
   }
 
-
   /// CREATE PRODUCT
-
 
   String? _selectedProductId;
   String? get selectedProductId => _selectedProductId;
@@ -511,14 +506,12 @@ class InventoryProvider with ChangeNotifier {
   }
 
   Future<void> fetchBins(BuildContext context, String warehouseId, int index) async {
-
     setFetchingBins(index, true);
 
     String baseUrl = await Constants.getBaseUrl();
     final url = Uri.parse('$baseUrl/bin/$warehouseId');
 
     try {
-
       final token = await Provider.of<AuthProvider>(context, listen: false).getToken();
 
       final response = await http.get(
@@ -553,7 +546,6 @@ class InventoryProvider with ChangeNotifier {
 
   Future<void> createInventory(BuildContext context) async {
     try {
-
       if (selectedProductId == null) {
         Utils.showSnackBar(context, 'Please Select Product..!');
         return;
@@ -562,17 +554,18 @@ class InventoryProvider with ChangeNotifier {
       final body = {
         "product_id": selectedProductId,
         "subInventory": subInventories.map((subInventory) {
-
           final binQty = subInventory.bin.binQuantity ?? '';
 
           return {
             "warehouseId": subInventory.warehouseId,
             "thresholdQuantity": int.tryParse(subInventory.thresholdQuantity ?? '') ?? null,
-            "bin": [{
-              "binName": subInventory.bin.binName,
-              "binQty": int.tryParse(binQty) ?? 1,
-              "binPriority": subInventory.bin.binPriority,
-            }]
+            "bin": [
+              {
+                "binName": subInventory.bin.binName,
+                "binQty": int.tryParse(binQty) ?? 1,
+                "binPriority": subInventory.bin.binPriority,
+              }
+            ]
           };
         }).toList(),
       };
@@ -611,7 +604,6 @@ class InventoryProvider with ChangeNotifier {
       } catch (e) {
         Utils.showSnackBar(context, 'Error occured while creating inventory..!', details: e.toString(), color: Colors.red);
       }
-
     } catch (e, s) {
       log('Error creating Inventory :- $e\n$s');
       Utils.showSnackBar(context, 'Error creating Inventory :- ${e.toString()}');
@@ -626,7 +618,6 @@ class InventoryProvider with ChangeNotifier {
     addCreateInventoryModel();
   }
 }
-
 
 class SubInventoryModel {
   final String? warehouseId;
@@ -676,5 +667,4 @@ class InventoryBin {
       binQuantity: binQuantity ?? this.binQuantity,
     );
   }
-
 }

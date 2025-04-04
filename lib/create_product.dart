@@ -17,7 +17,6 @@ import 'package:provider/provider.dart';
 import 'Custom-Files/sub_category_search_field.dart';
 
 class CreateProduct extends StatefulWidget {
-
   final VoidCallback onCreated;
 
   const CreateProduct({super.key, required this.onCreated});
@@ -119,13 +118,6 @@ class _CreateProductState extends State<CreateProduct> {
       selectedIndexOfLabel = 0;
       selectedIndexOfBoxSize = 0;
       selectedIndexOfColorDrop = 0;
-
-      // dropdownKey.currentState!.reset();
-      // categoryKey.currentState!.reset();
-      // labelKey.currentState!.reset();
-      // colorKey.currentState!.reset();
-      // sizeKey.currentState!.reset();
-      // gradeKey.currentState!.reset();
 
       _productNameController.clear();
       _productIdentifierController.clear();
@@ -599,7 +591,6 @@ class _CreateProductState extends State<CreateProduct> {
                         setState(() {
                           selectedParentSku = data['value'];
                         });
-                        // log('Selected Parent SKU: $id');
                       },
                     ),
                   ),
@@ -612,7 +603,6 @@ class _CreateProductState extends State<CreateProduct> {
                       controller: _skuController,
                       height: 51,
                       validator: (value) {
-                        // value = value?.trim().replaceAll(RegExp(r'\s+'), '');
                         if (value == null || value.trim().isEmpty) {
                           return 'SKU is required';
                         }
@@ -650,7 +640,6 @@ class _CreateProductState extends State<CreateProduct> {
                         selectedBrandId = data['id'];
                         selectedBrandName = data['value'];
                       });
-                      // debugPrint('Selected Brand ID: $id');
                     },
                   ),
                 ),
@@ -671,7 +660,6 @@ class _CreateProductState extends State<CreateProduct> {
                             selectedCategoryId = data['id'];
                             selectedCategoryName = data['value'];
                           });
-                          // log('Selected Category ID: $id');
                         },
                       ),
                     ),
@@ -683,6 +671,7 @@ class _CreateProductState extends State<CreateProduct> {
                 fieldTitle('Sub-category', required: true),
                 SubCategorySearchableTextField(
                   isRequired: true,
+                  categoryName: selectedCategoryName,
                   onSelected: (subCategory) {
                     if (subCategory != null) {
                       setState(() {
@@ -720,7 +709,6 @@ class _CreateProductState extends State<CreateProduct> {
                         selectedLabelId = data['id'];
                         selectedLabelSku = data['value'];
                       });
-                      // log('Selected Label ID: $id');
                     },
                   ),
                 ),
@@ -749,12 +737,6 @@ class _CreateProductState extends State<CreateProduct> {
                   controller: _mrpController,
                   height: 51,
                   keyboardType: TextInputType.number,
-                  // validator: (value) {
-                  //   if (_mrpController.text.trim().isEmpty) {
-                  //     return 'MRP is required';
-                  //   }
-                  //   return null;
-                  // },
                 ),
               ),
               const SizedBox(height: 12),
@@ -861,7 +843,6 @@ class _CreateProductState extends State<CreateProduct> {
                       setState(() {
                         selectedBoxName = data['value'];
                       });
-                      // log('Selected Box Size ID: $id');
                     },
                   ),
                 ),

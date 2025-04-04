@@ -40,7 +40,7 @@ class MarketplaceProvider with ChangeNotifier {
     try {
       _marketplaces = await marketplaceApi.getMarketplaces();
 
-      log("under fetchMarketplaces try: $_marketplaces");
+      // log("under fetchMarketplaces try: $_marketplaces");
 
       // for (var marketplace in _marketplaces) {
       //   for (var skuMap in marketplace.skuMap) {
@@ -54,7 +54,7 @@ class MarketplaceProvider with ChangeNotifier {
 
       _filteredMarketplaces = _marketplaces;
 
-      log("_filteredMarketplaces: $_filteredMarketplaces");
+      // log("_filteredMarketplaces: $_filteredMarketplaces");
 
     } catch (e, s) {
       log('Error fetching marketplaces: $e $s');

@@ -134,8 +134,7 @@ class _InventoryDataTableState extends State<InventoryDataTable> {
                             mainAxisSize: MainAxisSize.min,
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Text(cellData?.toString() ?? '0',
-                                  style: const TextStyle(fontSize: 16)),
+                              Text(cellData?.toString() ?? '0', style: const TextStyle(fontSize: 16)),
                               IconButton(
                                 icon: const Icon(Icons.edit, size: 16),
                                 onPressed: () {
@@ -150,8 +149,7 @@ class _InventoryDataTableState extends State<InventoryDataTable> {
                               if (inventoryId != null) {
                                 _showDetailsDialog(context, data);
                               } else {
-                                print(
-                                    'Inventory ID not found for the selected item.');
+                                print('Inventory ID not found for the selected item.');
                               }
                             },
                             child: const Text(
@@ -164,13 +162,11 @@ class _InventoryDataTableState extends State<InventoryDataTable> {
                     ),
                   );
                 } else if (columnName == 'SKU QUANTITY') {
-                  List<dynamic> thresholds =
-                      data['SKU QUANTITY'] ?? []; // Get the list of thresholds
+                  List<dynamic> thresholds = data['SKU QUANTITY'] ?? []; // Get the list of thresholds
 
                   return DataCell(
                     Container(
-                      constraints: const BoxConstraints(
-                          maxWidth: 300), // Prevent excessive width
+                      constraints: const BoxConstraints(), // Prevent excessive width
                       child: SingleChildScrollView(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -180,80 +176,85 @@ class _InventoryDataTableState extends State<InventoryDataTable> {
                               child: Row(
                                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                 children: [
-                                  Expanded(
-                                    child: Row(
-                                      children: [
-                                        const Icon(
-                                          Icons.warehouse,
-                                          size: 14,
-                                          color: Colors.grey,
-                                        ),
-                                        const SizedBox(width: 4),
-                                        Flexible(
-                                          child: Text(
-                                            threshold['warehouseName'] ?? 'N/A',
-                                            style: const TextStyle(fontSize: 13),
-                                            overflow: TextOverflow.ellipsis,
+                                  if (threshold['warehouseName'].toString().isNotEmpty) ...[
+                                    Expanded(
+                                      child: Row(
+                                        children: [
+                                          const Icon(
+                                            Icons.warehouse,
+                                            size: 14,
+                                            color: Colors.grey,
                                           ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                  Container(
-                                    margin: const EdgeInsets.only(left: 8),
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 6,
-                                      vertical: 2,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: Colors.grey.shade100,
-                                      borderRadius: BorderRadius.circular(4),
-                                    ),
-                                    child: Text(
-                                      threshold['quantity']?.toString() ?? 'N/A',
-                                      style: TextStyle(
-                                        fontSize: 13,
-                                        color: Colors.grey.shade700,
+                                          const SizedBox(width: 4),
+                                          Flexible(
+                                            child: Text(
+                                              threshold['warehouseName'] ?? 'N/A',
+                                              style: const TextStyle(fontSize: 13),
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                          ),
+                                        ],
                                       ),
                                     ),
-                                  ),
-                                  Expanded(
-                                    child: Row(
-                                      children: [
-                                        const Icon(
-                                          Icons.warehouse,
-                                          size: 14,
-                                          color: Colors.grey,
+                                    Container(
+                                      margin: const EdgeInsets.only(left: 8),
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 6,
+                                        vertical: 2,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: Colors.grey.shade100,
+                                        borderRadius: BorderRadius.circular(4),
+                                      ),
+                                      child: Text(
+                                        threshold['quantity']?.toString() ?? 'N/A',
+                                        style: TextStyle(
+                                          fontSize: 13,
+                                          color: Colors.grey.shade700,
                                         ),
-                                        const SizedBox(width: 4),
-                                        Flexible(
-                                          child: Text(
-                                            threshold['binName'] ?? 'N/A',
-                                            style: const TextStyle(fontSize: 13),
-                                            overflow: TextOverflow.ellipsis,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                  Container(
-                                    margin: const EdgeInsets.only(left: 8),
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 6,
-                                      vertical: 2,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: Colors.grey.shade100,
-                                      borderRadius: BorderRadius.circular(4),
-                                    ),
-                                    child: Text(
-                                      threshold['binQty']?.toString() ?? 'N/A',
-                                      style: TextStyle(
-                                        fontSize: 13,
-                                        color: Colors.grey.shade700,
                                       ),
                                     ),
-                                  ),
+                                  ],
+                                  const SizedBox(width: 8),
+                                  if (threshold['binName'].toString().isNotEmpty) ...[
+                                    Expanded(
+                                      child: Row(
+                                        children: [
+                                          const Icon(
+                                            Icons.inventory,
+                                            size: 14,
+                                            color: Colors.grey,
+                                          ),
+                                          const SizedBox(width: 4),
+                                          Flexible(
+                                            child: Text(
+                                              threshold['binName'] ?? 'N/A',
+                                              style: const TextStyle(fontSize: 13),
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    Container(
+                                      margin: const EdgeInsets.only(left: 8),
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 6,
+                                        vertical: 2,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: Colors.grey.shade100,
+                                        borderRadius: BorderRadius.circular(4),
+                                      ),
+                                      child: Text(
+                                        threshold['binQty']?.toString() ?? 'N/A',
+                                        style: TextStyle(
+                                          fontSize: 13,
+                                          color: Colors.grey.shade700,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
                                 ],
                               ),
                             );
@@ -272,8 +273,7 @@ class _InventoryDataTableState extends State<InventoryDataTable> {
                             mainAxisSize: MainAxisSize.min,
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Text(cellData?.toString() ?? '0',
-                                  style: const TextStyle(fontSize: 16)),
+                              Text(cellData?.toString() ?? '0', style: const TextStyle(fontSize: 16)),
                               IconButton(
                                 icon: const Icon(Icons.edit, size: 16),
                                 onPressed: () {
@@ -291,13 +291,11 @@ class _InventoryDataTableState extends State<InventoryDataTable> {
                 } else if (columnName == 'THRESHOLD') {
                   // Logger().e('data: ${data['THRESHOLD']}');
 
-                  List<dynamic> thresholds =
-                      data['THRESHOLD'] ?? []; // Get the list of thresholds
+                  List<dynamic> thresholds = data['THRESHOLD'] ?? []; // Get the list of thresholds
 
                   return DataCell(
                     Container(
-                      constraints: const BoxConstraints(
-                          maxWidth: 300), // Prevent excessive width
+                      constraints: const BoxConstraints(maxWidth: 300), // Prevent excessive width
                       child: SingleChildScrollView(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -337,9 +335,7 @@ class _InventoryDataTableState extends State<InventoryDataTable> {
                                       borderRadius: BorderRadius.circular(4),
                                     ),
                                     child: Text(
-                                      threshold['thresholdQuantity']
-                                              ?.toString() ??
-                                          'N/A',
+                                      threshold['thresholdQuantity']?.toString() ?? 'N/A',
                                       style: TextStyle(
                                         fontSize: 13,
                                         color: Colors.grey.shade700,
@@ -370,8 +366,7 @@ class _InventoryDataTableState extends State<InventoryDataTable> {
     );
   }
 
-  void _showUpdateQuantityDialog(
-      BuildContext context, Map<String, dynamic> data) {
+  void _showUpdateQuantityDialog(BuildContext context, Map<String, dynamic> data) {
     TextEditingController quantityController = TextEditingController();
     TextEditingController reasonController = TextEditingController();
 
@@ -416,8 +411,7 @@ class _InventoryDataTableState extends State<InventoryDataTable> {
               onPressed: () {
                 Navigator.of(context).pop();
               },
-              child:
-                  const Text('Cancel', style: TextStyle(color: Colors.white)),
+              child: const Text('Cancel', style: TextStyle(color: Colors.white)),
             ),
             const SizedBox(
               width: 5,
@@ -434,8 +428,7 @@ class _InventoryDataTableState extends State<InventoryDataTable> {
                   return;
                 }
 
-                final inventoryProvider =
-                    Provider.of<InventoryProvider>(context, listen: false);
+                final inventoryProvider = Provider.of<InventoryProvider>(context, listen: false);
 
                 final prefs = await SharedPreferences.getInstance();
                 final warehouseId = prefs.getString('warehouseId') ?? '';
@@ -447,13 +440,11 @@ class _InventoryDataTableState extends State<InventoryDataTable> {
                   reason, // Reason for the update
                 );
 
-                inventoryProvider
-                    .notifyListeners(); // This will rebuild the relevant widgets
+                inventoryProvider.notifyListeners(); // This will rebuild the relevant widgets
 
                 data['QUANTITY'] = parsedQuantity;
 
-                print(
-                    'Updated quantity for ${data['PRODUCT NAME']}: $newQuantity');
+                print('Updated quantity for ${data['PRODUCT NAME']}: $newQuantity');
                 if (reason.isNotEmpty) {
                   print('Reason: $reason');
                 }
@@ -461,8 +452,7 @@ class _InventoryDataTableState extends State<InventoryDataTable> {
                 // Close the dialog
                 Navigator.of(context).pop();
               },
-              child:
-                  const Text('Update', style: TextStyle(color: Colors.white)),
+              child: const Text('Update', style: TextStyle(color: Colors.white)),
             ),
           ],
         );
@@ -501,8 +491,7 @@ class _InventoryDataTableState extends State<InventoryDataTable> {
               onPressed: () {
                 Navigator.of(context).pop();
               },
-              child:
-                  const Text('Cancel', style: TextStyle(color: Colors.white)),
+              child: const Text('Cancel', style: TextStyle(color: Colors.white)),
             ),
             const SizedBox(
               width: 5,
@@ -519,23 +508,20 @@ class _InventoryDataTableState extends State<InventoryDataTable> {
                   return;
                 }
 
-                final inventoryProvider =
-                    Provider.of<InventoryProvider>(context, listen: false);
+                final inventoryProvider = Provider.of<InventoryProvider>(context, listen: false);
 
                 await inventoryProvider.updateThresholdQuantity(
                   data['SKU'],
                   parsedQuantity,
                 );
 
-                inventoryProvider
-                    .notifyListeners(); // This will rebuild the relevant widgets
+                inventoryProvider.notifyListeners(); // This will rebuild the relevant widgets
 
                 data['THRESHOLD QUANTITY'] = parsedQuantity;
 
                 // Close the dialog
               },
-              child:
-                  const Text('Update', style: TextStyle(color: Colors.white)),
+              child: const Text('Update', style: TextStyle(color: Colors.white)),
             ),
           ],
         );
@@ -713,8 +699,7 @@ class _InventoryDataTableState extends State<InventoryDataTable> {
     return timestamp;
   }
 
-  void _showDetailsDialog(
-      BuildContext context, Map<String, dynamic> data) async {
+  void _showDetailsDialog(BuildContext context, Map<String, dynamic> data) async {
     List<dynamic> inventoryLogs = (data['inventoryLogs'] as List?)?.reversed.toList() ?? [];
 
     showDialog(
@@ -800,8 +785,7 @@ class _InventoryDataTableState extends State<InventoryDataTable> {
                           itemCount: inventoryLogs.length,
                           itemBuilder: (context, index) {
                             final log = inventoryLogs[index];
-                            final (icon, iconColor) =
-                                _getLogTypeDetails(log['changeType']);
+                            final (icon, iconColor) = _getLogTypeDetails(log['changeType']);
 
                             return Card(
                               margin: const EdgeInsets.only(bottom: 16),
@@ -824,8 +808,7 @@ class _InventoryDataTableState extends State<InventoryDataTable> {
                                         _buildIconBadge(icon, iconColor),
                                         const SizedBox(width: 12),
                                         Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
+                                          crossAxisAlignment: CrossAxisAlignment.start,
                                           children: [
                                             Text(
                                               log['changeType'],
@@ -836,8 +819,7 @@ class _InventoryDataTableState extends State<InventoryDataTable> {
                                               ),
                                             ),
                                             Text(
-                                              _formatTimestamp(
-                                                  log['timestamp']),
+                                              _formatTimestamp(log['timestamp']),
                                               style: TextStyle(
                                                 fontSize: 12,
                                                 color: Colors.grey.shade600,
@@ -867,8 +849,7 @@ class _InventoryDataTableState extends State<InventoryDataTable> {
                                     // Warehouse section if available
                                     if (log['affectedWarehouse'] != null) ...[
                                       const Divider(height: 24),
-                                      _buildWarehouseSection(
-                                          log['affectedWarehouse']),
+                                      _buildWarehouseSection(log['affectedWarehouse']),
                                     ],
                                   ],
                                 ),
@@ -996,8 +977,7 @@ class _OuterboxDataTableState extends State<OuterboxDataTable> {
                             mainAxisSize: MainAxisSize.min,
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Text(cellData?.toString() ?? '0',
-                                  style: const TextStyle(fontSize: 16)),
+                              Text(cellData?.toString() ?? '0', style: const TextStyle(fontSize: 16)),
                               IconButton(
                                 icon: const Icon(Icons.edit, size: 16),
                                 onPressed: () {
@@ -1026,8 +1006,7 @@ class _OuterboxDataTableState extends State<OuterboxDataTable> {
                   );
                 } else if (columnName == 'DIMENSION') {
                   return DataCell(
-                    Text(
-                        '${cellData['length'] ?? ''} x ${cellData['breadth'] ?? ''} x ${cellData['height'] ?? ''}'),
+                    Text('${cellData['length'] ?? ''} x ${cellData['breadth'] ?? ''} x ${cellData['height'] ?? ''}'),
                   );
                 } else if (cellData is Widget) {
                   return DataCell(cellData);
@@ -1047,8 +1026,7 @@ class _OuterboxDataTableState extends State<OuterboxDataTable> {
     );
   }
 
-  void _showUpdateQuantityDialog(
-      BuildContext context, Map<String, dynamic> data) {
+  void _showUpdateQuantityDialog(BuildContext context, Map<String, dynamic> data) {
     TextEditingController quantityController = TextEditingController();
     TextEditingController reasonController = TextEditingController();
 
@@ -1093,8 +1071,7 @@ class _OuterboxDataTableState extends State<OuterboxDataTable> {
               onPressed: () {
                 Navigator.of(context).pop();
               },
-              child:
-                  const Text('Cancel', style: TextStyle(color: Colors.white)),
+              child: const Text('Cancel', style: TextStyle(color: Colors.white)),
             ),
             const SizedBox(
               width: 5,
@@ -1111,8 +1088,7 @@ class _OuterboxDataTableState extends State<OuterboxDataTable> {
                   return;
                 }
 
-                final pro =
-                    Provider.of<OuterboxProvider>(context, listen: false);
+                final pro = Provider.of<OuterboxProvider>(context, listen: false);
 
                 await pro.updateBoxsizeQuantity(
                   data['_id'],
@@ -1129,8 +1105,7 @@ class _OuterboxDataTableState extends State<OuterboxDataTable> {
 
                 Navigator.of(context).pop();
               },
-              child:
-                  const Text('Update', style: TextStyle(color: Colors.white)),
+              child: const Text('Update', style: TextStyle(color: Colors.white)),
             ),
           ],
         );
@@ -1308,10 +1283,8 @@ class _OuterboxDataTableState extends State<OuterboxDataTable> {
     return timestamp;
   }
 
-  void _showDetailsDialog(
-      BuildContext context, Map<String, dynamic> data) async {
+  void _showDetailsDialog(BuildContext context, Map<String, dynamic> data) async {
     List<dynamic> logs = (data['LOGS'] as List?)?.reversed.toList() ?? [];
-
 
     showDialog(
       context: context,
@@ -1396,8 +1369,7 @@ class _OuterboxDataTableState extends State<OuterboxDataTable> {
                           itemCount: logs.length,
                           itemBuilder: (context, index) {
                             final log = logs[index];
-                            final (icon, iconColor) =
-                                _getLogTypeDetails(log['changeType']);
+                            final (icon, iconColor) = _getLogTypeDetails(log['changeType']);
 
                             return Card(
                               margin: const EdgeInsets.only(bottom: 16),
@@ -1420,8 +1392,7 @@ class _OuterboxDataTableState extends State<OuterboxDataTable> {
                                         _buildIconBadge(icon, iconColor),
                                         const SizedBox(width: 12),
                                         Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
+                                          crossAxisAlignment: CrossAxisAlignment.start,
                                           children: [
                                             Text(
                                               log['changeType'],
@@ -1432,8 +1403,7 @@ class _OuterboxDataTableState extends State<OuterboxDataTable> {
                                               ),
                                             ),
                                             Text(
-                                              _formatTimestamp(
-                                                  log['timestamp']),
+                                              _formatTimestamp(log['timestamp']),
                                               style: TextStyle(
                                                 fontSize: 12,
                                                 color: Colors.grey.shade600,

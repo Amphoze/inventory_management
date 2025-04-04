@@ -200,7 +200,7 @@ class _NewLocationFormState extends State<NewLocationForm> {
                   ),
                   const SizedBox(width: 8),
                   Text(
-                    locationProvider.isEditingLocation ? 'Edit Location' : 'New Location',
+                    locationProvider.isEditingLocation ? 'Edit Warehouse' : 'New Warehouse',
                     style: const TextStyle(
                       fontSize: 27,
                       fontWeight: FontWeight.bold,
