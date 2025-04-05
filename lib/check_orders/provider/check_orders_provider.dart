@@ -66,8 +66,8 @@ class CheckOrdersProvider with ChangeNotifier {
       } else {
         throw Exception('Failed to load orders: ${response.statusCode}');
       }
-    } catch (e) {
-      log('Error fetching orders: $e');
+    } catch (e, s) {
+      log('Error fetching orders: $e $s');
       _checkOrders = [];
       notifyListeners();
     } finally {
@@ -94,8 +94,8 @@ class CheckOrdersProvider with ChangeNotifier {
         final jsonResponse = json.decode(response.body);
 
         if (jsonResponse['success'] == true) {
-          final List<dynamic> ordersData = jsonResponse['orders'];
-          _checkOrders = ordersData.map((order) => CheckOrderModel.fromJson(order)).toList();
+          final Map<String, dynamic> ordersData = jsonResponse['order'];
+          _checkOrders = [CheckOrderModel.fromJson(ordersData)];
           notifyListeners();
         } else {
           throw Exception('Failed to fetch orders: ${jsonResponse['message']}');
@@ -103,8 +103,8 @@ class CheckOrdersProvider with ChangeNotifier {
       } else {
         throw Exception('Failed to load orders: ${response.statusCode}');
       }
-    } catch (e) {
-      log('Error fetching orders: $e');
+    } catch (e, s) {
+      log('Error fetching orders: $e $s');
       _checkOrders = [];
       notifyListeners();
     } finally {

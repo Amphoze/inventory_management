@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:inventory_management/Custom-Files/utils.dart';
 import 'package:photo_view/photo_view.dart';
@@ -229,6 +231,7 @@ class CheckOrderCard extends StatelessWidget {
   }
 
   Widget _buildImage(String url, double width, double height) {
+    log("image url is: $url");
     return ClipRRect(
       borderRadius: BorderRadius.circular(12),
       child: url.isNotEmpty
@@ -237,7 +240,26 @@ class CheckOrderCard extends StatelessWidget {
         width: width,
         height: height,
         fit: BoxFit.cover,
-        errorBuilder: (_, __, ___) => _errorImage(width, height),
+        loadingBuilder: (context, child, loadingProgress) {
+          if (loadingProgress == null) return child;
+          return Container(
+            width: width,
+            height: height,
+            color: Colors.grey[200],
+            child: Center(
+              child: CircularProgressIndicator(
+                value: loadingProgress.expectedTotalBytes != null
+                    ? loadingProgress.cumulativeBytesLoaded / (loadingProgress.expectedTotalBytes ?? 1)
+                    : null,
+              ),
+            ),
+          );
+        },
+        errorBuilder: (context, error, stackTrace) {
+          log('Image load error: $error'); // Log the error (e.g., CORS issue)
+          log('Failed to load URL: $url');
+          return _errorImage(width, height);
+        },
       )
           : Container(
         width: width,
