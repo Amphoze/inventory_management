@@ -1,5 +1,3 @@
-import 'dart:developer';
-
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -11,13 +9,13 @@ class Constants {
 
     String? env = dotenv.env['STOCKSHIP_ENV'];
 
-    // if (env == 'beta') {
-    //   return 'https://beta.api.stockship.ko-tech.in';
-    // } else if (env == 'dev') {
-    //   return 'http://192.168.107.199:3001';
-    // }
-    //
-    // return firebaseUrl;
+    if (env == 'beta') {
+      return 'https://beta.api.stockship.ko-tech.in';
+    } else if (env == 'dev') {
+      return 'http://192.168.107.199:3001';
+    }
+
+    return firebaseUrl;
 
 
 
@@ -34,7 +32,7 @@ class Constants {
 
     // return 'http://localhost:3001';
 
-    return 'http://192.168.29.31:3001';
+    // return 'http://192.168.29.31:3001';
 
     // return 'http://192.168.29.203:3001';
 
