@@ -71,7 +71,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'Custom-Files/colors.dart';
 import 'Custom-Files/switch_warehouse.dart';
-import 'check_orders/check_orders_page.dart';
+import 'check_orders/recheck_orders_page.dart';
+import 'check_orders/supervisor_page.dart';
 
 final globalScaffoldKey = GlobalKey<ScaffoldState>();
 
@@ -535,7 +536,8 @@ class _DashboardPageState extends State<DashboardPage> {
           "RTO",
           "All Orders",
           "Return Entry"
-              "Supervisor"
+              "Supervisor",
+          "Recheck Orders"
         ].contains(selectedDrawerItem)
             ? Colors.blue.withValues(alpha: 0.2)
             : AppColors.white,
@@ -559,7 +561,8 @@ class _DashboardPageState extends State<DashboardPage> {
           "RTO",
           "All Orders",
           "Return Entry",
-          "Supervisor"
+          "Supervisor",
+          "Recheck Orders"
         ].contains(selectedDrawerItem),
         title: Text(
           'Orders',
@@ -877,7 +880,27 @@ class _DashboardPageState extends State<DashboardPage> {
               icon: Icons.supervisor_account,
               text: 'Supervisor',
               isSelected: selectedDrawerItem == 'Supervisor',
-              onTap: () => _onDrawerItemTapped('Supervisor', isSmallScreen),
+              onTap: () => isPicker == true || isPacker == true || isChecker == true ||isRacker == true ||isManifest == true || isSuperAdmin == true || isAdmin == true
+                  ? _onDrawerItemTapped('Supervisor', isSmallScreen)
+                  : ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text("You are not authorized to view this page.")),
+              ),
+              isIndented: true,
+              iconSize: 20,
+              fontSize: 14,
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.only(left: 10.0),
+            child: _buildDrawerItem(
+              icon: Icons.check_circle_outline ,
+              text: 'Recheck Orders',
+              isSelected: selectedDrawerItem == 'Recheck Orders',
+              onTap: () => isPicker == true || isPacker == true || isChecker == true ||isRacker == true ||isManifest == true || isSuperAdmin == true || isAdmin == true
+                  ? _onDrawerItemTapped('Recheck Orders', isSmallScreen)
+                  : ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text("You are not authorized to view this page.")),
+              ),
               isIndented: true,
               iconSize: 20,
               fontSize: 14,
@@ -1612,7 +1635,9 @@ class _DashboardPageState extends State<DashboardPage> {
       case 'Return Entry':
         return const ReturnEntry();
       case 'Supervisor':
-        return const CheckOrdersPage();
+        return const SupervisorPage();
+      case 'Recheck Orders':
+        return const RecheckOrdersPage();
       case 'Product Master':
         return const ProductMasterPage();
       case 'Create Label Page':

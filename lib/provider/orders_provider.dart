@@ -913,7 +913,7 @@ class OrdersProvider with ChangeNotifier {
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        // log('data: $data');
+        log('data: $data');
         _readyOrders = (data['orders'] as List).map((order) => Order.fromJson(order)).toList();
         // _readyOrders = [Order.fromJson(data)];
         log('selectedReadyOrders: $selectedReadyOrders');

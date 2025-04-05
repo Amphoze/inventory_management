@@ -52,13 +52,6 @@ class OrderComboCard extends StatefulWidget {
     this.margin,
   });
 
-  static String maskPhoneNumber(dynamic phone) {
-    if (phone == null) return '';
-    String phoneStr = phone.toString();
-    if (phoneStr.length < 4) return phoneStr;
-    return '${'*' * (phoneStr.length - 4)}${phoneStr.substring(phoneStr.length - 4)}';
-  }
-
   @override
   State<OrderComboCard> createState() => _OrderComboCardState();
 }
@@ -68,6 +61,13 @@ class _OrderComboCardState extends State<OrderComboCard> {
   final accountsRemark = TextEditingController();
   String? email;
   String? role;
+
+  static String maskPhoneNumber(dynamic phone) {
+    if (phone == null) return '';
+    String phoneStr = phone.toString();
+    if (phoneStr.length < 4) return phoneStr;
+    return '${'*' * (phoneStr.length - 4)}${phoneStr.substring(phoneStr.length - 4)}';
+  }
 
   void getUserData() async {
     final prefs = await SharedPreferences.getInstance();
@@ -816,7 +816,7 @@ class _OrderComboCardState extends State<OrderComboCard> {
                                   ),
                                   buildLabelValueRow(
                                     'Phone',
-                                    OrderComboCard.maskPhoneNumber(widget.order.customer?.phone?.toString()) ?? '',
+                                    maskPhoneNumber(widget.order.customer?.phone?.toString()) ?? '',
                                   ),
                                   buildLabelValueRow(
                                     'GSTIN',
@@ -854,7 +854,7 @@ class _OrderComboCardState extends State<OrderComboCard> {
                                         : widget.order.shippingAddress?.firstName ?? '',
                                   ),
                                   buildLabelValueRow(
-                                      'Phone', OrderComboCard.maskPhoneNumber(widget.order.shippingAddress?.phone?.toString()) ?? ''),
+                                      'Phone', maskPhoneNumber(widget.order.shippingAddress?.phone?.toString()) ?? ''),
                                   buildLabelValueRow('Email', widget.order.shippingAddress?.email ?? ''),
                                   buildLabelValueRow('Country Code', widget.order.shippingAddress?.countryCode ?? ''),
                                   if (widget.order.shippingAddress?.zipcode?.isNotEmpty ?? false)
@@ -891,7 +891,7 @@ class _OrderComboCardState extends State<OrderComboCard> {
                                         : widget.order.billingAddress?.firstName ?? '',
                                   ),
                                   buildLabelValueRow(
-                                      'Phone', OrderComboCard.maskPhoneNumber(widget.order.billingAddress?.phone?.toString()) ?? ''),
+                                      'Phone', maskPhoneNumber(widget.order.billingAddress?.phone?.toString()) ?? ''),
                                   buildLabelValueRow('Email', widget.order.billingAddress?.email ?? ''),
                                   buildLabelValueRow('Country Code', widget.order.billingAddress?.countryCode ?? ''),
                                   if (widget.order.billingAddress?.zipcode?.isNotEmpty ?? false)

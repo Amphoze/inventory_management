@@ -22,8 +22,17 @@ class _RecheckOrdersPageState extends State<RecheckOrdersPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
         title: const Text('Recheck Orders'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            onPressed: () {
+              Provider.of<CheckOrdersProvider>(context, listen: false).getRecheckOrders();
+            },
+          ),
+        ],
       ),
       body: Consumer<CheckOrdersProvider>(
         builder: (context, provider, child) {

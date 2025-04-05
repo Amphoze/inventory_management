@@ -505,7 +505,7 @@ class Customer {
   final String? customerId;
   final String? firstName;
   final String? lastName;
-  final int? phone;
+  final String? phone;
   final String? email;
   final String? billingAddress;
   final String? customerGstin;
@@ -527,7 +527,7 @@ class Customer {
       customerId: json['customer_id']?.toString() ?? '',
       firstName: json['first_name']?.toString() ?? '',
       lastName: json['last_name']?.toString() ?? '',
-      phone: json['phone'] is int ? json['phone'] : null,
+      phone:  json['phone'] ?? '',
       billingAddress: json['billing_addr']?.toString() ?? '',
       email: json['email']?.toString() ?? '',
       customerGstin: json['customer_gstin']?.toString() ?? '',
@@ -957,7 +957,7 @@ class Address {
       lastName: json['last_name']?.toString() ?? '',
       address1: json['address1']?.toString() ?? '',
       address2: json['address2']?.toString() ?? '',
-      phone: (json['phone'] )?.toString(),
+      phone: json['phone'] ?? '' ,
       city: json['city']?.toString() ?? '',
       pincode: json['pincode'] is int ? json['pincode'].toString() : json['pincode'] ?? '0',
       zipcode: json['zip_code'] is int ? json['zip_code'].toString() : json['zip_code'] ?? '',

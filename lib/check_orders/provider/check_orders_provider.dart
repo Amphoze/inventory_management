@@ -56,8 +56,9 @@ class CheckOrdersProvider with ChangeNotifier {
         final jsonResponse = json.decode(response.body);
 
         if (jsonResponse['success'] == true) {
-          final List<dynamic> ordersData = jsonResponse['orders'];
-          _checkOrders = ordersData.map((order) => CheckOrderModel.fromJson(order)).toList();
+          final Map<String, dynamic> ordersData = jsonResponse['order'];
+          _checkOrders = [CheckOrderModel.fromJson(ordersData)];
+          // _checkOrders = ordersData.map((order) => CheckOrderModel.fromJson(order)).toList();
           notifyListeners();
         } else {
           throw Exception('Failed to fetch orders: ${jsonResponse['message']}');

@@ -218,6 +218,7 @@ class RecheckOrderCard extends StatelessWidget {
                   check: checkStatus,
                 );
                 Navigator.of(context).pop();
+                await provider.getRecheckOrders();
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(content: Text('Order ${action}ed successfully')),
                 );

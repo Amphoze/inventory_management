@@ -311,6 +311,7 @@ class CheckOrderCard extends StatelessWidget {
                 check: checkStatus,
               );
               Navigator.pop(context);
+              await provider.getCheckOrders();
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(content: Text(res ? 'Order ${action}ed successfully' : 'Failed to $action order')),
               );

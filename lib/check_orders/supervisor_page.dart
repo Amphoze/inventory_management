@@ -6,14 +6,14 @@ import 'package:inventory_management/check_orders/widgets/check_order_card.dart'
 
 import '../Custom-Files/colors.dart';
 
-class CheckOrdersPage extends StatefulWidget {
-  const CheckOrdersPage({super.key});
+class SupervisorPage extends StatefulWidget {
+  const SupervisorPage({super.key});
 
   @override
-  State<CheckOrdersPage> createState() => _CheckOrdersPageState();
+  State<SupervisorPage> createState() => _SupervisorPageState();
 }
 
-class _CheckOrdersPageState extends State<CheckOrdersPage> {
+class _SupervisorPageState extends State<SupervisorPage> {
   final TextEditingController _searchController = TextEditingController();
   @override
   void initState() {
@@ -53,7 +53,7 @@ class _CheckOrdersPageState extends State<CheckOrdersPage> {
                       }
                     },
                     decoration: const InputDecoration(
-                      hintText: 'Search Orders',
+                      hintText: 'Search by Order ID',
                       hintStyle: TextStyle(
                         color: Color.fromRGBO(117, 117, 117, 1),
                         fontSize: 16,
