@@ -7,6 +7,7 @@ import 'package:inventory_management/Api/bin_api.dart';
 import 'package:inventory_management/provider/location_provider.dart';
 import 'package:logger/logger.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'Api/auth_provider.dart';
 import 'Custom-Files/colors.dart';
 import 'Custom-Files/utils.dart';
@@ -26,8 +27,22 @@ class _CreateBinPageState extends State<CreateBinPage> {
   final TextEditingController _binDescriptionController = TextEditingController();
   final TextEditingController _binCapacityController = TextEditingController();
 
-  String _selectedWarehouse = 'Gilehri Warehouse';
+  String? _selectedWarehouse;
   bool _isLoading = false;
+
+  Future<void> getWarehouse() async{
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _selectedWarehouse = prefs.getString('warehouseName');
+    });
+    return;
+  }
+
+  @override
+  void initState() {
+    getWarehouse();
+    super.initState();
+  }
 
   @override
   void dispose() {
@@ -56,11 +71,11 @@ class _CreateBinPageState extends State<CreateBinPage> {
           'Authorization': 'Bearer $token',
         },
         body: jsonEncode({
-          'binName': _binNameController.text,
-          'binDescription': _binDescriptionController.text,
-          'binCapacity': int.parse(_binCapacityController.text),
+          'binName': _binNameController.text.trim(),
+          'binDescription': _binDescriptionController.text.trim(),
+          'binCapacity': int.parse(_binCapacityController.text.trim()),
           'warehouse': _selectedWarehouse,
-          'subBin': _subBinNameController.text,
+          'subBin': _subBinNameController.text.trim(),
         }),
       );
 
@@ -135,8 +150,7 @@ class _CreateBinPageState extends State<CreateBinPage> {
                     controller: _binNameController,
                     label: 'Bin Name',
                     icon: Icons.inventory,
-                    validator: (value) =>
-                    value!.isEmpty ? 'Required' : (value.length < 3 ? 'Min 3 chars' : null),
+                    validator: (value) => value!.isEmpty ? 'Required' : (value.length < 3 ? 'Min 3 chars' : null),
                   ),
                   const SizedBox(height: 12),
                   _buildTextField(
@@ -151,8 +165,7 @@ class _CreateBinPageState extends State<CreateBinPage> {
                     icon: Icons.dashboard,
                     keyboardType: TextInputType.number,
                     inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                    validator: (value) =>
-                    value!.isEmpty ? 'Required' : (int.tryParse(value) == null ? 'Invalid' : null),
+                    validator: (value) => value!.isEmpty ? 'Required' : (int.tryParse(value) == null ? 'Invalid' : null),
                   ),
                   const SizedBox(height: 12),
                   _buildWarehouseDropdown(),
@@ -178,14 +191,14 @@ class _CreateBinPageState extends State<CreateBinPage> {
                       ),
                       child: _isLoading
                           ? const SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
-                      )
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                            )
                           : const Text(
-                        'Create Bin',
-                        style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
-                      ),
+                              'Create Bin',
+                              style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                            ),
                     ),
                   ),
                 ],

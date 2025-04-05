@@ -89,8 +89,6 @@ class _BinMasterPageState extends State<BinMasterPage> {
                     onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const CreateBinPage())),
                     child: const Text('Create Bin'),
                   ),
-                  const SizedBox(width: 8),
-
                 ],
               ),
             ),
@@ -122,9 +120,7 @@ class _BinMasterPageState extends State<BinMasterPage> {
             Expanded(
               child: provider.toShowBins
                   ? Container(
-                      decoration: BoxDecoration(
-                        color: Colors.grey[50],
-                      ),
+                      color: Colors.white,
                       child: GridView.builder(
                         padding: const EdgeInsets.all(24.0),
                         gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
