@@ -31,7 +31,7 @@ class RecheckOrderCard extends StatelessWidget {
                     children: [
                       _buildInfoColumn('Order ID', order.orderId),
                       const SizedBox(width: 24),
-                      _buildInfoColumn('Packlist ID', order.picklistId),
+                      _buildInfoColumn('Picklist ID', order.picklistId),
                     ],
                   ),
                 ),
