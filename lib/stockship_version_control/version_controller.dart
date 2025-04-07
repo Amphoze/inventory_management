@@ -13,14 +13,12 @@ class VersionController extends ChangeNotifier {
   /// 3. firebase deploy                                              ///
   /// 4. Change version in firebase to this currentVersion.           ///
   ///////////////////////////////////////////////////////////////////////
-  String currentVersion = '6.8.6';
+  String currentVersion = '6.8.7';
   String? latestVersion = '';
 
   void setLatest(String value) {
     latestVersion = value;
   }
-
-  // firebase functions:config:set api.key="AIzaSyBsvnPpvkmHf5PhCrPWADuxWieoD3k71G0" api.secret="your-secret-key"
 
   Future<void> addDeveloperReleaseTime({
     required String datetime,

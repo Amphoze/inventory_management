@@ -4,6 +4,7 @@ import 'package:photo_view/photo_view.dart';
 import 'package:provider/provider.dart';
 import '../models/recheck_order_model.dart';
 import '../provider/check_orders_provider.dart';
+import 'image_viewer.dart';
 
 class RecheckOrderCard extends StatelessWidget {
   final RecheckOrderModel order;
@@ -30,7 +31,7 @@ class RecheckOrderCard extends StatelessWidget {
                     children: [
                       _buildInfoColumn('Order ID', order.orderId),
                       const SizedBox(width: 24),
-                      _buildInfoColumn('Packlist ID', order.packListId),
+                      _buildInfoColumn('Packlist ID', order.picklistId),
                     ],
                   ),
                 ),
@@ -52,16 +53,16 @@ class RecheckOrderCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               // mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Expanded(child: _buildPackedBySection()),
+                Expanded(child: _buildPackedBySection(context)),
                 // const SizedBox(width: 16),
                 // Expanded(
                 //   child: _buildStatusSection(),
                 // ),
-                const Spacer(),
-                if (order.orderPics.isNotEmpty) ...[
-                  // const SizedBox(height: 12),
-                  Expanded(child: _buildImagesSection(context)),
-                ],
+                // const Spacer(),
+                // if (order.orderPics.isNotEmpty) ...[
+                //   // const SizedBox(height: 12),
+                //   Expanded(child: _buildImagesSection(context)),
+                // ],
               ],
             ),
           ],
@@ -84,17 +85,21 @@ class RecheckOrderCard extends StatelessWidget {
     );
   }
 
-  Widget _buildPackedBySection() {
+  Widget _buildPackedBySection(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Utils.richText('Packed By: ', '${order.packedBy.name} (${order.packedBy.email})'),
+        // const SizedBox(height: 4),
+        // Utils.richText('Contact: ', order.packedBy.contact.toString()),
         const SizedBox(height: 4),
-        Utils.richText('Contact: ', order.packedBy.contact.toString()),
-        const SizedBox(height: 4),
-        Utils.richText('Is Checked: ', order.isChecked ? 'Yes' : 'No'),
-        const SizedBox(height: 4),
-        Utils.richText('ReChecked: ', order.reChecked ? 'Yes' : 'No'),
+        if (order.orderPics.isNotEmpty) ...[
+          // const SizedBox(height: 12),
+          _buildImagesSection(context),
+        ],
+        // Utils.richText('Is Checked: ', order.isChecked ? 'Yes' : 'No'),
+        // const SizedBox(height: 4),
+        // Utils.richText('ReChecked: ', order.reChecked ? 'Yes' : 'No'),
       ],
     );
   }
@@ -105,7 +110,7 @@ class RecheckOrderCard extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('Order Images:', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
+        const Text('Order Images:', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
         const SizedBox(height: 8),
         SizedBox(
           height: 80, // Increased height for better visibility
@@ -182,7 +187,7 @@ class RecheckOrderCard extends StatelessWidget {
   void _showImageGallery(BuildContext context, List<String> images, int initialIndex) {
     Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (context) => _ImageGalleryScreen(images: images, initialIndex: initialIndex),
+        builder: (context) => ImageGalleryScreen(images: images, initialIndex: initialIndex),
       ),
     );
   }
@@ -214,7 +219,7 @@ class RecheckOrderCard extends StatelessWidget {
                 final provider = Provider.of<CheckOrdersProvider>(context, listen: false);
                 await provider.updateCheckStatus(
                   orderId: order.orderId,
-                  pickListId: order.packListId,
+                  pickListId: order.picklistId,
                   check: checkStatus,
                 );
                 Navigator.of(context).pop();
@@ -231,78 +236,6 @@ class RecheckOrderCard extends StatelessWidget {
             },
             child: Text(action),
           ),
-        ],
-      ),
-    );
-  }
-}
-
-class _ImageGalleryScreen extends StatefulWidget {
-  final List<String> images;
-  final int initialIndex;
-
-  const _ImageGalleryScreen({required this.images, required this.initialIndex});
-
-  @override
-  State<_ImageGalleryScreen> createState() => _ImageGalleryScreenState();
-}
-
-class _ImageGalleryScreenState extends State<_ImageGalleryScreen> {
-  late int _currentIndex;
-
-  @override
-  void initState() {
-    super.initState();
-    _currentIndex = widget.initialIndex;
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.black,
-      appBar: AppBar(
-        backgroundColor: Colors.black,
-        leading: IconButton(
-          icon: const Icon(Icons.close, color: Colors.white),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: Text(
-          '${_currentIndex + 1}/${widget.images.length}',
-          style: const TextStyle(color: Colors.white, fontSize: 16),
-        ),
-      ),
-      body: Stack(
-        children: [
-          PhotoView(
-            imageProvider: NetworkImage(widget.images[_currentIndex]),
-            minScale: PhotoViewComputedScale.contained,
-            maxScale: PhotoViewComputedScale.covered * 2,
-            errorBuilder: (_, __, ___) => const Center(
-              child: Text('Failed to load image', style: TextStyle(color: Colors.white)),
-            ),
-          ),
-          if (widget.images.length > 1) ...[
-            if (_currentIndex > 0)
-              Positioned(
-                left: 16,
-                top: 0,
-                bottom: 0,
-                child: IconButton(
-                  icon: const Icon(Icons.arrow_left, color: Colors.white, size: 32),
-                  onPressed: () => setState(() => _currentIndex--),
-                ),
-              ),
-            if (_currentIndex < widget.images.length - 1)
-              Positioned(
-                right: 16,
-                top: 0,
-                bottom: 0,
-                child: IconButton(
-                  icon: const Icon(Icons.arrow_right, color: Colors.white, size: 32),
-                  onPressed: () => setState(() => _currentIndex++),
-                ),
-              ),
-          ],
         ],
       ),
     );

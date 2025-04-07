@@ -54,12 +54,10 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'provider/create_order_provider.dart';
 
-// prateekkhatri@katyayaniorganics.com
-
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
 void main() async {
-  // await dotenv.load(fileName: ".env");
+  await dotenv.load(fileName: ".env");
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,

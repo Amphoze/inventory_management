@@ -10,6 +10,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 class AuthProvider with ChangeNotifier {
   bool _isAuthenticated = false;
+
   bool _isSuperAdminAssigned = false;
   bool _isAdminAssigned = false;
   bool _isConfirmerAssigned = false;
@@ -24,6 +25,7 @@ class AuthProvider with ChangeNotifier {
   bool _isSupportAssigned = false;
   bool _isCreateOrderAssigned = false;
   bool _isGGVAssigned = false;
+  bool _isSuperVisorAssigned = false;
 
   bool get isSuperAdminAssigned => _isSuperAdminAssigned;
   bool get isAdminAssigned => _isAdminAssigned;
@@ -39,6 +41,7 @@ class AuthProvider with ChangeNotifier {
   bool get isSupportAssigned => _isSupportAssigned;
   bool get isCreateOrderAssigned => _isCreateOrderAssigned;
   bool get isGGVAssigned => _isGGVAssigned;
+  bool get isSuperVisorAssigned => _isSuperVisorAssigned;
 
   String? assignedRole;
 
@@ -146,15 +149,8 @@ class AuthProvider with ChangeNotifier {
         }),
       );
 
-      print('Login Response: ${response.statusCode}');
-      print('Login Response Body: ${response.body}');
-      print('Response Headers: ${response.headers}');
-
       if (response.statusCode == 200) {
         final responseData = json.decode(response.body);
-        print('Parsed Response Data: $responseData');
-
-        // Directly extract the token from the response body
         final token = responseData['token'] ?? '';
 
         Logger().e('token hai: $token');
@@ -225,6 +221,12 @@ class AuthProvider with ChangeNotifier {
                 _isGGVAssigned = true;
                 log('isGGV: $_isGGVAssigned');
                 break;
+              case 'supervisor':
+                _isSuperVisorAssigned = true;
+                log('isSuperVisor: $_isSuperVisorAssigned');
+                break;
+              default:
+                log('Unknown role: $assignedRole');
             }
           }
         }
@@ -253,17 +255,13 @@ class AuthProvider with ChangeNotifier {
         await prefs.setBool('_isSupportAssigned', _isSupportAssigned);
         await prefs.setBool('_isCreateOrderAssigned', _isCreateOrderAssigned);
         await prefs.setBool('_isGGVAssigned', _isGGVAssigned);
+        await prefs.setBool('_isSuperVisorAssigned', _isSuperVisorAssigned);
         await prefs.setString('userPrimaryRole', userPrimaryRole ?? 'none');
         await prefs.setString('userName', responseData['userName'] ?? '');
 
-        // log('Assigned Role: $assignedRole'); // Debugging line
-
         if (token != null && token.isNotEmpty) {
           await _saveToken(token);
-          print('Token retrieved and saved: $token');
           await _saveCredentials(email, password);
-
-          // log("responseData: $responseData"); ////////////////////////
 
           return {
             'success': true,
@@ -271,7 +269,6 @@ class AuthProvider with ChangeNotifier {
             'role': assignedRole,
           };
         } else {
-          print('Token not retrieved');
           return {'success': false, 'data': responseData};
         }
       } else if (response.statusCode == 400) {
@@ -283,7 +280,7 @@ class AuthProvider with ChangeNotifier {
         return {'success': false, 'message': 'Login failed with status code: ${response.statusCode}'};
       }
     } catch (error) {
-      print('An error occurred during login: $error');
+      log('An error occurred during login: $error');
       return {'success': false, 'message': 'An error occurred'};
     }
   }

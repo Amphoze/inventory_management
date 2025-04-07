@@ -1,148 +1,144 @@
+import 'dart:developer';
+import 'package:http_parser/http_parser.dart';
 import 'package:flutter/material.dart';
-import 'package:inventory_management/Custom-Files/excelFileUpload.dart';
+import 'package:inventory_management/constants/constants.dart';
 import 'package:inventory_management/provider/product_data_provider.dart';
-import 'package:logger/logger.dart';
 import 'package:provider/provider.dart';
 import 'package:inventory_management/Custom-Files/colors.dart';
 import 'package:inventory_management/Api/auth_provider.dart';
 import 'package:intl/intl.dart';
+import 'package:file_picker/file_picker.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import 'package:url_launcher/url_launcher.dart';
 
 class ProductDataDisplay extends StatefulWidget {
   const ProductDataDisplay({super.key});
 
   @override
-  _ProductDataDisplayState createState() => _ProductDataDisplayState();
+  ProductDataDisplayState createState() => ProductDataDisplayState();
 }
 
-class _ProductDataDisplayState extends State<ProductDataDisplay> {
+class ProductDataDisplayState extends State<ProductDataDisplay> {
   List<Map<String, dynamic>> failedProducts = [];
   bool showFailedProducts = false;
-
   bool downloadingTemplate = false;
+  bool isUploading = false;
+  bool hasData = false;
+
+  Future<void> _pickCsv(BuildContext context) async {
+    try {
+      FilePickerResult? result = await FilePicker.platform.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: ['csv'],
+      );
+
+      if (result == null || result.files.isEmpty) {
+        _showMessage(context, 'No file selected', isError: true);
+        return;
+      }
+
+      final file = result.files.first;
+      final bytes = file.bytes;
+      if (bytes == null) {
+        _showMessage(context, 'Error reading file', isError: true);
+        return;
+      }
+
+      final csvString = utf8.decode(bytes);
+      final csvLines = csvString.split('\n');
+      final headers = csvLines[0].split(',').map((h) => h.trim()).toList();
+
+      List<Map<String, String>> csvData = [];
+      for (int i = 1; i < csvLines.length; i++) {
+        if (csvLines[i].trim().isEmpty) continue;
+        final values = csvLines[i].split(',');
+        Map<String, String> row = {};
+        for (int j = 0; j < headers.length && j < values.length; j++) {
+          row[headers[j]] = values[j].trim();
+        }
+        csvData.add(row);
+      }
+
+      setState(() => hasData = true);
+      Provider.of<ProductDataProvider>(context, listen: false).setDataGroups(csvData);
+      _showMessage(context, 'CSV file loaded successfully');
+    } catch (e) {
+      _showMessage(context, 'Error: ${e.toString()}', isError: true);
+    }
+  }
 
   Future<void> _uploadProducts(BuildContext context) async {
-    final authProvider = AuthProvider();
     final productDataProvider = Provider.of<ProductDataProvider>(context, listen: false);
 
     if (productDataProvider.dataGroups.isEmpty) {
-      _showMessage(context, 'No data available to upload.', isError: true);
+      _showMessage(context, 'No data to upload', isError: true);
       return;
     }
 
-    productDataProvider.setUploading(true);
+    setState(() => isUploading = true);
 
-    int successCount = 0;
-    List<String> errorMessages = [];
-    List<Map<String, dynamic>> invalidProducts = [];
+    try {
+      final authProvider = AuthProvider();
+      final uri = Uri.parse('${await Constants.getBaseUrl()}/products/create-by-csv');
 
-    List<Map<String, dynamic>> productApiData = [];
-    for (var productData in productDataProvider.dataGroups) {
-      if ((productData['sku']?.isEmpty ?? true) && (productData['displayName']?.isEmpty ?? true)) {
-        invalidProducts.add(productData);
-        failedProducts.add({
-          'sku': 'N/A',
-          'reason': 'Product is missing both SKU and display name.',
-          'timestamp': DateFormat('yyyy-MM-dd - kk:mm').format(DateTime.now()),
+      var request = http.MultipartRequest('POST', uri)
+        ..files.add(http.MultipartFile.fromBytes(
+          'file',
+          utf8.encode([(productDataProvider.dataGroups[0].keys.join(','))] // Headers
+              .followedBy(productDataProvider.dataGroups
+                  .map((row) => row.values.map((v) => v ?? '').join(',')))
+              .join('\n')),
+          filename: 'upload.csv',
+          contentType: MediaType('text', 'csv'), // Explicitly set MIME type
+        ))
+        ..headers.addAll({
+          'Authorization': 'Bearer ${await authProvider.getToken()}',
         });
-        continue;
-      } else if (productData['sku']?.isEmpty ?? true) {
-        invalidProducts.add(productData);
-        failedProducts.add({
-          'sku': 'N/A',
-          'reason': 'Product with display name "${productData['displayName']}" is missing a SKU.',
-          'timestamp': DateFormat('yyyy-MM-dd - kk:mm').format(DateTime.now()),
-        });
-        continue;
-      } else if (productData['displayName']?.isEmpty ?? true) {
-        invalidProducts.add(productData);
-        failedProducts.add({
-          'sku': productData['sku'] ?? 'N/A',
-          'reason': 'Product with SKU "${productData['sku']}" is missing a display name.',
-          'timestamp': DateFormat('yyyy-MM-dd - kk:mm').format(DateTime.now()),
-        });
-        continue;
-      }
 
-      Map<String, dynamic> productMap = {
-        'displayName': productData['displayName']?.isEmpty ?? true ? null : productData['displayName'],
-        'parentSku': productData['parentSku']?.isEmpty ?? true ? null : productData['parentSku'],
-        'sku': productData['sku']?.isEmpty ?? true ? null : productData['sku'],
-        'netWeight': productData['netWeight']?.isEmpty ?? true ? null : productData['netWeight'],
-        'grossWeight': productData['grossWeight']?.isEmpty ?? true ? null : productData['grossWeight'],
-        'cost': productData['cost']?.isEmpty ?? true ? null : productData['cost'],
-        'mrp': productData['mrp']?.isEmpty ?? true ? null : productData['mrp'],
-        'ean': productData['ean']?.isEmpty ?? true ? null : productData['ean'],
-        'brand_id': productData['brand_id']?.isEmpty ?? true ? null : productData['brand_id'],
-        'tax_rule': productData['tax_rule']?.isEmpty ?? true ? null : productData['tax_rule'],
-        'description': productData['description']?.isEmpty ?? true ? null : productData['description'],
-        'technicalName': productData['technicalName']?.isEmpty ?? true ? null : productData['technicalName'],
-        'labelSku': productData['labelSku']?.isEmpty ?? true ? null : productData['labelSku'],
-        'box_name': productData['box_name']?.isEmpty ?? true ? null : productData['box_name'],
-        'categoryName': productData['categoryName']?.isEmpty ?? true ? null : productData['categoryName'],
-        'length': productData['length']?.isEmpty ?? true ? null : productData['length'],
-        'width': productData['width']?.isEmpty ?? true ? null : productData['width'],
-        'height': productData['height']?.isEmpty ?? true ? null : productData['height'],
-        'shopifyImage': productData['shopifyImage']?.isEmpty ?? true ? null : productData['shopifyImage'],
-        'grade': productData['grade']?.isEmpty ?? true ? null : productData['grade'],
-      };
+      final response = await request.send();
+      final responseBody = await response.stream.bytesToString();
+      log("product create response: $responseBody");
+      final jsonResponse = json.decode(responseBody);
 
-      productApiData.add(productMap);
-    }
+      if (response.statusCode == 200 || response.statusCode == 207) {
+        if (jsonResponse['insertedCount'] != null && jsonResponse['insertedCount'] > 0) {
+          _showMessage(context, '${jsonResponse['insertedCount']} products uploaded successfully!');
+          Provider.of<ProductDataProvider>(context, listen: false).reset();
+          setState(() => hasData = false);
+        }
 
-    // Now upload all products in a single request
-    final result = await authProvider.createProduct(productApiData);
-
-    productDataProvider.setUploading(false);
-
-    if (result != null) {
-      // Handle successful products
-      if (result['successfulProducts'] != null) {
-        successCount = result['successfulProducts'].length;
-      }
-
-      // Handle failed products
-      if (result['failedProducts'] != null) {
-        for (var failedProduct in result['failedProducts']) {
-          String sku = failedProduct['sku'];
-          String reason = failedProduct['reason'] ?? 'Unknown error';
-
-          failedProducts.add({
-            'sku': sku,
-            'reason': reason,
-            'timestamp': DateFormat('yyyy-MM-dd - kk:mm').format(DateTime.now()),
+        if (jsonResponse['failedCount'] != null && jsonResponse['failedCount'] > 0) {
+          setState(() {
+            showFailedProducts = true;
+            failedProducts.add({
+              'sku': 'N/A',
+              'reason': '${jsonResponse['failedCount']} products failed to upload',
+              'timestamp': DateFormat('yyyy-MM-dd - kk:mm').format(DateTime.now()),
+            });
           });
 
-          errorMessages.add('Failed to upload SKU: $sku - Reason: $reason');
+          if (jsonResponse['failedFileUrl'] != null) {
+            final url = jsonResponse['failedFileUrl'];
+            if (await canLaunch(url)) {
+              await launch(url);
+            } else {
+              _showMessage(context, 'Could not launch failed file URL', isError: true);
+            }
+          }
         }
+      } else {
+        _showMessage(context, jsonResponse['error'] ?? 'Failed to upload products', isError: true);
       }
-    }
-
-    // Notify the user of the upload results
-    if (successCount > 0) {
-      productDataProvider.reset();
-      _showMessage(context, '$successCount products uploaded successfully!');
-    }
-
-    // Print all error messages for debugging purposes
-    if (errorMessages.isNotEmpty || invalidProducts.isNotEmpty) {
-      for (var error in errorMessages) {
-        print('Error: $error');
-      }
-
-      setState(() {
-        showFailedProducts = true;
-      });
-    }
-
-    // Notify user of invalid products
-    if (invalidProducts.isNotEmpty) {
-      _showMessage(context, '${invalidProducts.length} products are invalid and were not uploaded.', isError: true);
+    } catch (e, s) {
+      log("Error while uploading products: $e\n\n$s");
+      _showMessage(context, 'Error: ${e.toString()}', isError: true);
+    } finally {
+      setState(() => isUploading = false);
     }
   }
 
   void _showMessage(BuildContext context, String message, {bool isError = false}) {
-    print(message);
-
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),
@@ -162,9 +158,8 @@ class _ProductDataDisplayState extends State<ProductDataDisplay> {
   @override
   Widget build(BuildContext context) {
     final productDataProvider = Provider.of<ProductDataProvider>(context);
-
     final double screenWidth = MediaQuery.of(context).size.width;
-    final double baseTextSize = screenWidth > 1200 ? 16.0 : (screenWidth > 800 ? 15.0 : 14.0);
+    final double baseTextSize = screenWidth > 1200 ? 16.0 : (screenWidth > 800 ? 14.0 : 12.0);
 
     return Scaffold(
       backgroundColor: AppColors.white,
@@ -173,131 +168,76 @@ class _ProductDataDisplayState extends State<ProductDataDisplay> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Row(
-              mainAxisAlignment: MainAxisAlignment.start,
-              children: [
-                Text(
-                  'Upload Products',
-                  style: TextStyle(fontSize: 25, fontWeight: FontWeight.bold),
-                ),
-              ],
+            const Text(
+              'Upload Products',
+              style: TextStyle(fontSize: 25, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
             Row(
               children: [
-                ExcelFileUploader(
-                  sheetName: 'Sheet1',
-                  onUploadSuccess: (List<Map<String, String>> uploadedData) {
-                    productDataProvider.setDataGroups(uploadedData);
-                  },
-                  onError: (String errorMessage) {
-                    _showMessage(context, errorMessage, isError: true);
-                  },
-                ),
-                if (productDataProvider.isUploadSuccessful) ...[
-                  const SizedBox(width: 16.0),
-                  ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primaryGreen,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 12.0),
-                    ),
-                    onPressed: productDataProvider.isUploading ? null : () => _uploadProducts(context),
-                    child: const Text('Upload Products'),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.cancel, color: Colors.red),
-                    onPressed: () {
-                      // Clear the uploaded data
-                      productDataProvider.reset();
-                      _showMessage(context, 'Upload cancelled.');
-                    },
-                  ),
-                ],
-                const SizedBox(width: 16),
                 ElevatedButton(
-                  onPressed: () async {
-                    setState(() {
-                      downloadingTemplate = true;
-                    });
-
-                    await AuthProvider().downloadTemplate(context, 'product');
-
-                    setState(() {
-                      downloadingTemplate = false;
-                    });
-                  },
-                  child: downloadingTemplate ? const CircularProgressIndicator(color: Colors.white) : const Text('Download Template'),
-                ),
-                const SizedBox(width: 16.0),
-                ElevatedButton(
-                  onPressed: failedProducts.isEmpty
-                      ? null
-                      : () {
-                          setState(() {
-                            showFailedProducts = !showFailedProducts;
-                          });
-                        },
+                  onPressed: isUploading ? null : () => _pickCsv(context),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.redAccent,
+                    backgroundColor: AppColors.primaryGreen,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10),
                     ),
-                    padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 12.0),
                   ),
-                  child: const Text('Failed Products'),
+                  child: const Text('Select CSV'),
                 ),
-              ],
-            ),
-            const SizedBox(height: 16.0),
-            Expanded(
-              child: productDataProvider.dataGroups.isEmpty
-                  ? const Center(child: Text('No data available.'))
-                  : ListView.builder(
-                      itemCount: productDataProvider.dataGroups.length,
-                      itemBuilder: (context, index) {
-                        Map<String, String> dataMap = productDataProvider.dataGroups[index];
-
-                        Logger().e('sheet data: $dataMap');
-
-                        return GestureDetector(
-                          child: Container(
-                            margin: const EdgeInsets.symmetric(vertical: 8.0),
-                            decoration: BoxDecoration(
-                              color: AppColors.white,
-                              borderRadius: BorderRadius.circular(8),
-                              border: Border.all(color: AppColors.blueAccent, width: 1),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: AppColors.grey.withValues(alpha: 0.5),
-                                  spreadRadius: 2,
-                                  blurRadius: 5,
-                                  offset: const Offset(0, 3),
-                                ),
-                              ],
-                            ),
-                            padding: const EdgeInsets.all(12.0),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                if (dataMap['shopifyImage'] != null && dataMap['shopifyImage']!.isNotEmpty)
-                                  ClipRRect(
-                                    borderRadius: BorderRadius.circular(8),
-                                    child: Image.network(
-                                      dataMap['shopifyImage']!,
-                                      height: 80,
-                                      fit: BoxFit.cover,
-                                    ),
-                                  ),
-                                const SizedBox(height: 4.0),
-                                _buildRowContent(dataMap, baseTextSize),
-                              ],
+                const SizedBox(width: 16),
+                if (hasData) ...[
+                  isUploading
+                      ? const CircularProgressIndicator()
+                      : ElevatedButton(
+                          onPressed: isUploading ? null : () => _uploadProducts(context),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.primaryGreen,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
                             ),
                           ),
-                        );
-                      },
+                          child: const Text('Upload Products'),
+                        ),
+                  const SizedBox(width: 16),
+                ],
+                ElevatedButton(
+                  onPressed: downloadingTemplate
+                      ? null
+                      : () async {
+                          setState(() => downloadingTemplate = true);
+                          await AuthProvider().downloadTemplate(context, 'product');
+                          setState(() => downloadingTemplate = false);
+                        },
+                  child: downloadingTemplate
+                      ? const CircularProgressIndicator(color: Colors.white)
+                      : const Text('Download Template'),
+                ),
+                // const SizedBox(width: 16),
+                // ElevatedButton(
+                //   onPressed: failedProducts.isEmpty
+                //       ? null
+                //       : () => setState(() => showFailedProducts = !showFailedProducts),
+                //   style: ElevatedButton.styleFrom(
+                //     backgroundColor: Colors.redAccent,
+                //     shape: RoundedRectangleBorder(
+                //       borderRadius: BorderRadius.circular(10),
+                //     ),
+                //   ),
+                //   child: const Text('Failed Products'),
+                // ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            Expanded(
+              child: productDataProvider.dataGroups.isEmpty
+                  ? const Center(child: Text('No data available. Please select a CSV file.'))
+                  : SingleChildScrollView(
+                      scrollDirection: Axis.vertical,
+                      child: SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: _buildDataTable(productDataProvider.dataGroups, baseTextSize),
+                      ),
                     ),
             ),
             if (showFailedProducts && failedProducts.isNotEmpty) ...[
@@ -307,10 +247,10 @@ class _ProductDataDisplayState extends State<ProductDataDisplay> {
                   'Failed Products',
                   style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
                 ),
-                initiallyExpanded: showFailedProducts,
+                initiallyExpanded: true,
                 children: [
                   SizedBox(
-                    height: 200, // Set a height for the scrolling area
+                    height: 200,
                     child: ListView.builder(
                       shrinkWrap: true,
                       itemCount: failedProducts.length,
@@ -320,7 +260,7 @@ class _ProductDataDisplayState extends State<ProductDataDisplay> {
                           title: Text('SKU: ${failedProduct['sku']}'),
                           subtitle: Text(
                             'Reason: ${failedProduct['reason']}\nFailed at: ${failedProduct['timestamp']}',
-                            style: const TextStyle(color: Colors.red), // Optional styling
+                            style: const TextStyle(color: Colors.red),
                           ),
                         );
                       },
@@ -339,63 +279,43 @@ class _ProductDataDisplayState extends State<ProductDataDisplay> {
     );
   }
 
-  Widget _buildRowContent(Map<String, dynamic> dataMap, double baseTextSize) {
-    final List<String> fieldsToShow = dataMap.keys.toList();
+  Widget _buildDataTable(List<Map<String, String>> dataGroups, double baseTextSize) {
+    if (dataGroups.isEmpty) return const SizedBox.shrink();
 
-    List<Widget> rowWidgets = [];
-
-    for (int i = 0; i < fieldsToShow.length; i += 2) {
-      String leftField = fieldsToShow[i];
-      String rightField = fieldsToShow.length > i + 1 ? fieldsToShow[i + 1] : '';
-
-      rowWidgets.add(
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            _buildTwoColumnRow(leftField, dataMap[leftField], baseTextSize),
-            if (rightField.isNotEmpty) _buildTwoColumnRow(rightField, dataMap[rightField], baseTextSize),
-          ],
-        ),
-      );
+    Set<String> allHeaders = {};
+    for (var data in dataGroups) {
+      allHeaders.addAll(data.keys);
     }
+    List<String> headers = allHeaders.toList();
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: rowWidgets,
-    );
-  }
-
-  Widget _buildTwoColumnRow(String fieldName, dynamic value, double baseTextSize) {
-    String displayValue = value != null && value.isNotEmpty ? value.toString() : '';
-    // String displayValue = value != null ? value.toString() : '';
-
-    return Expanded(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 4.0),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(
-              flex: 3,
-              child: Text(
-                '$fieldName:',
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: baseTextSize,
+    return DataTable(
+      columnSpacing: 16.0,
+      dataRowHeight: 48.0,
+      headingRowHeight: 56.0,
+      border: TableBorder.all(color: AppColors.grey),
+      columns: headers
+          .map((header) => DataColumn(
+                label: Text(
+                  header,
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: baseTextSize,
+                  ),
                 ),
-              ),
-            ),
-            const SizedBox(width: 8.0),
-            Expanded(
-              flex: 5,
-              child: Text(
-                displayValue,
-                style: TextStyle(fontSize: baseTextSize),
-              ),
-            ),
-          ],
-        ),
-      ),
+              ))
+          .toList(),
+      rows: dataGroups
+          .map((data) => DataRow(
+                cells: headers
+                    .map((header) => DataCell(
+                          Text(
+                            data[header] ?? '',
+                            style: TextStyle(fontSize: baseTextSize),
+                          ),
+                        ))
+                    .toList(),
+              ))
+          .toList(),
     );
   }
 }

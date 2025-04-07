@@ -1155,8 +1155,8 @@ class BookProvider with ChangeNotifier {
     }
 
     // Define colors
-    final whiteColor = PdfColors.white;
-    final lightGrey = PdfColors.grey300;
+    const whiteColor = PdfColors.white;
+    const lightGrey = PdfColors.grey300;
 
     // Track unique OrderIds and assign colors
     Map<String, PdfColor> orderIdColors = {};

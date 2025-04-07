@@ -1,11 +1,10 @@
 import 'dart:developer';
-
 import 'package:flutter/material.dart';
 import 'package:inventory_management/Custom-Files/utils.dart';
-import 'package:photo_view/photo_view.dart';
 import 'package:provider/provider.dart';
 import '../models/check_order_model.dart';
 import '../provider/check_orders_provider.dart';
+import 'image_viewer.dart';
 
 class CheckOrderCard extends StatelessWidget {
   final String orderId;
@@ -39,55 +38,55 @@ class CheckOrderCard extends StatelessWidget {
             // Make header responsive based on screen size
             isSmallScreen
                 ? Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Expanded(child: _buildInfoColumn('Order ID', orderId)),
-                    const SizedBox(width: 16),
-                    Expanded(child: _buildInfoColumn('Picklist ID', pickListId)),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                Row(
-                  children: [
-                    Expanded(
-                      child: _buildActionButton(context, 'Reject', Colors.red, false),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: _buildActionButton(context, 'Accept', Colors.green, true),
-                    ),
-                  ],
-                ),
-              ],
-            )
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Expanded(child: _buildInfoColumn('Order ID', orderId)),
+                          const SizedBox(width: 16),
+                          Expanded(child: _buildInfoColumn('Picklist ID', pickListId)),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _buildActionButton(context, 'Reject', Colors.red, false),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: _buildActionButton(context, 'Accept', Colors.green, true),
+                          ),
+                        ],
+                      ),
+                    ],
+                  )
                 : Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Expanded(
-                  flex: 2,
-                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      _buildInfoColumn('Order ID', orderId),
-                      const SizedBox(width: 24),
-                      _buildInfoColumn('Picklist ID', pickListId),
+                      Expanded(
+                        flex: 2,
+                        child: Row(
+                          children: [
+                            _buildInfoColumn('Order ID', orderId),
+                            const SizedBox(width: 24),
+                            _buildInfoColumn('Picklist ID', pickListId),
+                          ],
+                        ),
+                      ),
+                      Expanded(
+                        flex: 1,
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                            _buildActionButton(context, 'Reject', Colors.red, false),
+                            const SizedBox(width: 8),
+                            _buildActionButton(context, 'Accept', Colors.green, true),
+                          ],
+                        ),
+                      ),
                     ],
                   ),
-                ),
-                Expanded(
-                  flex: 1,
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      _buildActionButton(context, 'Reject', Colors.red, false),
-                      const SizedBox(width: 8),
-                      _buildActionButton(context, 'Accept', Colors.green, true),
-                    ],
-                  ),
-                ),
-              ],
-            ),
             const Divider(height: 16),
             GridView.builder(
               padding: const EdgeInsets.symmetric(vertical: 8),
@@ -133,7 +132,7 @@ class CheckOrderCard extends StatelessWidget {
 
   Widget _buildItemRow(BuildContext context, Item item, bool isSmallScreen) {
     final matchingOrderPic = orderPics.firstWhere(
-          (pic) => pic.itemSku == item.sku,
+      (pic) => pic.itemSku == item.sku,
       orElse: () => OrderPic(itemSku: item.sku, image1: '', image2: ''),
     );
     final allImages = [
@@ -162,120 +161,130 @@ class CheckOrderCard extends StatelessWidget {
           // Make image layout responsive
           isSmallScreen
               ? Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              GestureDetector(
-                onTap: allImages.isNotEmpty ? () => _showImageGallery(context, allImages, 0) : null,
-                child: _buildImage(item.shopifyImage, mainImageSize, mainImageSize),
-              ),
-              const SizedBox(height: 8),
-              if (allImages.length > 1)
-                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    if (matchingOrderPic.image1.isNotEmpty)
-                      Expanded(
-                        child: Padding(
-                          padding: const EdgeInsets.only(right: 4),
-                          child: GestureDetector(
-                            onTap: () => _showImageGallery(context, allImages, 1),
-                            child: _buildImage(matchingOrderPic.image1, secondaryImageSize, secondaryImageSize),
-                          ),
-                        ),
-                      ),
-                    if (matchingOrderPic.image2.isNotEmpty)
-                      Expanded(
-                        child: Padding(
-                          padding: const EdgeInsets.only(left: 4),
-                          child: GestureDetector(
-                            onTap: () => _showImageGallery(context, allImages, allImages.length > 2 ? 2 : 1),
-                            child: _buildImage(matchingOrderPic.image2, secondaryImageSize, secondaryImageSize),
-                          ),
-                        ),
+                    GestureDetector(
+                      onTap: allImages.isNotEmpty
+                          ? () => _showImageGallery(context, allImages, 0)
+                          : null,
+                      child: _buildImage(item.shopifyImage, mainImageSize, mainImageSize),
+                    ),
+                    const SizedBox(height: 8),
+                    if (allImages.length > 1)
+                      Row(
+                        children: [
+                          if (matchingOrderPic.image1.isNotEmpty)
+                            Expanded(
+                              child: Padding(
+                                padding: const EdgeInsets.only(right: 4),
+                                child: GestureDetector(
+                                  onTap: () => _showImageGallery(context, allImages, 1),
+                                  child: _buildImage(matchingOrderPic.image1, secondaryImageSize,
+                                      secondaryImageSize),
+                                ),
+                              ),
+                            ),
+                          if (matchingOrderPic.image2.isNotEmpty)
+                            Expanded(
+                              child: Padding(
+                                padding: const EdgeInsets.only(left: 4),
+                                child: GestureDetector(
+                                  onTap: () => _showImageGallery(
+                                      context, allImages, allImages.length > 2 ? 2 : 1),
+                                  child: _buildImage(matchingOrderPic.image2, secondaryImageSize,
+                                      secondaryImageSize),
+                                ),
+                              ),
+                            ),
+                        ],
                       ),
                   ],
-                ),
-            ],
-          )
+                )
               : Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              GestureDetector(
-                onTap: allImages.isNotEmpty ? () => _showImageGallery(context, allImages, 0) : null,
-                child: _buildImage(item.shopifyImage, mainImageSize, mainImageSize),
-              ),
-              const SizedBox(width: 16),
-              if (allImages.length > 1)
-                Column(
-                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    if (matchingOrderPic.image1.isNotEmpty)
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: 12),
-                        child: GestureDetector(
-                          onTap: () => _showImageGallery(context, allImages, 1),
-                          child: _buildImage(matchingOrderPic.image1, secondaryImageSize, secondaryImageSize),
-                        ),
-                      ),
-                    if (matchingOrderPic.image2.isNotEmpty)
-                      GestureDetector(
-                        onTap: () => _showImageGallery(context, allImages, allImages.length > 2 ? 2 : 1),
-                        child: _buildImage(matchingOrderPic.image2, secondaryImageSize, secondaryImageSize),
+                    GestureDetector(
+                      onTap: allImages.isNotEmpty
+                          ? () => _showImageGallery(context, allImages, 0)
+                          : null,
+                      child: _buildImage(item.shopifyImage, mainImageSize, mainImageSize),
+                    ),
+                    const SizedBox(width: 16),
+                    if (allImages.length > 1)
+                      Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          if (matchingOrderPic.image1.isNotEmpty)
+                            Padding(
+                              padding: const EdgeInsets.only(bottom: 12),
+                              child: GestureDetector(
+                                onTap: () => _showImageGallery(context, allImages, 1),
+                                child: _buildImage(matchingOrderPic.image1, secondaryImageSize,
+                                    secondaryImageSize),
+                              ),
+                            ),
+                          if (matchingOrderPic.image2.isNotEmpty)
+                            GestureDetector(
+                              onTap: () => _showImageGallery(
+                                  context, allImages, allImages.length > 2 ? 2 : 1),
+                              child: _buildImage(
+                                  matchingOrderPic.image2, secondaryImageSize, secondaryImageSize),
+                            ),
+                        ],
                       ),
                   ],
                 ),
-            ],
-          ),
         ],
       ),
     );
   }
 
   Widget _buildImage(String url, double width, double height) {
-    log("image url is: $url");
     return ClipRRect(
       borderRadius: BorderRadius.circular(12),
       child: url.isNotEmpty
           ? Image.network(
-        url,
-        width: width,
-        height: height,
-        fit: BoxFit.cover,
-        loadingBuilder: (context, child, loadingProgress) {
-          if (loadingProgress == null) return child;
-          return Container(
-            width: width,
-            height: height,
-            color: Colors.grey[200],
-            child: Center(
-              child: CircularProgressIndicator(
-                value: loadingProgress.expectedTotalBytes != null
-                    ? loadingProgress.cumulativeBytesLoaded / (loadingProgress.expectedTotalBytes ?? 1)
-                    : null,
-              ),
-            ),
-          );
-        },
-        errorBuilder: (context, error, stackTrace) {
-          log('Image load error: $error'); // Log the error (e.g., CORS issue)
-          log('Failed to load URL: $url');
-          return _errorImage(width, height);
-        },
-      )
+              url,
+              width: width,
+              height: height,
+              fit: BoxFit.cover,
+              loadingBuilder: (context, child, loadingProgress) {
+                if (loadingProgress == null) return child;
+                return Container(
+                  width: width,
+                  height: height,
+                  color: Colors.grey[200],
+                  child: Center(
+                    child: CircularProgressIndicator(
+                      value: loadingProgress.expectedTotalBytes != null
+                          ? loadingProgress.cumulativeBytesLoaded /
+                              (loadingProgress.expectedTotalBytes ?? 1)
+                          : null,
+                    ),
+                  ),
+                );
+              },
+              errorBuilder: (context, error, stackTrace) {
+                log('Image load error: $error'); // Log the error (e.g., CORS issue)
+                log('Failed to load URL: $url');
+                return _errorImage(width, height);
+              },
+            )
           : Container(
-        width: width,
-        height: height,
-        color: Colors.grey[200],
-        child: const Icon(Icons.image_not_supported, size: 40, color: Colors.grey),
-      ),
+              width: width,
+              height: height,
+              color: Colors.grey[200],
+              child: const Icon(Icons.image_not_supported, size: 40, color: Colors.grey),
+            ),
     );
   }
 
   Widget _errorImage(double width, double height) => Container(
-    width: width,
-    height: height,
-    color: Colors.grey[200],
-    child: const Icon(Icons.broken_image, size: 40, color: Colors.red),
-  );
+        width: width,
+        height: height,
+        color: Colors.grey[200],
+        child: const Icon(Icons.broken_image, size: 40, color: Colors.red),
+      );
 
   Widget _buildActionButton(BuildContext context, String label, Color color, bool status) {
     return ElevatedButton(
@@ -294,7 +303,7 @@ class CheckOrderCard extends StatelessWidget {
   void _showImageGallery(BuildContext context, List<String> images, int initialIndex) {
     Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (context) => _ImageGalleryScreen(images: images, initialIndex: initialIndex),
+        builder: (context) => ImageGalleryScreen(images: images, initialIndex: initialIndex),
       ),
     );
   }
@@ -304,7 +313,8 @@ class CheckOrderCard extends StatelessWidget {
       context: context,
       builder: (dialogContext) => AlertDialog(
         title: Text('Confirm $action', style: const TextStyle(fontSize: 16)),
-        content: Text('Are you sure you want to $action this order?', style: const TextStyle(fontSize: 14)),
+        content: Text('Are you sure you want to $action this order?',
+            style: const TextStyle(fontSize: 14)),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(),
@@ -335,83 +345,13 @@ class CheckOrderCard extends StatelessWidget {
               Navigator.pop(context);
               await provider.getCheckOrders();
               ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text(res ? 'Order ${action}ed successfully' : 'Failed to $action order')),
+                SnackBar(
+                    content:
+                        Text(res ? 'Order ${action}ed successfully' : 'Failed to $action order')),
               );
             },
             child: Text(action),
           ),
-        ],
-      ),
-    );
-  }
-}
-
-class _ImageGalleryScreen extends StatefulWidget {
-  final List<String> images;
-  final int initialIndex;
-
-  const _ImageGalleryScreen({required this.images, required this.initialIndex});
-
-  @override
-  State<_ImageGalleryScreen> createState() => _ImageGalleryScreenState();
-}
-
-class _ImageGalleryScreenState extends State<_ImageGalleryScreen> {
-  late int _currentIndex;
-
-  @override
-  void initState() {
-    super.initState();
-    _currentIndex = widget.initialIndex;
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.black,
-      appBar: AppBar(
-        backgroundColor: Colors.black,
-        leading: IconButton(
-          icon: const Icon(Icons.close, color: Colors.white),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: Text(
-          '${_currentIndex + 1}/${widget.images.length}',
-          style: const TextStyle(color: Colors.white, fontSize: 16),
-        ),
-      ),
-      body: Stack(
-        children: [
-          PhotoView(
-            imageProvider: NetworkImage(widget.images[_currentIndex]),
-            minScale: PhotoViewComputedScale.contained,
-            maxScale: PhotoViewComputedScale.covered * 2,
-            errorBuilder: (_, __, ___) => const Center(
-              child: Text('Failed to load image', style: TextStyle(color: Colors.white)),
-            ),
-          ),
-          if (widget.images.length > 1) ...[
-            if (_currentIndex > 0)
-              Positioned(
-                left: 16,
-                top: 0,
-                bottom: 0,
-                child: IconButton(
-                  icon: const Icon(Icons.arrow_left, color: Colors.white, size: 32),
-                  onPressed: () => setState(() => _currentIndex--),
-                ),
-              ),
-            if (_currentIndex < widget.images.length - 1)
-              Positioned(
-                right: 16,
-                top: 0,
-                bottom: 0,
-                child: IconButton(
-                  icon: const Icon(Icons.arrow_right, color: Colors.white, size: 32),
-                  onPressed: () => setState(() => _currentIndex++),
-                ),
-              ),
-          ],
         ],
       ),
     );

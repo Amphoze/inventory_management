@@ -1,7 +1,7 @@
 class RecheckOrderModel {
   final PackedBy packedBy;
   final String id;
-  final String packListId;
+  final String picklistId;
   final String orderId;
   final List<OrderPic> orderPics;
   final bool isChecked;
@@ -12,7 +12,7 @@ class RecheckOrderModel {
   RecheckOrderModel({
     required this.packedBy,
     required this.id,
-    required this.packListId,
+    required this.picklistId,
     required this.orderId,
     required this.orderPics,
     required this.isChecked,
@@ -25,7 +25,7 @@ class RecheckOrderModel {
     return RecheckOrderModel(
       packedBy: PackedBy.fromJson(json['packedBy']),
       id: json['_id'] ?? '',
-      packListId: json['packListId'] ?? '',
+      picklistId: json['pickListId'] ?? '',
       orderId: json['orderId'] ?? '',
       orderPics: (json['orderPics'] as List<dynamic>)
           .map((pic) => OrderPic.fromJson(pic))
