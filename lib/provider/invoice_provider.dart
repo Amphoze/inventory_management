@@ -20,6 +20,7 @@ class InvoiceProvider with ChangeNotifier {
   String? get error => _error;
   int get currentPage => _currentPage;
   int get totalPages => _totalPages;
+  int get totalInvoices => _totalInvoices;
 
   // late final String apiUrl;
 

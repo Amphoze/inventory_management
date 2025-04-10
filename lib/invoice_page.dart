@@ -38,7 +38,9 @@ class _InvoicePageState extends State<InvoicePage> {
     super.initState();
 
     pro = Provider.of<InvoiceProvider>(context, listen: false);
-    pro.fetchInvoices();
+    WidgetsBinding.instance.addPostFrameCallback((_){
+      pro.fetchInvoices();
+    });
   }
 
   @override
@@ -101,6 +103,16 @@ class _InvoicePageState extends State<InvoicePage> {
                     },
                     onChanged: _onSearchChanged,
                   ),
+                ),
+                IconButton(
+                  tooltip: 'Refresh',
+                  icon: const Icon(
+                    Icons.refresh,
+                    color: AppColors.primaryBlue,
+                  ),
+                  onPressed: () {
+                    invoiceProvider.fetchInvoices();
+                  },
                 ),
               ],
             ),
@@ -181,6 +193,7 @@ class _InvoicePageState extends State<InvoicePage> {
           CustomPaginationFooter(
             currentPage: invoiceProvider.currentPage,
             totalPages: invoiceProvider.totalPages,
+            totalCount: invoiceProvider.totalInvoices,
             buttonSize: MediaQuery.of(context).size.width > 600 ? 32 : 24,
             onFirstPage: () => invoiceProvider.goToFirstPage(),
             onLastPage: () => invoiceProvider.goToLastPage(),
