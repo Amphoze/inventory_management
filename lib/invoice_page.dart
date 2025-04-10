@@ -199,7 +199,7 @@ class _InvoicePageState extends State<InvoicePage> {
             onLastPage: () => invoiceProvider.goToLastPage(),
             onNextPage: () => invoiceProvider.nextPage(),
             onPreviousPage: () => invoiceProvider.previousPage(),
-            onGoToPage: (int) => invoiceProvider.goToPage(int),
+            onGoToPage: (value) => invoiceProvider.goToPage(value),
             onJumpToPage: () {},
             pageController: _pageController,
           ),
