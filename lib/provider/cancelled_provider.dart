@@ -10,25 +10,17 @@ import 'package:http/http.dart' as http;
 import '../model/orders_model.dart';
 
 class CancelledProvider with ChangeNotifier {
+  int totalOrders = 0;
   bool isLoading = false;
   bool selectAll = false;
   List<bool> selectedProducts = [];
-  List<Order> orders0 = [];
+  List<Order> _orders = [];
   int currentPage = 1; // Ensure this starts at 1
   int totalPages = 1;
   final PageController pageController = PageController();
   final TextEditingController textEditingController = TextEditingController();
   Timer? debounce;
-
-  // bool get selectAll => selectAll;
-  // List<bool> get selectedProducts => selectedProducts;
-  List<Order> get orders => orders0;
-  // bool get isLoading => isLoading;
-
-  // int get currentPage => currentPage;
-  // int get totalPages => totalPages;
-  // PageController get pageController => pageController;
-  // TextEditingController get textEditingController => textEditingController;
+  List<Order> get orders => _orders;
 
   int get selectedCount => selectedProducts.where((isSelected) => isSelected).length;
 
@@ -41,7 +33,7 @@ class CancelledProvider with ChangeNotifier {
 
   void toggleSelectAll(bool value) {
     selectAll = value;
-    selectedProducts = List<bool>.generate(orders0.length, (index) => selectAll);
+    selectedProducts = List<bool>.generate(_orders.length, (index) => selectAll);
     notifyListeners();
   }
 
@@ -69,24 +61,25 @@ class CancelledProvider with ChangeNotifier {
         initializeSelection();
 
         totalPages = data['totalPages']; // Get total pages from response
-        orders0 = orders; // Set the orders for the current page
+        _orders = orders; // Set the orders for the current page
+        totalOrders = data['totalOrders'] ?? 0; // Get total orders from response
 
         Logger().e(orders);
 
-        // Initialize selected products list
-        selectedProducts = List<bool>.filled(orders0.length, false);
+        selectedProducts = List<bool>.filled(_orders.length, false); // Set directly
+        selectAll = false;
 
         Logger().e(selectedProducts);
         // Print the total number of orders fetched from the current page
         print('Total Orders Fetched from Page $currentPage: ${orders.length}');
       } else {
         // Handle non-success responses
-        orders0 = [];
+        _orders = [];
         totalPages = 1; // Reset total pages if there’s an error
       }
     } catch (e) {
       // Handle errors
-      orders0 = [];
+      _orders = [];
       totalPages = 1; // Reset total pages if there’s an error
     } finally {
       isLoading = false;
@@ -116,26 +109,16 @@ class CancelledProvider with ChangeNotifier {
   bool selectAllcanceled = false;
 
   void initializeSelection() {
-    selectedProducts = List<bool>.filled(orders0.length, false);
+    selectedProducts = List<bool>.filled(_orders.length, false);
     selectedcanceledItems = List<bool>.filled(orderscanceled.length, false);
   }
 
-  // Handle individual row checkbox change for orders
   void handleRowCheckboxChange(int index, bool isSelected) {
     selectedProducts[index] = isSelected;
+    selectAll = selectedProducts.every((element) => element); // Check all visible orders
     notifyListeners();
   }
 
-  // Handle individual row checkbox change for returned orders
-  void handleRowCheckboxChangeForcanceled(String? orderId, bool isSelected) {
-    int index = orderscanceled.indexWhere((order) => order.orderId == orderId);
-    if (index != -1) {
-      selectedcanceledItems[index] = isSelected;
-      orderscanceled[index].isSelected = isSelected;
-      updateSelectAllStateForcanceled();
-    }
-    notifyListeners();
-  }
 
   void updateSelectAllStateForcanceled() {
     selectAllcanceled = selectedcanceledItems.every((item) => item);
@@ -143,7 +126,6 @@ class CancelledProvider with ChangeNotifier {
   }
 
   bool isCancelling = false;
-  // bool get isCancelling => isCancelling;
 
   Future<void> returnSelectedOrders() async {
     isCancelling = true; // Set loading state
@@ -156,8 +138,8 @@ class CancelledProvider with ChangeNotifier {
 
     // Collect the IDs of orders where trackingStatus is 'NA' (null or empty)
     for (int i = 0; i < selectedProducts.length; i++) {
-      if (selectedProducts[i] && (orders0[i].trackingStatus?.isEmpty ?? true)) {
-        selectedOrderIds.add(orders0[i].orderId);
+      if (selectedProducts[i] && (_orders[i].trackingStatus?.isEmpty ?? true)) {
+        selectedOrderIds.add(_orders[i].orderId);
       }
     }
 
@@ -187,9 +169,9 @@ class CancelledProvider with ChangeNotifier {
         if (response.statusCode == 200) {
           print('Orders returned successfully!');
           // Update local order tracking status
-          for (int i = 0; i < orders0.length; i++) {
-            if (selectedProducts[i] && (orders0[i].trackingStatus?.isEmpty ?? true)) {
-              orders0[i].trackingStatus = 'return'; // Update locally
+          for (int i = 0; i < _orders.length; i++) {
+            if (selectedProducts[i] && (_orders[i].trackingStatus?.isEmpty ?? true)) {
+              _orders[i].trackingStatus = 'return'; // Update locally
             }
           }
 
@@ -211,7 +193,7 @@ class CancelledProvider with ChangeNotifier {
   void onSearchChanged(String query) {
     if (debounce?.isActive ?? false) debounce!.cancel();
     debounce = Timer(const Duration(milliseconds: 500), () {
-      if (query.isEmpty) {
+      if (query.trim().isEmpty) {
         // If query is empty, reload all orders
         fetchOrdersWithStatus10();
       } else {
@@ -223,7 +205,7 @@ class CancelledProvider with ChangeNotifier {
   Future<List<Order>> searchOrders(String query) async {
     if (query.isEmpty) {
       await fetchOrdersWithStatus10();
-      return orders0;
+      return _orders;
     }
 
     isLoading = true;
@@ -261,20 +243,22 @@ class CancelledProvider with ChangeNotifier {
         //   print('No data found in response.');
         // }
 
-        orders0 = orders;
+        _orders = orders;
+        selectedProducts = List<bool>.filled(_orders.length, false); // Reset to match _orders
+        selectAll = false;
         print('Orders fetched: ${orders.length}');
       } else {
         print('Failed to load orders: ${response.statusCode}');
-        orders0 = [];
+        _orders = [];
       }
     } catch (error) {
       print('Error searching failed orders: $error');
-      orders0 = [];
+      _orders = [];
     } finally {
       isLoading = false;
       notifyListeners();
     }
 
-    return orders0;
+    return _orders;
   }
 }

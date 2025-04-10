@@ -26,9 +26,8 @@ class _CheckerPageState extends State<CheckerPage> {
     Provider.of<CheckerProvider>(context, listen: false).textEditingController.clear();
   }
 
-  void _onSearchButtonPressed() {
-    final query = _searchController.text.trim();
-    if (query.isNotEmpty) {
+  void _onSearchButtonPressed(String query) {
+    if (query.trim().isNotEmpty) {
       Provider.of<CheckerProvider>(context, listen: false).onSearchChanged(query);
     }
   }
@@ -65,16 +64,7 @@ class _CheckerPageState extends State<CheckerPage> {
                           border: InputBorder.none,
                           contentPadding: EdgeInsets.symmetric(vertical: 12, horizontal: 8),
                         ),
-                        onChanged: (query) {
-                          // Trigger a rebuild to show/hide the search button
-                          // setState(() {
-                          //   // Update search focus
-                          // });
-                          if (query.isEmpty) {
-                            // Reset to all orders if search is cleared
-                            checkerProvider.fetchOrdersWithStatus6();
-                          }
-                        },
+                        onChanged: _onSearchButtonPressed,
                         onSubmitted: (query) {
                           if (query.isNotEmpty) {
                             checkerProvider.searchOrders(query);
@@ -86,89 +76,7 @@ class _CheckerPageState extends State<CheckerPage> {
                         },
                       ),
                     ),
-                    // const SizedBox(width: 8),
-                    // // Search Button
-                    // ElevatedButton(
-                    //   style: ElevatedButton.styleFrom(
-                    //     backgroundColor: AppColors.primaryBlue,
-                    //   ),
-                    //   onPressed: _searchController.text.isNotEmpty ? _onSearchButtonPressed : null,
-                    //   child: const Text(
-                    //     'Search',
-                    //     style: TextStyle(color: Colors.white),
-                    //   ),
-                    // ),
                     const Spacer(),
-                    //   ElevatedButton(
-                    //   style: ElevatedButton.styleFrom(
-                    //     backgroundColor: AppColors.cardsred,
-                    //   ),
-                    //   onPressed: checkerProvider.isCancel
-                    //       ? null // Disable button while loading
-                    //       : () async {
-                    //           final provider = Provider.of<CheckerProvider>(
-                    //               context,
-                    //               listen: false);
-                    //           // Collect selected order IDs
-                    //           List<String> selectedOrderIds = provider.orders
-                    //               .asMap()
-                    //               .entries
-                    //               .where((entry) =>
-                    //                   provider.selectedProducts[entry.key])
-                    //               .map((entry) => entry.value.orderId)
-                    //               .toList();
-                    //           if (selectedOrderIds.isEmpty) {
-                    //             // Show an error message if no orders are selected
-                    //             ScaffoldMessenger.of(context).showSnackBar(
-                    //               const SnackBar(
-                    //                 content: Text('No orders selected'),
-                    //                 backgroundColor: AppColors.cardsred,
-                    //               ),
-                    //             );
-                    //           } else {
-                    //             // Set loading status to true before starting the operation
-                    //             provider.setCancelStatus(true);
-                    //             // Call confirmOrders method with selected IDs
-                    //             String resultMessage = await provider
-                    //                 .cancelOrders(context, selectedOrderIds);
-                    //             // Set loading status to false after operation completes
-                    //             provider.setCancelStatus(false);
-                    //             // Determine the background color based on the result
-                    //             Color snackBarColor;
-                    //             if (resultMessage.contains('success')) {
-                    //               snackBarColor =
-                    //                   AppColors.green; // Success: Green
-                    //             } else if (resultMessage.contains('error') ||
-                    //                 resultMessage.contains('failed')) {
-                    //               snackBarColor =
-                    //                   AppColors.cardsred; // Error: Red
-                    //             } else {
-                    //               snackBarColor =
-                    //                   AppColors.orange; // Other: Orange
-                    //             }
-                    //             // Show feedback based on the result
-                    //             ScaffoldMessenger.of(context).showSnackBar(
-                    //               SnackBar(
-                    //                 content: Text(resultMessage),
-                    //                 backgroundColor: snackBarColor,
-                    //               ),
-                    //             );
-                    //           }
-                    //         },
-                    //   child: checkerProvider.isCancel
-                    //       ? const SizedBox(
-                    //           width: 20,
-                    //           height: 20,
-                    //           child:
-                    //               CircularProgressIndicator(color: Colors.white),
-                    //         )
-                    //       : const Text(
-                    //           'Cancel Orders',
-                    //           style: TextStyle(color: Colors.white),
-                    //         ),
-                    // ),
-                    // const SizedBox(width: 8),
-                    // Refresh Button
                     ElevatedButton(
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.primaryBlue,
@@ -236,38 +144,43 @@ class _CheckerPageState extends State<CheckerPage> {
                   ],
                 ),
               ),
-              CustomPaginationFooter(
-                currentPage: checkerProvider.currentPage, // Ensure correct currentPage
-                totalPages: checkerProvider.totalPages,
-                buttonSize: 30,
-                pageController: checkerProvider.textEditingController,
-                onFirstPage: () {
-                  checkerProvider.goToPage(1);
-                },
-                onLastPage: () {
-                  checkerProvider.goToPage(checkerProvider.totalPages);
-                },
-                onNextPage: () {
-                  if (checkerProvider.currentPage < checkerProvider.totalPages) {
-                    print('Navigating to page: ${checkerProvider.currentPage + 1}');
-                    checkerProvider.goToPage(checkerProvider.currentPage + 1);
-                  }
-                },
-                onPreviousPage: () {
-                  if (checkerProvider.currentPage > 1) {
-                    print('Navigating to page: ${checkerProvider.currentPage - 1}');
-                    checkerProvider.goToPage(checkerProvider.currentPage - 1);
-                  }
-                },
-                onGoToPage: (page) {
-                  checkerProvider.goToPage(page);
-                },
-                onJumpToPage: () {
-                  final page = int.tryParse(checkerProvider.textEditingController.text);
-                  if (page != null && page > 0 && page <= checkerProvider.totalPages) {
-                    checkerProvider.goToPage(page);
-                  }
-                },
+              Consumer<CheckerProvider>(
+                builder: (context, checkerProvider, child) {
+                  return CustomPaginationFooter(
+                    currentPage: checkerProvider.currentPage, // Ensure correct currentPage
+                    totalPages: checkerProvider.totalPages,
+                    totalCount: checkerProvider.totalOrders,
+                    buttonSize: 30,
+                    pageController: checkerProvider.textEditingController,
+                    onFirstPage: () {
+                      checkerProvider.goToPage(1);
+                    },
+                    onLastPage: () {
+                      checkerProvider.goToPage(checkerProvider.totalPages);
+                    },
+                    onNextPage: () {
+                      if (checkerProvider.currentPage < checkerProvider.totalPages) {
+                        print('Navigating to page: ${checkerProvider.currentPage + 1}');
+                        checkerProvider.goToPage(checkerProvider.currentPage + 1);
+                      }
+                    },
+                    onPreviousPage: () {
+                      if (checkerProvider.currentPage > 1) {
+                        print('Navigating to page: ${checkerProvider.currentPage - 1}');
+                        checkerProvider.goToPage(checkerProvider.currentPage - 1);
+                      }
+                    },
+                    onGoToPage: (page) {
+                      checkerProvider.goToPage(page);
+                    },
+                    onJumpToPage: () {
+                      final page = int.tryParse(checkerProvider.textEditingController.text);
+                      if (page != null && page > 0 && page <= checkerProvider.totalPages) {
+                        checkerProvider.goToPage(page);
+                      }
+                    },
+                  );
+                }
               ),
             ],
           ),

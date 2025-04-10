@@ -10,7 +10,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../Custom-Files/colors.dart';
 import '../Custom-Files/label_search_field.dart';
 import '../Custom-Files/vendor_search_field.dart';
-import 'location_provider.dart';
+import 'warehouse_provider.dart';
 
 class LabelFormPage extends StatefulWidget {
   const LabelFormPage({super.key});
@@ -275,7 +275,7 @@ class LabelFormPageState extends State<LabelFormPage> with SingleTickerProviderS
           ],
         ),
         backgroundColor: Colors.red,
-        duration: Duration(seconds: 4),
+        duration: Duration(seconds: 5),
         action: SnackBarAction(
           label: 'DISMISS',
           textColor: Colors.white,
@@ -504,7 +504,7 @@ class LabelFormPageState extends State<LabelFormPage> with SingleTickerProviderS
 
     if (_tabController.index == 0) ...[
       Expanded(
-        child: Consumer<LocationProvider>(
+        child: Consumer<WarehouseProvider>(
           builder: (context, pro, child) {
             return _buildDropdown(
               value: receivingPlace,

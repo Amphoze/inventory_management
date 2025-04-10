@@ -4,7 +4,7 @@ import 'package:inventory_management/model/combo_model.dart'; // Assuming your P
 class SkuMap {
   final String mktpSku;
   final String productId;
-  Product? product; // Optional product object for storing additional product info
+  Product? product;
 
   SkuMap({
     required this.mktpSku,

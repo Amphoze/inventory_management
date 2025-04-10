@@ -17,6 +17,8 @@ import '../dashboard.dart';
 import 'chat_provider.dart';
 
 class OrdersProvider with ChangeNotifier {
+  int totalReadyOrders = 0;
+  int totalFailedOrders = 0;
   bool allSelectedReady = false;
   bool allSelectedFailed = false;
   int selectedReadyItemsCount = 0;
@@ -266,21 +268,16 @@ class OrdersProvider with ChangeNotifier {
       if (response.statusCode == 200) {
         return {"success": true, "message": "Order updated successfully"};
       } else {
-
         final json = jsonDecode(response.body);
 
         final message = json['message'] ?? '';
 
         return {"success": false, "message": message.isEmpty ? "Failed to update order" : message};
       }
-
-
     } catch (e, s) {
-
       log('Error while editing order :- $e\n$s');
 
       return {"success": false, "message": e.toString()};
-
     } finally {
       notifyListeners();
     }
@@ -399,10 +396,10 @@ class OrdersProvider with ChangeNotifier {
         _failedOrders = (jsonData['orders'] as List).map((order) => Order.fromJson(order)).toList();
         _totalFailedPages = (jsonData['totalPages'] as int?) ?? 1;
         _currentPageFailed = page;
+        totalFailedOrders = (jsonData['totalOrders'] as int?) ?? 0;
 
         resetSelections();
-        _selectedFailedOrders = List<bool>.filled(failedOrders.length, false);
-        // _failedOrders = failedOrders;
+        _selectedFailedOrders = List<bool>.filled(_failedOrders.length, false);
         notifyListeners();
       } else {
         resetFailed();
@@ -417,22 +414,17 @@ class OrdersProvider with ChangeNotifier {
   }
 
   Future<void> fetchReadyOrders({int page = 1}) async {
-    // searchControllerReady.clear();
     log('fetchReadyOrders');
     if (page < 1 || page > totalReadyPages) {
       return;
     }
-    // if(searchControllerReady.text.trim().isNotEmpty) {
-    //   searchReadyToConfirmOrders(searchControllerReady.text.trim());
-    //   return;
-    // }
-
     setReadyLoading(true);
 
     final prefs = await SharedPreferences.getInstance();
     final warehouseId = prefs.getString('warehouseId') ?? '';
 
-    var readyOrdersUrl = '${await Constants.getBaseUrl()}/orders?warehouse=$warehouseId&orderStatus=1&page=$page&find=true';
+    var readyOrdersUrl =
+        '${await Constants.getBaseUrl()}/orders?warehouse=$warehouseId&orderStatus=1&page=$page&find=true';
 
     if (readyPicked != null) {
       String formattedDate = DateFormat('yyyy-MM-dd').format(readyPicked!);
@@ -474,13 +466,13 @@ class OrdersProvider with ChangeNotifier {
           }
         }
 
-        // _readyOrders = (jsonData['orders'] as List).map((order) => Order.fromJson(order)).toList();
         _readyOrders = rOrders;
         _totalReadyPages = jsonData['totalPages'] ?? 1;
         _currentPageReady = page;
+        totalReadyOrders = jsonData['totalOrders'] ?? 0;
 
         resetSelections();
-        _selectedReadyOrders = List<bool>.filled(readyOrders.length, false);
+        _selectedReadyOrders = List<bool>.filled(_readyOrders.length, false);
 
         notifyListeners();
       } else {
@@ -526,7 +518,6 @@ class OrdersProvider with ChangeNotifier {
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         await fetchReadyOrders();
-        resetSelections();
         return responseData['message'] + ": ${responseData['newOrders'][0]['order_id']}" ?? 'Orders clone successfully';
       } else {
         log('Cloning Response :- ${response.statusCode} ### ${response.body}');
@@ -540,7 +531,6 @@ class OrdersProvider with ChangeNotifier {
       notifyListeners();
     }
   }
-
 
   void initializeSocket(BuildContext context) async {
     _progressMessage = '';
@@ -587,7 +577,6 @@ class OrdersProvider with ChangeNotifier {
         log('CSV file uploaded: $data'); // This is working
         setConfirmStatus(false);
         _showSnackBar(_progressMessage, color: Colors.green); // Debug this
-        resetSelections();
         await fetchReadyOrders();
       });
 
@@ -713,7 +702,6 @@ class OrdersProvider with ChangeNotifier {
 
       if (response.statusCode == 200) {
         await fetchReadyOrders();
-        resetSelections();
         notifyListeners();
 
         log('Order Cancelled Successfully :)');
@@ -733,8 +721,8 @@ class OrdersProvider with ChangeNotifier {
 
   void toggleSelectAllReady(bool isSelected) {
     allSelectedReady = isSelected;
-    selectedReadyItemsCount = isSelected ? readyOrders.length : 0;
-    _selectedReadyOrders = List<bool>.filled(readyOrders.length, isSelected);
+    selectedReadyItemsCount = isSelected ? _readyOrders.length : 0;
+    _selectedReadyOrders = List<bool>.filled(_readyOrders.length, isSelected);
 
     notifyListeners();
   }
@@ -762,29 +750,28 @@ class OrdersProvider with ChangeNotifier {
     if (index >= 0 && index < _selectedReadyOrders.length) {
       _selectedReadyOrders[index] = value;
       selectedReadyItemsCount = _selectedReadyOrders.where((selected) => selected).length;
-
-      allSelectedReady = selectedReadyItemsCount == readyOrders.length;
+      allSelectedReady = selectedReadyItemsCount == _readyOrders.length;
 
       notifyListeners();
     }
   }
 
   Future<void> approveFailedOrders(BuildContext context) async {
-
-    final List<String> failedOrderIds = failedOrders.asMap().entries.where((entry) => _selectedFailedOrders[entry.key]).map((entry) => entry.value.orderId).toList();
+    setUpdating(true);
+    final List<String> failedOrderIds = failedOrders
+        .asMap()
+        .entries
+        .where((entry) => _selectedFailedOrders[entry.key])
+        .map((entry) => entry.value.orderId)
+        .toList();
 
     if (failedOrderIds.isEmpty) {
-      _showSnackbar(context, 'No orders selected to update.');
+      Utils.showSnackBar(context, 'No orders selected to update.', isError: true);
       return;
     }
 
     await updateOrderStatus(context, failedOrderIds, 1);
-
     await fetchFailedOrders();
-
-    allSelectedFailed = false;
-    _selectedFailedOrders = List<bool>.filled(failedOrders.length, false);
-    selectedFailedItemsCount = 0;
     setUpdating(false);
     notifyListeners();
   }
@@ -792,7 +779,7 @@ class OrdersProvider with ChangeNotifier {
   Future<void> updateOrderStatus(BuildContext context, List<String> orderIds, int newStatus) async {
     final String? token = await _getToken();
     if (token == null) {
-      _showSnackbar(context, 'No auth token found');
+      Utils.showSnackBar(context, 'No auth token found', isError: true);
       return;
     }
 
@@ -806,7 +793,6 @@ class OrdersProvider with ChangeNotifier {
     };
 
     try {
-
       final payload = jsonEncode({
         'orderIds': orderIds,
       });
@@ -820,7 +806,6 @@ class OrdersProvider with ChangeNotifier {
       );
 
       if (response.statusCode == 200 || response.statusCode == 201) {
-
         final res = jsonDecode(response.body);
 
         final message = res['message'] ?? '';
@@ -837,9 +822,7 @@ class OrdersProvider with ChangeNotifier {
 
         await fetchReadyOrders();
         await fetchFailedOrders();
-
       } else {
-
         final errorResponse = json.decode(response.body);
 
         String errorMessage = errorResponse['message'] ?? 'Failed to update order status';
@@ -849,14 +832,14 @@ class OrdersProvider with ChangeNotifier {
         log('Failed to update order status: ${response.statusCode} ${response.body}');
       }
     } catch (error) {
-      _showSnackbar(context, 'An error occurred while updating the order status: $error');
+      Utils.showSnackBar(
+        context,
+        'An error occurred while updating the order status',
+        isError: true,
+        details: error.toString(),
+      );
       log('An error occurred while updating the order status: $error');
     }
-  }
-
-  void _showSnackbar(BuildContext context, String message) {
-    final snackBar = SnackBar(content: Text(message));
-    ScaffoldMessenger.of(context).showSnackBar(snackBar);
   }
 
   Future<String?> _getToken() async {
@@ -894,7 +877,8 @@ class OrdersProvider with ChangeNotifier {
     final prefs = await SharedPreferences.getInstance();
     final warehouseId = prefs.getString('warehouseId') ?? '';
 
-    final url = Uri.parse('${await Constants.getBaseUrl()}/orders?warehouse=$warehouseId&orderStatus=1&order_id=$encodedOrderId&find=true');
+    final url = Uri.parse(
+        '${await Constants.getBaseUrl()}/orders?warehouse=$warehouseId&orderStatus=1&order_id=$encodedOrderId&find=true');
     final token = await _getToken();
     if (token == null) return;
 
@@ -913,10 +897,9 @@ class OrdersProvider with ChangeNotifier {
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        log('data: $data');
         _readyOrders = (data['orders'] as List).map((order) => Order.fromJson(order)).toList();
-        // _readyOrders = [Order.fromJson(data)];
-        log('selectedReadyOrders: $selectedReadyOrders');
+        resetSelections();
+        _selectedReadyOrders = List<bool>.filled(_readyOrders.length, false);
       } else {
         resetReady();
       }
@@ -933,7 +916,8 @@ class OrdersProvider with ChangeNotifier {
     final prefs = await SharedPreferences.getInstance();
     final warehouseId = prefs.getString('warehouseId') ?? '';
 
-    final url = Uri.parse('${await Constants.getBaseUrl()}/orders?warehouse=$warehouseId&orderStatus=0,-1&order_id=$encodedOrderId');
+    final url = Uri.parse(
+        '${await Constants.getBaseUrl()}/orders?warehouse=$warehouseId&orderStatus=0,-1&order_id=$encodedOrderId');
     final token = await _getToken();
     if (token == null) return;
 
@@ -954,7 +938,8 @@ class OrdersProvider with ChangeNotifier {
         final res = jsonDecode(response.body);
 
         _failedOrders = (res['orders'] as List).map((order) => Order.fromJson(order)).toList();
-        // _failedOrders = [Order.fromJson(res)];
+        resetSelections();
+        _selectedFailedOrders = List<bool>.filled(_failedOrders.length, false);
       } else {
         resetFailed();
       }
@@ -1000,14 +985,7 @@ class OrdersProvider with ChangeNotifier {
   }
 
   void showSnackBar(BuildContext context, String message, Color color) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        duration: const Duration(seconds: 3),
-        behavior: SnackBarBehavior.floating,
-        backgroundColor: color,
-      ),
-    );
+    Utils.showSnackBar(context, message, color: color);
   }
 
   Future<Map<String, dynamic>> splitOrder(String orderId, List<String> productSkus, {String weightLimit = ""}) async {

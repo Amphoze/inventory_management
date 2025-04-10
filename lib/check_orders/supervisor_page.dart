@@ -1,6 +1,8 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:inventory_management/check_orders/provider/check_orders_provider.dart';
+import 'package:inventory_management/check_orders/provider/supervisor_provider.dart';
 import 'package:inventory_management/check_orders/recheck_orders_page.dart';
 import 'package:inventory_management/check_orders/widgets/check_order_card.dart';
 
@@ -15,11 +17,25 @@ class SupervisorPage extends StatefulWidget {
 
 class _SupervisorPageState extends State<SupervisorPage> {
   final TextEditingController _searchController = TextEditingController();
+  late SupervisorProvider supervisorProvider;
+  Timer? _debounce;
+
+  void _onSearchChanged(String value) {
+    if (value.trim().isEmpty) {
+      supervisorProvider.getCheckOrders();
+    }
+
+    if (_debounce?.isActive ?? false) _debounce?.cancel();
+    _debounce = Timer(const Duration(milliseconds: 300), () {
+      supervisorProvider.searchCheckOrders(value);
+    });
+  }
   @override
   void initState() {
     super.initState();
+    supervisorProvider = Provider.of<SupervisorProvider>(context, listen: false);
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      Provider.of<CheckOrdersProvider>(context, listen: false).getCheckOrders();
+      supervisorProvider.getCheckOrders();
     });
   }
 
@@ -47,11 +63,7 @@ class _SupervisorPageState extends State<SupervisorPage> {
                   ),
                   child: TextField(
                     controller: _searchController,
-                    onChanged: (value) {
-                      if (value.isEmpty) {
-                        Provider.of<CheckOrdersProvider>(context, listen: false).getCheckOrders();
-                      }
-                    },
+                    onChanged: _onSearchChanged,
                     decoration: const InputDecoration(
                       hintText: 'Search by Order ID',
                       hintStyle: TextStyle(
@@ -63,7 +75,7 @@ class _SupervisorPageState extends State<SupervisorPage> {
                     ),
                     onSubmitted: (value) {
                       if (value.trim().isNotEmpty) {
-                        Provider.of<CheckOrdersProvider>(context, listen: false).searchCheckOrders(value.trim());
+                        Provider.of<SupervisorProvider>(context, listen: false).searchCheckOrders(value.trim());
                       }
                     },
                   ),
@@ -75,7 +87,7 @@ class _SupervisorPageState extends State<SupervisorPage> {
                     setState(() {
                       _searchController.clear();
                     });
-                    Provider.of<CheckOrdersProvider>(context, listen: false).getCheckOrders();
+                    Provider.of<SupervisorProvider>(context, listen: false).getCheckOrders();
                   },
                 ),
                 const SizedBox(width: 8),
@@ -92,7 +104,7 @@ class _SupervisorPageState extends State<SupervisorPage> {
             ),
             const SizedBox(height: 16),
             Expanded(
-              child: Consumer<CheckOrdersProvider>(
+              child: Consumer<SupervisorProvider>(
                 builder: (context, provider, child) {
                   if (provider.isCheckOrdersLoading) {
                     return const Center(child: CircularProgressIndicator());

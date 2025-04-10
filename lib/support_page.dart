@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:developer';
 
 import 'package:flutter/material.dart';
@@ -39,6 +40,19 @@ class _SupportPageState extends State<SupportPage> {
     final prefs = await SharedPreferences.getInstance();
     email = prefs.getString('email') ?? '';
     role = prefs.getString('userPrimaryRole');
+  }
+
+  Timer? _debounce;
+
+  void _onSearchChanged(String value) {
+    if (value.trim().isEmpty) {
+      provider.fetchSupportOrders();
+    }
+
+    if (_debounce?.isActive ?? false) _debounce?.cancel();
+    _debounce = Timer(const Duration(milliseconds: 300), () {
+      provider.searchOrders(value);
+    });
   }
 
   void _onSearchButtonPressed() {
@@ -113,23 +127,12 @@ class _SupportPageState extends State<SupportPage> {
                             border: InputBorder.none,
                             contentPadding: EdgeInsets.symmetric(vertical: 12, horizontal: 8),
                           ),
-                          onChanged: (query) {
-                            setState(() {});
-                            if (query.isEmpty) {
-                              pro.fetchSupportOrders();
-                            }
-                          },
-                          onTap: () {
-                            setState(() {});
-                          },
+                          onChanged: _onSearchChanged,
                           onSubmitted: (query) {
-                            if (query.isNotEmpty) {
+                            if (query.trim().isNotEmpty) {
                               pro.searchOrders(query);
                             }
-                          },
-                          onEditingComplete: () {
-                            FocusScope.of(context).unfocus();
-                          },
+                          }
                         ),
                       ),
                     ),
@@ -653,36 +656,41 @@ class _SupportPageState extends State<SupportPage> {
                   ],
                 ),
               ),
-              CustomPaginationFooter(
-                currentPage: pro.currentPage,
-                totalPages: pro.totalPages,
-                buttonSize: 30,
-                pageController: pro.textEditingController,
-                onFirstPage: () {
-                  pro.goToPage(1);
-                },
-                onLastPage: () {
-                  pro.goToPage(pro.totalPages);
-                },
-                onNextPage: () {
-                  if (pro.currentPage < pro.totalPages) {
-                    pro.goToPage(pro.currentPage + 1);
-                  }
-                },
-                onPreviousPage: () {
-                  if (pro.currentPage > 1) {
-                    pro.goToPage(pro.currentPage - 1);
-                  }
-                },
-                onGoToPage: (page) {
-                  pro.goToPage(page);
-                },
-                onJumpToPage: () {
-                  final page = int.tryParse(pro.textEditingController.text);
-                  if (page != null && page > 0 && page <= pro.totalPages) {
-                    pro.goToPage(page);
-                  }
-                },
+              Consumer<SupportProvider>(
+                builder: (context, pro, child) {
+                  return CustomPaginationFooter(
+                    currentPage: pro.currentPage,
+                    totalPages: pro.totalPages,
+                    totalCount: pro.totalOrders,
+                    buttonSize: 30,
+                    pageController: pro.textEditingController,
+                    onFirstPage: () {
+                      pro.goToPage(1);
+                    },
+                    onLastPage: () {
+                      pro.goToPage(pro.totalPages);
+                    },
+                    onNextPage: () {
+                      if (pro.currentPage < pro.totalPages) {
+                        pro.goToPage(pro.currentPage + 1);
+                      }
+                    },
+                    onPreviousPage: () {
+                      if (pro.currentPage > 1) {
+                        pro.goToPage(pro.currentPage - 1);
+                      }
+                    },
+                    onGoToPage: (page) {
+                      pro.goToPage(page);
+                    },
+                    onJumpToPage: () {
+                      final page = int.tryParse(pro.textEditingController.text);
+                      if (page != null && page > 0 && page <= pro.totalPages) {
+                        pro.goToPage(page);
+                      }
+                    },
+                  );
+                }
               ),
             ],
           ),
@@ -770,120 +778,3 @@ class _SupportPageState extends State<SupportPage> {
     );
   }
 }
-
-// Widget buildLabelValueRow(String label, String? value) {
-//   return Row(
-//     crossAxisAlignment: CrossAxisAlignment.start,
-//     mainAxisSize: MainAxisSize.min,
-//     children: [
-//       Text(
-//         '$label: ',
-//         style: const TextStyle(
-//           fontWeight: FontWeight.bold,
-//           fontSize: 12.0,
-//         ),
-//       ),
-//       Flexible(
-//         child: Tooltip(
-//           message: value ?? '',
-//           child: Text(
-//             value ?? '',
-//             overflow: TextOverflow.ellipsis,
-//             maxLines: 1,
-//             style: const TextStyle(
-//               fontSize: 12.0,
-//             ),
-//           ),
-//         ),
-//       ),
-//     ],
-//   );
-// }
-//
-// Widget _buildInfoColumn(String title, List<Widget> children) {
-//   return Expanded(
-//     child: Column(
-//       crossAxisAlignment: CrossAxisAlignment.start,
-//       children: [
-//         Text(
-//           title,
-//           style: const TextStyle(
-//             fontWeight: FontWeight.bold,
-//             fontSize: 14.0,
-//             color: AppColors.primaryBlue,
-//           ),
-//         ),
-//         const SizedBox(height: 8),
-//         ...children,
-//       ],
-//     ),
-//   );
-// }
-//
-// // Helper method to build address cards
-// Widget _buildAddressCard(
-//   String title,
-//   dynamic address,
-//   String? firstName,
-//   String? lastName,
-//   dynamic pincode,
-//   String? countryCode,
-// ) {
-//   return Card(
-//     elevation: 2,
-//     color: Colors.white,
-//     child: Padding(
-//       padding: const EdgeInsets.all(16.0),
-//       child: Column(
-//         crossAxisAlignment: CrossAxisAlignment.start,
-//         children: [
-//           Text(
-//             title,
-//             style: const TextStyle(
-//               fontWeight: FontWeight.bold,
-//               fontSize: 14.0,
-//               color: AppColors.primaryBlue,
-//             ),
-//           ),
-//           const SizedBox(height: 8),
-//           Row(
-//             crossAxisAlignment: CrossAxisAlignment.start,
-//             children: [
-//               const Text(
-//                 'Address: ',
-//                 style: TextStyle(
-//                   fontWeight: FontWeight.bold,
-//                   fontSize: 12.0,
-//                 ),
-//               ),
-//               Expanded(
-//                 child: Text(
-//                   [
-//                     address?.address1,
-//                     address?.address2,
-//                     address?.city,
-//                     address?.state,
-//                     address?.country,
-//                     address?.pincode?.toString(),
-//                   ]
-//                       .where((element) => element != null && element.isNotEmpty)
-//                       .join(', ')
-//                       .replaceAllMapped(RegExp('.{1,50}'), (match) => '${match.group(0)}\n'),
-//                   softWrap: true,
-//                   style: const TextStyle(fontSize: 12.0),
-//                 ),
-//               ),
-//             ],
-//           ),
-//           const SizedBox(height: 8),
-//           buildLabelValueRow(
-//             'Name',
-//             firstName != lastName ? '$firstName $lastName'.trim() : firstName ?? '',
-//           ),
-//           buildLabelValueRow('Pincode', pincode?.toString() ?? ''),
-//           buildLabelValueRow('Country Code', countryCode ?? ''),
-//         ],
-//       ),
-//     ),
-//   );
-// }

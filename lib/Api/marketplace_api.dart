@@ -41,7 +41,7 @@ class MarketplaceApi {
     }
   }
 
-  Future<List<Marketplace>> getMarketplaces() async {
+  Future<Map<String, dynamic>> getMarketplaces() async {
     String baseUrl = '${await Constants.getBaseUrl()}/marketplace?limit=100';
     final url = Uri.parse(baseUrl);
     log('Getting Market Places from URL :- $url');
@@ -56,10 +56,12 @@ class MarketplaceApi {
 
         if (responseJson.containsKey('data') && (responseJson['data']?.containsKey('marketplaces') ?? false)) {
           final List<dynamic> marketplaceJson = responseJson['data']?['marketplaces'] ?? [];
-          // log('marketplaceJson: $marketplaceJson');
-          return marketplaceJson.map((json) => Marketplace.fromJson(json)).toList();
+          return {
+            'totalMarketplace': responseJson['data']?['totalMarketplace'] ?? 0,
+            'marketplaces': marketplaceJson.map((json) => Marketplace.fromJson(json)).toList(),
+          };
         } else {
-          throw Exception('Expected "marketplaces" field not found in response');
+          return {};
         }
       } else {
         throw Exception('Failed to load marketplaces: ${response.body}');
@@ -67,7 +69,7 @@ class MarketplaceApi {
     } catch (e, s) {
       log("Error in getMarketplaces: $e $s");
     }
-    return [];
+    return {};
   }
 
   Future<Marketplace> getMarketplaceById(String id) async {

@@ -12,6 +12,8 @@ import 'package:logger/logger.dart';
 import 'package:socket_io_client/socket_io_client.dart' as IO;
 import 'package:url_launcher/url_launcher.dart';
 
+import 'Custom-Files/utils.dart';
+
 class CreateInvoiceByCSV extends StatefulWidget {
   const CreateInvoiceByCSV({super.key});
 
@@ -48,7 +50,6 @@ class _CreateInvoiceByCSVState extends State<CreateInvoiceByCSV> {
       final baseUrl = await Constants.getBaseUrl();
       log('Base URL in _initializeSocket: $baseUrl');
       final email = await AuthProvider().getEmail();
-
 
       // Initialize socket if not already initialized
       _socket ??= IO.io(
@@ -113,14 +114,7 @@ class _CreateInvoiceByCSVState extends State<CreateInvoiceByCSV> {
 // Helper function to show snackbars
   void _showSnackbar(String message, Color color) {
     if (context.mounted) {
-      ScaffoldMessenger.of(context).removeCurrentSnackBar();
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(message),
-          backgroundColor: color,
-          duration: const Duration(seconds: 3),
-        ),
-      );
+      Utils.showSnackBar(context, message, color: color);
     }
   }
 
@@ -202,9 +196,8 @@ class _CreateInvoiceByCSVState extends State<CreateInvoiceByCSV> {
       }
     } catch (e) {
       log('pick error: $e');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error reading CSV file: $e')),
-      );
+      Utils.showSnackBar(context, 'Error reading CSV file', details: e.toString(), isError: true);
+
       setState(() {
         _isPickingFile = false;
         _isProcessingFile = false;
@@ -230,9 +223,7 @@ class _CreateInvoiceByCSVState extends State<CreateInvoiceByCSV> {
       });
     } catch (e) {
       log('Error processing CSV: $e');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error processing CSV file: $e')),
-      );
+      Utils.showSnackBar(context, 'Error processing CSV file', details: e.toString(), isError: true);
       setState(() {
         _isProcessingFile = false;
       });
@@ -252,9 +243,7 @@ class _CreateInvoiceByCSVState extends State<CreateInvoiceByCSV> {
     try {
       final token = await getToken();
       if (token == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Authentication token not found')),
-        );
+        Utils.showSnackBar(context, 'Authentication token not found', isError: true);
         return;
       }
 
@@ -286,20 +275,13 @@ class _CreateInvoiceByCSVState extends State<CreateInvoiceByCSV> {
       Logger().e('Create Csv Body: $responseBody, Status Code: ${response.statusCode}');
 
       if (response.statusCode == 200 || response.statusCode == 201) {
-        // ScaffoldMessenger.of(context).showSnackBar(
-        //   SnackBar(content: Text("${jsonData['message']}")),
-        // );
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("${jsonData['message']}")),
-        );
+        Utils.showSnackBar(context, "${jsonData['message'] ?? 'An error occurred'}", isError: true);
         log('Failed to upload CSV: ${response.statusCode}\n$responseBody');
       }
     } catch (e) {
       log('Error: $e', error: e, stackTrace: StackTrace.current);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: $e')),
-      );
+      Utils.showSnackBar(context, "Error creating invoice", details: e.toString(), isError: true);
     } finally {
       setState(() {
         _isCreating = false;
@@ -339,14 +321,18 @@ class _CreateInvoiceByCSVState extends State<CreateInvoiceByCSV> {
                 ),
                 const SizedBox(width: 16),
                 ElevatedButton(
-                  onPressed: _isPickingFile || _isProcessingFile ? null : () => AuthProvider().downloadTemplate(context, 'confirmOrder'),
+                  onPressed: _isPickingFile || _isProcessingFile
+                      ? null
+                      : () => AuthProvider().downloadTemplate(context, 'confirmOrder'),
                   child: const Text('Download Template'),
                 ),
                 const SizedBox(width: 16),
                 if (_rowCount > 0)
                   Expanded(
                     child: ElevatedButton(
-                      onPressed: _isCreateEnabled && !_isCreating && !_isPickingFile && !_isProcessingFile ? _createInvoice : null,
+                      onPressed: _isCreateEnabled && !_isCreating && !_isPickingFile && !_isProcessingFile
+                          ? _createInvoice
+                          : null,
                       child: const Text('Create Invoice'),
                     ),
                   ),

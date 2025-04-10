@@ -5,7 +5,7 @@ import 'package:inventory_management/Custom-Files/utils.dart';
 import 'package:inventory_management/provider/inventory_provider.dart';
 import 'package:provider/provider.dart';
 
-import 'provider/location_provider.dart';
+import 'provider/warehouse_provider.dart';
 
 class CreateInventoryScreen extends StatefulWidget {
   const CreateInventoryScreen({super.key});
@@ -92,7 +92,7 @@ class _CreateInventoryScreenState extends State<CreateInventoryScreen> {
                                 children: [
                   
                                   Expanded(
-                                    child: Consumer<LocationProvider>(
+                                    child: Consumer<WarehouseProvider>(
                                       builder: (context, pro, child) {
                                         return _buildDropdown(
                                           value: subInventory.warehouseName,

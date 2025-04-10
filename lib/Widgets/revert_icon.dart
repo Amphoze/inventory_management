@@ -217,9 +217,8 @@ class _RevertOrderWidgetState extends State<RevertOrderWidget> {
         Utils.showInfoDialog(context, res['message'], false);
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Failed to revert order.")),
-      );
+      Utils.showSnackBar(context, 'Failed to revert order', details: e.toString(), isError: true);
+
     }
   }
 

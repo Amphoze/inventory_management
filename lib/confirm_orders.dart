@@ -202,9 +202,7 @@ class _ConfirmOrdersState extends State<ConfirmOrders> {
       }
     } catch (e) {
       log('pick error: $e');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error reading CSV file: $e')),
-      );
+      Utils.showSnackBar(context, 'Error reading CSV file', details: e.toString(), isError: true);
       setState(() {
         _isPickingFile = false;
         _isProcessingFile = false;
@@ -230,9 +228,7 @@ class _ConfirmOrdersState extends State<ConfirmOrders> {
       });
     } catch (e) {
       log('Error processing CSV: $e');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error processing CSV file: $e')),
-      );
+      Utils.showSnackBar(context, 'Error processing CSV file', details: e.toString(), isError: true);
       setState(() {
         _isProcessingFile = false;
       });
@@ -253,9 +249,8 @@ class _ConfirmOrdersState extends State<ConfirmOrders> {
     try {
       final token = await getToken();
       if (token == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Authentication token not found')),
-        );
+
+        Utils.showSnackBar(context, 'Error reading CSV file', isError: true);
         return;
       }
 
@@ -292,16 +287,12 @@ class _ConfirmOrdersState extends State<ConfirmOrders> {
           Utils.showSnackBar(context, jsonData['message']);
         }
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("${jsonData['message']}")),
-        );
+        Utils.showSnackBar(context, jsonData['message'] ?? '', isError: true);
         log('Failed to upload CSV: ${response.statusCode}\n$responseBody');
       }
     } catch (e) {
       log('Error during order creation: $e', error: e, stackTrace: StackTrace.current);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: $e')),
-      );
+      Utils.showSnackBar(context, 'An error occurred while confirming orders', details: e.toString(), isError: true);
     }
   }
 
@@ -315,26 +306,9 @@ class _ConfirmOrdersState extends State<ConfirmOrders> {
 
     if (hasError) {
       String firstErrorMessage = results.firstWhere((order) => order['status'] == 'Failed')['errors'][0];
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            'Error: $firstErrorMessage',
-            style: const TextStyle(color: Colors.white),
-          ),
-          backgroundColor: Colors.red,
-        ),
-      );
+      Utils.showSnackBar(context, 'Error: $firstErrorMessage', isError: true);
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            'Success: $message',
-            style: const TextStyle(color: Colors.white),
-          ),
-          backgroundColor: Colors.green,
-        ),
-      );
+      Utils.showSnackBar(context, 'Success: $message', color: AppColors.cardsgreen);
     }
   }
 

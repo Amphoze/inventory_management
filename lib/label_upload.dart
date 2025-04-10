@@ -4,6 +4,8 @@ import 'package:inventory_management/provider/label_data_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:inventory_management/Custom-Files/colors.dart';
 import 'package:inventory_management/Api/auth_provider.dart';
+
+import 'Custom-Files/utils.dart';
 // Import the html library
 
 class LabelUpload extends StatefulWidget {
@@ -16,8 +18,7 @@ class LabelUpload extends StatefulWidget {
 class _LabelUploadState extends State<LabelUpload> {
   Future<void> _uploadLabels(BuildContext context) async {
     final authProvider = AuthProvider();
-    final labelDataProvider =
-        Provider.of<LabelDataProvider>(context, listen: false);
+    final labelDataProvider = Provider.of<LabelDataProvider>(context, listen: false);
 
     if (labelDataProvider.labelDataGroups.isEmpty) {
       _showMessage(context, 'No data available to upload.', isError: true);
@@ -67,16 +68,12 @@ class _LabelUploadState extends State<LabelUpload> {
     }
   }
 
-  void _showMessage(BuildContext context, String message,
-      {bool isError = false, bool isCancelled = false}) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: isCancelled
-            ? Colors.orange
-            : (isError ? AppColors.cardsred : AppColors.primaryGreen),
-        duration: const Duration(seconds: 4),
-      ),
+  void _showMessage(BuildContext context, String message, {bool isError = false, bool isCancelled = false}) {
+    Utils.showSnackBar(
+      context,
+      message,
+      color: isCancelled ? Colors.orange : (isError ? AppColors.cardsred : AppColors.primaryGreen),
+      seconds: 5,
     );
   }
 
@@ -102,8 +99,7 @@ class _LabelUploadState extends State<LabelUpload> {
   Widget build(BuildContext context) {
     final labelDataProvider = Provider.of<LabelDataProvider>(context);
     final screenWidth = MediaQuery.of(context).size.width;
-    final baseTextSize =
-        screenWidth > 1200 ? 16.0 : (screenWidth > 800 ? 15.0 : 14.0);
+    final baseTextSize = screenWidth > 1200 ? 16.0 : (screenWidth > 800 ? 15.0 : 14.0);
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (labelDataProvider.isLoadingDataGroups) {
@@ -133,8 +129,7 @@ class _LabelUploadState extends State<LabelUpload> {
                 ExcelFileUploader(
                   sheetName: 'Sheet1',
                   onUploadSuccess: labelDataProvider.setDataGroups,
-                  onError: (errorMessage) =>
-                      _showMessage(context, errorMessage, isError: true),
+                  onError: (errorMessage) => _showMessage(context, errorMessage, isError: true),
                 ),
                 if (labelDataProvider.isUploadSuccessful) ...[
                   const SizedBox(width: 16.0),
@@ -144,27 +139,22 @@ class _LabelUploadState extends State<LabelUpload> {
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(10),
                       ),
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 24.0, vertical: 12.0),
+                      padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 12.0),
                     ),
-                    onPressed: labelDataProvider.isUploading
-                        ? null
-                        : () => _uploadLabels(context),
+                    onPressed: labelDataProvider.isUploading ? null : () => _uploadLabels(context),
                     child: const Text('Upload Labels'),
                   ),
                   IconButton(
                     icon: const Icon(Icons.cancel, color: Colors.red),
                     onPressed: () {
                       labelDataProvider.reset();
-                      _showMessage(context, 'Upload cancelled.',
-                          isCancelled: true);
+                      _showMessage(context, 'Upload cancelled.', isCancelled: true);
                     },
                   ),
                 ],
                 const SizedBox(width: 16),
                 ElevatedButton(
-                  onPressed: () =>
-                      AuthProvider().downloadTemplate(context, 'label'),
+                  onPressed: () => AuthProvider().downloadTemplate(context, 'label'),
                   child: const Text('Download Template'),
                 ),
               ],
@@ -181,8 +171,7 @@ class _LabelUploadState extends State<LabelUpload> {
                   : ListView.builder(
                       itemCount: labelDataProvider.labelDataGroups.length,
                       itemBuilder: (context, index) {
-                        final dataMap =
-                            labelDataProvider.labelDataGroups[index];
+                        final dataMap = labelDataProvider.labelDataGroups[index];
                         return _buildListItem(context, dataMap, baseTextSize);
                       },
                     ),
@@ -193,8 +182,7 @@ class _LabelUploadState extends State<LabelUpload> {
     );
   }
 
-  Widget _buildListItem(
-      BuildContext context, Map<String, String> dataMap, double baseTextSize) {
+  Widget _buildListItem(BuildContext context, Map<String, String> dataMap, double baseTextSize) {
     return GestureDetector(
       child: Container(
         margin: const EdgeInsets.symmetric(vertical: 8.0),

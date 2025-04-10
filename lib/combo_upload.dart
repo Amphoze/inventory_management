@@ -8,6 +8,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:inventory_management/Api/inventory_api.dart';
+import 'package:inventory_management/Custom-Files/utils.dart';
 import 'dart:html' as html;
 
 import 'package:inventory_management/constants/constants.dart';
@@ -50,9 +51,7 @@ class _ComboUploadState extends State<ComboUpload> {
         });
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error reading CSV file: $e')),
-      );
+      Utils.showSnackBar(context, 'Error reading CSV file', isError: true, details: e.toString());
     } finally {
       setState(() {
         _isPicking = false;
@@ -122,81 +121,21 @@ class _ComboUploadState extends State<ComboUpload> {
         }
       }
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Upload completed successfully!')),
-      );
+      Utils.showSnackBar(context, 'Upload completed successfully!', color: AppColors.cardsgreen);
 
       setState(() {
         _isUploaded = true;
       });
       log(errorComboSku.toString());
-    } catch (e) {
-      log(e.toString());
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error during upload: $e')),
-      );
+    } catch (e,s) {
+      log("$e\n\n$s");
+      Utils.showSnackBar(context, 'Error during upload', isError: true, details: e.toString());
     } finally {
       setState(() {
         _isUploading = false;
       });
     }
   }
-
-  // Future<void> _uploadInventory() async {
-  //   if (_csvData.isEmpty) return;
-  //   setState(() {
-  //     _isUploading = true;
-  //     _currentUploadIndex = 0;
-  //   });
-  //   try {
-  //     final token = await getToken();
-  //     if (token == null) {
-  //       throw Exception('No authentication token found');
-  //     }
-  //     for (int i = 1; i < _csvData.length; i++) {
-  //       setState(() {
-  //         _currentUploadIndex = i;
-  //       });
-  //       final sku = _csvData[i][0].toString();
-  //       final quantity = num.parse(_csvData[i][1].toString());
-  //       log("${await ApiUrls.getBaseUrl()}/combo?sku=$sku");
-  //       log({
-  //         "newTotal": quantity,
-  //         "warehouseId": "66fceb5163c6d5c106cfa809",
-  //         "additionalInfo": {"reason": "Excel update"}
-  //       }.toString());
-  //       final response = await http.put(
-  //         Uri.parse(
-  //             '${await ApiUrls.getBaseUrl()}/combo?sku=$sku'),
-  //         headers: {
-  //           'Content-Type': 'application/json',
-  //           'Authorization': 'Bearer $token',
-  //         },
-  //         body: json.encode({
-  //           "newTotal": quantity,
-  //           "warehouseId": "66fceb5163c6d5c106cfa809",
-  //           "additionalInfo": {"reason": "Excel update"}
-  //         }),
-  //       );
-  //       log(response.statusCode.toString());
-  //       if (response.statusCode != 200) {
-  //         throw Exception('Failed to upload SKU: $sku');
-  //       }
-  //       await Future.delayed(const Duration(milliseconds: 100));
-  //     }
-  //     ScaffoldMessenger.of(context).showSnackBar(
-  //       const SnackBar(content: Text('Upload completed successfully!')),
-  //     );
-  //   } catch (e) {
-  //     ScaffoldMessenger.of(context).showSnackBar(
-  //       SnackBar(content: Text('Error during upload: $e')),
-  //     );
-  //   } finally {
-  //     setState(() {
-  //       _isUploading = false;
-  //     });
-  //   }
-  // }
 
   @override
   Widget build(BuildContext context) {
@@ -322,11 +261,7 @@ class _ComboUploadState extends State<ComboUpload> {
                               final String content = errorComboSku.join('\n');
                               html.window.navigator.clipboard!
                                   .writeText(content);
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                    content:
-                                        Text('Contents copied to clipboard!')),
-                              );
+                              Utils.showSnackBar(context, 'Contents copied to clipboard!', color: AppColors.primaryGreen);
                             },
                             child: Icon(
                               Icons.copy,

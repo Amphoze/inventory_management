@@ -3,7 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:inventory_management/Api/lable-page-api.dart';
 import 'package:inventory_management/Custom-Files/responsove-layout.dart';
+import 'package:inventory_management/Custom-Files/utils.dart';
 import 'package:provider/provider.dart';
+
+import 'Custom-Files/colors.dart';
 
 class CreateLabelPage extends StatefulWidget {
   const CreateLabelPage({super.key});
@@ -38,12 +41,7 @@ class _CreateLabelPageState extends State<CreateLabelPage> {
       labelPageProvider!.buttonTapStatus(true);
       var res = await labelPageProvider!.createLabel();
       if (res["res"] == "success") {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text("Label created successfully"),
-            backgroundColor: Colors.green,
-          ),
-        );
+        Utils.showSnackBar(context, "Label created successfully", color: AppColors.cardsgreen);
         labelPageProvider!.clearControllers(_dropdownKey);
         labelPageProvider!.buttonTapStatus(false);
       } else {
@@ -51,12 +49,7 @@ class _CreateLabelPageState extends State<CreateLabelPage> {
       }
     } catch (e) {
       labelPageProvider!.buttonTapStatus(false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text("Error: ${e.toString()}"),
-          backgroundColor: Colors.red,
-        ),
-      );
+      Utils.showSnackBar(context, "Error creating label", isError: true, details: "Error: $e");
     }
   }
 

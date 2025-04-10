@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -11,6 +12,8 @@ import 'package:logger/logger.dart';
 import 'package:provider/provider.dart';
 import 'package:inventory_management/model/orders_model.dart';
 
+import 'Custom-Files/utils.dart';
+
 class AllOrdersPage extends StatefulWidget {
   const AllOrdersPage({super.key});
 
@@ -19,7 +22,6 @@ class AllOrdersPage extends StatefulWidget {
 }
 
 class _AllOrdersPageState extends State<AllOrdersPage> with SingleTickerProviderStateMixin {
-
   final TextEditingController _pageController = TextEditingController();
   List<Map<String, String>> statuses = [];
   String selectedCourier = 'All';
@@ -31,18 +33,32 @@ class _AllOrdersPageState extends State<AllOrdersPage> with SingleTickerProvider
   final Map<String, ValueNotifier<String?>> delhiveryTrackingStatuses = {};
   final Map<String, ValueNotifier<String?>> shiprocketTrackingStatuses = {};
 
+  Timer? _debounce;
+
+  void _onSearchChanged(String value) {
+    if (value.trim().isEmpty) {
+      setState(() {
+        _selectedDate = 'Select Date';
+        picked = null;
+        selectedCourier = 'All';
+        selectedStatus = 'All';
+      });
+      context.read<AllOrdersProvider>().fetchAllOrders();
+    }
+
+    if (_debounce?.isActive ?? false) _debounce?.cancel();
+    _debounce = Timer(const Duration(milliseconds: 300), () {
+      allOrdersProvider.searchOrdersWithId(value);
+    });
+  }
+
   @override
   void initState() {
     super.initState();
     allOrdersProvider = Provider.of<AllOrdersProvider>(context, listen: false);
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      // selectedCourier = 'All';
-      // selectedStatus = 'All';
-      // _selectedDate = 'Select Date';
-      // picked = null;
       allOrdersProvider.fetchAllOrders(page: allOrdersProvider.currentPage);
-      // context.read<MarketplaceProvider>().fetchMarketplaces();
       fetchStatuses();
     });
   }
@@ -101,13 +117,14 @@ class _AllOrdersPageState extends State<AllOrdersPage> with SingleTickerProvider
       backgroundColor: Colors.white,
       body: Column(
         children: [
-
           Row(
             children: [
               Consumer<AllOrdersProvider>(
                 builder: (context, provider, _) {
-
-                  int selectedCount = provider.selectedItems.keys.where((orderId) => provider.selectedItems[orderId] ?? false).toList().length;
+                  int selectedCount = provider.selectedItems.keys
+                      .where((orderId) => provider.selectedItems[orderId] ?? false)
+                      .toList()
+                      .length;
 
                   return SizedBox(
                     width: 140,
@@ -126,128 +143,102 @@ class _AllOrdersPageState extends State<AllOrdersPage> with SingleTickerProvider
                   );
                 },
               ),
-
               const SizedBox(width: 10),
-
               _searchBar(),
-
               const Spacer(),
-
               _buildConfirmButtons(),
             ],
           ),
-
           Expanded(
             child: Consumer<AllOrdersProvider>(
               builder: (context, provider, _) {
                 return provider.isLoading
-                    ?
-                const Center(
-                  child: LoadingAnimation(
-                    icon: Icons.apps,
-                    beginColor: Color.fromRGBO(189, 189, 189, 1),
-                    endColor: AppColors.primaryBlue,
-                    size: 80.0,
-                  ),
-                )
-                    :
-                provider.orders.isEmpty
-                    ?
-                const Center(
-                  child: Text(
-                    'No Orders Found',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.grey,
-                    ),
-                  ),
-                )
-                    :
-                ListView.builder(
-                  itemCount: provider.orders.length,
-                  itemBuilder: (context, index) {
-
-                    final order = provider.orders[index];
-
-                    String orderStatus = (order.orderStatusMap.isNotEmpty)
-                        ? order.orderStatusMap.last.status
-                        : 'Unknown Status';
-
-                    return Card(
-                      elevation: 2,
-                      color: Colors.grey.shade100,
-                      margin: const EdgeInsets.only(bottom: 10),
-                      child: Padding(
-                        padding: const EdgeInsets.all(10),
-                        child: Row(
-                          children: [
-
-                            Expanded(
-                              flex: 7,
-                              child: OrderComboCard(
-                                order: order,
-                                elevation: 0,
-                                margin: EdgeInsets.zero,
-                                toShowBy: true,
-                                toShowOrderDetails: true,
-                                checkboxWidget: Consumer<AllOrdersProvider>(
-                                  builder: (context, provider, _) {
-                                    return SizedBox(
-                                      height: 30,
-                                      width: 30,
-                                      child: Checkbox(
-                                        value: provider.selectedItems[order.orderId] ?? false,
-                                        onChanged: (value) {
-                                          provider.toggleSelectItems(order.orderId);
-                                        },
-                                      ),
-                                    );
-                                  }
-                                )
-                              ),
-                            ),
-
-                            const SizedBox(width: 10),
-
-                            Expanded(
-                              flex: 2,
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-
-                                  _buildOrderStatusCard(orderStatus),
-
-                                  SizedBox(height: MediaQuery.of(context).size.height * 0.1),
-
-                                  // order.awbNumber == ''
-                                  //     ?
-                                  // const Text('Not Available')
-                                  //     :
-                                  // _buildTrackingStatus(order),
-
-                                  _buildTrackingStatusCard(order),
-
-                                  if (order.reverseOrder.isNotEmpty)
-                                    _buildReverseOrderCard(order),
-                                ],
-                              ),
-                            ),
-                          ],
+                    ? const Center(
+                        child: LoadingAnimation(
+                          icon: Icons.apps,
+                          beginColor: Color.fromRGBO(189, 189, 189, 1),
+                          endColor: AppColors.primaryBlue,
+                          size: 80.0,
                         ),
-                      ),
-                    );
-                  },
-                );
+                      )
+                    : provider.orders.isEmpty
+                        ? const Center(
+                            child: Text(
+                              'No Orders Found',
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.grey,
+                              ),
+                            ),
+                          )
+                        : ListView.builder(
+                            itemCount: provider.orders.length,
+                            itemBuilder: (context, index) {
+                              final order = provider.orders[index];
+
+                              String orderStatus = (order.orderStatusMap.isNotEmpty)
+                                  ? order.orderStatusMap.last.status
+                                  : 'Unknown Status';
+
+                              return Card(
+                                elevation: 2,
+                                color: Colors.grey.shade100,
+                                margin: const EdgeInsets.only(bottom: 10),
+                                child: Padding(
+                                  padding: const EdgeInsets.all(10),
+                                  child: Row(
+                                    children: [
+                                      Expanded(
+                                        flex: 7,
+                                        child: OrderComboCard(
+                                            order: order,
+                                            elevation: 0,
+                                            margin: EdgeInsets.zero,
+                                            toShowBy: true,
+                                            toShowOrderDetails: true,
+                                            checkboxWidget:
+                                                Consumer<AllOrdersProvider>(builder: (context, provider, _) {
+                                              return SizedBox(
+                                                height: 30,
+                                                width: 30,
+                                                child: Checkbox(
+                                                  value: provider.selectedItems[order.orderId] ?? false,
+                                                  onChanged: (value) {
+                                                    provider.toggleSelectItems(order.orderId);
+                                                  },
+                                                ),
+                                              );
+                                            })),
+                                      ),
+                                      const SizedBox(width: 10),
+                                      Expanded(
+                                        flex: 2,
+                                        child: Column(
+                                          mainAxisAlignment: MainAxisAlignment.center,
+                                          children: [
+                                            _buildOrderStatusCard(orderStatus),
+
+                                            SizedBox(height: MediaQuery.of(context).size.height * 0.1),
+
+                                            _buildTrackingStatusCard(order),
+
+                                            if (order.reverseOrder.isNotEmpty) _buildReverseOrderCard(order),
+                                          ],
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              );
+                            },
+                          );
               },
             ),
           ),
-
           const SizedBox(height: 10),
-
           Consumer<AllOrdersProvider>(
             builder: (context, allOrdersProvider, _) {
-
               if (allOrdersProvider.isLoading) {
                 return const SizedBox();
               }
@@ -255,13 +246,15 @@ class _AllOrdersPageState extends State<AllOrdersPage> with SingleTickerProvider
               return CustomPaginationFooter(
                 currentPage: allOrdersProvider.currentPage,
                 totalPages: allOrdersProvider.totalPages,
+                totalCount: allOrdersProvider.totalOrders,
                 buttonSize: 30,
                 pageController: _pageController,
                 onFirstPage: () {
                   allOrdersProvider.goToPage(1, date: picked, status: selectedStatus, marketplace: selectedCourier);
                 },
                 onLastPage: () {
-                  allOrdersProvider.goToPage(allOrdersProvider.totalPages, date: picked, status: selectedStatus, marketplace: selectedCourier);
+                  allOrdersProvider.goToPage(allOrdersProvider.totalPages,
+                      date: picked, status: selectedStatus, marketplace: selectedCourier);
                 },
                 onNextPage: () {
                   int currentPage = allOrdersProvider.currentPage;
@@ -281,7 +274,8 @@ class _AllOrdersPageState extends State<AllOrdersPage> with SingleTickerProvider
                 onGoToPage: (int page) {
                   int totalPages = allOrdersProvider.totalPages;
                   if (page > 0 && page <= totalPages) {
-                    allOrdersProvider.goToPage(page, date: picked, status: selectedStatus, marketplace: selectedCourier);
+                    allOrdersProvider.goToPage(page,
+                        date: picked, status: selectedStatus, marketplace: selectedCourier);
                   } else {
                     _showSnackbar(context, 'Please enter a valid page number between 1 and $totalPages.');
                   }
@@ -346,17 +340,7 @@ class _AllOrdersPageState extends State<AllOrdersPage> with SingleTickerProvider
                   contentPadding: EdgeInsets.symmetric(vertical: 12, horizontal: 8),
                 ),
                 style: const TextStyle(color: AppColors.black),
-                onChanged: (text) {
-                  if (text.isEmpty) {
-                    setState(() {
-                      _selectedDate = 'Select Date';
-                      picked = null;
-                      selectedCourier = 'All';
-                      selectedStatus = 'All';
-                    });
-                    context.read<AllOrdersProvider>().fetchAllOrders();
-                  }
-                },
+                onChanged: _onSearchChanged,
                 onSubmitted: (text) {
                   setState(() {
                     _selectedDate = 'Select Date';
@@ -397,10 +381,7 @@ class _AllOrdersPageState extends State<AllOrdersPage> with SingleTickerProvider
   }
 
   void _showSnackbar(BuildContext context, String message) {
-    ScaffoldMessenger.of(context).removeCurrentSnackBar();
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message)),
-    );
+    Utils.showSnackBar(context, message, toRemoveCurr: true, seconds: 5);
   }
 
   Widget _buildConfirmButtons() {
@@ -454,9 +435,9 @@ class _AllOrdersPageState extends State<AllOrdersPage> with SingleTickerProvider
                           provider.fetchAllOrders(
                               page: provider.currentPage,
                               date: picked,
-                              status: statuses.firstWhere((map) => map.containsKey(selectedStatus), orElse: () => {})[selectedStatus]!,
-                              marketplace: selectedCourier
-                          );
+                              status: statuses.firstWhere((map) => map.containsKey(selectedStatus),
+                                  orElse: () => {})[selectedStatus]!,
+                              marketplace: selectedCourier);
                         }
                       },
                       icon: const Icon(Icons.date_range),
@@ -501,9 +482,9 @@ class _AllOrdersPageState extends State<AllOrdersPage> with SingleTickerProvider
                         List<String> temp = statuses.map((item) => item.keys.first).toList();
                         return <PopupMenuEntry<String>>[
                           ...temp.map((status) => PopupMenuItem<String>(
-                            value: status.toString(),
-                            child: Text(status.toString()),
-                          )),
+                                value: status.toString(),
+                                child: Text(status.toString()),
+                              )),
                           // const PopupMenuItem<String>(
                           //   value: 'All',
                           //   child: Text('All'),
@@ -531,7 +512,8 @@ class _AllOrdersPageState extends State<AllOrdersPage> with SingleTickerProvider
                         return PopupMenuButton<String>(
                           tooltip: 'Filter by Marketplace',
                           onSelected: (String value) {
-                            final status = statuses.firstWhere((map) => map.containsKey(selectedStatus), orElse: () => {})[selectedStatus]!;
+                            final status = statuses.firstWhere((map) => map.containsKey(selectedStatus),
+                                orElse: () => {})[selectedStatus]!;
                             log('marketplace value: $value');
                             log('date value: $picked');
                             log('status value: $status');
@@ -543,9 +525,9 @@ class _AllOrdersPageState extends State<AllOrdersPage> with SingleTickerProvider
                           },
                           itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
                             ...marketPro.marketplaces.map((marketplace) => PopupMenuItem<String>(
-                              value: marketplace.name,
-                              child: Text(marketplace.name),
-                            )), // Fetched marketplaces
+                                  value: marketplace.name,
+                                  child: Text(marketplace.name),
+                                )), // Fetched marketplaces
                             const PopupMenuItem<String>(
                               value: 'All', // Hardcoded marketplace
                               child: Text('All'),
@@ -571,65 +553,54 @@ class _AllOrdersPageState extends State<AllOrdersPage> with SingleTickerProvider
                   onPressed: provider.isCancelling
                       ? null
                       : () async {
+                          final provider = Provider.of<AllOrdersProvider>(context, listen: false);
 
-                    final provider = Provider.of<AllOrdersProvider>(context, listen: false);
+                          // List<String> selectedOrderIds = provider.orders
+                          //     .asMap()
+                          //     .entries
+                          //     .where((entry) {
+                          //   log('Entry Key is ${entry.key}');
+                          //   log('Entry Value is ${entry.value}');
+                          //   return provider.selectedProducts[entry.key];
+                          // })
+                          //     .map((entry) => entry.value.orderId)
+                          //     .toList();
 
-                    // List<String> selectedOrderIds = provider.orders
-                    //     .asMap()
-                    //     .entries
-                    //     .where((entry) {
-                    //   log('Entry Key is ${entry.key}');
-                    //   log('Entry Value is ${entry.value}');
-                    //   return provider.selectedProducts[entry.key];
-                    // })
-                    //     .map((entry) => entry.value.orderId)
-                    //     .toList();
+                          List<String> selectedOrderIds = provider.selectedItems.keys
+                              .where((orderId) => provider.selectedItems[orderId] ?? false)
+                              .toList();
 
-                    List<String> selectedOrderIds = provider.selectedItems.keys.where((orderId) => provider.selectedItems[orderId] ?? false).toList();
+                          if (selectedOrderIds.isEmpty) {
+                            Utils.showSnackBar(context, 'No orders selected', isError: true, toRemoveCurr: true);
+                          } else {
+                            // provider.setCancelStatus(true);
 
-                    if (selectedOrderIds.isEmpty) {
-                      ScaffoldMessenger.of(context).removeCurrentSnackBar();
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('No orders selected'),
-                          backgroundColor: AppColors.cardsred,
-                        ),
-                      );
-                    } else {
-                      // provider.setCancelStatus(true);
+                            String resultMessage = await provider.cancelOrders(context, selectedOrderIds);
 
-                      String resultMessage = await provider.cancelOrders(context, selectedOrderIds);
+                            // provider.setCancelStatus(false);
 
-                      // provider.setCancelStatus(false);
+                            Color snackBarColor;
+                            if (resultMessage.contains('success')) {
+                              snackBarColor = AppColors.green;
+                            } else if (resultMessage.contains('error') || resultMessage.contains('failed')) {
+                              snackBarColor = AppColors.cardsred;
+                            } else {
+                              snackBarColor = AppColors.orange;
+                            }
 
-                      Color snackBarColor;
-                      if (resultMessage.contains('success')) {
-                        snackBarColor = AppColors.green;
-                      } else if (resultMessage.contains('error') || resultMessage.contains('failed')) {
-                        snackBarColor = AppColors.cardsred;
-                      } else {
-                        snackBarColor = AppColors.orange;
-                      }
-
-                      ScaffoldMessenger.of(context).removeCurrentSnackBar();
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(resultMessage),
-                          backgroundColor: snackBarColor,
-                        ),
-                      );
-                    }
-                  },
+                            Utils.showSnackBar(context, resultMessage, color: snackBarColor, seconds: 5);
+                          }
+                        },
                   child: provider.isCancelling
                       ? const SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(color: Colors.white),
-                  )
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(color: Colors.white),
+                        )
                       : const Text(
-                    'Cancel Orders',
-                    style: TextStyle(color: Colors.white),
-                  ),
+                          'Cancel Orders',
+                          style: TextStyle(color: Colors.white),
+                        ),
                 ),
                 const SizedBox(width: 8),
                 ElevatedButton(
@@ -652,20 +623,21 @@ class _AllOrdersPageState extends State<AllOrdersPage> with SingleTickerProvider
                   onPressed: provider.isRefreshingOrders
                       ? null
                       : () async {
+                          final status = statuses.firstWhere((map) => map.containsKey(selectedStatus),
+                              orElse: () => {})[selectedStatus]!;
 
-                    final status = statuses.firstWhere((map) => map.containsKey(selectedStatus), orElse: () => {})[selectedStatus]!;
-
-                    provider.fetchAllOrders(page: provider.currentPage, date: picked, status: status, marketplace: selectedCourier);
-                  },
+                          provider.fetchAllOrders(
+                              page: provider.currentPage, date: picked, status: status, marketplace: selectedCourier);
+                        },
                   icon: provider.isRefreshingOrders
                       ? const SizedBox(
-                    width: 16,
-                    height: 16,
-                    child: CircularProgressIndicator(
-                      color: Colors.white,
-                      strokeWidth: 2,
-                    ),
-                  )
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(
+                            color: Colors.white,
+                            strokeWidth: 2,
+                          ),
+                        )
                       : const Icon(Icons.refresh),
                 ),
               ],
@@ -677,7 +649,6 @@ class _AllOrdersPageState extends State<AllOrdersPage> with SingleTickerProvider
   }
 
   Widget _buildOrderStatusCard(String orderStatus) {
-
     Color bgColor = Colors.blue.shade300;
     Color fgColor = Colors.blue;
 
@@ -705,9 +676,7 @@ class _AllOrdersPageState extends State<AllOrdersPage> with SingleTickerProvider
               color: fgColor,
             ),
           ),
-
           const SizedBox(height: 3),
-
           Text(
             orderStatus,
             style: TextStyle(
@@ -722,7 +691,6 @@ class _AllOrdersPageState extends State<AllOrdersPage> with SingleTickerProvider
   }
 
   Widget _buildTrackingStatusCard(Order order) {
-
     bool isDelhivery = order.bookingCourier == 'Delhivery';
     String awbNumber = order.awbNumber;
 
@@ -757,9 +725,7 @@ class _AllOrdersPageState extends State<AllOrdersPage> with SingleTickerProvider
               color: fgColor,
             ),
           ),
-
           const SizedBox(height: 3),
-
           if (awbNumber.isNotEmpty)
             ValueListenableBuilder<String?>(
               valueListenable: _getTrackingNotifier(awbNumber, isDelhivery),
@@ -794,9 +760,7 @@ class _AllOrdersPageState extends State<AllOrdersPage> with SingleTickerProvider
                 }
               },
             ),
-
           const SizedBox(height: 3),
-
           _buildReverseInfoRow(
             title: 'AWB',
             value: awbNumber.isEmpty ? 'Not Available' : awbNumber,
@@ -808,14 +772,12 @@ class _AllOrdersPageState extends State<AllOrdersPage> with SingleTickerProvider
   }
 
   Widget _buildTrackingStatus(Order order) {
-
     bool isDelhivery = order.bookingCourier == 'Delhivery';
 
     return Center(
       child: Column(
         children: [
           Text(order.awbNumber),
-
           Builder(
             builder: (context) {
               _updateTrackingStatus(order.awbNumber, isDelhivery);
@@ -894,7 +856,6 @@ class _AllOrdersPageState extends State<AllOrdersPage> with SingleTickerProvider
   }
 
   Widget _buildReverseOrderCard(Order order) {
-    
     final reverseOrder = order.reverseOrder.last;
 
     if (!reverseOrder.status) return const SizedBox();
@@ -927,7 +888,6 @@ class _AllOrdersPageState extends State<AllOrdersPage> with SingleTickerProvider
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-
             const Text(
               'Reversing Details',
               style: TextStyle(
@@ -936,28 +896,21 @@ class _AllOrdersPageState extends State<AllOrdersPage> with SingleTickerProvider
                 color: Colors.red,
               ),
             ),
-
             const SizedBox(height: 3),
-
             _buildReverseInfoRow(
               title: 'Reason',
               value: reverseOrder.reason,
             ),
-
             const SizedBox(height: 3),
-
             _buildReverseInfoRow(
               title: 'Reversed By',
               value: reverseOrder.reverseBy,
             ),
-
             const SizedBox(height: 3),
-
             _buildReverseInfoRow(
               title: 'Date',
               value: date,
             ),
-
           ],
         ),
       ),
@@ -969,27 +922,20 @@ class _AllOrdersPageState extends State<AllOrdersPage> with SingleTickerProvider
     required String value,
     bool isReverseDetailCard = true,
   }) {
-    return Text.rich(
-        TextSpan(
-            children: [
-              TextSpan(
-                  text: '$title: ',
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.bold,
-                    color: isReverseDetailCard ? Colors.red : Colors.green,
-                  )
-              ),
-
-              TextSpan(
-                  text: value,
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: isReverseDetailCard ? Colors.red.shade400 : Colors.green.shade400,
-                  )
-              )
-            ]
-        )
-    );
+    return Text.rich(TextSpan(children: [
+      TextSpan(
+          text: '$title: ',
+          style: TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.bold,
+            color: isReverseDetailCard ? Colors.red : Colors.green,
+          )),
+      TextSpan(
+          text: value,
+          style: TextStyle(
+            fontSize: 12,
+            color: isReverseDetailCard ? Colors.red.shade400 : Colors.green.shade400,
+          ))
+    ]));
   }
 }

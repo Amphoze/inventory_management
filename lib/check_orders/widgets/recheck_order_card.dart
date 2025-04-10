@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:inventory_management/Custom-Files/colors.dart';
 import 'package:inventory_management/Custom-Files/utils.dart';
 import 'package:photo_view/photo_view.dart';
 import 'package:provider/provider.dart';
 import '../models/recheck_order_model.dart';
-import '../provider/check_orders_provider.dart';
+import '../provider/supervisor_provider.dart';
 import 'image_viewer.dart';
 
 class RecheckOrderCard extends StatelessWidget {
@@ -31,7 +32,7 @@ class RecheckOrderCard extends StatelessWidget {
                     children: [
                       _buildInfoColumn('Order ID', order.orderId),
                       const SizedBox(width: 24),
-                      _buildInfoColumn('Packlist ID', order.picklistId),
+                      _buildInfoColumn('Picklist ID', order.picklistId),
                     ],
                   ),
                 ),
@@ -51,18 +52,8 @@ class RecheckOrderCard extends StatelessWidget {
             const Divider(height: 16),
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
-              // mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Expanded(child: _buildPackedBySection(context)),
-                // const SizedBox(width: 16),
-                // Expanded(
-                //   child: _buildStatusSection(),
-                // ),
-                // const Spacer(),
-                // if (order.orderPics.isNotEmpty) ...[
-                //   // const SizedBox(height: 12),
-                //   Expanded(child: _buildImagesSection(context)),
-                // ],
               ],
             ),
           ],
@@ -157,17 +148,6 @@ class RecheckOrderCard extends StatelessWidget {
         child: const Icon(Icons.broken_image, size: 20, color: Colors.red),
       );
 
-  // Widget _buildStatusSection() {
-  //   return Column(
-  //     crossAxisAlignment: CrossAxisAlignment.start,
-  //     children: [
-  //       Text('Is Checked: ${order.isChecked ? 'Yes' : 'No'}', style: const TextStyle(fontSize: 12)),
-  //       const SizedBox(height: 4),
-  //       Text('ReChecked: ${order.reChecked ? 'Yes' : 'No'}', style: const TextStyle(fontSize: 12, color: Colors.grey)),
-  //     ],
-  //   );
-  // }
-
   Widget _buildActionButton(BuildContext context, String label, Color color, bool status) {
     return Expanded(
       child: ElevatedButton(
@@ -216,7 +196,7 @@ class RecheckOrderCard extends StatelessWidget {
                 ),
               );
               try {
-                final provider = Provider.of<CheckOrdersProvider>(context, listen: false);
+                final provider = Provider.of<SupervisorProvider>(context, listen: false);
                 await provider.updateCheckStatus(
                   orderId: order.orderId,
                   pickListId: order.picklistId,
@@ -224,14 +204,10 @@ class RecheckOrderCard extends StatelessWidget {
                 );
                 Navigator.of(context).pop();
                 await provider.getRecheckOrders();
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('Order ${action}ed successfully')),
-                );
+                Utils.showSnackBar(context, 'Order ${action}ed successfully', color: AppColors.cardsgreen);
               } catch (e) {
                 Navigator.of(context).pop();
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('Failed to $action order: $e')),
-                );
+                Utils.showSnackBar(context, 'Failed to $action order: $e', isError: true);
               }
             },
             child: Text(action),

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:inventory_management/Custom-Files/colors.dart';
@@ -32,9 +33,20 @@ class _BookedPageState extends State<BookedPage> with SingleTickerProviderStateM
   bool isDownloading = false;
   late BookProvider bookProvider;
 
-  // String _selectedDate = 'Select Date';
-  // String selectedCourier = 'All';
-  // DateTime? picked;
+  Timer? _debounce;
+
+  void _onSearchChanged(String value) {
+    if (value.trim().isEmpty) {
+      bookProvider.clearSearchResults();
+      bookProvider.resetFilterData();
+      _refreshOrders();
+    }
+
+    if (_debounce?.isActive ?? false) _debounce?.cancel();
+    _debounce = Timer(const Duration(milliseconds: 300), () {
+      bookProvider.searchBookedOrders(value, selectedSearchType);
+    });
+  }
 
   bool? isSuperAdmin = false;
   bool? isAdmin = false;
@@ -62,6 +74,7 @@ class _BookedPageState extends State<BookedPage> with SingleTickerProviderStateM
 
   @override
   void dispose() {
+    _debounce?.cancel();
     _searchController.dispose();
     _pageController.dispose();
     super.dispose();
@@ -139,14 +152,7 @@ class _BookedPageState extends State<BookedPage> with SingleTickerProviderStateM
                       contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 13),
                     ),
                     style: const TextStyle(color: AppColors.black),
-                    onChanged: (text) {
-                      if (text.isEmpty) {
-                        Provider.of<BookProvider>(context, listen: false).clearSearchResults();
-                        _refreshOrders();
-                      } else {
-                        Provider.of<BookProvider>(context, listen: false).searchBookedOrders(text, selectedSearchType);
-                      }
-                    },
+                    onChanged: _onSearchChanged,
                     onSubmitted: (text) {
                       bookProvider.resetFilterData();
                       if (text.isEmpty) {
@@ -235,65 +241,65 @@ class _BookedPageState extends State<BookedPage> with SingleTickerProviderStateM
                     ),
         ),
         if (areOrdersFetched)
-          CustomPaginationFooter(
-            currentPage: bookProvider.currentPageBooked,
-            totalPages: bookProvider.totalPagesBooked,
-            buttonSize: 30,
-            pageController: _pageController,
-            onFirstPage: () {
-              bookProvider.fetchBookedOrders(1);
-            },
-            onLastPage: () {
-              bookProvider.fetchBookedOrders(bookProvider.totalPagesBooked);
-            },
-            onNextPage: () {
-              int currentPage = bookProvider.currentPageBooked;
+          Consumer<BookProvider>(
+            builder: (context, bookProvider, child) {
+              return CustomPaginationFooter(
+                currentPage: bookProvider.currentPageBooked,
+                totalPages: bookProvider.totalPagesBooked,
+                totalCount: bookProvider.totalOrdersBooked,
+                buttonSize: 30,
+                pageController: _pageController,
+                onFirstPage: () {
+                  bookProvider.fetchBookedOrders(1);
+                },
+                onLastPage: () {
+                  bookProvider.fetchBookedOrders(bookProvider.totalPagesBooked);
+                },
+                onNextPage: () {
+                  int currentPage = bookProvider.currentPageBooked;
 
-              int totalPages = bookProvider.totalPagesBooked;
+                  int totalPages = bookProvider.totalPagesBooked;
 
-              if (currentPage < totalPages) {
-                bookProvider.fetchBookedOrders(currentPage + 1);
-              }
-            },
-            onPreviousPage: () {
-              int currentPage = bookProvider.currentPageBooked;
+                  if (currentPage < totalPages) {
+                    bookProvider.fetchBookedOrders(currentPage + 1);
+                  }
+                },
+                onPreviousPage: () {
+                  int currentPage = bookProvider.currentPageBooked;
 
-              if (currentPage > 1) {
-                bookProvider.fetchBookedOrders(currentPage - 1);
-              }
-            },
-            onGoToPage: (int page) {
-              int totalPages = bookProvider.totalPagesBooked;
+                  if (currentPage > 1) {
+                    bookProvider.fetchBookedOrders(currentPage - 1);
+                  }
+                },
+                onGoToPage: (int page) {
+                  int totalPages = bookProvider.totalPagesBooked;
 
-              if (page > 0 && page <= totalPages) {
-                bookProvider.fetchBookedOrders(page);
-              } else {
-                _showSnackbar(context, 'Please enter a valid page number between 1 and $totalPages.');
-              }
-            },
-            onJumpToPage: () {
-              final String pageText = _pageController.text;
-              int? page = int.tryParse(pageText);
-              int totalPages = bookProvider.totalPagesBooked;
+                  if (page > 0 && page <= totalPages) {
+                    bookProvider.fetchBookedOrders(page);
+                  } else {
+                    Utils.showSnackBar(context, 'Please enter a valid page number between 1 and $totalPages.',
+                        isError: true, toRemoveCurr: true);
+                  }
+                },
+                onJumpToPage: () {
+                  final String pageText = _pageController.text;
+                  int? page = int.tryParse(pageText);
+                  int totalPages = bookProvider.totalPagesBooked;
 
-              if (page == null || page < 1 || page > totalPages) {
-                _showSnackbar(context, 'Please enter a valid page number between 1 and $totalPages.');
-                return;
-              }
+                  if (page == null || page < 1 || page > totalPages) {
+                    Utils.showSnackBar(context, 'Please enter a valid page number between 1 and $totalPages.',
+                        isError: true, toRemoveCurr: true);
+                    return;
+                  }
 
-              bookProvider.fetchBookedOrders(page);
+                  bookProvider.fetchBookedOrders(page);
 
-              _pageController.clear();
-            },
+                  _pageController.clear();
+                },
+              );
+            }
           ),
       ],
-    );
-  }
-
-  void _showSnackbar(BuildContext context, String message) {
-    ScaffoldMessenger.of(context).removeCurrentSnackBar();
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message)),
     );
   }
 
@@ -429,23 +435,7 @@ class _BookedPageState extends State<BookedPage> with SingleTickerProviderStateM
                     log("Selected Order IDs: $selectedOrderIds");
 
                     if (selectedOrderIds.isEmpty) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: const Row(
-                            children: [
-                              Icon(Icons.error_outline, color: Colors.white),
-                              SizedBox(width: 8),
-                              Text('Please select at least one order'),
-                            ],
-                          ),
-                          backgroundColor: AppColors.cardsred,
-                          behavior: SnackBarBehavior.floating,
-                          margin: const EdgeInsets.all(8),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                        ),
-                      );
+                      Utils.showSnackBar(context, 'No orders selected', isError: true);
                     } else {
                       provider.setRebookingStatus(true);
                       String resultMessage = await provider.rebookOrders(selectedOrderIds);
@@ -464,7 +454,9 @@ class _BookedPageState extends State<BookedPage> with SingleTickerProviderStateM
                             title: Container(
                               padding: const EdgeInsets.all(16),
                               decoration: BoxDecoration(
-                                color: isSuccess ? AppColors.green.withValues(alpha: 0.1) : AppColors.cardsred.withValues(alpha: 0.1),
+                                color: isSuccess
+                                    ? AppColors.green.withValues(alpha: 0.1)
+                                    : AppColors.cardsred.withValues(alpha: 0.1),
                                 borderRadius: const BorderRadius.only(
                                   topLeft: Radius.circular(12),
                                   topRight: Radius.circular(12),
@@ -703,9 +695,10 @@ class _BookedPageState extends State<BookedPage> with SingleTickerProviderStateM
                               },
                             );
 
-                            final res = await bookProvider.generatePacklist(context, _dateController.text, selectedPicklist);
+                            final res =
+                                await bookProvider.generatePacklist(context, _dateController.text, selectedPicklist);
 
-                            Utils.showSnackBar(context, res['message']);
+                            Utils.showSnackBar(context, res['message'] ?? '');
 
                             Navigator.pop(context);
                             Navigator.pop(context);
@@ -741,24 +734,14 @@ class _BookedPageState extends State<BookedPage> with SingleTickerProviderStateM
 
                     log("Selected Order IDs: $selectedOrderIds");
                     if (selectedOrderIds.isEmpty) {
-                      // Show an error message if no orders are selected
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('No orders selected'),
-                          backgroundColor: AppColors.cardsred,
-                        ),
-                      );
+                      Utils.showSnackBar(context, 'No orders selected', isError: true);
                     } else {
-                      // Set loading status to true before starting the operation
                       provider.setCancelStatus(true);
 
-                      // Call confirmOrders method with selected IDs
                       String resultMessage = await provider.cancelOrders(context, selectedOrderIds);
 
-                      // Set loading status to false after operation completes
                       provider.setCancelStatus(false);
 
-                      // Determine the background color based on the result
                       Color snackBarColor;
                       if (resultMessage.contains('success')) {
                         snackBarColor = AppColors.green; // Success: Green
@@ -768,13 +751,7 @@ class _BookedPageState extends State<BookedPage> with SingleTickerProviderStateM
                         snackBarColor = AppColors.orange; // Other: Orange
                       }
 
-                      // Show feedback based on the result
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(resultMessage),
-                          backgroundColor: snackBarColor,
-                        ),
-                      );
+                      Utils.showSnackBar(context, resultMessage, color: snackBarColor, seconds: 5);
                     }
                   },
             child: bookProvider.isCancel
@@ -892,7 +869,6 @@ class _BookedPageState extends State<BookedPage> with SingleTickerProviderStateM
 
     return Row(
       children: [
-
         Expanded(
           flex: 8,
           child: OrderComboCard(
@@ -905,7 +881,6 @@ class _BookedPageState extends State<BookedPage> with SingleTickerProviderStateM
             isSuperAdmin: isSuperAdmin ?? false,
           ),
         ),
-
         Expanded(
           flex: 2,
           child: Column(
@@ -913,18 +888,16 @@ class _BookedPageState extends State<BookedPage> with SingleTickerProviderStateM
             children: [
               order.isBooked
                   ? const Icon(
-                Icons.check,
-                size: 40,
-                color: AppColors.green,
-              )
+                      Icons.check,
+                      size: 40,
+                      color: AppColors.green,
+                    )
                   : const Icon(
-                Icons.close,
-                size: 40,
-                color: AppColors.cardsred,
-              ),
-
+                      Icons.close,
+                      size: 40,
+                      color: AppColors.cardsred,
+                    ),
               const SizedBox(height: 10),
-
               if (order.orderStatusMap.isNotEmpty)
                 Text(
                   order.orderStatusMap.last.status,

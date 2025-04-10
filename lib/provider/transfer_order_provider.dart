@@ -53,9 +53,9 @@ class TransferOrderProvider with ChangeNotifier {
   late TextEditingController shippingCountryController;
 
   final List<TextEditingController> addedProductQuantityControllers = [];
-  final List<TextEditingController> addedProductRateControllers = [];
+  // final List<TextEditingController> addedProductRateControllers = [];
   final List<TextEditingController> addedComboQuantityControllers = [];
-  final List<TextEditingController> addedComboRateControllers = [];
+  // final List<TextEditingController> addedComboRateControllers = [];
 
   void initializeControllers() {
     marketplaceController = TextEditingController();
@@ -87,20 +87,20 @@ class TransferOrderProvider with ChangeNotifier {
 
   void _updateItemControllers() {
     addedProductQuantityControllers.clear();
-    addedProductRateControllers.clear();
+    // addedProductRateControllers.clear();
     addedComboQuantityControllers.clear();
-    addedComboRateControllers.clear();
+    // addedComboRateControllers.clear();
 
     for (var item in addedProductList) {
-      final rate = item['amount'] / item['qty'];
+      // final rate = item['amount'] / item['qty'];
       addedProductQuantityControllers.add(TextEditingController(text: item['qty'].toString()));
-      addedProductRateControllers.add(TextEditingController(text: rate.toStringAsFixed(2)));
+      // addedProductRateControllers.add(TextEditingController(text: rate.toStringAsFixed(2)));
     }
 
     for (var item in addedComboList) {
-      final rate = double.parse(item['amount'].toString()) / item['qty'];
+      // final rate = double.parse(item['amount'].toString()) / item['qty'];
       addedComboQuantityControllers.add(TextEditingController(text: item['qty'].toString()));
-      addedComboRateControllers.add(TextEditingController(text: rate.toStringAsFixed(2)));
+      // addedComboRateControllers.add(TextEditingController(text: rate.toStringAsFixed(2)));
     }
   }
 
@@ -129,9 +129,9 @@ class TransferOrderProvider with ChangeNotifier {
     shippingCountryController.dispose();
 
     for (var controller in addedProductQuantityControllers) controller.dispose();
-    for (var controller in addedProductRateControllers) controller.dispose();
+    // for (var controller in addedProductRateControllers) controller.dispose();
     for (var controller in addedComboQuantityControllers) controller.dispose();
-    for (var controller in addedComboRateControllers) controller.dispose();
+    // for (var controller in addedComboRateControllers) controller.dispose();
   }
 
   String formatDate(DateTime date) => "${date.day}-${date.month}-${date.year}";
@@ -258,7 +258,7 @@ class TransferOrderProvider with ChangeNotifier {
 
       addedProductList.add(newItem);
       addedProductQuantityControllers.add(TextEditingController(text: '1'));
-      addedProductRateControllers.add(TextEditingController(text: '0.00'));
+      // addedProductRateControllers.add(TextEditingController(text: '0.00'));
       _productsFuture.add(fetchedProduct);
       setTotalQuantity();
     } catch (e, s) {
@@ -289,7 +289,7 @@ class TransferOrderProvider with ChangeNotifier {
         //     .toStringAsFixed(2);
 
         addedProductQuantityControllers.removeAt(index);
-        addedProductRateControllers.removeAt(index);
+        // addedProductRateControllers.removeAt(index);
 
         final productIndex = _productsFuture.indexWhere((product) => product?.id == id);
         if (productIndex != -1) {
@@ -333,7 +333,7 @@ class TransferOrderProvider with ChangeNotifier {
 
       addedComboList.add(newItem);
       addedComboQuantityControllers.add(TextEditingController(text: '1'));
-      addedComboRateControllers.add(TextEditingController(text: fetchedCombo.comboAmount ?? '0'));
+      // addedComboRateControllers.add(TextEditingController(text: fetchedCombo.comboAmount ?? '0'));
 
       // if (fetchedCombo.comboAmount != null && fetchedCombo.comboAmount != '0') {
       //   totalAmtController.text = '0';
@@ -377,7 +377,7 @@ class TransferOrderProvider with ChangeNotifier {
         // codAmountController.text = totalAmtController.text;
 
         addedComboQuantityControllers.removeAt(index);
-        addedComboRateControllers.removeAt(index);
+        // addedComboRateControllers.removeAt(index);
 
         final comboIndex = _combosFuture.indexWhere((combo) => combo?.id == fetchedCombo.id);
         if (comboIndex != -1) {
@@ -505,27 +505,27 @@ class TransferOrderProvider with ChangeNotifier {
       ...addedProductList.asMap().entries.map((entry) {
         int index = entry.key;
         var item = entry.value;
-        double rate = double.tryParse(addedProductRateControllers[index].text) ?? 0.0;
+        // double rate = double.tryParse(addedProductRateControllers[index].text) ?? 0.0;
         int qty = int.tryParse(addedProductQuantityControllers[index].text) ?? 1;
-        double amount = rate * qty;
+        // double amount = rate * qty;
         return {
           'id': item['id'],
           'qty': qty,
           'sku': item['sku'],
-          'amount': amount,
+          'amount': 0,
         };
       }),
       ...addedComboList.asMap().entries.map((entry) {
         int index = entry.key;
         var item = entry.value;
-        double rate = double.tryParse(addedComboRateControllers[index].text) ?? 0.0;
+        // double rate = double.tryParse(addedComboRateControllers[index].text) ?? 0.0;
         int qty = int.tryParse(addedComboQuantityControllers[index].text) ?? 1;
-        double amount = rate * qty;
+        // double amount = rate * qty;
         return {
           'id': item['id'],
           'qty': qty,
           'sku': item['sku'],
-          'amount': amount,
+          'amount': 0,
         };
       }),
     ];

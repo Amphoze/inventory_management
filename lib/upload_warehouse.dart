@@ -12,6 +12,8 @@ import 'package:logger/logger.dart';
 import 'package:socket_io_client/socket_io_client.dart' as IO;
 import 'package:url_launcher/url_launcher.dart';
 
+import 'Custom-Files/utils.dart';
+
 class UploadWarehouse extends StatefulWidget {
   const UploadWarehouse({super.key});
 
@@ -49,14 +51,8 @@ class _UploadWarehouseState extends State<UploadWarehouse> {
       final email = await AuthProvider().getEmail();
       log('email: $email');
 
-      _socket ??= IO.io(
-        baseUrl,
-        IO.OptionBuilder()
-            .setTransports(['websocket'])
-            .disableAutoConnect()
-            .setQuery({'email': email})
-            .build()
-      );
+      _socket ??= IO.io(baseUrl,
+          IO.OptionBuilder().setTransports(['websocket']).disableAutoConnect().setQuery({'email': email}).build());
 
       _socket?.onConnect((_) {
         debugPrint('Connected to Socket.IO');
@@ -109,14 +105,7 @@ class _UploadWarehouseState extends State<UploadWarehouse> {
 
   void _showSnackbar(String message, Color color) {
     if (context.mounted) {
-      ScaffoldMessenger.of(context).removeCurrentSnackBar();
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(message),
-          backgroundColor: color,
-          duration: const Duration(seconds: 3),
-        ),
-      );
+      Utils.showSnackBar(context, message, color: color);
     }
   }
 
@@ -199,9 +188,7 @@ class _UploadWarehouseState extends State<UploadWarehouse> {
       }
     } catch (e) {
       log('pick error: $e');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error reading CSV file: $e')),
-      );
+      Utils.showSnackBar(context, 'Error reading CSV file', details: e.toString(), isError: true);
       setState(() {
         _isPickingFile = false;
         _isProcessingFile = false;
@@ -227,9 +214,8 @@ class _UploadWarehouseState extends State<UploadWarehouse> {
       });
     } catch (e) {
       log('Error processing CSV: $e');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error processing CSV file: $e')),
-      );
+      Utils.showSnackBar(context, 'Error processing CSV file', details: e.toString(), isError: true);
+
       setState(() {
         _isProcessingFile = false;
       });
@@ -248,9 +234,7 @@ class _UploadWarehouseState extends State<UploadWarehouse> {
     try {
       final token = await getToken();
       if (token == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Authentication token not found')),
-        );
+        Utils.showSnackBar(context, 'Authentication token not found', isError: true);
         return;
       }
 
@@ -283,16 +267,12 @@ class _UploadWarehouseState extends State<UploadWarehouse> {
 
       if (response.statusCode == 200 || response.statusCode == 201) {
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("${jsonData['message']}")),
-        );
+        Utils.showSnackBar(context, jsonData['message'] ?? '', isError: true);
         log('Failed to upload CSV: ${response.statusCode}\n$responseBody');
       }
     } catch (e) {
       log('Error during order creation: $e', error: e, stackTrace: StackTrace.current);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: $e')),
-      );
+      Utils.showSnackBar(context, 'An error occurred while uploading warehouses', details: e.toString(), isError: true);
     } finally {
       setState(() {
         _isCreating = false;
@@ -326,20 +306,24 @@ class _UploadWarehouseState extends State<UploadWarehouse> {
                     child: Text(_isPickingFile
                         ? 'Selecting File...'
                         : _isProcessingFile
-                        ? 'Processing File...'
-                        : 'Select CSV File'),
+                            ? 'Processing File...'
+                            : 'Select CSV File'),
                   ),
                 ),
                 const SizedBox(width: 16),
                 ElevatedButton(
-                  onPressed: _isPickingFile || _isProcessingFile ? null : () => AuthProvider().downloadTemplate(context, 'warehouse'),
+                  onPressed: _isPickingFile || _isProcessingFile
+                      ? null
+                      : () => AuthProvider().downloadTemplate(context, 'warehouse'),
                   child: const Text('Download Template'),
                 ),
                 const SizedBox(width: 16),
                 if (_rowCount > 0)
                   Expanded(
                     child: ElevatedButton(
-                      onPressed: _isCreateEnabled && !_isCreating && !_isPickingFile && !_isProcessingFile ? _uploadWarehouses : null,
+                      onPressed: _isCreateEnabled && !_isCreating && !_isPickingFile && !_isProcessingFile
+                          ? _uploadWarehouses
+                          : null,
                       child: const Text('Upload'),
                     ),
                   ),
@@ -412,17 +396,17 @@ class _UploadWarehouseState extends State<UploadWarehouse> {
               ),
               columns: headers
                   .map((header) => DataColumn(
-                label: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                  child: Text(header.toString()),
-                ),
-              ))
+                        label: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                          child: Text(header.toString()),
+                        ),
+                      ))
                   .toList(),
               rows: pagedData.map((row) {
                 return DataRow(
                   cells: List.generate(
                     row.length,
-                        (index) => DataCell(
+                    (index) => DataCell(
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 8.0),
                         child: Text(row[index].toString()),

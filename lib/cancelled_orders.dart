@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:inventory_management/provider/cancelled_provider.dart';
 import 'package:provider/provider.dart';
@@ -17,21 +19,20 @@ class CancelledOrders extends StatefulWidget {
 
 class _CancelledOrdersState extends State<CancelledOrders> {
   final TextEditingController _searchController = TextEditingController();
+  late CancelledProvider cancelledProvider;
 
   @override
   void initState() {
     super.initState();
+    cancelledProvider = context.read<CancelledProvider>();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      Provider.of<CancelledProvider>(context, listen: false)
-          .fetchOrdersWithStatus10();
+      cancelledProvider.fetchOrdersWithStatus10();
     });
   }
 
-  void _onSearchButtonPressed() {
-    final query = _searchController.text.trim();
-    if (query.isNotEmpty) {
-      Provider.of<CancelledProvider>(context, listen: false)
-          .onSearchChanged(query);
+  void _onSearchButtonPressed(String query) {
+    if (query.trim().isNotEmpty) {
+      cancelledProvider.onSearchChanged(query);
     }
   }
 
@@ -58,61 +59,24 @@ class _CancelledOrdersState extends State<CancelledOrders> {
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: TextField(
-                        controller: _searchController,
-                        style: const TextStyle(color: Colors.black),
-                        decoration: const InputDecoration(
-                          hintText: 'Search by Order ID',
-                          hintStyle: TextStyle(color: Colors.black),
-                          border: InputBorder.none,
-                          contentPadding: EdgeInsets.symmetric(vertical: 12, horizontal: 8),
-                        ),
-                        onChanged: (query) {
-                          // Trigger a rebuild to show/hide the search button
-                          setState(() {
-                            // Update search focus
-                          });
-                          if (query.isEmpty) {
-                            // Reset to all orders if search is cleared
-                            cancelProvider.fetchOrdersWithStatus10();
-                          }
-                        },
-                        onTap: () {
-                          setState(() {
-                            // Mark the search field as focused
-                          });
-                        },
-                        onSubmitted: (query) {
-                          if (query.isNotEmpty) {
-                            cancelProvider.searchOrders(query);
-                          }
-                        },
-                        onEditingComplete: () {
-                          // Mark it as not focused when done
-                          FocusScope.of(context)
-                              .unfocus(); // Dismiss the keyboard
-                        },
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-
-                    ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primaryBlue,
-                      ),
-                      onPressed: _searchController.text.isNotEmpty
-                          ? _onSearchButtonPressed
-                          : null,
-                      child: const Text(
-                        'Search',
-                        style: TextStyle(color: Colors.white),
-                      ),
+                          controller: _searchController,
+                          style: const TextStyle(color: Colors.black),
+                          decoration: const InputDecoration(
+                            hintText: 'Search by Order ID',
+                            hintStyle: TextStyle(color: Colors.black),
+                            border: InputBorder.none,
+                            contentPadding: EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+                          ),
+                          onChanged: _onSearchButtonPressed,
+                          onSubmitted: (query) {
+                            if (query.trim().isNotEmpty) {
+                              cancelProvider.searchOrders(query);
+                            } else {
+                              cancelProvider.fetchOrdersWithStatus10();
+                            }
+                          }),
                     ),
                     const Spacer(),
-
-                    // _buildReturnButton(cancelProvider),
-                    // const SizedBox(width: 8),
-
-                    // Refresh Button
                     ElevatedButton(
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.primaryBlue,
@@ -182,40 +146,40 @@ class _CancelledOrdersState extends State<CancelledOrders> {
                   ],
                 ),
               ),
-              CustomPaginationFooter(
-                currentPage: cancelProvider.currentPage,
-                totalPages: cancelProvider.totalPages,
-                buttonSize: 30,
-                pageController: cancelProvider.textEditingController,
-                onFirstPage: () {
-                  cancelProvider.goToPage(1);
-                },
-                onLastPage: () {
-                  cancelProvider.goToPage(cancelProvider.totalPages);
-                },
-                onNextPage: () {
-                  if (cancelProvider.currentPage < cancelProvider.totalPages) {
-                    cancelProvider.goToPage(cancelProvider.currentPage + 1);
-                  }
-                },
-                onPreviousPage: () {
-                  if (cancelProvider.currentPage > 1) {
-                    cancelProvider.goToPage(cancelProvider.currentPage - 1);
-                  }
-                },
-                onGoToPage: (page) {
-                  cancelProvider.goToPage(page);
-                },
-                onJumpToPage: () {
-                  final page =
-                      int.tryParse(cancelProvider.textEditingController.text);
-                  if (page != null &&
-                      page > 0 &&
-                      page <= cancelProvider.totalPages) {
+              Consumer<CancelledProvider>(builder: (context, cancelProvider, child) {
+                return CustomPaginationFooter(
+                  currentPage: cancelProvider.currentPage,
+                  totalPages: cancelProvider.totalPages,
+                  totalCount: cancelProvider.totalOrders,
+                  buttonSize: 30,
+                  pageController: cancelProvider.textEditingController,
+                  onFirstPage: () {
+                    cancelProvider.goToPage(1);
+                  },
+                  onLastPage: () {
+                    cancelProvider.goToPage(cancelProvider.totalPages);
+                  },
+                  onNextPage: () {
+                    if (cancelProvider.currentPage < cancelProvider.totalPages) {
+                      cancelProvider.goToPage(cancelProvider.currentPage + 1);
+                    }
+                  },
+                  onPreviousPage: () {
+                    if (cancelProvider.currentPage > 1) {
+                      cancelProvider.goToPage(cancelProvider.currentPage - 1);
+                    }
+                  },
+                  onGoToPage: (page) {
                     cancelProvider.goToPage(page);
-                  }
-                },
-              ),
+                  },
+                  onJumpToPage: () {
+                    final page = int.tryParse(cancelProvider.textEditingController.text);
+                    if (page != null && page > 0 && page <= cancelProvider.totalPages) {
+                      cancelProvider.goToPage(page);
+                    }
+                  },
+                );
+              }),
             ],
           ),
         );
@@ -223,16 +187,14 @@ class _CancelledOrdersState extends State<CancelledOrders> {
     );
   }
 
-  Widget _buildOrderCard(
-      Order order, int index, CancelledProvider cancelProvider) {
+  Widget _buildOrderCard(Order order, int index, CancelledProvider cancelProvider) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4.0, horizontal: 8.0),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Checkbox(
-            value: cancelProvider
-                .selectedProducts[index], // Accessing selected products
+            value: cancelProvider.selectedProducts[index], // Accessing selected products
             onChanged: (isSelected) {
               cancelProvider.handleRowCheckboxChange(index, isSelected!);
             },
@@ -240,23 +202,18 @@ class _CancelledOrdersState extends State<CancelledOrders> {
           Expanded(
             flex: 5,
             child: Row(
-              mainAxisAlignment:
-                  MainAxisAlignment.spaceBetween, // Space between elements
+              mainAxisAlignment: MainAxisAlignment.spaceBetween, // Space between elements
               children: [
                 Expanded(
-                  child:
-                      OrderCard(order: order), // Your existing OrderCard widget
+                  child: OrderCard(order: order), // Your existing OrderCard widget
                 ),
-                const SizedBox(
-                    width: 200), // Add some spacing between the elements
+                const SizedBox(width: 200), // Add some spacing between the elements
 
                 Text(
                   '${(order.trackingStatus?.isEmpty ?? true) ? "NA" : order.trackingStatus}', // Display "NA" if null or empty
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
-                    color: order.trackingStatus == 'return'
-                        ? Colors.green
-                        : Colors.black,
+                    color: order.trackingStatus == 'return' ? Colors.green : Colors.black,
                   ),
                 ),
 

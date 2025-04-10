@@ -3,6 +3,8 @@ import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
+import 'package:inventory_management/Custom-Files/colors.dart';
+import 'package:inventory_management/Custom-Files/utils.dart';
 import 'package:inventory_management/constants/constants.dart';
 import 'package:logger/logger.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -62,28 +64,129 @@ class AuthProvider with ChangeNotifier {
     notifyListeners();
   }
 
+  Future<void> _saveUserInfo(Map<String, dynamic> responseData, String email, String password) async {
+    final List<dynamic> userRoles = responseData['userRoles'];
+    for (var role in userRoles) {
+      if (role['isAssigned'] == true) {
+        if (userPrimaryRole == null && importantRoles.contains(role['roleName'])) {
+          userPrimaryRole = role['roleName'];
+        }
+
+        assignedRole = role['roleName'];
+        switch (assignedRole) {
+          case 'superAdmin':
+            _isSuperAdminAssigned = true;
+            log('isSuperAdmin: $_isSuperAdminAssigned');
+            break;
+          case 'admin':
+            _isAdminAssigned = true;
+            log('isAdmin: $_isAdminAssigned');
+            break;
+          case 'confirmer':
+            _isConfirmerAssigned = true;
+            log('isConfirmer: $_isConfirmerAssigned');
+            break;
+          case 'booker':
+            _isBookerAssigned = true;
+            log('isBooker: $_isBookerAssigned');
+            break;
+          case 'account':
+            _isAccountsAssigned = true;
+            log('isAccounts: $_isAccountsAssigned');
+            break;
+          case 'picker':
+            _isPickerAssigned = true;
+            log('isPicker: $_isPickerAssigned');
+            break;
+          case 'packer':
+            _isPackerAssigned = true;
+            log('isPacker: $_isPackerAssigned');
+            break;
+          case 'checker':
+            _isCheckerAssigned = true;
+            log('isChecker: $_isCheckerAssigned');
+            break;
+          case 'racker':
+            _isRackerAssigned = true;
+            log('isRacker: $_isRackerAssigned');
+            break;
+          case 'manifest':
+            _isManifestAssigned = true;
+            log('isManifest: $_isManifestAssigned');
+            break;
+          case 'outbound':
+            _isOutboundAssigned = true;
+            log('isOutbound: $_isOutboundAssigned');
+            break;
+          case 'support':
+            _isSupportAssigned = true;
+            log('isSupport: $_isSupportAssigned');
+            break;
+          case 'createOrder':
+            _isCreateOrderAssigned = true;
+            log('isCreateOrder: $_isCreateOrderAssigned');
+            break;
+          case 'ggv':
+            _isGGVAssigned = true;
+            log('isGGV: $_isGGVAssigned');
+            break;
+          case 'supervisor':
+            _isSuperVisorAssigned = true;
+            log('isSuperVisor: $_isSuperVisorAssigned');
+            break;
+          default:
+            log('Unknown role: $assignedRole');
+        }
+      }
+    }
+
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('_isSuperAdminAssigned', _isSuperAdminAssigned);
+    await prefs.setBool('_isAdminAssigned', _isAdminAssigned);
+    await prefs.setBool('_isConfirmerAssigned', _isConfirmerAssigned);
+    await prefs.setBool('_isBookerAssigned', _isBookerAssigned);
+    await prefs.setBool('_isAccountsAssigned', _isAccountsAssigned);
+    await prefs.setBool('_isPickerAssigned', _isPickerAssigned);
+    await prefs.setBool('_isPackerAssigned', _isPackerAssigned);
+    await prefs.setBool('_isCheckerAssigned', _isCheckerAssigned);
+    await prefs.setBool('_isRackerAssigned', _isRackerAssigned);
+    await prefs.setBool('_isManifestAssigned', _isManifestAssigned);
+    await prefs.setBool('_isOutboundAssigned', _isOutboundAssigned);
+    await prefs.setBool('_isSupportAssigned', _isSupportAssigned);
+    await prefs.setBool('_isCreateOrderAssigned', _isCreateOrderAssigned);
+    await prefs.setBool('_isGGVAssigned', _isGGVAssigned);
+    await prefs.setBool('_isSuperVisorAssigned', _isSuperVisorAssigned);
+    await prefs.setString('userPrimaryRole', userPrimaryRole ?? 'none');
+    await prefs.setString('userName', responseData['userName'] ?? '');
+
+    await _saveToken(responseData['token'] ?? '');
+    await _saveCredentials(email, password);
+  }
+
   Future<Map<String, dynamic>> register(String email, String password, List<Map<String, dynamic>> assignedRoles) async {
     String baseUrl = await Constants.getBaseUrl();
 
     final url = Uri.parse('$baseUrl/register');
 
     log(assignedRoles.toString());
+
+    final body = jsonEncode({
+      'email': email,
+      'password': password,
+      'userRoles': assignedRoles,
+    });
+
     try {
       final response = await http.post(
         url,
         headers: {'Content-Type': 'application/json'},
-        body: json.encode({
-          'email': email,
-          'password': password,
-          'userRoles': assignedRoles,
-        }),
+        body: body,
       );
 
-      log({
-        'email': email,
-        'password': password,
-        'userRoles': assignedRoles,
-      }.toString());
+      log("register body is: $body".toString());
+
+      log('Registration Response: ${response.statusCode}');
+      log('Registration Response Body: ${response.body}');
 
       if (response.statusCode == 200) {
         // await _saveCredentials(email, password, '');
@@ -91,7 +194,10 @@ class AuthProvider with ChangeNotifier {
       } else if (response.statusCode == 400) {
         final errorResponse = json.decode(response.body);
         if (errorResponse['error'] == 'Email already exists') {
-          return {'success': false, 'message': 'This email is already registered. Please use a different email or log in.'};
+          return {
+            'success': false,
+            'message': 'This email is already registered. Please use a different email or log in.'
+          };
         }
         return {'success': false, 'message': 'Registration failed'};
       } else {
@@ -108,18 +214,29 @@ class AuthProvider with ChangeNotifier {
 
     final url = Uri.parse('$baseUrl/register-otp');
 
+    final body = json.encode({
+      'email': email,
+      'otp': otp,
+      'password': password,
+    });
+
+    log("register otp body is: $body");
+
     try {
       final response = await http.post(
         url,
         headers: {'Content-Type': 'application/json'},
-        body: json.encode({
-          'email': email,
-          'otp': otp,
-          'password': password,
-        }),
+        body: body,
       );
 
+      log('Registration OTP Response: ${response.statusCode}');
+      log('Registration OTP Response Body: ${response.body}');
+
+      final responseData = jsonDecode(response.body);
+
       if (response.statusCode == 200 || response.statusCode == 201) {
+        _saveUserInfo(responseData, email, password);
+
         return {'success': true, 'data': json.decode(response.body)};
       } else {
         print('OTP verification failed with status code: ${response.statusCode}');
@@ -153,124 +270,15 @@ class AuthProvider with ChangeNotifier {
         final responseData = json.decode(response.body);
         final token = responseData['token'] ?? '';
 
-        Logger().e('token hai: $token');
+        Logger().e('token is: $token');
 
-        // Fetch user roles from responseData
-        final List<dynamic> userRoles = responseData['userRoles'];
-        for (var role in userRoles) {
-          if (role['isAssigned'] == true) {
-            if (userPrimaryRole == null && importantRoles.contains(role['roleName'])) {
-              userPrimaryRole = role['roleName'];
-            }
+        await _saveUserInfo(responseData, email, password);
 
-            assignedRole = role['roleName'];
-            switch (assignedRole) {
-              case 'superAdmin':
-                _isSuperAdminAssigned = true;
-                log('isSuperAdmin: $_isSuperAdminAssigned');
-                break;
-              case 'admin':
-                _isAdminAssigned = true;
-                log('isAdmin: $_isAdminAssigned');
-                break;
-              case 'confirmer':
-                _isConfirmerAssigned = true;
-                log('isConfirmer: $_isConfirmerAssigned');
-                break;
-              case 'booker':
-                _isBookerAssigned = true;
-                log('isBooker: $_isBookerAssigned');
-                break;
-              case 'account':
-                _isAccountsAssigned = true;
-                log('isAccounts: $_isAccountsAssigned');
-                break;
-              case 'picker':
-                _isPickerAssigned = true;
-                log('isPicker: $_isPickerAssigned');
-                break;
-              case 'packer':
-                _isPackerAssigned = true;
-                log('isPacker: $_isPackerAssigned');
-                break;
-              case 'checker':
-                _isCheckerAssigned = true;
-                log('isChecker: $_isCheckerAssigned');
-                break;
-              case 'racker':
-                _isRackerAssigned = true;
-                log('isRacker: $_isRackerAssigned');
-                break;
-              case 'manifest':
-                _isManifestAssigned = true;
-                log('isManifest: $_isManifestAssigned');
-                break;
-              case 'outbound':
-                _isOutboundAssigned = true;
-                log('isOutbound: $_isOutboundAssigned');
-                break;
-              case 'support':
-                _isSupportAssigned = true;
-                log('isSupport: $_isSupportAssigned');
-                break;
-              case 'createOrder':
-                _isCreateOrderAssigned = true;
-                log('isCreateOrder: $_isCreateOrderAssigned');
-                break;
-              case 'ggv':
-                _isGGVAssigned = true;
-                log('isGGV: $_isGGVAssigned');
-                break;
-              case 'supervisor':
-                _isSuperVisorAssigned = true;
-                log('isSuperVisor: $_isSuperVisorAssigned');
-                break;
-              default:
-                log('Unknown role: $assignedRole');
-            }
-          }
-        }
-
-        // for (var role in userRoles) {
-        //   if (role['isAssigned'] == true && importantRoles.contains(role['roleName'])) {
-        //     userPrimaryRole = role['roleName'];
-        //     break; // Stop at the first assigned role found
-        //   }
-        // }
-
-        Logger().d('userName: ${responseData['userName']}');
-
-        final prefs = await SharedPreferences.getInstance();
-        await prefs.setBool('_isSuperAdminAssigned', _isSuperAdminAssigned);
-        await prefs.setBool('_isAdminAssigned', _isAdminAssigned);
-        await prefs.setBool('_isConfirmerAssigned', _isConfirmerAssigned);
-        await prefs.setBool('_isBookerAssigned', _isBookerAssigned);
-        await prefs.setBool('_isAccountsAssigned', _isAccountsAssigned);
-        await prefs.setBool('_isPickerAssigned', _isPickerAssigned);
-        await prefs.setBool('_isPackerAssigned', _isPackerAssigned);
-        await prefs.setBool('_isCheckerAssigned', _isCheckerAssigned);
-        await prefs.setBool('_isRackerAssigned', _isRackerAssigned);
-        await prefs.setBool('_isManifestAssigned', _isManifestAssigned);
-        await prefs.setBool('_isOutboundAssigned', _isOutboundAssigned);
-        await prefs.setBool('_isSupportAssigned', _isSupportAssigned);
-        await prefs.setBool('_isCreateOrderAssigned', _isCreateOrderAssigned);
-        await prefs.setBool('_isGGVAssigned', _isGGVAssigned);
-        await prefs.setBool('_isSuperVisorAssigned', _isSuperVisorAssigned);
-        await prefs.setString('userPrimaryRole', userPrimaryRole ?? 'none');
-        await prefs.setString('userName', responseData['userName'] ?? '');
-
-        if (token != null && token.isNotEmpty) {
-          await _saveToken(token);
-          await _saveCredentials(email, password);
-
-          return {
-            'success': true,
-            'data': responseData,
-            'role': assignedRole,
-          };
-        } else {
-          return {'success': false, 'data': responseData};
-        }
+        return {
+          'success': true,
+          'data': responseData,
+          'role': assignedRole,
+        };
       } else if (response.statusCode == 400) {
         final errorResponse = json.decode(response.body);
         return {'success': false, 'message': errorResponse['error']};
@@ -404,7 +412,9 @@ class AuthProvider with ChangeNotifier {
 
           // If a name is provided, filter the categories by the name
           if (name != null && name.isNotEmpty) {
-            categories = categories.where((category) => category['name'].toString().toLowerCase() == name.toLowerCase()).toList();
+            categories = categories
+                .where((category) => category['name'].toString().toLowerCase() == name.toLowerCase())
+                .toList();
 
             if (categories.isEmpty) {
               return {'success': false, 'message': 'Category with name "$name" not found'};
@@ -428,28 +438,32 @@ class AuthProvider with ChangeNotifier {
 
   Future<String?> getToken() async {
     final prefs = await SharedPreferences.getInstance();
-    _isAuthenticated = prefs.getString('authToken') != null && prefs.getString('date') == DateFormat('dd-MMMM-yyyy').format(DateTime.now());
+    _isAuthenticated = prefs.getString('authToken') != null &&
+        prefs.getString('date') == DateFormat('dd-MMMM-yyyy').format(DateTime.now());
     // notifyListeners();
     return prefs.getString('authToken');
   }
 
   Future<String?> getWarehouseId() async {
     final prefs = await SharedPreferences.getInstance();
-    _isAuthenticated = prefs.getString('authToken') != null && prefs.getString('date') == DateFormat('dd-MMMM-yyyy').format(DateTime.now());
+    _isAuthenticated = prefs.getString('authToken') != null &&
+        prefs.getString('date') == DateFormat('dd-MMMM-yyyy').format(DateTime.now());
     // notifyListeners();
     return prefs.getString('warehouseId');
   }
 
   Future<String?> getWarehouseName() async {
     final prefs = await SharedPreferences.getInstance();
-    _isAuthenticated = prefs.getString('authToken') != null && prefs.getString('date') == DateFormat('dd-MMMM-yyyy').format(DateTime.now());
+    _isAuthenticated = prefs.getString('authToken') != null &&
+        prefs.getString('date') == DateFormat('dd-MMMM-yyyy').format(DateTime.now());
     // notifyListeners();
     return prefs.getString('warehouseName');
   }
 
   Future<String?> getEmail() async {
     final prefs = await SharedPreferences.getInstance();
-    _isAuthenticated = prefs.getString('authToken') != null && prefs.getString('date') == DateFormat('dd-MMMM-yyyy').format(DateTime.now());
+    _isAuthenticated = prefs.getString('authToken') != null &&
+        prefs.getString('date') == DateFormat('dd-MMMM-yyyy').format(DateTime.now());
     // notifyListeners();
     return prefs.getString('email');
   }
@@ -704,7 +718,8 @@ class AuthProvider with ChangeNotifier {
         return {
           'success': true,
           'data': {'warehouses': warehouses},
-          'totalPages': res['data']['totalPages'],
+          'totalPages': res['data']?['totalPages'] ?? 0,
+          'totalWarehouses': res['data']?['totalwarehouses'] ?? 0,
         };
       } else {
         return {'success': false, 'message': 'Failed to load warehouses. Status code: ${response.statusCode}'};
@@ -893,7 +908,6 @@ class AuthProvider with ChangeNotifier {
   }
 
   Future<Map<String, dynamic>?> createProduct(List<Map<String, dynamic>> productData) async {
-
     String baseUrl = await Constants.getBaseUrl();
 
     final url = Uri.parse('$baseUrl/products');
@@ -922,9 +936,7 @@ class AuthProvider with ChangeNotifier {
           'successfulProducts': responseData['successfulProducts'],
           'failedProducts': responseData['failedProducts'],
         };
-      }
-      else {
-
+      } else {
         final errorResponse = json.decode(response.body);
 
         String errorMessage;
@@ -934,7 +946,8 @@ class AuthProvider with ChangeNotifier {
         } else if (response.statusCode == 401) {
           errorMessage = 'Authorization failed. Please check your credentials.';
         } else {
-          errorMessage = 'Failed to create product. Status code: ${response.statusCode} - ${errorResponse['message'] ?? 'Unknown error'}';
+          errorMessage =
+              'Failed to create product. Status code: ${response.statusCode} - ${errorResponse['message'] ?? 'Unknown error'}';
         }
 
         print('Error Response: ${jsonEncode(errorResponse)}'); // Print structured error response
@@ -1043,7 +1056,10 @@ class AuthProvider with ChangeNotifier {
         final res = json.decode(response.body);
         // Logger().e("Response Body: $decodedBody");
 
-        if (res['products'] is! List || res['totalProducts'] is! int || res['totalPages'] is! int || res['currentPage'] is! int) {
+        if (res['products'] is! List ||
+            res['totalProducts'] is! int ||
+            res['totalPages'] is! int ||
+            res['currentPage'] is! int) {
           return {
             'success': false,
             'message': 'Unexpected response format',
@@ -1138,7 +1154,10 @@ class AuthProvider with ChangeNotifier {
         final res = json.decode(response.body);
         // Logger().e("Response Body: $decodedBody");
 
-        if (res['products'] is! List || res['totalProducts'] is! int || res['totalPages'] is! int || res['currentPage'] is! int) {
+        if (res['products'] is! List ||
+            res['totalProducts'] is! int ||
+            res['totalPages'] is! int ||
+            res['currentPage'] is! int) {
           return {
             'success': false,
             'message': 'Unexpected response format',
@@ -1366,42 +1385,13 @@ class AuthProvider with ChangeNotifier {
 
       if (await canLaunchUrl(fileUrl)) {
         await launchUrl(fileUrl);
-        // Optionally, show a message to the user
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Template download initiated.')),
-        );
+        Utils.showSnackBar(context, 'Template download initiated');
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Could not launch URL.')),
-        );
+        Utils.showSnackBar(context, 'Could not launch URL', color: AppColors.cardsred);
       }
-
-      // final response = await http.get(Uri.parse(apiUrl));
-
-      // if (response.statusCode == 200) {
-      //   final res = json.decode(response.body);
-      //   final String fileUrl = res['data']['url']; // Extract the URL from the response
-
-      // if (await canLaunch(fileUrl)) {
-      //   await launch(fileUrl);
-      //   // Optionally, show a message to the user
-      //   ScaffoldMessenger.of(context).showSnackBar(
-      //     const SnackBar(content: Text('Template download initiated.')),
-      //   );
-      // } else {
-      //   ScaffoldMessenger.of(context).showSnackBar(
-      //     const SnackBar(content: Text('Could not launch URL.')),
-      //   );
-      // }
-      // } else {
-      //   ScaffoldMessenger.of(context).showSnackBar(
-      //     SnackBar(content: Text('Failed to fetch template URL: ${response.statusCode}')),
-      //   );
-      // }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: $e')),
-      );
+      Utils.showSnackBar(context, 'An error occurred while downloading the template',
+          color: AppColors.cardsred, details: e.toString());
     }
   }
 
@@ -1438,7 +1428,7 @@ class AuthProvider with ChangeNotifier {
           {
             'order_id': orderId,
             'order_status': revertStatus,
-            'reason' : remark,
+            'reason': remark,
           },
         ),
       );
@@ -1450,7 +1440,11 @@ class AuthProvider with ChangeNotifier {
       // Logger().e('reverseOrder body: $data');
 
       if (response.statusCode == 200) {
-        Logger().e('reverseOrder body: ${{'success': true, 'message': data['message'], 'newOrderId': data['order']?['order_id'] ?? ''}}');
+        Logger().e('reverseOrder body: ${{
+          'success': true,
+          'message': data['message'],
+          'newOrderId': data['order']?['order_id'] ?? ''
+        }}');
         return {'success': true, 'message': data['message'], 'newOrderId': data['order']?['order_id'] ?? ''};
       } else {
         return {'success': false, 'message': data['message']};

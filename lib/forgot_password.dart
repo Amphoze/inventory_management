@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:inventory_management/Custom-Files/colors.dart';
+import 'package:inventory_management/Custom-Files/utils.dart';
 import 'package:inventory_management/reset_password.dart';
 import 'Api/auth_provider.dart';
 
@@ -29,16 +30,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
   final AuthProvider _authProvider = AuthProvider();
 
   void _showSnackbar(String message, {bool isSuccess = true}) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          message,
-          style: const TextStyle(color: Colors.white),
-        ),
-        backgroundColor: isSuccess ? Colors.black : Colors.red,
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
+    Utils.showSnackBar(context, message, isError: !isSuccess);
   }
 
   void _validateEmail(String email) {

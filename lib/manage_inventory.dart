@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:developer';
 import 'package:flutter/material.dart';
@@ -8,12 +9,11 @@ import 'package:inventory_management/constants/constants.dart';
 import 'package:inventory_management/create_inventory_screen.dart';
 import 'package:inventory_management/provider/combo_provider.dart';
 import 'package:inventory_management/provider/inventory_provider.dart';
-import 'package:inventory_management/provider/location_provider.dart';
+import 'package:inventory_management/provider/warehouse_provider.dart';
 import 'package:logger/logger.dart';
 import 'package:provider/provider.dart';
 import 'package:inventory_management/Custom-Files/colors.dart';
 import 'package:http/http.dart' as http;
-import 'package:dropdown_search/dropdown_search.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'Api/auth_provider.dart';
 import 'Api/inventory_api.dart';
@@ -51,11 +51,25 @@ class _ManageInventoryPageState extends State<ManageInventoryPage> {
   bool isloading = true;
   final TextEditingController searchController = TextEditingController();
   String? downloadUrl;
+  late InventoryProvider inventoryProvider;
+  Timer? _debounce;
+
+  void _onSearchChanged(String value) {
+    if (value.trim().isEmpty) {
+      context.read<InventoryProvider>().fetchInventory();
+    }
+
+    if (_debounce?.isActive ?? false) _debounce?.cancel();
+    _debounce = Timer(const Duration(milliseconds: 300), () {
+      context.read<InventoryProvider>().filterInventory(value.trim(), inventoryProvider.selectedSearchBy);
+    });
+  }
 
   @override
   void initState() {
+    inventoryProvider = Provider.of<InventoryProvider>(context, listen: false);
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      Provider.of<InventoryProvider>(context, listen: false).fetchInventory(page: 1);
+      inventoryProvider.fetchInventory(page: 1);
       Provider.of<ComboProvider>(context, listen: false).fetchProducts();
 
       searchController.addListener(() {
@@ -69,7 +83,7 @@ class _ManageInventoryPageState extends State<ManageInventoryPage> {
   }
 
   void _getInventoryItems() async {
-    downloadUrl = await context.read<InventoryProvider>().getInventoryItems();
+    downloadUrl = await inventoryProvider.getInventoryItems();
   }
 
   void addSubInventory() {
@@ -94,9 +108,7 @@ class _ManageInventoryPageState extends State<ManageInventoryPage> {
 
   Future<void> saveInventoryToApi(BuildContext context) async {
     if (selectedProductId == null) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-        content: Text("Please select a product"),
-      ));
+      Utils.showSnackBar(context, 'Please select a product', color: AppColors.cardsred, seconds: 5);
       return;
     }
 
@@ -143,7 +155,8 @@ class _ManageInventoryPageState extends State<ManageInventoryPage> {
 
       Utils.showSnackBar(context, message, details: details, color: Colors.red);
     } catch (e) {
-      Utils.showSnackBar(context, 'Error occured while creating inventory..!', details: e.toString(), color: Colors.red);
+      Utils.showSnackBar(context, 'Error occured while creating inventory..!',
+          details: e.toString(), color: Colors.red);
     }
   }
 
@@ -178,22 +191,6 @@ class _ManageInventoryPageState extends State<ManageInventoryPage> {
       String baseUrl = await Constants.getBaseUrl();
 
       if (token == null || token.isEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Row(
-              children: [
-                Icon(Icons.error_outline, color: Colors.white),
-                SizedBox(width: 8),
-                Expanded(
-                  child: Text('Authorization token is missing or invalid'),
-                ),
-              ],
-            ),
-            backgroundColor: Colors.red,
-            duration: Duration(seconds: 3),
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
         throw Exception('Authorization token is missing or invalid.');
       }
 
@@ -220,22 +217,7 @@ class _ManageInventoryPageState extends State<ManageInventoryPage> {
           if (canLaunch) {
             await launchUrl(Uri.parse(downloadUrl));
 
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Row(
-                  children: [
-                    Icon(Icons.check_circle, color: Colors.white),
-                    SizedBox(width: 8),
-                    Expanded(
-                      child: Text('CSV download started successfully'),
-                    ),
-                  ],
-                ),
-                backgroundColor: Colors.green,
-                duration: Duration(seconds: 3),
-                behavior: SnackBarBehavior.floating,
-              ),
-            );
+            Utils.showSnackBar(context, 'CSV download started successfully');
           } else {
             throw 'Could not launch $downloadUrl';
           }
@@ -249,26 +231,7 @@ class _ManageInventoryPageState extends State<ManageInventoryPage> {
       log('error: $error');
       log('Error during report generation: $error');
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Row(
-            children: [
-              const Icon(Icons.error_outline, color: Colors.white),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  'Error downloading CSV: $error',
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-            ],
-          ),
-          backgroundColor: Colors.red,
-          duration: const Duration(seconds: 3),
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
+      Utils.showSnackBar(context, 'Error downloading CSV', color: AppColors.cardsred, details: error.toString(), seconds: 5);
     } finally {
       setState(() {
         isThresholdCsv = false;
@@ -288,22 +251,6 @@ class _ManageInventoryPageState extends State<ManageInventoryPage> {
       String baseUrl = await Constants.getBaseUrl();
 
       if (token == null || token.isEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Row(
-              children: [
-                Icon(Icons.error_outline, color: Colors.white),
-                SizedBox(width: 8),
-                Expanded(
-                  child: Text('Authorization token is missing or invalid'),
-                ),
-              ],
-            ),
-            backgroundColor: Colors.red,
-            duration: Duration(seconds: 3),
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
         throw Exception('Authorization token is missing or invalid.');
       }
 
@@ -330,22 +277,7 @@ class _ManageInventoryPageState extends State<ManageInventoryPage> {
           if (canLaunch) {
             await launchUrl(Uri.parse(downloadUrl));
 
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Row(
-                  children: [
-                    Icon(Icons.check_circle, color: Colors.white),
-                    SizedBox(width: 8),
-                    Expanded(
-                      child: Text('CSV download started successfully'),
-                    ),
-                  ],
-                ),
-                backgroundColor: Colors.green,
-                duration: Duration(seconds: 3),
-                behavior: SnackBarBehavior.floating,
-              ),
-            );
+            Utils.showSnackBar(context, 'CSV download started successfully');
           } else {
             throw 'Could not launch $downloadUrl';
           }
@@ -359,26 +291,7 @@ class _ManageInventoryPageState extends State<ManageInventoryPage> {
       log('error: $error');
       log('Error during report generation: $error');
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Row(
-            children: [
-              Icon(Icons.error_outline, color: Colors.white),
-              SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  'Error downloading CSV',
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-            ],
-          ),
-          backgroundColor: Colors.red,
-          duration: Duration(seconds: 3),
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
+      Utils.showSnackBar(context, 'Error downloading CSV', details: error.toString(), color: AppColors.cardsred, seconds: 5);
     } finally {
       setState(() {
         isSkuCsv = false;
@@ -452,17 +365,18 @@ class _ManageInventoryPageState extends State<ManageInventoryPage> {
                 ),
                 Expanded(
                   child: Container(
+                    height: 35,
                     margin: const EdgeInsets.symmetric(horizontal: 8.0),
                     child: TextField(
                       controller: _searchController,
                       decoration: InputDecoration(
                         hintText: 'Search...',
                         hintStyle: TextStyle(color: Colors.grey[600]),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(30),
+                        border: const OutlineInputBorder(
+                          // borderRadius: BorderRadius.circular(30),
                           borderSide: const BorderSide(color: AppColors.primaryBlue),
                         ),
-                        contentPadding: const EdgeInsets.symmetric(vertical: 10, horizontal: 20),
+                        contentPadding: const EdgeInsets.all(8),
                         prefixIcon: IconButton(
                             tooltip: 'Search',
                             icon: const Icon(Icons.search, color: AppColors.primaryBlue),
@@ -488,11 +402,7 @@ class _ManageInventoryPageState extends State<ManageInventoryPage> {
                               }
                             }),
                       ),
-                      onChanged: (value) {
-                        if (value.isEmpty) {
-                          provider.fetchInventory();
-                        }
-                      },
+                      onChanged: _onSearchChanged,
                       onSubmitted: (value) {
                         Logger().e('$value ${provider.selectedSearchBy}');
                         if (value.trim().isNotEmpty) {
@@ -512,6 +422,14 @@ class _ManageInventoryPageState extends State<ManageInventoryPage> {
                       duration: const Duration(milliseconds: 300),
                       curve: Curves.easeInOut,
                     );
+                  },
+                ),
+                const SizedBox(width: 10),
+                IconButton(
+                  tooltip: 'Refresh',
+                  icon: const Icon(Icons.refresh, color: AppColors.primaryBlue),
+                  onPressed: () {
+                    provider.fetchInventory();
                   },
                 ),
                 const SizedBox(width: 10),
@@ -579,23 +497,12 @@ class _ManageInventoryPageState extends State<ManageInventoryPage> {
                         await launchUrl(url);
                       } else {
                         if (context.mounted) {
-                          ScaffoldMessenger.of(context).removeCurrentSnackBar();
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Could not launch download URL'),
-                              backgroundColor: Colors.red,
-                            ),
-                          );
+                          Utils.showSnackBar(context, "Could not launch download URL", color: AppColors.cardsred, toRemoveCurr: true);
                         }
                       }
                     } else {
                       if (context.mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Download URL not available'),
-                            backgroundColor: Colors.red,
-                          ),
-                        );
+                        Utils.showSnackBar(context, 'Download URL not available', isError: true);
                       }
                     }
                   },
@@ -671,7 +578,7 @@ class _ManageInventoryPageState extends State<ManageInventoryPage> {
                                     Row(
                                       children: [
                                         Expanded(
-                                          child: Consumer<LocationProvider>(
+                                          child: Consumer<WarehouseProvider>(
                                             builder: (context, pro, child) {
                                               return _buildDropdown(
                                                 value: warehouse[index],
@@ -679,7 +586,8 @@ class _ManageInventoryPageState extends State<ManageInventoryPage> {
                                                 items: pro.warehouses.map((e) => e['name'].toString()).toList(),
                                                 onChanged: (value) async {
                                                   if (value != null) {
-                                                    final tempWarehouse = pro.warehouses.firstWhere((e) => e['name'] == value);
+                                                    final tempWarehouse =
+                                                        pro.warehouses.firstWhere((e) => e['name'] == value);
                                                     final id = tempWarehouse['_id'].toString();
                                                     setState(() {
                                                       warehouse[index] = value;
@@ -692,7 +600,8 @@ class _ManageInventoryPageState extends State<ManageInventoryPage> {
                                                     await _fetchBins(id);
                                                   }
                                                 },
-                                                validator: (value) => value == null ? 'Please select a warehouse' : null,
+                                                validator: (value) =>
+                                                    value == null ? 'Please select a warehouse' : null,
                                               );
                                             },
                                           ),
@@ -737,7 +646,8 @@ class _ManageInventoryPageState extends State<ManageInventoryPage> {
                                                     log("value type 2: ${subInventories[index]['bin'][0]['binName'].runtimeType}");
                                                     log("2. Sub Inventory at $index is ${subInventories[index]}");
                                                   },
-                                            validator: (value) => value == null || value.isEmpty ? 'Please select a bin' : null,
+                                            validator: (value) =>
+                                                value == null || value.isEmpty ? 'Please select a bin' : null,
                                           ),
                                     const SizedBox(height: 8),
                                     TextFormField(
@@ -787,9 +697,7 @@ class _ManageInventoryPageState extends State<ManageInventoryPage> {
                               ElevatedButton(
                                 onPressed: () async {
                                   if (selectedProductId == null) {
-                                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                                      content: Text("Please select a product"),
-                                    ));
+                                    Utils.showSnackBar(context, 'Please select a product', isError: true);
                                   } else {
                                     showDialog(
                                       context: context,
@@ -860,25 +768,30 @@ class _ManageInventoryPageState extends State<ManageInventoryPage> {
             ),
           ),
           if (!comboProvider.isFormVisible)
-            CustomPaginationFooter(
-              currentPage: provider.currentPage,
-              totalPages: provider.totalPages,
-              buttonSize: MediaQuery.of(context).size.width > 600 ? 32 : 24,
-              pageController: _pageController,
-              onFirstPage: () => _goToPage(1),
-              onLastPage: () => _goToPage(provider.totalPages),
-              onNextPage: () {
-                if (provider.currentPage - 1 < provider.totalPages) {
-                  _goToPage(provider.currentPage + 1);
-                }
-              },
-              onPreviousPage: () {
-                if (provider.currentPage > 1) {
-                  _goToPage(provider.currentPage - 1);
-                }
-              },
-              onGoToPage: _goToPage,
-              onJumpToPage: _jumpToPage,
+            Consumer<InventoryProvider>(
+              builder: (context, provider, child) {
+                return CustomPaginationFooter(
+                  currentPage: provider.currentPage,
+                  totalPages: provider.totalPages,
+                  totalCount: provider.totalCount,
+                  buttonSize: MediaQuery.of(context).size.width > 600 ? 32 : 24,
+                  pageController: _pageController,
+                  onFirstPage: () => _goToPage(1),
+                  onLastPage: () => _goToPage(provider.totalPages),
+                  onNextPage: () {
+                    if (provider.currentPage - 1 < provider.totalPages) {
+                      _goToPage(provider.currentPage + 1);
+                    }
+                  },
+                  onPreviousPage: () {
+                    if (provider.currentPage > 1) {
+                      _goToPage(provider.currentPage - 1);
+                    }
+                  },
+                  onGoToPage: _goToPage,
+                  onJumpToPage: _jumpToPage,
+                );
+              }
             ),
         ],
       ),
@@ -921,12 +834,7 @@ class _ManageInventoryPageState extends State<ManageInventoryPage> {
       setState(() => bins = []);
       if (mounted) {
         Navigator.of(context).pop();
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to fetch bins: $error'),
-            backgroundColor: Colors.red,
-          ),
-        );
+        Utils.showSnackBar(context, 'Failed to fetch bins: $error',  isError: true);
       }
     } finally {
       setState(() => isLoadingBins = false);

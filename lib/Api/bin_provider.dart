@@ -9,7 +9,7 @@ import 'package:inventory_management/constants/constants.dart';
 import 'package:logger/logger.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-class BinApi with ChangeNotifier {
+class BinProvider with ChangeNotifier {
   List<String> _bins = [];
   List<Map<String, dynamic>> _products = [];
   bool _isLoadingBins = false;
@@ -101,12 +101,7 @@ class BinApi with ChangeNotifier {
     } catch (error) {
       _bins = [];
       log('error hai: $error');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(error.toString()),
-          backgroundColor: Colors.red,
-        ),
-      );
+      Utils.showSnackBar(context, 'Error: $error', isError: true, details: error.toString());
     } finally {
       setBinsLoadingStatus(false);
     }
@@ -125,7 +120,7 @@ class BinApi with ChangeNotifier {
 
     url += '&warehouseId=${await getWarehouseId()}';
 
-    Logger().e('url: $url');
+    Logger().e('seearchBinsByProduct url: $url');
 
     try {
       final token = await AuthProvider().getToken();
@@ -163,7 +158,6 @@ class BinApi with ChangeNotifier {
   }
 
   Future<void> searchProducts(String binName, String query) async {
-    log('searchProducts');
     setProductsLoadingStatus(true);
 
     final pref = await SharedPreferences.getInstance();
@@ -178,7 +172,7 @@ class BinApi with ChangeNotifier {
       url += '&displayName=$query';
     }
 
-    log('searchProducts url: $url');
+    log("bin searchProducts url: $url");
 
     try {
       final token = await AuthProvider().getToken();
@@ -192,7 +186,6 @@ class BinApi with ChangeNotifier {
 
       if (response.statusCode == 200) {
         final res = json.decode(response.body);
-        Logger().e('searchProducts body: $res');
         if (res.containsKey('data') && (res['data'] as List).isNotEmpty) {
           _products = (res['data'][0]['products'] as List)
               .map((product) => {

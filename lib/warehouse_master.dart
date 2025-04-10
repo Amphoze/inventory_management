@@ -1,22 +1,22 @@
 import 'package:flutter/material.dart';
+import 'package:inventory_management/Custom-Files/utils.dart';
 import 'package:provider/provider.dart';
 import 'package:inventory_management/create_location_form.dart';
 import 'Custom-Files/custom_pagination.dart';
-import 'provider/location_provider.dart';
+import 'provider/warehouse_provider.dart';
 import 'Custom-Files/custom-button.dart';
 import 'Custom-Files/colors.dart';
 import 'Custom-Files/data_table.dart';
 import 'Custom-Files/loading_indicator.dart';
 
-class LocationMaster extends StatefulWidget {
-  const LocationMaster({super.key});
+class WarehouseMaster extends StatefulWidget {
+  const WarehouseMaster({super.key});
 
   @override
-  _LocationMasterState createState() => _LocationMasterState();
+  _WarehouseMasterState createState() => _WarehouseMasterState();
 }
 
-class _LocationMasterState extends State<LocationMaster> {
-
+class _WarehouseMasterState extends State<WarehouseMaster> {
   @override
   void initState() {
     super.initState();
@@ -26,56 +26,37 @@ class _LocationMasterState extends State<LocationMaster> {
   }
 
   void _refreshData() async {
-    final locationProvider = Provider.of<LocationProvider>(context, listen: false);
+    final locationProvider = Provider.of<WarehouseProvider>(context, listen: false);
     locationProvider.setLoading(true); // Start loading
 
     try {
       await locationProvider.fetchWarehouses(); // Fetch data
       print("Warehouses fetched successfully."); // Debugging
     } catch (error) {
-      // Handle errors during fetch
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Failed to refresh warehouses'),
-          backgroundColor: AppColors.cardsred,
-        ),
-      );
+      Utils.showSnackBar(context, 'Failed to refresh warehouses', isError: true);
     } finally {
       locationProvider.setLoading(false); // Ensure loading is stopped
     }
   }
 
-  Future<void> _deleteWarehouse(
-      BuildContext context, String warehouseId) async {
-    final locationProvider =
-        Provider.of<LocationProvider>(context, listen: false);
+  Future<void> _deleteWarehouse(BuildContext context, String warehouseId, String warehouseName) async {
+    final locationProvider = Provider.of<WarehouseProvider>(context, listen: false);
 
     locationProvider.setLoading(true);
-    bool isDeleted =
-        await locationProvider.deleteWarehouse(context, warehouseId);
+    bool isDeleted = await locationProvider.deleteWarehouse(context, warehouseId);
 
     if (isDeleted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Warehouse deleted successfully'),
-          backgroundColor: AppColors.primaryGreen,
-        ),
-      );
+      Utils.showSnackBar(context, '$warehouseName deleted successfully', color: AppColors.primaryBlue);
       _refreshData();
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Failed to delete warehouse'),
-          backgroundColor: AppColors.cardsred,
-        ),
-      );
+      Utils.showSnackBar(context, 'Failed to delete $warehouseName', isError: true);
     }
     locationProvider.setLoading(false);
   }
 
   @override
   Widget build(BuildContext context) {
-    final locationProvider = Provider.of<LocationProvider>(context);
+    final locationProvider = Provider.of<WarehouseProvider>(context);
     final screenWidth = MediaQuery.of(context).size.width;
 
     // // Fixed sizes for large screens
@@ -103,7 +84,8 @@ class _LocationMasterState extends State<LocationMaster> {
                   locationProvider.isEditingLocation
                       ? NewLocationForm(
                           isEditing: true,
-                          warehouseData: locationProvider.warehouseData, // If you want to pass this as a flag, ensure your form handles it
+                          warehouseData: locationProvider
+                              .warehouseData, // If you want to pass this as a flag, ensure your form handles it
                         )
                       : locationProvider.isCreatingNewLocation
                           ? const NewLocationForm()
@@ -112,63 +94,58 @@ class _LocationMasterState extends State<LocationMaster> {
               ),
             ),
           ),
+          if (!locationProvider.isCreatingNewLocation && !locationProvider.isEditingLocation)
+            Consumer<WarehouseProvider>(
+              builder: (context, locationProvider, child) {
+                return CustomPaginationFooter(
+                  currentPage: locationProvider.currentPage,
+                  totalPages: locationProvider.totalPages,
+                  totalCount: locationProvider.totalWarehouses,
+                  buttonSize: 30,
+                  pageController: locationProvider.textEditingController,
+                  onFirstPage: () {
+                    locationProvider.goToPage(1);
+                  },
+                  onLastPage: () {
+                    locationProvider.goToPage(locationProvider.totalPages);
+                  },
+                  onNextPage: () {
+                    if (locationProvider.currentPage < locationProvider.totalPages) {
+                      locationProvider.goToPage(locationProvider.currentPage + 1);
+                    }
+                  },
+                  onPreviousPage: () {
+                    if (locationProvider.currentPage > 1) {
+                      locationProvider.goToPage(locationProvider.currentPage - 1);
+                    }
+                  },
+                  onGoToPage: (page) {
+                    locationProvider.goToPage(page);
+                  },
+                  onJumpToPage: () {
+                    final page = int.tryParse(locationProvider.textEditingController.text);
+                    if (page != null && page > 0 && page <= locationProvider.totalPages) {
+                      locationProvider.goToPage(page);
+                    }
+                  },
+                );
+              }
+            )
         ],
-      ),
-      bottomNavigationBar: CustomPaginationFooter(
-        currentPage: locationProvider.currentPage,
-        totalPages: locationProvider.totalPages,
-        buttonSize: 30,
-        pageController: locationProvider.textEditingController,
-        onFirstPage: () {
-          locationProvider.goToPage(1);
-        },
-        onLastPage: () {
-          locationProvider.goToPage(locationProvider.totalPages);
-        },
-        onNextPage: () {
-          if (locationProvider.currentPage < locationProvider.totalPages) {
-            locationProvider.goToPage(locationProvider.currentPage + 1);
-          }
-        },
-        onPreviousPage: () {
-          if (locationProvider.currentPage > 1) {
-            locationProvider.goToPage(locationProvider.currentPage - 1);
-          }
-        },
-        onGoToPage: (page) {
-          locationProvider.goToPage(page);
-        },
-        onJumpToPage: () {
-          final page = int.tryParse(locationProvider.textEditingController.text);
-          if (page != null && page > 0 && page <= locationProvider.totalPages) {
-            locationProvider.goToPage(page);
-          }
-        },
       ),
     );
   }
 
-  Widget _buildButtonRow(LocationProvider locationProvider, BuildContext context, double buttonWidth, double buttonHeight, double fontSize) {
+  Widget _buildButtonRow(WarehouseProvider locationProvider, BuildContext context, double buttonWidth,
+      double buttonHeight, double fontSize) {
     return Container(
       width: double.infinity,
-      height: 60,
-      color: AppColors.primaryGreen,
+      // height: 60,
+      // color: AppColors.primaryBlue,
       alignment: Alignment.center,
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
+        mainAxisAlignment: MainAxisAlignment.end,
         children: [
-          CustomButton(
-            width: 180,
-            height: 30,
-            onTap: () {
-              Provider.of<LocationProvider>(context, listen: false).toggleCreatingNewLocation();
-            },
-            color: AppColors.white,
-            textColor: AppColors.primaryGreen,
-            fontSize: fontSize,
-            text: 'Create New Warehouse',
-            borderRadius: BorderRadius.circular(8),
-          ),
           // const SizedBox(width: 16),
           // CustomButton(
           //   width: buttonWidth,
@@ -177,45 +154,20 @@ class _LocationMasterState extends State<LocationMaster> {
           //     // Implement bulk locations upload functionality here
           //   },
           //   color: AppColors.white,
-          //   textColor: AppColors.primaryGreen,
+          //   textColor: AppColors.primaryBlue,
           //   fontSize: fontSize,
           //   text: 'Bulk Locations Upload',
           //   borderRadius: BorderRadius.circular(8),
           // ),
-          const SizedBox(width: 16),
-          CustomButton(
-            width: buttonWidth * 0.75,
-            height: buttonHeight,
-            onTap: _refreshData,
-            color: AppColors.white,
-            textColor: AppColors.primaryGreen,
-            fontSize: fontSize,
-            text: 'Refresh',
-            borderRadius: BorderRadius.circular(8),
-          ),
-          const SizedBox(width: 16),
           SizedBox(
             width: 300,
             height: 35,
             child: TextField(
-              style: TextStyle(color: Colors.white),
               decoration: InputDecoration(
-                prefixIcon: const Icon(Icons.search, color: Colors.white),
-                hintText: 'Search',
-                hintStyle: TextStyle(color: Colors.white),
+                prefixIcon: const Icon(Icons.search),
+                hintText: 'Search Warehouse',
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
-                  borderSide: const BorderSide(
-                    color: Colors.white60,
-                    width: 1,
-                  ),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  borderSide: const BorderSide(
-                    color: AppColors.white,
-                    width: 1,
-                  ),
                 ),
               ),
               onChanged: (value) {
@@ -223,13 +175,43 @@ class _LocationMasterState extends State<LocationMaster> {
               },
             ),
           ),
+          const SizedBox(width: 16),
+          IconButton(
+            onPressed: _refreshData,
+            icon: const Icon(Icons.refresh, color: AppColors.primaryBlue),
+          ),
+          // CustomButton(
+          //   width: buttonWidth * 0.75,
+          //   height: buttonHeight,
+          //   onTap: _refreshData,
+          //   color: AppColors.white,
+          //   textColor: AppColors.primaryBlue,
+          //   fontSize: fontSize,
+          //   text: 'Refresh',
+          //   borderRadius: BorderRadius.circular(8),
+          // ),
+          const SizedBox(width: 16),
+          ElevatedButton(
+            onPressed: () => Provider.of<WarehouseProvider>(context, listen: false).toggleCreatingNewLocation(),
+            child: const Text('Create Warehouse'),
+          ),
+          // CustomButton(
+          //   width: 180,
+          //   height: 30,
+          //   onTap: () {},
+          //   color: AppColors.white,
+          //   textColor: AppColors.primaryBlue,
+          //   fontSize: fontSize,
+          //   text: 'Create New Warehouse',
+          //   borderRadius: BorderRadius.circular(8),
+          // ),
         ],
       ),
     );
   }
 
   Widget _buildMainTable(BuildContext context) {
-    final locationProvider = Provider.of<LocationProvider>(context);
+    final locationProvider = Provider.of<WarehouseProvider>(context);
 
     // Column names including delete action
     final columnNames = [
@@ -275,20 +257,43 @@ class _LocationMasterState extends State<LocationMaster> {
           mainAxisSize: MainAxisSize.min,
           children: [
             IconButton(
-              icon: const Icon(Icons.edit, color: AppColors.tealcolor),
+              icon: const Icon(Icons.edit, color: AppColors.primaryBlue),
               onPressed: () async {
                 // Call the fetchWarehouse method using the warehouse ID
-                await Provider.of<LocationProvider>(context, listen: false).fetchWarehouseById(warehouse['_id']);
+                await Provider.of<WarehouseProvider>(context, listen: false).fetchWarehouseById(warehouse['_id']);
 
                 // Enable editing mode in LocationProvider
-                Provider.of<LocationProvider>(context, listen: false).toggleEditingLocation();
+                Provider.of<WarehouseProvider>(context, listen: false).toggleEditingLocation();
 
                 setState(() {});
               },
             ),
             IconButton(
               icon: const Icon(Icons.delete, color: AppColors.cardsred),
-              onPressed: () => _deleteWarehouse(context, warehouse['_id']),
+              onPressed: () {
+                showDialog(
+                    context: context,
+                    builder: (context) {
+                      return AlertDialog(
+                        title: const Text('Delete Warehouse'),
+                        content: const Text('Are you sure you want to delete this warehouse?'),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(context),
+                            child: const Text('Cancel'),
+                          ),
+                          TextButton(
+                            onPressed: () {
+                              _deleteWarehouse(context, warehouse['_id'] ?? '', warehouse['name'] ?? '');
+                              Navigator.pop(context);
+                              setState(() {});
+                            },
+                            child: const Text('Delete'),
+                          ),
+                        ],
+                      );
+                    });
+              },
             ),
           ],
         ),
@@ -304,7 +309,7 @@ class _LocationMasterState extends State<LocationMaster> {
                   child: LoadingAnimation(
                     icon: Icons.warehouse_outlined,
                     beginColor: Color.fromRGBO(189, 189, 189, 1),
-                    endColor: AppColors.primaryGreen,
+                    endColor: AppColors.primaryBlue,
                     size: 80.0,
                   ),
                 )

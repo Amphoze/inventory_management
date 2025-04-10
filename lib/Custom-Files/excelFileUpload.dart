@@ -3,7 +3,7 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:excel/excel.dart' as excel;
 import 'package:file_picker/file_picker.dart';
-import 'package:inventory_management/Custom-Files/colors.dart';
+import 'package:inventory_management/Custom-Files/utils.dart';
 import 'package:inventory_management/provider/label_data_provider.dart';
 import 'package:provider/provider.dart';
 
@@ -142,13 +142,7 @@ class _ExcelFileUploaderState extends State<ExcelFileUploader> {
   }
 
   void _showMessage(BuildContext context, String message, {bool isError = false}) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: isError ? AppColors.cardsred : AppColors.primaryGreen,
-        duration: const Duration(seconds: 4),
-      ),
-    );
+   Utils.showSnackBar(context, message, isError: isError);
   }
 
   bool _isRowEmptyOrInvalid(List<dynamic> row) {

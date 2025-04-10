@@ -11,23 +11,27 @@ import 'package:logger/logger.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class AccountsProvider with ChangeNotifier {
+  int totalOrdersAccounts = 0;
+  int totalOrdersInvoiced = 0;
   bool _isLoading = false;
-  bool _selectAll = false;
-  List<bool> _selectedProducts = [];
-  int selectedItemsCount = 0;
+  bool allSelectedAccounts = false;
+  bool allSelectedInvoiced = false;
+  List<bool> _selectedAccounts = [];
+  List<bool> _selectedInvoiced = [];
+  int selectedAccountOrderCount = 0;
+  int selectedInvoicedOrderCount = 0;
   List<Order> _orders = [];
   List<Order> _ordersBooked = [];
   int _currentPage = 1;
   int _totalPages = 1;
   final PageController _pageController = PageController();
   final TextEditingController _textEditingController = TextEditingController();
-  Timer? _debounce;
   final TextEditingController accountsSearch = TextEditingController();
   final TextEditingController invoiceSearch = TextEditingController();
   String selectedSearchType = 'Order ID';
 
-  bool get selectAll => _selectAll;
-  List<bool> get selectedProducts => _selectedProducts;
+  List<bool> get selectedAccounts => _selectedAccounts;
+  List<bool> get selectedInvoiced => _selectedInvoiced;
   List<Order> get orders => _orders;
   bool get isLoading => _isLoading;
 
@@ -36,13 +40,11 @@ class AccountsProvider with ChangeNotifier {
   PageController get pageController => _pageController;
   TextEditingController get textEditingController => _textEditingController;
 
-  int get selectedCount => _selectedProducts.where((isSelected) => isSelected).length;
-
   bool isUpdatingOrder = false;
   bool isCancel = false;
 
   List<bool> selectedBookedItems = List.generate(40, (index) => false);
-  bool selectAllBooked = false;
+  // bool selectAllBooked = false;
   bool isLoadingBooked = false;
   List<Order> get ordersBooked => _ordersBooked;
   int currentPageBooked = 1;
@@ -67,8 +69,8 @@ class AccountsProvider with ChangeNotifier {
     _orders = [];
     _totalPages = 1;
     _currentPage = 1;
-    _selectedProducts = [];
-    _selectAll = false;
+    _selectedAccounts = [];
+    allSelectedAccounts = false;
     notifyListeners();
   }
 
@@ -77,7 +79,7 @@ class AccountsProvider with ChangeNotifier {
     totalPagesBooked = 1;
     currentPageBooked = 1;
     selectedBookedItems = List.generate(40, (index) => false);
-    selectAllBooked = false;
+    allSelectedInvoiced = false;
     notifyListeners();
   }
 
@@ -96,17 +98,27 @@ class AccountsProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  void handleRowCheckboxChange(int index, bool isSelected) {
-    _selectedProducts[index] = isSelected;
+  void toggleOrderSelectionAccounts(int index, bool value) {
+    if (index >= 0 && index < _selectedAccounts.length) {
+      _selectedAccounts[index] = value;
+      selectedAccountOrderCount = _selectedAccounts.where((selected) => selected).length;
+      allSelectedAccounts = selectedAccountOrderCount == _orders.length;
 
-    if (!isSelected) {
-      _selectAll = false;
-    } else {
-      _selectAll = _selectedProducts.every((element) => element);
+      notifyListeners();
     }
-
-    notifyListeners();
   }
+
+  // void handleRowCheckboxChange(int index, bool isSelected) {
+  //   _selectedAccounts[index] = isSelected;
+  //
+  //   if (!isSelected) {
+  //     _selectAllAccounts = false;
+  //   } else {
+  //     _selectAllAccounts = _selectedAccounts.every((element) => element);
+  //   }
+  //
+  //   notifyListeners();
+  // }
 
   void setCurrentPage(int value) {
     _currentPage = value;
@@ -118,9 +130,10 @@ class AccountsProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  void toggleSelectAll(bool value) {
-    _selectAll = value;
-    _selectedProducts = List<bool>.generate(_orders.length, (index) => _selectAll);
+  void toggleSelectAllAccounts(bool value) {
+    allSelectedAccounts = value;
+    selectedAccountOrderCount = value ? _orders.length : 0;
+    _selectedAccounts = List<bool>.filled(_orders.length, value);
     notifyListeners();
   }
 
@@ -243,10 +256,6 @@ class AccountsProvider with ChangeNotifier {
 
   Future<void> fetchOrdersWithStatus2() async {
     accountsSearch.clear();
-    // if (accountsSearch.text.trim().isNotEmpty) {
-    //   searchOrders(accountsSearch.text.trim(), selectedSearchType);
-    //   return;
-    // }
 
     setLoading(true);
 
@@ -284,11 +293,12 @@ class AccountsProvider with ChangeNotifier {
         List<Order> orders = (data['orders'] as List).map((order) => Order.fromJson(order)).toList();
         log(orders.toString());
 
+        totalOrdersAccounts = data['totalOrders'] ?? 0;
         _totalPages = data['totalPages'];
         _orders = orders;
         _currentPage = data['currentPage'];
 
-        _selectedProducts = List<bool>.filled(_orders.length, false);
+        _selectedAccounts = List<bool>.filled(_orders.length, false);
 
         print('Total Orders Fetched from Page $_currentPage: ${orders.length}');
       } else {
@@ -303,18 +313,20 @@ class AccountsProvider with ChangeNotifier {
     }
   }
 
-  // void onSearchChanged(String query) {
-  //   if (_debounce?.isActive ?? false) _debounce!.cancel();
-  //   _debounce = Timer(const Duration(milliseconds: 500), () {
-  //     if (query.isEmpty) {
-  //       fetchOrdersWithStatus2();
-  //     } else {
-  //       searchOrders(query, 'Order ID');
-  //     }
-  //   });
-  // }
+  void resetSelections() {
+    _selectedAccounts.fillRange(0, _selectedAccounts.length, false);
+    allSelectedAccounts = false;
 
-  Future<List<Order>> searchOrders(String query, String searchType) async {
+    _selectedInvoiced.fillRange(0, _selectedAccounts.length, false);
+    allSelectedInvoiced = false;
+
+    selectedAccountOrderCount = 0;
+    selectedInvoicedOrderCount = 0;
+
+    notifyListeners();
+  }
+
+  Future<List<Order>> searchOrders(String query) async {
     if (query.isEmpty) {
       await fetchOrdersWithStatus2();
       return _orders;
@@ -331,7 +343,7 @@ class AccountsProvider with ChangeNotifier {
 
     String url = '${await Constants.getBaseUrl()}/orders?warehouse=$warehouseId&orderStatus=2';
 
-    if (searchType == "Order ID") {
+    if (selectedSearchType == "Order ID") {
       url += '&order_id=$encodedOrderId';
     } else {
       url += '&transaction_number=$query';
@@ -348,25 +360,16 @@ class AccountsProvider with ChangeNotifier {
         },
       );
 
-      print('Response status: ${response.statusCode}');
-
       if (response.statusCode == 200) {
         final jsonData = json.decode(response.body);
 
         if (jsonData != null) {
-          // if (searchType == "Order ID") {
-          // _orders = [Order.fromJson(jsonData)];
-          // } else {
+          _totalPages = jsonData['totalPages'] ?? 0;
           _orders = (jsonData['orders'] as List).map((orderJson) => Order.fromJson(orderJson)).toList();
-          // }
-          // } else {
-          //   log('No data found in response.');
+          resetSelections();
+          _selectedAccounts = List<bool>.filled(_orders.length, false);
         }
-
-        _orders = orders;
-        print('Orders fetched: ${orders.length}');
       } else {
-        print('Failed to load orders: ${response.statusCode}');
         resetAccounts();
       }
     } catch (error) {
@@ -385,14 +388,15 @@ class AccountsProvider with ChangeNotifier {
   ) async {
     setUpdatingOrder(true);
     notifyListeners();
-    final selectedOrderIds =
-        _orders.asMap().entries.where((entry) => _selectedProducts[entry.key]).map((entry) => entry.value.orderId).toList();
+    final selectedOrderIds = _orders
+        .asMap()
+        .entries
+        .where((entry) => _selectedAccounts[entry.key])
+        .map((entry) => entry.value.orderId)
+        .toList();
 
     if (selectedOrderIds.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('No orders selected to update')),
-      );
-      setUpdatingOrder(false);
+      Utils.showSnackBar(context, 'No orders selected to update', isError: true);
       notifyListeners();
       return false;
     }
@@ -423,10 +427,8 @@ class AccountsProvider with ChangeNotifier {
         return false;
       }
     } catch (error) {
-      print('Error updating order status: $error');
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Error while updating orders')),
-      );
+      log('Error updating order status: $error');
+      Utils.showSnackBar(context, 'Error while updating orders', isError: true);
       return false;
     } finally {
       setUpdatingOrder(false);
@@ -489,9 +491,6 @@ class AccountsProvider with ChangeNotifier {
 
   Future<void> fetchInvoicedOrders(int page) async {
     invoiceSearch.clear();
-    // if(invoiceSearch.text.trim().isNotEmpty) {
-    //   searchInvoicedOrders(invoiceSearch.text.trim(), selectedSearchType);
-    // }
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('authToken') ?? '';
     final warehouseId = prefs.getString('warehouseId') ?? '';
@@ -535,13 +534,18 @@ class AccountsProvider with ChangeNotifier {
 
         _ordersBooked = orders;
         currentPageBooked = page;
-        totalPagesBooked = jsonResponse['totalPages'];
+        totalPagesBooked = jsonResponse['totalPages'] ?? 0;
+        totalOrdersInvoiced = jsonResponse['totalOrders']?? 0;
+
+        resetSelections();
+        _selectedInvoiced = List<bool>.filled(_ordersBooked.length, false);
+        allSelectedInvoiced=false;
       } else {
         resetBookedOrders();
         throw Exception('Failed to load orders: ${response.statusCode}');
       }
-    } catch (e) {
-      log('Error fetching orders: $e');
+    } catch (e,s) {
+      log('Error fetching orders: $e\n\n$s');
       resetBookedOrders();
     } finally {
       setLoadingBookedOrders(false);
@@ -578,12 +582,9 @@ class AccountsProvider with ChangeNotifier {
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-
-        // if (searchType == "Order ID") {
-        // _ordersBooked = [Order.fromJson(data)];
-        // } else {
         _ordersBooked = (data['orders'] as List).map((orderJson) => Order.fromJson(orderJson)).toList();
-        // }
+        resetSelections();
+        _selectedInvoiced = List<bool>.filled(_ordersBooked.length, false);
 
         log('Orders found: $_ordersBooked');
       } else {
@@ -598,40 +599,36 @@ class AccountsProvider with ChangeNotifier {
     }
   }
 
-  void handleRowCheckboxChangeBooked(String? orderId, bool isSelected) {
-    int index;
-    index = ordersBooked.indexWhere((order) => order.orderId == orderId);
-    if (index != -1) {
-      selectedBookedItems[index] = isSelected;
-      ordersBooked[index].isSelected = isSelected;
-    }
+  void toggleOrderSelectionBooked(String? orderId, bool isSelected) {
+    int index = _ordersBooked.indexWhere((order) => order.orderId == orderId);
 
-    selectAllBooked = selectedBookedItems.every((item) => item);
-    notifyListeners();
+    if (index >= 0 && index < _ordersBooked.length) {
+      _selectedInvoiced[index] = isSelected;
+      _ordersBooked[index].isSelected = isSelected;
+
+      selectedInvoicedOrderCount = _selectedInvoiced.where((selected) => selected).length;
+      allSelectedInvoiced = selectedInvoicedOrderCount == _ordersBooked.length;
+
+      notifyListeners();
+    }
   }
 
   void toggleBookedSelectAll(bool? value) {
-    selectAllBooked = value!;
-    selectedBookedItems.fillRange(0, selectedBookedItems.length, selectAllBooked);
-    for (int i = 0; i < ordersBooked.length; i++) {
-      ordersBooked[i].isSelected = selectAllBooked;
+    allSelectedInvoiced = value ?? false;
+    selectedInvoicedOrderCount = value == true ? _ordersBooked.length : 0;
+    _selectedInvoiced = List<bool>.filled(_ordersBooked.length, value ?? false);
+
+    for (int i = 0; i < _ordersBooked.length; i++) {
+      _ordersBooked[i].isSelected = value ?? false;
     }
     notifyListeners();
   }
 
   void clearAllSelections() {
     selectedBookedItems.fillRange(0, selectedBookedItems.length, false);
-    selectAllBooked = false;
+    allSelectedInvoiced = false;
     notifyListeners();
   }
 
   PageController get pageControllerBooked => _pageControllerBooked;
-
-  // void goToBookedPage(int page) {
-  //   if (page < 1 || page > totalPagesBooked) return;
-  //   currentPageBooked = page;
-  //   print('Current booked page set to: $currentPageBooked');
-  //   fetchInvoicedOrders(currentPageBooked);
-  //   notifyListeners();
-  // }
 }

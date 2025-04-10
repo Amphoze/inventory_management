@@ -13,6 +13,7 @@ import 'package:http/http.dart' as http;
 import '../Api/inventory_api.dart';
 
 class ComboProvider with ChangeNotifier {
+  int totalCombos = 0;
   Combo? _combo;
   bool _isFormVisible = false;
   List<Combo> _comboList = [];
@@ -140,8 +141,10 @@ class ComboProvider with ChangeNotifier {
     setRefreshingOrders(true);
     notifyListeners();
     try {
-      _combosList = await comboApi.getCombos(page: page, limit: limit);
-      //print("comboProvider.combosList : $_combosList");
+      // _combosList = await comboApi.getCombos(page: page, limit: limit);
+      final res = await comboApi.getCombos(page: page, limit: limit);
+      _combosList = res['combos'] as List<Map<String, dynamic>>;
+      totalCombos = res['totalCombos'] as int;
     } catch (e) {
       print('Error fetching combos: $e');
     }

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:developer';
 import 'package:flutter/cupertino.dart';
@@ -7,13 +8,13 @@ import 'package:inventory_management/constants/constants.dart';
 import 'package:logger/logger.dart';
 
 class LabelApi with ChangeNotifier {
+  int totalLabels = 0;
   List<Map<String, dynamic>> _labelInformation = [];
   List<Map<String, dynamic>> _replication = [];
-  // List<Map<String, dynamic>> _replication = [];
   int _currentPage = 1;
   int _totalPage = 0;
   bool _loading = false;
-  
+
   List<Map<String, dynamic>> get labelInformation => _labelInformation;
   int get totalPage => _totalPage;
   int get currentPage => _currentPage;
@@ -38,8 +39,7 @@ class LabelApi with ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> updateLabelQuantity(
-      String labelId, int newQuantity, String reason) async {
+  Future<void> updateLabelQuantity(String labelId, int newQuantity, String reason) async {
     String baseUrl = await Constants.getBaseUrl();
     loadingStatus(true);
     log("Id $labelId");
@@ -75,8 +75,7 @@ class LabelApi with ChangeNotifier {
         final data = json.decode(response.body);
         log('Inventory updated: $data');
 
-        final index =
-            _labelInformation.indexWhere((item) => item['_id'] == labelId);
+        final index = _labelInformation.indexWhere((item) => item['_id'] == labelId);
         if (index != -1) {
           _labelInformation[index]['QUANTITY'] = newQuantity.toString();
           notifyListeners();
@@ -116,11 +115,10 @@ class LabelApi with ChangeNotifier {
         if (data.containsKey('data')) {
           //       "totalPages": 16,
           // "currentPage": 1
-          _labelInformation =
-              (List<Map<String, dynamic>>.from(data["data"]['labels']));
-          _replication = (List<Map<String, dynamic>>.from(
-              _labelInformation)); // Create a copy
+          _labelInformation = (List<Map<String, dynamic>>.from(data["data"]['labels']));
+          _replication = (List<Map<String, dynamic>>.from(_labelInformation)); // Create a copy
           _totalPage = data["data"]['totalPages'];
+          totalLabels = data['data']['totalLabels'] ?? 0;
           // if(!wait){
           loadingStatus(false);
 
@@ -133,17 +131,26 @@ class LabelApi with ChangeNotifier {
           return {'success': false, 'message': 'Unexpected response format'};
         }
       } else {
-        return {
-          'success': false,
-          'message':
-              'Failed to fetch labels with status code: ${response.statusCode}'
-        };
+        return {'success': false, 'message': 'Failed to fetch labels with status code: ${response.statusCode}'};
       }
     } catch (error) {
       return {'success': false, 'message': 'An error occurred: $error'};
     } finally {
       loadingStatus(false);
     }
+  }
+
+  Timer? _debounce;
+
+  void onSearchChanged(String value) {
+    if (value.trim().isEmpty) {
+      getLabel();
+    }
+
+    if (_debounce?.isActive ?? false) _debounce?.cancel();
+    _debounce = Timer(const Duration(milliseconds: 300), () {
+      searchByLabel(value);
+    });
   }
 
   // Search by label
@@ -169,23 +176,15 @@ class LabelApi with ChangeNotifier {
         if (data.containsKey('data')) {
           // _labelInformation.clear();
           // print("heeelo ${_labelInformation.length}   ${_replication.length}");
-          _labelInformation =
-              List<Map<String, dynamic>>.from(data["data"]['labels']);
+          _labelInformation = List<Map<String, dynamic>>.from(data["data"]['labels']);
           notifyListeners();
-          return {
-            'success': true,
-            'data': _labelInformation
-          }; // Dispatched updated labels
+          return {'success': true, 'data': _labelInformation}; // Dispatched updated labels
         } else {
           print('Unexpected response format: $data');
           return {'success': false, 'message': 'Unexpected response format'};
         }
       } else {
-        return {
-          'success': false,
-          'message':
-              'Failed to fetch labels with status code: ${response.statusCode}'
-        };
+        return {'success': false, 'message': 'Failed to fetch labels with status code: ${response.statusCode}'};
       }
     } catch (error) {
       return {'success': false, 'message': 'An error occurred: $error'};

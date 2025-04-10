@@ -1,23 +1,19 @@
-// ignore_for_file: avoid_print
-
+import 'dart:convert';
 import 'dart:developer';
-
 import 'package:flutter/material.dart';
 import 'package:inventory_management/Api/auth_provider.dart';
-import 'package:logger/logger.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-
 import '../Custom-Files/colors.dart';
-import '../dashboard.dart';
+import '../Custom-Files/utils.dart';
 
-class LocationProvider with ChangeNotifier {
+class WarehouseProvider with ChangeNotifier {
   final AuthProvider authProvider;
 
-  LocationProvider({required this.authProvider});
-
+  WarehouseProvider({required this.authProvider});
+  int totalWarehouses = 0;
   List<Map<String, dynamic>> _warehouses = [];
   List<Map<String, dynamic>> _filteredWarehouses = [];
-  Map<String, dynamic>? warehouseData; // for get warehouse by ID
+  Map<String, dynamic>? warehouseData;
 
   List<Map<String, dynamic>> get warehouses => _filteredWarehouses.isNotEmpty ? _filteredWarehouses : _warehouses;
 
@@ -34,7 +30,7 @@ class LocationProvider with ChangeNotifier {
   int _totalPages = 1;
   final TextEditingController _textEditingController = TextEditingController();
 
-  bool _isEditingLocation = false; // Add this property to track editing state
+  bool _isEditingLocation = false;
 
   bool get isCreatingNewLocation => _isCreatingNewLocation;
   int get selectedBillingCountryIndex => _selectedBillingCountryIndex;
@@ -48,7 +44,6 @@ class LocationProvider with ChangeNotifier {
   int get currentPage => _currentPage;
   int get totalPages => _totalPages;
   TextEditingController get textEditingController => _textEditingController;
-
 
   bool get isEditingLocation => _isEditingLocation;
 
@@ -71,17 +66,16 @@ class LocationProvider with ChangeNotifier {
   void goToPage(int page) {
     if (page < 1 || page > _totalPages) return;
     _currentPage = page;
-    print('Current page set to: $_currentPage'); // Debugging line
+    print('Current page set to: $_currentPage');
     fetchWarehouses(page: _currentPage);
     notifyListeners();
   }
 
   void setLoading(bool loading) {
     _isLoading = loading;
-    notifyListeners(); // Notify listeners when the state changes
+    notifyListeners();
   }
 
-  // Helper methods for handling success and error
   void _setError(String message) {
     _errorMessage = message;
     _successMessage = null;
@@ -107,8 +101,8 @@ class LocationProvider with ChangeNotifier {
       notifyListeners();
     } else {
       pincodes = pincode;
-      // pincodes.add(pincode);
-      validationMessage = null; // Clear validation message
+
+      validationMessage = null;
       notifyListeners();
     }
   }
@@ -154,9 +148,7 @@ class LocationProvider with ChangeNotifier {
 
   void selectBillingCountry(int index) {
     _selectedBillingCountryIndex = index;
-    // print(
-    //     "selected billing contry index in provider : $_selectedBillingCountryIndex");
-    // print("called notifylisteners() after this line");
+
     notifyListeners();
   }
 
@@ -224,14 +216,7 @@ class LocationProvider with ChangeNotifier {
     log('warehouseName: $warehouseName');
 
     if (context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Successfully signed in to $warehouseName'),
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-          backgroundColor: AppColors.primaryBlue,
-        ),
-      );
+      Utils.showSnackBar(context, 'Successfully signed in to $warehouseName', color: AppColors.primaryBlue);
     }
   }
 
@@ -240,10 +225,13 @@ class LocationProvider with ChangeNotifier {
     notifyListeners();
 
     final result = await getAllWarehouses(page: page);
-
     if (result['success']) {
+      log("fetchWarehouses result: ${jsonEncode(result)}");
       final warehousesData = result['data']?['warehouses'] ?? [];
       _totalPages = result['totalPages'];
+      totalWarehouses = result['totalWarehouses'] ?? 0;
+
+      log("Total Warehouses: $totalWarehouses");
 
       if (warehousesData is List && warehousesData.isNotEmpty) {
         _warehouses = List<Map<String, dynamic>>.from(warehousesData);
@@ -258,58 +246,13 @@ class LocationProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  void refreshContent() async {
-    await fetchWarehouses();
-    notifyListeners();
-  }
-
   Future<Map<String, dynamic>> getAllWarehouses({int page = 1}) async {
     return await authProvider.getAllWarehouses(page: page);
   }
 
   Future<bool> createWarehouse(Map<String, dynamic> body) async {
     try {
-      // final taxIdentificationNumber = body['taxIdentificationNumber'] is int
-      //     ? body['taxIdentificationNumber'] as int
-      //     : int.tryParse(body['taxIdentificationNumber'].toString()) ?? 0;
-
-      // final holdStocks = body['holdStocks'] is bool ? body['holdStocks'] as bool : body['holdStocks'] == 'true';
-
-      // final copyMasterSkuFromPrimary =
-      //     body['copyMasterSkuFromPrimary'] is bool ? body['copyMasterSkuFromPrimary'] as bool : body['copyMasterSkuFromPrimary'] == 'true';
-
-      // Extract pincodes from location if available
-      // final List<String> pincodes = body['pincode'] is List<String> ? List<String>.from(body['pincode']) : [];
-
       final response = await authProvider.createWarehouse(warehouseData: body);
-      // final response = await authProvider.createWarehouse(
-      //   name: location['name'] as String,
-      //   email: location['email'] as String,
-      //   taxIdentificationNumber: taxIdentificationNumber,
-      //   billingAddressLine1:
-      //       location['billingAddress']['addressLine1'] as String,
-      //   billingAddressLine2:
-      //       location['billingAddress']['addressLine2'] as String,
-      //   billingCountry: countries[_selectedBillingCountryIndex]['name'],
-      //   billingState: states[_selectedBillingStateIndex]['name'],
-      //   billingCity: location['billingAddress']['city'] as String,
-      //   billingZipCode: location['billingAddress']['zipCode'] as int,
-      //   billingPhoneNumber: location['billingAddress']['phoneNumber'] as int,
-      //   shippingAddressLine1:
-      //       location['shippingAddress']['addressLine1'] as String,
-      //   shippingAddressLine2:
-      //       location['shippingAddress']['addressLine2'] as String,
-      //   shippingCountry: countries[_selectedShippingCountryIndex]['name'],
-      //   shippingState: states[_selectedShippingStateIndex]['name'],
-      //   shippingCity: location['shippingAddress']['city'] as String,
-      //   shippingZipCode: location['shippingAddress']['zipCode'] as int,
-      //   shippingPhoneNumber: location['shippingAddress']['phoneNumber'] as int,
-      //   locationType: locationTypes[_selectedLocationTypeIndex]['name'],
-      //   holdStocks: holdStocks,
-      //   copyMasterSkuFromPrimary: copyMasterSkuFromPrimary,
-      //   pincodes: pincodes,
-      //   warehousePincode: location['warehousePincode'] as int,
-      // );
 
       if (response['success']) {
         _setSuccess('Warehouse created successfully!');
@@ -326,7 +269,6 @@ class LocationProvider with ChangeNotifier {
     }
   }
 
-  // Filtered warehouses
   void filterWarehouses(String query) {
     if (query.isEmpty) {
       _filteredWarehouses.clear();
@@ -362,21 +304,17 @@ class LocationProvider with ChangeNotifier {
     notifyListeners();
   }
 
-// Method to fetch warehouse data by ID
   Future<void> fetchWarehouseById(String warehouseId) async {
-    _isLoading = true; // Set loading to true
-    notifyListeners(); // Notify listeners about the change
+    _isLoading = true;
+    notifyListeners();
 
     try {
-      // Call your API method
       warehouseData = await authProvider.fetchWarehouseById(warehouseId);
-      // print("Open $warehouseData in editing mode");
     } catch (error) {
-      // Handle error here if needed or let it propagate
-      rethrow; // Rethrow the error to be handled in the UI
+      rethrow;
     } finally {
-      _isLoading = false; // Set loading to false
-      notifyListeners(); // Notify listeners about the change
+      _isLoading = false;
+      notifyListeners();
     }
   }
 }

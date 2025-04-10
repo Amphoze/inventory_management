@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:inventory_management/Custom-Files/colors.dart';
+import 'package:inventory_management/Custom-Files/utils.dart';
 
 class CustomPaginationFooter extends StatelessWidget {
   final int currentPage;
   final int totalPages;
+  final int? totalCount;
   final double buttonSize;
   final TextEditingController pageController;
   final VoidCallback onFirstPage;
@@ -13,12 +16,14 @@ class CustomPaginationFooter extends StatelessWidget {
   final Function(int) onGoToPage;
   final VoidCallback onJumpToPage;
   final bool toShowGoToPageField;
+  // final bool toShowTotal;
 
   const CustomPaginationFooter({
     super.key,
     required this.currentPage,
     this.toShowGoToPageField = true,
     required this.totalPages,
+    this.totalCount,
     required this.buttonSize,
     required this.pageController,
     required this.onFirstPage,
@@ -27,6 +32,7 @@ class CustomPaginationFooter extends StatelessWidget {
     required this.onPreviousPage,
     required this.onGoToPage,
     required this.onJumpToPage,
+    // this.toShowTotal = true,
   });
 
   @override
@@ -37,7 +43,6 @@ class CustomPaginationFooter extends StatelessWidget {
         return Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            // Page shifter buttons on the left
             Row(
               children: [
                 IconButton(
@@ -67,22 +72,23 @@ class CustomPaginationFooter extends StatelessWidget {
                 ),
               ],
             ),
-            // Go to page section on the right
+            // const Spacer(),
+
+            if (totalCount != null)
+              Utils.richText('Total: ', totalCount.toString(), fontSize: 16),
+
             if (toShowGoToPageField)
               Row(
                 children: [
                   SizedBox(
-                    width: 100,
-                    height: 35,
+                    width: 120,
+                    height: 30,
                     child: TextField(
                       controller: pageController,
                       keyboardType: TextInputType.number,
-                      decoration: InputDecoration(
-                        hintText: 'Go to Page',
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                      ),
+                      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                      decoration: const InputDecoration(hintText: 'Go to Page', border: OutlineInputBorder()),
+                      onSubmitted: (value) => onJumpToPage,
                     ),
                   ),
                   Text(

@@ -183,17 +183,16 @@ class Order {
   });
 
   factory Order.fromJson(Map<String, dynamic> json) {
-
     return Order(
       callStatus: (json['callStatus'] as List? ?? []).map((e) => CallStatus.fromJson(e)).toList(),
       merged: json['merged'] ?? {},
       availableCouriers: (json['availableCouriers'] as List?)
-          ?.map((courier) => {
-        'name': _parseString(courier['name']),
-        'freight_charge': _parseDouble(courier['freight_charge']),
-        'courier_company_id': _parseString(courier['courier_company_id']),
-      })
-          .toList() ??
+              ?.map((courier) => {
+                    'name': _parseString(courier['name']),
+                    'freight_charge': _parseDouble(courier['freight_charge']),
+                    'courier_company_id': _parseString(courier['courier_company_id']),
+                  })
+              .toList() ??
           [],
       picklistId: _parseString(json['picklistId']),
       warehouseId: json['warehouse']?['warehouse_id']?['_id'] ?? '',
@@ -204,15 +203,14 @@ class Order {
       reverseOrder: json['reverseOrder'] == null
           ? []
           : (json['reverseOrder'] is Map<String, dynamic>)
-          ? ([ReverseOrder.fromJson(json['reverseOrder'])])
-          : (json['reverseOrder'] is List<dynamic>) ? (json['reverseOrder'] as List<dynamic>).map((e) => ReverseOrder.fromJson(e)).toList()
-          : [],
+              ? ([ReverseOrder.fromJson(json['reverseOrder'])])
+              : (json['reverseOrder'] is List<dynamic>)
+                  ? (json['reverseOrder'] as List<dynamic>).map((e) => ReverseOrder.fromJson(e)).toList()
+                  : [],
 
       mistakes: json['isMistake'] == null
           ? []
-          : (json['isMistake'] as List<dynamic>)
-          .map((e) => Mistake.fromJson(e as Map<String, dynamic>))
-          .toList(),
+          : (json['isMistake'] as List<dynamic>).map((e) => Mistake.fromJson(e as Map<String, dynamic>)).toList(),
 
       outBoundBy: json['isOutBound'] ?? {},
       confirmedBy: json['confirmedBy'] ?? {},
@@ -258,7 +256,9 @@ class Order {
       // outerPackage: _parseString(json['outerPackage']),
       replacement: json['replacement'] is bool ? json['replacement'] : false,
       orderStatus: _parseInt(json['order_status']),
-      orderStatusMap: json['order_status_map'] == null ? [] : ((json['order_status_map'] ?? []) as List).map((status) => OrderStatusMap.fromJson(status)).toList(),
+      orderStatusMap: json['order_status_map'] == null
+          ? []
+          : ((json['order_status_map'] ?? []) as List).map((status) => OrderStatusMap.fromJson(status)).toList(),
       marketplace: json['marketplace'] != null ? Marketplace.fromJson(json['marketplace']) : null,
       agent: _parseString(json['agent']),
       filter: _parseString(json['filter']),
@@ -345,26 +345,38 @@ class Order {
 }
 
 class Messages {
-
   final List<FailureReason> failureReason;
   final List<Message> confirmerMessages;
   final List<Message> bookerMessages;
   final List<Message> accountMessages;
   final List<Message> reverseMessages;
 
-
-  Messages({required this.failureReason, required this.confirmerMessages, required this.bookerMessages, required this.accountMessages, required this.reverseMessages});
+  Messages(
+      {required this.failureReason,
+      required this.confirmerMessages,
+      required this.bookerMessages,
+      required this.accountMessages,
+      required this.reverseMessages});
 
   factory Messages.fromJson(Map<String, dynamic> json) {
     return Messages(
-      failureReason: json['failureReason'] == null ? [] : (json['failureReason'] as List<dynamic>).map((reason) => FailureReason.fromJson(reason)).toList(),
-      confirmerMessages: json['confirmerMessage'] == null ? [] : (json['confirmerMessage']  as List<dynamic>).map((message) => Message.fromJson(message)).toList(),
-      bookerMessages: json['bookerMessage'] == null ? [] : (json['bookerMessage']  as List<dynamic>).map((message) => Message.fromJson(message)).toList(),
-      accountMessages: json['accountMessage'] == null ? [] : (json['accountMessage']  as List<dynamic>).map((message) => Message.fromJson(message)).toList(),
-      reverseMessages: json['reverseMessage'] == null ? [] : (json['reverseMessage']  as List<dynamic>).map((message) => Message.fromJson(message)).toList(),
+      failureReason: json['failureReason'] == null
+          ? []
+          : (json['failureReason'] as List<dynamic>).map((reason) => FailureReason.fromJson(reason)).toList(),
+      confirmerMessages: json['confirmerMessage'] == null
+          ? []
+          : (json['confirmerMessage'] as List<dynamic>).map((message) => Message.fromJson(message)).toList(),
+      bookerMessages: json['bookerMessage'] == null
+          ? []
+          : (json['bookerMessage'] as List<dynamic>).map((message) => Message.fromJson(message)).toList(),
+      accountMessages: json['accountMessage'] == null
+          ? []
+          : (json['accountMessage'] as List<dynamic>).map((message) => Message.fromJson(message)).toList(),
+      reverseMessages: json['reverseMessage'] == null
+          ? []
+          : (json['reverseMessage'] as List<dynamic>).map((message) => Message.fromJson(message)).toList(),
     );
   }
-
 
   Map<String, dynamic> toJson() {
     return {
@@ -438,7 +450,6 @@ class Message {
 }
 
 class ReverseOrder {
-
   final String id;
   final String reverseBy;
   final String reason;
@@ -446,7 +457,13 @@ class ReverseOrder {
   final bool status;
   final String timestamp;
 
-  ReverseOrder({required this.id, required this.reverseBy, required this.reason, required this.reverseStatus, required this.status, required this.timestamp});
+  ReverseOrder(
+      {required this.id,
+      required this.reverseBy,
+      required this.reason,
+      required this.reverseStatus,
+      required this.status,
+      required this.timestamp});
 
   factory ReverseOrder.fromJson(Map<String, dynamic> json) {
     return ReverseOrder(
@@ -478,7 +495,12 @@ class OrderStatusMap {
   final String createdAt;
   final String updatedAt;
 
-  OrderStatusMap({required this.id, required this.statusId, required this.status, required this.createdAt, required this.updatedAt});
+  OrderStatusMap(
+      {required this.id,
+      required this.statusId,
+      required this.status,
+      required this.createdAt,
+      required this.updatedAt});
 
   factory OrderStatusMap.fromJson(Map<String, dynamic> json) {
     return OrderStatusMap(
@@ -527,7 +549,7 @@ class Customer {
       customerId: json['customer_id']?.toString() ?? '',
       firstName: json['first_name']?.toString() ?? '',
       lastName: json['last_name']?.toString() ?? '',
-      phone:  json['phone'] ?? '',
+      phone: json['phone'] ?? '',
       billingAddress: json['billing_addr']?.toString() ?? '',
       email: json['email']?.toString() ?? '',
       customerGstin: json['customer_gstin']?.toString() ?? '',
@@ -811,7 +833,13 @@ class OuterPackage {
   final String? lengthUnit;
 
   OuterPackage(
-      {this.id, this.outerPackageSku, this.outerPackageName, this.outerPackageType, this.occupiedWeight, this.weightUnit, this.lengthUnit});
+      {this.id,
+      this.outerPackageSku,
+      this.outerPackageName,
+      this.outerPackageType,
+      this.occupiedWeight,
+      this.weightUnit,
+      this.lengthUnit});
 
   factory OuterPackage.fromJson(Map<String, dynamic> json) {
     return OuterPackage(
@@ -957,7 +985,7 @@ class Address {
       lastName: json['last_name']?.toString() ?? '',
       address1: json['address1']?.toString() ?? '',
       address2: json['address2']?.toString() ?? '',
-      phone: json['phone'] ?? '' ,
+      phone: json['phone'] ?? '',
       city: json['city']?.toString() ?? '',
       pincode: json['pincode'] is int ? json['pincode'].toString() : json['pincode'] ?? '0',
       zipcode: json['zip_code'] is int ? json['zip_code'].toString() : json['zip_code'] ?? '',
@@ -968,7 +996,6 @@ class Address {
     );
   }
 }
-
 
 class FreightCharge {
   final double? delhivery;

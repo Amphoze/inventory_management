@@ -3,8 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'package:inventory_management/Api/bin_api.dart';
-import 'package:inventory_management/provider/location_provider.dart';
+import 'package:inventory_management/Api/bin_provider.dart';
+import 'package:inventory_management/provider/warehouse_provider.dart';
 import 'package:logger/logger.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -85,7 +85,7 @@ class _CreateBinPageState extends State<CreateBinPage> {
       if (response.statusCode == 200 || response.statusCode == 201) {
         _resetForm();
         Navigator.pop(context);
-        context.read<BinApi>().fetchBins(context);
+        context.read<BinProvider>().fetchBins(context);
         Utils.showSnackBar(context, 'Bin "${_binNameController.text}" created!', color: Colors.green);
       } else {
         final errorData = json.decode(response.body);
@@ -275,7 +275,7 @@ class _CreateBinPageState extends State<CreateBinPage> {
             borderRadius: BorderRadius.circular(8),
             border: Border.all(color: Colors.grey.shade300),
           ),
-          child: Consumer<LocationProvider>(
+          child: Consumer<WarehouseProvider>(
             builder: (context, pro, child) => DropdownButtonHideUnderline(
               child: DropdownButton<String>(
                 value: _selectedWarehouse,

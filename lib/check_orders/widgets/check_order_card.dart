@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:inventory_management/Custom-Files/utils.dart';
 import 'package:provider/provider.dart';
 import '../models/check_order_model.dart';
-import '../provider/check_orders_provider.dart';
+import '../provider/supervisor_provider.dart';
 import 'image_viewer.dart';
 
 class CheckOrderCard extends StatelessWidget {
@@ -36,32 +36,7 @@ class CheckOrderCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Make header responsive based on screen size
-            isSmallScreen
-                ? Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Expanded(child: _buildInfoColumn('Order ID', orderId)),
-                          const SizedBox(width: 16),
-                          Expanded(child: _buildInfoColumn('Picklist ID', pickListId)),
-                        ],
-                      ),
-                      const SizedBox(height: 12),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: _buildActionButton(context, 'Reject', Colors.red, false),
-                          ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: _buildActionButton(context, 'Accept', Colors.green, true),
-                          ),
-                        ],
-                      ),
-                    ],
-                  )
-                : Row(
+            Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Expanded(
@@ -336,7 +311,7 @@ class CheckOrderCard extends StatelessWidget {
                   ),
                 ),
               );
-              final provider = Provider.of<CheckOrdersProvider>(context, listen: false);
+              final provider = Provider.of<SupervisorProvider>(context, listen: false);
               final res = await provider.updateCheckStatus(
                 orderId: orderId,
                 pickListId: pickListId,
@@ -344,11 +319,7 @@ class CheckOrderCard extends StatelessWidget {
               );
               Navigator.pop(context);
               await provider.getCheckOrders();
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                    content:
-                        Text(res ? 'Order ${action}ed successfully' : 'Failed to $action order')),
-              );
+              Utils.showSnackBar(context, res ? 'Order ${action}ed successfully' : 'Failed to $action order');
             },
             child: Text(action),
           ),

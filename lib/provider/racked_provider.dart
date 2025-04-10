@@ -7,6 +7,7 @@ import 'package:inventory_management/model/orders_model.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class RackedProvider with ChangeNotifier {
+  int totalOrders = 0;
   bool _isLoading = false;
   bool _selectAll = false;
   List<bool> _selectedProducts = [];
@@ -128,6 +129,7 @@ class RackedProvider with ChangeNotifier {
 
         _totalPages = data['totalPages']; // Get total pages from response
         _orders = orders; // Set the orders for the current page
+        totalOrders = data['totalOrders'] ?? 0; // Set the total orders
 
         // Initialize selected products list
         _selectedProducts = List<bool>.filled(_orders.length, false);

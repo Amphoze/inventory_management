@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:inventory_management/check_orders/provider/check_orders_provider.dart';
+import 'package:inventory_management/check_orders/provider/supervisor_provider.dart';
 import 'package:inventory_management/check_orders/widgets/recheck_order_card.dart';
 
 class RecheckOrdersPage extends StatefulWidget {
@@ -14,7 +14,7 @@ class _RecheckOrdersPageState extends State<RecheckOrdersPage> {
   @override
   void initState() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      Provider.of<CheckOrdersProvider>(context, listen: false).getRecheckOrders();
+      Provider.of<SupervisorProvider>(context, listen: false).getRecheckOrders();
     });
     super.initState();
   }
@@ -29,12 +29,12 @@ class _RecheckOrdersPageState extends State<RecheckOrdersPage> {
           IconButton(
             icon: const Icon(Icons.refresh),
             onPressed: () {
-              Provider.of<CheckOrdersProvider>(context, listen: false).getRecheckOrders();
+              Provider.of<SupervisorProvider>(context, listen: false).getRecheckOrders();
             },
           ),
         ],
       ),
-      body: Consumer<CheckOrdersProvider>(
+      body: Consumer<SupervisorProvider>(
         builder: (context, provider, child) {
           if (provider.isRecheckOrdersLoading) {
             return const Center(child: CircularProgressIndicator());

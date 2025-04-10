@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:inventory_management/provider/return_provoider.dart';
+import 'package:inventory_management/provider/rto_provider.dart';
 import 'package:provider/provider.dart';
 
 import 'Custom-Files/colors.dart';
@@ -22,22 +22,19 @@ class _RTOOrdersState extends State<RTOOrders> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      Provider.of<ReturnProvider>(context, listen: false)
-          .fetchOrdersWithStatus10();
+      Provider.of<RtoProvider>(context, listen: false).fetchOrdersWithStatus11();
     });
   }
 
-  void _onSearchButtonPressed() {
-    final query = _searchController.text.trim();
-    if (query.isNotEmpty) {
-      Provider.of<ReturnProvider>(context, listen: false)
-          .onSearchChanged(query);
+  void _onSearchButtonPressed(String query) {
+    if (query.trim().isNotEmpty) {
+      Provider.of<RtoProvider>(context, listen: false).onSearchChanged(query);
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<ReturnProvider>(
+    return Consumer<RtoProvider>(
       builder: (context, returnProvider, child) {
         return Scaffold(
           backgroundColor: AppColors.white,
@@ -66,16 +63,7 @@ class _RTOOrdersState extends State<RTOOrders> {
                           border: InputBorder.none,
                           contentPadding: EdgeInsets.symmetric(vertical: 12, horizontal: 8),
                         ),
-                        onChanged: (query) {
-                          // Trigger a rebuild to show/hide the search button
-                          setState(() {
-                            // Update search focus
-                          });
-                          if (query.isEmpty) {
-                            // Reset to all orders if search is cleared
-                            returnProvider.fetchOrdersWithStatus10();
-                          }
-                        },
+                        onChanged: _onSearchButtonPressed,
                         onTap: () {
                           setState(() {
                             // Mark the search field as focused
@@ -88,31 +76,11 @@ class _RTOOrdersState extends State<RTOOrders> {
                         },
                         onEditingComplete: () {
                           // Mark it as not focused when done
-                          FocusScope.of(context)
-                              .unfocus(); // Dismiss the keyboard
+                          FocusScope.of(context).unfocus(); // Dismiss the keyboard
                         },
                       ),
                     ),
-                    const SizedBox(width: 8),
-
-                    ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primaryBlue,
-                      ),
-                      onPressed: _searchController.text.isNotEmpty
-                          ? _onSearchButtonPressed
-                          : null,
-                      child: const Text(
-                        'Search',
-                        style: TextStyle(color: Colors.white),
-                      ),
-                    ),
                     const Spacer(),
-
-                    // _buildReturnButton(returnProvider),
-                    // const SizedBox(width: 8),
-
-                    // Refresh Button
                     ElevatedButton(
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.primaryBlue,
@@ -120,7 +88,7 @@ class _RTOOrdersState extends State<RTOOrders> {
                       onPressed: returnProvider.isRefreshingOrders
                           ? null
                           : () async {
-                              returnProvider.fetchOrdersWithStatus10();
+                              returnProvider.fetchOrdersWithStatus11();
                             },
                       child: returnProvider.isRefreshingOrders
                           ? const SizedBox(
@@ -141,7 +109,7 @@ class _RTOOrdersState extends State<RTOOrders> {
               ),
               const SizedBox(height: 8),
               const SizedBox(height: 8),
-              _buildTableHeader(returnProvider.orders.length, returnProvider),
+              _buildTableHeader(returnProvider.orders.length),
               const SizedBox(height: 4),
               Expanded(
                 child: Stack(
@@ -182,39 +150,41 @@ class _RTOOrdersState extends State<RTOOrders> {
                   ],
                 ),
               ),
-              CustomPaginationFooter(
-                currentPage: returnProvider.currentPage,
-                totalPages: returnProvider.totalPages,
-                buttonSize: 30,
-                pageController: returnProvider.textEditingController,
-                onFirstPage: () {
-                  returnProvider.goToPage(1);
-                },
-                onLastPage: () {
-                  returnProvider.goToPage(returnProvider.totalPages);
-                },
-                onNextPage: () {
-                  if (returnProvider.currentPage < returnProvider.totalPages) {
-                    returnProvider.goToPage(returnProvider.currentPage + 1);
-                  }
-                },
-                onPreviousPage: () {
-                  if (returnProvider.currentPage > 1) {
-                    returnProvider.goToPage(returnProvider.currentPage - 1);
-                  }
-                },
-                onGoToPage: (page) {
-                  returnProvider.goToPage(page);
-                },
-                onJumpToPage: () {
-                  final page =
-                      int.tryParse(returnProvider.textEditingController.text);
-                  if (page != null &&
-                      page > 0 &&
-                      page <= returnProvider.totalPages) {
-                    returnProvider.goToPage(page);
-                  }
-                },
+              Consumer<RtoProvider>(
+                builder: (context, returnProvider, child) {
+                  return CustomPaginationFooter(
+                    currentPage: returnProvider.currentPage,
+                    totalPages: returnProvider.totalPages,
+                    totalCount: returnProvider.totalOrders,
+                    buttonSize: 30,
+                    pageController: returnProvider.textEditingController,
+                    onFirstPage: () {
+                      returnProvider.goToPage(1);
+                    },
+                    onLastPage: () {
+                      returnProvider.goToPage(returnProvider.totalPages);
+                    },
+                    onNextPage: () {
+                      if (returnProvider.currentPage < returnProvider.totalPages) {
+                        returnProvider.goToPage(returnProvider.currentPage + 1);
+                      }
+                    },
+                    onPreviousPage: () {
+                      if (returnProvider.currentPage > 1) {
+                        returnProvider.goToPage(returnProvider.currentPage - 1);
+                      }
+                    },
+                    onGoToPage: (page) {
+                      returnProvider.goToPage(page);
+                    },
+                    onJumpToPage: () {
+                      final page = int.tryParse(returnProvider.textEditingController.text);
+                      if (page != null && page > 0 && page <= returnProvider.totalPages) {
+                        returnProvider.goToPage(page);
+                      }
+                    },
+                  );
+                }
               ),
             ],
           ),
@@ -223,16 +193,17 @@ class _RTOOrdersState extends State<RTOOrders> {
     );
   }
 
-  Widget _buildOrderCard(
-      Order order, int index, ReturnProvider returnProvider) {
+  Widget _buildOrderCard(Order order, int index, RtoProvider returnProvider) {
+    if (index >= returnProvider.selectedProducts.length) {
+      returnProvider.selectedProducts = List<bool>.filled(returnProvider.orders.length, false);
+    }
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4.0, horizontal: 8.0),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Checkbox(
-            value: returnProvider
-                .selectedProducts[index], // Accessing selected products
+            value: returnProvider.selectedProducts[index], // Accessing selected products
             onChanged: (isSelected) {
               returnProvider.handleRowCheckboxChange(index, isSelected!);
             },
@@ -240,23 +211,18 @@ class _RTOOrdersState extends State<RTOOrders> {
           Expanded(
             flex: 5,
             child: Row(
-              mainAxisAlignment:
-                  MainAxisAlignment.spaceBetween, // Space between elements
+              mainAxisAlignment: MainAxisAlignment.spaceBetween, // Space between elements
               children: [
                 Expanded(
-                  child:
-                      OrderCard(order: order), // Your existing OrderCard widget
+                  child: OrderCard(order: order), // Your existing OrderCard widget
                 ),
-                const SizedBox(
-                    width: 200), // Add some spacing between the elements
+                const SizedBox(width: 200), // Add some spacing between the elements
 
                 Text(
                   '${order.trackingStatus?.isEmpty ?? true ? "NA" : order.trackingStatus}', // Display "NA" if null or empty
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
-                    color: order.trackingStatus == 'return'
-                        ? Colors.green
-                        : Colors.black,
+                    color: order.trackingStatus == 'return' ? Colors.green : Colors.black,
                   ),
                 ),
 
@@ -274,7 +240,9 @@ class _RTOOrdersState extends State<RTOOrders> {
     );
   }
 
-  Widget _buildTableHeader(int totalCount, ReturnProvider returnProvider) {
+  Widget _buildTableHeader(int totalCount) {
+    final returnProvider = Provider.of<RtoProvider>(context);
+
     return Container(
       color: Colors.grey[300],
       padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
@@ -322,28 +290,4 @@ class _RTOOrdersState extends State<RTOOrders> {
       ),
     );
   }
-
-  // Widget _buildReturnButton(ReturnProvider returnProvider) {
-  //   return ElevatedButton(
-  //     onPressed: returnProvider.selectedCount > 0
-  //         ? () async {
-  //             await returnProvider
-  //                 .returnSelectedOrders(); // Call the return method
-  //           }
-  //         : null, // Disable the button if no orders are selected
-  //     child: returnProvider.isCancelling
-  //         ? const SizedBox(
-  //             width: 24,
-  //             height: 24,
-  //             child: CircularProgressIndicator(
-  //               color: Colors.white,
-  //               strokeWidth: 3,
-  //             ),
-  //           )
-  //         : const Text(
-  //             'Cancel',
-  //             style: TextStyle(color: Colors.white),
-  //           ),
-  //   );
-  // }
 }

@@ -10,7 +10,9 @@ import 'package:inventory_management/constants/constants.dart';
 import 'package:inventory_management/provider/inner_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'Custom-Files/colors.dart';
 import 'Custom-Files/product_search_field.dart';
+import 'Custom-Files/utils.dart';
 
 class InnerPackingForm extends StatefulWidget {
   const InnerPackingForm({super.key});
@@ -61,12 +63,8 @@ class _InnerPackingFormState extends State<InnerPackingForm> {
 
       if (response.statusCode == 201) {
         if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Inner packing created successfully'),
-            backgroundColor: Colors.green,
-          ),
-        );
+        Utils.showSnackBar(context, 'Inner packing created successfully', color: AppColors.cardsgreen);
+
         _resetForm();
         context.read<InnerPackagingProvider>().toggleFormVisibility();
       } else {
@@ -75,12 +73,7 @@ class _InnerPackingFormState extends State<InnerPackingForm> {
     } catch (e, s) {
       if (!mounted) return;
       log('create inner error: $e \n\n$s');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error: ${e.toString()}'),
-          backgroundColor: Colors.red,
-        ),
-      );
+      Utils.showSnackBar(context, 'Error creating inner packing', details: e.toString(),  isError: true);
     } finally {
       if (mounted) {
         setState(() => _isLoading = false);

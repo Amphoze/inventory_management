@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -7,10 +8,11 @@ import 'package:inventory_management/Custom-Files/loading_indicator.dart';
 import 'package:inventory_management/Widgets/order_combo_card.dart';
 import 'package:inventory_management/provider/accounts_provider.dart';
 import 'package:inventory_management/provider/marketplace_provider.dart';
-import 'package:logger/logger.dart';
 import 'package:provider/provider.dart';
 import 'package:inventory_management/model/orders_model.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+import 'Custom-Files/utils.dart';
 
 class InvoicedOrders extends StatefulWidget {
   const InvoicedOrders({super.key});
@@ -23,10 +25,6 @@ class _InvoicedOrdersState extends State<InvoicedOrders> with SingleTickerProvid
   final TextEditingController _pageController = TextEditingController();
   bool areOrdersFetched = false;
   String selectedSearchType = 'Order ID'; // Default selection
-  // String selectedCourier = 'All';
-  // String _selectedDate = 'Select Date';
-  // String? selectedPaymentMode = ''; // Default selection
-  // DateTime? picked;
   late AccountsProvider provider;
 
   bool? isSuperAdmin = false;
@@ -37,6 +35,20 @@ class _InvoicedOrdersState extends State<InvoicedOrders> with SingleTickerProvid
     setState(() {
       isSuperAdmin = prefs.getBool('_isSuperAdminAssigned');
       isAdmin = prefs.getBool('_isAdminAssigned');
+    });
+  }
+
+  Timer? _debounce;
+
+  void _onSearchChanged(String value) {
+    if (provider.invoiceSearch.text.trim().isEmpty) {
+      _refreshBookedOrders();
+      Provider.of<AccountsProvider>(context, listen: false).clearSearchResults();
+    }
+
+    if (_debounce?.isActive ?? false) _debounce?.cancel();
+    _debounce = Timer(const Duration(milliseconds: 300), () {
+      provider.searchInvoicedOrders(value, provider.selectedSearchType);
     });
   }
 
@@ -142,18 +154,14 @@ class _InvoicedOrdersState extends State<InvoicedOrders> with SingleTickerProvid
                       contentPadding: EdgeInsets.symmetric(vertical: 13, horizontal: 8),
                     ),
                     style: const TextStyle(color: AppColors.black),
-                    onChanged: (text) {
-                      if (provider.invoiceSearch.text.isEmpty) {
-                        _refreshBookedOrders();
-                        Provider.of<AccountsProvider>(context, listen: false).clearSearchResults();
-                      }
-                    },
+                    onChanged: _onSearchChanged,
                     onSubmitted: (text) {
                       provider.resetFilterData();
                       if (text.isEmpty) {
                         _refreshBookedOrders();
                       } else {
-                        Provider.of<AccountsProvider>(context, listen: false).searchInvoicedOrders(text, selectedSearchType);
+                        Provider.of<AccountsProvider>(context, listen: false)
+                            .searchInvoicedOrders(text, selectedSearchType);
                       }
                     },
                   ),
@@ -201,7 +209,7 @@ class _InvoicedOrdersState extends State<InvoicedOrders> with SingleTickerProvid
             _buildConfirmButtons(),
           ],
         ),
-        _buildTableHeader(selectedCount, accountsProvider),
+        _buildTableHeader(selectedCount),
         Expanded(
           child: accountsProvider.isLoadingBooked
               ? const Center(
@@ -236,66 +244,68 @@ class _InvoicedOrdersState extends State<InvoicedOrders> with SingleTickerProvid
                     ),
         ),
         if (areOrdersFetched)
-          CustomPaginationFooter(
-            currentPage: accountsProvider.currentPageBooked,
-            totalPages: accountsProvider.totalPages,
-            buttonSize: 30,
-            pageController: _pageController,
-            onFirstPage: () {
-              goToBookedPage(1);
-            },
-            onLastPage: () {
-              goToBookedPage(accountsProvider.totalPagesBooked);
-            },
-            onNextPage: () {
-              int currentPage = accountsProvider.currentPageBooked;
+          Consumer<AccountsProvider>(
+            builder: (context, accountsProvider, child) {
+              return CustomPaginationFooter(
+                currentPage: accountsProvider.currentPageBooked,
+                totalPages: accountsProvider.totalPages,
+                buttonSize: 30,
+                totalCount: accountsProvider.totalOrdersInvoiced,
+                pageController: _pageController,
+                onFirstPage: () {
+                  goToBookedPage(1);
+                },
+                onLastPage: () {
+                  goToBookedPage(accountsProvider.totalPagesBooked);
+                },
+                onNextPage: () {
+                  int currentPage = accountsProvider.currentPageBooked;
 
-              int totalPages = accountsProvider.totalPagesBooked;
+                  int totalPages = accountsProvider.totalPagesBooked;
 
-              if (currentPage < totalPages) {
-                goToBookedPage(accountsProvider.currentPageBooked + 1);
-              }
-            },
-            onPreviousPage: () {
-              int currentPage = accountsProvider.currentPageBooked;
+                  if (currentPage < totalPages) {
+                    goToBookedPage(accountsProvider.currentPageBooked + 1);
+                  }
+                },
+                onPreviousPage: () {
+                  int currentPage = accountsProvider.currentPageBooked;
 
-              if (currentPage > 1) {
-                goToBookedPage(accountsProvider.currentPageBooked - 1);
-              }
-            },
-            onGoToPage: (int page) {
-              int totalPages = accountsProvider.totalPages;
+                  if (currentPage > 1) {
+                    goToBookedPage(accountsProvider.currentPageBooked - 1);
+                  }
+                },
+                onGoToPage: (int page) {
+                  int totalPages = accountsProvider.totalPages;
 
-              if (page > 0 && page <= totalPages) {
-                goToBookedPage(page);
-              } else {
-                _showSnackbar(context, 'Please enter a valid page number between 1 and $totalPages.');
-              }
-            },
-            onJumpToPage: () {
-              final String pageText = _pageController.text;
-              int? page = int.tryParse(pageText);
-              int totalPages = accountsProvider.totalPages;
+                  if (page > 0 && page <= totalPages) {
+                    goToBookedPage(page);
+                  } else {
+                    _showSnackbar(context, 'Please enter a valid page number between 1 and $totalPages.');
+                  }
+                },
+                onJumpToPage: () {
+                  final String pageText = _pageController.text;
+                  int? page = int.tryParse(pageText);
+                  int totalPages = accountsProvider.totalPages;
 
-              if (page == null || page < 1 || page > totalPages) {
-                _showSnackbar(context, 'Please enter a valid page number between 1 and $totalPages.');
-                return;
-              }
+                  if (page == null || page < 1 || page > totalPages) {
+                    _showSnackbar(context, 'Please enter a valid page number between 1 and $totalPages.');
+                    return;
+                  }
 
-              goToBookedPage(page);
+                  goToBookedPage(page);
 
-              _pageController.clear();
-            },
+                  _pageController.clear();
+                },
+              );
+            }
           ),
       ],
     );
   }
 
   void _showSnackbar(BuildContext context, String message) {
-    ScaffoldMessenger.of(context).removeCurrentSnackBar();
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message)),
-    );
+    Utils.showSnackBar(context, message);
   }
 
   Widget _buildConfirmButtons() {
@@ -480,38 +490,18 @@ class _InvoicedOrdersState extends State<InvoicedOrders> with SingleTickerProvid
                       List<String> selectedOrderIds = provider.ordersBooked
                           .asMap()
                           .entries
-                          .where((entry) => provider.selectedProducts[entry.key])
+                          .where((entry) => provider.selectedAccounts[entry.key])
                           .map((entry) => entry.value.orderId)
                           .toList();
 
                       if (selectedOrderIds.isEmpty) {
-                        // Show an error message if no ordersBooked are selected
-                        ScaffoldMessenger.of(context).removeCurrentSnackBar();
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('No ordersBooked selected'),
-                            backgroundColor: AppColors.cardsred,
-                          ),
-                        );
+                        Utils.showSnackBar(context, 'No orders selected', isError: true, toRemoveCurr: true);
                       } else {
-                        // Set loading status to true before starting the operation
-                        provider.setCancelStatus(true);
-
-                        // Call confirmOrders method with selected IDs
                         String resultMessage = await provider.cancelOrders(context, selectedOrderIds);
 
-                        // Set loading status to false after operation completes
-                        provider.setCancelStatus(false);
-
-                        // Determine the background color based on the result
                         Color snackBarColor;
                         if (resultMessage.contains('success')) {
-                          // if (selectedCourier != 'All') {
-                          //   await accountsProvider.fetchOrdersByMarketplace(selectedCourier, 2, accountsProvider.currentPage,
-                          //       date: picked, mode: selectedPaymentMode);
-                          // } else {
                           await accountsProvider.fetchInvoicedOrders(accountsProvider.currentPageBooked);
-                          // }
 
                           snackBarColor = AppColors.green; // Success: Green
                         } else if (resultMessage.contains('error') || resultMessage.contains('failed')) {
@@ -520,14 +510,7 @@ class _InvoicedOrdersState extends State<InvoicedOrders> with SingleTickerProvid
                           snackBarColor = AppColors.orange; // Other: Orange
                         }
 
-                        // Show feedback based on the result
-                        ScaffoldMessenger.of(context).removeCurrentSnackBar();
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(resultMessage),
-                            backgroundColor: snackBarColor,
-                          ),
-                        );
+                        Utils.showSnackBar(context, resultMessage, color: snackBarColor, seconds: 5);
                       }
                     },
               child: accountsProvider.isCancel
@@ -565,8 +548,7 @@ class _InvoicedOrdersState extends State<InvoicedOrders> with SingleTickerProvid
                 icon: const Icon(
                   Icons.refresh,
                   color: AppColors.primaryBlue,
-                )
-            ),
+                )),
 
             // ElevatedButton(
             //   style: ElevatedButton.styleFrom(
@@ -597,32 +579,34 @@ class _InvoicedOrdersState extends State<InvoicedOrders> with SingleTickerProvid
     );
   }
 
-  Widget _buildTableHeader(int selectedCount, AccountsProvider accountsProvider) {
-    return Container(
-      color: Colors.grey[300],
-      padding: const EdgeInsets.symmetric(vertical: 12),
-      child: Row(
-        children: [
-          SizedBox(
-            width: 140,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Checkbox(
-                  value: accountsProvider.selectAllBooked,
-                  onChanged: (value) {
-                    accountsProvider.toggleBookedSelectAll(value!);
-                  },
-                ),
-                Text("Select All ($selectedCount)"),
-              ],
+  Widget _buildTableHeader(int selectedCount) {
+    return Consumer<AccountsProvider>(builder: (context, accountsProvider, child) {
+      return Container(
+        color: Colors.grey[300],
+        padding: const EdgeInsets.symmetric(vertical: 12),
+        child: Row(
+          children: [
+            SizedBox(
+              width: 140,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Checkbox(
+                    value: accountsProvider.allSelectedInvoiced,
+                    onChanged: (value) {
+                      accountsProvider.toggleBookedSelectAll(value!);
+                    },
+                  ),
+                  Text("Select All ($selectedCount)"),
+                ],
+              ),
             ),
-          ),
-          buildHeader('ORDERS', flex: 7),
-          buildHeader('Invoice', flex: 2),
-        ],
-      ),
-    );
+            buildHeader('ORDERS', flex: 7),
+            buildHeader('Invoice', flex: 2),
+          ],
+        ),
+      );
+    });
   }
 
   Widget buildHeader(String title, {int flex = 1}) {
@@ -652,7 +636,7 @@ class _InvoicedOrdersState extends State<InvoicedOrders> with SingleTickerProvid
           child: Checkbox(
             value: order.isSelected,
             onChanged: (value) {
-              accountsProvider.handleRowCheckboxChangeBooked(
+              accountsProvider.toggleOrderSelectionBooked(
                 order.orderId,
                 value!,
               );

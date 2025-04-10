@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:inventory_management/Custom-Files/colors.dart';
+import 'package:inventory_management/Custom-Files/utils.dart';
 import 'package:provider/provider.dart';
 import 'Api/auth_provider.dart';
 
@@ -24,7 +25,7 @@ class CreateAccountPage extends StatelessWidget {
                     children: [
                       Container(
                         color: AppColors.primaryBlue,
-                        child: Center(
+                        child: const Center(
                           child: Padding(
                             padding: const EdgeInsets.all(30.0),
                             child: Column(
@@ -32,7 +33,7 @@ class CreateAccountPage extends StatelessWidget {
                               crossAxisAlignment: CrossAxisAlignment.center,
                               children: [
                                 const Text(
-                                  "Welcome Back!",
+                                  "Welcome!",
                                   style: TextStyle(
                                     fontSize: 32,
                                     color: AppColors.white,
@@ -41,28 +42,28 @@ class CreateAccountPage extends StatelessWidget {
                                 ),
                                 const SizedBox(height: 20),
                                 const Text(
-                                  "To keep connected with us please login with your personal info",
+                                  "To keep connected with us, please create an account with your personal info.",
                                   style: TextStyle(
                                     fontSize: 18,
                                     color: AppColors.white,
                                   ),
                                   textAlign: TextAlign.center,
                                 ),
-                                const SizedBox(height: 40),
-                                ElevatedButton(
-                                  onPressed: () {
-                                    Navigator.pop(context);
-                                  },
-                                  style: ElevatedButton.styleFrom(
-                                    foregroundColor: AppColors.primaryBlue,
-                                    backgroundColor: AppColors.white,
-                                    padding: const EdgeInsets.symmetric(vertical: 20.0, horizontal: 20.0),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(8.0),
-                                    ),
-                                  ),
-                                  child: const Text("SIGN IN"),
-                                ),
+                                // const SizedBox(height: 40),
+                                // ElevatedButton(
+                                //   onPressed: () {
+                                //     Navigator.pop(context);
+                                //   },
+                                //   style: ElevatedButton.styleFrom(
+                                //     foregroundColor: AppColors.primaryBlue,
+                                //     backgroundColor: AppColors.white,
+                                //     padding: const EdgeInsets.symmetric(vertical: 20.0, horizontal: 20.0),
+                                //     shape: RoundedRectangleBorder(
+                                //       borderRadius: BorderRadius.circular(8.0),
+                                //     ),
+                                //   ),
+                                //   child: const Text("SIGN IN"),
+                                // ),
                               ],
                             ),
                           ),
@@ -216,7 +217,15 @@ class CreateAccountFormState extends State<CreateAccountForm> {
 
   void _checkIfOtpCanBeEnabled() {
     setState(() {
-      _isOtpEnabled = _username != null && _username!.isNotEmpty && _email != null && _email!.isNotEmpty && _password != null && _password!.isNotEmpty && _confirmPassword != null && _password == _confirmPassword && _isValidEmail(_email!);
+      _isOtpEnabled = _username != null &&
+          _username!.isNotEmpty &&
+          _email != null &&
+          _email!.isNotEmpty &&
+          _password != null &&
+          _password!.isNotEmpty &&
+          _confirmPassword != null &&
+          _password == _confirmPassword &&
+          _isValidEmail(_email!);
     });
   }
 
@@ -248,14 +257,10 @@ class CreateAccountFormState extends State<CreateAccountForm> {
       setState(() {
         _isOtpSent = true;
       });
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('OTP sent successfully!')),
-      );
+      Utils.showSnackBar(context, 'OTP sent successfully!', color: AppColors.primaryBlue);
       _startResendTimer();
     } catch (error) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to send OTP: $error')),
-      );
+      Utils.showSnackBar(context, 'Failed to send OTP', details: error.toString(), isError: true);
     } finally {
       setState(() {
         _isSendingOtp = false;
@@ -289,19 +294,13 @@ class CreateAccountFormState extends State<CreateAccountForm> {
           _isOtpVerified = true;
         });
 
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('OTP verified successfully!')),
-        );
+        Utils.showSnackBar(context, 'OTP verified successfully!', color: AppColors.cardsgreen);
         Navigator.pop(context);
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Incorrect OTP. Please try again.')),
-        );
+        Utils.showSnackBar(context, 'Incorrect OTP. Please try again.',  isError: true);
       }
     } catch (error) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to verify OTP: $error')),
-      );
+      Utils.showSnackBar(context, 'Failed to verify OTP', details: error.toString(),  isError: true);
     }
   }
 
@@ -318,6 +317,7 @@ class CreateAccountFormState extends State<CreateAccountForm> {
     'racker',
     'manifest',
     'support',
+    'supervisor',
     'ggv',
     'createOrder',
   ];
@@ -338,6 +338,7 @@ class CreateAccountFormState extends State<CreateAccountForm> {
     'manifest': 'Manifest',
     'support': 'Support',
     'ggv': 'GGV',
+    'supervisor': 'Supervisor',
     'createOrder': 'Create Order',
   };
 
@@ -414,28 +415,28 @@ class CreateAccountFormState extends State<CreateAccountForm> {
                     color: AppColors.primaryBlue,
                   ),
                 ),
-                const SizedBox(height: 20),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    IconButton(
-                      icon: const Icon(FontAwesomeIcons.facebook, color: AppColors.facebookColor),
-                      onPressed: () {},
-                    ),
-                    const SizedBox(width: 10),
-                    IconButton(
-                      icon: const Icon(FontAwesomeIcons.google, color: AppColors.googleColor),
-                      onPressed: () {},
-                    ),
-                    const SizedBox(width: 10),
-                    IconButton(
-                      icon: const Icon(FontAwesomeIcons.linkedin, color: AppColors.linkedinColor),
-                      onPressed: () {},
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 20),
-                const Text("or use your email for registration:"),
+                // const SizedBox(height: 20),
+                // Row(
+                //   mainAxisAlignment: MainAxisAlignment.center,
+                //   children: [
+                //     IconButton(
+                //       icon: const Icon(FontAwesomeIcons.facebook, color: AppColors.facebookColor),
+                //       onPressed: () {},
+                //     ),
+                //     const SizedBox(width: 10),
+                //     IconButton(
+                //       icon: const Icon(FontAwesomeIcons.google, color: AppColors.googleColor),
+                //       onPressed: () {},
+                //     ),
+                //     const SizedBox(width: 10),
+                //     IconButton(
+                //       icon: const Icon(FontAwesomeIcons.linkedin, color: AppColors.linkedinColor),
+                //       onPressed: () {},
+                //     ),
+                //   ],
+                // ),
+                // const SizedBox(height: 20),
+                // const Text("or use your email for registration:"),
                 const SizedBox(height: 20),
                 TextFormField(
                   controller: _usernameController,
@@ -464,7 +465,9 @@ class CreateAccountFormState extends State<CreateAccountForm> {
                       border: OutlineInputBorder(),
                     ),
                     child: Text(
-                      selectedRoles.isEmpty ? "No roles selected" : selectedRoles.map((role) => roleDisplayNames[role] ?? role).join(', '),
+                      selectedRoles.isEmpty
+                          ? "No roles selected"
+                          : selectedRoles.map((role) => roleDisplayNames[role] ?? role).join(', '),
                       style: TextStyle(
                         color: selectedRoles.isEmpty ? Colors.grey : Colors.black,
                       ),
@@ -648,30 +651,4 @@ class CreateAccountFormState extends State<CreateAccountForm> {
       ),
     );
   }
-
-  // void _register() async {
-  //   final authProvider = Provider.of<AuthProvider>(context, listen: false);
-
-  //   if (_email != null && _password != null && _username != null) {
-  //     setState(() {
-  //       _isLoading = true;
-  //     });
-  //     final response =
-  //         await authProvider.register(_email!, _password!, assignedRoles);
-  //     setState(() {
-  //       _isLoading = false;
-  //     });
-
-  //     if (response['success']) {
-  //       ScaffoldMessenger.of(context).showSnackBar(
-  //         const SnackBar(content: Text('Account created successfully!')),
-  //       );
-  //       Navigator.pushNamed(context, '/login');
-  //     } else {
-  //       ScaffoldMessenger.of(context).showSnackBar(
-  //         SnackBar(content: Text(response['message'])),
-  //       );
-  //     }
-  //   }
-  // }
 }

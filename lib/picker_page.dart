@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -27,7 +28,7 @@ class _PickerPageState extends State<PickerPage> {
   String selectedPicklist = '';
   List<String> picklistIds = ['W1', 'W2', 'W3', 'G1', 'G2', 'G3', 'E1', 'E2', 'E3'];
   bool isDownloading = false;
-
+  late PickerProvider pickerProvider;
   bool? isSuperAdmin = false;
   bool? isAdmin = false;
 
@@ -39,14 +40,28 @@ class _PickerPageState extends State<PickerPage> {
     });
   }
 
+  Timer? _debounce;
+
+  void _onSearchChanged(String value) {
+    if (value.trim().isEmpty) {
+      pickerProvider.fetchOrdersWithStatus4();
+    }
+
+    if (_debounce?.isActive ?? false) _debounce?.cancel();
+    _debounce = Timer(const Duration(milliseconds: 300), () {
+      pickerProvider.searchOrders(value);
+    });
+  }
+
   @override
   void initState() {
     super.initState();
+    pickerProvider = Provider.of<PickerProvider>(context, listen: false);
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      Provider.of<PickerProvider>(context, listen: false).fetchOrdersWithStatus4();
+      pickerProvider.fetchOrdersWithStatus4();
       _fetchUserRole();
     });
-    Provider.of<PickerProvider>(context, listen: false).textEditingController.clear();
+    pickerProvider.textEditingController.clear();
   }
 
   void _showOrderIdsDialog(Picklist picklist) {
@@ -58,7 +73,8 @@ class _PickerPageState extends State<PickerPage> {
 
         return StatefulBuilder(
           builder: (context, setState) {
-            List<String> filteredIds = orderIds.where((id) => id.toLowerCase().contains(searchQuery.toLowerCase())).toList();
+            List<String> filteredIds =
+                orderIds.where((id) => id.toLowerCase().contains(searchQuery.toLowerCase())).toList();
 
             return AlertDialog(
               title: TextField(
@@ -89,7 +105,8 @@ class _PickerPageState extends State<PickerPage> {
                                 builder: (context) {
                                   return AlertDialog(
                                     title: const Text('Revert Order'),
-                                    content: Text('Are you sure you want to revert ${filteredIds[index]} to READY TO CONFIRM'),
+                                    content: Text(
+                                        'Are you sure you want to revert ${filteredIds[index]} to READY TO CONFIRM'),
                                     actions: [
                                       TextButton(
                                         onPressed: () {
@@ -123,7 +140,8 @@ class _PickerPageState extends State<PickerPage> {
                                             Navigator.pop(context);
 
                                             if (res['success'] == true) {
-                                              Utils.showInfoDialog(context, "${res['message']}\nNew Order ID: ${res['newOrderId']}", true);
+                                              Utils.showInfoDialog(context,
+                                                  "${res['message']}\nNew Order ID: ${res['newOrderId']}", true);
                                             } else {
                                               Utils.showInfoDialog(context, res['message'], false);
                                             }
@@ -193,14 +211,9 @@ class _PickerPageState extends State<PickerPage> {
                         border: InputBorder.none,
                         contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 12.0),
                       ),
-                      onChanged: (query) {
-                        // setState(() {});
-                        if (query.isEmpty) {
-                          pickerProvider.fetchOrdersWithStatus4();
-                        }
-                      },
+                      onChanged: _onSearchChanged,
                       onSubmitted: (query) {
-                        if (query.isNotEmpty) {
+                        if (query.trim().isNotEmpty) {
                           pickerProvider.searchOrders(query);
                         } else {
                           pickerProvider.fetchOrdersWithStatus4();
@@ -211,17 +224,6 @@ class _PickerPageState extends State<PickerPage> {
                       },
                     ),
                   ),
-                  // const SizedBox(width: 8),
-                  // ElevatedButton(
-                  //   style: ElevatedButton.styleFrom(
-                  //     backgroundColor: AppColors.primaryBlue,
-                  //   ),
-                  //   onPressed: _searchController.text.isNotEmpty ? () => pickerProvider.searchOrders(_searchController.text) : null,
-                  //   child: const Text(
-                  //     'Search',
-                  //     style: TextStyle(color: Colors.white),
-                  //   ),
-                  // ),
                   const Spacer(),
                   ElevatedButton(
                     style: ElevatedButton.styleFrom(
@@ -314,7 +316,8 @@ class _PickerPageState extends State<PickerPage> {
                                       },
                                     );
 
-                                    final res = await pickerProvider.downloadPicklist(context, _dateController.text, selectedPicklist);
+                                    final res = await pickerProvider.downloadPicklist(
+                                        context, _dateController.text, selectedPicklist);
 
                                     Utils.showSnackBar(context, res['message']);
 
@@ -469,7 +472,8 @@ class _PickerPageState extends State<PickerPage> {
                   pickerProvider.goToPage(page);
                   pickerProvider.textEditingController.clear();
                 } else {
-                  _showSnackbar(context, 'Please enter a valid page number between 1 and ${pickerProvider.totalPages}.');
+                  _showSnackbar(
+                      context, 'Please enter a valid page number between 1 and ${pickerProvider.totalPages}.');
                 }
               },
             ),
@@ -480,9 +484,7 @@ class _PickerPageState extends State<PickerPage> {
   }
 
   void _showSnackbar(BuildContext context, String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message)),
-    );
+    Utils.showSnackBar(context, message);
   }
 
   Widget _buildTableHeader(int totalCount, PickerProvider pickerProvider) {

@@ -26,17 +26,6 @@ class Constants {
 
     // return 'https://stockship-3.onrender.com';
 
-    // return 'http://192.168.67.122:3001';
-
-    // return 'http://192.168.107.199:3001';
-
-    // return 'http://localhost:3001';
-
-    // return 'http://192.168.1.22:3001';
-
-    // return 'http://192.168.29.31:3001';
-
-    // return 'http://192.168.29.203:3001';
-
+    // return 'http://192.168.89.199:3001';
   }
 }

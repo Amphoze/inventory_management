@@ -7,6 +7,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:inventory_management/Api/inventory_api.dart';
+import 'package:inventory_management/Custom-Files/utils.dart';
 import 'package:inventory_management/constants/constants.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -43,9 +44,8 @@ class _ThresholdUploadState extends State<ThresholdUpload> {
         });
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error reading CSV file: $e')),
-      );
+      Utils.showSnackBar(context, 'Error reading CSV file: $e', isError: true);
+
     }
   }
 
@@ -89,13 +89,9 @@ class _ThresholdUploadState extends State<ThresholdUpload> {
         log(response.statusCode.toString());
       }
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Upload completed successfully!')),
-      );
+      Utils.showSnackBar(context, 'Upload completed successfully!', color: AppColors.cardsgreen);
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error during upload: $e')),
-      );
+      Utils.showSnackBar(context, 'Error during upload: $e', isError: true);
     } finally {
       setState(() {
         _isChangeUploading = false;

@@ -1,8 +1,10 @@
+import 'dart:async';
 import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:inventory_management/Custom-Files/custom_pagination.dart';
 import 'package:inventory_management/Custom-Files/loading_indicator.dart';
+import 'package:inventory_management/Custom-Files/utils.dart';
 import 'package:inventory_management/Widgets/big_combo_card.dart';
 import 'package:inventory_management/Widgets/order_info.dart';
 import 'package:inventory_management/Widgets/product_details_card.dart';
@@ -26,13 +28,28 @@ class _RoutingPageState extends State<RoutingPage> with TickerProviderStateMixin
   late TextEditingController _searchControllerFailed;
   final TextEditingController _pageController = TextEditingController();
   final TextEditingController pageController = TextEditingController();
+  late RoutingProvider pro;
   String _selectedDate = 'Select Date';
   String selectedCourier = 'All';
   DateTime? picked;
+  Timer? _debounce;
+
+  void _onSearchChanged(String value) {
+    if (value.trim().isEmpty) {
+      pro.clearSearchResults();
+      pro.fetchOrders();
+    }
+
+    if (_debounce?.isActive ?? false) _debounce?.cancel();
+    _debounce = Timer(const Duration(milliseconds: 300), () {
+      pro.searchOrders(value);
+    });
+  }
 
   @override
   void initState() {
     super.initState();
+    pro = Provider.of<RoutingProvider>(context, listen: false);
     _tabController = TabController(length: 2, vsync: this);
     _searchController = TextEditingController();
     _searchControllerReady = TextEditingController();
@@ -56,6 +73,7 @@ class _RoutingPageState extends State<RoutingPage> with TickerProviderStateMixin
 
   @override
   void dispose() {
+    _debounce?.cancel();
     _tabController.dispose();
     _searchController.dispose();
     _searchControllerReady.dispose();
@@ -85,16 +103,16 @@ class _RoutingPageState extends State<RoutingPage> with TickerProviderStateMixin
       // appBar: _buildAppBar(),
       body: Consumer<RoutingProvider>(
         builder: (context, pro, child) {
-          if (pro.isLoading) {
-            return const Center(
-              child: LoadingAnimation(
-                icon: Icons.route,
-                beginColor: Color.fromRGBO(189, 189, 189, 1),
-                endColor: AppColors.primaryBlue,
-                size: 80.0,
-              ),
-            );
-          }
+          // if (pro.isLoading) {
+          //   return const Center(
+          //     child: LoadingAnimation(
+          //       icon: Icons.route,
+          //       beginColor: Color.fromRGBO(189, 189, 189, 1),
+          //       endColor: AppColors.primaryBlue,
+          //       size: 80.0,
+          //     ),
+          //   );
+          // }
           return Column(
             children: [
               const SizedBox(height: 10),
@@ -232,26 +250,10 @@ class _RoutingPageState extends State<RoutingPage> with TickerProviderStateMixin
                                 log('selectedOrderIds: $selectedOrderIds');
 
                                 if (selectedOrderIds.isEmpty) {
-                                  // Show an error message if no orders are selected
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                      content: Text('No orders selected'),
-                                      backgroundColor: AppColors.cardsred,
-                                    ),
-                                  );
+                                  Utils.showSnackBar(context, 'No orders selected', isError: true);
                                 } else {
-                                  // Set loading status to true before starting the operation
-                                  // provider.setConfirmStatus(true);
-
-                                  // Call confirmOrders method with selected IDs
                                   String resultMessage = await provider.routeOrders(context, selectedOrderIds);
 
-                                  log('resultMessage: $resultMessage');
-
-                                  // Set loading status to false after operation completes
-                                  // provider.setConfirmStatus(false);
-
-                                  // Determine the background color based on the result
                                   Color snackBarColor;
                                   if (resultMessage.contains('success')) {
                                     snackBarColor = AppColors.green; // Success: Green
@@ -261,13 +263,7 @@ class _RoutingPageState extends State<RoutingPage> with TickerProviderStateMixin
                                     snackBarColor = AppColors.orange; // Other: Orange
                                   }
 
-                                  // Show feedback based on the result
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Text(resultMessage),
-                                      backgroundColor: snackBarColor,
-                                    ),
-                                  );
+                                  Utils.showSnackBar(context, resultMessage, color: snackBarColor, seconds: 5);
                                 }
                               },
                         child: pro.isConfirm
@@ -343,12 +339,7 @@ class _RoutingPageState extends State<RoutingPage> with TickerProviderStateMixin
                                     pro.searchOrders(value);
                                   }
                                 },
-                                onChanged: (value) {
-                                  if (value.isEmpty) {
-                                    pro.clearSearchResults();
-                                    pro.fetchOrders();
-                                  }
-                                },
+                                onChanged: _onSearchChanged,
                               ),
                             ),
                             if (_searchControllerReady.text.isNotEmpty)
@@ -375,7 +366,7 @@ class _RoutingPageState extends State<RoutingPage> with TickerProviderStateMixin
                 child: pro.isLoading
                     ? const Center(
                         child: LoadingAnimation(
-                          icon: Icons.shopping_cart,
+                          icon: Icons.route,
                           beginColor: Color.fromRGBO(189, 189, 189, 1),
                           endColor: AppColors.primaryBlue,
                           size: 80.0,
@@ -402,11 +393,13 @@ class _RoutingPageState extends State<RoutingPage> with TickerProviderStateMixin
                                   groupedComboItems[item.comboSku]!.add(item);
                                 }
                               }
-                              final List<List<Item>> comboItemGroups = groupedComboItems.values.where((items) => items.length > 1).toList();
+                              final List<List<Item>> comboItemGroups =
+                                  groupedComboItems.values.where((items) => items.length > 1).toList();
 
                               final List<Item> remainingItems = order.items
-                                  .where((item) =>
-                                      !(item.isCombo == true && item.comboSku != null && groupedComboItems[item.comboSku]!.length > 1))
+                                  .where((item) => !(item.isCombo == true &&
+                                      item.comboSku != null &&
+                                      groupedComboItems[item.comboSku]!.length > 1))
                                   .toList();
                               //////////////////////////////////////////////////////////
                               return Card(
@@ -451,7 +444,8 @@ class _RoutingPageState extends State<RoutingPage> with TickerProviderStateMixin
                                               ),
                                               Text(
                                                 pro.formatDate(order.date!),
-                                                style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.primaryBlue),
+                                                style: const TextStyle(
+                                                    fontWeight: FontWeight.bold, color: AppColors.primaryBlue),
                                               ),
                                             ],
                                           ),
@@ -464,7 +458,8 @@ class _RoutingPageState extends State<RoutingPage> with TickerProviderStateMixin
                                               ),
                                               Text(
                                                 'Rs. ${order.totalAmount ?? ''}',
-                                                style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.primaryBlue),
+                                                style: const TextStyle(
+                                                    fontWeight: FontWeight.bold, color: AppColors.primaryBlue),
                                               ),
                                             ],
                                           ),
@@ -477,7 +472,8 @@ class _RoutingPageState extends State<RoutingPage> with TickerProviderStateMixin
                                               ),
                                               Text(
                                                 '${order.items.fold(0, (total, item) => total + item.qty!)}',
-                                                style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.primaryBlue),
+                                                style: const TextStyle(
+                                                    fontWeight: FontWeight.bold, color: AppColors.primaryBlue),
                                               ),
                                             ],
                                           ),
@@ -490,7 +486,8 @@ class _RoutingPageState extends State<RoutingPage> with TickerProviderStateMixin
                                               ),
                                               Text(
                                                 '${order.totalWeight ?? ''}',
-                                                style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.primaryBlue),
+                                                style: const TextStyle(
+                                                    fontWeight: FontWeight.bold, color: AppColors.primaryBlue),
                                               ),
                                             ],
                                           ),
@@ -641,7 +638,9 @@ class _RoutingPageState extends State<RoutingPage> with TickerProviderStateMixin
                   final int? page = int.tryParse(pageController.text);
 
                   if (page == null || page < 1 || page > pro.totalReadyPages) {
-                    _showSnackbar(context, 'Please enter a valid page number between 1 and ${pro.totalReadyPages}.');
+                    Utils.showSnackBar(
+                        context, 'Please enter a valid page number between 1 and ${pro.totalReadyPages}.',
+                        isError: true);
                     return;
                   }
 
@@ -690,12 +689,6 @@ class _RoutingPageState extends State<RoutingPage> with TickerProviderStateMixin
   //     ],
   //   );
   // }
-}
-
-void _showSnackbar(BuildContext context, String message) {
-  ScaffoldMessenger.of(context).showSnackBar(
-    SnackBar(content: Text(message)),
-  );
 }
 
 Widget buildLabelValueRow(String label, String? value) {

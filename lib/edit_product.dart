@@ -3,6 +3,8 @@ import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
+import 'package:inventory_management/Custom-Files/colors.dart';
+import 'package:inventory_management/Custom-Files/utils.dart';
 import 'package:inventory_management/constants/constants.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'Custom-Files/label_search_field.dart';
@@ -160,23 +162,14 @@ class _EditProductPageState extends State<EditProductPage> {
       log('res: ${response.body}');
 
       if (response.statusCode == 200 || response.statusCode == 201) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Product updated successfully'), backgroundColor: Colors.green),
-        );
+        Utils.showSnackBar(context, 'Product updated successfully', color: AppColors.cardsgreen);
         Navigator.pop(context, true);
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to update product. Error: ${response.statusCode}'),
-            backgroundColor: Colors.red,
-          ),
-        );
+        Utils.showSnackBar(context, 'Failed to update product. Error: ${response.statusCode}', isError: true);
       }
     } catch (e) {
       setState(() => _isLoading = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('An error occurred: $e'), backgroundColor: Colors.red),
-      );
+      Utils.showSnackBar(context, 'An error occured', details: e.toString(), isError: true);
     }
   }
 
@@ -443,7 +436,8 @@ class _EditProductPageState extends State<EditProductPage> {
                                 children: [
                                   Expanded(
                                     child: searchabletestfeild(
-                                      isRequired: _fieldRequirements['outerPackageName'] ?? false, // Dynamic requirement
+                                      isRequired:
+                                          _fieldRequirements['outerPackageName'] ?? false, // Dynamic requirement
                                       controller: outerPackageNameController,
                                       isEditProduct: true,
                                       lable: 'search Outer Packaging',

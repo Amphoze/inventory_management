@@ -8,31 +8,23 @@ import 'package:inventory_management/constants/constants.dart';
 import 'package:logger/logger.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
+import '../Custom-Files/utils.dart';
 import '../model/orders_model.dart';
 
 class DispatchedProvider with ChangeNotifier {
+  int totalOrders = 0;
   bool isLoading = false;
   bool selectAll = false;
   List<bool> selectedProducts = [];
-  List<Order> orders0 = [];
+  List<Order> _orders = [];
   int currentPage = 1; // Ensure this starts at 1
   int totalPages = 1;
   final PageController pageController = PageController();
   final TextEditingController textEditingController = TextEditingController();
   Timer? debounce;
 
-  // bool get selectAll => selectAll;
-  // List<bool> get selectedProducts => selectedProducts;
-  List<Order> get orders => orders0;
-  // bool get isLoading => isLoading;
-
-  // int get currentPage => currentPage;
-  // int get totalPages => totalPages;
-  // PageController get pageController => pageController;
-  // TextEditingController get textEditingController => textEditingController;
-
+  List<Order> get orders => _orders;
   int get selectedCount => selectedProducts.where((isSelected) => isSelected).length;
-
   bool isRefreshingOrders = false;
 
   void setRefreshingOrders(bool value) {
@@ -42,7 +34,7 @@ class DispatchedProvider with ChangeNotifier {
 
   void toggleSelectAll(bool value) {
     selectAll = value;
-    selectedProducts = List<bool>.generate(orders0.length, (index) => selectAll);
+    selectedProducts = List<bool>.generate(_orders.length, (index) => selectAll);
     notifyListeners();
   }
 
@@ -66,13 +58,11 @@ class DispatchedProvider with ChangeNotifier {
       'Content-Type': 'application/json',
     };
 
-    // Request body containing the order IDs
     final body = json.encode({
       'orderIds': orderIds,
     });
 
     try {
-      // Make the POST request to confirm the orders
       final response = await http.post(
         Uri.parse(cancelOrderUrl),
         headers: headers,
@@ -80,26 +70,23 @@ class DispatchedProvider with ChangeNotifier {
       );
 
       print('Response status: ${response.statusCode}');
-      //print('Response body: ${response.body}');
 
       final responseData = json.decode(response.body);
 
       if (response.statusCode == 200) {
-        // After successful confirmation, fetch updated orders and notify listeners
-        await fetchOrdersWithStatus9(); // Assuming fetchOrders is a function that reloads the orders
-        // resetSelections(); // Clear selected order IDs
-        setCancelStatus(false);
-        notifyListeners(); // Notify the UI to rebuild
+        await fetchOrdersWithStatus9();
+        notifyListeners();
 
         return responseData['message'] ?? 'Orders cancelled successfully';
       } else {
         return responseData['message'] ?? 'Failed to cancel orders';
       }
     } catch (error) {
-      setCancelStatus(false);
       notifyListeners();
       print('Error during API request: $error');
       return 'An error occurred: $error';
+    } finally {
+      setCancelStatus(false);
     }
   }
 
@@ -127,12 +114,13 @@ class DispatchedProvider with ChangeNotifier {
         // initializeSelection();
 
         totalPages = data['totalPages']; // Get total pages from response
-        orders0 = orders; // Set the orders for the current page
+        _orders = orders; // Set the orders for the current page
+        totalOrders = data['totalOrders']; // Get total orders from response
 
         Logger().e(orders);
 
         // Initialize selected products list
-        selectedProducts = List<bool>.filled(orders0.length, false);
+        selectedProducts = List<bool>.filled(_orders.length, false);
 
         // Logger().e(_selectedProducts);
         // Print the total number of orders fetched from the current page
@@ -140,14 +128,14 @@ class DispatchedProvider with ChangeNotifier {
       } else {
         // Handle non-success responses
 
-        orders0 = [];
+        _orders = [];
         currentPage = 1;
         totalPages = 1; // Reset total pages if there’s an error
       }
     } catch (e) {
       // Handle errors
       log(e.toString());
-      orders0 = [];
+      _orders = [];
       currentPage = 1;
       totalPages = 1; // Reset total pages if there’s an error
     } finally {
@@ -178,24 +166,13 @@ class DispatchedProvider with ChangeNotifier {
   bool selectAllDispatched = false;
 
   void initializeSelection() {
-    selectedProducts = List<bool>.filled(orders0.length, false);
+    selectedProducts = List<bool>.filled(_orders.length, false);
     selectedDispatchedItems = List<bool>.filled(ordersDispatched.length, false);
   }
 
-  // Handle individual row checkbox change for orders
   void handleRowCheckboxChange(int index, bool isSelected) {
     selectedProducts[index] = isSelected;
-    notifyListeners();
-  }
-
-  // Handle individual row checkbox change for returned orders
-  void handleRowCheckboxChangeForDispatched(String? orderId, bool isSelected) {
-    int index = ordersDispatched.indexWhere((order) => order.orderId == orderId);
-    if (index != -1) {
-      selectedDispatchedItems[index] = isSelected;
-      ordersDispatched[index].isSelected = isSelected;
-      updateSelectAllStateForDispatched();
-    }
+    selectAll = selectedProducts.every((element) => element); // Check all visible orders
     notifyListeners();
   }
 
@@ -218,8 +195,8 @@ class DispatchedProvider with ChangeNotifier {
 
     // Collect the IDs of orders where trackingStatus is 'NA' (null or empty)
     for (int i = 0; i < selectedProducts.length; i++) {
-      if (selectedProducts[i] && (orders0[i].trackingStatus?.isEmpty ?? true)) {
-        selectedOrderIds.add(orders0[i].orderId);
+      if (selectedProducts[i] && (_orders[i].trackingStatus?.isEmpty ?? true)) {
+        selectedOrderIds.add(_orders[i].orderId);
       }
     }
 
@@ -249,9 +226,9 @@ class DispatchedProvider with ChangeNotifier {
         if (response.statusCode == 200) {
           print('Orders returned successfully!');
           // Update local order tracking status
-          for (int i = 0; i < orders0.length; i++) {
-            if (selectedProducts[i] && (orders0[i].trackingStatus?.isEmpty ?? true)) {
-              orders0[i].trackingStatus = 'return'; // Update locally
+          for (int i = 0; i < _orders.length; i++) {
+            if (selectedProducts[i] && (_orders[i].trackingStatus?.isEmpty ?? true)) {
+              _orders[i].trackingStatus = 'return'; // Update locally
             }
           }
 
@@ -285,7 +262,7 @@ class DispatchedProvider with ChangeNotifier {
   Future<List<Order>> searchOrders(String query) async {
     if (query.isEmpty) {
       await fetchOrdersWithStatus9();
-      return orders0;
+      return _orders;
     }
 
     isLoading = true;
@@ -323,17 +300,20 @@ class DispatchedProvider with ChangeNotifier {
         //   print('No data found in response.');
         // }
 
-        orders0 = orders;
+        _orders = orders;
+
+        selectedProducts = List<bool>.filled(_orders.length, false); // Reset to match orders0
+        selectAll = false;
         print('Orders fetched: ${orders.length}');
       } else {
         print('Failed to load orders: ${response.statusCode}');
-        orders0 = [];
+        _orders = [];
         currentPage = 1;
         totalPages = 1;
       }
     } catch (error) {
       print('Error searching failed orders: $error');
-      orders0 = [];
+      _orders = [];
       currentPage = 1;
       totalPages = 1;
     } finally {
@@ -341,7 +321,7 @@ class DispatchedProvider with ChangeNotifier {
       notifyListeners();
     }
 
-    return orders0;
+    return _orders;
   }
 
   Future<String> updateOrderTrackingStatus(BuildContext context, String id, String trackingStatus) async {
@@ -372,29 +352,18 @@ class DispatchedProvider with ChangeNotifier {
       print('Response status: ${response.statusCode}');
 
       if (response.statusCode == 200) {
-        // Show success snackbar
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-              backgroundColor: AppColors.green,
-              content: Text(
-                'Tracking status successfully updated to "$trackingStatus"',
-              )),
-        );
+        Utils.showSnackBar(context, 'Tracking status successfully updated to $trackingStatus', color: AppColors.cardsgreen);
         return 'Tracking status updated successfully';
       } else {
         final responseData = json.decode(response.body);
-        // Show failure snackbar
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(responseData['message'] ?? 'Failed to update tracking status')),
-        );
+        Utils.showSnackBar(context, responseData['message'] ?? 'Failed to update tracking status', isError: true);
+
         return responseData['message'] ?? 'Failed to update tracking status';
       }
     } catch (error) {
       print('Error during API request: $error');
-      // Show error snackbar
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('An error occurred: $error')),
-      );
+      Utils.showSnackBar(context, 'An error occurred', details: error.toString(), isError: true);
+
       return 'An error occurred: $error';
     }
   }

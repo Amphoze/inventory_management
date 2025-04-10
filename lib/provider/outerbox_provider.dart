@@ -8,6 +8,7 @@ import '../Api/auth_provider.dart';
 import 'package:flutter/material.dart';
 
 class OuterboxProvider with ChangeNotifier {
+  int totalBoxSizes = 0;
   List<Map<String, dynamic>> _boxsizes = [];
   int _currentPage = 1;
   int _totalPages = 1;
@@ -112,7 +113,8 @@ class OuterboxProvider with ChangeNotifier {
           // log('fetchedInventory: $fetchedInventory');
 
           _boxsizes = fetchedBoxsizes.toList();
-          _totalPages = res['data']['totalPages'] ?? 1;
+          _totalPages = res['data']['totalPages'] ?? 0;
+          totalBoxSizes = res['data']['totalBoxSizes'] ?? 0;
           _currentPage = page;
           notifyListeners();
         } else {

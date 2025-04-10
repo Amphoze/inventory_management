@@ -18,7 +18,8 @@ AppColors {
   static const Color greyText = Color.fromRGBO(135, 135, 135, 1);
   static const Color drawerBackground = Colors.grey;
   static const Color cardsred = Colors.redAccent;
-  static const Color cardsgreen = Colors.greenAccent;
+  static const Color cardsgreen = primaryGreen;
+  // static const Color cardsgreen = Colors.greenAccent;
   static const Color green = Colors.green;
   static const Color blueAccent = Color.fromRGBO(68, 138, 255, 1);
   static const Color orange = Colors.orange;

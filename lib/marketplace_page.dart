@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:inventory_management/Custom-Files/colors.dart';
+import 'package:inventory_management/Custom-Files/utils.dart';
 import 'package:provider/provider.dart';
 import 'package:inventory_management/provider/marketplace_provider.dart';
 import 'package:inventory_management/Custom-Files/custom-dropdown.dart';
+
+import 'model/combo_model.dart';
 
 class MarketplacePage extends StatefulWidget {
   const MarketplacePage({super.key});
@@ -25,6 +28,12 @@ class _MarketplacePageState extends State<MarketplacePage> {
   }
 
   @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final provider = Provider.of<MarketplaceProvider>(context);
 
@@ -42,59 +51,59 @@ class _MarketplacePageState extends State<MarketplacePage> {
                   backgroundColor: provider.isFormVisible ? AppColors.cardsred : AppColors.primaryBlue,
                 ),
                 onPressed: () {
-                  provider.toggleForm(); // Toggle the form visibility
+                  provider.toggleForm();
+                  FocusScope.of(context).unfocus();
                 },
                 child: provider.isFormVisible ? const Text('Cancel') : const Text('Create Marketplace'),
               ),
-
               if (!provider.isFormVisible)
-                Container(
-                  width: 200,
-                  height: 35,
-                  decoration: BoxDecoration(
-                    border: Border.all(
-                      color: AppColors.primaryBlue,
-                      width: 1.5,
+                Row(
+                  children: [
+                    Utils.richText('Total: ', provider.totalMarketplace.toString()),
+                    IconButton(
+                      tooltip: 'Refresh',
+                      onPressed: () {
+                        Provider.of<MarketplaceProvider>(context, listen: false).fetchMarketplaces();
+                      },
+                      icon: const Icon(Icons.refresh, color: AppColors.primaryBlue),
                     ),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: TextField(
-                          controller: _searchController,
-                          decoration: const InputDecoration(
-                            hintText: 'Search Marketplaces',
-                            hintStyle: TextStyle(
-                              color: Color.fromRGBO(117, 117, 117, 1),
-                              fontSize: 16,
-                            ),
-                            border: InputBorder.none,
-                            contentPadding: EdgeInsets.symmetric(vertical: 11, horizontal: 8),
-                          ),
-                          style: const TextStyle(color: AppColors.black),
-                          onSubmitted: (value) {
-                            provider.updateSearchQuery(value);
-                          },
-                          onChanged: (value) {
-                            provider.updateSearchQuery(value);
-                          },
-                        ),
+                    const SizedBox(width: 8),
+                    Container(
+                      width: 200,
+                      height: 35,
+                      decoration: BoxDecoration(
+                        border: Border.all(color: AppColors.primaryBlue, width: 1.5),
+                        borderRadius: BorderRadius.circular(8),
                       ),
-                      if (_searchController.text.isNotEmpty)
-                        InkWell(
-                          child: Icon(
-                            Icons.close,
-                            size: 20,
-                            color: Colors.grey.shade600,
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: TextField(
+                              controller: _searchController,
+                              textDirection: TextDirection.ltr,
+                              decoration: const InputDecoration(
+                                hintText: 'Search Marketplaces',
+                                hintStyle: TextStyle(color: Color.fromRGBO(117, 117, 117, 1), fontSize: 16),
+                                border: InputBorder.none,
+                                contentPadding: EdgeInsets.symmetric(vertical: 11, horizontal: 8),
+                              ),
+                              style: const TextStyle(color: AppColors.black),
+                              onSubmitted: (value) => provider.updateSearchQuery(value),
+                              onChanged: (value) => provider.updateSearchQuery(value),
+                            ),
                           ),
-                          onTap: () {
-                            _searchController.clear();
-                            provider.updateSearchQuery('');
-                          },
-                        ),
-                    ],
-                  ),
+                          if (_searchController.text.isNotEmpty)
+                            InkWell(
+                              onTap: () {
+                                _searchController.clear();
+                                provider.updateSearchQuery('');
+                              },
+                              child: Icon(Icons.close, size: 20, color: Colors.grey.shade600),
+                            ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
             ],
           ),
@@ -105,27 +114,21 @@ class _MarketplacePageState extends State<MarketplacePage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    'Add New Marketplace',
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                  ),
+                  const Text('Add New Marketplace', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
                   const SizedBox(height: 16),
                   TextField(
                     controller: provider.nameController,
+                    textDirection: TextDirection.ltr,
                     decoration: const InputDecoration(
                       labelText: 'Name',
                       border: OutlineInputBorder(),
                     ),
                   ),
                   const SizedBox(height: 16),
-                  const Text(
-                    'SKU Map:',
-                    style: TextStyle(fontSize: 16),
-                  ),
+                  const Text('SKU Map:', style: TextStyle(fontSize: 16)),
                   const SizedBox(height: 16),
                   Consumer<MarketplaceProvider>(
                     builder: (context, provider, child) {
-                      // Prepare the options for CustomDropdown
                       List<Map<String, dynamic>> options = provider.products
                           .map((product) => {
                                 'name': product.displayName ?? 'Unknown',
@@ -134,40 +137,17 @@ class _MarketplacePageState extends State<MarketplacePage> {
                           .toList();
 
                       return Column(
-                        children: provider.skuMaps.map((skuMap) {
-                          int index = provider.skuMaps.indexOf(skuMap);
-                          return Row(
-                            children: [
-                              Expanded(
-                                child: TextField(
-                                  controller: TextEditingController(text: skuMap.mktpSku),
-                                  decoration: const InputDecoration(
-                                    labelText: 'SKU',
-                                    border: OutlineInputBorder(),
-                                  ),
-                                  onChanged: (value) {
-                                    provider.updateSkuMap(index, value, skuMap.product);
-                                  },
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              Expanded(
-                                child: CustomDropdown(
-                                  option: options,
-                                  selectedIndex: skuMap.product != null ? options.indexWhere((option) => option['product'] == skuMap.product) : 0,
-                                  onSelectedChanged: (selectedIndex) {
-                                    final selectedProduct = options.isNotEmpty ? options[selectedIndex]['product'] : null;
-                                    provider.updateSkuMap(index, skuMap.mktpSku, selectedProduct);
-                                  },
-                                ),
-                              ),
-                              IconButton(
-                                icon: const Icon(Icons.remove_circle),
-                                onPressed: () {
-                                  provider.removeSkuMapRow(index);
-                                },
-                              ),
-                            ],
+                        children: provider.skuMaps.asMap().entries.map((entry) {
+                          int index = entry.key;
+                          var skuMap = entry.value;
+                          return SkuMapRow(
+                            key: ValueKey(index), // Ensure unique keys for each row
+                            index: index,
+                            initialSku: skuMap.mktpSku,
+                            initialProduct: skuMap.product,
+                            options: options,
+                            onRemove: () => provider.removeSkuMapRow(index),
+                            onUpdate: (sku, product) => provider.updateSkuMap(index, sku, product),
                           );
                         }).toList(),
                       );
@@ -175,22 +155,18 @@ class _MarketplacePageState extends State<MarketplacePage> {
                   ),
                   const SizedBox(height: 8),
                   ElevatedButton(
-                    onPressed: () {
-                      provider.addSkuMapRow(); // Adds a new empty row for SKU Map
-                    },
+                    onPressed: provider.addSkuMapRow,
                     child: const Text('Add New Row'),
                   ),
                   const SizedBox(height: 16),
                   ElevatedButton(
                     onPressed: provider.isSaving
-                        ? null // Disable button while saving
+                        ? null
                         : () async {
-                            await provider.saveMarketplace(); // Save marketplace
+                            await provider.saveMarketplace();
                           },
                     child: provider.isSaving
-                        ? const CircularProgressIndicator(
-                            color: Colors.purple,
-                          )
+                        ? const CircularProgressIndicator(color: Colors.purple)
                         : const Text('Save Marketplace'),
                   ),
                 ],
@@ -198,59 +174,36 @@ class _MarketplacePageState extends State<MarketplacePage> {
             ),
           ],
           if (!provider.isFormVisible) ...[
-            const SizedBox(height: 16),
-            const Text(
-              'Existing Marketplaces:',
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-                color: Colors.black87,
-              ),
-            ),
-            const SizedBox(height: 16),
             Expanded(
               child: Consumer<MarketplaceProvider>(
                 builder: (context, provider, child) {
-                  if (provider.loading) {
-                    return const Center(child: CircularProgressIndicator());
-                  }
-
-                  if (provider.marketplaces.isEmpty) {
-                    return const Center(child: Text('No marketplaces found.'));
-                  }
+                  if (provider.loading) return const Center(child: CircularProgressIndicator());
+                  if (provider.marketplaces.isEmpty) return const Center(child: Text('No marketplaces found.'));
 
                   return ListView.builder(
                     itemCount: provider.filteredMarketplaces.length,
                     itemBuilder: (context, index) {
                       final marketplace = provider.filteredMarketplaces[index];
-
                       return Card(
                         margin: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-                        elevation: 6, // Enhanced shadow for better card visibility
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(15),
-                        ),
+                        elevation: 6,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
                         child: Padding(
                           padding: const EdgeInsets.all(16.0),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              // Marketplace title with delete option
                               Row(
                                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                 children: [
                                   Text(
                                     marketplace.name,
                                     style: const TextStyle(
-                                      fontSize: 20,
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.black87,
-                                    ),
+                                        fontSize: 20, fontWeight: FontWeight.bold, color: Colors.black87),
                                   ),
                                   IconButton(
                                     icon: const Icon(Icons.delete, color: Colors.blueGrey),
                                     onPressed: () {
-                                      // Confirm deletion dialog
                                       showDialog(
                                         context: context,
                                         builder: (BuildContext context) {
@@ -259,9 +212,7 @@ class _MarketplacePageState extends State<MarketplacePage> {
                                             content: const Text('Are you sure you want to delete this marketplace?'),
                                             actions: [
                                               TextButton(
-                                                onPressed: () {
-                                                  Navigator.of(context).pop();
-                                                },
+                                                onPressed: () => Navigator.of(context).pop(),
                                                 child: const Text('Cancel'),
                                               ),
                                               TextButton(
@@ -280,32 +231,27 @@ class _MarketplacePageState extends State<MarketplacePage> {
                                 ],
                               ),
                               const SizedBox(height: 8),
-
-                              // Products within the marketplace
                               SingleChildScrollView(
                                 scrollDirection: Axis.horizontal,
                                 child: Row(
                                   mainAxisAlignment: MainAxisAlignment.start,
                                   children: marketplace.skuMap.map((skuMap) {
                                     final product = skuMap.product;
-
-                                    // Fetch the product image if it exists
-                                    final imageUrl = (product?.images as List<dynamic>?)?.isNotEmpty == true ? product!.images![0] : null;
+                                    final imageUrl = (product?.images as List<dynamic>?)?.isNotEmpty == true
+                                        ? product!.images![0]
+                                        : null;
 
                                     return Padding(
                                       padding: const EdgeInsets.only(right: 12.0),
                                       child: Card(
                                         elevation: 3,
                                         margin: const EdgeInsets.only(top: 8),
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(12),
-                                        ),
+                                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                                         child: Padding(
                                           padding: const EdgeInsets.all(12.0),
                                           child: Row(
                                             crossAxisAlignment: CrossAxisAlignment.start,
                                             children: [
-                                              // Display product image or a placeholder icon if no image is found
                                               imageUrl != null
                                                   ? Image.network(
                                                       imageUrl,
@@ -316,7 +262,6 @@ class _MarketplacePageState extends State<MarketplacePage> {
                                                           const Icon(Icons.image, size: 80, color: Colors.grey),
                                                     )
                                                   : const Icon(Icons.image, size: 80, color: Colors.grey),
-
                                               const SizedBox(width: 12),
                                               Column(
                                                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -355,9 +300,6 @@ class _MarketplacePageState extends State<MarketplacePage> {
                                   }).toList(),
                                 ),
                               ),
-                              const SizedBox(
-                                width: 8,
-                              ),
                             ],
                           ),
                         ),
@@ -370,14 +312,89 @@ class _MarketplacePageState extends State<MarketplacePage> {
           ],
         ],
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          // Call the method to fetch marketplaces
-          Provider.of<MarketplaceProvider>(context, listen: false).fetchMarketplaces();
-        },
-        backgroundColor: Colors.blue,
-        tooltip: 'Fetch Marketplaces',
-        child: const Icon(Icons.refresh),
+    );
+  }
+}
+
+// Stateful widget for each SKU map row
+class SkuMapRow extends StatefulWidget {
+  final int index;
+  final String initialSku;
+  final Product? initialProduct;
+  final List<Map<String, dynamic>> options;
+  final VoidCallback onRemove;
+  final void Function(String, Product?) onUpdate;
+
+  const SkuMapRow({
+    super.key,
+    required this.index,
+    required this.initialSku,
+    required this.initialProduct,
+    required this.options,
+    required this.onRemove,
+    required this.onUpdate,
+  });
+
+  @override
+  _SkuMapRowState createState() => _SkuMapRowState();
+}
+
+class _SkuMapRowState extends State<SkuMapRow> {
+  late TextEditingController _skuController;
+  late int _selectedIndex;
+
+  @override
+  void initState() {
+    super.initState();
+    _skuController = TextEditingController(text: widget.initialSku);
+    _selectedIndex = widget.initialProduct != null
+        ? widget.options.indexWhere((option) => option['product'] == widget.initialProduct)
+        : 0;
+  }
+
+  @override
+  void dispose() {
+    _skuController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8.0),
+      child: Row(
+        children: [
+          Expanded(
+            child: TextField(
+              controller: _skuController,
+              textDirection: TextDirection.ltr,
+              decoration: const InputDecoration(
+                labelText: 'SKU',
+                border: OutlineInputBorder(),
+              ),
+              onSubmitted: (value) {
+                widget.onUpdate(value, widget.options[_selectedIndex]['product']);
+              },
+            ),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: CustomDropdown(
+              option: widget.options,
+              selectedIndex: _selectedIndex,
+              onSelectedChanged: (selectedIndex) {
+                setState(() {
+                  _selectedIndex = selectedIndex;
+                });
+                widget.onUpdate(_skuController.text, widget.options[selectedIndex]['product']);
+              },
+            ),
+          ),
+          IconButton(
+            icon: const Icon(Icons.remove_circle),
+            onPressed: widget.onRemove,
+          ),
+        ],
       ),
     );
   }

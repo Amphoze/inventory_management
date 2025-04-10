@@ -24,12 +24,6 @@ class _CategoryMasterPageState extends State<CategoryMasterPage> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       categoryProvider.fetchAllCategories();
     });
-
-    categoryProvider.searchController.addListener(() {
-      if (categoryProvider.isSearchMode) {
-        _onSearchChanged(categoryProvider.searchController.text);
-      }
-    });
   }
 
   void _onSearchChanged(String query) {
@@ -45,167 +39,90 @@ class _CategoryMasterPageState extends State<CategoryMasterPage> {
     final isSmallScreen = MediaQuery.of(context).size.width < 600;
 
     return Scaffold(
-      backgroundColor: AppColors.lightGrey,
+      backgroundColor: Colors.white,
       body: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 24.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            isSmallScreen
-                ? Wrap(
-                    spacing: 16.0,
-                    runSpacing: 16.0,
-                    children: [
-                      _buildButton(
-                        text: categoryProvider.isCreatingCategory ? 'Cancel' : 'Create',
-                        color: AppColors.tealcolor,
-                        icon: categoryProvider.isCreatingCategory ? Icons.cancel : Icons.add,
-                        onTap: categoryProvider.toggleCreateCategoryMode,
-                      ),
-                      if (!categoryProvider.isCreatingCategory) ...[
-                        _buildButton(
-                          text: categoryProvider.isSearchMode ? 'Cancel' : 'Search',
-                          color: AppColors.primaryBlue,
-                          icon: categoryProvider.isSearchMode ? Icons.cancel : Icons.search,
-                          onTap: categoryProvider.toggleSearchMode,
-                        ),
-                      ],
-                      if (categoryProvider.isCreatingCategory)
-                        Container(
-                          margin: const EdgeInsets.only(top: 16.0),
-                          child: Row(
-                            children: [
-                              SizedBox(
-                                width: 150,
-                                child: TextField(
-                                  controller: categoryProvider.categoryNameController,
-                                  decoration: const InputDecoration(labelText: 'Category Name'),
-                                ),
-                              ),
-                              const SizedBox(width: 8.0),
-                              ElevatedButton(
-                                onPressed: categoryProvider.createCategory,
-                                child: const Text('Add'),
-                              ),
-                            ],
-                          ),
-                        ),
-                      if (categoryProvider.isSearchMode && !categoryProvider.isCreatingCategory)
-                        Container(
-                          margin: const EdgeInsets.only(top: 16.0),
-                          child: SizedBox(
-                            width: 150,
-                            child: TextField(
-                              controller: categoryProvider.searchController,
-                              decoration: const InputDecoration(
-                                labelText: 'Search Category by Name',
-                                suffixIcon: Icon(Icons.search),
-                              ),
-                            ),
-                          ),
-                        ),
-                      const Spacer(),
-                      ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.primaryBlue,
-                        ),
-                        onPressed: categoryProvider.isRefreshingOrders
-                            ? null
-                            : () async {
-                                categoryProvider.fetchAllCategories();
-                              },
-                        child: categoryProvider.isRefreshingOrders
-                            ? const SizedBox(
-                                width: 16,
-                                height: 16,
-                                child: CircularProgressIndicator(
-                                  color: Colors.white,
-                                  strokeWidth: 2,
-                                ),
-                              )
-                            : const Text(
-                                'Refresh',
-                                style: TextStyle(color: Colors.white),
-                              ),
-                      ),
-                    ],
-                  )
-                : Row(
-                    children: [
-                      _buildButton(
-                        text: categoryProvider.isCreatingCategory ? 'Cancel' : 'Create',
-                        color: AppColors.tealcolor,
-                        icon: categoryProvider.isCreatingCategory ? Icons.cancel : Icons.add,
-                        onTap: categoryProvider.toggleCreateCategoryMode,
-                      ),
-                      const SizedBox(width: 16.0),
-                      if (!categoryProvider.isCreatingCategory) ...[
-                        _buildButton(
-                          text: categoryProvider.isSearchMode ? 'Cancel' : 'Search',
-                          color: AppColors.primaryBlue,
-                          icon: categoryProvider.isSearchMode ? Icons.cancel : Icons.search,
-                          onTap: categoryProvider.toggleSearchMode,
-                        ),
-                      ],
-                      const SizedBox(width: 16.0),
-                      if (categoryProvider.isCreatingCategory)
-                        Expanded(
-                          child: Row(
-                            children: [
-                              SizedBox(
-                                width: 200,
-                                child: TextField(
-                                  controller: categoryProvider.categoryNameController,
-                                  decoration: const InputDecoration(labelText: 'Category Name'),
-                                ),
-                              ),
-                              const SizedBox(width: 8.0),
-                              ElevatedButton(
-                                onPressed: categoryProvider.createCategory,
-                                child: const Text('Add'),
-                              ),
-                            ],
-                          ),
-                        ),
-                      if (categoryProvider.isSearchMode && !categoryProvider.isCreatingCategory)
-                        Expanded(
-                          child: SizedBox(
-                            width: 200,
-                            child: TextField(
-                              controller: categoryProvider.searchController,
-                              decoration: const InputDecoration(
-                                labelText: 'Search Category by Name',
-                                suffixIcon: Icon(Icons.search),
-                              ),
-                            ),
-                          ),
-                        ),
-                      const Spacer(),
-                      ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.primaryBlue,
-                        ),
-                        onPressed: categoryProvider.isRefreshingOrders
-                            ? null
-                            : () async {
-                                categoryProvider.fetchAllCategories();
-                              },
-                        child: categoryProvider.isRefreshingOrders
-                            ? const SizedBox(
-                                width: 16,
-                                height: 16,
-                                child: CircularProgressIndicator(
-                                  color: Colors.white,
-                                  strokeWidth: 2,
-                                ),
-                              )
-                            : const Text(
-                                'Refresh',
-                                style: TextStyle(color: Colors.white),
-                              ),
-                      ),
-                    ],
+            Row(
+              children: [
+                _buildButton(
+                  text: categoryProvider.isCreatingCategory ? 'Cancel' : 'Create',
+                  color: AppColors.tealcolor,
+                  icon: categoryProvider.isCreatingCategory ? Icons.cancel : Icons.add,
+                  onTap: categoryProvider.toggleCreateCategoryMode,
+                ),
+                const SizedBox(width: 16.0),
+                if (!categoryProvider.isCreatingCategory) ...[
+                  _buildButton(
+                    text: categoryProvider.isSearchMode ? 'Cancel' : 'Search',
+                    color: AppColors.primaryBlue,
+                    icon: categoryProvider.isSearchMode ? Icons.cancel : Icons.search,
+                    onTap: categoryProvider.toggleSearchMode,
                   ),
+                ],
+                const SizedBox(width: 16.0),
+                if (categoryProvider.isCreatingCategory)
+                  Expanded(
+                    child: Row(
+                      children: [
+                        SizedBox(
+                          width: 200,
+                          child: TextField(
+                            controller: categoryProvider.categoryNameController,
+                            decoration: const InputDecoration(labelText: 'Category Name'),
+                          ),
+                        ),
+                        const SizedBox(width: 8.0),
+                        ElevatedButton(
+                          onPressed: categoryProvider.createCategory,
+                          child: const Text('Add'),
+                        ),
+                      ],
+                    ),
+                  ),
+                if (categoryProvider.isSearchMode && !categoryProvider.isCreatingCategory)
+                  Expanded(
+                    child: SizedBox(
+                      width: 200,
+                      child: TextField(
+                        controller: categoryProvider.searchController,
+                        decoration: const InputDecoration(
+                          labelText: 'Search Category by Name',
+                          suffixIcon: Icon(Icons.search),
+                        ),
+                        onChanged: _onSearchChanged,
+                        onSubmitted: _onSearchChanged,
+                      ),
+                    ),
+                  ),
+                const Spacer(),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primaryBlue,
+                  ),
+                  onPressed: categoryProvider.isRefreshingOrders
+                      ? null
+                      : () async {
+                          categoryProvider.fetchAllCategories();
+                        },
+                  child: categoryProvider.isRefreshingOrders
+                      ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(
+                            color: Colors.white,
+                            strokeWidth: 2,
+                          ),
+                        )
+                      : const Text(
+                          'Refresh',
+                          style: TextStyle(color: Colors.white),
+                        ),
+                ),
+              ],
+            ),
             const SizedBox(height: 24.0),
 
             // Display Loader when fetching data

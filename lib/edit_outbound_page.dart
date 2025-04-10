@@ -783,16 +783,7 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
         } else {
           Utils.showSnackBar(context, res['message'], color: Colors.red);
         }
-        // final ordersProvider = Provider.of<OrdersProvider>(context, listen: false);
-        // ordersProvider.fetchReadyOrders();
-        // ordersProvider.fetchFailedOrders();
-        // context.read<AccountsProvider>().fetchOrdersWithStatus2();
-        // context.read<BookProvider>().fetchPaginatedOrdersB2B(1);
-        // context.read<BookProvider>().fetchPaginatedOrdersB2C(1);
       } catch (error, s) {
-        // ScaffoldMessenger.of(context).showSnackBar(
-        //   const SnackBar(content: Text('Failed to update order.')),
-        // );
         log('Error while editting order :- $error\n$s');
         Utils.showSnackBar(context, "Error: $error", color: Colors.red);
       } finally {
@@ -996,9 +987,7 @@ class _EditOutboundPageState extends State<EditOutboundPage> {
     bool comboExists = addedComboList.any((item) => item['id'] == selected['id']) || comboList.any((item) => item['id'] == selected['id']);
     if (comboExists) {
       print('Combo already added');
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Combo already added.')),
-      );
+      Utils.showSnackBar(context, 'Combo already added', isError: true);
       return;
     }
 

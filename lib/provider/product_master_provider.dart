@@ -5,6 +5,8 @@ import 'package:inventory_management/model/product_master_model.dart';
 import 'package:logger/logger.dart';
 import 'package:provider/provider.dart';
 
+import '../Custom-Files/utils.dart';
+
 class ProductMasterProvider with ChangeNotifier {
   final int _itemsPerPage = 30;
   final List<Product> _products = [];
@@ -74,11 +76,6 @@ class ProductMasterProvider with ChangeNotifier {
   }
 
   Future<void> performSearch(BuildContext context) async {
-    if (_searchbarController.text.trim().isEmpty) {
-      // refreshPage();
-      return;
-    }
-
     _isLoading = true;
     _hasMore = false;
     notifyListeners();
@@ -102,9 +99,7 @@ class ProductMasterProvider with ChangeNotifier {
         if (productData != null) {
           _products.addAll(productData.map((data) => Product.fromJson(data)));
         } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(response['message'] ?? 'No products found.')),
-          );
+          Utils.showSnackBar(context, response['message'] ?? 'No products found.', isError: true);
         }
       } else {
         _handleError(context, response['message']);
@@ -128,9 +123,7 @@ class ProductMasterProvider with ChangeNotifier {
 
   void _handleError(BuildContext context, String? message) {
     _products.clear();
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message ?? 'Something went wrong.')),
-    );
+    Utils.showSnackBar(context, message ?? 'Something went wrong.', isError: true);
     notifyListeners();
   }
 }

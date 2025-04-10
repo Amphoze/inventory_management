@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert'; // For JSON encoding/decoding
 import 'dart:developer';
 import 'package:flutter/material.dart';
@@ -16,6 +17,8 @@ import 'Custom-Files/custom_pagination.dart';
 import 'Custom-Files/data_table.dart';
 import 'Custom-Files/loading_indicator.dart';
 import 'package:url_launcher/url_launcher.dart';
+
+import 'Custom-Files/utils.dart';
 
 class ManageOuterbox extends StatefulWidget {
   const ManageOuterbox({
@@ -38,12 +41,27 @@ class _ManageOuterboxState extends State<ManageOuterbox> {
   bool isloading = true;
   final TextEditingController searchController = TextEditingController();
   String? downloadUrl;
+  late OuterboxProvider outerboxProvider;
+  Timer? _debounce;
+
+  void _onSearchChanged(String value) {
+    if (value.trim().isEmpty) {
+      Provider.of<ComboProvider>(context, listen: false).fetchProducts();
+      outerboxProvider.fetchBoxsizes();
+    }
+
+    if (_debounce?.isActive ?? false) _debounce?.cancel();
+    _debounce = Timer(const Duration(milliseconds: 300), () {
+      outerboxProvider.filterBoxsize(value);
+    });
+  }
 
   @override
   void initState() {
     super.initState();
+    outerboxProvider = context.read<OuterboxProvider>();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      Provider.of<OuterboxProvider>(context, listen: false).fetchBoxsizes(); // Start at page 1
+      outerboxProvider.fetchBoxsizes(); // Start at page 1
       Provider.of<ComboProvider>(context, listen: false).fetchProducts();
 
       getDropValueForProduct();
@@ -81,19 +99,13 @@ class _ManageOuterboxState extends State<ManageOuterbox> {
 
     setState(() {
       dropdownItemsForWarehouses = newItems;
-      subInventories.add({
-        'warehouseId': null,
-        'quantity': null
-      });
+      subInventories.add({'warehouseId': null, 'quantity': null});
     });
   }
 
   void addSubInventory() {
     setState(() {
-      subInventories.add({
-        'warehouseId': null,
-        'quantity': null
-      });
+      subInventories.add({'warehouseId': null, 'quantity': null});
     });
   }
 
@@ -111,9 +123,7 @@ class _ManageOuterboxState extends State<ManageOuterbox> {
 
   Future<void> saveInventoryToApi(BuildContext context) async {
     if (selectedProductId == null) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-        content: Text("Please select a product"),
-      ));
+      Utils.showSnackBar(context, 'Please select a product', isError: true);
       return;
     }
 
@@ -146,35 +156,15 @@ class _ManageOuterboxState extends State<ManageOuterbox> {
       if (response.statusCode == 201) {
         final responseData = jsonDecode(response.body);
         if (responseData['success'] == true) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text("Inventory created successfully!"),
-              backgroundColor: Colors.green,
-            ),
-          );
+          Utils.showSnackBar(context, 'Inventory created successfully!', color: AppColors.cardsgreen);
         } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text("Failed to create inventory"),
-              backgroundColor: Colors.red,
-            ),
-          );
+          Utils.showSnackBar(context, 'Failed to create inventory', isError: true);
         }
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text("Failed to save inventory"),
-            backgroundColor: Colors.red,
-          ),
-        );
+        Utils.showSnackBar(context, 'Failed to save inventory', isError: true);
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text("Error saving inventory: $e"),
-          backgroundColor: Colors.red,
-        ),
-      );
+      Utils.showSnackBar(context, 'Error saving inventory', details: e.toString(), isError: true);
     }
   }
 
@@ -208,22 +198,6 @@ class _ManageOuterboxState extends State<ManageOuterbox> {
       String baseUrl = await Constants.getBaseUrl();
 
       if (token == null || token.isEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Row(
-              children: [
-                Icon(Icons.error_outline, color: Colors.white),
-                SizedBox(width: 8),
-                Expanded(
-                  child: Text('Authorization token is missing or invalid'),
-                ),
-              ],
-            ),
-            backgroundColor: Colors.red,
-            duration: Duration(seconds: 3),
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
         throw Exception('Authorization token is missing or invalid.');
       }
 
@@ -250,23 +224,7 @@ class _ManageOuterboxState extends State<ManageOuterbox> {
           if (canLaunch) {
             await launchUrl(Uri.parse(downloadUrl));
 
-            // Show success message
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Row(
-                  children: [
-                    Icon(Icons.check_circle, color: Colors.white),
-                    SizedBox(width: 8),
-                    Expanded(
-                      child: Text('CSV download started successfully'),
-                    ),
-                  ],
-                ),
-                backgroundColor: Colors.green,
-                duration: Duration(seconds: 3),
-                behavior: SnackBarBehavior.floating,
-              ),
-            );
+            Utils.showSnackBar(context, 'CSV download started successfully');
           } else {
             throw 'Could not launch $downloadUrl';
           }
@@ -280,27 +238,7 @@ class _ManageOuterboxState extends State<ManageOuterbox> {
       log('error: $error');
       log('Error during report generation: $error');
 
-      // Show error message
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Row(
-            children: [
-              const Icon(Icons.error_outline, color: Colors.white),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  'Error downloading CSV: $error',
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-            ],
-          ),
-          backgroundColor: Colors.red,
-          duration: const Duration(seconds: 3),
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
+      Utils.showSnackBar(context, 'Error downloading CSV', isError: true, details: error.toString());
     } finally {
       setState(() {
         withQtyCsv = false;
@@ -320,22 +258,6 @@ class _ManageOuterboxState extends State<ManageOuterbox> {
       String baseUrl = await Constants.getBaseUrl();
 
       if (token == null || token.isEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Row(
-              children: [
-                Icon(Icons.error_outline, color: Colors.white),
-                SizedBox(width: 8),
-                Expanded(
-                  child: Text('Authorization token is missing or invalid'),
-                ),
-              ],
-            ),
-            backgroundColor: Colors.red,
-            duration: Duration(seconds: 3),
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
         throw Exception('Authorization token is missing or invalid.');
       }
 
@@ -361,24 +283,7 @@ class _ManageOuterboxState extends State<ManageOuterbox> {
           final canLaunch = await canLaunchUrl(Uri.parse(downloadUrl));
           if (canLaunch) {
             await launchUrl(Uri.parse(downloadUrl));
-
-            // Show success message
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Row(
-                  children: [
-                    Icon(Icons.check_circle, color: Colors.white),
-                    SizedBox(width: 8),
-                    Expanded(
-                      child: Text('CSV download started successfully'),
-                    ),
-                  ],
-                ),
-                backgroundColor: Colors.green,
-                duration: Duration(seconds: 3),
-                behavior: SnackBarBehavior.floating,
-              ),
-            );
+            Utils.showSnackBar(context, 'CSV download started successfully', color: AppColors.cardsgreen);
           } else {
             throw 'Could not launch $downloadUrl';
           }
@@ -392,27 +297,7 @@ class _ManageOuterboxState extends State<ManageOuterbox> {
       log('error: $error');
       log('Error during report generation: $error');
 
-      // Show error message
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Row(
-            children: [
-              Icon(Icons.error_outline, color: Colors.white),
-              SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  'Error downloading CSV',
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-            ],
-          ),
-          backgroundColor: Colors.red,
-          duration: Duration(seconds: 3),
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
+      Utils.showSnackBar(context, 'Error downloading CSV', details: error.toString(), isError: true);
     } finally {
       setState(() {
         withoutQtyCsv = false;
@@ -485,17 +370,18 @@ class _ManageOuterboxState extends State<ManageOuterbox> {
                 ),
                 Expanded(
                   child: Container(
+                    height: 35,
                     margin: const EdgeInsets.symmetric(horizontal: 8.0),
                     child: TextField(
                       controller: _searchController,
                       decoration: InputDecoration(
                         hintText: 'Search...',
                         hintStyle: TextStyle(color: Colors.grey[600]),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(30),
-                          borderSide: const BorderSide(color: AppColors.primaryBlue),
+                        border: const OutlineInputBorder(
+                          // borderRadius: BorderRadius.circular(30),
+                          borderSide: BorderSide(color: AppColors.primaryBlue),
                         ),
-                        contentPadding: const EdgeInsets.symmetric(vertical: 10, horizontal: 20),
+                        contentPadding: const EdgeInsets.all(8),
                         suffixIcon: IconButton(
                             icon: const Icon(Icons.search, color: AppColors.primaryBlue),
                             onPressed: () {
@@ -507,17 +393,13 @@ class _ManageOuterboxState extends State<ManageOuterbox> {
                               }
                             }),
                       ),
-                      onChanged: (value) {
-                        if (value.isEmpty) {
-                          provider.fetchBoxsizes(); // Load all inventory
-                        }
-                      },
-                      onSubmitted: (value) {
+                      onChanged: _onSearchChanged,
+                      onSubmitted: (value) async {
                         Logger().e('Submitted: $value');
                         if (value.isEmpty) {
-                          provider.fetchBoxsizes(); // Load all inventory
+                          await provider.fetchBoxsizes(); // Load all inventory
                         } else {
-                          provider.filterBoxsize(value); // Fetch filtered data
+                          await provider.filterBoxsize(value); // Fetch filtered data
                         }
                       },
                     ),
@@ -531,6 +413,14 @@ class _ManageOuterboxState extends State<ManageOuterbox> {
                       duration: const Duration(milliseconds: 300),
                       curve: Curves.easeInOut,
                     );
+                  },
+                ),
+                const SizedBox(width: 10),
+                IconButton(
+                  tooltip: 'Refresh',
+                  icon: const Icon(Icons.refresh, color: AppColors.primaryBlue),
+                  onPressed: () async {
+                    await provider.fetchBoxsizes(); // Load all inventory
                   },
                 ),
                 const SizedBox(width: 10),
@@ -633,25 +523,30 @@ class _ManageOuterboxState extends State<ManageOuterbox> {
             ),
           ),
           if (!provider.isFormVisible)
-            CustomPaginationFooter(
-              currentPage: provider.currentPage,
-              totalPages: provider.totalPages,
-              buttonSize: MediaQuery.of(context).size.width > 600 ? 32 : 24,
-              pageController: _pageController,
-              onFirstPage: () => _goToPage(1),
-              onLastPage: () => _goToPage(provider.totalPages),
-              onNextPage: () {
-                if (provider.currentPage - 1 < provider.totalPages) {
-                  _goToPage(provider.currentPage + 1);
-                }
-              },
-              onPreviousPage: () {
-                if (provider.currentPage > 1) {
-                  _goToPage(provider.currentPage - 1);
-                }
-              },
-              onGoToPage: _goToPage,
-              onJumpToPage: _jumpToPage,
+            Consumer<OuterboxProvider>(
+              builder: (context, provider, child) {
+                return CustomPaginationFooter(
+                  currentPage: provider.currentPage,
+                  totalPages: provider.totalPages,
+                  totalCount: provider.totalBoxSizes,
+                  buttonSize: MediaQuery.of(context).size.width > 600 ? 32 : 24,
+                  pageController: _pageController,
+                  onFirstPage: () => _goToPage(1),
+                  onLastPage: () => _goToPage(provider.totalPages),
+                  onNextPage: () {
+                    if (provider.currentPage - 1 < provider.totalPages) {
+                      _goToPage(provider.currentPage + 1);
+                    }
+                  },
+                  onPreviousPage: () {
+                    if (provider.currentPage > 1) {
+                      _goToPage(provider.currentPage - 1);
+                    }
+                  },
+                  onGoToPage: _goToPage,
+                  onJumpToPage: _jumpToPage,
+                );
+              }
             ),
         ],
       ),

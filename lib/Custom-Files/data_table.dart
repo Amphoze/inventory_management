@@ -1,9 +1,7 @@
 import 'dart:developer';
-
 import 'package:flutter/material.dart';
 import 'package:inventory_management/Custom-Files/colors.dart';
 import 'package:inventory_management/provider/outerbox_provider.dart';
-import 'package:logger/logger.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../provider/inventory_provider.dart';
@@ -26,7 +24,7 @@ class CustomDataTable extends StatelessWidget {
           name,
           style: const TextStyle(
             fontWeight: FontWeight.bold,
-            color: AppColors.black,
+            color: AppColors.primaryBlue,
           ),
         ),
       );
@@ -52,7 +50,7 @@ class CustomDataTable extends StatelessWidget {
         scrollDirection: Axis.vertical,
         child: DataTable(
           headingRowColor: WidgetStateColor.resolveWith(
-            (states) => AppColors.green.withValues(alpha: 0.2),
+            (states) => AppColors.primaryBlue.withValues(alpha: 0.2),
           ),
           columns: columns,
           rows: rows,
@@ -440,8 +438,6 @@ class _InventoryDataTableState extends State<InventoryDataTable> {
                   reason, // Reason for the update
                 );
 
-                inventoryProvider.notifyListeners(); // This will rebuild the relevant widgets
-
                 data['QUANTITY'] = parsedQuantity;
 
                 print('Updated quantity for ${data['PRODUCT NAME']}: $newQuantity');
@@ -514,8 +510,6 @@ class _InventoryDataTableState extends State<InventoryDataTable> {
                   data['SKU'],
                   parsedQuantity,
                 );
-
-                inventoryProvider.notifyListeners(); // This will rebuild the relevant widgets
 
                 data['THRESHOLD QUANTITY'] = parsedQuantity;
 
@@ -1095,8 +1089,6 @@ class _OuterboxDataTableState extends State<OuterboxDataTable> {
                   parsedQuantity,
                   reason, // Reason for the update
                 );
-
-                pro.notifyListeners(); // This will rebuild the relevant widgets
 
                 data['outerPackage_quantity'] = parsedQuantity;
 

@@ -201,9 +201,8 @@ class _CheckInvoiceByCsvState extends State<CheckInvoiceByCsv> {
       }
     } catch (e) {
       log('pick error: $e');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error reading CSV file: $e')),
-      );
+      Utils.showSnackBar(context, 'Error reading CSV file: $e', details: e.toString(), isError: true);
+
       setState(() {
         _isPickingFile = false;
         _isProcessingFile = false;
@@ -229,9 +228,8 @@ class _CheckInvoiceByCsvState extends State<CheckInvoiceByCsv> {
       });
     } catch (e) {
       log('Error processing CSV: $e');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error processing CSV file: $e')),
-      );
+      Utils.showSnackBar(context, 'Error processing CSV file: $e', details: e.toString(), isError: true);
+
       setState(() {
         _isProcessingFile = false;
       });
@@ -252,9 +250,7 @@ class _CheckInvoiceByCsvState extends State<CheckInvoiceByCsv> {
     try {
       final token = await getToken();
       if (token == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Authentication token not found')),
-        );
+        Utils.showSnackBar(context, 'Authentication token not found', isError: true);
         return;
       }
 
@@ -288,54 +284,17 @@ class _CheckInvoiceByCsvState extends State<CheckInvoiceByCsv> {
         //   Logger().e('_csvData: ${_csvData.length}');
         //   showOrderStatusSnackbar(context, jsonData);
         // } else {
-        Utils.showSnackBar(context, jsonData['message']);
+        Utils.showSnackBar(context, jsonData['message'] ?? '', color: AppColors.cardsgreen);
         // }
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("${jsonData['message']}")),
-        );
+        Utils.showSnackBar(context, jsonData['message'] ?? '', color: AppColors.cardsred);
         log('Failed to upload CSV: ${response.statusCode}\n$responseBody');
       }
     } catch (e) {
       log('Error during order creation: $e', error: e, stackTrace: StackTrace.current);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: $e')),
-      );
+      Utils.showSnackBar(context, 'An error occurred', details: e.toString(),  isError: true);
     }
   }
-
-  // void showOrderStatusSnackbar(BuildContext context, Map<String, dynamic> response) {
-  //   String message = response['message'];
-  //   List results = response['results'];
-  //
-  //   log('showOrderStatusSnackbar message: $message}');
-  //
-  //   bool hasError = results.any((order) => order['status'] == 'Failed');
-  //
-  //   if (hasError) {
-  //     String firstErrorMessage = results.firstWhere((order) => order['status'] == 'Failed')['errors'][0];
-  //
-  //     ScaffoldMessenger.of(context).showSnackBar(
-  //       SnackBar(
-  //         content: Text(
-  //           'Error: $firstErrorMessage',
-  //           style: const TextStyle(color: Colors.white),
-  //         ),
-  //         backgroundColor: Colors.red,
-  //       ),
-  //     );
-  //   } else {
-  //     ScaffoldMessenger.of(context).showSnackBar(
-  //       SnackBar(
-  //         content: Text(
-  //           'Success: $message',
-  //           style: const TextStyle(color: Colors.white),
-  //         ),
-  //         backgroundColor: Colors.green,
-  //       ),
-  //     );
-  //   }
-  // }
 
   @override
   Widget build(BuildContext context) {

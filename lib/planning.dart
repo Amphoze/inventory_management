@@ -6,7 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 import 'package:inventory_management/constants/constants.dart';
-import 'package:inventory_management/provider/location_provider.dart';
+import 'package:inventory_management/provider/warehouse_provider.dart';
 import 'package:inventory_management/provider/marketplace_provider.dart';
 import 'package:multi_select_flutter/chip_display/multi_select_chip_display.dart';
 import 'package:multi_select_flutter/dialog/multi_select_dialog_field.dart';
@@ -235,7 +235,7 @@ class _MaterialPlanningState extends State<MaterialPlanning> with SingleTickerPr
                 _buildRow([
                   _buildSelectionCard(
                     title: "Select Warehouse",
-                    child: Consumer<LocationProvider>(
+                    child: Consumer<WarehouseProvider>(
                       builder: (context, pro, child) => _buildStyledDropdown<String>(
                         value: selectedWarehouse,
                         items: pro.warehouses.map((e) => e['name'].toString()).toList(),

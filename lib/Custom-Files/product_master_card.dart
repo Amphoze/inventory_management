@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:inventory_management/Custom-Files/add_bin_button.dart';
 import 'package:inventory_management/Custom-Files/colors.dart';
-import 'package:inventory_management/Custom-Files/update_bin_button.dart';
 import 'package:inventory_management/edit_product.dart';
 import 'package:logger/logger.dart';
 import 'package:provider/provider.dart';

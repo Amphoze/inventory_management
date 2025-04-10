@@ -1,23 +1,27 @@
 
 class Invoice {
   final String id;
-  final String? invoiceNumber;
-  final String? invoiceUrl;
-  final DateTime createdAt;
+  final String invoiceNumber;
+  final String orderId;
+  final String invoiceUrl;
+  final DateTime? createdAt;
 
   Invoice({
     required this.id,
-    this.invoiceNumber,
-    this.invoiceUrl,
+    required this.invoiceNumber,
+    required this.orderId,
+    required this.invoiceUrl,
     required this.createdAt,
   });
 
   factory Invoice.fromJson(Map<String, dynamic> json) {
+    final createdAt = DateTime.tryParse(json['createdAt'] ?? '');
     return Invoice(
       id: json['_id'] as String,
-      invoiceNumber: json['invoice_number'] as String?,
-      invoiceUrl: json['invoice_url'] as String?,
-      createdAt: DateTime.parse(json['createdAt'] as String), // Parse the date string
+      invoiceNumber: json['invoice_number'] ?? '',
+      orderId: json['order_id'] ?? '',
+      invoiceUrl: json['invoice_url'] ?? '',
+      createdAt: createdAt,
     );
   }
 }

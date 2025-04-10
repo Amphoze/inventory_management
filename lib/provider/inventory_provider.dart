@@ -13,6 +13,7 @@ import 'package:flutter/material.dart';
 
 class InventoryProvider with ChangeNotifier {
   List<Map<String, dynamic>> _inventory = [];
+  int totalCount = 0;
   int _currentPage = 1;
   int _rowsPerPage = 20;
   int _totalPages = 1;
@@ -89,6 +90,8 @@ class InventoryProvider with ChangeNotifier {
         final data = json.decode(response.body);
         if (data.containsKey('data')) {
           // Process inventory data with default values
+          totalCount = data['data']['totalCount'] ?? 0;
+
           List<Map<String, dynamic>> fetchedInventory = List<Map<String, dynamic>>.from(data['data']['inventories']).map((item) {
             final inventoryId = item['_id'].toString() ?? '';
             final product = item['product_id'] ?? {};

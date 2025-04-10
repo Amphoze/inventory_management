@@ -6,19 +6,8 @@ import 'package:http_parser/http_parser.dart';
 import 'package:inventory_management/constants/constants.dart';
 import 'package:inventory_management/model/combo_model.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-// import 'package:http_parser/http_parser.dart';
-//
+
 class ComboApi with ChangeNotifier {
-  // late final String baseUrl;
-
-  // ComboApi() {
-  //   _initialize();
-  // }
-
-  // Future<void> _initialize() async {
-  //   baseUrl = await ApiUrls.getBaseUrl();
-  // }
-
   Future<String> updateCombo(String comboId, String name, String weight) async {
     String baseUrl = await Constants.getBaseUrl();
     try {
@@ -71,28 +60,17 @@ class ComboApi with ChangeNotifier {
 
       final response = await http.get(
         Uri.parse(url),
-        headers: {
-          'Authorization': 'Bearer $token'
-        },
+        headers: {'Authorization': 'Bearer $token'},
       );
-
-      //print('Response status: ${response.statusCode}');
-      //print('Response body: ${response.body}');
 
       if (response.statusCode == 200) {
         final decodedResponse = json.decode(response.body);
-        //print('Decoded response: $decodedResponse');
 
-        // Handle different response structures here
         if (decodedResponse is List) {
-          // If it's a list, return it directly
-          //print("list");
           return List<Map<String, dynamic>>.from(decodedResponse);
         } else if (decodedResponse is Map) {
-          // If it's a map, check if it contains the list under a specific key
-          //print("map");
           final comboList = decodedResponse['combos'] as List<dynamic>? ?? [];
-          //print("comboList: $comboList");
+
           return List<Map<String, dynamic>>.from(comboList);
         } else {
           throw Exception('Unexpected JSON format');
@@ -109,7 +87,6 @@ class ComboApi with ChangeNotifier {
   Future<void> createCombo(Combo combo, List<Uint8List>? images, List<String> imageNames) async {
     String baseUrl = await Constants.getBaseUrl();
     try {
-      // Get the token using the token retrieval method
       final token = await _getToken();
       if (token == null) {
         throw Exception("Authentication token is missing.");
@@ -119,14 +96,12 @@ class ComboApi with ChangeNotifier {
       var request = http.MultipartRequest('POST', uri);
       request.headers['Authorization'] = 'Bearer $token';
 
-      // // Add combo fields as text
       request.fields['name'] = combo.name;
       request.fields['mrp'] = combo.mrp;
       request.fields['cost'] = combo.cost;
       request.fields['comboSku'] = combo.comboSku;
       request.fields['products'] = jsonEncode(combo.products);
 
-      // Attach selected images to the request
       if (images != null && images.isNotEmpty) {
         for (int i = 0; i < images.length; i++) {
           request.files.add(
@@ -141,13 +116,10 @@ class ComboApi with ChangeNotifier {
         }
       }
 
-      // Send the request
       var response = await request.send();
       debugPrint('Response status: ${response.statusCode}');
 
-      // Handle response
       if (response.statusCode == 201) {
-        // Change this to check for 201
         print('Combo created successfully');
         var responseData = await http.Response.fromStream(response);
         print('Response Data: ${responseData.body}');
@@ -163,8 +135,7 @@ class ComboApi with ChangeNotifier {
     }
   }
 
-  // Get all combos
-  Future<List<Map<String, dynamic>>> getCombos({int page = 1, int limit = 10}) async {
+  Future<Map<String, dynamic>> getCombos({int page = 1, int limit = 10}) async {
     String baseUrl = await Constants.getBaseUrl();
     try {
       final token = await _getToken();
@@ -174,32 +145,26 @@ class ComboApi with ChangeNotifier {
 
       final response = await http.get(
         Uri.parse('$baseUrl/combo?page=$page&limit=$limit'),
-        headers: {
-          'Authorization': 'Bearer $token'
-        },
+        headers: {'Authorization': 'Bearer $token'},
       );
 
-      //print('Response status: ${response.statusCode}');
-      //print('Response body: ${response.body}');
-
       if (response.statusCode == 200) {
-        final decodedResponse = json.decode(response.body);
-        //print('Decoded response: $decodedResponse');
+        final res = json.decode(response.body);
 
-        // Handle different response structures here
-        if (decodedResponse is List) {
-          // If it's a list, return it directly
-          //print("list");
-          return List<Map<String, dynamic>>.from(decodedResponse);
-        } else if (decodedResponse is Map) {
-          // If it's a map, check if it contains the list under a specific key
-          //print("map");
-          final comboList = decodedResponse['combos'] as List<dynamic>? ?? [];
-          //print("comboList: $comboList");
-          return List<Map<String, dynamic>>.from(comboList);
-        } else {
-          throw Exception('Unexpected JSON format');
-        }
+        return {
+          "combos": List<Map<String, dynamic>>.from(res['combos'] as List<dynamic>? ?? []),
+          "totalCombos": res['totalCombos'] ?? 0,
+        };
+
+        // if (res is List) {
+        //   return List<Map<String, dynamic>>.from(res);
+        // } else if (res is Map) {
+        //   final comboList = res['combos'] as List<dynamic>? ?? [];
+        //
+        //   return List<Map<String, dynamic>>.from(comboList);
+        // } else {
+        //   throw Exception('Unexpected JSON format');
+        // }
       } else {
         throw Exception('Failed to load combos: ${response.reasonPhrase}');
       }
@@ -212,7 +177,7 @@ class ComboApi with ChangeNotifier {
   Future<Map<String, dynamic>> getAllProducts() async {
     String baseUrl = await Constants.getBaseUrl();
     try {
-      final token = await _getToken(); // Fetch token dynamically
+      final token = await _getToken();
 
       if (token == null) {
         throw Exception('Token not found');
@@ -226,16 +191,14 @@ class ComboApi with ChangeNotifier {
         },
       );
 
-      //print('get products response: ${response.body}');
-
       if (response.statusCode == 200) {
-        return jsonDecode(response.body); // Dispatched the full JSON response
+        return jsonDecode(response.body);
       } else {
         throw Exception('Failed to load products: ${response.statusCode}');
       }
     } catch (error) {
       log('Error in getAllProducts: $error');
-      // throw Exception('Error: $error');
+
       return {};
     }
   }
@@ -244,7 +207,7 @@ class ComboApi with ChangeNotifier {
     String baseUrl = await Constants.getBaseUrl();
     try {
       final token = await _getToken();
-      //print(token);
+
       final response = await http.get(
         Uri.parse('$baseUrl/products/search/$productId'),
         headers: {
@@ -252,7 +215,7 @@ class ComboApi with ChangeNotifier {
           'Authorization': 'Bearer $token',
         },
       );
-      //print(response.body);
+
       if (response.statusCode == 200) {
         return Product.fromJson(json.decode(response.body));
       } else {

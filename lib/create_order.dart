@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:developer';
 
 import 'package:flutter/material.dart';
@@ -34,7 +35,7 @@ class _CreateOrderPageState extends State<CreateOrderPage> {
     provider.setBillingSameAsShipping(provider.isBillingSameAsShipping);
 
     if (provider.addedProductList.isEmpty && provider.addedComboList.isEmpty) {
-      Utils.showSnackBar(context, 'Please add items to the order.');
+      Utils.showSnackBar(context, 'Please add items to the order.', toRemoveCurr: true);
       return;
     }
 
@@ -47,12 +48,14 @@ class _CreateOrderPageState extends State<CreateOrderPage> {
     log('Total Amount :- $totalAmount');
 
     if (codAmount + prepaidAmount != totalAmount) {
-      Utils.showSnackBar(context, "Total amount must be equal to the sum of cod amount and prepaid amount");
+      Utils.showSnackBar(context, "Total amount must be equal to the sum of cod amount and prepaid amount",
+          toRemoveCurr: true);
       return;
     }
 
-    if ((provider.billingStateController.text.trim().length < 3) || (provider.shippingStateController.text.trim().length < 3)) {
-      Utils.showSnackBar(context, 'State name must be at least 3 characters long');
+    if ((provider.billingStateController.text.trim().length < 3) ||
+        (provider.shippingStateController.text.trim().length < 3)) {
+      Utils.showSnackBar(context, 'State name must be at least 3 characters long', toRemoveCurr: true);
       return;
     }
 
@@ -60,11 +63,10 @@ class _CreateOrderPageState extends State<CreateOrderPage> {
       final result = await provider.saveOrder();
       if (result['success'] == true) {
         Utils.showSnackBar(context, result['message'] ?? 'Order Created Successfully', color: Colors.green);
-        // _formKey.currentState!.reset();
         Navigator.pop(context);
       } else {
         Utils.showSnackBar(context, result['message'] ?? "An error occurred",
-            details: result['details'] ?? "Unknown error", color: Colors.red);
+            details: result['details'] ?? "Unknown error", isError: true, toRemoveCurr: true);
       }
     }
   }
@@ -236,22 +238,21 @@ class _CreateOrderPageState extends State<CreateOrderPage> {
                         controller: provider.codAmountController,
                         label: 'COD Amount',
                         icon: Icons.money,
+                        isNumber: true,
                         onChanged: (value) => provider.updateCod(context),
-                        // onSubmitted: (value) => provider.updateCod(context),
-                        // enabled: false,
+                        onSubmitted: (value) => provider.updateCod(context),
                         validator: (value) => (value?.isEmpty ?? false) ? 'Required' : null,
                       ),
                     ),
                     const SizedBox(width: 8),
-                    // if (provider.selectedPayment != 'COD')
                     Expanded(
                       child: _buildTextField(
                         controller: provider.prepaidAmountController,
                         label: 'Prepaid Amount',
                         icon: Icons.credit_card,
+                        isNumber: true,
                         onChanged: (value) => provider.updatePrepaid(context),
-                        // onSubmitted: (value) => provider.updatePrepaid(context),
-                        // enabled: false,
+                        onSubmitted: (value) => provider.updatePrepaid(context),
                         validator: (value) => (value?.isEmpty ?? false) ? 'Required' : null,
                       ),
                     ),
@@ -274,7 +275,6 @@ class _CreateOrderPageState extends State<CreateOrderPage> {
                           label: 'Original Amount',
                           enabled: false,
                           icon: Icons.currency_rupee,
-                          // validator: (value) => (value?.isEmpty ?? false) ? 'Required' : null,
                         ),
                       ),
                     ]
@@ -316,6 +316,7 @@ class _CreateOrderPageState extends State<CreateOrderPage> {
                         controller: provider.discountPercentController,
                         label: 'Discount Percent',
                         icon: Icons.percent,
+                        isNumber: true,
                         onChanged: (_) => provider.applyDiscount(),
                         // onSubmitted: (_) => provider.applyDiscount(),
                       ),
@@ -323,7 +324,11 @@ class _CreateOrderPageState extends State<CreateOrderPage> {
                     const SizedBox(width: 10),
                     Expanded(
                       child: _buildTextField(
-                          controller: provider.discountAmountController, label: 'Discount Amount', icon: Icons.money_off, enabled: false),
+                        controller: provider.discountAmountController,
+                        label: 'Discount Amount',
+                        icon: Icons.money_off,
+                        enabled: false,
+                      ),
                     ),
                   ],
                 ),
@@ -358,6 +363,7 @@ class _CreateOrderPageState extends State<CreateOrderPage> {
                           child: _buildTextField(
                             controller: provider.taxPercentController,
                             label: 'Tax Percent',
+                            isNumber: true,
                             icon: Icons.account_balance_wallet,
                           ),
                         ),
@@ -431,15 +437,6 @@ class _CreateOrderPageState extends State<CreateOrderPage> {
                   controller: provider.customerEmailController,
                   label: 'Email',
                   icon: Icons.email,
-                  // validator: (value) {
-                  //   if (value == null || value.trim().isEmpty) return null;
-                  //
-                  //   if (!value.contains('@') || !value.contains('.')) {
-                  //     return 'Enter a valid email';
-                  //   }
-                  //
-                  //   return null;
-                  // },
                 ),
                 const SizedBox(height: 10),
                 _buildPhoneField(
@@ -464,7 +461,8 @@ class _CreateOrderPageState extends State<CreateOrderPage> {
         title: Row(
           children: [
             _buildHeading("Billing Address "),
-            const Text("(Enter the pincode only. We'll fetch the address for you.)", style: TextStyle(color: Colors.red)),
+            const Text("(Enter the pincode only. We'll fetch the address for you.)",
+                style: TextStyle(color: Colors.red)),
           ],
         ),
         children: [
@@ -500,15 +498,6 @@ class _CreateOrderPageState extends State<CreateOrderPage> {
                         label: 'Email',
                         icon: Icons.email,
                         enabled: !provider.isBillingSameAsShipping,
-                        // validator: (value) {
-                        //   if (value == null || value.trim().isEmpty) return null;
-                        //
-                        //   if (!value.contains('@') || !value.contains('.')) {
-                        //     return 'Enter a valid email';
-                        //   }
-                        //
-                        //   return null;
-                        // },
                       ),
                     ),
                   ],
@@ -550,11 +539,11 @@ class _CreateOrderPageState extends State<CreateOrderPage> {
                             context.read<CreateOrderProvider>().clearLocationDetails(isBilling: true);
                           }
                           // if (value.length == 6) {
-                          context.read<CreateOrderProvider>().getLocationDetails(context: context, pincode: value, isBilling: true);
+                          context
+                              .read<CreateOrderProvider>()
+                              .getLocationDetails(context: context, pincode: value, isBilling: true);
                           // }
                         },
-                        // maxLength: 6,
-                        // isNumber: true,
                       ),
                     ),
                     const SizedBox(width: 10),
@@ -630,7 +619,8 @@ class _CreateOrderPageState extends State<CreateOrderPage> {
         title: Row(
           children: [
             _buildHeading("Shipping Address "),
-            const Text("(Enter the pincode only. We'll fetch the address for you.)", style: TextStyle(color: Colors.red)),
+            const Text("(Enter the pincode only. We'll fetch the address for you.)",
+                style: TextStyle(color: Colors.red)),
           ],
         ),
         children: [
@@ -669,15 +659,6 @@ class _CreateOrderPageState extends State<CreateOrderPage> {
                         controller: provider.shippingEmailController,
                         label: 'Email',
                         icon: Icons.email,
-                        // validator: (value) {
-                        //   if (value == null || value.trim().isEmpty) return null;
-                        //
-                        //   if (!value.contains('@') || !value.contains('.')) {
-                        //     return 'Enter a valid email';
-                        //   }
-                        //
-                        //   return null;
-                        // },
                       ),
                     ),
                   ],
@@ -717,11 +698,11 @@ class _CreateOrderPageState extends State<CreateOrderPage> {
                             context.read<CreateOrderProvider>().clearLocationDetails(isBilling: false);
                           }
                           // if (value.length == 6) {
-                          context.read<CreateOrderProvider>().getLocationDetails(context: context, pincode: value, isBilling: false);
+                          context
+                              .read<CreateOrderProvider>()
+                              .getLocationDetails(context: context, pincode: value, isBilling: false);
                           // }
                         },
-                        // maxLength: 6,
-                        // isNumber: true,
                       ),
                     ),
                     const SizedBox(width: 10),
@@ -771,7 +752,8 @@ class _CreateOrderPageState extends State<CreateOrderPage> {
                       ),
                     ),
                     const SizedBox(width: 10),
-                    Flexible(child: _buildPhoneField(phoneController: provider.shippingPhoneController, label: 'Phone')),
+                    Flexible(
+                        child: _buildPhoneField(phoneController: provider.shippingPhoneController, label: 'Phone')),
                   ],
                 ),
               ],
@@ -1007,6 +989,8 @@ class _CreateOrderPageState extends State<CreateOrderPage> {
     int? maxLength,
     bool isNumber = false,
   }) {
+    Timer? debounce;
+
     return TextFormField(
       controller: controller,
       enabled: enabled,
@@ -1020,11 +1004,21 @@ class _CreateOrderPageState extends State<CreateOrderPage> {
               return null;
             }
           : validator,
-      onChanged: onChanged,
+      onChanged: (value) {
+        if (debounce?.isActive ?? false) debounce?.cancel();
+        debounce = Timer(const Duration(milliseconds: 300), () {
+          onChanged?.call(value);
+        });
+      },
       maxLength: maxLength,
-      // keyboardType: isNumber ? TextInputType.number : TextInputType.text,
+      keyboardType: isNumber ? TextInputType.number : TextInputType.text,
       inputFormatters: isNumber
-          ? [FilteringTextInputFormatter.digitsOnly, if (label == 'Rate') FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*'))]
+          ? [
+              if (label == 'Qty')
+                FilteringTextInputFormatter.digitsOnly
+              else
+                FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*$'))
+            ]
           : [],
       onFieldSubmitted: onSubmitted,
       decoration: InputDecoration(
@@ -1046,40 +1040,6 @@ class _CreateOrderPageState extends State<CreateOrderPage> {
         fillColor: enabled ? Colors.white : Colors.grey[100],
         contentPadding: const EdgeInsets.symmetric(vertical: 15, horizontal: 12),
       ),
-    );
-  }
-
-  Widget _buildDropdown({
-    required String? value,
-    required String label,
-    required List<String> items,
-    required void Function(String?)? onChanged, // Make it nullable
-    String? Function(String?)? validator,
-    bool isDisabled = false, // Add a flag to disable the dropdown
-  }) {
-    return DropdownButtonFormField<String>(
-      value: value,
-      decoration: InputDecoration(
-        label: Text(label, style: TextStyle(color: validator != null ? Colors.red : Colors.grey)),
-        prefixIcon: Icon(Icons.list, color: Colors.grey[700]),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: BorderSide(color: Colors.grey[400]!, width: 1.2),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: BorderSide(color: Colors.grey[400]!, width: 1.2),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(color: AppColors.primaryBlue, width: 1.5),
-        ),
-      ),
-      items: items.map((item) => DropdownMenuItem(value: item, child: Text(item))).toList(),
-      onChanged: isDisabled ? null : onChanged, // Disable when isDisabled is true
-      validator: validator,
-      hint: Text('Select $label'),
-      disabledHint: Text(value ?? 'Select $label'), // Show current value when disabled
     );
   }
 
@@ -1124,6 +1084,40 @@ class _CreateOrderPageState extends State<CreateOrderPage> {
         fillColor: enabled ? Colors.white : Colors.grey[200],
         contentPadding: const EdgeInsets.symmetric(vertical: 15, horizontal: 12),
       ),
+    );
+  }
+
+  Widget _buildDropdown({
+    required String? value,
+    required String label,
+    required List<String> items,
+    required void Function(String?)? onChanged, // Make it nullable
+    String? Function(String?)? validator,
+    bool isDisabled = false, // Add a flag to disable the dropdown
+  }) {
+    return DropdownButtonFormField<String>(
+      value: value,
+      decoration: InputDecoration(
+        label: Text(label, style: TextStyle(color: validator != null ? Colors.red : Colors.grey)),
+        prefixIcon: Icon(Icons.list, color: Colors.grey[700]),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: BorderSide(color: Colors.grey[400]!, width: 1.2),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: BorderSide(color: Colors.grey[400]!, width: 1.2),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: const BorderSide(color: AppColors.primaryBlue, width: 1.5),
+        ),
+      ),
+      items: items.map((item) => DropdownMenuItem(value: item, child: Text(item))).toList(),
+      onChanged: isDisabled ? null : onChanged, // Disable when isDisabled is true
+      validator: validator,
+      hint: Text('Select $label'),
+      disabledHint: Text(value ?? 'Select $label'), // Show current value when disabled
     );
   }
 

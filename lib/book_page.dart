@@ -1,5 +1,5 @@
+import 'dart:async';
 import 'dart:developer';
-
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:inventory_management/Custom-Files/colors.dart';
@@ -8,9 +8,8 @@ import 'package:inventory_management/Custom-Files/loading_indicator.dart';
 import 'package:inventory_management/Custom-Files/utils.dart';
 import 'package:inventory_management/Widgets/order_combo_card.dart';
 import 'package:inventory_management/chat_screen.dart';
-import 'package:inventory_management/provider/location_provider.dart';
+import 'package:inventory_management/provider/warehouse_provider.dart';
 import 'package:inventory_management/provider/marketplace_provider.dart';
-import 'package:logger/logger.dart';
 import 'package:provider/provider.dart';
 import 'package:inventory_management/provider/book_provider.dart';
 import 'package:inventory_management/model/orders_model.dart';
@@ -41,6 +40,24 @@ class _BookPageState extends State<BookPage> with SingleTickerProviderStateMixin
     });
   }
 
+  Timer? _debounce;
+
+  void _onSearchChanged(String value, String orderType) {
+    if (value.trim().isEmpty) {
+      bookProvider.resetFilterData();
+      _refreshOrders(orderType);
+    }
+
+    if (_debounce?.isActive ?? false) _debounce?.cancel();
+    _debounce = Timer(const Duration(milliseconds: 300), () {
+      if (orderType == 'B2B') {
+        bookProvider.searchB2BOrders(value);
+      } else {
+        bookProvider.searchB2COrders(value);
+      }
+    });
+  }
+
   @override
   void initState() {
     super.initState();
@@ -63,7 +80,7 @@ class _BookPageState extends State<BookPage> with SingleTickerProviderStateMixin
       bookProvider.fetchOrders('B2B', bookProvider.currentPageB2B);
       bookProvider.fetchOrders('B2C', bookProvider.currentPageB2C);
       // context.read<MarketplaceProvider>().fetchMarketplaces();
-      context.read<LocationProvider>().fetchWarehouses();
+      context.read<WarehouseProvider>().fetchWarehouses();
       _fetchUserRole();
     });
   }
@@ -138,7 +155,8 @@ class _BookPageState extends State<BookPage> with SingleTickerProviderStateMixin
   // String selectedSearchType = 'Order ID';
 
   Widget _searchBar(String orderType) {
-    final TextEditingController controller = orderType == 'B2B' ? bookProvider.b2bSearchController : bookProvider.b2cSearchController;
+    final TextEditingController controller =
+        orderType == 'B2B' ? bookProvider.b2bSearchController : bookProvider.b2cSearchController;
 
     return Padding(
       padding: const EdgeInsets.all(8.0),
@@ -191,18 +209,7 @@ class _BookPageState extends State<BookPage> with SingleTickerProviderStateMixin
                       contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 13),
                     ),
                     style: const TextStyle(color: AppColors.black),
-                    onChanged: (text) {
-                      if (text.isEmpty) {
-                        bookProvider.resetFilterData();
-                        orderType == 'B2B' ? _refreshOrders('B2B') : _refreshOrders('B2C');
-                      } else {
-                        if (orderType == 'B2B') {
-                          Provider.of<BookProvider>(context, listen: false).searchB2BOrders(text);
-                        } else {
-                          Provider.of<BookProvider>(context, listen: false).searchB2COrders(text);
-                        }
-                      }
-                    },
+                    onChanged: (value) => _onSearchChanged(value, orderType),
                     onSubmitted: (text) {
                       bookProvider.resetFilterData();
                       if (text.trim().isEmpty) {
@@ -297,90 +304,92 @@ class _BookPageState extends State<BookPage> with SingleTickerProviderStateMixin
                     ),
         ),
         if (areOrdersFetched)
-          CustomPaginationFooter(
-            currentPage: orderType == 'B2B' ? bookProvider.currentPageB2B : bookProvider.currentPageB2C,
-            totalPages: orderType == 'B2B' ? bookProvider.totalPagesB2B : bookProvider.totalPagesB2C,
-            buttonSize: 30,
-            pageController: orderType == 'B2B' ? b2bPageController : b2cPageController,
-            onFirstPage: () {
-              if (orderType == 'B2B') {
-                bookProvider.fetchPaginatedOrdersB2B(1);
-              } else {
-                bookProvider.fetchPaginatedOrdersB2C(1);
-              }
-            },
-            onLastPage: () {
-              if (orderType == 'B2B') {
-                bookProvider.fetchPaginatedOrdersB2B(bookProvider.totalPagesB2B);
-              } else {
-                bookProvider.fetchPaginatedOrdersB2C(bookProvider.totalPagesB2C);
-              }
-            },
-            onNextPage: () {
-              int currentPage = orderType == 'B2B' ? bookProvider.currentPageB2B : bookProvider.currentPageB2C;
+          Consumer<BookProvider>(
+            builder: (context, bookProvider, child) {
+              return CustomPaginationFooter(
+                currentPage: orderType == 'B2B' ? bookProvider.currentPageB2B : bookProvider.currentPageB2C,
+                totalPages: orderType == 'B2B' ? bookProvider.totalPagesB2B : bookProvider.totalPagesB2C,
+                totalCount: bookProvider.totalOrders,
+                buttonSize: 30,
+                pageController: orderType == 'B2B' ? b2bPageController : b2cPageController,
+                onFirstPage: () {
+                  if (orderType == 'B2B') {
+                    bookProvider.fetchPaginatedOrdersB2B(1);
+                  } else {
+                    bookProvider.fetchPaginatedOrdersB2C(1);
+                  }
+                },
+                onLastPage: () {
+                  if (orderType == 'B2B') {
+                    bookProvider.fetchPaginatedOrdersB2B(bookProvider.totalPagesB2B);
+                  } else {
+                    bookProvider.fetchPaginatedOrdersB2C(bookProvider.totalPagesB2C);
+                  }
+                },
+                onNextPage: () {
+                  int currentPage = orderType == 'B2B' ? bookProvider.currentPageB2B : bookProvider.currentPageB2C;
 
-              int totalPages = orderType == 'B2B' ? bookProvider.totalPagesB2B : bookProvider.totalPagesB2C;
+                  int totalPages = orderType == 'B2B' ? bookProvider.totalPagesB2B : bookProvider.totalPagesB2C;
 
-              if (currentPage < totalPages) {
-                if (orderType == 'B2B') {
-                  bookProvider.fetchPaginatedOrdersB2B(currentPage + 1);
-                } else {
-                  bookProvider.fetchPaginatedOrdersB2C(currentPage + 1);
-                }
-              }
-            },
-            onPreviousPage: () {
-              int currentPage = orderType == 'B2B' ? bookProvider.currentPageB2B : bookProvider.currentPageB2C;
+                  if (currentPage < totalPages) {
+                    if (orderType == 'B2B') {
+                      bookProvider.fetchPaginatedOrdersB2B(currentPage + 1);
+                    } else {
+                      bookProvider.fetchPaginatedOrdersB2C(currentPage + 1);
+                    }
+                  }
+                },
+                onPreviousPage: () {
+                  int currentPage = orderType == 'B2B' ? bookProvider.currentPageB2B : bookProvider.currentPageB2C;
 
-              if (currentPage > 1) {
-                if (orderType == 'B2B') {
-                  bookProvider.fetchPaginatedOrdersB2B(currentPage - 1);
-                } else {
-                  bookProvider.fetchPaginatedOrdersB2C(currentPage - 1);
-                }
-              }
-            },
-            onGoToPage: (int page) {
-              int totalPages = orderType == 'B2B' ? bookProvider.totalPagesB2B : bookProvider.totalPagesB2C;
+                  if (currentPage > 1) {
+                    if (orderType == 'B2B') {
+                      bookProvider.fetchPaginatedOrdersB2B(currentPage - 1);
+                    } else {
+                      bookProvider.fetchPaginatedOrdersB2C(currentPage - 1);
+                    }
+                  }
+                },
+                onGoToPage: (int page) {
+                  int totalPages = orderType == 'B2B' ? bookProvider.totalPagesB2B : bookProvider.totalPagesB2C;
 
-              if (page > 0 && page <= totalPages) {
-                if (orderType == 'B2B') {
-                  bookProvider.fetchPaginatedOrdersB2B(page);
-                } else {
-                  bookProvider.fetchPaginatedOrdersB2C(page);
-                }
-              } else {
-                _showSnackbar(context, 'Please enter a valid page number between 1 and $totalPages.');
-              }
-            },
-            onJumpToPage: () {
-              final String pageText = (orderType == 'B2B' ? b2bPageController : b2cPageController).text;
-              int? page = int.tryParse(pageText);
-              int totalPages = orderType == 'B2B' ? bookProvider.totalPagesB2B : bookProvider.totalPagesB2C;
+                  if (page > 0 && page <= totalPages) {
+                    if (orderType == 'B2B') {
+                      bookProvider.fetchPaginatedOrdersB2B(page);
+                    } else {
+                      bookProvider.fetchPaginatedOrdersB2C(page);
+                    }
+                  } else {
+                    _showSnackbar(context, 'Please enter a valid page number between 1 and $totalPages.');
+                  }
+                },
+                onJumpToPage: () {
+                  final String pageText = (orderType == 'B2B' ? b2bPageController : b2cPageController).text;
+                  int? page = int.tryParse(pageText);
+                  int totalPages = orderType == 'B2B' ? bookProvider.totalPagesB2B : bookProvider.totalPagesB2C;
 
-              if (page == null || page < 1 || page > totalPages) {
-                _showSnackbar(context, 'Please enter a valid page number between 1 and $totalPages.');
-                return;
-              }
+                  if (page == null || page < 1 || page > totalPages) {
+                    _showSnackbar(context, 'Please enter a valid page number between 1 and $totalPages.');
+                    return;
+                  }
 
-              if (orderType == 'B2B') {
-                bookProvider.fetchPaginatedOrdersB2B(page);
-              } else {
-                bookProvider.fetchPaginatedOrdersB2C(page);
-              }
+                  if (orderType == 'B2B') {
+                    bookProvider.fetchPaginatedOrdersB2B(page);
+                  } else {
+                    bookProvider.fetchPaginatedOrdersB2C(page);
+                  }
 
-              (orderType == 'B2B' ? b2bPageController : b2cPageController).clear();
-            },
+                  (orderType == 'B2B' ? b2bPageController : b2cPageController).clear();
+                },
+              );
+            }
           ),
       ],
     );
   }
 
   void _showSnackbar(BuildContext context, String message) {
-    ScaffoldMessenger.of(context).removeCurrentSnackBar();
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message)),
-    );
+    Utils.showSnackBar(context, message, toRemoveCurr: true);
   }
 
   Widget _buildConfirmButtons(String orderType) {
@@ -509,21 +518,22 @@ class _BookPageState extends State<BookPage> with SingleTickerProviderStateMixin
                   ? null
                   : () async {
                       List<Order> orders = orderType == 'B2B' ? bookProvider.ordersB2B : bookProvider.ordersB2C;
-                      List<bool> selectedOrders = orderType == 'B2B' ? bookProvider.selectedB2BItems : bookProvider.selectedB2CItems;
+                      List<bool> selectedOrders =
+                          orderType == 'B2B' ? bookProvider.selectedB2BItems : bookProvider.selectedB2CItems;
                       int page = orderType == 'B2B' ? bookProvider.currentPageB2B : bookProvider.currentPageB2C;
 
-                      List<String> selectedOrderIds =
-                          orders.asMap().entries.where((entry) => selectedOrders[entry.key]).map((entry) => entry.value.orderId).toList();
+                      List<String> selectedOrderIds = orders
+                          .asMap()
+                          .entries
+                          .where((entry) => selectedOrders[entry.key])
+                          .map((entry) => entry.value.orderId)
+                          .toList();
 
                       if (selectedOrderIds.isEmpty) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('No orders selected'),
-                            backgroundColor: AppColors.cardsred,
-                          ),
-                        );
+                        Utils.showSnackBar(context, 'No orders selected', isError: true);
                       } else {
-                        String resultMessage = await bookProvider.cloneOrders(context, orderType, page, selectedOrderIds);
+                        String resultMessage =
+                            await bookProvider.cloneOrders(context, orderType, page, selectedOrderIds);
                         Color snackBarColor;
                         if (resultMessage.contains('success')) {
                           snackBarColor = AppColors.green;
@@ -533,12 +543,7 @@ class _BookPageState extends State<BookPage> with SingleTickerProviderStateMixin
                           snackBarColor = AppColors.orange;
                         }
 
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(resultMessage),
-                            backgroundColor: snackBarColor,
-                          ),
-                        );
+                        Utils.showSnackBar(context, resultMessage, color: snackBarColor, seconds: 5);
                       }
                     },
               child: bookProvider.isCloning
@@ -578,19 +583,10 @@ class _BookPageState extends State<BookPage> with SingleTickerProviderStateMixin
                                 .toList();
 
                             if (selectedOrderIds.isEmpty) {
-                              ScaffoldMessenger.of(context).removeCurrentSnackBar();
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text('No orders selected'),
-                                  backgroundColor: AppColors.cardsred,
-                                ),
-                              );
+                              Utils.showSnackBar(context, 'No orders selected',
+                                  color: AppColors.cardsred, toRemoveCurr: true);
                             } else {
-                              provider.setCancelStatus(true);
-
                               String resultMessage = await provider.cancelOrders(context, selectedOrderIds);
-
-                              provider.setCancelStatus(false);
 
                               Color snackBarColor;
                               if (resultMessage.contains('success')) {
@@ -601,13 +597,7 @@ class _BookPageState extends State<BookPage> with SingleTickerProviderStateMixin
                                 snackBarColor = AppColors.orange;
                               }
 
-                              ScaffoldMessenger.of(context).removeCurrentSnackBar();
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text(resultMessage),
-                                  backgroundColor: snackBarColor,
-                                ),
-                              );
+                              Utils.showSnackBar(context, resultMessage, color: snackBarColor, seconds: 5);
                             }
                           },
                     child: bookProvider.isCancel
@@ -639,13 +629,7 @@ class _BookPageState extends State<BookPage> with SingleTickerProviderStateMixin
                                 .toList();
 
                             if (selectedOrderIds.isEmpty) {
-                              ScaffoldMessenger.of(context).removeCurrentSnackBar();
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text('No orders selected'),
-                                  backgroundColor: AppColors.cardsred,
-                                ),
-                              );
+                              Utils.showSnackBar(context, 'No orders selected', isError: true);
                             } else {
                               provider.setCancelStatus(true);
 
@@ -662,13 +646,7 @@ class _BookPageState extends State<BookPage> with SingleTickerProviderStateMixin
                                 snackBarColor = AppColors.orange;
                               }
 
-                              ScaffoldMessenger.of(context).removeCurrentSnackBar();
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text(resultMessage),
-                                  backgroundColor: snackBarColor,
-                                ),
-                              );
+                              Utils.showSnackBar(context, resultMessage, color: snackBarColor, seconds: 5);
                             }
                           },
                     child: bookProvider.isCancel
@@ -836,12 +814,7 @@ class _BookPageState extends State<BookPage> with SingleTickerProviderStateMixin
     });
 
     if (selectedOrderIds.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('No orders selected'),
-          backgroundColor: AppColors.orange,
-        ),
-      );
+      Utils.showSnackBar(context, 'No orders selected', isError: true);
       setState(() => isLoading = false);
       return;
     }
@@ -855,7 +828,8 @@ class _BookPageState extends State<BookPage> with SingleTickerProviderStateMixin
 
     // Original Shiprocket validation
     if (courier == 'Shiprocket' &&
-        selectedOrderIds.every((order) => (order['courierId']?.isEmpty ?? false) || (order['selectedCourier']?.isEmpty ?? false))) {
+        selectedOrderIds
+            .every((order) => (order['courierId']?.isEmpty ?? false) || (order['selectedCourier']?.isEmpty ?? false))) {
       Utils.showSnackBar(context, 'Selected Delivery Courier', color: Colors.red);
       setState(() => isLoading = false);
       return;
@@ -876,62 +850,6 @@ class _BookPageState extends State<BookPage> with SingleTickerProviderStateMixin
       Utils.showSnackBar(context, res['message'], color: Colors.red);
     }
   }
-
-  // Future<void> _handleBooking(String courier, String orderType) async {
-  //   final bookProvider = Provider.of<BookProvider>(context, listen: false);
-  //   List<Map<String, String>> selectedOrderIds = [];
-  //
-  //   setState(() {
-  //     selectedOrderIds = (orderType == 'B2B' ? bookProvider.ordersB2B : bookProvider.ordersB2C)
-  //         .where((order) => order.isSelected)
-  //         .map((order) =>
-  //             {'orderId': order.orderId, 'courierId': order.selectedCourierId ?? '', 'selectedCourier': order.selectedCourier ?? ''})
-  //         .toList();
-  //   });
-  //
-  //   if (selectedOrderIds.isEmpty) {
-  //     ScaffoldMessenger.of(context).removeCurrentSnackBar();
-  //     ScaffoldMessenger.of(context).showSnackBar(
-  //       const SnackBar(
-  //         content: Text('No orders selected'),
-  //         backgroundColor: AppColors.orange,
-  //       ),
-  //     );
-  //     setState(() {
-  //       isLoading = false;
-  //     });
-  //     return;
-  //   }
-  //
-  //   bool canProceed = await _checkOrderWeightAndShowDialog(context, selectedOrderIds);
-  //   if (!canProceed) {
-  //     setState(() => isLoading = false);
-  //     return;
-  //   }
-  //
-  //   log('Selected Orders: $selectedOrderIds');
-  //   if (courier == 'Shiprocket' &&
-  //       selectedOrderIds.every((order) => (order['courierId']?.isEmpty ?? false) || (order['selectedCourier']?.isEmpty ?? false))) {
-  //     Utils.showSnackBar(context, 'Selected Delivery Courier', color: Colors.red);
-  //     setState(() {
-  //       isLoading = false;
-  //     });
-  //     return;
-  //   }
-  //
-  //   Map<String, dynamic> res = await bookProvider.bookOrders(context, selectedOrderIds, courier);
-  //   ScaffoldMessenger.of(context).clearSnackBars();
-  //
-  //   if (res['success'] == true) {
-  //     Utils.showSnackBar(context, res['message'], color: Colors.green);
-  //     await bookProvider.fetchOrders(
-  //       orderType,
-  //       orderType == 'B2B' ? bookProvider.currentPageB2B : bookProvider.currentPageB2C,
-  //     );
-  //   } else {
-  //     Utils.showSnackBar(context, res['message'], color: Colors.red);
-  //   }
-  // }
 
   Widget _buildTableHeader(String orderType, int selectedCount) {
     final bookProvider = Provider.of<BookProvider>(context);

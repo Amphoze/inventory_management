@@ -10,7 +10,7 @@ import 'package:inventory_management/edit_outbound_page.dart';
 import 'package:inventory_management/model/orders_model.dart';
 import 'package:inventory_management/provider/accounts_provider.dart';
 import 'package:inventory_management/provider/book_provider.dart';
-import 'package:inventory_management/provider/location_provider.dart';
+import 'package:inventory_management/provider/warehouse_provider.dart';
 import 'package:inventory_management/provider/packer_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -263,7 +263,7 @@ class _OrderComboCardState extends State<OrderComboCard> {
                                             Text(widget.order.orderId, style: const TextStyle(fontSize: 15)),
                                           ],
                                         ),
-                                        content: Consumer<LocationProvider>(builder: (context, pro, child) {
+                                        content: Consumer<WarehouseProvider>(builder: (context, pro, child) {
                                           return DropdownButton(
                                             value: selectedWarehouse,
                                             isExpanded: true,
@@ -321,9 +321,7 @@ class _OrderComboCardState extends State<OrderComboCard> {
                                                   }
                                                 } else {
                                                   if (context.mounted) {
-                                                    ScaffoldMessenger.of(context).showSnackBar(
-                                                      const SnackBar(content: Text('Failed to edit warehouse')),
-                                                    );
+                                                    Utils.showSnackBar(context, 'Failed to edit warehouse', isError: true);
                                                   }
                                                 }
                                                 if (context.mounted) {

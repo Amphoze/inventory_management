@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:inventory_management/Api/auth_provider.dart';
 import 'package:inventory_management/Custom-Files/colors.dart';
+import 'package:inventory_management/Custom-Files/utils.dart';
 import 'package:inventory_management/dashboard.dart';
 import 'package:inventory_management/forgot_password.dart';
 import 'package:inventory_management/warehouses_page.dart';
@@ -32,12 +33,7 @@ class LoginPage extends StatelessWidget {
                           Color(0xFF125F9D),
                           Colors.white,
                         ],
-                        stops: [
-                          0.1,
-                          0.4,
-                          0.7,
-                          0.9
-                        ],
+                        stops: [0.1, 0.4, 0.7, 0.9],
                       ),
                     ),
                     child: Stack(
@@ -85,10 +81,7 @@ class LoginPage extends StatelessWidget {
                 gradient: LinearGradient(
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
-                  colors: [
-                    Colors.white,
-                    Color(0xFF003560)
-                  ],
+                  colors: [Colors.white, Color(0xFF003560)],
                 ),
               ),
               child: SingleChildScrollView(
@@ -162,23 +155,11 @@ class _LoginFormState extends State<LoginForm> {
   }
 
   void _showSuccessMessage(BuildContext context) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text("Login successful"),
-        backgroundColor: AppColors.primaryGreen,
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
+    Utils.showSnackBar(context, "login successful", color: AppColors.primaryGreen);
   }
 
   void _showErrorMessage(BuildContext context, String? message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message ?? "Login failed"),
-        backgroundColor: Colors.red,
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
+    Utils.showSnackBar(context, message ?? "Login failed", isError: true);
   }
 
   void _clearForm() {
@@ -247,10 +228,7 @@ class _LoginFormState extends State<LoginForm> {
     return TextFormField(
       controller: _emailController,
       keyboardType: TextInputType.emailAddress,
-      autofillHints: const [
-        AutofillHints.username,
-        AutofillHints.email
-      ],
+      autofillHints: const [AutofillHints.username, AutofillHints.email],
       onEditingComplete: () => TextInput.finishAutofillContext(),
       // Add this handler for autofill
       // onChanged: (value) {
@@ -292,9 +270,7 @@ class _LoginFormState extends State<LoginForm> {
     return TextFormField(
       controller: _passwordController,
       obscureText: _obscurePassword,
-      autofillHints: const [
-        AutofillHints.password
-      ],
+      autofillHints: const [AutofillHints.password],
       onEditingComplete: () => TextInput.finishAutofillContext(),
       // Add this handler for autofill
       // onChanged: (value) {

@@ -12,6 +12,8 @@ import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import 'Custom-Files/utils.dart';
+
 class DownloadOrders extends StatefulWidget {
   const DownloadOrders({super.key});
 
@@ -594,8 +596,9 @@ class _DownloadOrdersState extends State<DownloadOrders> {
                               // });
                               Logger().e('_selectedStatus: $_selectedStatus');
 
-                              String marketplacesParam =
-                                  selectedMarketplaces.isEmpty ? 'marketplace=all' : 'marketplace=${selectedMarketplaces.join(',')}';
+                              String marketplacesParam = selectedMarketplaces.isEmpty
+                                  ? 'marketplace=all'
+                                  : 'marketplace=${selectedMarketplaces.join(',')}';
 
                               String url =
                                   '$baseUrl/orders/download?startDate=$startDate&endDate=$endDate&order_status=$_selectedStatus&$marketplacesParam';
@@ -646,12 +649,7 @@ class _DownloadOrdersState extends State<DownloadOrders> {
                               // Navigator.pop(context);
                               Navigator.pop(context);
 
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text(jsonBody!['message'] ?? jsonBody['error']),
-                                  behavior: SnackBarBehavior.floating,
-                                ),
-                              );
+                              Utils.showSnackBar(context, jsonBody!['message'] ?? jsonBody['error']);
                             }
                           }
                         },
@@ -661,18 +659,7 @@ class _DownloadOrdersState extends State<DownloadOrders> {
                           ),
                           backgroundColor: AppColors.primaryBlue,
                         ),
-                        child:
-                            // _isDownloading
-                            //     ? const SizedBox(
-                            //         height: 24,
-                            //         width: 24,
-                            //         child: CircularProgressIndicator(
-                            //           strokeWidth: 2,
-                            //           valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                            //         ),
-                            //       )
-                            //     :
-                            const Row(
+                        child: const Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Icon(Icons.download, color: Colors.white),

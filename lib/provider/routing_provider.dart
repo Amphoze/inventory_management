@@ -1,6 +1,5 @@
 import 'dart:convert';
 import 'dart:developer';
-
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
@@ -168,7 +167,7 @@ class RoutingProvider with ChangeNotifier {
     final prefs = await SharedPreferences.getInstance();
     final warehouseId = prefs.getString('warehouseId') ?? '';
 
-    String readyOrdersUrl = '${await Constants.getBaseUrl()}/orders/getHoldOrders?warehouse=$warehouseId&page=$page';
+    String readyOrdersUrl = '${await Constants.getBaseUrl()}/orders/getHoldOrders?page=$page';
 
     if (date != null) {
       String formattedDate = DateFormat('yyyy-MM-dd').format(date);
@@ -228,8 +227,9 @@ class RoutingProvider with ChangeNotifier {
   Future<void> searchOrders(String orderId) async {
     final prefs = await SharedPreferences.getInstance();
     final warehouseId = prefs.getString('warehouseId') ?? '';
+    final encodedOrderId = Uri.encodeComponent(orderId);
 
-    final url = Uri.parse('${await Constants.getBaseUrl()}/orders/getHoldOrders?warehouse=$warehouseId&order_id=$orderId');
+    final url = Uri.parse('${await Constants.getBaseUrl()}/orders/getHoldOrders?order_id=$encodedOrderId');
     final token = await _getToken();
     if (token == null) return;
 
@@ -248,7 +248,12 @@ class RoutingProvider with ChangeNotifier {
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         log('data: $data');
-        readyOrders = [Order.fromJson(data)];
+        List<dynamic> orders = data['orders'] ?? [];
+        if (orders.isEmpty) {
+          readyOrders = [Order.fromJson(data)];
+        } else {
+          readyOrders = orders.map((order) => Order.fromJson(order)).toList();
+        }
       } else {
         resetData();
       }
@@ -333,11 +338,6 @@ class RoutingProvider with ChangeNotifier {
 
       notifyListeners();
     }
-  }
-
-  void _showSnackbar(BuildContext context, String message) {
-    final snackBar = SnackBar(content: Text(message));
-    ScaffoldMessenger.of(context).showSnackBar(snackBar);
   }
 
   Future<String?> _getToken() async {

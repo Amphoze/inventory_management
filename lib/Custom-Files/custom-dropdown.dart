@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:developer';
 
 import 'package:dropdown_search/dropdown_search.dart';
 import 'package:http/http.dart' as http;
@@ -91,9 +92,9 @@ class CustomDropdownState extends State<CustomDropdown> {
         'Authorization': 'Bearer $token',
       },
     );
-    var reslt = jsonDecode(response.body);
+    var result = jsonDecode(response.body);
     if (response.statusCode == 200 || response.statusCode == 201) {
-      print("here dipu with reslut ${reslt['categories']}");
+      log("searchData  result: ${result['categories']}");
     }
   }
 
@@ -109,7 +110,7 @@ class CustomDropdownState extends State<CustomDropdown> {
         });
       },
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
+        padding: const EdgeInsets.all(10),
         decoration: BoxDecoration(
           border: Border.all(color: Colors.grey),
           borderRadius: BorderRadius.circular(5.0),

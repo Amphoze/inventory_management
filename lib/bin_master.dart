@@ -1,10 +1,10 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:inventory_management/Api/bin_api.dart';
+import 'package:inventory_management/Api/bin_provider.dart';
 import 'package:inventory_management/Custom-Files/colors.dart';
 import 'package:inventory_management/Custom-Files/loading_indicator.dart';
 import 'package:inventory_management/bin_products.dart';
 import 'package:inventory_management/create_bin_page.dart';
-import 'package:inventory_management/provider/location_provider.dart';
 import 'package:provider/provider.dart';
 
 class BinMasterPage extends StatefulWidget {
@@ -15,8 +15,21 @@ class BinMasterPage extends StatefulWidget {
 }
 
 class _BinMasterPageState extends State<BinMasterPage> {
+  late BinProvider binProvider;
   String? selectedBin;
   final _searchController = TextEditingController();
+  Timer? _debounce;
+
+  void _onSearchChanged(String value) {
+    if (value.trim().isEmpty) {
+      binProvider.fetchBins(context);
+    }
+
+    if (_debounce?.isActive ?? false) _debounce?.cancel();
+    _debounce = Timer(const Duration(milliseconds: 300), () {
+      binProvider.seearchBinsByProduct(context, value);
+    });
+  }
 
   void selectBin(String? binName) {
     setState(() {
@@ -26,17 +39,22 @@ class _BinMasterPageState extends State<BinMasterPage> {
 
   @override
   void initState() {
+    binProvider = Provider.of<BinProvider>(context, listen: false);
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<LocationProvider>().fetchWarehouses();
-      Provider.of<BinApi>(context, listen: false).fetchBins(context);
-      // getWarehouse();
+      binProvider.fetchBins(context);
     });
     super.initState();
   }
 
   @override
+  void dispose() {
+    _debounce?.cancel();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return Consumer<BinApi>(
+    return Consumer<BinProvider>(
       builder: (context, provider, child) => Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -65,11 +83,7 @@ class _BinMasterPageState extends State<BinMasterPage> {
                       onSubmitted: (value) {
                         provider.seearchBinsByProduct(context, value);
                       },
-                      onChanged: (value) {
-                        if (value.isEmpty) {
-                          provider.fetchBins(context);
-                        }
-                      },
+                      onChanged: _onSearchChanged,
                     ),
                   ),
                   const Spacer(),
@@ -86,7 +100,8 @@ class _BinMasterPageState extends State<BinMasterPage> {
                   ),
                   const SizedBox(width: 8),
                   ElevatedButton(
-                    onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const CreateBinPage())),
+                    onPressed: () =>
+                        Navigator.push(context, MaterialPageRoute(builder: (context) => const CreateBinPage())),
                     child: const Text('Create Bin'),
                   ),
                 ],
@@ -111,7 +126,8 @@ class _BinMasterPageState extends State<BinMasterPage> {
                   children: [
                     const Icon(Icons.search_off, size: 60, color: Colors.grey),
                     const SizedBox(height: 16),
-                    Text('No bins found for: ${_searchController.text}', style: const TextStyle(fontSize: 16, color: Colors.grey)),
+                    Text('No bins found for: ${_searchController.text}',
+                        style: const TextStyle(fontSize: 16, color: Colors.grey)),
                   ],
                 ),
               ),

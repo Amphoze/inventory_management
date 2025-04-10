@@ -10,6 +10,7 @@ import 'package:logger/logger.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class AllOrdersProvider with ChangeNotifier {
+  int totalOrders = 0;
   final TextEditingController searchController = TextEditingController();
   bool _isLoading = false;
   int selectedItemsCount = 0;
@@ -70,8 +71,6 @@ class AllOrdersProvider with ChangeNotifier {
 
       if (response.statusCode == 200) {
         await fetchAllOrders(page: _currentPage);
-        setRefreshingOrders(false);
-        setCancelStatus(false);
         notifyListeners();
 
         return responseData['message'] ?? 'Orders cancelled successfully';
@@ -79,10 +78,12 @@ class AllOrdersProvider with ChangeNotifier {
         return responseData['message'] ?? 'Failed to cancel orders';
       }
     } catch (error) {
-      setCancelStatus(false);
       notifyListeners();
       print('Error during API request: $error');
       return 'An error occurred: $error';
+    } finally {
+      setRefreshingOrders(false);
+      setCancelStatus(false);
     }
   }
 
@@ -239,6 +240,7 @@ class AllOrdersProvider with ChangeNotifier {
       if (response.statusCode == 200) {
         final jsonResponse = jsonDecode(response.body);
         List<Order> orders = (jsonResponse['orders'] as List).map((order) => Order.fromJson(order)).toList();
+        totalOrders = jsonResponse['totalOrders'] ?? 0;
 
         _orders = orders;
         _currentPage = page;
@@ -312,7 +314,8 @@ class AllOrdersProvider with ChangeNotifier {
     final token = prefs.getString('authToken') ?? '';
     final warehouseId = prefs.getString('warehouseId') ?? '';
 
-    final url = '${await Constants.getBaseUrl()}/orders?warehouse=$warehouseId&order_id=$encodedOrderId&isSalesApproved=true';
+    final url =
+        '${await Constants.getBaseUrl()}/orders?warehouse=$warehouseId&order_id=$encodedOrderId&isSalesApproved=true';
     log('search all orders url: $url');
     final mainUrl = Uri.parse(url);
     log('parsed url: $mainUrl');

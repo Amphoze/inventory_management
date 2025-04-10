@@ -1,23 +1,22 @@
+import 'dart:async';
 import 'dart:developer';
 
 import 'package:flutter/material.dart';
 import 'package:inventory_management/Api/combo_api.dart';
-import 'package:inventory_management/model/combo_model.dart'; // for product model
+import 'package:inventory_management/model/combo_model.dart'; // Product model
 import 'package:inventory_management/model/marketplace_model.dart';
 import 'package:inventory_management/Api/marketplace_api.dart';
 
 class MarketplaceProvider with ChangeNotifier {
+  int totalMarketplace = 0;
   bool _isFormVisible = false;
-  TextEditingController nameController = TextEditingController();
+  final TextEditingController nameController = TextEditingController();
   final List<SkuMap> _skuMaps = [];
   List<Marketplace> _marketplaces = [];
   List<Marketplace> _filteredMarketplaces = [];
   String _searchQuery = '';
-
   List<Product> _products = [];
-  Product? _selectedProduct;
   bool _loading = false;
-
   bool isSaving = false;
 
   bool get isFormVisible => _isFormVisible;
@@ -25,9 +24,7 @@ class MarketplaceProvider with ChangeNotifier {
   String get searchQuery => _searchQuery;
   List<Marketplace> get marketplaces => _marketplaces;
   List<SkuMap> get skuMaps => _skuMaps;
-
   List<Product> get products => _products;
-  Product? get selectedProduct => _selectedProduct;
   bool get loading => _loading;
 
   final marketplaceApi = MarketplaceApi();
@@ -36,29 +33,15 @@ class MarketplaceProvider with ChangeNotifier {
   Future<void> fetchMarketplaces() async {
     _loading = true;
     notifyListeners();
-
     try {
-      _marketplaces = await marketplaceApi.getMarketplaces();
-
-      // log("under fetchMarketplaces try: $_marketplaces");
-
-      // for (var marketplace in _marketplaces) {
-      //   for (var skuMap in marketplace.skuMap) {
-      //     try {
-      //       skuMap.product = await comboApi.getProductById(skuMap.productId);
-      //     } catch (e) {
-      //       skuMap.product = null;
-      //     }
-      //   }
-      // }
-
+      final res = await marketplaceApi.getMarketplaces();
+      _marketplaces = res['marketplaces'];
+      totalMarketplace = res['totalMarketplace'];
       _filteredMarketplaces = _marketplaces;
-
-      // log("_filteredMarketplaces: $_filteredMarketplaces");
-
     } catch (e, s) {
       log('Error fetching marketplaces: $e $s');
-      _marketplaces = []; // Clear the list on error
+      _filteredMarketplaces = [];
+      _marketplaces = [];
     } finally {
       _loading = false;
       notifyListeners();
@@ -67,16 +50,11 @@ class MarketplaceProvider with ChangeNotifier {
 
   Future<void> fetchProducts() async {
     _loading = true;
-    notifyListeners(); // Notify listeners to show loading state
+    notifyListeners();
     try {
-      final api = ComboApi();
-
-      final response = await api.getAllProducts();
-
+      final response = await comboApi.getAllProducts();
       final productList = response['products'] ?? [];
-      _products =
-          productList.map<Product>((json) => Product.fromJson(json)).toList();
-
+      _products = productList.map<Product>((json) => Product.fromJson(json)).toList();
     } catch (e, s) {
       log('Error fetching products: $e\n\n$s');
     } finally {
@@ -85,66 +63,21 @@ class MarketplaceProvider with ChangeNotifier {
     }
   }
 
-  void selectProduct(Product product) {
-    _selectedProduct = product;
-    notifyListeners();
-  }
-
-  // Create a new marketplace
-  Future<void> createMarketplace(Marketplace marketplace) async {
-    try {
-      await marketplaceApi.createMarketplace(marketplace);
-      fetchMarketplaces(); // Refresh marketplaces after creating one
-    } catch (e) {
-      print('Error creating marketplace: $e');
-    }
-  }
-
-  // Update an existing marketplace
-  Future<void> updateMarketplace(String id, Marketplace marketplace) async {
-    try {
-      await marketplaceApi.updateMarketplace(id, marketplace);
-      fetchMarketplaces(); // Refresh marketplaces after updating
-    } catch (e) {
-      print('Error updating marketplace: $e');
-    }
-  }
-
-  // Delete a marketplace
-  Future<void> deleteMarketplace(String id) async {
-    try {
-      await marketplaceApi.deleteMarketplace(id);
-      fetchMarketplaces(); // Refresh marketplaces after deletion
-    } catch (e) {
-      print('Error deleting marketplace: $e');
-    }
-  }
-
-  // Update SKU map with the selected product
   void updateSkuMap(int index, String sku, Product? selectedProduct) {
-    final productId = selectedProduct?.id;
-    if (productId == null || productId.isEmpty) {
-      return; // Handle the error if productId is not available
-    }
+    final productId = selectedProduct?.id ?? '';
     _skuMaps[index] = SkuMap(
       mktpSku: sku,
       productId: productId,
       product: selectedProduct,
     );
-    notifyListeners();
+    // No notifyListeners() here; UI will handle temporary state
   }
 
-  // Add a new SKU map row
   void addSkuMapRow() {
-    _skuMaps.add(SkuMap(
-      mktpSku: '',
-      productId: '',
-      product: null,
-    ));
+    _skuMaps.add(SkuMap(mktpSku: '', productId: '', product: null));
     notifyListeners();
   }
 
-  // Remove a SKU map row
   void removeSkuMapRow(int index) {
     _skuMaps.removeAt(index);
     notifyListeners();
@@ -152,6 +85,10 @@ class MarketplaceProvider with ChangeNotifier {
 
   void toggleForm() {
     _isFormVisible = !_isFormVisible;
+    if (!_isFormVisible) {
+      _skuMaps.clear();
+      nameController.clear();
+    }
     notifyListeners();
   }
 
@@ -165,52 +102,48 @@ class MarketplaceProvider with ChangeNotifier {
     if (_searchQuery.isEmpty) {
       _filteredMarketplaces = _marketplaces;
     } else {
-      _filteredMarketplaces = _marketplaces.where((marketplace) => marketplace.name.toLowerCase().contains(_searchQuery.toLowerCase())).toList();
+      _filteredMarketplaces = _marketplaces
+          .where((marketplace) => marketplace.name.toLowerCase().contains(_searchQuery.toLowerCase()))
+          .toList();
     }
     notifyListeners();
   }
 
-  // Save the marketplace
   Future<void> saveMarketplace() async {
-    isSaving = true; // Start saving
-    notifyListeners(); // Notify UI to show progress indicator
+    isSaving = true;
+    notifyListeners();
 
-    // Validate SKU maps
     final invalidSkuMaps = skuMaps.where((skuMap) => skuMap.mktpSku.isEmpty).toList();
-
-    if (invalidSkuMaps.isNotEmpty) {
-      // Show an error message or handle invalid data
-      print('Error: Some SKU maps are missing the mktp_sku.');
-
-      // Stop saving if there are invalid SKU maps
+    if (nameController.text.isEmpty || invalidSkuMaps.isNotEmpty) {
+      log('Error: Name or some SKU maps are invalid.');
       isSaving = false;
       notifyListeners();
-      return; // Exit early if invalid data
+      return;
     }
 
-    // Prepare the new marketplace data
     final newMarketplace = Marketplace(
       name: nameController.text,
-      skuMap: List.from(skuMaps), // Create a copy of SKU maps
+      skuMap: List.from(skuMaps),
     );
 
     try {
-      // API call to save the marketplace
       await marketplaceApi.createMarketplace(newMarketplace);
-
-      // Fetch the updated list of marketplaces
       await fetchMarketplaces();
-
-      // Reset form and clear inputs after successful save
-      toggleForm(); // Hide the form after saving
-      skuMaps.clear();
-      nameController.clear();
+      toggleForm();
     } catch (e) {
-      // Handle any errors
-      print('Error creating marketplace: $e');
+      log('Error creating marketplace: $e');
     } finally {
-      isSaving = false; // Stop saving
-      notifyListeners(); // Notify UI to hide progress indicator
+      isSaving = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> deleteMarketplace(String id) async {
+    try {
+      await marketplaceApi.deleteMarketplace(id);
+      fetchMarketplaces();
+    } catch (e) {
+      log('Error deleting marketplace: $e');
     }
   }
 }

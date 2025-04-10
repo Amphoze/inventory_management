@@ -49,12 +49,18 @@ class OrderCard extends StatelessWidget {
                 Row(
                   children: [
                     if (isBookPage && checkboxWidget != null) checkboxWidget!,
-                    Text(
-                      'Order ID: ${order.orderId}',
+                    Text.rich(
+                      TextSpan(text: 'Order ID: ', children: [
+                        TextSpan(
+                          text: order.orderId,
+                          style: const TextStyle(
+                            color: Colors.blueAccent,
+                          ),
+                        )
+                      ]),
                       style: const TextStyle(
-                        fontWeight: FontWeight.bold,
                         fontSize: 15,
-                        color: Colors.blueAccent,
+                        color: Colors.black,
                       ),
                     ),
                   ],

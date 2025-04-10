@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:inventory_management/Custom-Files/loading_indicator.dart';
 import 'package:inventory_management/Widgets/order_card.dart';
@@ -20,17 +22,24 @@ class _ManifestedOrdersState extends State<ManifestedOrders> {
   @override
   void initState() {
     super.initState();
+    manifestProvider = Provider.of<ManifestProvider>(context, listen: false);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       Provider.of<ManifestProvider>(context, listen: false).fetchCreatedManifests(1);
     });
     Provider.of<ManifestProvider>(context, listen: false).textEditingController.clear();
   }
 
-  void _onSearchButtonPressed() {
-    final query = manifestProvider.manifestedController.text.trim();
-    if (query.isNotEmpty) {
-      Provider.of<ManifestProvider>(context, listen: false).onSearchChanged(query);
+  Timer? _debounce;
+
+  void _onSearchChanged(String value) {
+    if (value.trim().isEmpty) {
+      manifestProvider.fetchCreatedManifests(manifestProvider.currentPage);
     }
+
+    if (_debounce?.isActive ?? false) _debounce?.cancel();
+    _debounce = Timer(const Duration(milliseconds: 300), () {
+      manifestProvider.searchManifests(value);
+    });
   }
 
   @override
@@ -48,7 +57,7 @@ class _ManifestedOrdersState extends State<ManifestedOrders> {
                   children: [
                     Container(
                       height: 35,
-                      width: 200,
+                      width: 300,
                       decoration: BoxDecoration(
                         border: Border.all(
                           color: const Color.fromARGB(183, 6, 90, 216),
@@ -64,34 +73,12 @@ class _ManifestedOrdersState extends State<ManifestedOrders> {
                           border: InputBorder.none,
                           contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 12.0),
                         ),
-                        onChanged: (query) {
-                          setState(() {});
-                          if (query.isEmpty) {
-                            manifestProvider.fetchCreatedManifests(manifestProvider.currentPage);
-                          }
-                        },
-                        onTap: () {
-                          setState(() {});
-                        },
+                        onChanged: _onSearchChanged,
                         onSubmitted: (query) {
                           if (query.isNotEmpty) {
                             manifestProvider.searchManifests(query);
                           }
                         },
-                        onEditingComplete: () {
-                          FocusScope.of(context).unfocus();
-                        },
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primaryBlue,
-                      ),
-                      onPressed: manifestProvider.manifestedController.text.isNotEmpty ? _onSearchButtonPressed : null,
-                      child: const Text(
-                        'Search',
-                        style: TextStyle(color: Colors.white),
                       ),
                     ),
                     const Spacer(),

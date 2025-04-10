@@ -6,6 +6,8 @@ import 'package:inventory_management/Custom-Files/colors.dart';
 import 'package:provider/provider.dart';
 import 'package:inventory_management/provider/outerbox_provider.dart';
 
+import 'Custom-Files/utils.dart';
+
 class OuterPackageForm extends StatefulWidget {
   const OuterPackageForm({super.key});
 
@@ -348,19 +350,9 @@ class _OuterPackageFormState extends State<OuterPackageForm> {
                               if (pro.errorMessage == null) {
                                 // _resetForm();
                                 pro.toggleFormVisibility();
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text('Box size created successfully'),
-                                    backgroundColor: Colors.green,
-                                  ),
-                                );
+                                Utils.showSnackBar(context, 'Box size created successfully', color: AppColors.cardsgreen);
                               } else {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text(pro.errorMessage!),
-                                    backgroundColor: AppColors.cardsred,
-                                  ),
-                                );
+                                Utils.showSnackBar(context, pro.errorMessage ?? 'Some error occurred', isError: true);
                               }
                             }
                           }

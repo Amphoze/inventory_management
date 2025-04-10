@@ -4,7 +4,7 @@ import 'package:inventory_management/Custom-Files/colors.dart';
 import 'package:inventory_management/Widgets/combo_card.dart';
 import 'package:inventory_management/Widgets/product_card.dart';
 import 'package:inventory_management/Widgets/searchable_dropdown.dart';
-import 'package:inventory_management/provider/location_provider.dart';
+import 'package:inventory_management/provider/warehouse_provider.dart';
 import 'package:inventory_management/provider/marketplace_provider.dart';
 import 'package:inventory_management/provider/transfer_order_provider.dart';
 import 'package:provider/provider.dart';
@@ -28,9 +28,6 @@ class _TransferOrderPageState extends State<TransferOrderPage> {
   void initState() {
     provider = context.read<TransferOrderProvider>();
     provider.initializeControllers();
-    // WidgetsBinding.instance.addPostFrameCallback((_) {
-    //   context.read<MarketplaceProvider>().fetchMarketplaces();
-    // });
     super.initState();
   }
 
@@ -47,22 +44,22 @@ class _TransferOrderPageState extends State<TransferOrderPage> {
         provider.selectedFromWarehouse!.isEmpty ||
         provider.selectedToWarehouse == null ||
         provider.selectedToWarehouse!.isEmpty) {
-      Utils.showSnackBar(context, 'Please select both source and destination warehouses.');
+      Utils.showSnackBar(context, 'Please select both source and destination warehouses.', toRemoveCurr: true);
       return;
     }
 
     if (provider.selectedFromWarehouse == provider.selectedToWarehouse) {
-      Utils.showSnackBar(context, 'Please select different warehouses.');
+      Utils.showSnackBar(context, 'Please select different warehouses.', toRemoveCurr: true);
       return;
     }
 
     if (provider.addedProductList.isEmpty && provider.addedComboList.isEmpty) {
-      Utils.showSnackBar(context, 'Please add items to the order.');
+      Utils.showSnackBar(context, 'Please add items to the order.', toRemoveCurr: true);
       return;
     }
 
     if ((provider.billingStateController.text.trim().length < 3) || (provider.shippingStateController.text.trim().length < 3)) {
-      Utils.showSnackBar(context, 'State name must be at least 3 characters long');
+      Utils.showSnackBar(context, 'State name must be at least 3 characters long', toRemoveCurr: true);
       return;
     }
 
@@ -72,7 +69,7 @@ class _TransferOrderPageState extends State<TransferOrderPage> {
         Utils.showSnackBar(context, 'Order Transferred successfully!', color: Colors.green);
         Utils.showInfoDialog(context, 'Order ID: ${res['message'] ?? ''}!', true);
       } else {
-        Utils.showSnackBar(context, 'Error transferring order: ${res['error'] ?? ''}', details: res['details'] ?? '', color: Colors.red);
+        Utils.showSnackBar(context, 'Error transferring order: ${res['error'] ?? ''}', details: res['details'] ?? '', isError: true);
       }
     }
   }
@@ -144,7 +141,7 @@ class _TransferOrderPageState extends State<TransferOrderPage> {
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Consumer<LocationProvider>(
+                    Consumer<WarehouseProvider>(
                       builder: (context, pro, child) {
                         return Flexible(
                           child: _buildDropdown(
@@ -164,7 +161,7 @@ class _TransferOrderPageState extends State<TransferOrderPage> {
                       },
                     ),
                     const SizedBox(width: 8),
-                    Consumer<LocationProvider>(
+                    Consumer<WarehouseProvider>(
                       builder: (context, pro, child) {
                         return Flexible(
                           child: _buildDropdown(
@@ -326,16 +323,6 @@ class _TransferOrderPageState extends State<TransferOrderPage> {
                         enabled: !provider.isBillingSameAsShipping,
                       ),
                     ),
-                    // const SizedBox(width: 10),
-                    // Expanded(
-                    //   child: _buildTextField(
-                    //     controller: provider.billingCountryController,
-                    //     label: 'Country',
-                    //     icon: Icons.public,
-                    //     validator: (value) => (value?.isEmpty ?? false) ? 'Required' : null,
-                    //     enabled: !provider.isBillingSameAsShipping,
-                    //   ),
-                    // ),
                   ],
                 ),
                 const SizedBox(height: 10),

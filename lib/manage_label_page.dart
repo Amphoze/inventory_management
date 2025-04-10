@@ -7,6 +7,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:inventory_management/Api/inventory_api.dart';
+import 'package:inventory_management/Custom-Files/utils.dart';
 import 'package:inventory_management/constants/constants.dart';
 
 class ManageLabelPage extends StatefulWidget {
@@ -43,9 +44,7 @@ class _ManageLabelPageState extends State<ManageLabelPage> {
         });
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error reading CSV file: $e')),
-      );
+      Utils.showSnackBar(context, 'Error reading CSV file: $e', isError: true);
     }
   }
 
@@ -103,20 +102,11 @@ class _ManageLabelPageState extends State<ManageLabelPage> {
         );
         log('response: ${response.body}');
         log('response code: ${response.statusCode}');
-
-        // if (response.statusCode != 201) {
-        //   throw Exception('Failed to upload SKU: $sku');
-        // }
       }
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Upload completed successfully!')),
-      );
+      Utils.showSnackBar(context, 'Upload completed successfully!', color: AppColors.cardsgreen);
     } catch (e) {
       log('error: $e');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error during upload: $e')),
-      );
+      Utils.showSnackBar(context, 'Error during upload: $e',  isError: true);
     } finally {
       setState(() {
         // _isUploading = false;
@@ -164,8 +154,8 @@ class _ManageLabelPageState extends State<ManageLabelPage> {
                 ),
                 const SizedBox(width: 16),
                 ElevatedButton(
-                  onPressed: () => AuthProvider().downloadTemplate(
-                      context, 'manage-label'), //////////////////////////////
+                  onPressed: () =>
+                      AuthProvider().downloadTemplate(context, 'manage-label'), //////////////////////////////
                   child: const Text('Download Template'),
                 ),
                 const SizedBox(width: 16),
@@ -173,15 +163,11 @@ class _ManageLabelPageState extends State<ManageLabelPage> {
                   Expanded(
                     child: ElevatedButton(
                       onPressed: () {
-                        _isUploadEnabled && !_isChangeUploading
-                            ? _uploadLabel('change')
-                            : null;
+                        _isUploadEnabled && !_isChangeUploading ? _uploadLabel('change') : null;
                       },
                       child: FittedBox(
                         fit: BoxFit.contain,
-                        child: Text(_isChangeUploading
-                            ? 'Uploading...'
-                            : 'Upload Label (for change)'),
+                        child: Text(_isChangeUploading ? 'Uploading...' : 'Upload Label (for change)'),
                       ),
                     ),
                   ),
@@ -190,15 +176,11 @@ class _ManageLabelPageState extends State<ManageLabelPage> {
                   Expanded(
                     child: ElevatedButton(
                       onPressed: () {
-                        _isUploadEnabled && !_isAddUploading
-                            ? _uploadLabel('add')
-                            : null;
+                        _isUploadEnabled && !_isAddUploading ? _uploadLabel('add') : null;
                       },
                       child: FittedBox(
                         fit: BoxFit.scaleDown,
-                        child: Text(_isAddUploading
-                            ? 'Uploading...'
-                            : 'Upload Label (for add)'),
+                        child: Text(_isAddUploading ? 'Uploading...' : 'Upload Label (for add)'),
                       ),
                     ),
                   ),
@@ -207,15 +189,11 @@ class _ManageLabelPageState extends State<ManageLabelPage> {
                   Expanded(
                     child: ElevatedButton(
                       onPressed: () {
-                        _isUploadEnabled && !_isSubtractUploading
-                            ? _uploadLabel('subtract')
-                            : null;
+                        _isUploadEnabled && !_isSubtractUploading ? _uploadLabel('subtract') : null;
                       },
                       child: FittedBox(
                         fit: BoxFit.scaleDown,
-                        child: Text(_isSubtractUploading
-                            ? 'Uploading...'
-                            : 'Upload Label (for subtract)'),
+                        child: Text(_isSubtractUploading ? 'Uploading...' : 'Upload Label (for subtract)'),
                       ),
                     ),
                   ),
@@ -259,13 +237,11 @@ class _ManageLabelPageState extends State<ManageLabelPage> {
                         return DataRow(
                           cells: [
                             DataCell(Padding(
-                              padding:
-                                  const EdgeInsets.symmetric(horizontal: 8.0),
+                              padding: const EdgeInsets.symmetric(horizontal: 8.0),
                               child: Text(row[0].toString()),
                             )),
                             DataCell(Padding(
-                              padding:
-                                  const EdgeInsets.symmetric(horizontal: 8.0),
+                              padding: const EdgeInsets.symmetric(horizontal: 8.0),
                               child: Text(row[1].toString()),
                             )),
                           ],
@@ -276,16 +252,13 @@ class _ManageLabelPageState extends State<ManageLabelPage> {
                 ),
               ),
             ],
-            if (_isChangeUploading ||
-                _isAddUploading ||
-                _isSubtractUploading) ...[
+            if (_isChangeUploading || _isAddUploading || _isSubtractUploading) ...[
               const SizedBox(height: 16),
               LinearProgressIndicator(
                 value: _currentUploadIndex / _csvData.length,
               ),
               const SizedBox(height: 8),
-              Text(
-                  'Uploading item $_currentUploadIndex of ${_csvData.length - 1}'),
+              Text('Uploading item $_currentUploadIndex of ${_csvData.length - 1}'),
             ],
           ],
         ),

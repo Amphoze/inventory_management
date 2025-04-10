@@ -46,6 +46,7 @@ class _ManageInnerState extends State<ManageInner> {
     final columns = ['SKU', 'Name', 'Quantity', 'Product SKU'];
     return Consumer<InnerPackagingProvider>(
       builder: (context, provider, child) => Scaffold(
+        backgroundColor: Colors.white,
         body: provider.innerPackings.isNotEmpty && !provider.isLoading
             ? Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -54,9 +55,10 @@ class _ManageInnerState extends State<ManageInner> {
                   Center(
                     child: Row(
                       children: [
-                        InkWell(
-                          child: const Icon(Icons.refresh),
-                          onTap: () {
+                        IconButton(
+                          tooltip: 'Refresh',
+                          icon: const Icon(Icons.refresh),
+                          onPressed: () {
                             provider.fetchAllInnerPackings();
                           },
                         ),
@@ -272,6 +274,7 @@ class _ManageInnerState extends State<ManageInner> {
                     CustomPaginationFooter(
                       currentPage: provider.currentPage,
                       totalPages: provider.totalPages,
+                      totalCount: provider.totalInnerPacking,
                       buttonSize: MediaQuery.of(context).size.width > 600 ? 32 : 24,
                       pageController: _pageController,
                       onFirstPage: () => _goToPage(1),

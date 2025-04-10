@@ -1,16 +1,11 @@
 import 'package:flutter/material.dart';
 import 'dart:developer';
-
-import 'package:flutter/material.dart';
 import 'package:flutter_typeahead/flutter_typeahead.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-
 import '../../Api/auth_provider.dart';
 import '../../Custom-Files/colors.dart';
 import '../../constants/constants.dart';
-
-
 
 class searchabletestfeild extends StatefulWidget {
   final bool isRequired;

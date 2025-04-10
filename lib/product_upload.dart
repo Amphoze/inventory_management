@@ -1,6 +1,7 @@
 import 'dart:developer';
 import 'package:http_parser/http_parser.dart';
 import 'package:flutter/material.dart';
+import 'package:inventory_management/Custom-Files/utils.dart';
 import 'package:inventory_management/constants/constants.dart';
 import 'package:inventory_management/provider/product_data_provider.dart';
 import 'package:provider/provider.dart';
@@ -60,7 +61,10 @@ class ProductDataDisplayState extends State<ProductDataDisplay> {
         csvData.add(row);
       }
 
-      setState(() => hasData = true);
+      setState(() {
+        hasData = true;
+        failedProducts = [];
+      });
       Provider.of<ProductDataProvider>(context, listen: false).setDataGroups(csvData);
       _showMessage(context, 'CSV file loaded successfully');
     } catch (e) {
@@ -86,8 +90,7 @@ class ProductDataDisplayState extends State<ProductDataDisplay> {
         ..files.add(http.MultipartFile.fromBytes(
           'file',
           utf8.encode([(productDataProvider.dataGroups[0].keys.join(','))] // Headers
-              .followedBy(productDataProvider.dataGroups
-                  .map((row) => row.values.map((v) => v ?? '').join(',')))
+              .followedBy(productDataProvider.dataGroups.map((row) => row.values.map((v) => v ?? '').join(',')))
               .join('\n')),
           filename: 'upload.csv',
           contentType: MediaType('text', 'csv'), // Explicitly set MIME type
@@ -139,13 +142,7 @@ class ProductDataDisplayState extends State<ProductDataDisplay> {
   }
 
   void _showMessage(BuildContext context, String message, {bool isError = false}) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: isError ? AppColors.cardsred : AppColors.primaryGreen,
-        duration: const Duration(seconds: 4),
-      ),
-    );
+    Utils.showSnackBar(context, message, color: isError ? AppColors.cardsred : AppColors.primaryGreen, seconds: 5);
   }
 
   void _clearFailedProducts() {

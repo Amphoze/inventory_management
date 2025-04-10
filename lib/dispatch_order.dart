@@ -1,6 +1,5 @@
-import 'dart:developer';
-
 import 'package:flutter/material.dart';
+import 'package:inventory_management/Custom-Files/utils.dart';
 import 'package:inventory_management/Widgets/small_combo_card.dart';
 import 'package:inventory_management/provider/dispatched_provider.dart';
 import 'package:provider/provider.dart';
@@ -29,9 +28,8 @@ class _DispatchedOrdersState extends State<DispatchedOrders> {
     });
   }
 
-  void _onSearchButtonPressed() {
-    final query = _searchController.text.trim();
-    if (query.isNotEmpty) {
+  void _onSearchButtonPressed(String query) {
+    if (query.trim().isNotEmpty) {
       Provider.of<DispatchedProvider>(context, listen: false)
           .onSearchChanged(query);
     }
@@ -68,45 +66,12 @@ class _DispatchedOrdersState extends State<DispatchedOrders> {
                           border: InputBorder.none,
                           contentPadding: EdgeInsets.symmetric(vertical: 12, horizontal: 8),
                         ),
-                        onChanged: (query) {
-                          // Trigger a rebuild to show/hide the search button
-                          setState(() {
-                            // Update search focus
-                          });
-                          if (query.isEmpty) {
-                            // Reset to all orders if search is cleared
-                            dispatchProvider.fetchOrdersWithStatus9();
-                          }
-                        },
-                        onTap: () {
-                          setState(() {
-                            // Mark the search field as focused
-                          });
-                        },
+                        onChanged: _onSearchButtonPressed,
                         onSubmitted: (query) {
                           if (query.isNotEmpty) {
                             dispatchProvider.searchOrders(query);
                           }
                         },
-                        onEditingComplete: () {
-                          // Mark it as not focused when done
-                          FocusScope.of(context)
-                              .unfocus(); // Dismiss the keyboard
-                        },
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-
-                    ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primaryBlue,
-                      ),
-                      onPressed: _searchController.text.isNotEmpty
-                          ? _onSearchButtonPressed
-                          : null,
-                      child: const Text(
-                        'Search',
-                        style: TextStyle(color: Colors.white),
                       ),
                     ),
                     const Spacer(),
@@ -132,25 +97,11 @@ class _DispatchedOrdersState extends State<DispatchedOrders> {
                                   .toList();
 
                               if (selectedOrderIds.isEmpty) {
-                                // Show an error message if no orders are selected
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text('No orders selected'),
-                                    backgroundColor: AppColors.cardsred,
-                                  ),
-                                );
+                                Utils.showSnackBar(context, 'No orders selected', isError: true);
                               } else {
-                                // Set loading status to true before starting the operation
-                                provider.setCancelStatus(true);
-
-                                // Call confirmOrders method with selected IDs
                                 String resultMessage = await provider
                                     .cancelOrders(context, selectedOrderIds);
 
-                                // Set loading status to false after operation completes
-                                provider.setCancelStatus(false);
-
-                                // Determine the background color based on the result
                                 Color snackBarColor;
                                 if (resultMessage.contains('success')) {
                                   snackBarColor =
@@ -164,13 +115,7 @@ class _DispatchedOrdersState extends State<DispatchedOrders> {
                                       AppColors.orange; // Other: Orange
                                 }
 
-                                // Show feedback based on the result
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text(resultMessage),
-                                    backgroundColor: snackBarColor,
-                                  ),
-                                );
+                                Utils.showSnackBar(context, resultMessage, color: snackBarColor, seconds: 5);
                               }
                             },
                       child: dispatchProvider.isCancel
@@ -261,40 +206,45 @@ class _DispatchedOrdersState extends State<DispatchedOrders> {
                   ],
                 ),
               ),
-              CustomPaginationFooter(
-                currentPage: dispatchProvider.currentPage,
-                totalPages: dispatchProvider.totalPages,
-                buttonSize: 30,
-                pageController: dispatchProvider.textEditingController,
-                onFirstPage: () {
-                  dispatchProvider.goToPage(1);
-                },
-                onLastPage: () {
-                  dispatchProvider.goToPage(dispatchProvider.totalPages);
-                },
-                onNextPage: () {
-                  if (dispatchProvider.currentPage <
-                      dispatchProvider.totalPages) {
-                    dispatchProvider.goToPage(dispatchProvider.currentPage + 1);
-                  }
-                },
-                onPreviousPage: () {
-                  if (dispatchProvider.currentPage > 1) {
-                    dispatchProvider.goToPage(dispatchProvider.currentPage - 1);
-                  }
-                },
-                onGoToPage: (page) {
-                  dispatchProvider.goToPage(page);
-                },
-                onJumpToPage: () {
-                  final page =
-                      int.tryParse(dispatchProvider.textEditingController.text);
-                  if (page != null &&
-                      page > 0 &&
-                      page <= dispatchProvider.totalPages) {
-                    dispatchProvider.goToPage(page);
-                  }
-                },
+              Consumer<DispatchedProvider>(
+                builder: (context, dispatchProvider, child) {
+                  return CustomPaginationFooter(
+                    currentPage: dispatchProvider.currentPage,
+                    totalPages: dispatchProvider.totalPages,
+                    totalCount: dispatchProvider.totalOrders,
+                    buttonSize: 30,
+                    pageController: dispatchProvider.textEditingController,
+                    onFirstPage: () {
+                      dispatchProvider.goToPage(1);
+                    },
+                    onLastPage: () {
+                      dispatchProvider.goToPage(dispatchProvider.totalPages);
+                    },
+                    onNextPage: () {
+                      if (dispatchProvider.currentPage <
+                          dispatchProvider.totalPages) {
+                        dispatchProvider.goToPage(dispatchProvider.currentPage + 1);
+                      }
+                    },
+                    onPreviousPage: () {
+                      if (dispatchProvider.currentPage > 1) {
+                        dispatchProvider.goToPage(dispatchProvider.currentPage - 1);
+                      }
+                    },
+                    onGoToPage: (page) {
+                      dispatchProvider.goToPage(page);
+                    },
+                    onJumpToPage: () {
+                      final page =
+                          int.tryParse(dispatchProvider.textEditingController.text);
+                      if (page != null &&
+                          page > 0 &&
+                          page <= dispatchProvider.totalPages) {
+                        dispatchProvider.goToPage(page);
+                      }
+                    },
+                  );
+                }
               ),
             ],
           ),

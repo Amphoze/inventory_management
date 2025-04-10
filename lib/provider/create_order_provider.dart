@@ -140,13 +140,18 @@ class CreateOrderProvider with ChangeNotifier {
     addedComboRateControllers.clear();
 
     for (var item in addedProductList) {
-      final rate = item['amount'] / item['qty'];
+      final qty = int.tryParse(item['qty']) ?? 1;
+      final amt = double.tryParse(item['amount']) ?? 0;
+      final rate = amt / qty;
+
       addedProductQuantityControllers.add(TextEditingController(text: item['qty'].toString()));
       addedProductRateControllers.add(TextEditingController(text: rate.toStringAsFixed(2)));
     }
 
     for (var item in addedComboList) {
-      final rate = double.parse(item['amount'].toString()) / item['qty'];
+      final qty = int.tryParse(item['qty']) ?? 1;
+      final amt = double.tryParse(item['amount']) ?? 0;
+      final rate = amt / qty;
       addedComboQuantityControllers.add(TextEditingController(text: item['qty'].toString()));
       addedComboRateControllers.add(TextEditingController(text: rate.toStringAsFixed(2)));
     }
@@ -217,7 +222,8 @@ class CreateOrderProvider with ChangeNotifier {
   }
 
   String formatDate(DateTime date) => "${date.day}-${date.month}-${date.year}";
-  String formatDateTime(DateTime date) => "${date.day}-${date.month}-${date.year} ${date.hour}:${date.minute}:${date.second}";
+  String formatDateTime(DateTime date) =>
+      "${date.day}-${date.month}-${date.year} ${date.hour}:${date.minute}:${date.second}";
 
   DateTime? parseDate(String dateStr) {
     try {
@@ -328,12 +334,6 @@ class CreateOrderProvider with ChangeNotifier {
 
         totalAmtController.text = (totalAmt - amount).toStringAsFixed(2);
 
-        // totalAmtController.text =
-        //     (double.parse(totalAmtController.text) -
-        //         double.parse(addedProductRateControllers[index].text) *
-        //             int.parse(addedProductQuantityControllers[index].text))
-        //         .toStringAsFixed(2);
-
         addedProductQuantityControllers.removeAt(index);
         addedProductRateControllers.removeAt(index);
 
@@ -356,8 +356,8 @@ class CreateOrderProvider with ChangeNotifier {
   Future<void> addCombo(BuildContext context, Map<String, String> selected) async {
     if (selected['id'] == null) return;
 
-    bool comboExists =
-        addedComboList.any((item) => item['id'] == selected['id']) || addedComboList.any((item) => item['id'] == selected['id']);
+    bool comboExists = addedComboList.any((item) => item['id'] == selected['id']) ||
+        addedComboList.any((item) => item['id'] == selected['id']);
 
     if (comboExists) {
       Utils.showSnackBar(context, 'Combo already added', color: Colors.red);
@@ -381,10 +381,13 @@ class CreateOrderProvider with ChangeNotifier {
       addedComboQuantityControllers.add(TextEditingController(text: '1'));
       addedComboRateControllers.add(TextEditingController(text: fetchedCombo.comboAmount ?? '0'));
 
+      final totalAmt = double.tryParse(totalAmtController.text) ?? 0;
+      final discountPercent = double.tryParse(discountPercentController.text) ?? 0;
+      final fetchedComboAmount = double.tryParse(fetchedCombo.comboAmount ?? '0') ?? 0;
+
       if (fetchedCombo.comboAmount != null && fetchedCombo.comboAmount != '0') {
-        totalAmtController.text = (double.parse(totalAmtController.text) +
-                (100 - double.parse(discountPercentController.text)) * (double.parse(fetchedCombo.comboAmount!) ?? 0))
-            .toStringAsFixed(2);
+        totalAmtController.text =
+            (totalAmt + (100 - discountPercent) * fetchedComboAmount).toStringAsFixed(2);
         codAmountController.text = totalAmtController.text;
       }
 
@@ -689,9 +692,11 @@ class CreateOrderProvider with ChangeNotifier {
     }
   }
 
-  Future<void> getLocationDetails({required BuildContext context, required String pincode, required bool isBilling}) async {
+  Future<void> getLocationDetails(
+      {required BuildContext context, required String pincode, required bool isBilling}) async {
     try {
-      Uri url = Uri.parse('https://api.opencagedata.com/geocode/v1/json?q=$pincode&key=55710109e7c24fbc98c86377005c0612');
+      Uri url =
+          Uri.parse('https://api.opencagedata.com/geocode/v1/json?q=$pincode&key=55710109e7c24fbc98c86377005c0612');
 
       Utils.showLoadingDialog(context, "Fetching Address");
 
@@ -707,7 +712,8 @@ class CreateOrderProvider with ChangeNotifier {
 
           String country = components['country'] ?? '';
           String state = components['state'] ?? '';
-          String city = components['city_district'] ?? components['state_district'] ?? components['_normalized_city'] ?? '';
+          String city =
+              components['city_district'] ?? components['state_district'] ?? components['_normalized_city'] ?? '';
           String countryCode = components['country_code'].toString().toUpperCase() ?? '';
 
           if (isBilling) {
@@ -787,7 +793,7 @@ class CreateOrderProvider with ChangeNotifier {
   }
 
   void applyDiscount() {
-    final discount = double.parse(discountPercentController.text);
+    final discount = double.tryParse(discountPercentController.text) ?? 0;
     final total = _calculateTotal();
     final discountAmt = total * (discount / 100);
 
@@ -800,7 +806,7 @@ class CreateOrderProvider with ChangeNotifier {
   }
 
   void updateOriginal() {
-    final discount = double.parse(discountPercentController.text);
+    final discount = double.tryParse(discountPercentController.text) ?? 0;
     final total = _calculateTotal();
 
     double discountedTotal = discount != 0 ? total - (total * (discount / 100)) : total;
@@ -814,8 +820,8 @@ class CreateOrderProvider with ChangeNotifier {
 
   void updateCod(BuildContext context) {
     try {
-      final discount = double.parse(discountPercentController.text);
-      final cod = double.parse(codAmountController.text);
+      final discount = double.tryParse(discountPercentController.text) ?? 0;
+      final cod = double.tryParse(codAmountController.text) ?? 0;
       final total = _calculateTotal();
 
       originalAmtController.text = total.toStringAsFixed(2);
@@ -841,14 +847,13 @@ class CreateOrderProvider with ChangeNotifier {
   }
 
   void updatePrepaid(BuildContext context) {
-    final discount = double.parse(discountPercentController.text);
-    final prepaid = double.parse(prepaidAmountController.text);
+    final discount = double.tryParse(discountPercentController.text) ?? 0;
+    final prepaid = double.tryParse(prepaidAmountController.text) ?? 0;
     final total = _calculateTotal();
 
     log('updatePrepaid: $prepaid');
     log('updatePrepaid total: $total');
     log('updatePrepaid discount: $discount');
-    // log('updatePrepaid cod: $cod');
 
     originalAmtController.text = total.toStringAsFixed(2);
 
@@ -862,7 +867,7 @@ class CreateOrderProvider with ChangeNotifier {
 
     codAmountController.text = (discountedTotal - prepaid).toStringAsFixed(2);
 
-    final cod = double.parse(codAmountController.text);
+    final cod = double.tryParse(codAmountController.text) ?? 0;
     if (cod == 0) {
       selectPayment('PrePaid');
     } else {

@@ -221,7 +221,7 @@ class DashboardProvider with ChangeNotifier {
         headers: headers,
         body: jsonEncode(body),
       );
-      log('Percentage response body: ${response.body}');
+      // log('Percentage response body: ${response.body}');
 
       if (response.statusCode == 200) {
         resetValues();
@@ -242,11 +242,11 @@ class DashboardProvider with ChangeNotifier {
           }
         });
 
-        log('percentage response: ${response.body}');
-        log('Message: $_message');
-        log('total_orders: $_totalOrders');
-        log('status_totals: $_statusTotals');
-        log('status_percentages: $_statusPercentages');
+        // log('percentage response: ${response.body}');
+        // log('Message: $_message');
+        // log('total_orders: $_totalOrders');
+        // log('status_totals: $_statusTotals');
+        // log('status_percentages: $_statusPercentages');
       } else {
         log('Failed to fetch data: ${response.statusCode}');
       }

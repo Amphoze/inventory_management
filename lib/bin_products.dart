@@ -1,8 +1,11 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
-import 'package:inventory_management/Api/bin_api.dart';
+import 'package:inventory_management/Api/bin_provider.dart';
 import 'package:inventory_management/Custom-Files/colors.dart';
 import 'package:inventory_management/Custom-Files/custom_pagination.dart';
 import 'package:inventory_management/Custom-Files/loading_indicator.dart';
+import 'package:inventory_management/Custom-Files/utils.dart';
 import 'package:provider/provider.dart';
 
 class BinProductsPage extends StatefulWidget {
@@ -16,32 +19,40 @@ class BinProductsPage extends StatefulWidget {
 
 class _BinProductsPageState extends State<BinProductsPage> {
   final _searchController = TextEditingController();
+  late BinProvider pro;
 
   @override
   void initState() {
+    pro = context.read<BinProvider>();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<BinApi>().fetchBinProducts(widget.binName);
-      context.read<BinApi>().setBinName(widget.binName);
+      pro.fetchBinProducts(widget.binName);
+      pro.setBinName(widget.binName);
     });
     super.initState();
   }
 
-  // Widget _buildProductName(String name) {
-  //   return Text(
-  //     name ?? 'No Name',
-  //     style: const TextStyle(
-  //       fontWeight: FontWeight.w600,
-  //       fontSize: 14,
-  //       color: Colors.black87,
-  //     ),
-  //     maxLines: 2,
-  //     overflow: TextOverflow.ellipsis,
-  //   );
-  // }
+  Timer? _debounce;
+
+  void _onSearchChanged(String value) {
+    if (value.trim().isEmpty) {
+      pro.fetchBinProducts(widget.binName);
+    }
+
+    if (_debounce?.isActive ?? false) _debounce?.cancel();
+    _debounce = Timer(const Duration(milliseconds: 300), () {
+      pro.searchProducts(widget.binName, value);
+    });
+  }
+
+  @override
+  void dispose() {
+    _debounce?.cancel();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<BinApi>(
+    return Consumer<BinProvider>(
       builder: (context, provider, child) {
         return Padding(
           padding: const EdgeInsets.all(8.0),
@@ -95,16 +106,17 @@ class _BinProductsPageState extends State<BinProductsPage> {
                     ),
                     const SizedBox(width: 24),
                     // Bin name with ellipsis overflow handling
-                    Expanded(
-                      child: Text(
-                        "Bin: ${widget.binName}",
-                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                              fontWeight: FontWeight.w600,
-                              color: Colors.black87,
-                            ),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
+                    Expanded(child: Utils.richText('Bin: ', widget.binName, fontSize: 20)),
+                    // Expanded(
+                    //   child: Text(
+                    //     "Bin: ${widget.binName}",
+                    //     style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    //           fontWeight: FontWeight.w600,
+                    //           color: Colors.black87,
+                    //         ),
+                    //     overflow: TextOverflow.ellipsis,
+                    //   ),
+                    // ),
                     Container(
                       width: 180,
                       height: 35,
@@ -131,13 +143,13 @@ class _BinProductsPageState extends State<BinProductsPage> {
                               ),
                               style: const TextStyle(color: AppColors.black),
                               onSubmitted: (value) {
-                                provider.searchProducts(widget.binName, value);
-                              },
-                              onChanged: (value) {
-                                if (value.isEmpty) {
+                                if (value.trim().isNotEmpty) {
+                                  provider.searchProducts(widget.binName, value);
+                                } else {
                                   provider.fetchBinProducts(widget.binName);
                                 }
                               },
+                              onChanged: _onSearchChanged,
                             ),
                           ),
                           if (_searchController.text.isNotEmpty)

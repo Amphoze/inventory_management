@@ -13,7 +13,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'chat_provider.dart';
 
 class SupportProvider with ChangeNotifier {
-
+  int totalOrders = 0;
   bool _isLoading = false;
   bool _selectAll = false;
   List<bool> _selectedProducts = [];
@@ -50,7 +50,7 @@ class SupportProvider with ChangeNotifier {
   String? _currentUserEmail;
   String? get currentUserEmail => _currentUserEmail;
 
-  void setUserData(String orderId,  bool canSendMessage) {
+  void setUserData(String orderId, bool canSendMessage) {
     _orderId = orderId;
     _canSendMessage = canSendMessage;
     initUserDetails();
@@ -80,15 +80,11 @@ class SupportProvider with ChangeNotifier {
 
   void handleRowCheckboxChange(int index, bool isSelected) {
     _selectedProducts[index] = isSelected;
-
-    // If any individual checkbox is unchecked, deselect "Select All"
     if (!isSelected) {
       _selectAll = false;
     } else {
-      // If all boxes are checked, select "Select All"
       _selectAll = _selectedProducts.every((element) => element);
     }
-
     notifyListeners();
   }
 
@@ -162,6 +158,7 @@ class SupportProvider with ChangeNotifier {
 
         _totalPages = data['totalPages']; // Get total pages from response
         _orders = orders; // Set the orders for the current page
+        totalOrders = data['totalOrders'] ?? 0;
 
         // Initialize selected products list
         _selectedProducts = List<bool>.filled(_orders.length, false);
@@ -240,6 +237,8 @@ class SupportProvider with ChangeNotifier {
         // }
 
         _orders = orders;
+        _selectedProducts = List<bool>.filled(_orders.length, false); // Reset to match _orders
+        _selectAll = false;
         print('Orders fetched: ${orders.length}');
       } else {
         print('Failed to load orders: ${response.statusCode}');
@@ -275,8 +274,6 @@ class SupportProvider with ChangeNotifier {
 
       final responseData = json.decode(response.body);
 
-      // log('support body: $responseData');
-
       if (response.statusCode == 200) {
         await Provider.of<ChatProvider>(context, listen: false).sendMessageForOrder(
           orderId: orderId,
@@ -291,24 +288,4 @@ class SupportProvider with ChangeNotifier {
       return false; // Network error
     }
   }
-
-// void _showResultDialog(BuildContext context, bool success) {
-//   showDialog(
-//     context: context,
-//     builder: (context) {
-//       return AlertDialog(
-//         title: Text(success ? 'Success' : 'Error'),
-//         content: Text(success
-//             ? 'Your request has been sent.'
-//             : 'Failed to send request. Please try again.'),
-//         actions: [
-//           TextButton(
-//             onPressed: () => Navigator.pop(context),
-//             child: const Text('OK'),
-//           ),
-//         ],
-//       );
-//     },
-//   );
-// }
 }

@@ -1,3 +1,6 @@
+import 'dart:async';
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:inventory_management/Custom-Files/custom-button.dart';
 import 'package:inventory_management/Custom-Files/loading_indicator.dart';
@@ -15,8 +18,26 @@ class ProductMasterPage extends StatefulWidget {
 }
 
 class _ProductMasterPageState extends State<ProductMasterPage> {
+  late ProductMasterProvider provider;
+  Timer? _debounce;
+
+  void _onSearchChanged(String value) {
+    log("_onSearchChanged called");
+    if (value.trim().isEmpty) {
+      provider.refreshPage(context);
+    }
+
+    if (_debounce?.isActive ?? false) _debounce?.cancel();
+    _debounce = Timer(const Duration(milliseconds: 300), () {
+    log("_onSearchChanged ########################");
+
+      provider.performSearch(context);
+    });
+  }
+
   @override
   void initState() {
+    provider = Provider.of<ProductMasterProvider>(context, listen: false);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       Provider.of<ProductMasterProvider>(context, listen: false).loadMoreProducts(context);
     });
@@ -94,25 +115,15 @@ class _ProductMasterPageState extends State<ProductMasterPage> {
           Expanded(
             child: TextField(
               controller: provider.searchbarController,
-              decoration: InputDecoration(
+              decoration: const InputDecoration(
                 hintText: 'Search by SKU or Name',
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12.0),
                   borderSide: const BorderSide(color: Colors.orange, width: 2.0),
                 ),
               ),
-              onChanged: (value) {
-                if (value.trim().isEmpty) {
-                  provider.refreshPage(context);
-                }
-              },
+              onChanged: _onSearchChanged,
               onSubmitted: (_) => provider.performSearch(context),
             ),
-          ),
-          const SizedBox(width: 8),
-          ElevatedButton(
-            onPressed: () => provider.performSearch(context),
-            child: const Text('Search'),
           ),
           const SizedBox(width: 8),
           ElevatedButton(

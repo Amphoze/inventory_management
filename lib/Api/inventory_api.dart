@@ -3,13 +3,12 @@ import 'package:http/http.dart' as http;
 import 'package:inventory_management/constants/constants.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-//class InventoryApi with ChangeNotifier {
-bool _isAuthenticated = false;
+bool isAuthenticated = false;
 List<Map<String, dynamic>> filteredInventories = [];
 
 Future<String?> getToken() async {
   final prefs = await SharedPreferences.getInstance();
-  _isAuthenticated = prefs.getString('authToken') != null;
+  isAuthenticated = prefs.getString('authToken') != null;
   return prefs.getString('authToken');
 }
 

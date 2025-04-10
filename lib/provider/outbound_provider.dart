@@ -9,14 +9,17 @@ import 'package:inventory_management/model/orders_model.dart'; // Ensure you hav
 import 'package:logger/logger.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-class OutboundProvider with ChangeNotifier {
-  bool allSelectedReady = false;
-  int selectedReadyItemsCount = 0;
+import '../Custom-Files/utils.dart';
 
-  List<bool> _selectedReadyOrders = [];
+class OutboundProvider with ChangeNotifier {
+  bool allSelected = false;
+  int selectedOrdersCount = 0;
+  int totalOrders = 0;
+
+  List<bool> _selectedOrders = [];
   List<Order> _outboundOrders = [];
-  int _totalReadyPages = 1;
-  int _currentPageReady = 1;
+  int _totalPages = 1;
+  int _currentPage = 1;
   String? _selectedPayment;
   String? _selectedFilter;
   String? _selectedOrderType;
@@ -36,7 +39,7 @@ class OutboundProvider with ChangeNotifier {
 
   bool isLoading = false;
 
-  List<bool> get selectedReadyOrders => _selectedReadyOrders;
+  List<bool> get selectedOrders => _selectedOrders;
   String? get selectedPayment => _selectedPayment;
   String? get selectedOrderType => _selectedOrderType;
   String? get selectedCustomerType => _selectedCustomerType;
@@ -46,9 +49,9 @@ class OutboundProvider with ChangeNotifier {
   String get normalDate => _normalDate;
   String get sanitizedEmail => _sanitizedEmail;
 
-  int get currentPageReady => _currentPageReady;
+  int get currentPage => _currentPage;
   List<Order> get outboundOrders => _outboundOrders;
-  int get totalReadyPages => _totalReadyPages;
+  int get totalPages => _totalPages;
 
   bool isConfirm = false;
   bool isCancel = false;
@@ -56,8 +59,8 @@ class OutboundProvider with ChangeNotifier {
 
   void resetOrderData() {
     _outboundOrders = [];
-    _currentPageReady = 1;
-    _totalReadyPages = 1;
+    _currentPage = 1;
+    _totalPages = 1;
     notifyListeners();
   }
 
@@ -129,16 +132,9 @@ class OutboundProvider with ChangeNotifier {
   }
 
   void resetSelections() {
-    allSelectedReady = false;
-    // allSelectedFailed = false;
-
-    selectedReadyOrders.fillRange(0, selectedReadyOrders.length, false);
-    // selectedFailedOrders.fillRange(0, selectedFailedOrders.length, false);
-
-    // Reset counts
-    selectedReadyItemsCount = 0;
-    // selectedFailedItemsCount = 0;
-
+    allSelected = false;
+    selectedOrders.fillRange(0, selectedOrders.length, false);
+    selectedOrdersCount = 0;
     notifyListeners();
   }
 
@@ -241,15 +237,10 @@ class OutboundProvider with ChangeNotifier {
   Future<void> fetchOrders({int page = 1}) async {
     searchController.clear();
     dispatchCount = rtoCount = allCount = null;
-    if (page < 1 || page > totalReadyPages) {
+    if (page < 1 || page > totalPages) {
       print('Invalid page number for ready orders: $page');
       return;
     }
-
-    // if(searchController.text.trim().isNotEmpty) {
-    //   searchOrdersByID(searchController.text.trim());
-    //   return;
-    // }
 
     isLoading = true;
     notifyListeners();
@@ -283,7 +274,6 @@ class OutboundProvider with ChangeNotifier {
     }
 
     try {
-      // Fetch ready orders
       final responseReady = await http.get(Uri.parse(readyOrdersUrl), headers: {
         'Authorization': 'Bearer $token',
         'Content-Type': 'application/json',
@@ -294,15 +284,12 @@ class OutboundProvider with ChangeNotifier {
         final orders = (jsonData['orders'] as List).map((order) => Order.fromJson(order)).toList();
         // outboundOrders = orders;
         _outboundOrders = orders;
-        _totalReadyPages = jsonData['totalPages'] ?? 1; // Update total pages
-        _currentPageReady = page; // Update the current page for ready orders
+        _totalPages = jsonData['totalPages'] ?? 1; // Update total pages
+        _currentPage = page; // Update the current page for ready orders
+        totalOrders = jsonData['totalOrders'] ?? 0;
 
-        // log("readyOrders: $readyOrders");
-
-        // Reset selections
         resetSelections();
-        _selectedReadyOrders = List<bool>.filled(outboundOrders.length, false);
-        // outboundOrders = outboundOrders;
+        _selectedOrders = List<bool>.filled(_outboundOrders.length, false);
       } else {
         resetOrderData();
         log('Failed to load ready orders: ${responseReady.body}');
@@ -411,7 +398,6 @@ class OutboundProvider with ChangeNotifier {
         // After successful confirmation, fetch updated orders and notify listeners
         await fetchOrders(); // Assuming fetchOrders is a function that reloads the orders
         resetSelections(); // Clear selected order IDs
-        setCancelStatus(false);
         notifyListeners(); // Notify the UI to rebuild
 
         return responseData['message'] ?? 'Orders cancelled successfully';
@@ -419,40 +405,40 @@ class OutboundProvider with ChangeNotifier {
         return responseData['message'] ?? 'Failed to cancel orders';
       }
     } catch (error) {
-      setCancelStatus(false);
       notifyListeners();
       print('Error during API request: $error');
       return 'An error occurred: $error';
+    } finally {
+      setCancelStatus(false);
     }
   }
 
   void toggleSelectAllReady(bool isSelected) {
-    allSelectedReady = isSelected;
-    selectedReadyItemsCount = isSelected ? outboundOrders.length : 0; // Update count based on selection state
-    _selectedReadyOrders = List<bool>.filled(outboundOrders.length, isSelected); // Update selection list
+    allSelected = isSelected;
+    selectedOrdersCount = isSelected ? outboundOrders.length : 0; // Update count based on selection state
+    _selectedOrders = List<bool>.filled(outboundOrders.length, isSelected); // Update selection list
 
     notifyListeners();
   }
 
   void toggleOrderSelectionReady(bool value, int index) {
     Logger().e('toggleOrderSelectionReady: $value, $index');
-    if (index >= 0 && index < _selectedReadyOrders.length) {
-      _selectedReadyOrders[index] = value;
-      selectedReadyItemsCount = _selectedReadyOrders.where((selected) => selected).length; // Update count of selected items
-
-      // Check if all selected
-      allSelectedReady = selectedReadyItemsCount == outboundOrders.length;
+    if (index >= 0 && index < _selectedOrders.length) {
+      _selectedOrders[index] = value;
+      selectedOrdersCount = _selectedOrders.where((selected) => selected).length; // Update count of selected items
+      allSelected = selectedOrdersCount == _outboundOrders.length;
 
       notifyListeners();
     }
   }
 
-  // Update status for failed orders
-
-// Update status for ready-to-confirm orders
   Future<void> updateOutboundOrders(BuildContext context) async {
-    final List<String> readyOrderIds =
-        outboundOrders.asMap().entries.where((entry) => _selectedReadyOrders[entry.key]).map((entry) => entry.value.orderId).toList();
+    final List<String> readyOrderIds = outboundOrders
+        .asMap()
+        .entries
+        .where((entry) => _selectedOrders[entry.key])
+        .map((entry) => entry.value.orderId)
+        .toList();
 
     if (readyOrderIds.isEmpty) {
       _showSnackbar(context, 'No orders selected to update.');
@@ -463,18 +449,10 @@ class OutboundProvider with ChangeNotifier {
       await updateOrderStatus(context, orderId, 2); // Update status to 2 for ready-to-confirm orders
     }
 
-    // Reload orders after updating
-    await fetchOrders(); // Refresh the orders after update
-
-    // Reset checkbox states
-    allSelectedReady = false; // Reset "Select All" checkbox
-    _selectedReadyOrders = List<bool>.filled(outboundOrders.length, false); // Reset selection list
-    selectedReadyItemsCount = 0; // Reset selected items count
-
-    notifyListeners(); // Notify listeners to update UI
+    await fetchOrders();
+    notifyListeners();
   }
 
-  // Existing updateOrderStatus function
   Future<void> updateOrderStatus(BuildContext context, String orderId, int newStatus) async {
     final String? token = await _getToken();
     if (token == null) {
@@ -482,10 +460,8 @@ class OutboundProvider with ChangeNotifier {
       return;
     }
 
-    // Define the URL for the update with query parameters
     final String url = '${await Constants.getBaseUrl()}/orders?order_id=$orderId&status=$newStatus';
 
-    // Set up the headers for the request
     final headers = {
       'Authorization': 'Bearer $token',
       'Content-Type': 'application/json',
@@ -515,22 +491,15 @@ class OutboundProvider with ChangeNotifier {
     }
   }
 
-  // Method to display a snackbar
-  void _showSnackbar(BuildContext context, String message, {Color color = Colors.black}) {
-    final snackBar = SnackBar(
-      content: Text(message),
-      backgroundColor: color,
-    );
-    ScaffoldMessenger.of(context).showSnackBar(snackBar);
+  void _showSnackbar(BuildContext context, String message, {Color? color}) {
+    Utils.showSnackBar(context, message, color: color);
   }
 
-  // Method to get the token from shared preferences
   Future<String?> _getToken() async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getString('authToken');
   }
 
-  // Format date
   String formatDate(DateTime date) {
     String year = date.year.toString();
     String month = date.month.toString().padLeft(2, '0');
@@ -560,8 +529,8 @@ class OutboundProvider with ChangeNotifier {
     final prefs = await SharedPreferences.getInstance();
     final warehouseId = prefs.getString('warehouseId') ?? '';
 
-    // log('searchOrdersByID');
-    String url = '${await Constants.getBaseUrl()}/orders?marketplace=Shopify,Woocommerce&isOutBound=false&order_id=$encodedOrderId';
+    String url =
+        '${await Constants.getBaseUrl()}/orders?marketplace=Shopify,Woocommerce&isOutBound=false&order_id=$encodedOrderId';
     final token = await _getToken();
     if (token == null) return;
 
@@ -582,7 +551,9 @@ class OutboundProvider with ChangeNotifier {
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         _outboundOrders = (data['orders'] as List).map((order) => Order.fromJson(order)).toList();
-        // _outboundOrders = [Order.fromJson(data)];
+        totalOrders = data['totalOrders'] ?? 0;
+        resetSelections();
+        _selectedOrders = List<bool>.filled(_outboundOrders.length, false);
       } else {
         _outboundOrders = [];
       }
@@ -601,9 +572,6 @@ class OutboundProvider with ChangeNotifier {
     if (token == null) return;
 
     try {
-      // isLoading = true;
-      // notifyListeners();
-
       final response = await http.get(
         Uri.parse(url),
         headers: {
@@ -623,13 +591,9 @@ class OutboundProvider with ChangeNotifier {
         List<Order> rtoOrders = orders.where((order) => order.orderStatus == 11).toList();
         rtoCount = rtoOrders.length;
 
-        // Logger().e('all orders: $allCount');
-        // Logger().e('dispatchOrders: $dispatchCount');
-        // Logger().e('rtoOrders: $rtoCount');
+        resetSelections();
+        _selectedOrders = List<bool>.filled(_outboundOrders.length, false);
 
-        notifyListeners();
-
-        // Use dispatchOrders and rtoOrders as needed
       } else {
         dispatchCount = null;
         rtoCount = null;
@@ -640,7 +604,6 @@ class OutboundProvider with ChangeNotifier {
       dispatchCount = null;
       rtoCount = null;
     } finally {
-      // isLoading = false;
       notifyListeners();
     }
   }
@@ -650,7 +613,8 @@ class OutboundProvider with ChangeNotifier {
     final prefs = await SharedPreferences.getInstance();
     final warehouseId = prefs.getString('warehouseId') ?? '';
 
-    String url = '${await Constants.getBaseUrl()}/orders?marketplace=Shopify,Woocommerce&isOutBound=false&phone=${phone.trim()}';
+    String url =
+        '${await Constants.getBaseUrl()}/orders?marketplace=Shopify,Woocommerce&isOutBound=false&phone=${phone.trim()}';
     final token = await _getToken();
     if (token == null) return;
 
@@ -673,14 +637,14 @@ class OutboundProvider with ChangeNotifier {
         log('data: $data');
         _outboundOrders = (data['orders'] as List).map((order) => Order.fromJson(order)).toList();
         await getOrdersByPhone(phone);
-        // dispatchCount = await getDispatchOrders(phone);
-        // rtoCount = await getRtoOrders(phone);
         log('readyOrders: $outboundOrders');
       } else {
-        resetOrderData();      }
+        resetOrderData();
+      }
     } catch (e) {
       log('Search orders error: $e');
-      resetOrderData();    } finally {
+      resetOrderData();
+    } finally {
       isLoading = false;
       notifyListeners();
     }

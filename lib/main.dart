@@ -6,12 +6,12 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:inventory_management/Api/auth_provider.dart';
-import 'package:inventory_management/Api/bin_api.dart';
+import 'package:inventory_management/Api/bin_provider.dart';
 import 'package:inventory_management/Api/label-api.dart';
 import 'package:inventory_management/Api/lable-page-api.dart';
 import 'package:inventory_management/Api/order-page-checkbox-provider.dart';
 import 'package:inventory_management/Api/products-provider.dart';
-import 'package:inventory_management/check_orders/provider/check_orders_provider.dart';
+import 'package:inventory_management/check_orders/provider/supervisor_provider.dart';
 import 'package:inventory_management/dashboard.dart';
 import 'package:inventory_management/firebase_options.dart';
 import 'package:inventory_management/login_page.dart';
@@ -30,7 +30,7 @@ import 'package:inventory_management/provider/inner_provider.dart';
 import 'package:inventory_management/provider/inventory_provider.dart';
 import 'package:inventory_management/provider/invoice_provider.dart';
 import 'package:inventory_management/provider/label_data_provider.dart';
-import 'package:inventory_management/provider/location_provider.dart';
+import 'package:inventory_management/provider/warehouse_provider.dart';
 import 'package:inventory_management/provider/manifest_provider.dart';
 import 'package:inventory_management/provider/marketplace_provider.dart';
 import 'package:inventory_management/provider/orders_provider.dart';
@@ -42,7 +42,7 @@ import 'package:inventory_management/provider/product_data_provider.dart';
 import 'package:inventory_management/provider/product_master_provider.dart';
 import 'package:inventory_management/provider/racked_provider.dart';
 import 'package:inventory_management/provider/return_entry_provider.dart';
-import 'package:inventory_management/provider/return_provoider.dart';
+import 'package:inventory_management/provider/rto_provider.dart';
 import 'package:inventory_management/provider/routing_provider.dart';
 import 'package:inventory_management/provider/show-details-order-provider.dart';
 import 'package:inventory_management/provider/support_provider.dart';
@@ -66,7 +66,7 @@ void main() async {
   runApp(MultiProvider(
     providers: [
       ChangeNotifierProvider(create: (context) => LabelApi()),
-      ChangeNotifierProvider(create: (context) => BinApi()),
+      ChangeNotifierProvider(create: (context) => BinProvider()),
       ChangeNotifierProvider(create: (context) => AuthProvider()),
       ChangeNotifierProvider(create: (context) => CheckBoxProvider()),
       ChangeNotifierProvider(create: (context) => DashboardProvider()),
@@ -85,9 +85,9 @@ void main() async {
       ChangeNotifierProvider(create: (context) => OutboundProvider()),
       ChangeNotifierProvider(create: (context) => DispatchedProvider()),
       ChangeNotifierProvider(create: (context) => CancelledProvider()),
-      ChangeNotifierProvider(create: (context) => ReturnProvider()),
+      ChangeNotifierProvider(create: (context) => RtoProvider()),
       ChangeNotifierProvider(create: (context) => AllOrdersProvider()),
-      ChangeNotifierProvider(create: (context) => LocationProvider(authProvider: Provider.of<AuthProvider>(context, listen: false))),
+      ChangeNotifierProvider(create: (context) => WarehouseProvider(authProvider: Provider.of<AuthProvider>(context, listen: false))),
       ChangeNotifierProvider(create: (context) => CategoryProvider()),
       ChangeNotifierProvider(create: (context) => ProductDataProvider()),
       ChangeNotifierProvider(create: (context) => LabelDataProvider()),
@@ -105,7 +105,7 @@ void main() async {
       ChangeNotifierProvider(create: (context) => ChatProvider()),
       ChangeNotifierProvider(create: (context) => ReturnEntryProvider()),
       ChangeNotifierProvider(create: (context) => RoutingProvider()),
-      ChangeNotifierProvider(create: (context) => CheckOrdersProvider()),
+      ChangeNotifierProvider(create: (context) => SupervisorProvider()),
     ],
     child: const MyApp(),
   ));

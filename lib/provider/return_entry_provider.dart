@@ -10,6 +10,8 @@ import 'package:logger/logger.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:file_picker/file_picker.dart';
 
+import '../Custom-Files/utils.dart';
+
 class ReturnEntryProvider with ChangeNotifier {
   bool _isLoading = false;
   int selectedItemsCount = 0;
@@ -89,14 +91,7 @@ class ReturnEntryProvider with ChangeNotifier {
   }
 
   void showSnackBar(BuildContext context, String message, Color color) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        duration: const Duration(seconds: 3),
-        behavior: SnackBarBehavior.floating,
-        backgroundColor: color,
-      ),
-    );
+    Utils.showSnackBar(context, message, color: color);
   }
 
   void showMessageDialog(BuildContext context, String message, Color color) {

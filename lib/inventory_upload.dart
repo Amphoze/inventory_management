@@ -7,6 +7,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:inventory_management/Api/inventory_api.dart';
+import 'package:inventory_management/Custom-Files/utils.dart';
 import 'package:inventory_management/constants/constants.dart';
 
 class InventoryUpload extends StatefulWidget {
@@ -43,9 +44,7 @@ class _InventoryUploadState extends State<InventoryUpload> {
         });
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error reading CSV file: $e')),
-      );
+      Utils.showSnackBar(context, 'Error reading CSV file', details: e.toString(), isError: true);
     }
   }
 
@@ -99,20 +98,12 @@ class _InventoryUploadState extends State<InventoryUpload> {
 
         log('Code: ${response.statusCode}');
         log('Response body: ${response.body}');
-
-        // if (response.statusCode != 201) {
-        //   throw Exception('Failed to upload SKU: $sku');
-        // }
       }
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Upload completed successfully!')),
-      );
-    } catch (e) {
-      log('bada error: $e');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error during upload: $e')),
-      );
+      Utils.showSnackBar(context, 'Upload completed successfully!', color: AppColors.cardsgreen);
+    } catch (e, s) {
+      log('error: $e$s');
+      Utils.showSnackBar(context, 'Error during upload', details: e.toString(), isError: true);
     } finally {
       setState(() {
         // _isUploading = false;

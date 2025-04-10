@@ -15,6 +15,7 @@ import 'package:logger/logger.dart';
 import 'package:provider/provider.dart';
 
 import 'Custom-Files/sub_category_search_field.dart';
+import 'Custom-Files/utils.dart';
 
 class CreateProduct extends StatefulWidget {
   final VoidCallback onCreated;
@@ -29,7 +30,6 @@ class _CreateProductState extends State<CreateProduct> {
   String? token;
   List<String>? webImages;
 
-  CustomDropdown brandd = CustomDropdown();
   final TextEditingController _productNameController = TextEditingController();
   final TextEditingController _productIdentifierController = TextEditingController();
   final TextEditingController _productBrandController = TextEditingController();
@@ -190,8 +190,8 @@ class _CreateProductState extends State<CreateProduct> {
       productProvider = Provider.of<ProductProvider>(context, listen: false);
       await productProvider.getCategories();
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(backgroundColor: Colors.red, content: Text("some error ${e.toString()}")));
-      productProvider!.update();
+      Utils.showSnackBar(context, e.toString(), seconds: 5, color: AppColors.cardsred);
+      productProvider.update();
     }
   }
 
@@ -442,22 +442,12 @@ class _CreateProductState extends State<CreateProduct> {
 
   void saveButton() async {
     if (!_formKey.currentState!.validate()) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please fill all required fields correctly'),
-          backgroundColor: Colors.red,
-        ),
-      );
+      Utils.showSnackBar(context, 'Please fill all required fields correctly', isError: true);
       return;
     }
 
     if (!_validateDropdowns()) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please select all required dropdown fields'),
-          backgroundColor: Colors.red,
-        ),
-      );
+      Utils.showSnackBar(context, 'Please select all required dropdown fields', isError: true);
       return;
     }
 
@@ -503,20 +493,14 @@ class _CreateProductState extends State<CreateProduct> {
       final responseData = jsonDecode(res.body);
 
       if (res.statusCode == 200 || res.statusCode == 201) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Product created successfully')),
-        );
+        Utils.showSnackBar(context, 'Product created successfully', color: AppColors.cardsgreen);
         clear();
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: ${responseData['message']}')),
-        );
+        Utils.showSnackBar(context, responseData['message'], isError: true);
       }
     } catch (error, s) {
       log('Error creating product: $error \n\n$s');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: $error')),
-      );
+      Utils.showSnackBar(context, error.toString(), details: error.toString(), isError: true);
     } finally {
       productProvider!.saveButtonClickStatus();
     }
@@ -536,12 +520,7 @@ class _CreateProductState extends State<CreateProduct> {
   }
 
   void _scrollToField(String fieldName) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Please select a $fieldName'),
-        backgroundColor: Colors.red,
-      ),
-    );
+    Utils.showSnackBar(context, 'Please select a $fieldName', isError: true);
   }
 
   Widget webLayout(

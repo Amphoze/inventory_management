@@ -31,9 +31,8 @@ class ReturnEntry extends StatefulWidget {
 class _ReturnEntryState extends State<ReturnEntry> {
   final TextEditingController _searchController = TextEditingController();
 
-  void _onSearchButtonPressed() {
-    final query = _searchController.text.trim();
-    if (query.isNotEmpty) {
+  void _onSearchButtonPressed(String query) {
+    if (query.trim().isNotEmpty) {
       Provider.of<ReturnEntryProvider>(context, listen: false).onSearchChanged(query);
     }
   }
@@ -93,6 +92,17 @@ class _ReturnEntryState extends State<ReturnEntry> {
                           ),
                         ),
                       )
+                    else if (pro.orders.isEmpty && _searchController.text.trim().isNotEmpty)
+                        const Center(
+                          child: Text(
+                            'No order found',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.grey,
+                            ),
+                          ),
+                        )
                     else
                       ListView.builder(
                         itemCount: pro.orders.length,
@@ -364,9 +374,7 @@ class _ReturnEntryState extends State<ReturnEntry> {
             pro.searchOrders(query.trim());
           }
         },
-        onEditingComplete: () {
-          FocusScope.of(context).unfocus();
-        },
+        onChanged: _onSearchButtonPressed,
       ),
     );
   }

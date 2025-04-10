@@ -26,6 +26,7 @@ class _ManifestPageState extends State<ManifestPage> {
   @override
   void initState() {
     super.initState();
+    manifestProvider = Provider.of<ManifestProvider>(context, listen: false);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       manifestProvider.fetchOrdersWithStatus8(date: picked, courier: selectedCourier);
       _selectedDate = 'Select Date';
@@ -35,9 +36,8 @@ class _ManifestPageState extends State<ManifestPage> {
     Provider.of<ManifestProvider>(context, listen: false).textEditingController.clear();
   }
 
-  void _onSearchButtonPressed() {
-    final query = manifestProvider.manifestController.text.trim();
-    if (query.isNotEmpty) {
+  void _onSearchButtonPressed(String query) {
+    if (query.trim().isNotEmpty) {
       Provider.of<ManifestProvider>(context, listen: false).onSearchChanged(query);
     }
   }
@@ -73,37 +73,12 @@ class _ManifestPageState extends State<ManifestPage> {
                           border: InputBorder.none,
                           contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 12.0),
                         ),
-                        onChanged: (query) {
-                          if (query.trim().isEmpty) {
-                            manifestProvider.fetchOrdersWithStatus8();
-                          }
-                        },
-                        onTap: () {
-                          setState(() {
-                            // Mark the search field as focused
-                          });
-                        },
+                        onChanged: _onSearchButtonPressed,
                         onSubmitted: (query) {
                           if (query.isNotEmpty) {
                             manifestProvider.searchOrders(query);
                           }
                         },
-                        onEditingComplete: () {
-                          // Mark it as not focused when done
-                          FocusScope.of(context).unfocus(); // Dismiss the keyboard
-                        },
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    // Search Button
-                    ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primaryBlue,
-                      ),
-                      onPressed: manifestProvider.manifestController.text.isNotEmpty ? _onSearchButtonPressed : null,
-                      child: const Text(
-                        'Search',
-                        style: TextStyle(color: Colors.white),
                       ),
                     ),
                     const Spacer(),
@@ -290,7 +265,7 @@ class _ManifestPageState extends State<ManifestPage> {
                 ),
               ),
               const SizedBox(height: 8), // Decreased space here
-              _buildTableHeader(manifestProvider.orders.length, manifestProvider),
+              _buildTableHeader(manifestProvider.orders.length),
               const SizedBox(height: 4), // New space for alignment
               Expanded(
                 child: Stack(
@@ -331,38 +306,43 @@ class _ManifestPageState extends State<ManifestPage> {
                   ],
                 ),
               ),
-              CustomPaginationFooter(
-                currentPage: manifestProvider.currentPage, // Ensure correct currentPage
-                totalPages: manifestProvider.totalPages,
-                buttonSize: 30,
-                pageController: manifestProvider.textEditingController,
-                onFirstPage: () {
-                  manifestProvider.goToPage(1);
-                },
-                onLastPage: () {
-                  manifestProvider.goToPage(manifestProvider.totalPages);
-                },
-                onNextPage: () {
-                  if (manifestProvider.currentPage < manifestProvider.totalPages) {
-                    print('Navigating to page: ${manifestProvider.currentPage + 1}');
-                    manifestProvider.goToPage(manifestProvider.currentPage + 1);
-                  }
-                },
-                onPreviousPage: () {
-                  if (manifestProvider.currentPage > 1) {
-                    print('Navigating to page: ${manifestProvider.currentPage - 1}');
-                    manifestProvider.goToPage(manifestProvider.currentPage - 1);
-                  }
-                },
-                onGoToPage: (page) {
-                  manifestProvider.goToPage(page);
-                },
-                onJumpToPage: () {
-                  final page = int.tryParse(manifestProvider.textEditingController.text);
-                  if (page != null && page > 0 && page <= manifestProvider.totalPages) {
-                    manifestProvider.goToPage(page);
-                  }
-                },
+              Consumer<ManifestProvider>(
+                builder: (context, manifestProvider, child) {
+                  return CustomPaginationFooter(
+                    currentPage: manifestProvider.currentPage, // Ensure correct currentPage
+                    totalPages: manifestProvider.totalPages,
+                    totalCount: manifestProvider.totalOrders,
+                    buttonSize: 30,
+                    pageController: manifestProvider.textEditingController,
+                    onFirstPage: () {
+                      manifestProvider.goToPage(1);
+                    },
+                    onLastPage: () {
+                      manifestProvider.goToPage(manifestProvider.totalPages);
+                    },
+                    onNextPage: () {
+                      if (manifestProvider.currentPage < manifestProvider.totalPages) {
+                        print('Navigating to page: ${manifestProvider.currentPage + 1}');
+                        manifestProvider.goToPage(manifestProvider.currentPage + 1);
+                      }
+                    },
+                    onPreviousPage: () {
+                      if (manifestProvider.currentPage > 1) {
+                        print('Navigating to page: ${manifestProvider.currentPage - 1}');
+                        manifestProvider.goToPage(manifestProvider.currentPage - 1);
+                      }
+                    },
+                    onGoToPage: (page) {
+                      manifestProvider.goToPage(page);
+                    },
+                    onJumpToPage: () {
+                      final page = int.tryParse(manifestProvider.textEditingController.text);
+                      if (page != null && page > 0 && page <= manifestProvider.totalPages) {
+                        manifestProvider.goToPage(page);
+                      }
+                    },
+                  );
+                }
               ),
             ],
           ),
@@ -371,7 +351,9 @@ class _ManifestPageState extends State<ManifestPage> {
     );
   }
 
-  Widget _buildTableHeader(int totalCount, ManifestProvider manifestProvider) {
+  Widget _buildTableHeader(int totalCount) {
+    final manifestProvider = Provider.of<ManifestProvider>(context);
+
     return Container(
       color: Colors.grey[300],
       padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
@@ -389,10 +371,7 @@ class _ManifestPageState extends State<ManifestPage> {
           Text(
             'Select All(${manifestProvider.selectedCount})',
           ),
-          buildHeader('ORDERS', flex: 8), // Increased flex
-          // buildHeader('DELIVERY PARTNER SIGNATURE',
-          //     flex: 5), // Decreased flex for better alignment
-          // buildHeader('CONFIRM', flex: 3),
+          buildHeader('ORDERS', flex: 8),
         ],
       ),
     );

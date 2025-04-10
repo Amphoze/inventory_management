@@ -37,9 +37,8 @@ class _PackerPageState extends State<PackerPage> {
     Provider.of<PackerProvider>(context, listen: false).textEditingController.clear();
   }
 
-  void _onSearchButtonPressed() {
-    final query = _searchController.text.trim();
-    if (query.isNotEmpty) {
+  void _onSearchButtonPressed(String query) {
+    if (query.trim().isNotEmpty) {
       Provider.of<PackerProvider>(context, listen: false).onSearchChanged(query);
     }
   }
@@ -76,16 +75,7 @@ class _PackerPageState extends State<PackerPage> {
                           border: InputBorder.none,
                           contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 12.0),
                         ),
-                        onChanged: (query) {
-                          // Trigger a rebuild to show/hide the search button
-                          // setState(() {
-                          //   // Update search focus
-                          // });
-                          if (query.isEmpty) {
-                            // Reset to all orders if search is cleared
-                            packerProvider.fetchOrdersWithStatus5();
-                          }
-                        },
+                        onChanged: _onSearchButtonPressed,
                         onSubmitted: (query) {
                           if (query.isNotEmpty) {
                             packerProvider.searchOrders(query);
@@ -97,93 +87,7 @@ class _PackerPageState extends State<PackerPage> {
                         },
                       ),
                     ),
-                    // const SizedBox(width: 8),
-                    // // Search Button
-                    // ElevatedButton(
-                    //   style: ElevatedButton.styleFrom(
-                    //     backgroundColor: AppColors.primaryBlue,
-                    //   ),
-                    //   onPressed: _searchController.text.isNotEmpty ? _onSearchButtonPressed : null,
-                    //   child: const Text(
-                    //     'Search',
-                    //     style: TextStyle(color: Colors.white),
-                    //   ),
-                    // ),
                     const Spacer(),
-                    //   ElevatedButton(
-                    //   style: ElevatedButton.styleFrom(
-                    //     backgroundColor: AppColors.cardsred,
-                    //   ),
-                    //   onPressed: packerProvider.isCancel
-                    //       ? null // Disable button while loading
-                    //       : () async {
-                    //           final provider = Provider.of<PackerProvider>(
-                    //               context,
-                    //               listen: false);
-
-                    //           // Collect selected order IDs
-                    //           List<String> selectedOrderIds = provider.orders
-                    //               .asMap()
-                    //               .entries
-                    //               .where((entry) =>
-                    //                   provider.selectedProducts[entry.key])
-                    //               .map((entry) => entry.value.orderId)
-                    //               .toList();
-
-                    //           if (selectedOrderIds.isEmpty) {
-                    //             // Show an error message if no orders are selected
-                    //             ScaffoldMessenger.of(context).showSnackBar(
-                    //               const SnackBar(
-                    //                 content: Text('No orders selected'),
-                    //                 backgroundColor: AppColors.cardsred,
-                    //               ),
-                    //             );
-                    //           } else {
-                    //             // Set loading status to true before starting the operation
-                    //             provider.setCancelStatus(true);
-
-                    //             // Call confirmOrders method with selected IDs
-                    //             String resultMessage = await provider
-                    //                 .cancelOrders(context, selectedOrderIds);
-
-                    //             // Set loading status to false after operation completes
-                    //             provider.setCancelStatus(false);
-
-                    //             // Determine the background color based on the result
-                    //             Color snackBarColor;
-                    //             if (resultMessage.contains('success')) {
-                    //               snackBarColor =
-                    //                   AppColors.green; // Success: Green
-                    //             } else if (resultMessage.contains('error') ||
-                    //                 resultMessage.contains('failed')) {
-                    //               snackBarColor =
-                    //                   AppColors.cardsred; // Error: Red
-                    //             } else {
-                    //               snackBarColor =
-                    //                   AppColors.orange; // Other: Orange
-                    //             }
-
-                    //             // Show feedback based on the result
-                    //             ScaffoldMessenger.of(context).showSnackBar(
-                    //               SnackBar(
-                    //                 content: Text(resultMessage),
-                    //                 backgroundColor: snackBarColor,
-                    //               ),
-                    //             );
-                    //           }
-                    //         },
-                    //   child: packerProvider.isCancel
-                    //       ? const SizedBox(
-                    //           width: 20,
-                    //           height: 20,
-                    //           child:
-                    //               CircularProgressIndicator(color: Colors.white),
-                    //         )
-                    //       : const Text(
-                    //           'Cancel Orders',
-                    //           style: TextStyle(color: Colors.white),
-                    //         ),
-                    // ),
                     ElevatedButton(
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.primaryBlue,
@@ -369,39 +273,42 @@ class _PackerPageState extends State<PackerPage> {
                   ],
                 ),
               ),
-              CustomPaginationFooter(
-                currentPage: packerProvider.currentPage, // Ensure correct currentPage
-                totalPages: packerProvider.totalPages,
-                buttonSize: 30,
-                pageController: packerProvider.textEditingController,
-                onFirstPage: () {
-                  packerProvider.goToPage(1);
-                },
-                onLastPage: () {
-                  packerProvider.goToPage(packerProvider.totalPages);
-                },
-                onNextPage: () {
-                  if (packerProvider.currentPage < packerProvider.totalPages) {
-                    print('Navigating to page: ${packerProvider.currentPage + 1}');
-                    packerProvider.goToPage(packerProvider.currentPage + 1);
-                  }
-                },
-                onPreviousPage: () {
-                  if (packerProvider.currentPage > 1) {
-                    print('Navigating to page: ${packerProvider.currentPage - 1}');
-                    packerProvider.goToPage(packerProvider.currentPage - 1);
-                  }
-                },
-                onGoToPage: (page) {
-                  packerProvider.goToPage(page);
-                },
-                onJumpToPage: () {
-                  final page = int.tryParse(packerProvider.textEditingController.text);
-                  if (page != null && page > 0 && page <= packerProvider.totalPages) {
+              Consumer<PackerProvider>(builder: (context, packerProvider, child) {
+                return CustomPaginationFooter(
+                  currentPage: packerProvider.currentPage, // Ensure correct currentPage
+                  totalPages: packerProvider.totalPages,
+                  totalCount: packerProvider.totalOrders,
+                  buttonSize: 30,
+                  pageController: packerProvider.textEditingController,
+                  onFirstPage: () {
+                    packerProvider.goToPage(1);
+                  },
+                  onLastPage: () {
+                    packerProvider.goToPage(packerProvider.totalPages);
+                  },
+                  onNextPage: () {
+                    if (packerProvider.currentPage < packerProvider.totalPages) {
+                      print('Navigating to page: ${packerProvider.currentPage + 1}');
+                      packerProvider.goToPage(packerProvider.currentPage + 1);
+                    }
+                  },
+                  onPreviousPage: () {
+                    if (packerProvider.currentPage > 1) {
+                      print('Navigating to page: ${packerProvider.currentPage - 1}');
+                      packerProvider.goToPage(packerProvider.currentPage - 1);
+                    }
+                  },
+                  onGoToPage: (page) {
                     packerProvider.goToPage(page);
-                  }
-                },
-              ),
+                  },
+                  onJumpToPage: () {
+                    final page = int.tryParse(packerProvider.textEditingController.text);
+                    if (page != null && page > 0 && page <= packerProvider.totalPages) {
+                      packerProvider.goToPage(page);
+                    }
+                  },
+                );
+              }),
             ],
           ),
         );
@@ -474,17 +381,17 @@ class _PackerPageState extends State<PackerPage> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      IconButton(
-                        onPressed: () {
-                          // Add your phone action here
-                        },
-                        icon: const Icon(
-                          Icons.phone,
-                          color: AppColors.green,
-                          size: 14,
-                        ),
-                      ),
-                      const SizedBox(width: 4),
+                      // IconButton(
+                      //   onPressed: () {
+                      //     // Add your phone action here
+                      //   },
+                      //   icon: const Icon(
+                      //     Icons.phone,
+                      //     color: AppColors.green,
+                      //     size: 14,
+                      //   ),
+                      // ),
+                      // const SizedBox(width: 4),
                       Text(
                         _getCustomerPhoneNumber(order.customer?.phone),
                         style: const TextStyle(
@@ -534,17 +441,18 @@ class _PackerPageState extends State<PackerPage> {
           // ),
           buildCell(
             flex: 2,
-            (order.outerPackages != null && (order.outerPackages?.isNotEmpty ?? false)) ?
-            Column(
-              children: order.outerPackages
-                  !.map(
-                    (e) => Text(
-                      e.outerPackageName ?? '',
-                      style: const TextStyle(fontSize: 16),
-                    ),
+            (order.outerPackages != null && (order.outerPackages?.isNotEmpty ?? false))
+                ? Column(
+                    children: order.outerPackages!
+                        .map(
+                          (e) => Text(
+                            e.outerPackageName ?? '',
+                            style: const TextStyle(fontSize: 16),
+                          ),
+                        )
+                        .toList(),
                   )
-                  .toList(),
-            ) : const SizedBox(),
+                : const SizedBox(),
           ),
           // const SizedBox(width: 4),
           // buildCell(

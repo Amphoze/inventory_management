@@ -3,19 +3,21 @@ import 'dart:developer';
 import 'package:dropdown_search/dropdown_search.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-// import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+
 import 'package:google_fonts/google_fonts.dart';
 import 'package:inventory_management/Api/label-api.dart';
 import 'package:inventory_management/Custom-Files/colors.dart';
 import 'package:inventory_management/Custom-Files/custom_pagination.dart';
 import 'package:inventory_management/constants/constants.dart';
 import 'package:inventory_management/provider/combo_provider.dart';
-// import 'package:pagination_flutter/pagination.dart';
+
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'Api/lable-page-api.dart';
 import 'package:http/http.dart' as http;
+
+import 'Custom-Files/utils.dart';
 
 final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
 bool showLabelForm = false;
@@ -29,12 +31,10 @@ class ShowLabelPage extends StatefulWidget {
 
 class _ShowLabelPageState extends State<ShowLabelPage> {
   LabelPageApi? labelPageProvider;
-  //final ScrollController controller = ScrollController();
   final GlobalKey<DropdownSearchState<String>> _dropdownKey = GlobalKey<DropdownSearchState<String>>();
 
   void _toggleFormVisibility() {
     setState(() {
-      // Toggle the flag value to show or hide the form
       showLabelForm = !showLabelForm;
     });
   }
@@ -53,9 +53,7 @@ class _ShowLabelPageState extends State<ShowLabelPage> {
 
   TextEditingController searchController = TextEditingController();
 
-  // TextEditingController searchController = TextEditingController();
-
-  void getData() async {
+  Future<void> getData() async {
     LabelApi po = Provider.of<LabelApi>(context, listen: false);
     labelPageProvider = Provider.of<LabelPageApi>(context, listen: false);
     await labelPageProvider!.getProductDetails();
@@ -97,7 +95,6 @@ class _ShowLabelPageState extends State<ShowLabelPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Enhanced Header Section
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -144,8 +141,6 @@ class _ShowLabelPageState extends State<ShowLabelPage> {
                 const SizedBox(height: 16),
                 Divider(color: Colors.grey[300], thickness: 1.5),
                 const SizedBox(height: 16),
-
-                // Enhanced Content Section
                 Expanded(
                   child: labelLogs.isNotEmpty
                       ? ListView.builder(
@@ -180,7 +175,6 @@ class _ShowLabelPageState extends State<ShowLabelPage> {
                                 child: Row(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    // Enhanced Icon Section
                                     Container(
                                       decoration: BoxDecoration(
                                         shape: BoxShape.circle,
@@ -201,8 +195,6 @@ class _ShowLabelPageState extends State<ShowLabelPage> {
                                       ),
                                     ),
                                     const SizedBox(width: 16),
-
-                                    // Enhanced Log Details Section
                                     Expanded(
                                       child: Column(
                                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -268,8 +260,6 @@ class _ShowLabelPageState extends State<ShowLabelPage> {
                           ),
                         ),
                 ),
-
-                // Enhanced Footer Section
                 const SizedBox(height: 20),
                 Align(
                   alignment: Alignment.centerRight,
@@ -315,7 +305,6 @@ class _ShowLabelPageState extends State<ShowLabelPage> {
     }
   }
 
-// Enhanced detail row builder
   Widget _buildEnhancedDetailRow(String label, String value, Color textColor) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
@@ -426,11 +415,8 @@ class _ShowLabelPageState extends State<ShowLabelPage> {
                 await labelProvider.updateLabelQuantity(
                   data['_id'],
                   parsedQuantity,
-                  reason, // Reason for the update
+                  reason,
                 );
-
-                // labelProvider
-                //     .notifyListeners(); // This will rebuild the relevant widgets
 
                 data['quantity'] = parsedQuantity;
 
@@ -438,9 +424,6 @@ class _ShowLabelPageState extends State<ShowLabelPage> {
                 if (reason.isNotEmpty) {
                   log('Reason: $reason');
                 }
-
-                // Close the dialog
-                // Navigator.of(context).pop();
               },
               child: const Text('Update', style: TextStyle(color: Colors.white)),
             ),
@@ -465,7 +448,7 @@ class _ShowLabelPageState extends State<ShowLabelPage> {
     final provider = Provider.of<LabelApi>(context, listen: false);
     int page = int.tryParse(_pageController.text) ?? 1;
     if (page >= 1 && page <= provider.totalPage) {
-      _goToPage(page - 1); // Go to the user-input page
+      _goToPage(page - 1);
     }
   }
 
@@ -474,13 +457,13 @@ class _ShowLabelPageState extends State<ShowLabelPage> {
     final columns = ['IMAGE', 'Label SKU', 'Name', 'Quantity', 'Product SKU'];
     return Consumer<LabelApi>(
       builder: (context, l, child) => Scaffold(
+        backgroundColor: Colors.white,
         body: l.labelInformation.isNotEmpty && l.loading == false
             ? Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisAlignment: MainAxisAlignment.start,
                 children: [
                   Center(
-                    // 171757177781
                     child: Row(
                       children: [
                         if (!showLabelForm) ...[
@@ -489,60 +472,47 @@ class _ShowLabelPageState extends State<ShowLabelPage> {
                             child: Center(
                               child: SizedBox(
                                 width: 300,
+                                height: 35,
                                 child: TextField(
                                   controller: searchController,
                                   decoration: InputDecoration(
                                     hintText: 'Search...',
                                     prefixIcon: const Icon(Icons.search, color: Colors.grey),
-                                    border: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(30.0),
-                                      borderSide: BorderSide.none, // No border line
-                                    ),
-                                    filled: true,
-                                    fillColor: Colors.white,
-                                    contentPadding: const EdgeInsets.symmetric(vertical: 15.0, horizontal: 20.0),
-                                    focusedBorder: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(30.0),
+                                    border: const OutlineInputBorder(
                                       borderSide: const BorderSide(
-                                        color: AppColors.primaryBlue, // Border color when focused
+                                        color: AppColors.primaryBlue,
                                         width: 2.0,
                                       ),
                                     ),
-                                    enabledBorder: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(30.0),
-                                      borderSide: BorderSide(
-                                        color: Colors.grey.withValues(alpha: 0.5), // Border color when enabled
-                                        width: 1.0,
-                                      ),
-                                    ),
+                                    filled: true,
+                                    fillColor: Colors.white,
                                     hintStyle: TextStyle(color: Colors.grey[600]),
                                   ),
-                                  onChanged: (value) async {
-                                    l.searchByLabel(value);
-                                  },
+                                  onSubmitted: l.onSearchChanged,
+                                  onChanged: l.onSearchChanged,
                                 ),
                               ),
                             ),
                           ),
-                          InkWell(
-                            child: const Icon(Icons.restart_alt),
-                            onTap: () {
-                              l.cancel();
-                              // l.getLabel();
+                          IconButton(
+                            tooltip: 'Refresh',
+                            icon: const Icon(Icons.refresh, color: AppColors.primaryBlue),
+                            onPressed: () async {
+                              await getData();
                             },
                           ),
                         ],
                         const SizedBox(width: 10),
                         ElevatedButton(
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.primaryBlue, // Button color
+                            backgroundColor: AppColors.primaryBlue,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(30.0),
                             ),
                             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                           ),
                           onPressed: () {
-                            _toggleFormVisibility(); // Toggle form visibility
+                            _toggleFormVisibility();
                           },
                           child: Text(
                             showLabelForm ? 'Back' : 'Create Label',
@@ -582,7 +552,8 @@ class _ShowLabelPageState extends State<ShowLabelPage> {
                               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
                               child: SizedBox(
                                 width: 620,
-                                child: SingleChildScrollView(child: LabelFormFields(labelPageProvider: labelPageProvider)),
+                                child:
+                                    SingleChildScrollView(child: LabelFormFields(labelPageProvider: labelPageProvider)),
                               ),
                             ),
                             const SizedBox(height: 7),
@@ -630,12 +601,9 @@ class _ShowLabelPageState extends State<ShowLabelPage> {
                             rows: l.labelInformation.map((item) {
                               return DataRow(
                                 cells: [
-                                  // Image column
                                   DataCell(
                                     Image.network(
-                                      item['images']?.isNotEmpty ?? false
-                                          ? item['images'][0]
-                                          : "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAKIAAACUCAMAAAAnDwKZAAAAaVBMVEX///9NTU1JSUnJycne3t7q6uouLS5jY2NCQkJgYGDw8PD7+/vh4eFGRkZzc3MnJyd9fX2EhIQ1NTU7OzukpKTQ0NCUlJRra2vAwMDX19eurq6amppWVla6uroaGhq0tLSMjIwAAAALCwuxY5kvAAAFIElEQVR4nO2b6ZKrKhSFUUJEcEDBAcXo6fd/yItmjsPpToGdU5fvR6raIFmuzd4g2gA4HA6Hw+FwOBwOh8PhcDgcvwCtoU0KExJTzyJx8vESfWMSfSsYlRjYwZzEmCFig8g3KJEa6GgO+XyJyEk0gAu0CZyLJvgHJLpAm2APF2kEuwK93fUOLkaZl3Ou2nc9ti8xivG05MOMvNe19UCTKr4snXn5XtfWXaz5bXnP3xuPtiXSAd8k5v1bXdsONE3im0TcvtW1dRfZXSJv3uraerqI+1jM5aqKrWS3ni7SvyqMw1UhItvo2n5d7C82+v6qiQXeGgM7TIACc/0jPF7fl1Gxr6LVb/dYRkRtqKpmvSi2fHPX5gMWY3DKeb5akX5/MUaDc1ny1wbC70u8Tj9xsDIUfj3Q8FY3MVtu8dsuosC/l/Z6sclvu5jdJx/NYamJTRe/oRgeHxXiRSUWJRbLpjz9eug/SvS4WGhkL9ARxuovtwKPi8mLjwuVx5qLkTYID9uxrvmLQs+v5ldly8UojjenjBE0U6jPmFceSy6iy5TBl+vI+ZQsnkv0criPRHS77Vud1u6rtJdQq9cksxJoEtzSYHVa0+m0pHCsPC8D2IaLhD38Oq5WzkhWJM4qjwWJJHmKIB8WTxBrCvVwfB4c5iXS7GWMxUu3z1L5y/rG4Rg8VR7jY5GWM3viWZICEC5l821wDFYllvM89fEsZUS+ofBlzWM60GKpksTJy5whNwVq1MNFGZa4qHA2Z5BgK8yvF2U20JSt5Onx6T65Xb6Qp4u6Vx6zLtJsrZT4DylTrNebO/ltkjHs4rrE+0z49zBPJ9y2V/Zy0YvVdV5rv2OirjzXTd3dJOobvLPG4rja5JnjpfLsFWjvugP6ei+wxbny7OeiztJON5xPPqtcZtQdXZzuTOD2tPJyTVPl2dNFvT6Q3vfDPGo87C3RO78Y9H2myrNroH/OWHn2dfHncPjpLo4PQv4BiR8faOMushyb5WjaRYAiwxyIWRcjZANpTqLnhXb4/BdVfZMSrWFG4p+jRdLQhER5sMn6Q0yHw/F/RQQEIO9h001tPNBYxuuouuyrdN74ScKF3dP3KfMSoJMuYPSyMyLGN0ro5e/zwcs3160T+vBsYNzBaSU9wfPh5jS2IuNeKH3nMfciLY4PKI2AZNV5NyYrSNZULQwYArAKBgq6ijUCRCxoJtVNUDVk0DcniTwkYRYBVtAjpEIfBg0WgZgk9lWy+vbMDykrFqAUHXDZecN44NihrxLmYaFKknSQ15ILmGcUD3LaoS+UFCkZQiCUycrIa8Gpp6mUYdGcSJ/2NW4ohzCvG+/9V0hfJB7yJkddDsbf1AfyDqUFiDvAGEDdgLsmpoBlUdr2YTCeIZskJ0V8SFpAOuGXINUSoT7MjqQ/ARAMJIelapovE/96NUoMQBnnqOf0LjGXVEvMGArbQnW9lphoiaKGYxZAXHecAMViRJNEVpPEo4R+U+eTxGogvBjCrq5NuRgCitMo4i30psGYahcl5aOL8lR0vEd46LkOdCnDcQNK8KhNEehPFUCx0ANkDPRJCk+KLx1oUXOtGBZ53SlDEptBl4ogAkWlyikHK4iqA00gaFvaKpE1OpMEY1QmYTm6rNNGMAlIpS3tVSZaWkEaHBCr9OE6E6qlJCmACIPa5NvY9/pyrjdPdaaoOqJa8FB07p9Ty0vzh1Me+9sDWoaKffrKD6EdHXE4HA6Hw+FwOBwOh8PhcHw6/wFnwnFzLAiC/AAAAABJRU5ErkJggg==",
+                                      (item['images']?.isNotEmpty ?? false) ? item['images'][0] : "",
                                       width: 50,
                                       height: 50,
                                       errorBuilder: (context, error, stackTrace) {
@@ -648,11 +616,8 @@ class _ShowLabelPageState extends State<ShowLabelPage> {
                                       fit: BoxFit.cover,
                                     ),
                                   ),
-                                  // Label SKU column
                                   DataCell(Text(item['labelSku']?.toString() ?? 'N/A')),
-                                  // Name column
                                   DataCell(Text(item['name']?.toString() ?? 'N/A')),
-                                  // Quantity column
                                   DataCell(
                                     Center(
                                       child: Column(
@@ -685,7 +650,6 @@ class _ShowLabelPageState extends State<ShowLabelPage> {
                                       ),
                                     ),
                                   ),
-                                  // Product SKU column
                                   DataCell(Text(_formatProductSkus(item['products'] ?? []))),
                                 ],
                               );
@@ -702,6 +666,7 @@ class _ShowLabelPageState extends State<ShowLabelPage> {
                     CustomPaginationFooter(
                       currentPage: l.currentPage,
                       totalPages: l.totalPage,
+                      totalCount: l.totalLabels,
                       buttonSize: MediaQuery.of(context).size.width > 600 ? 32 : 24,
                       pageController: _pageController,
                       onFirstPage: () => _goToPage(1),
@@ -727,7 +692,8 @@ class _ShowLabelPageState extends State<ShowLabelPage> {
     );
   }
 
-  Widget fieldTitle(String filTitle, String value, {bool show = true, double width = 133, var fontWeight = FontWeight.bold}) {
+  Widget fieldTitle(String filTitle, String value,
+      {bool show = true, double width = 133, var fontWeight = FontWeight.bold}) {
     return Container(
       alignment: Alignment.topRight,
       child: Row(
@@ -737,7 +703,8 @@ class _ShowLabelPageState extends State<ShowLabelPage> {
           SizedBox(
             width: width,
             child: Align(
-                alignment: Alignment.topLeft, child: Text(filTitle, style: GoogleFonts.daiBannaSil(fontSize: 20, fontWeight: fontWeight))),
+                alignment: Alignment.topLeft,
+                child: Text(filTitle, style: GoogleFonts.daiBannaSil(fontSize: 20, fontWeight: fontWeight))),
           ),
           const Text(":", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, fontFamily: 'googlefont')),
           show
@@ -762,27 +729,10 @@ class _ShowLabelPageState extends State<ShowLabelPage> {
     try {
       final prefs = await SharedPreferences.getInstance();
       final token = prefs.getString('authToken');
-      // final warehouseId = prefs.getString('warehouseId');
 
       String baseUrl = await Constants.getBaseUrl();
 
       if (token == null || token.isEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Row(
-              children: [
-                Icon(Icons.error_outline, color: Colors.white),
-                SizedBox(width: 8),
-                Expanded(
-                  child: Text('Authorization token is missing or invalid'),
-                ),
-              ],
-            ),
-            backgroundColor: Colors.red,
-            duration: Duration(seconds: 3),
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
         throw Exception('Authorization token is missing or invalid.');
       }
 
@@ -809,23 +759,7 @@ class _ShowLabelPageState extends State<ShowLabelPage> {
           if (canLaunch) {
             await launchUrl(Uri.parse(downloadUrl));
 
-            // Show success message
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Row(
-                  children: [
-                    Icon(Icons.check_circle, color: Colors.white),
-                    SizedBox(width: 8),
-                    Expanded(
-                      child: Text('CSV download started successfully'),
-                    ),
-                  ],
-                ),
-                backgroundColor: Colors.green,
-                duration: Duration(seconds: 3),
-                behavior: SnackBarBehavior.floating,
-              ),
-            );
+            Utils.showSnackBar(context, 'CSV download started successfully');
           } else {
             throw 'Could not launch $downloadUrl';
           }
@@ -839,27 +773,7 @@ class _ShowLabelPageState extends State<ShowLabelPage> {
       log('error: $error');
       log('Error during report generation: $error');
 
-      // Show error message
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Row(
-            children: [
-              Icon(Icons.error_outline, color: Colors.white),
-              SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  'Error downloading CSV',
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-            ],
-          ),
-          backgroundColor: Colors.red,
-          duration: Duration(seconds: 3),
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
+      Utils.showSnackBar(context, 'Error downloading CSV', details: error.toString(), isError: true);
     } finally {
       setState(() {
         isDownloadingCsv = false;
@@ -894,7 +808,7 @@ class _LoadingLabelAnimationState extends State<LoadingLabelAnimation> with Sing
 
     _colorAnimation = ColorTween(
       begin: Colors.grey.shade400,
-      end: Colors.blue, // You can use AppColors.primaryGreen or any color you prefer
+      end: Colors.blue,
     ).animate(_controller);
   }
 
@@ -932,29 +846,14 @@ class LabelFormFields extends StatefulWidget {
 }
 
 class _LabelFormFieldsState extends State<LabelFormFields> {
-  // final _formKey = GlobalKey<FormState>();
   final bool _autoValidateMode = false;
 
-  // Custom validator functions
   String? _requiredFieldValidator(String? value, String fieldName) {
     if (value == null || value.trim().isEmpty) {
       return 'Please enter $fieldName';
     }
     return null;
   }
-
-  // String? _quantityValidator(String? value) {
-  //   if (value == null || value.isEmpty) {
-  //     return 'Please enter a quantity';
-  //   }
-  //   if (int.tryParse(value) == null) {
-  //     return 'Please enter a valid number';
-  //   }
-  //   if (int.parse(value) <= 0) {
-  //     return 'Quantity must be greater than 0';
-  //   }
-  //   return null;
-  // }
 
   @override
   Widget build(BuildContext context) {
@@ -982,77 +881,9 @@ class _LabelFormFieldsState extends State<LabelFormFields> {
               ),
             ],
           ),
-          // _buildFormSection(
-          //   'Product Selection',
-          //   [
-          //     Padding(
-          //       padding: const EdgeInsets.symmetric(vertical: 8.0),
-          //       child: SizedBox(
-          //         width: 600,
-          //         child: DropdownSearch<String>.multiSelection(
-          //           items: comboProvider.products
-          //               .where((product) =>
-          //                   product.displayName?.toLowerCase().contains(
-          //                       searchController.text.toLowerCase()) ??
-          //                   false)
-          //               .map((product) => product.displayName ?? 'Unknown')
-          //               .toList(),
-          //           onChanged: (List<String> selectedValues) {
-          //             widget.labelPageProvider
-          //                 ?.updateSelectedProducts(selectedValues);
-          //           },
-          //           dropdownDecoratorProps: DropDownDecoratorProps(
-          //             dropdownSearchDecoration: InputDecoration(
-          //               labelText: 'Search and Select Products',
-          //               border: const OutlineInputBorder(),
-          //               prefixIcon: const Icon(Icons.search),
-          //               filled: true,
-          //               fillColor: Colors.white,
-          //               contentPadding: const EdgeInsets.all(16.0),
-          //               labelStyle: TextStyle(
-          //                 color: Theme.of(context).primaryColor,
-          //               ),
-          //             ),
-          //           ),
-          //           popupProps: PopupPropsMultiSelection.dialog(
-          //             showSearchBox: true,
-          //             searchFieldProps: const TextFieldProps(
-          //               decoration: InputDecoration(
-          //                 labelText: 'Search Products',
-          //                 border: OutlineInputBorder(),
-          //                 prefixIcon: Icon(Icons.search),
-          //                 filled: true,
-          //                 fillColor: Colors.white,
-          //               ),
-          //             ),
-          //             containerBuilder: (context, popupWidget) => Container(
-          //               decoration: BoxDecoration(
-          //                 borderRadius: BorderRadius.circular(8),
-          //                 boxShadow: [
-          //                   BoxShadow(
-          //                     color: Colors.grey.withValues(alpha: 0.2),
-          //                     spreadRadius: 2,
-          //                     blurRadius: 5,
-          //                   ),
-          //                 ],
-          //               ),
-          //               child: popupWidget,
-          //             ),
-          //           ),
-          //         ),
-          //       ),
-          //     ),
-          //   ],
-          // ),
           _buildFormSection(
             'Additional Details',
             [
-              // _buildCardTextField(
-              //   controller: widget.labelPageProvider!.imageController,
-              //   label: "Image URL",
-              //   prefixIcon: const Icon(Icons.image),
-              //   keyboardType: TextInputType.url,
-              // ),
               _buildCardTextField(
                   controller: widget.labelPageProvider!.descriptionController,
                   label: "Description",
@@ -1157,14 +988,12 @@ class LabelButtons extends StatefulWidget {
   final LabelPageApi? labelPageProvider;
   final LabelApi? l;
   final GlobalKey<DropdownSearchState<String>> dropdownKey;
-  // final GlobalKey<FormState>? formKey;
 
   const LabelButtons({
     super.key,
     this.labelPageProvider,
     required this.dropdownKey,
     this.l,
-    // this.formKey,
   });
 
   @override
@@ -1200,7 +1029,7 @@ class _LabelButtonsState extends State<LabelButtons> {
               borderRadius: BorderRadius.circular(30.0),
             ),
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-            minimumSize: const Size(100, 45), // Ensure consistent button size
+            minimumSize: const Size(100, 45),
           ),
           child: isLoading
               ? const SizedBox(
@@ -1225,29 +1054,17 @@ class _LabelButtonsState extends State<LabelButtons> {
 
   Future<void> _saveLabel(BuildContext context) async {
     if (_formKey.currentState?.validate() != true) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please fill in all required fields correctly'),
-          backgroundColor: Colors.red,
-        ),
-      );
+      Utils.showSnackBar(context, 'Please fill in all required fields correctly', isError: true);
       return;
     }
 
     final labelProvider = context.read<LabelPageApi>();
-    // final labelApi = context.read<LabelApi>();
 
     try {
-      // Set loading states
-      // labelProvider.buttonTapStatus(false);
-      // labelApi.loadingStatus(true);
-
-      // Validate required fields
       if (labelProvider.nameController.text.isEmpty || labelProvider.labelSkuController.text.isEmpty) {
         throw 'Name and SKU are required fields';
       }
 
-      // Create label
       final res = await labelProvider.createLabel();
 
       if (res.isEmpty) {
@@ -1259,28 +1076,12 @@ class _LabelButtonsState extends State<LabelButtons> {
           labelProvider.clearControllers(widget.dropdownKey);
           showLabelForm = false;
         });
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Label created successfully'),
-            backgroundColor: Colors.green,
-          ),
-        );
+        Utils.showSnackBar(context, 'Label created successfully', color: AppColors.cardsgreen);
       } else {
         throw res["res"] ?? 'Unknown error occurred';
       }
     } catch (e) {
-      // Show error message
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error creating label: ${e.toString()}'),
-          backgroundColor: Colors.red,
-        ),
-      );
-    } finally {
-      // Reset loading states
-      // labelProvider.buttonTapStatus(false);
-      // labelApi.loadingStatus(false);
+      Utils.showSnackBar(context, 'Error creating label: ${e.toString()}', isError: true);
     }
   }
 }

@@ -2,13 +2,14 @@ import 'dart:developer';
 
 import 'package:flutter/material.dart';
 import 'package:inventory_management/dashboard.dart';
-import 'package:inventory_management/provider/location_provider.dart';
+import 'package:inventory_management/provider/warehouse_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:inventory_management/Custom-Files/colors.dart';
 import 'package:shimmer/shimmer.dart';
 
 import 'Custom-Files/custom_pagination.dart';
+import 'Custom-Files/utils.dart';
 
 class WarehousesPage extends StatefulWidget {
   const WarehousesPage({super.key});
@@ -33,7 +34,7 @@ class _WarehousesPageState extends State<WarehousesPage> with SingleTickerProvid
       CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
     );
     _controller.forward();
-    Future.microtask(() => Provider.of<LocationProvider>(context, listen: false).fetchWarehouses());
+    Future.microtask(() => Provider.of<WarehouseProvider>(context, listen: false).fetchWarehouses());
   }
 
   @override
@@ -59,14 +60,7 @@ class _WarehousesPageState extends State<WarehousesPage> with SingleTickerProvid
     log('warehouseName: $warehouseName');
 
     if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Successfully signed in to $warehouseName'),
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-          backgroundColor: AppColors.primaryBlue,
-        ),
-      );
+      Utils.showSnackBar(context, 'Successfully signed in to $warehouseName', color: AppColors.primaryBlue);
 
       Navigator.pushReplacement(
         context,
@@ -144,7 +138,7 @@ class _WarehousesPageState extends State<WarehousesPage> with SingleTickerProvid
 
                               // Updated table styles
                               Expanded(
-                                child: Consumer<LocationProvider>(
+                                child: Consumer<WarehouseProvider>(
                                   builder: (context, provider, child) {
                                     if (provider.isLoading) {
                                       return Padding(
@@ -287,7 +281,7 @@ class _WarehousesPageState extends State<WarehousesPage> with SingleTickerProvid
                                 ),
                               ),
 
-                              Consumer<LocationProvider>(builder: (context, pro, child) {
+                              Consumer<WarehouseProvider>(builder: (context, pro, child) {
                                 return CustomPaginationFooter(
                                   currentPage: pro.currentPage,
                                   totalPages: pro.totalPages,

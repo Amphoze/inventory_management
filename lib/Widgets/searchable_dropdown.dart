@@ -9,6 +9,8 @@ import 'dart:convert';
 import 'dart:async';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../Custom-Files/utils.dart';
+
 class SearchableDropdown extends StatefulWidget {
   final String label;
   final Function(Map<String, String>?)? onChanged;
@@ -242,14 +244,7 @@ class _SearchableDropdownState extends State<SearchableDropdown> {
   }
 
   void _showSnackBar(String message, Color color) {
-    ScaffoldMessenger.of(context).removeCurrentSnackBar();
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: color,
-        duration: const Duration(seconds: 2),
-      ),
-    );
+    Utils.showSnackBar(context, message, color: color, toRemoveCurr: true);
   }
 
   @override

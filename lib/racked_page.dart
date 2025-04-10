@@ -29,9 +29,8 @@ class _RackedPageState extends State<RackedPage> {
         .clear();
   }
 
-  void _onSearchButtonPressed() {
-    final query = _searchController.text.trim();
-    if (query.isNotEmpty) {
+  void _onSearchButtonPressed(String query) {
+    if (query.trim().isNotEmpty) {
       Provider.of<RackedProvider>(context, listen: false)
           .onSearchChanged(query);
     }
@@ -69,21 +68,7 @@ class _RackedPageState extends State<RackedPage> {
                           border: InputBorder.none,
                           contentPadding: EdgeInsets.symmetric(vertical: 12, horizontal: 8),
                         ),
-                        onChanged: (query) {
-                          // Trigger a rebuild to show/hide the search button
-                          setState(() {
-                            // Update search focus
-                          });
-                          if (query.isEmpty) {
-                            // Reset to all orders if search is cleared
-                            rackedProvider.fetchOrdersWithStatus7();
-                          }
-                        },
-                        onTap: () {
-                          setState(() {
-                            // Mark the search field as focused
-                          });
-                        },
+                        onChanged: _onSearchButtonPressed,
                         onSubmitted: (query) {
                           if (query.isNotEmpty) {
                             rackedProvider.searchOrders(query);
@@ -96,97 +81,7 @@ class _RackedPageState extends State<RackedPage> {
                         },
                       ),
                     ),
-                    const SizedBox(width: 8),
-                    // Search Button
-                    ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primaryBlue,
-                      ),
-                      onPressed: _searchController.text.isNotEmpty
-                          ? _onSearchButtonPressed
-                          : null,
-                      child: const Text(
-                        'Search',
-                        style: TextStyle(color: Colors.white),
-                      ),
-                    ),
                     const Spacer(),
-                    // ElevatedButton(
-                    //   style: ElevatedButton.styleFrom(
-                    //     backgroundColor: AppColors.cardsred,
-                    //   ),
-                    //   onPressed: rackedProvider.isCancel
-                    //       ? null // Disable button while loading
-                    //       : () async {
-                    //           final provider = Provider.of<RackedProvider>(
-                    //               context,
-                    //               listen: false);
-
-                    //           // Collect selected order IDs
-                    //           List<String> selectedOrderIds = provider.orders
-                    //               .asMap()
-                    //               .entries
-                    //               .where((entry) =>
-                    //                   provider.selectedProducts[entry.key])
-                    //               .map((entry) => entry.value.orderId)
-                    //               .toList();
-
-                    //           if (selectedOrderIds.isEmpty) {
-                    //             // Show an error message if no orders are selected
-                    //             ScaffoldMessenger.of(context).showSnackBar(
-                    //               const SnackBar(
-                    //                 content: Text('No orders selected'),
-                    //                 backgroundColor: AppColors.cardsred,
-                    //               ),
-                    //             );
-                    //           } else {
-                    //             // Set loading status to true before starting the operation
-                    //             provider.setCancelStatus(true);
-
-                    //             // Call confirmOrders method with selected IDs
-                    //             String resultMessage = await provider
-                    //                 .cancelOrders(context, selectedOrderIds);
-
-                    //             // Set loading status to false after operation completes
-                    //             provider.setCancelStatus(false);
-
-                    //             // Determine the background color based on the result
-                    //             Color snackBarColor;
-                    //             if (resultMessage.contains('success')) {
-                    //               snackBarColor =
-                    //                   AppColors.green; // Success: Green
-                    //             } else if (resultMessage.contains('error') ||
-                    //                 resultMessage.contains('failed')) {
-                    //               snackBarColor =
-                    //                   AppColors.cardsred; // Error: Red
-                    //             } else {
-                    //               snackBarColor =
-                    //                   AppColors.orange; // Other: Orange
-                    //             }
-
-                    //             // Show feedback based on the result
-                    //             ScaffoldMessenger.of(context).showSnackBar(
-                    //               SnackBar(
-                    //                 content: Text(resultMessage),
-                    //                 backgroundColor: snackBarColor,
-                    //               ),
-                    //             );
-                    //           }
-                    //         },
-                    //   child: rackedProvider.isCancel
-                    //       ? const SizedBox(
-                    //           width: 20,
-                    //           height: 20,
-                    //           child: CircularProgressIndicator(
-                    //               color: Colors.white),
-                    //         )
-                    //       : const Text(
-                    //           'Cancel Orders',
-                    //           style: TextStyle(color: Colors.white),
-                    //         ),
-                    // ),
-                    // const SizedBox(width: 8),
-                    // Refresh Button
                     ElevatedButton(
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.primaryBlue,
@@ -254,44 +149,49 @@ class _RackedPageState extends State<RackedPage> {
                   ],
                 ),
               ),
-              CustomPaginationFooter(
-                currentPage:
-                    rackedProvider.currentPage, // Ensure correct currentPage
-                totalPages: rackedProvider.totalPages,
-                buttonSize: 30,
-                pageController: rackedProvider.textEditingController,
-                onFirstPage: () {
-                  rackedProvider.goToPage(1);
-                },
-                onLastPage: () {
-                  rackedProvider.goToPage(rackedProvider.totalPages);
-                },
-                onNextPage: () {
-                  if (rackedProvider.currentPage < rackedProvider.totalPages) {
-                    print(
-                        'Navigating to page: ${rackedProvider.currentPage + 1}');
-                    rackedProvider.goToPage(rackedProvider.currentPage + 1);
-                  }
-                },
-                onPreviousPage: () {
-                  if (rackedProvider.currentPage > 1) {
-                    print(
-                        'Navigating to page: ${rackedProvider.currentPage - 1}');
-                    rackedProvider.goToPage(rackedProvider.currentPage - 1);
-                  }
-                },
-                onGoToPage: (page) {
-                  rackedProvider.goToPage(page);
-                },
-                onJumpToPage: () {
-                  final page =
-                      int.tryParse(rackedProvider.textEditingController.text);
-                  if (page != null &&
-                      page > 0 &&
-                      page <= rackedProvider.totalPages) {
-                    rackedProvider.goToPage(page);
-                  }
-                },
+              Consumer<RackedProvider>(
+                builder: (context, rackedProvider, child) {
+                  return CustomPaginationFooter(
+                    currentPage:
+                        rackedProvider.currentPage, // Ensure correct currentPage
+                    totalPages: rackedProvider.totalPages,
+                    totalCount: rackedProvider.totalOrders,
+                    buttonSize: 30,
+                    pageController: rackedProvider.textEditingController,
+                    onFirstPage: () {
+                      rackedProvider.goToPage(1);
+                    },
+                    onLastPage: () {
+                      rackedProvider.goToPage(rackedProvider.totalPages);
+                    },
+                    onNextPage: () {
+                      if (rackedProvider.currentPage < rackedProvider.totalPages) {
+                        print(
+                            'Navigating to page: ${rackedProvider.currentPage + 1}');
+                        rackedProvider.goToPage(rackedProvider.currentPage + 1);
+                      }
+                    },
+                    onPreviousPage: () {
+                      if (rackedProvider.currentPage > 1) {
+                        print(
+                            'Navigating to page: ${rackedProvider.currentPage - 1}');
+                        rackedProvider.goToPage(rackedProvider.currentPage - 1);
+                      }
+                    },
+                    onGoToPage: (page) {
+                      rackedProvider.goToPage(page);
+                    },
+                    onJumpToPage: () {
+                      final page =
+                          int.tryParse(rackedProvider.textEditingController.text);
+                      if (page != null &&
+                          page > 0 &&
+                          page <= rackedProvider.totalPages) {
+                        rackedProvider.goToPage(page);
+                      }
+                    },
+                  );
+                }
               ),
             ],
           ),

@@ -1,10 +1,10 @@
-// ignore_for_file: avoid_print
-
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:inventory_management/Api/combo_api.dart';
 import 'package:inventory_management/Custom-Files/colors.dart';
 import 'package:inventory_management/Custom-Files/loading_indicator.dart';
+import 'package:inventory_management/Custom-Files/utils.dart';
 import 'package:inventory_management/Widgets/searchable_dropdown.dart';
 import 'package:inventory_management/model/combo_model.dart';
 import 'package:inventory_management/provider/combo_provider.dart';
@@ -25,7 +25,7 @@ class _ComboPageState extends State<ComboPage> {
   int totalCombos = 0;
 
   Product? product;
-  ComboProvider? comboProvider;
+  late ComboProvider comboProvider;
   final _idController = TextEditingController();
   final _nameController = TextEditingController();
   final _skuController = TextEditingController();
@@ -33,7 +33,18 @@ class _ComboPageState extends State<ComboPage> {
   final _mrpController = TextEditingController();
   final _costController = TextEditingController();
 
-  //final productController = MultiSelectController<String>();
+  Timer? _debounce;
+
+  void _onSearchChanged(String value) {
+    if (value.trim().isEmpty) {
+      comboProvider.fetchCombos();
+    }
+
+    if (_debounce?.isActive ?? false) _debounce?.cancel();
+    _debounce = Timer(const Duration(milliseconds: 300), () {
+      comboProvider.searchCombos(value);
+    });
+  }
 
   late final MultiSelectController<String> productController;
   List<DropdownItem<String>> items = [];
@@ -71,12 +82,8 @@ class _ComboPageState extends State<ComboPage> {
     );
 
     final comboApi = ComboApi();
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Saving combo...'),
-        duration: Duration(seconds: 2),
-      ),
-    );
+
+    Utils.showSnackBar(context, 'Saving combo...');
 
     try {
       await comboApi.createCombo(combo, comboProvider.selectedImages, comboProvider.imageNames);
@@ -85,37 +92,24 @@ class _ComboPageState extends State<ComboPage> {
       _clearFormFields();
       comboProvider.toggleFormVisibility();
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Combo saved successfully!'),
-          backgroundColor: Colors.green,
-        ),
-      );
+      Utils.showSnackBar(context, 'Combo saved successfully', color: AppColors.cardsgreen);
     } catch (e) {
       print('Failed to save combo: $e');
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Failed to save combo!'),
-          backgroundColor: Colors.red,
-        ),
-      );
+      Utils.showSnackBar(context, 'Failed to save combo', isError: true, details: e.toString());
     }
   }
 
   @override
   void initState() {
     super.initState();
+    comboProvider = Provider.of<ComboProvider>(context, listen: false);
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final comboProvider = Provider.of<ComboProvider>(context, listen: false);
       comboProvider.fetchCombos(page: currentPage, limit: 10);
-      //comboProvider.fetchProducts();
       productController = MultiSelectController<String>();
       getDropValue();
-      // print(1);
     });
   }
 
-  // Function to load more combos
   void loadMoreCombos() async {
     currentPage++;
     final comboProvider = Provider.of<ComboProvider>(context, listen: false);
@@ -128,7 +122,6 @@ class _ComboPageState extends State<ComboPage> {
     await comboProvider.fetchCombos(page: currentPage, limit: 10);
   }
 
-  // Function to refresh combos
   void refreshCombos() {
     currentPage = 1;
     loadCombos();
@@ -148,40 +141,18 @@ class _ComboPageState extends State<ComboPage> {
       ));
     }
 
-    //print("items in drop down: $newItems");
-
     setState(() {
       items = newItems;
     });
   }
 
-  // void getDropValue() async {
-  //   await comboProvider!.fetchCombos();
-  //   await comboProvider!.fetchProducts();
-  //   print("new style");
-  //   for (int i = 0; i < comboProvider!.products.length; i++) {
-  //     print("heello i am divyansh");
-  //     comboProvider!.addItem('$i:${comboProvider!.products[i].displayName}', comboProvider!.products[i].id);
-  //     // items.add(DropdownItem<String>(
-  //     //   label: '$i:${comboProvider!.products[i].displayName}',
-  //     //   value: comboProvider!.products[i].id,
-  //     // ));
-  //   }
-
-  //   print("length of it is here ${comboProvider!.item.length}");
-  //   // setState(() {
-
-  //   // });
-  // }
   final TextEditingController _searchController = TextEditingController();
 
-  // In your provider class
   final Map<String, ValueNotifier<int?>> _quantityNotifiers = {};
 
   ValueNotifier<int?> getQuantityNotifier(String sku) {
     if (!_quantityNotifiers.containsKey(sku)) {
       _quantityNotifiers[sku] = ValueNotifier<int?>(null);
-      // Fetch the initial value
       context.read<ComboProvider>().fetchQuantityBySku(sku).then((value) {
         _quantityNotifiers[sku]?.value = value;
       });
@@ -204,9 +175,12 @@ class _ComboPageState extends State<ComboPage> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text('Existing Combos', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.black87)),
+                      const Text('Existing Combos',
+                          style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.black87)),
                       Row(
                         children: [
+                          Utils.richText('Total: ', pro.totalCombos.toString()),
+                          const SizedBox(width: 8),
                           Container(
                             width: 200,
                             height: 34,
@@ -217,45 +191,26 @@ class _ComboPageState extends State<ComboPage> {
                               ),
                               borderRadius: BorderRadius.circular(8),
                             ),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Expanded(
-                                  child: TextField(
-                                    controller: _searchController,
-                                    decoration: InputDecoration(
-                                      prefixIcon: IconButton(
-                                        icon: const Icon(
-                                          Icons.search,
-                                          color: Color.fromRGBO(117, 117, 117, 1),
-                                        ),
-                                        onPressed: () {},
-                                      ),
-                                      hintText: 'Search Orders',
-                                      hintStyle: const TextStyle(
-                                        color: Color.fromRGBO(117, 117, 117, 1),
-                                        fontSize: 16,
-                                      ),
-                                      border: InputBorder.none,
-                                      contentPadding: const EdgeInsets.symmetric(vertical: 10.0),
-                                    ),
-                                    style: const TextStyle(color: AppColors.black),
-                                    onChanged: (text) {
-                                      if (_searchController.text.isEmpty) {
-                                        pro.fetchCombos();
-                                      }
-                                    },
-                                    onSubmitted: (text) {
-                                      if (_searchController.text.isEmpty) {
-                                        pro.fetchCombos();
-                                      } else {
-                                        pro.searchCombos(_searchController.text.trim());
-                                      }
-                                    },
-                                  ),
+                            child: TextField(
+                              controller: _searchController,
+                              decoration: const InputDecoration(
+                                hintText: 'Search Combos',
+                                hintStyle: const TextStyle(
+                                  color: Color.fromRGBO(117, 117, 117, 1),
+                                  fontSize: 16,
                                 ),
-                              ],
+                                border: InputBorder.none,
+                                contentPadding: const EdgeInsets.all(10),
+                              ),
+                              style: const TextStyle(color: AppColors.black),
+                              onChanged: _onSearchChanged,
+                              onSubmitted: (text) {
+                                if (_searchController.text.isEmpty) {
+                                  pro.fetchCombos();
+                                } else {
+                                  pro.searchCombos(_searchController.text.trim());
+                                }
+                              },
                             ),
                           ),
                           const SizedBox(width: 16),
@@ -335,7 +290,8 @@ class _ComboPageState extends State<ComboPage> {
                             SearchableDropdown(
                               label: "Add Products",
                               onChanged: (selected) {
-                                if (selected != null && !selectedProducts.any((product) => product['sku'] == selected['sku'])) {
+                                if (selected != null &&
+                                    !selectedProducts.any((product) => product['sku'] == selected['sku'])) {
                                   setState(() {
                                     selectedProducts.add({
                                       'sku': selected['sku'] ?? '',
@@ -391,7 +347,8 @@ class _ComboPageState extends State<ComboPage> {
                                     inputFormatters: [
                                       FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*')),
                                     ],
-                                    decoration: const InputDecoration(labelText: 'Weight', border: OutlineInputBorder()),
+                                    decoration:
+                                        const InputDecoration(labelText: 'Weight', border: OutlineInputBorder()),
                                     keyboardType: TextInputType.number,
                                     validator: (value) {
                                       if (value == null || value.isEmpty) {
@@ -576,7 +533,8 @@ class _ComboPageState extends State<ComboPage> {
                                               ),
                                               Row(
                                                 children: [
-                                                  _buildCompactInfo(label: 'Weight', value: '${combo['comboWeight'] ?? 'N/A'} Kg'),
+                                                  _buildCompactInfo(
+                                                      label: 'Weight', value: '${combo['comboWeight'] ?? 'N/A'} Kg'),
                                                   _buildCompactInfo(label: 'MRP', value: '₹${combo['mrp'] ?? 'N/A'}'),
                                                   _buildCompactInfo(label: 'Cost', value: '₹${combo['cost'] ?? 'N/A'}'),
                                                   _buildCompactInfo(label: 'SKU', value: combo['comboSku'] ?? 'N/A'),
@@ -584,9 +542,10 @@ class _ComboPageState extends State<ComboPage> {
                                                     padding: const EdgeInsets.only(left: 8.0),
                                                     child: ElevatedButton(
                                                       onPressed: () async {
-                                                        final nameController = TextEditingController(text: combo['name'] ?? '');
-                                                        final weightController =
-                                                            TextEditingController(text: combo['comboWeight']?.toString() ?? '');
+                                                        final nameController =
+                                                            TextEditingController(text: combo['name'] ?? '');
+                                                        final weightController = TextEditingController(
+                                                            text: combo['comboWeight']?.toString() ?? '');
 
                                                         try {
                                                           await showDialog(
@@ -603,24 +562,29 @@ class _ComboPageState extends State<ComboPage> {
                                                                       hintText: 'Enter combo name',
                                                                     ),
                                                                     textInputAction: TextInputAction.next,
-                                                                    validator: (value) =>
-                                                                        value?.isEmpty ?? true ? 'Name is required' : null,
+                                                                    validator: (value) => value?.isEmpty ?? true
+                                                                        ? 'Name is required'
+                                                                        : null,
                                                                   ),
                                                                   const SizedBox(height: 16),
                                                                   TextFormField(
                                                                     inputFormatters: [
-                                                                      FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*')),
+                                                                      FilteringTextInputFormatter.allow(
+                                                                          RegExp(r'^\d*\.?\d*')),
                                                                     ],
                                                                     controller: weightController,
                                                                     decoration: const InputDecoration(
                                                                       labelText: 'Weight',
                                                                       hintText: 'Enter weight',
                                                                     ),
-                                                                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                                                                    keyboardType: const TextInputType.numberWithOptions(
+                                                                        decimal: true),
                                                                     textInputAction: TextInputAction.done,
                                                                     validator: (value) {
-                                                                      if (value?.isEmpty ?? true) return 'Weight is required';
-                                                                      if (double.tryParse(value!) == null) return 'Invalid weight';
+                                                                      if (value?.isEmpty ?? true)
+                                                                        return 'Weight is required';
+                                                                      if (double.tryParse(value!) == null)
+                                                                        return 'Invalid weight';
                                                                       return null;
                                                                     },
                                                                   ),
@@ -633,10 +597,11 @@ class _ComboPageState extends State<ComboPage> {
                                                                 ),
                                                                 TextButton(
                                                                   onPressed: () async {
-                                                                    if (nameController.text.isEmpty || weightController.text.isEmpty) {
-                                                                      ScaffoldMessenger.of(context).showSnackBar(
-                                                                        const SnackBar(content: Text('Please fill all fields')),
-                                                                      );
+                                                                    if (nameController.text.isEmpty ||
+                                                                        weightController.text.isEmpty) {
+                                                                      Utils.showSnackBar(
+                                                                          context, 'Please fill all fields',
+                                                                          isError: true);
                                                                       return;
                                                                     }
 
@@ -647,7 +612,8 @@ class _ComboPageState extends State<ComboPage> {
                                                                         barrierDismissible: false,
                                                                         builder: (context) => const Dialog(
                                                                           child: Padding(
-                                                                            padding: EdgeInsets.symmetric(vertical: 20, horizontal: 24),
+                                                                            padding: EdgeInsets.symmetric(
+                                                                                vertical: 20, horizontal: 24),
                                                                             child: Row(
                                                                               mainAxisSize: MainAxisSize.min,
                                                                               children: [
@@ -678,7 +644,8 @@ class _ComboPageState extends State<ComboPage> {
                                                                             content: Text(res),
                                                                             actions: [
                                                                               TextButton(
-                                                                                onPressed: () => Navigator.of(context).pop(),
+                                                                                onPressed: () =>
+                                                                                    Navigator.of(context).pop(),
                                                                                 child: const Text('OK'),
                                                                               ),
                                                                             ],
@@ -699,10 +666,12 @@ class _ComboPageState extends State<ComboPage> {
                                                                           context: context,
                                                                           builder: (context) => AlertDialog(
                                                                             title: const Text('Error'),
-                                                                            content: Text('Failed to update: ${e.toString()}'),
+                                                                            content: Text(
+                                                                                'Failed to update: ${e.toString()}'),
                                                                             actions: [
                                                                               TextButton(
-                                                                                onPressed: () => Navigator.of(context).pop(),
+                                                                                onPressed: () =>
+                                                                                    Navigator.of(context).pop(),
                                                                                 child: const Text('OK'),
                                                                               ),
                                                                             ],
@@ -817,7 +786,8 @@ class _ComboPageState extends State<ComboPage> {
                                                                 crossAxisAlignment: CrossAxisAlignment.start,
                                                                 children: [
                                                                   Text(
-                                                                    product['displayName']?.toString() ?? 'No Name Available',
+                                                                    product['displayName']?.toString() ??
+                                                                        'No Name Available',
                                                                     style: const TextStyle(
                                                                       fontSize: 16,
                                                                       fontWeight: FontWeight.w500,
@@ -839,7 +809,8 @@ class _ComboPageState extends State<ComboPage> {
                                                             ),
                                                             const SizedBox(width: 16),
                                                             Container(
-                                                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                                              padding: const EdgeInsets.symmetric(
+                                                                  horizontal: 12, vertical: 6),
                                                               decoration: BoxDecoration(
                                                                 color: Colors.blue.shade50,
                                                                 borderRadius: BorderRadius.circular(20),

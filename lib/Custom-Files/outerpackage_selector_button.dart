@@ -166,12 +166,7 @@ class _OuterPackageSelectorButtonState extends State<OuterPackageSelectorButton>
                           widget.onRefresh?.call();
                         }
                       } else if (selectedPackages.isEmpty) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Please select at least one outer package'),
-                            backgroundColor: Colors.red,
-                          ),
-                        );
+                        Utils.showSnackBar(context, 'Please select at least one outer package',  isError: true);
                       }
                     },
               child: _isLoading
@@ -197,9 +192,7 @@ class _OuterPackageSelectorButtonState extends State<OuterPackageSelectorButton>
     final token = await AuthProvider().getToken();
 
     if (token == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Authentication token not found'), backgroundColor: Colors.red),
-      );
+      Utils.showSnackBar(context, 'Authentication token not found',  isError: true);
       return false;
     }
 
@@ -229,20 +222,15 @@ class _OuterPackageSelectorButtonState extends State<OuterPackageSelectorButton>
       );
 
       if (response.statusCode == 200) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Outer packages updated successfully'), backgroundColor: Colors.green),
-        );
+        Utils.showSnackBar(context, 'Outer packages updated successfully', color: AppColors.cardsgreen);
         return true;
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to update: ${response.body}'), backgroundColor: Colors.red),
-        );
+        Utils.showSnackBar(context, 'Failed to update the outer package', details: response.body, isError: true);
         return false;
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
-      );
+      Utils.showSnackBar(context, 'Failed to update the outer package', details: e.toString(),  isError: true);
+
       return false;
     }
   }

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:developer';
 
 import 'package:flutter/material.dart';
@@ -6,6 +7,7 @@ import 'package:intl/intl.dart';
 import 'package:inventory_management/Custom-Files/colors.dart';
 import 'package:inventory_management/Custom-Files/custom_pagination.dart';
 import 'package:inventory_management/Custom-Files/loading_indicator.dart';
+import 'package:inventory_management/Custom-Files/utils.dart';
 import 'package:inventory_management/Widgets/big_combo_card.dart';
 import 'package:inventory_management/Widgets/order_info.dart';
 import 'package:inventory_management/Widgets/product_details_card.dart';
@@ -24,50 +26,50 @@ class OutboundPage extends StatefulWidget {
 }
 
 class _OutboundPageState extends State<OutboundPage> with TickerProviderStateMixin {
-  // late TextEditingController _searchController;
-  // late TextEditingController _searchControllerFailed;
   final TextEditingController _pageController = TextEditingController();
   final TextEditingController pageController = TextEditingController();
-  // String _selectedDate = 'Select Date';
-  // String selectedCourier = 'All';
-  // DateTime? picked;
-
   late OutboundProvider provider;
+  Timer? _debounce;
+
+  void _onSearchChanged(String value) {
+    if (value.trim().isEmpty) {
+      provider.fetchOrders();
+    }
+
+    if (_debounce?.isActive ?? false) _debounce?.cancel();
+    _debounce = Timer(const Duration(milliseconds: 300), () {
+      if (value.startsWith(RegExp(r'^[0-9]'))) {
+        provider.searchOrdersByPhone(value);
+      } else if (value.contains('-')) {
+        provider.searchOrdersByID(value);
+      }
+    });
+  }
 
   @override
   void initState() {
     super.initState();
     provider = context.read<OutboundProvider>();
-    // _tabController = TabController(length: 2, vsync: this);
-    // _searchController = TextEditingController();
     provider.searchController = TextEditingController();
-    // _searchControllerFailed = TextEditingController();
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _reloadOrders();
       provider.resetFilter();
     });
-    // _searchController.clear();
     provider.searchController.clear();
-    // _searchControllerFailed.clear();
-
-    // context.read<MarketplaceProvider>().fetchMarketplaces();
   }
 
   @override
   void dispose() {
-    // _searchController.dispose();
+    _debounce?.cancel();
     provider.searchController.dispose();
-    // _searchControllerFailed.dispose();
     _pageController.dispose();
     pageController.dispose();
     super.dispose();
   }
 
   void _reloadOrders() async {
-    // Access the OutboundProvider and fetch orders again
     await provider.fetchOrders(); // Fetch both orders
-    // ordersProvider.fetchFailedOrders();
   }
 
   @override
@@ -81,33 +83,21 @@ class _OutboundPageState extends State<OutboundPage> with TickerProviderStateMix
   Widget _buildReadyToConfirmTab() {
     return Consumer<OutboundProvider>(
       builder: (context, pro, child) {
-        if (pro.isLoading) {
-          return const Center(
-            child: LoadingAnimation(
-              icon: Icons.outbond,
-              beginColor: Color.fromRGBO(189, 189, 189, 1),
-              endColor: AppColors.primaryBlue,
-              size: 80.0,
-            ),
-          );
-        }
         return Column(
           children: [
             const SizedBox(height: 10),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                // !isEditOrder
-                //     ?
                 Row(
                   children: [
                     Checkbox(
-                      value: pro.allSelectedReady,
+                      value: pro.allSelected,
                       onChanged: (bool? value) {
                         pro.toggleSelectAllReady(value ?? false);
                       },
                     ),
-                    Text('Select All (${pro.selectedReadyItemsCount})'),
+                    Text('Select All (${pro.selectedOrdersCount})'),
                   ],
                 ),
                 // : const SizedBox(),
@@ -149,7 +139,8 @@ class _OutboundPageState extends State<OutboundPage> with TickerProviderStateMix
                                     text: "Delivered: ",
                                     children: [
                                       TextSpan(
-                                        text: '${pro.dispatchCount} (${(pro.dispatchCount! / pro.allCount! * 100).round()}%)',
+                                        text:
+                                            '${pro.dispatchCount} (${(pro.dispatchCount! / pro.allCount! * 100).round()}%)',
                                         style: const TextStyle(
                                           fontWeight: FontWeight.normal,
                                           color: Colors.green,
@@ -208,7 +199,7 @@ class _OutboundPageState extends State<OutboundPage> with TickerProviderStateMix
                                   pro.selectedDate = formattedDate;
                                 });
 
-                                pro.fetchOrders(page: pro.currentPageReady);
+                                pro.fetchOrders(page: pro.currentPage);
                               }
                             },
                             icon: const Icon(
@@ -227,7 +218,7 @@ class _OutboundPageState extends State<OutboundPage> with TickerProviderStateMix
                                   pro.selectedDate = 'Select Date';
                                   pro.picked = null;
                                 });
-                                pro.fetchOrders(page: pro.currentPageReady);
+                                pro.fetchOrders(page: pro.currentPage);
                               },
                               child: const Icon(
                                 Icons.clear,
@@ -252,7 +243,7 @@ class _OutboundPageState extends State<OutboundPage> with TickerProviderStateMix
                                 setState(() {
                                   pro.selectedCourier = value;
                                 });
-                                pro.fetchOrders(page: pro.currentPageReady);
+                                pro.fetchOrders(page: pro.currentPage);
                               },
                               itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
                                 const PopupMenuItem<String>(
@@ -294,20 +285,14 @@ class _OutboundPageState extends State<OutboundPage> with TickerProviderStateMix
                               List<String> selectedOrderIds = provider.outboundOrders
                                   .asMap()
                                   .entries
-                                  .where((entry) => provider.selectedReadyOrders[entry.key])
+                                  .where((entry) => provider.selectedOrders[entry.key])
                                   .map((entry) => entry.value.orderId)
                                   .toList();
 
                               log('selectedOrderIds: $selectedOrderIds');
 
                               if (selectedOrderIds.isEmpty) {
-                                // Show an error message if no orders are selected
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text('No orders selected'),
-                                    backgroundColor: AppColors.cardsred,
-                                  ),
-                                );
+                                Utils.showSnackBar(context, 'No orders selected', isError: true);
                               } else {
                                 String resultMessage = await provider.approveOrders(context, selectedOrderIds);
 
@@ -320,13 +305,7 @@ class _OutboundPageState extends State<OutboundPage> with TickerProviderStateMix
                                   snackBarColor = AppColors.orange; // Other: Orange
                                 }
 
-                                // Show feedback based on the result
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text(resultMessage),
-                                    backgroundColor: snackBarColor,
-                                  ),
-                                );
+                                Utils.showSnackBar(context, resultMessage, color: snackBarColor, seconds: 5);
                               }
                             },
                       child: pro.isConfirm
@@ -346,37 +325,22 @@ class _OutboundPageState extends State<OutboundPage> with TickerProviderStateMix
                         backgroundColor: AppColors.cardsred,
                       ),
                       onPressed: pro.isCancel
-                          ? null // Disable button while loading
+                          ? null
                           : () async {
                               final provider = Provider.of<OutboundProvider>(context, listen: false);
 
-                              // Collect selected order IDs
                               List<String> selectedOrderIds = provider.outboundOrders
                                   .asMap()
                                   .entries
-                                  .where((entry) => provider.selectedReadyOrders[entry.key])
+                                  .where((entry) => provider.selectedOrders[entry.key])
                                   .map((entry) => entry.value.orderId)
                                   .toList();
 
                               if (selectedOrderIds.isEmpty) {
-                                // Show an error message if no orders are selected
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text('No orders selected'),
-                                    backgroundColor: AppColors.cardsred,
-                                  ),
-                                );
+                                Utils.showSnackBar(context, 'No orders selected', isError: true);
                               } else {
-                                // Set loading status to true before starting the operation
-                                provider.setCancelStatus(true);
-
-                                // Call confirmOrders method with selected IDs
                                 String resultMessage = await provider.cancelOrders(context, selectedOrderIds);
 
-                                // Set loading status to false after operation completes
-                                provider.setCancelStatus(false);
-
-                                // Determine the background color based on the result
                                 Color snackBarColor;
                                 if (resultMessage.contains('success')) {
                                   snackBarColor = AppColors.green; // Success: Green
@@ -386,14 +350,7 @@ class _OutboundPageState extends State<OutboundPage> with TickerProviderStateMix
                                   snackBarColor = AppColors.orange; // Other: Orange
                                 }
 
-                                // Show feedback based on the result
-                                ScaffoldMessenger.of(context).removeCurrentSnackBar();
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text(resultMessage),
-                                    backgroundColor: snackBarColor,
-                                  ),
-                                );
+                                Utils.showSnackBar(context, resultMessage, color: snackBarColor, seconds: 5);
                               }
                             },
                       child: pro.isCancel
@@ -437,8 +394,7 @@ class _OutboundPageState extends State<OutboundPage> with TickerProviderStateMix
                         icon: const Icon(
                           Icons.refresh,
                           color: AppColors.primaryBlue,
-                        )
-                    ),
+                        )),
                     // ElevatedButton(
                     //   style: ElevatedButton.styleFrom(
                     //     backgroundColor: Colors.grey,
@@ -490,12 +446,7 @@ class _OutboundPageState extends State<OutboundPage> with TickerProviderStateMix
                                   await pro.fetchOrders();
                                 }
                               },
-                              onChanged: (value) {
-                                if (value.isEmpty) {
-                                  pro.clearSearchResults();
-                                  pro.fetchOrders();
-                                }
-                              },
+                              onChanged: _onSearchChanged,
                             ),
                           ),
                           if (provider.searchController.text.isNotEmpty)
@@ -525,7 +476,7 @@ class _OutboundPageState extends State<OutboundPage> with TickerProviderStateMix
               child: pro.isLoading
                   ? const Center(
                       child: LoadingAnimation(
-                        icon: Icons.shopping_cart,
+                        icon: Icons.outbond,
                         beginColor: Color.fromRGBO(189, 189, 189, 1),
                         endColor: AppColors.primaryBlue,
                         size: 80.0,
@@ -564,18 +515,21 @@ class _OutboundPageState extends State<OutboundPage> with TickerProviderStateMix
                                 groupedComboItems[item.comboSku]!.add(item);
                               }
                             }
-                            final List<List<Item>> comboItemGroups = groupedComboItems.values.where((items) => items.length > 1).toList();
+                            final List<List<Item>> comboItemGroups =
+                                groupedComboItems.values.where((items) => items.length > 1).toList();
 
                             final List<Item> remainingItems = order.items
-                                .where((item) =>
-                                    !(item.isCombo == true && item.comboSku != null && groupedComboItems[item.comboSku]!.length > 1))
+                                .where((item) => !(item.isCombo == true &&
+                                    item.comboSku != null &&
+                                    groupedComboItems[item.comboSku]!.length > 1))
                                 .toList();
 
-                            Logger().e('order details: ${order.orderId} ${order.orderStatus} ${order.merged!['status']}');
+                            Logger()
+                                .e('order details: ${order.orderId} ${order.orderStatus} ${order.merged!['status']}');
                             //////////////////////////////////////////////////////////
                             return Card(
                               surfaceTintColor: Colors.white,
-                              color: pro.selectedReadyOrders[index] ? Colors.grey[300] : Colors.grey[100],
+                              color: pro.selectedOrders[index] ? Colors.grey[300] : Colors.grey[100],
                               elevation: 2,
                               margin: const EdgeInsets.all(8.0),
                               child: Padding(
@@ -587,7 +541,7 @@ class _OutboundPageState extends State<OutboundPage> with TickerProviderStateMix
                                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                       children: [
                                         Checkbox(
-                                          value: pro.selectedReadyOrders[index],
+                                          value: pro.selectedOrders[index],
                                           onChanged: (value) => pro.toggleOrderSelectionReady(value ?? false, index),
                                         ),
                                         Column(
@@ -616,7 +570,8 @@ class _OutboundPageState extends State<OutboundPage> with TickerProviderStateMix
                                               ),
                                               Text(
                                                 pro.formatDate(order.date!),
-                                                style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.primaryBlue),
+                                                style: const TextStyle(
+                                                    fontWeight: FontWeight.bold, color: AppColors.primaryBlue),
                                               ),
                                             ],
                                           ),
@@ -629,7 +584,8 @@ class _OutboundPageState extends State<OutboundPage> with TickerProviderStateMix
                                             ),
                                             Text(
                                               'Rs. ${order.totalAmount ?? ''}',
-                                              style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.primaryBlue),
+                                              style: const TextStyle(
+                                                  fontWeight: FontWeight.bold, color: AppColors.primaryBlue),
                                             ),
                                           ],
                                         ),
@@ -642,7 +598,8 @@ class _OutboundPageState extends State<OutboundPage> with TickerProviderStateMix
                                             ),
                                             Text(
                                               '${order.items.fold(0, (total, item) => total + item.qty!)}',
-                                              style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.primaryBlue),
+                                              style: const TextStyle(
+                                                  fontWeight: FontWeight.bold, color: AppColors.primaryBlue),
                                             ),
                                           ],
                                         ),
@@ -655,7 +612,8 @@ class _OutboundPageState extends State<OutboundPage> with TickerProviderStateMix
                                             ),
                                             Text(
                                               order.totalWeight.toStringAsFixed(2) ?? '',
-                                              style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.primaryBlue),
+                                              style: const TextStyle(
+                                                  fontWeight: FontWeight.bold, color: AppColors.primaryBlue),
                                             ),
                                           ],
                                         ),
@@ -682,7 +640,7 @@ class _OutboundPageState extends State<OutboundPage> with TickerProviderStateMix
                                                     if (readySearched.isNotEmpty) {
                                                       pro.searchOrdersByID(readySearched);
                                                     } else {
-                                                      pro.fetchOrders(page: pro.currentPageReady);
+                                                      pro.fetchOrders(page: pro.currentPage);
                                                     }
                                                   }
                                                 },
@@ -757,7 +715,8 @@ class _OutboundPageState extends State<OutboundPage> with TickerProviderStateMix
                                             text: 'Answered: ',
                                             children: [
                                               TextSpan(
-                                                  style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.green),
+                                                  style:
+                                                      const TextStyle(fontWeight: FontWeight.bold, color: Colors.green),
                                                   text: answeredCount.toString()),
                                             ],
                                           ),
@@ -767,7 +726,8 @@ class _OutboundPageState extends State<OutboundPage> with TickerProviderStateMix
                                             text: 'Not Answered: ',
                                             children: [
                                               TextSpan(
-                                                  style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.red),
+                                                  style:
+                                                      const TextStyle(fontWeight: FontWeight.bold, color: Colors.red),
                                                   text: notAnsweredCount.toString()),
                                             ],
                                           ),
@@ -777,7 +737,8 @@ class _OutboundPageState extends State<OutboundPage> with TickerProviderStateMix
                                             text: 'Not Reached: ',
                                             children: [
                                               TextSpan(
-                                                  style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.orange),
+                                                  style: const TextStyle(
+                                                      fontWeight: FontWeight.bold, color: Colors.orange),
                                                   text: notReachCount.toString()),
                                             ],
                                           ),
@@ -787,7 +748,8 @@ class _OutboundPageState extends State<OutboundPage> with TickerProviderStateMix
                                             text: 'Busy: ',
                                             children: [
                                               TextSpan(
-                                                  style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.blue),
+                                                  style:
+                                                      const TextStyle(fontWeight: FontWeight.bold, color: Colors.blue),
                                                   text: busyCount.toString()),
                                             ],
                                           ),
@@ -1073,7 +1035,8 @@ class _OutboundPageState extends State<OutboundPage> with TickerProviderStateMix
                                                           )),
                                                       (order.outBoundBy?['outboundBy']?.toString().isNotEmpty ?? false)
                                                           ? TextSpan(
-                                                              text: "(${order.outBoundBy?['outboundBy'].toString().split('@')[0] ?? ''})",
+                                                              text:
+                                                                  "(${order.outBoundBy?['outboundBy'].toString().split('@')[0] ?? ''})",
                                                               style: const TextStyle(
                                                                 fontWeight: FontWeight.normal,
                                                               ),
@@ -1116,7 +1079,8 @@ class _OutboundPageState extends State<OutboundPage> with TickerProviderStateMix
                                             ],
                                           ),
                                           // from - 0/1, to-1
-                                          if ((order.orderStatus == 0 || order.orderStatus == 1) && (order.merged!['status'] == false))
+                                          if ((order.orderStatus == 0 || order.orderStatus == 1) &&
+                                              (order.merged!['status'] == false))
                                             ElevatedButton(
                                               onPressed: () {
                                                 showDialog(
@@ -1151,7 +1115,8 @@ class _OutboundPageState extends State<OutboundPage> with TickerProviderStateMix
                                                                   shape: RoundedRectangleBorder(
                                                                     borderRadius: BorderRadius.circular(16),
                                                                   ),
-                                                                  insetPadding: const EdgeInsets.symmetric(horizontal: 20),
+                                                                  insetPadding:
+                                                                      const EdgeInsets.symmetric(horizontal: 20),
                                                                   content: const Row(
                                                                     mainAxisSize: MainAxisSize.min,
                                                                     children: [
@@ -1167,7 +1132,8 @@ class _OutboundPageState extends State<OutboundPage> with TickerProviderStateMix
                                                                 );
                                                               },
                                                             );
-                                                            final res = await pro.mergeOrders(context, order.orderId, mergeTo);
+                                                            final res =
+                                                                await pro.mergeOrders(context, order.orderId, mergeTo);
 
                                                             log('saved :)');
 
@@ -1212,7 +1178,8 @@ class _OutboundPageState extends State<OutboundPage> with TickerProviderStateMix
                                       itemCount: remainingItems.length,
                                       itemBuilder: (context, itemIndex) {
                                         final item = remainingItems[itemIndex];
-                                        print('Item $itemIndex: ${item.product?.displayName.toString() ?? ''}, Quantity: ${item.qty ?? 0}');
+                                        print(
+                                            'Item $itemIndex: ${item.product?.displayName.toString() ?? ''}, Quantity: ${item.qty ?? 0}');
                                         return ProductDetailsCard(
                                           item: item,
                                           index: itemIndex,
@@ -1226,43 +1193,48 @@ class _OutboundPageState extends State<OutboundPage> with TickerProviderStateMix
                           },
                         ),
             ),
-            CustomPaginationFooter(
-              currentPage: pro.currentPageReady,
-              totalPages: pro.totalReadyPages,
-              buttonSize: 30,
-              pageController: pageController,
-              onFirstPage: () {
-                pro.fetchOrders(page: 1);
-              },
-              onLastPage: () {
-                pro.fetchOrders(page: pro.totalReadyPages);
-              },
-              onNextPage: () {
-                if (pro.currentPageReady < pro.totalReadyPages) {
-                  pro.fetchOrders(page: pro.currentPageReady + 1);
-                }
-              },
-              onPreviousPage: () {
-                if (pro.currentPageReady > 1) {
-                  pro.fetchOrders(page: pro.currentPageReady - 1);
-                }
-              },
-              onGoToPage: (page) {
-                if (page > 0 && page <= pro.totalReadyPages) {
-                  pro.fetchOrders(page: page);
-                }
-              },
-              onJumpToPage: () {
-                final int? page = int.tryParse(pageController.text);
+            Consumer<OutboundProvider>(
+              builder: (context, pro, child) {
+                return CustomPaginationFooter(
+                  currentPage: pro.currentPage,
+                  totalPages: pro.totalPages,
+                  totalCount: pro.totalOrders,
+                  buttonSize: 30,
+                  pageController: pageController,
+                  onFirstPage: () {
+                    pro.fetchOrders(page: 1);
+                  },
+                  onLastPage: () {
+                    pro.fetchOrders(page: pro.totalPages);
+                  },
+                  onNextPage: () {
+                    if (pro.currentPage < pro.totalPages) {
+                      pro.fetchOrders(page: pro.currentPage + 1);
+                    }
+                  },
+                  onPreviousPage: () {
+                    if (pro.currentPage > 1) {
+                      pro.fetchOrders(page: pro.currentPage - 1);
+                    }
+                  },
+                  onGoToPage: (page) {
+                    if (page > 0 && page <= pro.totalPages) {
+                      pro.fetchOrders(page: page);
+                    }
+                  },
+                  onJumpToPage: () {
+                    final int? page = int.tryParse(pageController.text);
 
-                if (page == null || page < 1 || page > pro.totalReadyPages) {
-                  _showSnackbar(context, 'Please enter a valid page number between 1 and ${pro.totalReadyPages}.');
-                  return;
-                }
+                    if (page == null || page < 1 || page > pro.totalPages) {
+                      _showSnackbar(context, 'Please enter a valid page number between 1 and ${pro.totalPages}.');
+                      return;
+                    }
 
-                pro.fetchOrders(page: page);
-                pageController.clear();
-              },
+                    pro.fetchOrders(page: page);
+                    pageController.clear();
+                  },
+                );
+              }
             ),
           ],
         );
@@ -1365,9 +1337,7 @@ class _OutboundPageState extends State<OutboundPage> with TickerProviderStateMix
 }
 
 void _showSnackbar(BuildContext context, String message) {
-  ScaffoldMessenger.of(context).showSnackBar(
-    SnackBar(content: Text(message)),
-  );
+  Utils.showSnackBar(context, message);
 }
 
 Widget buildLabelValueRow(String label, String? value) {

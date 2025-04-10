@@ -9,10 +9,14 @@ import 'package:inventory_management/constants/constants.dart';
 import 'package:inventory_management/model/orders_model.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../Custom-Files/colors.dart';
+import '../Custom-Files/utils.dart';
+
 class BaApproveProvider with ChangeNotifier {
+  int totalOrders = 0;
   bool _isLoading = false;
   bool _selectAll = false;
-  List<bool> _selectedProducts = [];
+  List<bool> _selectedOrders = [];
   int selectedItemsCount = 0;
   List<Order> _orders = [];
   int _currentPage = 1;
@@ -23,18 +27,21 @@ class BaApproveProvider with ChangeNotifier {
   final TextEditingController searchController = TextEditingController();
 
   bool get selectAll => _selectAll;
-  List<bool> get selectedProducts => _selectedProducts;
+  List<bool> get selectedOrders => _selectedOrders;
   List<Order> get orders => _orders;
   bool get isLoading => _isLoading;
   int get currentPage => _currentPage;
   int get totalPages => _totalPages;
   PageController get pageController => _pageController;
   TextEditingController get textEditingController => _textEditingController;
-  int get selectedCount => _selectedProducts.where((isSelected) => isSelected).length;
+  int get selectedCount => _selectedOrders.where((isSelected) => isSelected).length;
 
   bool isUpdatingOrder = false;
   bool isRefreshingOrders = false;
   bool isCancel = false;
+
+  bool allSelected = false;
+  int selectedOrdersCount = 0;
 
   void resetOrderData() {
     _orders = [];
@@ -58,15 +65,20 @@ class BaApproveProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  void handleRowCheckboxChange(int index, bool isSelected) {
-    _selectedProducts[index] = isSelected;
+  void resetSelections() {
+    allSelected = false;
+    _selectedOrders.fillRange(0, selectedOrders.length, false);
+    selectedOrdersCount = 0;
+    notifyListeners();
+  }
 
-    // If any individual checkbox is unchecked, deselect "Select All"
+  void handleRowCheckboxChange(int index, bool isSelected) {
+    _selectedOrders[index] = isSelected;
+
     if (!isSelected) {
       _selectAll = false;
     } else {
-      // If all boxes are checked, select "Select All"
-      _selectAll = _selectedProducts.every((element) => element);
+      _selectAll = _selectedOrders.every((element) => element);
     }
 
     notifyListeners();
@@ -74,7 +86,7 @@ class BaApproveProvider with ChangeNotifier {
 
   void toggleSelectAll(bool value) {
     _selectAll = value;
-    _selectedProducts = List<bool>.generate(_orders.length, (index) => _selectAll);
+    _selectedOrders = List<bool>.generate(_orders.length, (index) => _selectAll);
     notifyListeners();
   }
 
@@ -148,7 +160,6 @@ class BaApproveProvider with ChangeNotifier {
         // After successful confirmation, fetch updated orders and notify listeners
         await fetchOrdersWithStatus2(); // Assuming fetchOrders is a function that reloads the orders
         setRefreshingOrders(false); // Clear selected order IDs
-        setCancelStatus(false);
         notifyListeners(); // Notify the UI to rebuild
 
         return responseData['message'] ?? 'Orders cancelled successfully';
@@ -156,18 +167,15 @@ class BaApproveProvider with ChangeNotifier {
         return responseData['message'] ?? 'Failed to cancel orders';
       }
     } catch (error) {
-      setCancelStatus(false);
       notifyListeners();
       print('Error during API request: $error');
       return 'An error occurred: $error';
+    } finally {
+      setCancelStatus(false);
     }
   }
 
   Future<void> fetchOrdersWithStatus2({DateTime? date, String? market}) async {
-    // if(searchController.text.trim().isNotEmpty) {
-    //   searchOrders(searchController.text.trim());
-    //   return;
-    // }
     _isLoading = true;
     setRefreshingOrders(true);
     notifyListeners();
@@ -176,7 +184,8 @@ class BaApproveProvider with ChangeNotifier {
     final token = prefs.getString('authToken') ?? '';
     final warehouseId = prefs.getString('warehouseId') ?? '';
 
-    var url = '${await Constants.getBaseUrl()}/orders?warehouse=$warehouseId&orderStatus=2&ba_approve=false&page=$_currentPage';
+    var url =
+        '${await Constants.getBaseUrl()}/orders?warehouse=$warehouseId&orderStatus=2&ba_approve=false&page=$_currentPage';
 
     if (date != null) {
       String formattedDate = DateFormat('yyyy-MM-dd').format(date);
@@ -198,11 +207,12 @@ class BaApproveProvider with ChangeNotifier {
 
         log('orders: $orders');
 
-        _totalPages = data['totalPages']; // Get total pages from response
-        _orders = orders; // Set the orders for the current page
+        _totalPages = data['totalPages'];
+        _orders = orders;
+        _currentPage = data['currentPage'];
+        totalOrders = data['totalOrders'] ?? 0;
 
-        // Initialize selected products list
-        _selectedProducts = List<bool>.filled(_orders.length, false);
+        _selectedOrders = List<bool>.filled(_orders.length, false);
 
         // Print the total number of orders fetched from the current page
         print('Total Orders Fetched from Page $_currentPage: ${orders.length}');
@@ -246,7 +256,8 @@ class BaApproveProvider with ChangeNotifier {
 
     String encodedOrderId = Uri.encodeComponent(query.trim());
 
-    final url = '${await Constants.getBaseUrl()}/orders?warehouse=$warehouseId&orderStatus=2&ba_approve=false&order_id=$encodedOrderId';
+    final url =
+        '${await Constants.getBaseUrl()}/orders?warehouse=$warehouseId&orderStatus=2&ba_approve=false&order_id=$encodedOrderId';
 
     print('Searching orders with term: $query');
 
@@ -264,16 +275,9 @@ class BaApproveProvider with ChangeNotifier {
       if (response.statusCode == 200) {
         final jsonData = json.decode(response.body);
 
-        // List<Order> orders = [];
-        // // print('Response data: $jsonData');
-        // if (jsonData != null) {
-        //   orders.add(Order.fromJson(jsonData));
-        //   print('Response data: $jsonData');
-        // } else {
-        //   print('No data found in response.');
-        // }
-
         _orders = (jsonData['orders'] as List).map((order) => Order.fromJson(order)).toList();
+        resetSelections();
+        _selectedOrders = List<bool>.filled(_orders.length, false);
         print('Orders fetched: ${orders.length}');
       } else {
         print('Failed to load orders: ${response.statusCode}');
@@ -294,12 +298,15 @@ class BaApproveProvider with ChangeNotifier {
   Future<void> statusUpdate(BuildContext context) async {
     setUpdatingOrder(true);
     notifyListeners();
-    final selectedOrderIds = _orders.asMap().entries.where((entry) => _selectedProducts[entry.key]).map((entry) => entry.value.orderId).toList();
+    final selectedOrderIds = _orders
+        .asMap()
+        .entries
+        .where((entry) => _selectedOrders[entry.key])
+        .map((entry) => entry.value.orderId)
+        .toList();
 
     if (selectedOrderIds.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('No orders selected to update')),
-      );
+      Utils.showSnackBar(context, 'No orders selected to update', isError: true);
       setUpdatingOrder(false);
       return;
     }
@@ -315,84 +322,20 @@ class BaApproveProvider with ChangeNotifier {
           'Authorization': 'Bearer $token',
           'Content-Type': 'application/json',
         },
-        body: jsonEncode({
-          'orderIds': selectedOrderIds
-        }),
+        body: jsonEncode({'orderIds': selectedOrderIds}),
       );
 
       if (response.statusCode == 200) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Orders updated successfully')),
-        );
-
-        // Refresh the orders after updating status
+        Utils.showSnackBar(context, 'Orders updated successfully!', color: AppColors.cardsgreen);
         fetchOrdersWithStatus2();
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Failed to update orders')),
-        );
+        Utils.showSnackBar(context, 'Failed to update orders', isError: true);
       }
     } catch (error) {
       print('Error updating order status: $error');
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Error while updating orders')),
-      );
+      Utils.showSnackBar(context, 'Error while updating orders', isError: true);
     } finally {
       setUpdatingOrder(false);
-      notifyListeners();
-    }
-  }
-
-  Future<void> fetchOrdersByMarketplace(String marketplace, int orderStatus, int page, {DateTime? date}) async {
-    final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString('authToken') ?? '';
-    final warehouseId = prefs.getString('warehouseId') ?? '';
-
-    String baseUrl = '${await Constants.getBaseUrl()}/orders';
-    String url = '$baseUrl?warehouse=$warehouseId&orderStatus=$orderStatus&ba_approve=false&marketplace=$marketplace&page=$page';
-
-    if (date != null) {
-      String formattedDate = DateFormat('yyyy-MM-dd').format(date);
-      url += '&date=$formattedDate';
-    }
-
-    try {
-      _isLoading = true;
-      notifyListeners();
-
-      // Clear checkboxes when a new page is fetched
-      // clearAllSelections();
-
-      final response = await http.get(
-        Uri.parse(url),
-        headers: {
-          'Authorization': 'Bearer $token',
-          'Content-Type': 'application/json',
-        },
-      );
-
-      // Log response for debugging
-      print('Response status: ${response.statusCode}');
-      print('Response body: ${response.body}');
-
-      if (response.statusCode == 200) {
-        final jsonResponse = jsonDecode(response.body);
-        List<Order> orders = (jsonResponse['orders'] as List).map((orderJson) => Order.fromJson(orderJson)).toList();
-
-        log("orders: $orders");
-
-        _orders = orders;
-        _currentPage = page; // Track current page for B2B
-        _totalPages = jsonResponse['totalPages']; // Assuming API returns total pages
-      } else {
-        resetOrderData();
-        throw Exception('Failed to load orders: ${response.statusCode}');
-      }
-    } catch (e) {
-      print('Error fetching orders: $e');
-      resetOrderData();
-    } finally {
-      _isLoading = false;
       notifyListeners();
     }
   }

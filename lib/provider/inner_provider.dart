@@ -6,6 +6,7 @@ import 'package:inventory_management/constants/constants.dart';
 import '../Api/auth_provider.dart';
 
 class InnerPackagingProvider with ChangeNotifier {
+  int totalInnerPacking = 0;
   bool _isLoading = false;
   String? _errorMessage;
   List<Map<String, dynamic>> _innerPackings = [];
@@ -112,6 +113,7 @@ class InnerPackagingProvider with ChangeNotifier {
         // Update pagination info
         _currentPage = res['data']['currentPage'] ?? 1;
         _totalPages = res['data']['totalPages'] ?? 1;
+        totalInnerPacking = res['data']['totalInnerPacking'] ?? 0;
 
         log('Inner packings fetched: $_innerPackings');
         notifyListeners();

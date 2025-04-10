@@ -7,7 +7,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'dart:developer';
 
-class CheckOrdersProvider with ChangeNotifier {
+class SupervisorProvider with ChangeNotifier {
   final authProvider = AuthProvider();
 
   bool _isCheckOrdersLoading = false;

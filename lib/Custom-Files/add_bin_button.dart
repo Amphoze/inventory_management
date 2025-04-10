@@ -1,14 +1,13 @@
 import 'dart:developer';
-
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
+import 'package:inventory_management/Custom-Files/colors.dart';
 import 'package:inventory_management/Custom-Files/utils.dart';
 import 'dart:convert';
 import 'package:inventory_management/constants/constants.dart';
 import 'package:provider/provider.dart';
 import '../Api/auth_provider.dart';
-import '../provider/location_provider.dart';
+import '../provider/warehouse_provider.dart';
 
 class AddBinButton extends StatefulWidget {
   final String? productSku;
@@ -155,35 +154,17 @@ class _AddBinButtonState extends State<AddBinButton> {
         if (mounted) {
           if (response.statusCode == 201 || response.statusCode == 200) {
             await _fetchBins(_warehouseIdController.text);
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Bin added successfully'),
-                backgroundColor: Colors.green,
-              ),
-            );
+            Utils.showSnackBar(context, 'Bin added successfully', color: AppColors.cardsgreen);
           } else {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text('Failed to add bin: ${responseData['error'] ?? 'Unknown error'}'),
-                backgroundColor: Colors.red,
-              ),
-            );
+            Utils.showSnackBar(context, 'Failed to add bin: ${responseData['error'] ?? 'Unknown error'}',  isError: true);
           }
         }
       } catch (e) {
-        // Close loading dialog
         Navigator.of(dialogContext).pop();
-        // Close add bin dialog
         Navigator.of(dialogContext).pop(false);
 
-        // Show error SnackBar after all dialogs are closed
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Error adding bin: $e'),
-              backgroundColor: Colors.red,
-            ),
-          );
+          Utils.showSnackBar(context, 'Error adding bin: $e',  isError: true);
         }
       }
     }
@@ -211,7 +192,7 @@ class _AddBinButtonState extends State<AddBinButton> {
                         validator: (value) => value?.isEmpty ?? true ? 'Please enter Product SKU' : null,
                       ),
                       const SizedBox(height: 8),
-                      Consumer<LocationProvider>(
+                      Consumer<WarehouseProvider>(
                         builder: (context, pro, child) {
                           return _buildDropdown(
                             value: warehouse,

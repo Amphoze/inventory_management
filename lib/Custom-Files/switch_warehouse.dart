@@ -2,10 +2,11 @@ import 'dart:developer';
 
 import 'package:flutter/material.dart';
 import 'package:inventory_management/Custom-Files/custom_pagination.dart';
+import 'package:inventory_management/Custom-Files/utils.dart';
 import 'package:provider/provider.dart';
 
 import '../Api/auth_provider.dart';
-import '../provider/location_provider.dart';
+import '../provider/warehouse_provider.dart';
 
 class SwitchWarehouse extends StatefulWidget {
   const SwitchWarehouse({super.key});
@@ -16,9 +17,8 @@ class SwitchWarehouse extends StatefulWidget {
 
 class _SwitchWarehouseState extends State<SwitchWarehouse> {
   String? selectedWarehouse;
-  bool _isSaving = false; // Lock to prevent rapid successive saves
+  bool _isSaving = false;
 
-  // Fetch the locally stored warehouse name
   Future<String?> getWarehouse() async {
     final authProvider = context.read<AuthProvider>();
     final warehouseName = await authProvider.getWarehouseName();
@@ -33,7 +33,7 @@ class _SwitchWarehouseState extends State<SwitchWarehouse> {
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
       builder: (context) {
-        return Consumer<LocationProvider>(builder: (context, pro, child) {
+        return Consumer<WarehouseProvider>(builder: (context, pro, child) {
           return Container(
             padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
             constraints: BoxConstraints(
@@ -72,34 +72,32 @@ class _SwitchWarehouseState extends State<SwitchWarehouse> {
                         onTap: _isSaving
                             ? null
                             : () async {
-                          Navigator.pop(context);
-                          final newWarehouseName = warehouse['name'] ?? '';
-                          final oldWarehouseName = selectedWarehouse;
-                          setState(() {
-                            selectedWarehouse = newWarehouseName;
-                            _isSaving = true;
-                          });
-                          try {
-                            await pro.saveWarehouseData(
-                              context,
-                              warehouse['_id'] ?? '',
-                              newWarehouseName,
-                              warehouse['isPrimary'] ?? false,
-                            );
-                            log('Warehouse ID: ${warehouse['_id']}');
-                          } catch (e) {
-                            setState(() {
-                              selectedWarehouse = oldWarehouseName; // Rollback on error
-                            });
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text('Failed to save warehouse: $e')),
-                            );
-                          } finally {
-                            setState(() {
-                              _isSaving = false;
-                            });
-                          }
-                        },
+                                Navigator.pop(context);
+                                final newWarehouseName = warehouse['name'] ?? '';
+                                final oldWarehouseName = selectedWarehouse;
+                                setState(() {
+                                  selectedWarehouse = newWarehouseName;
+                                  _isSaving = true;
+                                });
+                                try {
+                                  await pro.saveWarehouseData(
+                                    context,
+                                    warehouse['_id'] ?? '',
+                                    newWarehouseName,
+                                    warehouse['isPrimary'] ?? false,
+                                  );
+                                  log('Warehouse ID: ${warehouse['_id']}');
+                                } catch (e) {
+                                  setState(() {
+                                    selectedWarehouse = oldWarehouseName; // Rollback on error
+                                  });
+                                  Utils.showSnackBar(context, 'Failed to save warehouse: $e', isError: true);
+                                } finally {
+                                  setState(() {
+                                    _isSaving = false;
+                                  });
+                                }
+                              },
                         child: Container(
                           margin: const EdgeInsets.only(bottom: 8),
                           padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
@@ -155,6 +153,7 @@ class _SwitchWarehouseState extends State<SwitchWarehouse> {
                   currentPage: pro.currentPage,
                   totalPages: pro.totalPages,
                   buttonSize: 30,
+                  totalCount: pro.totalWarehouses,
                   pageController: pro.textEditingController,
                   onFirstPage: () => pro.goToPage(1),
                   onLastPage: () => pro.goToPage(pro.totalPages),
@@ -183,15 +182,14 @@ class _SwitchWarehouseState extends State<SwitchWarehouse> {
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const SizedBox(
-            width: 200,
             child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
           );
         }
         if (snapshot.hasError) {
           log('Error fetching warehouse: ${snapshot.error}');
-          selectedWarehouse = null; // Reset on error
+          selectedWarehouse = null;
         } else {
-          selectedWarehouse = snapshot.data; // Update local state
+          selectedWarehouse = snapshot.data;
         }
         return SizedBox(
           width: 200,

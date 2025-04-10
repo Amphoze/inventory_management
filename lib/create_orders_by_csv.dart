@@ -260,9 +260,7 @@ class _CreateOrdersByCSVState extends State<CreateOrdersByCSV> {
     try {
       final token = await getToken();
       if (token == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Authentication token not found')),
-        );
+        Utils.showSnackBar(context, 'Authentication token not found', isError: true);
         return;
       }
 
@@ -294,16 +292,12 @@ class _CreateOrdersByCSVState extends State<CreateOrdersByCSV> {
       if (response.statusCode == 200 || response.statusCode == 201) {
         Utils.showSnackBar(context, jsonData['message'] ?? 'Uploading...');
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("${jsonData['message']}")),
-        );
+        Utils.showSnackBar(context, "${jsonData['message'] ?? ''}", isError: true);
         log('Failed to upload CSV: ${response.statusCode}\n$responseBody');
       }
     } catch (e) {
       log('Error during order creation: $e', error: e, stackTrace: StackTrace.current);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error during order creation: $e')),
-      );
+      Utils.showSnackBar(context, "Error creating orders", details: e.toString(), isError: true);
     } finally {
       setState(() {
         _isCreating = false;
@@ -343,14 +337,18 @@ class _CreateOrdersByCSVState extends State<CreateOrdersByCSV> {
                 ),
                 const SizedBox(width: 16),
                 ElevatedButton(
-                  onPressed: _isPickingFile || _isProcessingFile ? null : () => AuthProvider().downloadTemplate(context, 'createOrder'),
+                  onPressed: _isPickingFile || _isProcessingFile
+                      ? null
+                      : () => AuthProvider().downloadTemplate(context, 'createOrder'),
                   child: const Text('Download Template'),
                 ),
                 const SizedBox(width: 16),
                 if (_rowCount > 0)
                   Expanded(
                     child: ElevatedButton(
-                      onPressed: _isCreateEnabled && !_isCreating && !_isPickingFile && !_isProcessingFile ? _createOrders : null,
+                      onPressed: _isCreateEnabled && !_isCreating && !_isPickingFile && !_isProcessingFile
+                          ? _createOrders
+                          : null,
                       child: const Text('Create Orders'),
                     ),
                   ),

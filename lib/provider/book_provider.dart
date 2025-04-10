@@ -13,8 +13,12 @@ import 'dart:html' as html;
 import 'dart:typed_data';
 import 'package:pdf/widgets.dart' as pw;
 
+import '../Custom-Files/utils.dart';
+
 class BookProvider with ChangeNotifier {
   final GlobalKey<ScaffoldState> scaffoldKey = GlobalKey<ScaffoldState>();
+  int totalOrders = 0;
+  int totalOrdersBooked = 0;
 
   List<bool> selectedB2BItems = List.generate(40, (index) => false);
   List<bool> selectedB2CItems = List.generate(40, (index) => false);
@@ -141,7 +145,6 @@ class BookProvider with ChangeNotifier {
 
       if (response.statusCode == 200) {
         setRefreshingOrders(false);
-        setCancelStatus(false);
         notifyListeners();
 
         return responseData['message'] ?? 'Orders cancelled successfully';
@@ -149,10 +152,11 @@ class BookProvider with ChangeNotifier {
         return responseData['message'] ?? 'Failed to cancel orders';
       }
     } catch (error) {
-      setCancelStatus(false);
       notifyListeners();
       print('Error during API request: $error');
       return 'An error occurred: $error';
+    } finally {
+      setCancelStatus(false);
     }
   }
 
@@ -296,6 +300,7 @@ class BookProvider with ChangeNotifier {
       if (response.statusCode == 200) {
         final jsonResponse = jsonDecode(response.body);
         List<Order> orders = (jsonResponse['orders'] as List).map((orderJson) => Order.fromJson(orderJson)).toList();
+        totalOrders = jsonResponse['totalOrders'] ?? 0;
 
         log('fetch book orders: ${orders.length}');
         if (type == 'B2B') {
@@ -388,6 +393,10 @@ class BookProvider with ChangeNotifier {
         _ordersBooked = orders;
         currentPageBooked = page;
         totalPagesBooked = jsonResponse['totalPages'];
+        totalOrdersBooked = jsonResponse['totalOrders'] ?? 0;
+
+        selectedBookedItems = List.generate(_ordersBooked.length, (index) => false);
+        selectAllBooked = false;
       } else {
         _ordersBooked = [];
         currentPageBooked = 1;
@@ -405,7 +414,8 @@ class BookProvider with ChangeNotifier {
     }
   }
 
-  Future<Map<String, dynamic>> bookOrders(BuildContext context, List<Map<String, String>> orderIds, String courier) async {
+  Future<Map<String, dynamic>> bookOrders(
+      BuildContext context, List<Map<String, String>> orderIds, String courier) async {
     log('courier: $courier');
     setLoading(courier, true);
     String baseUrl = await Constants.getBaseUrl();
@@ -476,7 +486,8 @@ class BookProvider with ChangeNotifier {
     }
   }
 
-  Future<Map<String, dynamic>> bookShiprocketOrder(BuildContext context, String orderId, String courierId, String courier) async {
+  Future<Map<String, dynamic>> bookShiprocketOrder(
+      BuildContext context, String orderId, String courierId, String courier) async {
     String baseUrl = await Constants.getBaseUrl();
     String bookOrderUrl = '$baseUrl/orders/book';
     final String? token = await _getToken();
@@ -555,15 +566,13 @@ class BookProvider with ChangeNotifier {
   }
 
   void handleRowCheckboxChangeBooked(String? orderId, bool isSelected) {
-    int index;
-    index = _ordersBooked.indexWhere((order) => order.orderId == orderId);
+    int index = _ordersBooked.indexWhere((order) => order.orderId == orderId);
     if (index != -1) {
       selectedBookedItems[index] = isSelected;
       _ordersBooked[index].isSelected = isSelected;
     }
-
-    selectAllBooked = selectedBookedItems.every((item) => item);
-
+    // Check if all visible orders are selected
+    selectAllBooked = _ordersBooked.every((order) => order.isSelected);
     notifyListeners();
   }
 
@@ -596,21 +605,21 @@ class BookProvider with ChangeNotifier {
   }
 
   void toggleBookedSelectAll(bool? value) {
-    selectAllBooked = value!;
-    selectedBookedItems.fillRange(0, selectedBookedItems.length, selectAllBooked);
-
+    selectAllBooked = value ?? false;
+    selectedBookedItems = List.generate(_ordersBooked.length, (index) => selectAllBooked);
     for (int i = 0; i < _ordersBooked.length; i++) {
       _ordersBooked[i].isSelected = selectAllBooked;
     }
-
     notifyListeners();
   }
 
   void clearAllSelections() {
     selectedB2BItems.fillRange(0, selectedB2BItems.length, false);
     selectedB2CItems.fillRange(0, selectedB2CItems.length, false);
+    selectedBookedItems.fillRange(0, selectedBookedItems.length, false);
     selectAllB2B = false;
     selectAllB2C = false;
+    selectAllBooked = false;
     notifyListeners();
   }
 
@@ -818,7 +827,8 @@ class BookProvider with ChangeNotifier {
         // } else {
         //   _ordersBooked = [Order.fromJson(data['orders'][0])];
         // }
-
+        selectedBookedItems = List.generate(_ordersBooked.length, (index) => false);
+        selectAllBooked = false;
         log('_ordersBooked: $ordersBooked');
       } else {
         _ordersBooked = [];
@@ -868,19 +878,10 @@ class BookProvider with ChangeNotifier {
       final data = jsonDecode(response.body);
 
       if (response.statusCode == 201) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(data['error']['message']),
-            backgroundColor: AppColors.green,
-          ),
-        );
+        Utils.showSnackBar(context, data['error']?['message'] ?? '', color: AppColors.cardsgreen);
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(data['error']['message']),
-            backgroundColor: AppColors.cardsred,
-          ),
-        );
+        Utils.showSnackBar(context, data['error']['message'] ?? '', isError: true);
+
         print('Failed to post order picker data: ${response.statusCode}');
       }
     } catch (e) {
@@ -1029,8 +1030,7 @@ class BookProvider with ChangeNotifier {
     }
   }
 
-  Future<Map<String, dynamic>>
-  reCalculateDeliveryCharges(String orderId, String newWarehouseName) async {
+  Future<Map<String, dynamic>> reCalculateDeliveryCharges(String orderId, String newWarehouseName) async {
     log('reCalculateDeliveryCharges called');
     String baseUrl = await Constants.getBaseUrl();
     String url = '$baseUrl/orders/reCalculateDeliverCharges';

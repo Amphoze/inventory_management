@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:inventory_management/Api/products-provider.dart';
+import 'package:inventory_management/Custom-Files/utils.dart';
 import 'package:provider/provider.dart';
 
 class CustomPicker extends StatefulWidget {
@@ -27,7 +28,7 @@ class _CustomPickerState extends State<CustomPicker> {
     } catch (e) {
       if (kDebugMode) print('Error picking images: $e');
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Failed to pick images. Please try again.'), duration: Duration(seconds: 2)));
+       Utils.showSnackBar(context, 'Failed to pick images. Please try again.', isError: true);
       }
     }
   }
